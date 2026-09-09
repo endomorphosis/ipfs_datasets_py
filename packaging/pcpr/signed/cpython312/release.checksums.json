@@ -1,0 +1,130 @@
+{
+  "algorithm": "sha256",
+  "artifacts": {
+    "container": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No container digest is bound. A digest was not invented.",
+      "status": "unavailable"
+    },
+    "detached_signature": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "cosign, minisign, and in-toto are not admitted live signers. A detached signature was not invented.",
+      "status": "unavailable"
+    },
+    "lock": {
+      "bytes": 3399,
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/locks/cpython312/release.lock.json",
+      "reason": "SHA-256 of committed bytes. This is not a published release digest.",
+      "sha256": "f5c16b1fb9ce6f96e1ca51edd156f2479e1f0938456e03c30af273adc3d4f22b",
+      "status": "observed"
+    },
+    "lock_txt": {
+      "bytes": 361,
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/locks/cpython312/release.txt",
+      "reason": "SHA-256 of committed bytes. This is not a published release digest.",
+      "sha256": "59be0f02a0869722c3061a96ed6ce18e9927ddef5d4dc532ec5e6441722874c1",
+      "status": "observed"
+    },
+    "provenance": {
+      "bytes": 4968,
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/provenance/cpython312/release.provenance.json",
+      "reason": "SHA-256 of committed bytes. This is not a published release digest.",
+      "sha256": "c1d95e7fd3c1b4e490ec553f3c73503ce3785d7363694a235ba05e2ded211f10",
+      "status": "observed"
+    },
+    "sbom": {
+      "bytes": 5886,
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/sbom/cpython312/release.sbom.json",
+      "reason": "SHA-256 of committed bytes. This is not a published release digest.",
+      "sha256": "c16d7202a57602a9a6332d0897bdf7262aa00ead73bd9ac89ebf7734fd74c9ca",
+      "status": "observed"
+    },
+    "sdist": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No published sdist digest is bound. Hermetic private builds are not a PCPR release. An sdist hash was not invented.",
+      "status": "unavailable"
+    },
+    "signed_tag": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No live signed git tag exists for this declared policy. A tag signature was not invented.",
+      "status": "unavailable"
+    },
+    "wheel": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No published wheel digest is bound. Hermetic private builds are not a PCPR release. A wheel hash was not invented.",
+      "status": "unavailable"
+    }
+  },
+  "checksum_kind": "declared_artifact_checksum_manifest",
+  "checksums_cid": "baguqeerax4bcjukmqipr76vndwafm2vomppsobybg7czameuzllcsgcymkwa",
+  "closed_release_outcome": null,
+  "evidence_kind": "measured",
+  "goal_id": "PCPR-G600",
+  "hashes_invented": false,
+  "interface": "DatasetsSignedTagsAndArtifacts@1",
+  "live": false,
+  "lock_cid": "baguqeeraxwt7j3qjwfy3yvicngqwrnx2suobs3yxa4ah6gbgbszxrbsrid7q",
+  "measured_files": [
+    {
+      "bytes": 3399,
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/locks/cpython312/release.lock.json",
+      "reason": "SHA-256 of committed bytes. This is not a published release digest.",
+      "sha256": "f5c16b1fb9ce6f96e1ca51edd156f2479e1f0938456e03c30af273adc3d4f22b",
+      "status": "observed"
+    },
+    {
+      "bytes": 361,
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/locks/cpython312/release.txt",
+      "reason": "SHA-256 of committed bytes. This is not a published release digest.",
+      "sha256": "59be0f02a0869722c3061a96ed6ce18e9927ddef5d4dc532ec5e6441722874c1",
+      "status": "observed"
+    },
+    {
+      "bytes": 5886,
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/sbom/cpython312/release.sbom.json",
+      "reason": "SHA-256 of committed bytes. This is not a published release digest.",
+      "sha256": "c16d7202a57602a9a6332d0897bdf7262aa00ead73bd9ac89ebf7734fd74c9ca",
+      "status": "observed"
+    },
+    {
+      "bytes": 4968,
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/provenance/cpython312/release.provenance.json",
+      "reason": "SHA-256 of committed bytes. This is not a published release digest.",
+      "sha256": "c1d95e7fd3c1b4e490ec553f3c73503ce3785d7363694a235ba05e2ded211f10",
+      "status": "observed"
+    }
+  ],
+  "package_name": "ipfs_datasets_py",
+  "package_version": "0.2.0",
+  "program_id": "proof-carrying-platform-qualification-and-release-v1",
+  "provenance_cid": "baguqeeraoq7sa7f5vjjauqzgwuz5w4lo4cayvmf3lwiijyurtn6dhtgakeia",
+  "published": false,
+  "release_claim": false,
+  "sbom_cid": "baguqeerao2zimzk7v7femnhzw5zhlvalaaor6foyvkrca3fneuhpe6ieoneq",
+  "schema": "ipfs_datasets_py/assurance/declared-artifact-checksums@1",
+  "signatures_invented": false,
+  "source_date_epoch": "0",
+  "tag_policy_cid": "baguqeeraubun3du77i6xczjl2eufg4fxq6v7dcmapqjtgutukf5fbl6wi33a",
+  "task_id": "PCPR-055"
+}

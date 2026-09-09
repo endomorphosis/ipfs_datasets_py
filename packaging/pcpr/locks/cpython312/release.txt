@@ -1,0 +1,8 @@
+# PCPR-053 declared release-profile lock for ipfs_datasets_py 0.2.0.
+# lock_kind: declared_release_profile
+# hashes: typed unavailable (not invented)
+# live resolver: typed unavailable
+# This is not a closed PCPR release and not pip --require-hashes material.
+# lock_cid: baguqeeraxwt7j3qjwfy3yvicngqwrnx2suobs3yxa4ah6gbgbszxrbsrid7q
+
+# (empty release profile)

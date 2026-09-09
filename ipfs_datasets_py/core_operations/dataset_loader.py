@@ -13,14 +13,20 @@ from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Try to import Hugging Face datasets with fallback
+from ..assurance.typed_outcomes import (
+    is_unavailable_surface,
+    unavailable_load_dataset,
+)
+
+# Try to import Hugging Face datasets with a typed unavailable stand-in.
+# PCPR-012: missing optional datasets is never silent None.
 try:
     from datasets import load_dataset as hf_load_dataset
     HF_DATASETS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Hugging Face datasets not available: {e}")
     HF_DATASETS_AVAILABLE = False
-    hf_load_dataset = None
+    hf_load_dataset = unavailable_load_dataset
 
 
 class DatasetLoader:
@@ -93,14 +99,19 @@ class DatasetLoader:
             if options is None:
                 options = {}
             
-            # Check if Hugging Face datasets is available
-            if not HF_DATASETS_AVAILABLE:
-                self.logger.warning("Hugging Face datasets not available, returning error")
-                return {
-                    "status": "error",
-                    "message": "Hugging Face datasets library is not available. Please install it with: pip install datasets",
-                    "source": source
-                }
+            # Check if Hugging Face datasets is available. Missing optional
+            # backends stay typed Unavailable (never silent None or success).
+            if not HF_DATASETS_AVAILABLE or is_unavailable_surface(hf_load_dataset):
+                self.logger.warning(
+                    "Hugging Face datasets not available, returning typed unavailable"
+                )
+                payload = unavailable_load_dataset(source)
+                payload["source"] = source
+                payload["message"] = payload.get("message") or (
+                    "Hugging Face datasets library is not available. "
+                    "Please install it with: pip install datasets"
+                )
+                return payload
             
             # Load the dataset directly using Hugging Face datasets
             try:

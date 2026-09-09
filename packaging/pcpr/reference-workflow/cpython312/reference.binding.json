@@ -1,0 +1,90 @@
+{
+  "applied": false,
+  "binding_cid": "baguqeera3eu7bvbep4tq3j3f26ra6qtcgro26nu74yqsabe5meflruyq76eq",
+  "branch_policy_cid": "baguqeeram3uegwfx6c4i76eyj5nuzlgsqw6yl5vb5c6drkuyacn5l77ksnna",
+  "closed_release_outcome": null,
+  "context_pack": {
+    "constructed": false,
+    "deferred": true,
+    "live": false,
+    "reason": "Datasets ContextPack construction remains PCPR-061.",
+    "task_id": "PCPR-061"
+  },
+  "contracts_frozen": false,
+  "duckdb_or_quack_state_written": false,
+  "evidence_kind": "measured",
+  "goal_id": "PCPR-G700",
+  "hashes_invented": false,
+  "idea": "Modify a typed formal-logic API while reusing unaffected proofs, selecting only impacted tests, rejecting stale-tree evidence, and producing a complete proof-carrying execution receipt.",
+  "idea_digest": "baguqeeracbayojdov4jmqiirx22pavrg6nabazcocru6y3scrdx5e54mw2zq",
+  "interface": "DatasetsReferenceHighLevelObjectiveBinding@1",
+  "language": "Python",
+  "live": false,
+  "live_semantic_impact": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "Semantic-impact inspection is PCPR-061, not this binding.",
+    "status": "unavailable"
+  },
+  "lock_cid": "baguqeerawsekbbbt5ccctjt4tydzeahfkahsatb6q5x7k6cy4inrii5lhqmq",
+  "materialization": {
+    "admitted": false,
+    "applied": false,
+    "duckdb_or_quack_state_written": false,
+    "evidence_kind": "unavailable",
+    "kind": "declared_binding_not_live",
+    "live": false
+  },
+  "normative_interface": "AccelerateReferenceHighLevelObjective@1",
+  "normative_source": "ipfs_accelerate_py/assurance/declared-reference-objective@1",
+  "objective_cid": "baguqeeraynsn7tjr3iaggnreylzxo3akaooqwp5bf5oheaa6eubth2zwqeba",
+  "objective_id": "PCPR-G700",
+  "objective_kind": "declared_reference_high_level_objective_binding",
+  "operator_blocking_task": {
+    "action": "Do not construct a ContextPack in this task. PCPR-061 inspects semantic impact after the declared objective identity is bound.",
+    "applied": false,
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "This binding does not perform live materialization or ContextPack construction. Missing live submission stays typed unavailable.",
+    "requires": "An admitted Quack-fenced state-owner session on the repaired PCPR-004 path before Datasets inspects live semantic impact",
+    "status": "typed_blocked",
+    "task_id": "pcpr-060-operator-live-objective-materialization"
+  },
+  "owned_contracts": [
+    "SupervisorContextPack",
+    "SemanticArtifactIdentity"
+  ],
+  "owner_repository": "ipfs_datasets_py",
+  "package_name": "ipfs_datasets_py",
+  "package_version": "0.2.0",
+  "portfolio_id": "portfolio:pcpr-v1",
+  "portfolio_version": "proof-carrying-platform-0.1.0",
+  "program_id": "proof-carrying-platform-qualification-and-release-v1",
+  "release_claim": false,
+  "release_gate_cid": "baguqeerajahrusqwd33fqbuw46zgqcsw4xsuswdqq6td7c3nyddeeg5qofca",
+  "schema": "ipfs_datasets_py/assurance/declared-reference-objective-binding@1",
+  "sibling_source_required": false,
+  "signatures_invented": false,
+  "source": {
+    "binding": "current_head_not_mutable_main",
+    "commit": {
+      "evidence_kind": "measured",
+      "field": "PCPR-060 receipt current_tree_binding",
+      "live": false,
+      "reason": "Exact commit and tree are bound by the task receipt because nested admission rewrites HEAD.",
+      "status": "observed_at_evaluation"
+    },
+    "kind": "git",
+    "mutable_main_reference": false,
+    "repository": "endomorphosis/ipfs_datasets_py"
+  },
+  "source_date_epoch": "0",
+  "storage": {
+    "deferred": true,
+    "stored": false,
+    "task_id": "PCPR-062"
+  },
+  "submitted_live": false,
+  "task_id": "PCPR-060",
+  "this_task_created_competing_authority": false
+}

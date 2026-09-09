@@ -39,10 +39,9 @@ def _cache_enabled() -> bool:
 
 
 def _auto_install_enabled() -> bool:
+    """Fail-closed: unset env does not authorize installation (PCPR-010)."""
     primary = os.getenv("IPFS_DATASETS_AUTO_INSTALL")
     secondary = os.getenv("IPFS_AUTO_INSTALL")
-    if primary is None and secondary is None:
-        return True
     return _truthy(primary) or _truthy(secondary)
 
 

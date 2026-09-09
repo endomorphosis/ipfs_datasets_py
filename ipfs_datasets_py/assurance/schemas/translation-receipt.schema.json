@@ -1,0 +1,24 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/translation-receipt.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged LogicTranslationReceipt@1. Missing or stale receipts have no authority.",
+  "properties": {
+    "freshness": { "enum": ["current", "stale"], "type": "string" },
+    "interface": { "const": "LogicTranslationReceipt@1" },
+    "schema": { "const": "logic-translation-receipt/v1" },
+    "source_family": { "type": "string", "minLength": 1 },
+    "target_family": { "type": "string", "minLength": 1 },
+    "translation_cid": {
+      "maxLength": 128,
+      "minLength": 8,
+      "pattern": "^b[a-z2-7]+$",
+      "type": "string"
+    }
+  },
+  "required": ["freshness", "schema", "source_family", "target_family", "translation_cid"],
+  "title": "LogicTranslationReceipt@1",
+  "type": "object",
+  "x-interface": "LogicTranslationReceipt@1",
+  "x-schema-version": "logic-translation-receipt/v1"
+}

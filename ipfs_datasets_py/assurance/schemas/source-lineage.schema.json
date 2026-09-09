@@ -1,0 +1,23 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/source-lineage.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged SourceLineage@1 graph identity. Unknown keys fail closed.",
+  "properties": {
+    "edges": {
+      "items": { "type": "object" },
+      "type": "array"
+    },
+    "interface": { "const": "SourceLineage@1" },
+    "nodes": {
+      "items": { "type": "object" },
+      "type": "array"
+    },
+    "schema": { "const": "ir-lineage-graph/v1" }
+  },
+  "required": ["nodes", "schema"],
+  "title": "SourceLineage@1",
+  "type": "object",
+  "x-interface": "SourceLineage@1",
+  "x-schema-version": "ir-lineage-graph/v1"
+}

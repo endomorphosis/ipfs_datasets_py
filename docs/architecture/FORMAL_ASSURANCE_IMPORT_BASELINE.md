@@ -7,7 +7,7 @@
 | Goal | `FACP-G210` |
 | Evidence | `facp/datasets-import-purity@1` |
 | Bundle | `facp/migration/datasets-import` |
-| Status | characterization (legacy impurity; **not** production-success) |
+| Status | characterization; PCPR-010 repaired import-time DS-IMPORT-001/002; remaining seeds are explicit installer-API reachability; **not** production-success |
 | Owner | datasets-migration |
 | Source of truth | `ipfs_datasets_py/__init__.py`; `ipfs_datasets_py/auto_installer.py`; FACP-003 `datasets_claims.json` import_effect_traces; `tests/unit/test_formal_assurance_import_purity.py` |
 | Last verified | 2026-08-19 |
@@ -19,7 +19,9 @@
 > Observations are discovery of impurity only. They must **not** be promoted to
 > production-success, hermetic purity, `effect_successful`, or
 > `production_supported` (FCA `import_effect` family: `unsafe_promotion: false`).
-> Repair belongs to FACP-022; this baseline does not change package import.
+> PCPR-010 removed import-time auto-install (DS-IMPORT-001/002). Remaining
+> seeds are explicit installer helpers, not package import. None of this is a
+> production-success or `production_supported` claim.
 
 ## 1. Purpose
 
@@ -29,8 +31,10 @@ empty explicit HOME / XDG / project-root equivalents with network, subprocess,
 and out-of-sandbox writes denied?
 
 The purity oracle in `tests/unit/test_formal_assurance_import_purity.py`
-**fails on every seeded import effect**. A failing purity verdict is the
-expected characterization outcome before FACP-022, not a green hermetic claim.
+records inert import for PCPR-010-repaired seeds ``DS-IMPORT-001`` and
+``DS-IMPORT-002``, and still fails for explicit installer-API seeds
+``DS-IMPORT-003`` … ``DS-IMPORT-005``. Inert import is not a production-success
+claim.
 
 ## 2. Audience
 
@@ -84,8 +88,8 @@ entries `cx-ds-import-*`.
 
 | Defect | Seed | Family | Reachability | Exact observed legacy behavior (characterization) | Purity verdict |
 | --- | --- | --- | --- | --- | --- |
-| `DS-IMPORT-001` | `cx-ds-import-auto-install-default-on` | `module_top_level_environment_write` | package import default | Cold import with auto-install env **unset** executes `_enable_default_auto_install()` and sets `IPFS_DATASETS_AUTO_INSTALL=true` and `IPFS_KIT_AUTO_INSTALL_DEPS=1`. | **FAIL** |
-| `DS-IMPORT-002` | `cx-ds-import-installer-path-mkdir` | `installer_construction_path_and_fs_mutation` | non-minimal package import | Non-minimal import calls `get_installer()` → `DependencyInstaller.__init__` which `mkdir`s project `bin` / `.deps` / npm prefix dirs and rewrites process `PATH` via `_ensure_bin_on_path`. | **FAIL** |
+| `DS-IMPORT-001` | `cx-ds-import-auto-install-default-on` | `module_top_level_environment_write` | package import default | PCPR-010: cold import with auto-install env **unset** does **not** write `IPFS_DATASETS_AUTO_INSTALL` or `IPFS_KIT_AUTO_INSTALL_DEPS`. Historical legacy wrote both. | **INERT (not production-success)** |
+| `DS-IMPORT-002` | `cx-ds-import-installer-path-mkdir` | `installer_construction_path_and_fs_mutation` | non-minimal package import | PCPR-010: package import uses `_InertInstaller` and does **not** call `get_installer()` / mkdir bin/deps / rewrite PATH. Historical legacy constructed `DependencyInstaller` on non-minimal import. | **INERT (not production-success)** |
 | `DS-IMPORT-003` | `cx-ds-import-pip-reachability` | `installer_reachability_pip_subprocess` | reachable after import when auto-install enabled | After import defaults enable auto-install, `DependencyInstaller._pip_install` / `ensure_module` attempts `sys.executable -m pip install …` via `subprocess.run`. Under denial the attempt is recorded; missing optional modules do **not** yield typed Unavailable in this legacy path. | **FAIL** |
 | `DS-IMPORT-004` | `cx-ds-import-persistent-path` | `persistent_user_path_write` | windows installer helper paths (also attempted on non-Windows via `setx` fallback) | `_add_to_user_path` attempts `winreg` user Environment mutation and/or `subprocess.run(['setx', 'PATH', …])`, then may mutate process `PATH`. Durable user PATH mutation is library-reachable. | **FAIL** |
 | `DS-IMPORT-005` | `cx-ds-import-runtime-installer-state` | `runtime_installer_bootstrap_write` | import when `IPFS_DATASETS_ENSURE_INSTALLER` truthy or `force=True` | `ensure_repo_installer_current` may run companion bootstrap helpers (git/pip subprocess) and `_save_runtime_installer_state` writing `state/runtime_installer_state.json` under the package repo root. | **FAIL** |
@@ -95,27 +99,16 @@ entries `cx-ds-import-*`.
 ```text
 import ipfs_datasets_py
         |
-        +--> _enable_default_auto_install()     # DS-IMPORT-001 (always)
-        |
-        +--> [unless MINIMAL_IMPORTS]
-                from .auto_installer import get_installer, ensure_repo_installer_current
-                installer = get_installer()
-                        |
-                        +--> DependencyInstaller.__init__
-                                mkdir bin/deps/npm
-                                _ensure_bin_on_path()          # DS-IMPORT-002
-                        |
-                ensure_repo_installer_current()               # DS-IMPORT-005 when gated
-                        |
-                        +--> companion bootstrap helpers
-                        +--> _save_runtime_installer_state
+        +--> _InertInstaller (auto_install=False)   # PCPR-010: no get_installer()
+        +--> ensure_module = importlib only         # no pip
+        +--> _enable_default_auto_install defined as no-op and not called
 
-later / helper reachability:
-        ensure_module / lazy_import
-                --> get_installer().ensure_dependency
-                        --> _pip_install (subprocess pip)     # DS-IMPORT-003
-        DependencyInstaller._add_to_user_path                 # DS-IMPORT-004
-                --> winreg and/or setx PATH
+explicit installer API (not import-time):
+        python -m ipfs_datasets_py.auto_installer
+        get_installer() / DependencyInstaller
+                --> _pip_install (subprocess pip)     # DS-IMPORT-003
+                --> _add_to_user_path                 # DS-IMPORT-004
+        ensure_repo_installer_current(force=True)     # DS-IMPORT-005
 ```
 
 ## 6. FCA classification (conservative)

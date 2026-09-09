@@ -1,0 +1,22 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/canonical-ir-identity.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged CanonicalIRIdentity@1 over canonical IR JSON. Identities are deterministic CIDv1 values.",
+  "properties": {
+    "identity_cid": {
+      "maxLength": 128,
+      "minLength": 8,
+      "pattern": "^b[a-z2-7]+$",
+      "type": "string"
+    },
+    "interface": { "const": "CanonicalIRIdentity@1" },
+    "profile": { "const": "ir-canonical-identity-v1" },
+    "schema": { "const": "ir-canonical-identity-v1" }
+  },
+  "required": ["identity_cid", "profile"],
+  "title": "CanonicalIRIdentity@1",
+  "type": "object",
+  "x-interface": "CanonicalIRIdentity@1",
+  "x-schema-version": "ir-canonical-identity-v1"
+}

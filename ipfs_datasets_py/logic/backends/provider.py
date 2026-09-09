@@ -1,15 +1,23 @@
-"""Canonical, package-neutral wire contract for optional logic providers.
+"""Compatibility-only LogicProvider@1 wire contract for optional logic providers.
 
 The datasets package owns the semantic/provider boundary.  This module is
 therefore intentionally a standard-library leaf: it does not import the agent
 supervisor, a backend registry, a solver, an installer, or an optional provider
 implementation.  Importing it is safe during capability discovery.
 
+Version 1 is **not canonical**.  The canonical protocol is
+``LogicProviderProtocol@2`` (see :mod:`ipfs_datasets_py.logic.backends.protocol_v2`).
+v1 remains importable as an explicit compatibility envelope: unrestricted JSON
+``payload`` values cannot mint executable ``BackendRequest@2`` identities.
+Dual-read of v1 generics is fail-closed and lives only in
+:mod:`ipfs_datasets_py.logic.backends.protocol_v1_adapter`.
+
 Version 1 uses strict JSON-compatible request and response envelopes.  Resource
 limits, deadlines, network policy, and cooperative cancellation are data in
 the request rather than ambient provider configuration.  A successful
 response is still only provider output; consumers must independently interpret
-typed evidence before granting proof authority.
+typed evidence before granting proof authority.  Advisory v1 data has no
+executable authority.
 """
 
 from __future__ import annotations
@@ -23,6 +31,10 @@ from enum import StrEnum
 from typing import Any, Final, Protocol, runtime_checkable
 
 LOGIC_PROVIDER_PROTOCOL_VERSION: Final = 1
+LOGIC_PROVIDER_PROTOCOL_V1_INTERFACE: Final = "LogicProviderProtocol@1"
+LOGIC_PROVIDER_PROTOCOL_CANONICAL: Final = False
+LOGIC_PROVIDER_PROTOCOL_MATURITY: Final = "compatibility_only"
+LOGIC_PROVIDER_PROTOCOL_SUCCESSOR: Final = "LogicProviderProtocol@2"
 LOGIC_PROVIDER_SUPPORTED_PROTOCOL_VERSIONS: Final = (
     LOGIC_PROVIDER_PROTOCOL_VERSION,
 )
@@ -405,7 +417,14 @@ class LogicProviderFailure:
 
 @dataclass(frozen=True, slots=True)
 class LogicProviderRequest:
-    """Strict, correlated request envelope shared by every operation."""
+    """Compatibility-only v1 request envelope.
+
+    The unrestricted JSON ``payload`` is advisory data.  It cannot mint an
+    executable ``BackendRequest@2``.  Elevation requires the explicit
+    :mod:`~ipfs_datasets_py.logic.backends.protocol_v1_adapter` and, for
+    executable operations, an admitted BackendRequest@2 supplied *outside*
+    the payload together with positive finite bounds.
+    """
 
     operation: LogicProviderOperation | str
     payload: Mapping[str, Any] = field(default_factory=dict)
@@ -725,7 +744,11 @@ class LogicProviderResponse:
 
 @runtime_checkable
 class LogicProvider(Protocol):
-    """Structural version-1 interface for a concrete logic provider."""
+    """Compatibility-only structural version-1 interface.
+
+    Canonical providers implement ``LogicProviderProtocol`` /
+    ``LogicProviderProtocol@2``.
+    """
 
     provider_id: str
     provider_version: str
@@ -765,7 +788,11 @@ class LogicProvider(Protocol):
 def dispatch_logic_provider_request(
     provider: LogicProvider, request: LogicProviderRequest
 ) -> LogicProviderResponse:
-    """Dispatch one already-admitted request without discovery or routing."""
+    """Dispatch one already-admitted v1 request (compatibility-only).
+
+    New executable work must use ``LogicProviderProtocol@2``.  This dispatcher
+    does not mint ``BackendRequest@2`` from a free-form payload.
+    """
 
     if not isinstance(request, LogicProviderRequest):
         raise TypeError("request must be a LogicProviderRequest")
@@ -874,6 +901,10 @@ def dispatch_logic_provider_request(
 
 __all__ = [
     "LOGIC_PROVIDER_CANCELLATION_SCHEMA",
+    "LOGIC_PROVIDER_PROTOCOL_CANONICAL",
+    "LOGIC_PROVIDER_PROTOCOL_MATURITY",
+    "LOGIC_PROVIDER_PROTOCOL_SUCCESSOR",
+    "LOGIC_PROVIDER_PROTOCOL_V1_INTERFACE",
     "LOGIC_PROVIDER_PROTOCOL_VERSION",
     "LOGIC_PROVIDER_REQUEST_SCHEMA",
     "LOGIC_PROVIDER_RESOURCE_SCHEMA",

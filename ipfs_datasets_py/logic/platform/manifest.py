@@ -28,7 +28,8 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Final
 
 from ipfs_datasets_py.logic.backends.provider import (
-    LOGIC_PROVIDER_PROTOCOL_VERSION,
+    LOGIC_PROVIDER_PROTOCOL_V1_INTERFACE,
+    LOGIC_PROVIDER_PROTOCOL_VERSION as LOGIC_PROVIDER_PROTOCOL_V1_VERSION,
     LOGIC_PROVIDER_REQUEST_SCHEMA,
     LOGIC_PROVIDER_RESPONSE_SCHEMA,
 )
@@ -56,6 +57,328 @@ GOAL_DIRECTED_PROOF_PLAN_INTERFACE: Final = "GoalDirectedProofPlan@1"
 GOAL_DIRECTED_PROOF_PLAN_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/goal-directed-proof-plan@1"
 )
+# Handshake identity only. Canonical protocol is @2; v1 is compatibility.
+LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE: Final = "LogicProviderProtocol@2"
+LOGIC_PROVIDER_PROTOCOL_V2_VERSION: Final = "2"
+LOGIC_PROVIDER_PROTOCOL_V1_ADAPTER_INTERFACE: Final = (
+    "LogicProviderProtocolV1Adapter@1"
+)
+LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA: Final = (
+    "ipfs_datasets_py/logic-provider-protocol@2"
+)
+LOGIC_PROVIDER_RESPONSE_V2_SCHEMA: Final = (
+    "ipfs_datasets_py/logic-provider-response@2"
+)
+# PCPR-014 Datasets-owned semantic APIs and ContextPack@1. Handshake identity
+# only; owners remain the named leaf modules. v0.1 ContextPack is compatibility.
+DATASETS_CONTEXT_PACK_INTERFACE: Final = "DatasetsContextPack@1"
+DATASETS_CONTEXT_PACK_VERSION: Final = "1"
+DATASETS_CONTEXT_PACK_SCHEMA: Final = (
+    "ipfs_datasets_py/datasets-context-pack@1"
+)
+DATASETS_CONTEXT_PACK_V01_INTERFACE: Final = "DatasetsContextPackAuthority@0.1"
+CANONICAL_IR_IDENTITY_INTERFACE: Final = "CanonicalIRIdentity@1"
+CANONICAL_IR_IDENTITY_SCHEMA: Final = "ir-canonical-identity-v1"
+DATASETS_SEMANTIC_API_CATALOG_INTERFACE: Final = "DatasetsSemanticApiCatalog@1"
+DATASETS_SEMANTIC_API_CATALOG_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/semantic-api-catalog@1"
+)
+# PCPR-015 packaged schemas and shared vectors. Handshake identity only;
+# loaders remain importlib.resources and never require a sibling tests tree.
+DATASETS_SCHEMA_PACKAGING_INTERFACE: Final = "DatasetsSchemaPackaging@1"
+DATASETS_SCHEMA_PACKAGING_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/schema-packaging-catalog@1"
+)
+DATASETS_SHARED_VECTORS_INTERFACE: Final = "DatasetsSharedVectors@1"
+DATASETS_SHARED_VECTORS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/shared-vectors@1"
+)
+# PCPR-016 package license metadata. Handshake identity only; LICENSE remains
+# the legal text. Dual-license authority is explicit and currently none.
+DATASETS_LICENSE_METADATA_INTERFACE: Final = "DatasetsLicenseMetadata@1"
+DATASETS_LICENSE_METADATA_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/license-authority@1"
+)
+# PCPR-017 solver qualification. Handshake identity only; live solvers require
+# sealed-PATH or digest-bound evidence. Missing solvers stay typed unavailable.
+DATASETS_SOLVER_QUALIFICATION_INTERFACE: Final = "DatasetsSolverQualification@1"
+DATASETS_SOLVER_QUALIFICATION_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/solver-qualification@1"
+)
+# PCPR-050 clean package. Handshake identity only; a wheel or sdist is not a
+# closed PCPR release. Sibling source trees are never required.
+DATASETS_CLEAN_PACKAGE_INTERFACE: Final = "DatasetsCleanPackage@1"
+DATASETS_CLEAN_PACKAGE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/clean-package@1"
+)
+# PCPR-053 declared release-profile dependency locks. Handshake identity only;
+# hashes and live resolver results stay typed unavailable until admitted.
+DATASETS_DEPENDENCY_LOCKS_INTERFACE: Final = "DatasetsDependencyLocks@1"
+DATASETS_DEPENDENCY_LOCKS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/dependency-locks@1"
+)
+# PCPR-054 declared SBOMs and build provenance. Handshake identity only;
+# live scanners, SLSA attestations, and published artifact digests stay
+# typed unavailable until admitted.
+DATASETS_SBOM_AND_PROVENANCE_INTERFACE: Final = "DatasetsSbomAndProvenance@1"
+DATASETS_SBOM_AND_PROVENANCE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/sbom-and-provenance@1"
+)
+# PCPR-055 declared signed tags and artifacts. Handshake identity only;
+# live GPG/SSH git tags, cosign signatures, and published wheel/sdist
+# identities stay typed unavailable until admitted.
+DATASETS_SIGNED_TAGS_AND_ARTIFACTS_INTERFACE: Final = (
+    "DatasetsSignedTagsAndArtifacts@1"
+)
+DATASETS_SIGNED_TAGS_AND_ARTIFACTS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/signed-tags-and-artifacts@1"
+)
+# PCPR-056 declared portfolio compatibility lock binding. Handshake identity
+# only; live signatures and unpublished artifact hashes stay typed
+# unavailable until admitted. Sibling source trees are never required.
+DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_INTERFACE: Final = (
+    "DatasetsPortfolioCompatibilityLockBinding@1"
+)
+DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/portfolio-compatibility-lock-binding@1"
+)
+# PCPR-057 declared branch and release gates binding. Handshake identity
+# only; live GitHub branch protection, tag protection, and repository-admin
+# application stay typed unavailable until admitted.
+DATASETS_BRANCH_AND_RELEASE_GATES_INTERFACE: Final = (
+    "DatasetsBranchAndReleaseGatesBinding@1"
+)
+DATASETS_BRANCH_AND_RELEASE_GATES_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/branch-and-release-gates-binding@1"
+)
+# PCPR-060 declared reference high-level objective binding. Handshake
+# identity only; live Supervisor submission, DuckDB/Quack materialization,
+# and ContextPack construction stay typed unavailable until admitted.
+DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_INTERFACE: Final = (
+    "DatasetsReferenceHighLevelObjectiveBinding@1"
+)
+DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/reference-high-level-objective-binding@1"
+)
+# PCPR-061 Datasets-owned semantic ContextPack. Handshake identity only;
+# live supervisor admission, solver-backed impact, and Kit current-root
+# CAS stay typed unavailable until admitted.
+DATASETS_SEMANTIC_CONTEXT_PACK_INTERFACE: Final = "DatasetsSemanticContextPack@1"
+DATASETS_SEMANTIC_CONTEXT_PACK_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/semantic-context-pack@1"
+)
+# PCPR-062 Datasets binding to Kit-owned ContextPack persist and
+# current-root CAS. Handshake identity only; live IPFS publication
+# stays typed unavailable until admitted.
+DATASETS_CONTEXT_PACK_STORAGE_INTERFACE: Final = (
+    "DatasetsContextPackStorageBinding@1"
+)
+DATASETS_CONTEXT_PACK_STORAGE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/context-pack-storage-binding@1"
+)
+# PCPR-063 Datasets binding to Accelerate-owned deterministic-first
+# route. Handshake identity only; live supervisor execution stays
+# typed unavailable until admitted.
+DATASETS_DETERMINISTIC_FIRST_ROUTE_INTERFACE: Final = (
+    "DatasetsDeterministicFirstRouteBinding@1"
+)
+DATASETS_DETERMINISTIC_FIRST_ROUTE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/deterministic-first-route-binding@1"
+)
+# PCPR-064 Datasets binding to Accelerate-owned bounded PatchPlan.
+# Handshake identity only; live supervisor application stays typed
+# unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_BOUNDED_PATCH_INTERFACE: Final = "DatasetsBoundedPatchBinding@1"
+DATASETS_BOUNDED_PATCH_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/bounded-patch-binding@1"
+)
+# PCPR-065 Datasets binding to Accelerate-owned selected tests and proofs.
+# Handshake identity only; live selected tests stay typed unavailable
+# until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_SELECTED_TESTS_AND_PROOFS_INTERFACE: Final = (
+    "DatasetsSelectedTestsAndProofsBinding@1"
+)
+DATASETS_SELECTED_TESTS_AND_PROOFS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/selected-tests-and-proofs-binding@1"
+)
+# PCPR-066 Datasets binding to Accelerate-owned unrelated documentation
+# change. Handshake identity only; live application stays typed
+# unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_UNRELATED_STATE_CHANGE_INTERFACE: Final = (
+    "DatasetsUnrelatedStateChangeBinding@1"
+)
+DATASETS_UNRELATED_STATE_CHANGE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/unrelated-state-change-binding@1"
+)
+# PCPR-067 Datasets binding to Accelerate-owned eligible reuse.
+# Handshake identity only; live reuse stays typed unavailable until
+# admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_SAFE_REUSE_INTERFACE: Final = "DatasetsSafeReuseBinding@1"
+DATASETS_SAFE_REUSE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/safe-reuse-binding@1"
+)
+# PCPR-068 Datasets binding to Accelerate-owned relevant interface
+# change. Handshake identity only; live application stays typed
+# unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_RELEVANT_INTERFACE_CHANGE_INTERFACE: Final = (
+    "DatasetsRelevantInterfaceChangeBinding@1"
+)
+DATASETS_RELEVANT_INTERFACE_CHANGE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/relevant-interface-change-binding@1"
+)
+# PCPR-069 Datasets binding to Accelerate-owned stale rejection and
+# PlanDelta. Handshake identity only; live PlanDelta admission stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted.
+DATASETS_STALE_REJECTION_INTERFACE: Final = (
+    "DatasetsStaleRejectionAndPlanDeltaBinding@1"
+)
+DATASETS_STALE_REJECTION_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/stale-rejection-binding@1"
+)
+# PCPR-070 Datasets binding to Accelerate-owned authoritative
+# state-owner restart. Handshake identity only; live Quack restart
+# stays typed unavailable until admitted. LogicProviderProtocol@2 is
+# not reminted.
+DATASETS_STATE_OWNER_RESTART_INTERFACE: Final = (
+    "DatasetsAuthoritativeStateOwnerRestartBinding@1"
+)
+DATASETS_STATE_OWNER_RESTART_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/state-owner-restart-binding@1"
+)
+# PCPR-071 Datasets binding to Accelerate-owned recovery and
+# idempotency. Handshake identity only; live Quack recovery stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted.
+DATASETS_RECOVERY_AND_IDEMPOTENCY_INTERFACE: Final = (
+    "DatasetsRecoveryAndIdempotencyBinding@1"
+)
+DATASETS_RECOVERY_AND_IDEMPOTENCY_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/recovery-and-idempotency-binding@1"
+)
+# PCPR-072 Datasets binding to Accelerate-owned final proof-carrying
+# receipt chain. Handshake identity only; live Quack chain emission
+# stays typed unavailable until admitted. LogicProviderProtocol@2 is
+# not reminted.
+DATASETS_FINAL_RECEIPT_CHAIN_INTERFACE: Final = (
+    "DatasetsFinalReceiptChainBinding@1"
+)
+DATASETS_FINAL_RECEIPT_CHAIN_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/final-receipt-chain-binding@1"
+)
+# PCPR-080 Datasets binding to Accelerate-owned Python external-client
+# demonstration. Handshake identity only; live Supervisor.run stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted.
+DATASETS_PYTHON_EXTERNAL_CLIENT_INTERFACE: Final = (
+    "DatasetsPythonExternalClientBinding@1"
+)
+DATASETS_PYTHON_EXTERNAL_CLIENT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/python-external-client-binding@1"
+)
+# PCPR-081 Datasets binding to Accelerate-owned generic MCP-client
+# demonstration. Handshake identity only; live MCP stdio/HTTP stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted.
+DATASETS_GENERIC_MCP_CLIENT_INTERFACE: Final = (
+    "DatasetsGenericMcpClientBinding@1"
+)
+DATASETS_GENERIC_MCP_CLIENT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/generic-mcp-client-binding@1"
+)
+# PCPR-082 Datasets binding to Accelerate-owned Python/MCP objective
+# identity parity. Handshake identity only; live Supervisor.run and live
+# MCP stdio/HTTP stay typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted.
+DATASETS_OBJECTIVE_IDENTITY_PARITY_INTERFACE: Final = (
+    "DatasetsObjectiveIdentityParityBinding@1"
+)
+DATASETS_OBJECTIVE_IDENTITY_PARITY_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/objective-identity-parity-binding@1"
+)
+# PCPR-083 Datasets binding to Accelerate-owned external-client
+# authority-bypass proof. Handshake identity only; live Supervisor.run
+# and live MCP stdio/HTTP stay typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted.
+DATASETS_AUTHORITY_BYPASS_INTERFACE: Final = (
+    "DatasetsAuthorityBypassBinding@1"
+)
+DATASETS_AUTHORITY_BYPASS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/authority-bypass-binding@1"
+)
+# PCPR-090 Datasets binding to Accelerate-owned objective-to-release
+# threat model. Handshake identity only; live Supervisor.run stays typed
+# unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_THREAT_MODEL_INTERFACE: Final = "DatasetsThreatModelBinding@1"
+DATASETS_THREAT_MODEL_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/threat-model-binding@1"
+)
+# PCPR-091 Datasets binding to Accelerate-owned objective-to-release
+# trusted-computing-base inventory. Handshake identity only; live
+# Supervisor.run stays typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted.
+DATASETS_TRUSTED_COMPUTING_BASE_INTERFACE: Final = (
+    "DatasetsTrustedComputingBaseBinding@1"
+)
+DATASETS_TRUSTED_COMPUTING_BASE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/trusted-computing-base-binding@1"
+)
+# PCPR-092 Datasets binding to Accelerate-owned objective-to-release
+# security and correctness audit package. Handshake identity only; live
+# Supervisor.run stays typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted. Status is external_audit_ready,
+# never externally_audited.
+DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_INTERFACE: Final = (
+    "DatasetsSecurityAndCorrectnessAuditPackageBinding@1"
+)
+DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/security-and-correctness-audit-package-binding@1"
+)
+# PCPR-093 Datasets binding to Accelerate-owned objective-to-release
+# candidate gate. Handshake identity only; live Supervisor.run stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted. Closed release remains PCPR-094.
+DATASETS_RELEASE_CANDIDATE_GATE_INTERFACE: Final = (
+    "DatasetsReleaseCandidateGateBinding@1"
+)
+DATASETS_RELEASE_CANDIDATE_GATE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/release-candidate-gate-binding@1"
+)
+# PCPR-094 Datasets binding to Accelerate-owned objective-to-release
+# promotion or honest non-promotion receipt. Handshake identity only;
+# live Supervisor.run stays typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted. This binding does not claim
+# a closed PCPR release outcome.
+DATASETS_PROMOTION_OR_NON_PROMOTION_INTERFACE: Final = (
+    "DatasetsPromotionOrNonPromotionBinding@1"
+)
+DATASETS_PROMOTION_OR_NON_PROMOTION_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/promotion-or-non-promotion-binding@1"
+)
+# PCPR-095 Datasets binding to Accelerate-owned objective-to-release
+# residual-gap report. Handshake identity only; live Supervisor.run stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+# Residual reporting does not create a successor campaign and does not
+# claim a closed PCPR release outcome.
+DATASETS_RESIDUAL_GAP_REPORT_INTERFACE: Final = (
+    "DatasetsResidualGapReportBinding@1"
+)
+DATASETS_RESIDUAL_GAP_REPORT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/residual-gap-report-binding@1"
+)
+
+# PCPR-096 Datasets binding to Accelerate-owned objective-to-release
+# next-bounded-pilot recommendation. Handshake identity only; live
+# Supervisor.run stays typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted. The recommended pilot is
+# synthetic, is not created, and does not create a successor campaign.
+DATASETS_NEXT_BOUNDED_PILOT_INTERFACE: Final = (
+    "DatasetsNextBoundedPilotBinding@1"
+)
+DATASETS_NEXT_BOUNDED_PILOT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/next-bounded-pilot-binding@1"
+)
+
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -292,7 +615,49 @@ def _default_interface_versions() -> Mapping[str, str]:
             LOGIC_OBLIGATION_V2_INTERFACE: "2",
             BACKEND_REQUEST_V2_INTERFACE: "2",
             GOAL_DIRECTED_PROOF_PLAN_INTERFACE: "1",
-            "LogicProviderProtocol@1": str(LOGIC_PROVIDER_PROTOCOL_VERSION),
+            LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE: LOGIC_PROVIDER_PROTOCOL_V2_VERSION,
+            LOGIC_PROVIDER_PROTOCOL_V1_ADAPTER_INTERFACE: "1.0.0",
+            LOGIC_PROVIDER_PROTOCOL_V1_INTERFACE: str(
+                LOGIC_PROVIDER_PROTOCOL_V1_VERSION
+            ),
+            DATASETS_CONTEXT_PACK_INTERFACE: DATASETS_CONTEXT_PACK_VERSION,
+            DATASETS_CONTEXT_PACK_V01_INTERFACE: "0.1",
+            CANONICAL_IR_IDENTITY_INTERFACE: "1",
+            DATASETS_SEMANTIC_API_CATALOG_INTERFACE: "1",
+            DATASETS_SCHEMA_PACKAGING_INTERFACE: "1",
+            DATASETS_SHARED_VECTORS_INTERFACE: "1",
+            DATASETS_LICENSE_METADATA_INTERFACE: "1",
+            DATASETS_SOLVER_QUALIFICATION_INTERFACE: "1",
+            DATASETS_CLEAN_PACKAGE_INTERFACE: "1",
+            DATASETS_DEPENDENCY_LOCKS_INTERFACE: "1",
+            DATASETS_SBOM_AND_PROVENANCE_INTERFACE: "1",
+            DATASETS_SIGNED_TAGS_AND_ARTIFACTS_INTERFACE: "1",
+            DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_INTERFACE: "1",
+            DATASETS_BRANCH_AND_RELEASE_GATES_INTERFACE: "1",
+            DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_INTERFACE: "1",
+            DATASETS_SEMANTIC_CONTEXT_PACK_INTERFACE: "1",
+            DATASETS_CONTEXT_PACK_STORAGE_INTERFACE: "1",
+            DATASETS_DETERMINISTIC_FIRST_ROUTE_INTERFACE: "1",
+            DATASETS_BOUNDED_PATCH_INTERFACE: "1",
+            DATASETS_SELECTED_TESTS_AND_PROOFS_INTERFACE: "1",
+            DATASETS_UNRELATED_STATE_CHANGE_INTERFACE: "1",
+            DATASETS_SAFE_REUSE_INTERFACE: "1",
+            DATASETS_RELEVANT_INTERFACE_CHANGE_INTERFACE: "1",
+            DATASETS_STALE_REJECTION_INTERFACE: "1",
+            DATASETS_STATE_OWNER_RESTART_INTERFACE: "1",
+            DATASETS_RECOVERY_AND_IDEMPOTENCY_INTERFACE: "1",
+            DATASETS_FINAL_RECEIPT_CHAIN_INTERFACE: "1",
+            DATASETS_PYTHON_EXTERNAL_CLIENT_INTERFACE: "1",
+            DATASETS_GENERIC_MCP_CLIENT_INTERFACE: "1",
+            DATASETS_OBJECTIVE_IDENTITY_PARITY_INTERFACE: "1",
+            DATASETS_AUTHORITY_BYPASS_INTERFACE: "1",
+            DATASETS_THREAT_MODEL_INTERFACE: "1",
+            DATASETS_TRUSTED_COMPUTING_BASE_INTERFACE: "1",
+            DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_INTERFACE: "1",
+            DATASETS_RELEASE_CANDIDATE_GATE_INTERFACE: "1",
+            DATASETS_PROMOTION_OR_NON_PROMOTION_INTERFACE: "1",
+            DATASETS_RESIDUAL_GAP_REPORT_INTERFACE: "1",
+            DATASETS_NEXT_BOUNDED_PILOT_INTERFACE: "1",
         }
     )
 
@@ -306,25 +671,121 @@ def _default_schema_roots() -> Mapping[str, str]:
             "logic_obligation": LOGIC_OBLIGATION_V2_SCHEMA_VERSION,
             "backend_request": BACKEND_REQUEST_V2_SCHEMA_VERSION,
             "goal_directed_proof_plan": GOAL_DIRECTED_PROOF_PLAN_SCHEMA,
-            "provider_request": LOGIC_PROVIDER_REQUEST_SCHEMA,
-            "provider_response": LOGIC_PROVIDER_RESPONSE_SCHEMA,
+            "provider_request": LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA,
+            "provider_response": LOGIC_PROVIDER_RESPONSE_V2_SCHEMA,
+            "provider_request_v1": LOGIC_PROVIDER_REQUEST_SCHEMA,
+            "provider_response_v1": LOGIC_PROVIDER_RESPONSE_SCHEMA,
             "manifest": LOGIC_PLATFORM_MANIFEST_SCHEMA,
+            "datasets_context_pack": DATASETS_CONTEXT_PACK_SCHEMA,
+            "canonical_ir_identity": CANONICAL_IR_IDENTITY_SCHEMA,
+            "datasets_semantic_api_catalog": DATASETS_SEMANTIC_API_CATALOG_SCHEMA,
+            "datasets_schema_packaging": DATASETS_SCHEMA_PACKAGING_SCHEMA,
+            "datasets_shared_vectors": DATASETS_SHARED_VECTORS_SCHEMA,
+            "datasets_license_metadata": DATASETS_LICENSE_METADATA_SCHEMA,
+            "datasets_solver_qualification": DATASETS_SOLVER_QUALIFICATION_SCHEMA,
+            "datasets_clean_package": DATASETS_CLEAN_PACKAGE_SCHEMA,
+            "datasets_dependency_locks": DATASETS_DEPENDENCY_LOCKS_SCHEMA,
+            "datasets_sbom_and_provenance": DATASETS_SBOM_AND_PROVENANCE_SCHEMA,
+            "datasets_signed_tags_and_artifacts": DATASETS_SIGNED_TAGS_AND_ARTIFACTS_SCHEMA,
+            "datasets_portfolio_compatibility_lock": DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_SCHEMA,
+            "datasets_branch_and_release_gates": DATASETS_BRANCH_AND_RELEASE_GATES_SCHEMA,
+            "datasets_reference_high_level_objective": (
+                DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_SCHEMA
+            ),
+            "datasets_semantic_context_pack": DATASETS_SEMANTIC_CONTEXT_PACK_SCHEMA,
+            "datasets_context_pack_storage": DATASETS_CONTEXT_PACK_STORAGE_SCHEMA,
+            "datasets_deterministic_first_route": (
+                DATASETS_DETERMINISTIC_FIRST_ROUTE_SCHEMA
+            ),
+            "datasets_bounded_patch": DATASETS_BOUNDED_PATCH_SCHEMA,
+            "datasets_selected_tests_and_proofs": (
+                DATASETS_SELECTED_TESTS_AND_PROOFS_SCHEMA
+            ),
+            "datasets_unrelated_state_change": (
+                DATASETS_UNRELATED_STATE_CHANGE_SCHEMA
+            ),
+            "datasets_safe_reuse": DATASETS_SAFE_REUSE_SCHEMA,
+            "datasets_relevant_interface_change": (
+                DATASETS_RELEVANT_INTERFACE_CHANGE_SCHEMA
+            ),
+            "datasets_stale_rejection": DATASETS_STALE_REJECTION_SCHEMA,
+            "datasets_state_owner_restart": DATASETS_STATE_OWNER_RESTART_SCHEMA,
+            "datasets_recovery_and_idempotency": (
+                DATASETS_RECOVERY_AND_IDEMPOTENCY_SCHEMA
+            ),
+            "datasets_final_receipt_chain": DATASETS_FINAL_RECEIPT_CHAIN_SCHEMA,
+            "datasets_python_external_client": DATASETS_PYTHON_EXTERNAL_CLIENT_SCHEMA,
+            "datasets_generic_mcp_client": DATASETS_GENERIC_MCP_CLIENT_SCHEMA,
+            "datasets_objective_identity_parity": (
+                DATASETS_OBJECTIVE_IDENTITY_PARITY_SCHEMA
+            ),
+            "datasets_authority_bypass": DATASETS_AUTHORITY_BYPASS_SCHEMA,
+            "datasets_threat_model": DATASETS_THREAT_MODEL_SCHEMA,
+            "datasets_trusted_computing_base": (
+                DATASETS_TRUSTED_COMPUTING_BASE_SCHEMA
+            ),
+            "datasets_security_and_correctness_audit_package": (
+                DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_SCHEMA
+            ),
+            "datasets_release_candidate_gate": DATASETS_RELEASE_CANDIDATE_GATE_SCHEMA,
+            "datasets_promotion_or_non_promotion": (
+                DATASETS_PROMOTION_OR_NON_PROMOTION_SCHEMA
+            ),
+            "datasets_residual_gap_report": DATASETS_RESIDUAL_GAP_REPORT_SCHEMA,
+            "datasets_next_bounded_pilot": DATASETS_NEXT_BOUNDED_PILOT_SCHEMA,
         }
     )
 
 
 def _default_operation_versions() -> Mapping[str, str]:
-    protocol = str(LOGIC_PROVIDER_PROTOCOL_VERSION)
+    protocol = LOGIC_PROVIDER_PROTOCOL_V2_VERSION
     return MappingProxyType(
         {
             "capability": protocol,
             "translate": protocol,
             "prove": protocol,
+            "check": protocol,
             "reconstruct": protocol,
             "verify": protocol,
             "attest": protocol,
             "handshake": LOGIC_PLATFORM_MANIFEST_VERSION,
             "catalog": CANONICAL_CATALOG_SNAPSHOT_VERSION,
+            "context_pack": DATASETS_CONTEXT_PACK_VERSION,
+            "canonical_ir_identity": "1",
+            "schema_packaging": "1",
+            "shared_vectors": "1",
+            "license_metadata": "1",
+            "solver_qualification": "1",
+            "clean_package": "1",
+            "dependency_locks": "1",
+            "sbom_and_provenance": "1",
+            "signed_tags_and_artifacts": "1",
+            "portfolio_compatibility_lock": "1",
+            "branch_and_release_gates": "1",
+            "reference_high_level_objective": "1",
+            "semantic_context_pack": "1",
+            "context_pack_storage": "1",
+            "deterministic_first_route": "1",
+            "bounded_patch": "1",
+            "selected_tests_and_proofs": "1",
+            "unrelated_state_change": "1",
+            "safe_reuse": "1",
+            "relevant_interface_change": "1",
+            "stale_rejection": "1",
+            "state_owner_restart": "1",
+            "recovery_and_idempotency": "1",
+            "final_receipt_chain": "1",
+            "python_external_client": "1",
+            "generic_mcp_client": "1",
+            "objective_identity_parity": "1",
+            "authority_bypass": "1",
+            "threat_model": "1",
+            "trusted_computing_base": "1",
+            "security_and_correctness_audit_package": "1",
+            "release_candidate_gate": "1",
+            "promotion_or_non_promotion": "1",
+            "residual_gap_report": "1",
+            "next_bounded_pilot": "1",
         }
     )
 
@@ -1062,6 +1523,10 @@ __all__ = [
     "LOGIC_PLATFORM_MANIFEST_SCHEMA",
     "LOGIC_PLATFORM_MANIFEST_TASK_ID",
     "LOGIC_PLATFORM_MANIFEST_VERSION",
+    "LOGIC_PROVIDER_PROTOCOL_V1_ADAPTER_INTERFACE",
+    "LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE",
+    "LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA",
+    "LOGIC_PROVIDER_PROTOCOL_V2_VERSION",
     "PACKAGE_NAME",
     "HandshakeRequirements",
     "HandshakeResult",

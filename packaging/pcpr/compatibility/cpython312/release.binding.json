@@ -1,0 +1,81 @@
+{
+  "binding_cid": "baguqeerake3frh23hk6xuemdbctuoatsqdiif4rcem2yrt2jztdsl2d4m4ea",
+  "catalog_cid": "baguqeeraqpptps2gf55wmthv3sm5nzlxqqdjfyg2ggkbl5ovfzuvvvsxap4a",
+  "closed_release_outcome": null,
+  "compatibility_document_cid": "baguqeerafnibnbrsfaqvbxx444kqk3gi4sh244r7bl7usdxk2krg6njlquza",
+  "compatibility_task": "PCPR-043",
+  "component": {
+    "checksums_cid": "baguqeerax4bcjukmqipr76vndwafm2vomppsobybg7czameuzllcsgcymkwa",
+    "intended_tag_name": "ipfs_datasets_py-v0.2.0",
+    "lock_cid": "baguqeeraxwt7j3qjwfy3yvicngqwrnx2suobs3yxa4ah6gbgbszxrbsrid7q",
+    "package_name": "ipfs_datasets_py",
+    "package_version": "0.2.0",
+    "provenance_cid": "baguqeeraoq7sa7f5vjjauqzgwuz5w4lo4cayvmf3lwiijyurtn6dhtgakeia",
+    "sbom_cid": "baguqeerao2zimzk7v7femnhzw5zhlvalaaor6foyvkrca3fneuhpe6ieoneq",
+    "tag_policy_cid": "baguqeeraubun3du77i6xczjl2eufg4fxq6v7dcmapqjtgutukf5fbl6wi33a"
+  },
+  "duckdb_or_quack_state_written": false,
+  "evidence_kind": "measured",
+  "freeze_task": "PCPR-002",
+  "frozen": false,
+  "goal_id": "PCPR-G600",
+  "hashes_invented": false,
+  "intended_tag_name": "ipfs_datasets_py-v0.2.0",
+  "interface": "DatasetsPortfolioCompatibilityLockBinding@1",
+  "live": false,
+  "lock": true,
+  "lock_cid": "baguqeerawsekbbbt5ccctjt4tydzeahfkahsatb6q5x7k6cy4inrii5lhqmq",
+  "lock_kind": "declared_portfolio_compatibility_lock_binding",
+  "negative_document_cid": "baguqeeraior5lq3fvefhgwsm3cjjaxozffmdmqmszwxy4ozfb37mnqx6lfca",
+  "normative_interface": "AcceleratePortfolioCompatibilityLock@1",
+  "normative_source": "ipfs_accelerate_py/assurance/declared-portfolio-compatibility-lock@1",
+  "owned_contracts": [
+    "SupervisorContextPack",
+    "SemanticArtifactIdentity"
+  ],
+  "owner_repository": "ipfs_datasets_py",
+  "package_name": "ipfs_datasets_py",
+  "package_version": "0.2.0",
+  "portfolio_id": "portfolio:pcpr-v1",
+  "portfolio_version": "proof-carrying-platform-0.1.0",
+  "program_id": "proof-carrying-platform-qualification-and-release-v1",
+  "protection": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "Protected tags and branch protection remain PCPR-057.",
+    "status": "unavailable"
+  },
+  "published": false,
+  "python": "3.12",
+  "python_requires": ">=3.12",
+  "reencode": false,
+  "release_claim": false,
+  "remint": false,
+  "required_repositories": [
+    "ipfs_accelerate_py",
+    "ipfs_datasets_py",
+    "ipfs_kit_py"
+  ],
+  "schema": "ipfs_datasets_py/assurance/declared-portfolio-compatibility-lock-binding@1",
+  "sibling_import": false,
+  "sibling_source_required": false,
+  "signatures_invented": false,
+  "signed_tags_task": "PCPR-055",
+  "signing": {
+    "evidence_kind": "unavailable",
+    "invented": false,
+    "live": false,
+    "reason": "A live signed lock was not admitted. A signature was not invented.",
+    "signed": false,
+    "status": "unavailable"
+  },
+  "source": {
+    "binding": "current_head_not_mutable_main",
+    "kind": "git",
+    "mutable_main_reference": false
+  },
+  "source_date_epoch": "0",
+  "supported_combination_id": "pcpr.v1.python312.accelerate-datasets-kit.shared-contracts-v1",
+  "task_id": "PCPR-056",
+  "vector_document_cid": "baguqeera6gwcyi3f7fkw5eufnhkovmqw7eevkeas4qxds5ws7b7rloic63da"
+}

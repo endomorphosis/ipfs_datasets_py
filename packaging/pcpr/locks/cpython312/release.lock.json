@@ -1,0 +1,103 @@
+{
+  "artifacts": {
+    "container": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No container digest is bound by this declared-spec lock.",
+      "status": "unavailable"
+    },
+    "sdist": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No published sdist identity is bound by this declared-spec lock.",
+      "status": "unavailable"
+    },
+    "wheel": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No published wheel identity is bound by this declared-spec lock.",
+      "status": "unavailable"
+    }
+  },
+  "closed_release_outcome": null,
+  "commands": {
+    "materialize_lock": "python -c \"from ipfs_datasets_py.assurance.dependency_locks import write_release_lock_files; write_release_lock_files()\"",
+    "pip_install_declared": "python -m pip install --no-deps -r packaging/pcpr/locks/cpython312/release.txt",
+    "pip_install_require_hashes": "unavailable"
+  },
+  "direct_requirement_count": 0,
+  "direct_requirements": [],
+  "editable": false,
+  "evidence_kind": "measured",
+  "goal_id": "PCPR-G600",
+  "hashes": {
+    "evidence_kind": "unavailable",
+    "invented": false,
+    "live": false,
+    "reason": "The Datasets core is empty, so there are no hashes to resolve. A non-empty hashed lock is not invented.",
+    "require_hashes": false,
+    "status": "unavailable"
+  },
+  "interface": "DatasetsDependencyLocks@1",
+  "live": false,
+  "lock_cid": "baguqeeraxwt7j3qjwfy3yvicngqwrnx2suobs3yxa4ah6gbgbszxrbsrid7q",
+  "lock_environment": {
+    "arch": "aarch64",
+    "evidence_kind": "measured",
+    "extra_indexes": [],
+    "index": "https://pypi.org/simple",
+    "os": "linux",
+    "pip_compile_path": "unavailable",
+    "pip_path": "/usr/bin/pip",
+    "python_implementation": "CPython",
+    "python_version": "3.12",
+    "resolver": "declared-spec lock; live pip metadata resolution is typed unavailable in the sealed validation environment",
+    "sealed_path": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin",
+    "sealed_python": "/usr/bin/python3.12",
+    "uv_path": "unavailable"
+  },
+  "lock_kind": "declared_release_profile",
+  "mutable_git": false,
+  "native_dependencies": {
+    "coqtop": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "coqtop is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "cvc5": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "cvc5 is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "lean": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "lean is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "z3": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "z3 is absent from the sealed PATH.",
+      "status": "unavailable"
+    }
+  },
+  "package_name": "ipfs_datasets_py",
+  "package_version": "0.2.0",
+  "path_local": false,
+  "profile": "release",
+  "python_requires": ">=3.12",
+  "release_claim": false,
+  "requirements_authority": "setup.py:install_requires",
+  "resolved_transitive": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "The empty core has no transitive graph to resolve.",
+    "status": "unavailable"
+  },
+  "schema": "ipfs_datasets_py/assurance/dependency-lock@1",
+  "sibling_source_required": false,
+  "task_id": "PCPR-053"
+}

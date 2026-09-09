@@ -1,8 +1,10 @@
 """
 IPFS Datasets Python
 
-A unified interface for data processing and distribution across decentralized networks
-with automated dependency installation for full functionality.
+A unified interface for data processing and distribution across decentralized
+networks. Package import is inert: it does not set auto-install flags, invoke
+installers, repair environments, start services, or access networks.
+Installation is an explicit CLI or operator action.
 """
 
 __version__ = "0.2.0"
@@ -27,14 +29,12 @@ def _truthy(value: str | None) -> bool:
 
 
 def _enable_default_auto_install() -> None:
-    """Enable runtime dependency installation unless the caller opted out."""
-    if not os.environ.get("IPFS_DATASETS_AUTO_INSTALL"):
-        os.environ["IPFS_DATASETS_AUTO_INSTALL"] = "true"
-    if not os.environ.get("IPFS_KIT_AUTO_INSTALL_DEPS"):
-        os.environ["IPFS_KIT_AUTO_INSTALL_DEPS"] = "1"
+    """Historical import-time helper. PCPR-010: never silently default-on.
 
-
-_enable_default_auto_install()
+    Installation is an explicit CLI or operator action. This function does
+    not write ``IPFS_DATASETS_AUTO_INSTALL`` or ``IPFS_KIT_AUTO_INSTALL_DEPS``.
+    """
+    return None
 
 
 # In benchmark/CI contexts we want imports to be as hermetic as possible.
@@ -176,61 +176,157 @@ def initialize(
 # subsystems (PDF pipelines, auto-installers, accelerate patching, etc.).
 HAVE_FILE_CONVERTER = False
 
-# Import automated dependency installer
-if _MINIMAL_IMPORTS:
+# Import-time installer stand-in. Never constructs DependencyInstaller,
+# never mkdir's project bin/deps, never mutates PATH, and never pip-installs.
+# Explicit installation remains `python -m ipfs_datasets_py.auto_installer`
+# or `ipfs_datasets_py.assurance.initialization.initialize_datasets`.
+class _InertInstaller:
+    auto_install = False
+    verbose = False
 
-    class _MinimalInstaller:
-        auto_install = False
-        verbose = False
 
-    installer = _MinimalInstaller()
+installer = _InertInstaller()
 
-    def ensure_module(*_: object, **__: object) -> bool:  # type: ignore
-        return False
 
-    lazy_import = ensure_module
-else:
-    from .auto_installer import (
-        ensure_module,
-        ensure_repo_installer_current,
-        get_installer,
-        lazy_import,
-    )
+def ensure_module(
+    module_name: str,
+    package_name: object = None,
+    system_deps: object = None,
+    fallback_mock: object = None,
+    required: bool = False,
+) -> object:
+    """Resolve a module without installing.
 
-    # Initialize installer with environment configuration
-    installer = get_installer()
+    Missing optional dependencies stay unavailable. Installation is an
+    explicit CLI or operator action, not an import-time side effect.
+    """
     try:
-        ensure_repo_installer_current()
+        return importlib.import_module(str(module_name))
     except Exception:
-        pass
+        if required:
+            raise ImportError(
+                f"Failed to import {module_name!r}; installation is an "
+                "explicit CLI or operator action "
+                "(python -m ipfs_datasets_py.auto_installer)"
+            ) from None
+        return fallback_mock
+
+
+lazy_import = ensure_module
 
 
 class _FallbackIPFSDatasets:
-    """Fallback IPFSDatasets interface when core dependencies are missing."""
+    """Unavailable IPFSDatasets stand-in when core dependencies are missing.
+
+    PCPR-011: download and upload never return status success without a real
+    effect. Missing backends stay typed Unavailable. Simulation requires
+    explicit caller selection and is never represented as live.
+    PCPR-012: this public surface is typed unavailable, never silent None.
+    """
+
+    surface_maturity = "unavailable"
+    unavailable = True
 
     def __init__(self, *_: object, **__: object) -> None:
-        self.status = "initialized"
+        self.status = "unavailable"
+        self.outcome = "Unavailable"
+        self.ok = False
+        self.live = False
+        self.surface_maturity = "unavailable"
+        self.unavailable = True
 
     def list_datasets(self) -> list:
-        """Return an empty dataset list as a safe fallback."""
+        """No catalog is observed when the backend is unavailable."""
         return []
 
-    def download_dataset(self, *_: object, **__: object) -> dict:
-        """Return a stub response for dataset downloads."""
-        return {"status": "success", "dataset": None}
+    def download_dataset(self, *_: object, **kwargs: object) -> dict:
+        """Typed unavailable download; never a false success."""
+        from .assurance.outcomes import replace_false_success_fallback
 
-    def upload_dataset(self, *_: object, **__: object) -> dict:
-        """Return a stub response for dataset uploads."""
-        return {"status": "success"}
+        explicit_simulation = _truthy(
+            str(kwargs.get("explicit_simulation") or "")
+        ) or _truthy(os.environ.get("IPFS_DATASETS_EXPLICIT_SIMULATION"))
+        if explicit_simulation:
+            result = replace_false_success_fallback(
+                family="download_fallback_stub_success",
+                operation="download",
+                backend_available=True,
+                dependency_available=True,
+                simulated=True,
+                legacy={
+                    "backend": "ipfs",
+                    "dependency": "ipfs_datasets_core",
+                    "simulated": True,
+                    "durable_effect": False,
+                },
+            )
+        else:
+            result = replace_false_success_fallback(
+                family="download_fallback_stub_success",
+                operation="download",
+                backend_available=False,
+                dependency_available=False,
+                legacy={
+                    "backend": "ipfs",
+                    "dependency": "ipfs_datasets_core",
+                },
+            )
+        payload = result.to_legacy_compat_dict()
+        payload["dataset"] = None
+        payload["live"] = False
+        payload["simulated"] = bool(explicit_simulation)
+        payload["simulated_represented_as_live"] = False
+        payload["durable_effect"] = False
+        return payload
+
+    def upload_dataset(self, *_: object, **kwargs: object) -> dict:
+        """Typed unavailable upload; never a false success."""
+        from .assurance.outcomes import replace_false_success_fallback
+
+        explicit_simulation = _truthy(
+            str(kwargs.get("explicit_simulation") or "")
+        ) or _truthy(os.environ.get("IPFS_DATASETS_EXPLICIT_SIMULATION"))
+        if explicit_simulation:
+            result = replace_false_success_fallback(
+                family="upload_placeholder_success",
+                operation="upload",
+                backend_available=True,
+                dependency_available=True,
+                simulated=True,
+                legacy={
+                    "backend": "ipfs",
+                    "dependency": "ipfs_datasets_core",
+                    "simulated": True,
+                    "durable_effect": False,
+                },
+            )
+        else:
+            result = replace_false_success_fallback(
+                family="upload_placeholder_success",
+                operation="upload",
+                backend_available=False,
+                dependency_available=False,
+                legacy={
+                    "backend": "ipfs",
+                    "dependency": "ipfs_datasets_core",
+                },
+            )
+        payload = result.to_legacy_compat_dict()
+        payload["live"] = False
+        payload["simulated"] = bool(explicit_simulation)
+        payload["simulated_represented_as_live"] = False
+        payload["durable_effect"] = False
+        return payload
 
 
 # Main entry points with automated installation
 # NOTE: intentionally lazy; see `__getattr__`.
 HAVE_IPFS_DATASETS = False
 
-# Re-export key functions with automated installation (lazy; see __getattr__)
+# Re-export key functions (lazy; see __getattr__). PCPR-012: load_dataset is
+# never silent None. Missing HuggingFace datasets resolve to a typed
+# Unavailable surface via DatasetsTypedOutcomesCanonical@1.
 HAVE_LOAD_DATASET = False
-load_dataset = None
 
 
 # IPLD components (lazy; see __getattr__).
@@ -1053,25 +1149,12 @@ def __getattr__(name: str):
 
     if name == "load_dataset":
         global HAVE_LOAD_DATASET
-        if _MINIMAL_IMPORTS:
-            globals()["load_dataset"] = None
-            HAVE_LOAD_DATASET = False
-            return None
-        try:
-            # Best-effort: only attempt optional dependency resolution when requested.
-            ok = ensure_module("datasets", "datasets", required=False)
-            if ok:
-                from datasets import load_dataset as _load_dataset
+        from .assurance.typed_outcomes import resolve_load_dataset_surface
 
-                globals()["load_dataset"] = _load_dataset
-                HAVE_LOAD_DATASET = True
-                return _load_dataset
-        except Exception:
-            pass
-
-        globals()["load_dataset"] = None
-        HAVE_LOAD_DATASET = False
-        return None
+        surface = resolve_load_dataset_surface(minimal_imports=_MINIMAL_IMPORTS)
+        globals()["load_dataset"] = surface
+        HAVE_LOAD_DATASET = bool(surface) and not surface.unavailable
+        return surface
 
     # -----------------------------------------------------------------------
     # Phase E+F canonical package modules (lazy on first access)

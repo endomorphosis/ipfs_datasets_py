@@ -1,0 +1,76 @@
+{
+  "closed_release_outcome": null,
+  "commands": {
+    "git_tag_created": false,
+    "git_tag_pushed": false,
+    "intended_signed_tag": "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin git -c tag.gpgSign=true tag -s ipfs_datasets_py-v0.2.0 -m 'PCPR declared annotated tag for ipfs_datasets_py 0.2.0'",
+    "materialize": "python -c \"from ipfs_datasets_py.assurance.signed_tags_and_artifacts import write_signed_tags_and_artifacts_files; write_signed_tags_and_artifacts_files()\"",
+    "observed_signed_tag": "unavailable"
+  },
+  "evidence_kind": "measured",
+  "goal_id": "PCPR-G600",
+  "hashes_invented": false,
+  "intended_tag_name": "ipfs_datasets_py-v0.2.0",
+  "intended_tag_type": "annotated",
+  "interface": "DatasetsSignedTagsAndArtifacts@1",
+  "live": false,
+  "lock_cid": "baguqeeraxwt7j3qjwfy3yvicngqwrnx2suobs3yxa4ah6gbgbszxrbsrid7q",
+  "package_name": "ipfs_datasets_py",
+  "package_version": "0.2.0",
+  "program_id": "proof-carrying-platform-qualification-and-release-v1",
+  "protection": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "Protected signed tags and branch protection are PCPR-057. This task does not claim GitHub tag protection.",
+    "status": "unavailable"
+  },
+  "provenance_cid": "baguqeeraoq7sa7f5vjjauqzgwuz5w4lo4cayvmf3lwiijyurtn6dhtgakeia",
+  "published": false,
+  "python_requires": ">=3.12",
+  "release_claim": false,
+  "sbom_cid": "baguqeerao2zimzk7v7femnhzw5zhlvalaaor6foyvkrca3fneuhpe6ieoneq",
+  "schema": "ipfs_datasets_py/assurance/declared-signed-tag-policy@1",
+  "sibling_source_required": false,
+  "signatures_invented": false,
+  "signing": {
+    "algorithm": "git-gpg-or-ssh",
+    "evidence_kind": "unavailable",
+    "invented": false,
+    "key_id": "unavailable",
+    "live": false,
+    "reason": "gpg, ssh signing keys, and cosign are not admitted live signers in the sealed environment. A signature was not invented and a git tag was not created or pushed.",
+    "signature": "unavailable",
+    "signed": false,
+    "status": "unavailable",
+    "tools": {
+      "cosign": "unavailable",
+      "gpg": "/usr/bin/gpg",
+      "gpg2": "unavailable",
+      "gpgsm": "/usr/bin/gpgsm",
+      "in_toto_sign": "unavailable",
+      "minisign": "unavailable",
+      "signify": "unavailable",
+      "signify_openbsd": "unavailable",
+      "slsa_generator": "unavailable",
+      "ssh_keygen": "/usr/bin/ssh-keygen"
+    }
+  },
+  "source": {
+    "binding": "current_head_not_mutable_main",
+    "commit": {
+      "evidence_kind": "measured",
+      "field": "PCPR-055 receipt current_tree_binding",
+      "live": false,
+      "reason": "Exact commit and tree are bound by the task receipt because nested admission rewrites HEAD. This document does not pin origin/main.",
+      "status": "observed_at_evaluation"
+    },
+    "kind": "git",
+    "mutable_main_reference": false,
+    "origin_url": "https://github.com/endomorphosis/ipfs_datasets_py",
+    "repository": "endomorphosis/ipfs_datasets_py"
+  },
+  "source_date_epoch": "0",
+  "tag_kind": "declared_signed_tag_policy",
+  "tag_policy_cid": "baguqeeraubun3du77i6xczjl2eufg4fxq6v7dcmapqjtgutukf5fbl6wi33a",
+  "task_id": "PCPR-055"
+}

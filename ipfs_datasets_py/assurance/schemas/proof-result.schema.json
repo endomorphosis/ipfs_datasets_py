@@ -1,0 +1,29 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/proof-result.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged ProofResult@1. Free-form payloads cannot mint theorem authority. Bounds are required.",
+  "properties": {
+    "bounds": {
+      "additionalProperties": false,
+      "properties": {
+        "memory_limit_mib": { "minimum": 1, "type": "integer" },
+        "timeout_ms": { "minimum": 1, "type": "integer" }
+      },
+      "required": ["memory_limit_mib", "timeout_ms"],
+      "type": "object"
+    },
+    "interface": { "const": "ProofResult@1" },
+    "obligation_id": { "type": "string", "minLength": 1 },
+    "schema": { "const": "bounded-result/v1" },
+    "status": {
+      "enum": ["verified", "failed", "unavailable", "rejected"],
+      "type": "string"
+    }
+  },
+  "required": ["bounds", "obligation_id", "schema", "status"],
+  "title": "ProofResult@1",
+  "type": "object",
+  "x-interface": "ProofResult@1",
+  "x-schema-version": "bounded-result/v1"
+}

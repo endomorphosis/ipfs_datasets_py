@@ -1,0 +1,50 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/datasets-context-pack.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged DatasetsContextPack@1 identity. Free-form executable fields cannot mint this contract. v0.1 remains compatibility-only.",
+  "properties": {
+    "advisory": { "type": "boolean" },
+    "bounds": { "type": "object" },
+    "capsule_cids": {
+      "items": { "$ref": "#/$defs/cid" },
+      "type": "array"
+    },
+    "executable": { "type": "boolean" },
+    "freshness": { "enum": ["current", "stale"], "type": "string" },
+    "interface": { "const": "DatasetsContextPack@1" },
+    "opaque": { "type": "boolean" },
+    "repository_state_cid": { "$ref": "#/$defs/cid" },
+    "risk_class": { "type": "string", "minLength": 1 },
+    "route_tier": { "type": "string", "minLength": 1 },
+    "scanned_tree_oid": { "type": "string", "minLength": 8, "maxLength": 64 },
+    "schema": { "const": "ipfs_datasets_py/datasets-context-pack@1" },
+    "source_tree_oid": { "type": "string", "minLength": 8, "maxLength": 64 },
+    "surrounding_source_cid": { "$ref": "#/$defs/cid" },
+    "target_source_cid": { "$ref": "#/$defs/cid" },
+    "task_class": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "test_source_cid": { "$ref": "#/$defs/cid" },
+    "unavailable": { "type": "boolean" }
+  },
+  "required": [
+    "repository_state_cid",
+    "scanned_tree_oid",
+    "surrounding_source_cid",
+    "target_source_cid",
+    "task_id",
+    "test_source_cid"
+  ],
+  "title": "DatasetsContextPack@1",
+  "type": "object",
+  "x-interface": "DatasetsContextPack@1",
+  "x-schema-version": "ipfs_datasets_py/datasets-context-pack@1",
+  "$defs": {
+    "cid": {
+      "maxLength": 128,
+      "minLength": 8,
+      "pattern": "^b[a-z2-7]+$",
+      "type": "string"
+    }
+  }
+}

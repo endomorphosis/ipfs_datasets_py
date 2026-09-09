@@ -436,10 +436,9 @@ def apply_hermetic_import_env_to_process() -> None:
 class _HermeticImportPolicyFinder:
     """Meta-path finder that applies fail-closed env before package import.
 
-    This is the runtime half of package-root fan-in when ``__init__.py`` has
-    not yet been rewritten: legacy ``_enable_default_auto_install`` becomes a
-    no-op because values are already set, and minimal imports skip installer
-    construction.
+    Defense in depth after PCPR-010 rewrote package-root ``__init__.py`` so
+    import no longer silently default-on. Fan-in still forces hermetic env
+    before import when applied.
     """
 
     def find_spec(self, fullname: str, path: Any = None, target: Any = None):

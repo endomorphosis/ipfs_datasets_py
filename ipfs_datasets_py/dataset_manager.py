@@ -9,11 +9,16 @@ inference when available.
 import anyio
 from typing import Dict, Any, Optional, Union, Protocol, runtime_checkable
 
+from .assurance.typed_outcomes import (
+    is_unavailable_surface,
+    unavailable_load_dataset,
+)
+
 try:
     from datasets import Dataset, load_dataset  # type: ignore
 except Exception:  # pragma: no cover
     Dataset = None  # type: ignore
-    load_dataset = None  # type: ignore
+    load_dataset = unavailable_load_dataset
 
 try:
     from .llm_router import get_accelerate_manager as _get_accelerate_manager
@@ -61,10 +66,19 @@ class DatasetManager:
         if dataset_id in self._datasets:
             return self._datasets[dataset_id]
 
-        # Try to load from HuggingFace Hub (optional dependency)
-        if load_dataset is not None:
+        # Try to load from HuggingFace Hub (optional dependency).
+        # PCPR-012: typed Unavailable surfaces are not silent None and are
+        # not treated as a live HuggingFace implementation.
+        if load_dataset is not None and not is_unavailable_surface(load_dataset):
             try:
                 hf_dataset = load_dataset(dataset_id, split="train")
+                if isinstance(hf_dataset, dict) and hf_dataset.get("status") in {
+                    "unavailable",
+                    "simulated",
+                    "failed",
+                    "rejected",
+                }:
+                    raise LookupError("typed non-success load_dataset outcome")
                 managed = ManagedDataset(hf_dataset, dataset_id)
                 self._datasets[dataset_id] = managed
                 return managed

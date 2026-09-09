@@ -7,8 +7,18 @@ name = "ipfs_datasets_py"
 version = "0.2.0"
 description = "IPFS-native decentralized AI data platform"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "AGPL-3.0-only"}
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Distributed Computing",
+]
 # Core dependencies are resolved dynamically from setup.py.  The proof-context
 # provider's core is intentionally dependency-free; optional capabilities stay
 # behind the established extras below.
@@ -30,6 +40,384 @@ shared-formal-verification-bindings = [
 ]
 optional-formal-verification-bindings = ["symbolicai"]
 external-native-tools-policy = "explicit-transactional-lazy-installer-only"
+
+[tool.ipfs-datasets-py.clean-package]
+schema = "ipfs_datasets_py/assurance/clean-package@1"
+interface = "DatasetsCleanPackage@1"
+task-id = "PCPR-050"
+goal-id = "PCPR-G600"
+requires-sibling-source-trees = false
+requires-recursive-submodules = false
+editable-local-dependencies = false
+sys-path-injection = false
+import-network = false
+mutable-git-release-requires = false
+runtime-requires-authority = "setup.py:install_requires"
+development-requirements-role = "source-checkout-development-and-integration"
+sibling-trees = ["ipfs_kit_py", "ipfs_accelerate_py", ".tools"]
+
+[tool.ipfs-datasets-py.dependency-locks]
+schema = "ipfs_datasets_py/assurance/dependency-locks@1"
+interface = "DatasetsDependencyLocks@1"
+task-id = "PCPR-053"
+goal-id = "PCPR-G600"
+lock-kind = "declared_release_profile"
+profile = "release"
+python-requires = ">=3.12"
+requirements-authority = "setup.py:install_requires"
+development-requirements-role = "source-checkout-development-and-integration"
+hashes-invented = false
+live-resolver-qualified = false
+release-claim = false
+
+[tool.ipfs-datasets-py.sbom-and-provenance]
+schema = "ipfs_datasets_py/assurance/sbom-and-provenance@1"
+interface = "DatasetsSbomAndProvenance@1"
+task-id = "PCPR-054"
+goal-id = "PCPR-G600"
+sbom-kind = "declared_release_profile"
+provenance-kind = "declared_build_binding"
+spdx-version = "SPDX-2.3"
+files-analyzed = false
+hashes-invented = false
+live-scanner-qualified = false
+slsa-attestation-live = false
+release-claim = false
+
+[tool.ipfs-datasets-py.signed-tags-and-artifacts]
+schema = "ipfs_datasets_py/assurance/signed-tags-and-artifacts@1"
+interface = "DatasetsSignedTagsAndArtifacts@1"
+task-id = "PCPR-055"
+goal-id = "PCPR-G600"
+tag-kind = "declared_signed_tag_policy"
+checksum-kind = "declared_artifact_checksum_manifest"
+intended-tag-name = "ipfs_datasets_py-v0.2.0"
+hashes-invented = false
+signatures-invented = false
+live-signed-tag = false
+live-artifact-signature = false
+release-claim = false
+
+[tool.ipfs-datasets-py.portfolio-compatibility-lock]
+schema = "ipfs_datasets_py/assurance/portfolio-compatibility-lock-binding@1"
+interface = "DatasetsPortfolioCompatibilityLockBinding@1"
+task-id = "PCPR-056"
+goal-id = "PCPR-G600"
+lock-kind = "declared_portfolio_compatibility_lock_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+supported-combination-id = "pcpr.v1.python312.accelerate-datasets-kit.shared-contracts-v1"
+hashes-invented = false
+signatures-invented = false
+live-signed-lock = false
+release-claim = false
+
+[tool.ipfs-datasets-py.branch-and-release-gates]
+schema = "ipfs_datasets_py/assurance/branch-and-release-gates-binding@1"
+interface = "DatasetsBranchAndReleaseGatesBinding@1"
+task-id = "PCPR-057"
+goal-id = "PCPR-G600"
+policy-kind = "declared_branch_protection_policy_binding"
+gate-kind = "declared_release_gate_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+default-branch = "main"
+intended-tag-pattern = "ipfs_datasets_py-v*"
+partial-required-build-failure-prohibits-release = true
+live-branch-protection = false
+live-tag-protection = false
+governance-gate-complete = false
+release-claim = false
+
+[tool.ipfs-datasets-py.reference-high-level-objective]
+schema = "ipfs_datasets_py/assurance/reference-high-level-objective-binding@1"
+interface = "DatasetsReferenceHighLevelObjectiveBinding@1"
+task-id = "PCPR-060"
+goal-id = "PCPR-G700"
+objective-kind = "declared_reference_high_level_objective_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-objective-submission = false
+live-materialization = false
+live-context-pack = false
+release-claim = false
+
+[tool.ipfs-datasets-py.semantic-context-pack]
+schema = "ipfs_datasets_py/assurance/semantic-context-pack@1"
+interface = "DatasetsSemanticContextPack@1"
+task-id = "PCPR-061"
+goal-id = "PCPR-G700"
+objective-kind = "declared_semantic_context_pack"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-context-pack-admission = false
+live-solver-impact = false
+live-storage = false
+release-claim = false
+
+[tool.ipfs-datasets-py.context-pack-storage]
+schema = "ipfs_datasets_py/assurance/context-pack-storage-binding@1"
+interface = "DatasetsContextPackStorageBinding@1"
+task-id = "PCPR-062"
+goal-id = "PCPR-G700"
+objective-kind = "declared_context_pack_root_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-storage = false
+live-current-root = false
+release-claim = false
+
+[tool.ipfs-datasets-py.deterministic-first-route]
+schema = "ipfs_datasets_py/assurance/deterministic-first-route-binding@1"
+interface = "DatasetsDeterministicFirstRouteBinding@1"
+task-id = "PCPR-063"
+goal-id = "PCPR-G700"
+objective-kind = "declared_deterministic_first_route_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-execution = false
+live-selected-tests = false
+release-claim = false
+
+[tool.ipfs-datasets-py.bounded-patch]
+schema = "ipfs_datasets_py/assurance/bounded-patch-binding@1"
+interface = "DatasetsBoundedPatchBinding@1"
+task-id = "PCPR-064"
+goal-id = "PCPR-G700"
+objective-kind = "declared_bounded_patch_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-selected-tests = false
+release-claim = false
+
+[tool.ipfs-datasets-py.selected-tests-and-proofs]
+schema = "ipfs_datasets_py/assurance/selected-tests-and-proofs-binding@1"
+interface = "DatasetsSelectedTestsAndProofsBinding@1"
+task-id = "PCPR-065"
+goal-id = "PCPR-G700"
+objective-kind = "declared_selected_tests_and_proofs_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-selected-tests = false
+release-claim = false
+
+[tool.ipfs-datasets-py.unrelated-state-change]
+schema = "ipfs_datasets_py/assurance/unrelated-state-change-binding@1"
+interface = "DatasetsUnrelatedStateChangeBinding@1"
+task-id = "PCPR-066"
+goal-id = "PCPR-G700"
+objective-kind = "declared_unrelated_state_change_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-reuse = false
+release-claim = false
+
+[tool.ipfs-datasets-py.safe-reuse]
+schema = "ipfs_datasets_py/assurance/safe-reuse-binding@1"
+interface = "DatasetsSafeReuseBinding@1"
+task-id = "PCPR-067"
+goal-id = "PCPR-G700"
+objective-kind = "declared_safe_reuse_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-reuse = false
+release-claim = false
+
+[tool.ipfs-datasets-py.relevant-interface-change]
+schema = "ipfs_datasets_py/assurance/relevant-interface-change-binding@1"
+interface = "DatasetsRelevantInterfaceChangeBinding@1"
+task-id = "PCPR-068"
+goal-id = "PCPR-G700"
+objective-kind = "declared_relevant_interface_change_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-reuse = false
+release-claim = false
+
+[tool.ipfs-datasets-py.stale-rejection]
+schema = "ipfs_datasets_py/assurance/stale-rejection-binding@1"
+interface = "DatasetsStaleRejectionAndPlanDeltaBinding@1"
+task-id = "PCPR-069"
+goal-id = "PCPR-G700"
+objective-kind = "declared_stale_rejection_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-plan-delta = false
+release-claim = false
+
+[tool.ipfs-datasets-py.state-owner-restart]
+schema = "ipfs_datasets_py/assurance/state-owner-restart-binding@1"
+interface = "DatasetsAuthoritativeStateOwnerRestartBinding@1"
+task-id = "PCPR-070"
+goal-id = "PCPR-G700"
+objective-kind = "declared_state_owner_restart_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-restart = false
+release-claim = false
+
+[tool.ipfs-datasets-py.recovery-and-idempotency]
+schema = "ipfs_datasets_py/assurance/recovery-and-idempotency-binding@1"
+interface = "DatasetsRecoveryAndIdempotencyBinding@1"
+task-id = "PCPR-071"
+goal-id = "PCPR-G700"
+objective-kind = "declared_recovery_and_idempotency_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-recovery = false
+release-claim = false
+
+[tool.ipfs-datasets-py.final-receipt-chain]
+schema = "ipfs_datasets_py/assurance/final-receipt-chain-binding@1"
+interface = "DatasetsFinalReceiptChainBinding@1"
+task-id = "PCPR-072"
+goal-id = "PCPR-G700"
+objective-kind = "declared_final_receipt_chain_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-chain = false
+release-claim = false
+
+[tool.ipfs-datasets-py.python-external-client]
+schema = "ipfs_datasets_py/assurance/python-external-client-binding@1"
+interface = "DatasetsPythonExternalClientBinding@1"
+task-id = "PCPR-080"
+goal-id = "PCPR-G800"
+objective-kind = "declared_python_external_client_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.generic-mcp-client]
+schema = "ipfs_datasets_py/assurance/generic-mcp-client-binding@1"
+interface = "DatasetsGenericMcpClientBinding@1"
+task-id = "PCPR-081"
+goal-id = "PCPR-G800"
+objective-kind = "declared_generic_mcp_client_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.objective-identity-parity]
+schema = "ipfs_datasets_py/assurance/objective-identity-parity-binding@1"
+interface = "DatasetsObjectiveIdentityParityBinding@1"
+task-id = "PCPR-082"
+goal-id = "PCPR-G800"
+objective-kind = "declared_objective_identity_parity_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.authority-bypass]
+schema = "ipfs_datasets_py/assurance/authority-bypass-binding@1"
+interface = "DatasetsAuthorityBypassBinding@1"
+task-id = "PCPR-083"
+goal-id = "PCPR-G800"
+objective-kind = "declared_authority_bypass_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.threat-model]
+schema = "ipfs_datasets_py/assurance/threat-model-binding@1"
+interface = "DatasetsThreatModelBinding@1"
+task-id = "PCPR-090"
+goal-id = "PCPR-G900"
+objective-kind = "declared_threat_model_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.trusted-computing-base]
+schema = "ipfs_datasets_py/assurance/trusted-computing-base-binding@1"
+interface = "DatasetsTrustedComputingBaseBinding@1"
+task-id = "PCPR-091"
+goal-id = "PCPR-G900"
+objective-kind = "declared_trusted_computing_base_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.security-and-correctness-audit-package]
+schema = "ipfs_datasets_py/assurance/security-and-correctness-audit-package-binding@1"
+interface = "DatasetsSecurityAndCorrectnessAuditPackageBinding@1"
+task-id = "PCPR-092"
+goal-id = "PCPR-G900"
+objective-kind = "declared_security_and_correctness_audit_package_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.release-candidate-gate]
+schema = "ipfs_datasets_py/assurance/release-candidate-gate-binding@1"
+interface = "DatasetsReleaseCandidateGateBinding@1"
+task-id = "PCPR-093"
+goal-id = "PCPR-G900"
+objective-kind = "declared_release_candidate_gate_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.promotion-or-non-promotion]
+schema = "ipfs_datasets_py/assurance/promotion-or-non-promotion-binding@1"
+interface = "DatasetsPromotionOrNonPromotionBinding@1"
+task-id = "PCPR-094"
+goal-id = "PCPR-G900"
+objective-kind = "declared_promotion_or_non_promotion_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.residual-gap-report]
+schema = "ipfs_datasets_py/assurance/residual-gap-report-binding@1"
+interface = "DatasetsResidualGapReportBinding@1"
+task-id = "PCPR-095"
+goal-id = "PCPR-G900"
+objective-kind = "declared_residual_gap_report_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
+[tool.ipfs-datasets-py.next-bounded-pilot]
+schema = "ipfs_datasets_py/assurance/next-bounded-pilot-binding@1"
+interface = "DatasetsNextBoundedPilotBinding@1"
+task-id = "PCPR-096"
+goal-id = "PCPR-G900"
+objective-kind = "declared_next_bounded_pilot_recommendation_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
 
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
@@ -353,6 +741,7 @@ all = [
 
 [tool.setuptools]
 include-package-data = true
+license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 include = ["ipfs_datasets_py", "ipfs_datasets_py.*"]
@@ -380,7 +769,15 @@ ipfs_datasets_py = [
     "processors/provekit_backend/build.sh",
     "logic/zkp/provekit/circuits/*/Nargo.toml",
     "logic/zkp/provekit/circuits/*/src/*.nr",
+    "assurance/schemas/*.json",
+    "assurance/vectors/*.json",
+    "logic/bridge/schemas/*.json",
+    "logic/intent_ir/intent_ir.schema.json",
     "logic/legal_ir/schemas/*.json",
+    "logic/software_contracts/adversarial_assurance/schemas/*.json",
+    "logic/software_contracts/semantic_governor/schemas/*.json",
+    "logic/software_contracts/semantic_state/schemas/*.json",
+    "logic/ui_ux_ir/ui_ux_ir.schema.json",
 ]
 
 [project.scripts]

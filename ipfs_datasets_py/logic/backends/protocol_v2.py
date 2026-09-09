@@ -1,6 +1,8 @@
-"""LogicProviderProtocol@2 — operation-specific typed provider requests (LPC-050).
+"""LogicProviderProtocol@2 — canonical operation-specific typed provider requests.
 
-Interface: ``LogicProviderProtocol@2``.
+Interface: ``LogicProviderProtocol@2``.  This is the canonical
+``LogicProviderProtocol`` (PCPR-013).  Version 1 remains a compatibility
+envelope only.
 
 Replaces unrestricted JSON ``payload`` routing from ``LogicProvider@1`` with
 typed, operation-specific request records:
@@ -66,7 +68,13 @@ from ipfs_datasets_py.logic.syntax_core.contracts import (
 
 LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE: Final = "LogicProviderProtocol@2"
 LOGIC_PROVIDER_PROTOCOL_VERSION: Final = 2
-LOGIC_PROVIDER_PROTOCOL_V2_MODULE_VERSION: Final = "1.0.0"
+LOGIC_PROVIDER_PROTOCOL_CANONICAL: Final = True
+LOGIC_PROVIDER_PROTOCOL_MATURITY: Final = "stable"
+CANONICAL_LOGIC_PROVIDER_PROTOCOL_INTERFACE: Final = (
+    LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+)
+CANONICAL_LOGIC_PROVIDER_PROTOCOL_VERSION: Final = LOGIC_PROVIDER_PROTOCOL_VERSION
+LOGIC_PROVIDER_PROTOCOL_V2_MODULE_VERSION: Final = "1.1.0"
 
 LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA: Final = (
     "ipfs_datasets_py/logic-provider-protocol@2"
@@ -110,6 +118,23 @@ PROTOCOL_V2_OPERATIONS: Final[frozenset[str]] = frozenset(
     {"capability", *EXECUTABLE_OPERATIONS}
 )
 
+# PCPR-064 additive bounded PatchPlan surface. This does not remint
+# LogicProviderProtocol@2 and does not add a protocol operation.
+BOUNDED_PATCH_PLAN_INTERFACE: Final = "LogicProviderProtocolBoundedPatchPlan@1"
+BOUNDED_PATCH_PLAN_SCHEMA: Final = (
+    "ipfs_datasets_py/logic-provider-bounded-patch-plan@1"
+)
+BOUNDED_PATCH_PLAN_TASK_ID: Final = "PCPR-064"
+AUTHORIZED_PROTOCOL_PATCH_RELPATHS: Final[frozenset[str]] = frozenset(
+    {
+        "ipfs_datasets_py/logic/backends/protocol_v2.py",
+        "ipfs_datasets_py/assurance/logic_provider_protocol.py",
+        "ipfs_datasets_py/assurance/bounded_patch.py",
+        "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+        "tests/unit/test_pcpr_014_semantic_apis.py",
+    }
+)
+
 
 class ProtocolV2Error(LogicProviderContractError):
     """Raised when a LogicProviderProtocol@2 request is malformed."""
@@ -117,6 +142,511 @@ class ProtocolV2Error(LogicProviderContractError):
 
 class ProtocolV2AdmissionError(ProtocolV2Error):
     """Raised when a request fails closed before provider dispatch."""
+
+
+class UnauthorizedProtocolPatchPathError(ProtocolV2AdmissionError):
+    """Raised when a PatchPlan path escapes the authorized protocol cone."""
+
+
+class ProtocolPatchRemintError(ProtocolV2AdmissionError):
+    """Raised when a PatchPlan would remint LogicProviderProtocol@2."""
+
+
+def protocol_patch_path_is_authorized(path: str) -> bool:
+    """Return whether *path* is inside the authorized protocol patch cone."""
+
+    normalized = str(path).replace("\\", "/").lstrip("./")
+    return normalized in AUTHORIZED_PROTOCOL_PATCH_RELPATHS
+
+
+def refuse_unauthorized_protocol_patch_path(path: str) -> str:
+    """Fail closed when a PatchPlan path is outside the protocol cone."""
+
+    normalized = str(path).replace("\\", "/").lstrip("./")
+    if normalized not in AUTHORIZED_PROTOCOL_PATCH_RELPATHS:
+        raise UnauthorizedProtocolPatchPathError(
+            f"path {path!r} is not an authorized LogicProviderProtocol@2 "
+            "patch path"
+        )
+    return normalized
+
+
+def refuse_protocol_operation_remint(operation: object) -> str:
+    """Reject a PatchPlan that would add or remint a protocol operation."""
+
+    value = str(getattr(operation, "value", operation) or "").strip()
+    if value not in PROTOCOL_V2_OPERATIONS:
+        raise ProtocolPatchRemintError(
+            f"bounded patch must not add protocol operation {operation!r}; "
+            "LogicProviderProtocol@2 operations remain the closed @2 set"
+        )
+    return value
+
+
+@dataclass(frozen=True)
+class BoundedPatchPlanV2:
+    """Typed bounded PatchPlan over LogicProviderProtocol@2.
+
+    Additive PCPR-064 surface. The plan authorizes source edits inside
+    :data:`AUTHORIZED_PROTOCOL_PATCH_RELPATHS` and refuses to remint the
+    canonical protocol identity or to add a protocol operation.
+    """
+
+    interface: str = BOUNDED_PATCH_PLAN_INTERFACE
+    schema: str = BOUNDED_PATCH_PLAN_SCHEMA
+    protocol_interface: str = LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+    protocol_version: int = LOGIC_PROVIDER_PROTOCOL_VERSION
+    remints_protocol: bool = False
+    adds_protocol_operation: bool = False
+    paths: tuple[str, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        if self.interface != BOUNDED_PATCH_PLAN_INTERFACE:
+            raise ProtocolV2AdmissionError(
+                "bounded patch interface must remain "
+                f"{BOUNDED_PATCH_PLAN_INTERFACE}"
+            )
+        if self.schema != BOUNDED_PATCH_PLAN_SCHEMA:
+            raise ProtocolV2AdmissionError(
+                "bounded patch schema must remain "
+                f"{BOUNDED_PATCH_PLAN_SCHEMA}"
+            )
+        if self.protocol_interface != LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE:
+            raise ProtocolPatchRemintError(
+                "bounded patch must not remint LogicProviderProtocol@2"
+            )
+        if int(self.protocol_version) != LOGIC_PROVIDER_PROTOCOL_VERSION:
+            raise ProtocolPatchRemintError(
+                "bounded patch must not remint LogicProviderProtocol@2 version"
+            )
+        if self.remints_protocol:
+            raise ProtocolPatchRemintError(
+                "bounded patch must not remint LogicProviderProtocol@2"
+            )
+        if self.adds_protocol_operation:
+            raise ProtocolPatchRemintError(
+                "bounded patch must not add a LogicProviderProtocol@2 operation"
+            )
+        normalized = tuple(
+            refuse_unauthorized_protocol_patch_path(path) for path in self.paths
+        )
+        object.__setattr__(self, "paths", normalized)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "adds_protocol_operation": False,
+            "interface": self.interface,
+            "paths": list(self.paths),
+            "protocol_interface": self.protocol_interface,
+            "protocol_version": self.protocol_version,
+            "remints_protocol": False,
+            "schema": self.schema,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "BoundedPatchPlanV2":
+        body = dict(payload)
+        _forbid_free_form_payload(body, "BoundedPatchPlanV2")
+        _reject_unknown(
+            body,
+            {
+                "adds_protocol_operation",
+                "interface",
+                "paths",
+                "protocol_interface",
+                "protocol_version",
+                "remints_protocol",
+                "schema",
+            },
+            "BoundedPatchPlanV2",
+        )
+        return cls(
+            interface=str(body.get("interface") or BOUNDED_PATCH_PLAN_INTERFACE),
+            schema=str(body.get("schema") or BOUNDED_PATCH_PLAN_SCHEMA),
+            protocol_interface=str(
+                body.get("protocol_interface")
+                or LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+            ),
+            protocol_version=int(
+                body.get("protocol_version", LOGIC_PROVIDER_PROTOCOL_VERSION)
+            ),
+            remints_protocol=bool(body.get("remints_protocol", False)),
+            adds_protocol_operation=bool(
+                body.get("adds_protocol_operation", False)
+            ),
+            paths=tuple(body.get("paths") or ()),
+        )
+
+
+# PCPR-068 relevant interface change. Adds successor protocol operation
+# ``impact`` as LogicProviderProtocolRelevantInterface@1. This does not
+# remint LogicProviderProtocol@2, does not enlarge the closed @2
+# executable set, and does not bump the PCPR-064 module version.
+RELEVANT_INTERFACE_CHANGE_INTERFACE: Final = (
+    "LogicProviderProtocolRelevantInterface@1"
+)
+RELEVANT_INTERFACE_CHANGE_SCHEMA: Final = (
+    "ipfs_datasets_py/logic-provider-relevant-interface@1"
+)
+RELEVANT_INTERFACE_CHANGE_TASK_ID: Final = "PCPR-068"
+RELEVANT_INTERFACE_OPERATION: Final = "impact"
+PROTOCOL_V2_RELEVANT_SUCCESSOR_OPERATIONS: Final[frozenset[str]] = frozenset(
+    {RELEVANT_INTERFACE_OPERATION}
+)
+RELEVANT_INTERFACE_CHANGE_RELPATHS: Final[frozenset[str]] = frozenset(
+    {
+        "ipfs_datasets_py/logic/backends/protocol_v2.py",
+        "ipfs_datasets_py/logic/platform/relevant_interface.py",
+        "ipfs_datasets_py/assurance/relevant_interface_change.py",
+        "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+        "tests/unit/test_pcpr_014_semantic_apis.py",
+    }
+)
+RELEVANT_INTERFACE_IMPACTED_CONE: Final[tuple[str, ...]] = (
+    "ipfs_datasets_py/logic/backends/protocol_v2.py",
+    "ipfs_datasets_py/logic/platform/relevant_interface.py",
+    "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+    "tests/unit/test_pcpr_014_semantic_apis.py",
+    "DatasetsContextPack@1",
+)
+RELEVANT_INTERFACE_STALE_IDENTITIES: Final[tuple[str, ...]] = (
+    "DatasetsContextPack@1",
+    "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+    "tests/unit/test_pcpr_014_semantic_apis.py",
+)
+RELEVANT_INTERFACE_UNAFFECTED: Final[tuple[str, ...]] = (
+    "tests/unit/test_pcpr_017_solver_qualification.py",
+    "ipfs_datasets_py/assurance/solver_qualification.py",
+)
+
+
+class ProtocolRelevantInterfaceError(ProtocolV2AdmissionError):
+    """Raised when a relevant interface change is malformed or incomplete."""
+
+
+def relevant_interface_path_is_authorized(path: str) -> bool:
+    """Return whether *path* is inside the relevant-interface cone."""
+
+    normalized = str(path).replace("\\", "/").lstrip("./")
+    return normalized in RELEVANT_INTERFACE_CHANGE_RELPATHS
+
+
+def refuse_unauthorized_relevant_interface_path(path: str) -> str:
+    """Fail closed when a relevant-interface path escapes the cone."""
+
+    normalized = str(path).replace("\\", "/").lstrip("./")
+    if normalized not in RELEVANT_INTERFACE_CHANGE_RELPATHS:
+        raise ProtocolRelevantInterfaceError(
+            f"path {path!r} is not an authorized relevant-interface path"
+        )
+    return normalized
+
+
+def refuse_closed_protocol_operation_remint(operation: object) -> str:
+    """Reject a relevant change that would remint the closed @2 set."""
+
+    value = str(getattr(operation, "value", operation) or "").strip()
+    if value in PROTOCOL_V2_OPERATIONS:
+        raise ProtocolRelevantInterfaceError(
+            f"relevant interface change must not remint closed @2 operation "
+            f"{operation!r}"
+        )
+    if value not in PROTOCOL_V2_RELEVANT_SUCCESSOR_OPERATIONS:
+        raise ProtocolRelevantInterfaceError(
+            f"relevant interface change must add successor operation "
+            f"{RELEVANT_INTERFACE_OPERATION!r}, not {operation!r}"
+        )
+    return value
+
+
+@dataclass(frozen=True)
+class ImpactRequestV2:
+    """Typed successor request for protocol operation ``impact``.
+
+    Non-executable semantic-impact inspection. Not a closed @2
+    BackendRequest operation. Does not remint LogicProviderProtocol@2.
+    """
+
+    interface: str = RELEVANT_INTERFACE_CHANGE_INTERFACE
+    schema: str = RELEVANT_INTERFACE_CHANGE_SCHEMA
+    protocol_interface: str = LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+    protocol_version: int = LOGIC_PROVIDER_PROTOCOL_VERSION
+    operation: str = RELEVANT_INTERFACE_OPERATION
+    remints_protocol: bool = False
+    adds_protocol_operation: bool = True
+    relevant_interface_change: bool = True
+    target_interface: str = LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+    request_id: str = field(default_factory=lambda: uuid.uuid4().hex)
+
+    def __post_init__(self) -> None:
+        if self.interface != RELEVANT_INTERFACE_CHANGE_INTERFACE:
+            raise ProtocolRelevantInterfaceError(
+                "impact request interface must remain "
+                f"{RELEVANT_INTERFACE_CHANGE_INTERFACE}"
+            )
+        if self.schema != RELEVANT_INTERFACE_CHANGE_SCHEMA:
+            raise ProtocolRelevantInterfaceError(
+                "impact request schema must remain "
+                f"{RELEVANT_INTERFACE_CHANGE_SCHEMA}"
+            )
+        if self.protocol_interface != LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE:
+            raise ProtocolPatchRemintError(
+                "relevant interface change must not remint "
+                "LogicProviderProtocol@2"
+            )
+        if int(self.protocol_version) != LOGIC_PROVIDER_PROTOCOL_VERSION:
+            raise ProtocolPatchRemintError(
+                "relevant interface change must not remint "
+                "LogicProviderProtocol@2 version"
+            )
+        if self.remints_protocol:
+            raise ProtocolPatchRemintError(
+                "relevant interface change must not remint "
+                "LogicProviderProtocol@2"
+            )
+        if not self.adds_protocol_operation:
+            raise ProtocolRelevantInterfaceError(
+                "relevant interface change must add a protocol operation"
+            )
+        if not self.relevant_interface_change:
+            raise ProtocolRelevantInterfaceError(
+                "impact request must be a relevant interface change"
+            )
+        refuse_closed_protocol_operation_remint(self.operation)
+
+    @property
+    def executable(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "adds_protocol_operation": True,
+            "executable": False,
+            "interface": self.interface,
+            "operation": self.operation,
+            "protocol_interface": self.protocol_interface,
+            "protocol_version": self.protocol_version,
+            "relevant_interface_change": True,
+            "remints_protocol": False,
+            "request_id": self.request_id,
+            "schema": self.schema,
+            "target_interface": self.target_interface,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ImpactRequestV2":
+        body = dict(payload)
+        _forbid_free_form_payload(body, "ImpactRequestV2")
+        _reject_unknown(
+            body,
+            {
+                "adds_protocol_operation",
+                "executable",
+                "interface",
+                "operation",
+                "protocol_interface",
+                "protocol_version",
+                "relevant_interface_change",
+                "remints_protocol",
+                "request_id",
+                "schema",
+                "target_interface",
+            },
+            "ImpactRequestV2",
+        )
+        return cls(
+            interface=str(
+                body.get("interface") or RELEVANT_INTERFACE_CHANGE_INTERFACE
+            ),
+            schema=str(body.get("schema") or RELEVANT_INTERFACE_CHANGE_SCHEMA),
+            protocol_interface=str(
+                body.get("protocol_interface")
+                or LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+            ),
+            protocol_version=int(
+                body.get("protocol_version", LOGIC_PROVIDER_PROTOCOL_VERSION)
+            ),
+            operation=str(
+                body.get("operation") or RELEVANT_INTERFACE_OPERATION
+            ),
+            remints_protocol=bool(body.get("remints_protocol", False)),
+            adds_protocol_operation=bool(
+                body.get("adds_protocol_operation", True)
+            ),
+            relevant_interface_change=bool(
+                body.get("relevant_interface_change", True)
+            ),
+            target_interface=str(
+                body.get("target_interface")
+                or LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+            ),
+            request_id=str(body.get("request_id") or _new_request_id()),
+        )
+
+
+@dataclass(frozen=True)
+class RelevantInterfaceChangeV2:
+    """Typed relevant interface change over LogicProviderProtocol@2.
+
+    Additive PCPR-068 surface. Adds successor operation ``impact``
+    without reminting the canonical @2 identity or the closed @2
+    executable set. The impacted cone is nonempty. Whole-plan
+    regeneration and stale rejection remain PCPR-069.
+    """
+
+    interface: str = RELEVANT_INTERFACE_CHANGE_INTERFACE
+    schema: str = RELEVANT_INTERFACE_CHANGE_SCHEMA
+    protocol_interface: str = LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+    protocol_version: int = LOGIC_PROVIDER_PROTOCOL_VERSION
+    operation: str = RELEVANT_INTERFACE_OPERATION
+    remints_protocol: bool = False
+    adds_protocol_operation: bool = True
+    relevant_interface_change: bool = True
+    whole_plan_regeneration_required: bool = False
+    paths: tuple[str, ...] = field(default_factory=tuple)
+    impacted_cone: tuple[str, ...] = RELEVANT_INTERFACE_IMPACTED_CONE
+    stale_identities: tuple[str, ...] = RELEVANT_INTERFACE_STALE_IDENTITIES
+    unaffected: tuple[str, ...] = RELEVANT_INTERFACE_UNAFFECTED
+
+    def __post_init__(self) -> None:
+        if self.interface != RELEVANT_INTERFACE_CHANGE_INTERFACE:
+            raise ProtocolRelevantInterfaceError(
+                "relevant interface change interface must remain "
+                f"{RELEVANT_INTERFACE_CHANGE_INTERFACE}"
+            )
+        if self.schema != RELEVANT_INTERFACE_CHANGE_SCHEMA:
+            raise ProtocolRelevantInterfaceError(
+                "relevant interface change schema must remain "
+                f"{RELEVANT_INTERFACE_CHANGE_SCHEMA}"
+            )
+        if self.protocol_interface != LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE:
+            raise ProtocolPatchRemintError(
+                "relevant interface change must not remint "
+                "LogicProviderProtocol@2"
+            )
+        if int(self.protocol_version) != LOGIC_PROVIDER_PROTOCOL_VERSION:
+            raise ProtocolPatchRemintError(
+                "relevant interface change must not remint "
+                "LogicProviderProtocol@2 version"
+            )
+        if self.remints_protocol:
+            raise ProtocolPatchRemintError(
+                "relevant interface change must not remint "
+                "LogicProviderProtocol@2"
+            )
+        if not self.adds_protocol_operation:
+            raise ProtocolRelevantInterfaceError(
+                "relevant interface change must add a protocol operation"
+            )
+        if not self.relevant_interface_change:
+            raise ProtocolRelevantInterfaceError(
+                "PCPR-068 must be a relevant interface change"
+            )
+        if self.whole_plan_regeneration_required:
+            raise ProtocolRelevantInterfaceError(
+                "relevant interface change must not regenerate the whole plan; "
+                "PlanDelta remains PCPR-069"
+            )
+        refuse_closed_protocol_operation_remint(self.operation)
+        normalized = tuple(
+            refuse_unauthorized_relevant_interface_path(path)
+            for path in self.paths
+        )
+        object.__setattr__(self, "paths", normalized)
+        if not self.impacted_cone:
+            raise ProtocolRelevantInterfaceError(
+                "relevant interface change must have a nonempty impacted cone"
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "adds_protocol_operation": True,
+            "impacted_cone": list(self.impacted_cone),
+            "interface": self.interface,
+            "operation": self.operation,
+            "paths": list(self.paths),
+            "protocol_interface": self.protocol_interface,
+            "protocol_version": self.protocol_version,
+            "relevant_interface_change": True,
+            "remints_protocol": False,
+            "schema": self.schema,
+            "stale_identities": list(self.stale_identities),
+            "unaffected": list(self.unaffected),
+            "whole_plan_regeneration_required": False,
+        }
+
+    @classmethod
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "RelevantInterfaceChangeV2":
+        body = dict(payload)
+        _forbid_free_form_payload(body, "RelevantInterfaceChangeV2")
+        _reject_unknown(
+            body,
+            {
+                "adds_protocol_operation",
+                "impacted_cone",
+                "interface",
+                "operation",
+                "paths",
+                "protocol_interface",
+                "protocol_version",
+                "relevant_interface_change",
+                "remints_protocol",
+                "schema",
+                "stale_identities",
+                "unaffected",
+                "whole_plan_regeneration_required",
+            },
+            "RelevantInterfaceChangeV2",
+        )
+        return cls(
+            interface=str(
+                body.get("interface") or RELEVANT_INTERFACE_CHANGE_INTERFACE
+            ),
+            schema=str(body.get("schema") or RELEVANT_INTERFACE_CHANGE_SCHEMA),
+            protocol_interface=str(
+                body.get("protocol_interface")
+                or LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+            ),
+            protocol_version=int(
+                body.get("protocol_version", LOGIC_PROVIDER_PROTOCOL_VERSION)
+            ),
+            operation=str(
+                body.get("operation") or RELEVANT_INTERFACE_OPERATION
+            ),
+            remints_protocol=bool(body.get("remints_protocol", False)),
+            adds_protocol_operation=bool(
+                body.get("adds_protocol_operation", True)
+            ),
+            relevant_interface_change=bool(
+                body.get("relevant_interface_change", True)
+            ),
+            whole_plan_regeneration_required=bool(
+                body.get("whole_plan_regeneration_required", False)
+            ),
+            paths=tuple(body.get("paths") or ()),
+            impacted_cone=tuple(
+                body.get("impacted_cone") or RELEVANT_INTERFACE_IMPACTED_CONE
+            ),
+            stale_identities=tuple(
+                body.get("stale_identities")
+                or RELEVANT_INTERFACE_STALE_IDENTITIES
+            ),
+            unaffected=tuple(
+                body.get("unaffected") or RELEVANT_INTERFACE_UNAFFECTED
+            ),
+        )
+
+
+def admit_relevant_interface_request(
+    value: Mapping[str, Any] | ImpactRequestV2,
+) -> ImpactRequestV2:
+    """Admit a typed ``impact`` successor request. Fail closed."""
+
+    if isinstance(value, ImpactRequestV2):
+        return value
+    return ImpactRequestV2.from_dict(value)
 
 
 class MissingExecutableBoundsError(ProtocolV2AdmissionError, MissingBoundsError):
@@ -1416,7 +1946,11 @@ class ProviderProtocolEnvelopeV2:
 
 @runtime_checkable
 class LogicProviderProtocolV2(Protocol):
-    """Structural LogicProviderProtocol@2 surface for concrete providers."""
+    """Structural LogicProviderProtocol@2 surface for concrete providers.
+
+    This is the canonical provider protocol.  The public alias
+    :data:`LogicProviderProtocol` names the same surface.
+    """
 
     provider_id: str
     provider_version: str
@@ -1456,6 +1990,22 @@ class LogicProviderProtocolV2(Protocol):
         self, request: AttestRequestV2
     ) -> Mapping[str, Any]:
         ...
+
+
+# Canonical public name. LogicProviderProtocol@2 is the current successor.
+LogicProviderProtocol = LogicProviderProtocolV2
+
+
+def admit_canonical_provider_request(
+    value: Mapping[str, Any] | ProviderRequestV2,
+) -> ProviderRequestV2:
+    """Canonical new-write gate: LogicProviderProtocol@2 typed requests only.
+
+    Free-form v1 payloads are rejected.  Dual-read of v1 generics must use
+    the explicit v1 adapter.
+    """
+
+    return admit_provider_request_v2(value)
 
 
 def require_executable_bounds(request: ProviderRequestV2) -> RequestBounds:
@@ -1517,36 +2067,68 @@ def v1_operation_for(operation: ProtocolOperationV2 | str) -> LogicProviderOpera
 
 __all__ = [
     "ATTEST_REQUEST_V2_SCHEMA",
+    "AUTHORIZED_PROTOCOL_PATCH_RELPATHS",
+    "BOUNDED_PATCH_PLAN_INTERFACE",
+    "BOUNDED_PATCH_PLAN_SCHEMA",
+    "BOUNDED_PATCH_PLAN_TASK_ID",
+    "CANONICAL_LOGIC_PROVIDER_PROTOCOL_INTERFACE",
+    "CANONICAL_LOGIC_PROVIDER_PROTOCOL_VERSION",
     "CAPABILITY_REQUEST_V2_SCHEMA",
     "EXECUTABLE_OPERATIONS",
+    "LOGIC_PROVIDER_PROTOCOL_CANONICAL",
+    "LOGIC_PROVIDER_PROTOCOL_MATURITY",
     "LOGIC_PROVIDER_PROTOCOL_VERSION",
     "LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE",
     "LOGIC_PROVIDER_PROTOCOL_V2_MODULE_VERSION",
     "LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA",
     "PROTOCOL_ENVELOPE_V2_SCHEMA",
     "PROTOCOL_V2_OPERATIONS",
+    "PROTOCOL_V2_RELEVANT_SUCCESSOR_OPERATIONS",
     "PROVE_CHECK_REQUEST_V2_SCHEMA",
     "RECONSTRUCT_REQUEST_V2_SCHEMA",
+    "RELEVANT_INTERFACE_CHANGE_INTERFACE",
+    "RELEVANT_INTERFACE_CHANGE_RELPATHS",
+    "RELEVANT_INTERFACE_CHANGE_SCHEMA",
+    "RELEVANT_INTERFACE_CHANGE_TASK_ID",
+    "RELEVANT_INTERFACE_IMPACTED_CONE",
+    "RELEVANT_INTERFACE_OPERATION",
+    "RELEVANT_INTERFACE_STALE_IDENTITIES",
+    "RELEVANT_INTERFACE_UNAFFECTED",
     "TRANSLATION_REQUEST_V2_SCHEMA",
     "VERIFY_REQUEST_V2_SCHEMA",
     "ArbitraryPayloadProtocolError",
     "AttestRequestV2",
+    "BoundedPatchPlanV2",
     "CapabilityRequestV2",
+    "ImpactRequestV2",
+    "LogicProviderProtocol",
     "LogicProviderProtocolV2",
     "MissingExecutableBoundsError",
     "ProveCheckMode",
     "ProveCheckRequestV2",
     "ProtocolOperationV2",
+    "ProtocolPatchRemintError",
+    "ProtocolRelevantInterfaceError",
     "ProtocolV2AdmissionError",
     "ProtocolV2Error",
     "ProviderProtocolEnvelopeV2",
     "ProviderRequestV2",
     "ReconstructRequestV2",
+    "RelevantInterfaceChangeV2",
     "TranslationRequestV2",
+    "UnauthorizedProtocolPatchPathError",
     "VerifyRequestV2",
+    "admit_canonical_provider_request",
     "admit_provider_request_v2",
+    "admit_relevant_interface_request",
     "content_digest_for_request",
     "is_executable_operation",
+    "protocol_patch_path_is_authorized",
+    "refuse_closed_protocol_operation_remint",
+    "refuse_protocol_operation_remint",
+    "refuse_unauthorized_protocol_patch_path",
+    "refuse_unauthorized_relevant_interface_path",
+    "relevant_interface_path_is_authorized",
     "require_executable_bounds",
     "v1_operation_for",
 ]
