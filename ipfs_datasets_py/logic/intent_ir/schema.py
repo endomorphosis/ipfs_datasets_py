@@ -181,6 +181,52 @@ RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_FORBIDDEN_FIELDS = frozenset(
     }
 )
 
+# Datasets-owned unresolved semantic-question contract (DOEP-025).  Extends the
+# existing SupervisorObjectiveIntent / DeterministicObjectiveNormalization /
+# RuleDrivenObjectiveDecomposition carriers with a fail-closed, semantic-only
+# record of named questions that remain after deterministic stages.  It names
+# the smallest adequate specialist class and a typed response shape, but it
+# does not dispatch models, execute tools, admit policy, or complete
+# objectives, and it is not a second Intent IR, planner, or competing
+# subsystem.
+UNRESOLVED_QUESTION_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/unresolved-question@1"
+)
+UNRESOLVED_QUESTION_SCHEMA_VERSION = "unresolved-question/v1"
+UNRESOLVED_QUESTION_CAPTURE_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/unresolved-question-capture@1"
+)
+UNRESOLVED_QUESTION_CAPTURE_SCHEMA_VERSION = "unresolved-question-capture/v1"
+UNRESOLVED_QUESTION_CAPTURE_ID = (
+    "ipfs_datasets_py/logic/intent-ir/unresolved-question-capture@1"
+)
+UNRESOLVED_QUESTION_CAPTURE_VERSION = "1"
+UNRESOLVED_QUESTION_AUTHORITY = "semantic_only"
+UNRESOLVED_QUESTION_MAX_QUESTIONS = 16
+UNRESOLVED_QUESTION_MAX_TEXT_CHARS = 4096
+UNRESOLVED_QUESTION_MAX_REASON_CHARS = 2048
+UNRESOLVED_QUESTION_MAX_EVIDENCE_ITEMS = 64
+UNRESOLVED_QUESTION_MAX_EVIDENCE_CHARS = 1024
+UNRESOLVED_QUESTION_MAX_RESPONSE_VALUES = 16
+UNRESOLVED_QUESTION_MAX_RESPONSE_VALUE_CHARS = 256
+UNRESOLVED_QUESTION_MAX_CONTEXT_BUDGET = 262144
+UNRESOLVED_QUESTION_FORBIDDEN_FIELDS = frozenset(
+    RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_FORBIDDEN_FIELDS
+    | {
+        "tool_calls",
+        "tool_call",
+        "tools",
+        "execute_tools",
+        "dispatch",
+        "dispatch_now",
+        "model_invocation",
+        "invoke_model",
+        "completion_authoritative",
+        "terminal_answer",
+    }
+)
+_QUESTION_IDENTITY_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+
 
 class IntentIRValidationError(ValueError):
     """Raised when an Intent IR document violates its canonical contract."""
@@ -2575,7 +2621,1065 @@ def decompose_supervisor_objective_by_rules(
     return validate_rule_driven_objective_decomposition(result)
 
 
+class MinimumSpecialistCapability(str, Enum):
+    """Smallest specialist class permitted to answer one unresolved question.
+
+    Values are advisory routing floors only.  Recording a capability does not
+    dispatch a model, execute tools, or grant completion authority.
+    """
+
+    LOCAL_SMALL_SPECIALIST = "local_small_specialist_model"
+    LOCAL_OR_REMOTE_MEDIUM = "local_or_remote_medium_model"
+    REMOTE_STRONG_OR_FRONTIER = "remote_strong_or_frontier_model"
+    HUMAN_DECISION = "human_decision"
+
+
+class AdmissibleDecisionImpact(str, Enum):
+    """Closed route outcomes that an answer may change.
+
+    Mirrors the deterministic-first ladder outcomes so this contract does not
+    invent a competing routing authority.
+    """
+
+    DETERMINISTIC_ONLY = "deterministic_only"
+    SMALL_LOCAL_MODEL = "small_local_model"
+    MEDIUM_MODEL = "medium_model"
+    FRONTIER_MODEL = "frontier_model"
+    HUMAN_REVIEW_REQUIRED = "human_review_required"
+
+
+def _normalize_question_text(value: Any, *, label: str, maximum: int) -> str:
+    if not isinstance(value, str):
+        raise IntentIRValidationError(f"{label} must be a string")
+    text = " ".join(value.split())
+    if not text:
+        raise IntentIRValidationError(f"{label} must not be empty")
+    if len(text) > maximum:
+        raise IntentIRValidationError(f"{label} exceeds {maximum} characters")
+    return text
+
+
+def _canonical_evidence_texts(
+    value: Any,
+    *,
+    label: str,
+    minimum_items: int = 0,
+) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Iterable):
+        raise IntentIRValidationError(f"{label} must be an iterable of strings")
+    items = tuple(
+        _normalize_question_text(
+            item,
+            label=f"{label} member",
+            maximum=UNRESOLVED_QUESTION_MAX_EVIDENCE_CHARS,
+        )
+        for item in value
+    )
+    if not minimum_items <= len(items) <= UNRESOLVED_QUESTION_MAX_EVIDENCE_ITEMS:
+        raise IntentIRValidationError(
+            f"{label} must contain from {minimum_items} through "
+            f"{UNRESOLVED_QUESTION_MAX_EVIDENCE_ITEMS} items"
+        )
+    _require_unique(items, f"{label} member")
+    return tuple(sorted(items))
+
+
+def _canonical_decision_impacts(value: Any) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Iterable):
+        raise IntentIRValidationError(
+            "candidate_decisions_answer_could_change must be an iterable of strings"
+        )
+    allowed = {item.value for item in AdmissibleDecisionImpact}
+    decisions: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or item not in allowed:
+            raise IntentIRValidationError(
+                "candidate_decisions_answer_could_change contains a non-admissible decision"
+            )
+        decisions.append(item)
+    if not 2 <= len(decisions) <= len(AdmissibleDecisionImpact):
+        raise IntentIRValidationError(
+            "candidate_decisions_answer_could_change must name at least two "
+            "admissible decisions"
+        )
+    _require_unique(decisions, "candidate_decisions_answer_could_change member")
+    return tuple(sorted(decisions))
+
+
+def _canonical_response_enum(value: Any) -> tuple[str, ...]:
+    if isinstance(value, Mapping):
+        if set(value) != {"type", "enum"}:
+            raise IntentIRValidationError(
+                "response_schema must be the closed string-enum response schema"
+            )
+        if value.get("type") != "string":
+            raise IntentIRValidationError("response_schema.type must be 'string'")
+        raw = value.get("enum")
+    else:
+        raw = value
+    if isinstance(raw, (str, bytes, bytearray)) or not isinstance(raw, Iterable):
+        raise IntentIRValidationError("response_schema.enum must be an iterable of strings")
+    answers = tuple(
+        _normalize_question_text(
+            item,
+            label="response_schema.enum member",
+            maximum=UNRESOLVED_QUESTION_MAX_RESPONSE_VALUE_CHARS,
+        )
+        for item in raw
+    )
+    if not 2 <= len(answers) <= UNRESOLVED_QUESTION_MAX_RESPONSE_VALUES:
+        raise IntentIRValidationError(
+            "response_schema.enum must contain from 2 through "
+            f"{UNRESOLVED_QUESTION_MAX_RESPONSE_VALUES} values"
+        )
+    _require_unique(answers, "response_schema.enum member")
+    return tuple(sorted(answers))
+
+
+def _coerce_minimum_specialist_capability(value: Any) -> str:
+    if isinstance(value, MinimumSpecialistCapability):
+        return value.value
+    if not isinstance(value, str):
+        raise IntentIRValidationError("minimum_specialist_capability must be a string")
+    text = value.strip()
+    allowed = {item.value for item in MinimumSpecialistCapability}
+    if text not in allowed:
+        raise IntentIRValidationError(
+            f"minimum_specialist_capability is unsupported: {text!r}"
+        )
+    return text
+
+
+def unresolved_question_identity_for(payload: Mapping[str, Any]) -> str:
+    """Derive the sealed identity from a validated non-identity question body."""
+
+    if not isinstance(payload, Mapping):
+        raise IntentIRValidationError("unresolved question payload must be a mapping")
+    body = {
+        "candidate_decisions_answer_could_change": list(
+            payload.get("candidate_decisions_answer_could_change", ())
+        ),
+        "context_budget": payload.get("context_budget", 0),
+        "context_pack_hint": payload.get("context_pack_hint", ""),
+        "evidence_available": list(payload.get("evidence_available", ())),
+        "evidence_missing": list(payload.get("evidence_missing", ())),
+        "exact_question": payload.get("exact_question", ""),
+        "minimum_specialist_capability": payload.get(
+            "minimum_specialist_capability", ""
+        ),
+        "response_schema": {
+            "enum": list(
+                payload.get("response_schema", {}).get("enum", ())
+                if isinstance(payload.get("response_schema"), Mapping)
+                else payload.get("response_enum", ())
+            ),
+            "type": "string",
+        },
+        "why_prior_deterministic_stages_could_not_resolve": payload.get(
+            "why_prior_deterministic_stages_could_not_resolve", ""
+        ),
+    }
+    canonical = json.dumps(
+        body,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class UnresolvedQuestion:
+    """One named unresolved semantic question after deterministic stages.
+
+    Parallel to other datasets-owned intent carriers: it records a sealed
+    question identity, evidence gap, specialist floor, and typed response
+    shape.  Typed answers cannot execute tools.  Accelerate alone admits
+    ContextPacks, model dispatch, and operational completion.
+    """
+
+    question_id: str
+    exact_question: str
+    why_prior_deterministic_stages_could_not_resolve: str
+    evidence_available: tuple[str, ...]
+    evidence_missing: tuple[str, ...]
+    candidate_decisions_answer_could_change: tuple[str, ...]
+    minimum_specialist_capability: str
+    response_enum: tuple[str, ...]
+    context_budget: int = 4096
+    context_pack_hint: str = ""
+    schema_version: str = UNRESOLVED_QUESTION_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_unresolved_question(self)
+
+    @property
+    def schema(self) -> str:
+        return UNRESOLVED_QUESTION_SCHEMA
+
+    @property
+    def authority(self) -> str:
+        return UNRESOLVED_QUESTION_AUTHORITY
+
+    @property
+    def is_completion_authority(self) -> bool:
+        return False
+
+    @property
+    def can_execute_tools(self) -> bool:
+        return False
+
+    @property
+    def callers_supply_authoritative_policy(self) -> bool:
+        return False
+
+    @property
+    def response_schema(self) -> dict[str, Any]:
+        return {"type": "string", "enum": list(self.response_enum)}
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "authority": UNRESOLVED_QUESTION_AUTHORITY,
+            "candidate_decisions_answer_could_change": list(
+                self.candidate_decisions_answer_could_change
+            ),
+            "can_execute_tools": False,
+            "context_budget": self.context_budget,
+            "context_pack_hint": self.context_pack_hint,
+            "evidence_available": list(self.evidence_available),
+            "evidence_missing": list(self.evidence_missing),
+            "exact_question": self.exact_question,
+            "minimum_specialist_capability": self.minimum_specialist_capability,
+            "question_id": self.question_id,
+            "response_schema": self.response_schema,
+            "schema": UNRESOLVED_QUESTION_SCHEMA,
+            "schema_version": self.schema_version,
+            "why_prior_deterministic_stages_could_not_resolve": (
+                self.why_prior_deterministic_stages_could_not_resolve
+            ),
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "UnresolvedQuestion":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError("UnresolvedQuestion mapping must be a mapping")
+        forbidden = sorted(
+            key for key in value if key in UNRESOLVED_QUESTION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "UnresolvedQuestion forbids authoritative/tool fields: "
+                + ", ".join(forbidden)
+            )
+        allowed = {
+            "authority",
+            "candidate_decisions_answer_could_change",
+            "can_execute_tools",
+            "context_budget",
+            "context_pack_hint",
+            "evidence_available",
+            "evidence_missing",
+            "exact_question",
+            "minimum_specialist_capability",
+            "question_id",
+            "response_enum",
+            "response_schema",
+            "schema",
+            "schema_version",
+            "why_prior_deterministic_stages_could_not_resolve",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "UnresolvedQuestion has unknown fields: " + ", ".join(unknown)
+            )
+        schema = value.get("schema", UNRESOLVED_QUESTION_SCHEMA)
+        if schema != UNRESOLVED_QUESTION_SCHEMA:
+            raise IntentIRValidationError(
+                f"Unsupported UnresolvedQuestion schema: {schema!r}"
+            )
+        authority = value.get("authority", UNRESOLVED_QUESTION_AUTHORITY)
+        if authority != UNRESOLVED_QUESTION_AUTHORITY:
+            raise IntentIRValidationError("UnresolvedQuestion cannot claim authority")
+        if "can_execute_tools" in value and value.get("can_execute_tools") is not False:
+            raise IntentIRValidationError(
+                "UnresolvedQuestion typed output cannot execute tools"
+            )
+        if "response_schema" in value:
+            response_enum = _canonical_response_enum(value.get("response_schema"))
+        else:
+            response_enum = _canonical_response_enum(value.get("response_enum", ()))
+        context_budget = value.get("context_budget", 4096)
+        if isinstance(context_budget, bool) or not isinstance(context_budget, int):
+            raise IntentIRValidationError("context_budget must be an integer")
+        return cls(
+            question_id=str(value.get("question_id") or ""),
+            exact_question=str(value.get("exact_question") or ""),
+            why_prior_deterministic_stages_could_not_resolve=str(
+                value.get("why_prior_deterministic_stages_could_not_resolve") or ""
+            ),
+            evidence_available=tuple(
+                str(item) for item in value.get("evidence_available", ())
+            ),
+            evidence_missing=tuple(
+                str(item) for item in value.get("evidence_missing", ())
+            ),
+            candidate_decisions_answer_could_change=tuple(
+                str(item)
+                for item in value.get("candidate_decisions_answer_could_change", ())
+            ),
+            minimum_specialist_capability=str(
+                value.get("minimum_specialist_capability") or ""
+            ),
+            response_enum=response_enum,
+            context_budget=context_budget,
+            context_pack_hint=str(value.get("context_pack_hint") or ""),
+            schema_version=str(
+                value.get("schema_version") or UNRESOLVED_QUESTION_SCHEMA_VERSION
+            ),
+        )
+
+
+def validate_unresolved_question(
+    value: UnresolvedQuestion | Mapping[str, Any],
+) -> UnresolvedQuestion:
+    """Validate and return one sealed :class:`UnresolvedQuestion`."""
+
+    if isinstance(value, Mapping):
+        value = UnresolvedQuestion.from_dict(value)
+    if not isinstance(value, UnresolvedQuestion):
+        raise IntentIRValidationError(
+            "UnresolvedQuestion mappings require from_dict or a typed value"
+        )
+    if value.schema_version != UNRESOLVED_QUESTION_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported UnresolvedQuestion schema_version: "
+            f"{value.schema_version!r}"
+        )
+    exact = _normalize_question_text(
+        value.exact_question,
+        label="UnresolvedQuestion.exact_question",
+        maximum=UNRESOLVED_QUESTION_MAX_TEXT_CHARS,
+    )
+    reason = _normalize_question_text(
+        value.why_prior_deterministic_stages_could_not_resolve,
+        label="UnresolvedQuestion.why_prior_deterministic_stages_could_not_resolve",
+        maximum=UNRESOLVED_QUESTION_MAX_REASON_CHARS,
+    )
+    available = _canonical_evidence_texts(
+        value.evidence_available,
+        label="UnresolvedQuestion.evidence_available",
+    )
+    missing = _canonical_evidence_texts(
+        value.evidence_missing,
+        label="UnresolvedQuestion.evidence_missing",
+        minimum_items=1,
+    )
+    if set(available).intersection(missing):
+        raise IntentIRValidationError(
+            "evidence_available and evidence_missing must not overlap"
+        )
+    impacts = _canonical_decision_impacts(
+        value.candidate_decisions_answer_could_change
+    )
+    capability = _coerce_minimum_specialist_capability(
+        value.minimum_specialist_capability
+    )
+    response_enum = _canonical_response_enum(value.response_enum)
+    if not (
+        1 <= value.context_budget <= UNRESOLVED_QUESTION_MAX_CONTEXT_BUDGET
+    ):
+        raise IntentIRValidationError(
+            "context_budget must be an integer from 1 through "
+            f"{UNRESOLVED_QUESTION_MAX_CONTEXT_BUDGET}"
+        )
+    hint = value.context_pack_hint.strip() if isinstance(value.context_pack_hint, str) else ""
+    if value.context_pack_hint is not None and not isinstance(
+        value.context_pack_hint, str
+    ):
+        raise IntentIRValidationError("context_pack_hint must be a string")
+    if hint:
+        _validate_identifier("UnresolvedQuestion.context_pack_hint", hint)
+    identity_payload = {
+        "candidate_decisions_answer_could_change": impacts,
+        "context_budget": value.context_budget,
+        "context_pack_hint": hint,
+        "evidence_available": available,
+        "evidence_missing": missing,
+        "exact_question": exact,
+        "minimum_specialist_capability": capability,
+        "response_schema": {"type": "string", "enum": list(response_enum)},
+        "why_prior_deterministic_stages_could_not_resolve": reason,
+    }
+    expected_id = unresolved_question_identity_for(identity_payload)
+    if not isinstance(value.question_id, str) or not _QUESTION_IDENTITY_RE.fullmatch(
+        value.question_id
+    ):
+        raise IntentIRValidationError(
+            "UnresolvedQuestion.question_id must be a sha256 identity"
+        )
+    if value.question_id != expected_id:
+        raise IntentIRValidationError(
+            "UnresolvedQuestion.question_id does not match the canonical question"
+        )
+    if (
+        exact != value.exact_question
+        or reason != value.why_prior_deterministic_stages_could_not_resolve
+        or available != value.evidence_available
+        or missing != value.evidence_missing
+        or impacts != value.candidate_decisions_answer_could_change
+        or capability != value.minimum_specialist_capability
+        or response_enum != value.response_enum
+        or hint != value.context_pack_hint
+    ):
+        return UnresolvedQuestion(
+            question_id=expected_id,
+            exact_question=exact,
+            why_prior_deterministic_stages_could_not_resolve=reason,
+            evidence_available=available,
+            evidence_missing=missing,
+            candidate_decisions_answer_could_change=impacts,
+            minimum_specialist_capability=capability,
+            response_enum=response_enum,
+            context_budget=value.context_budget,
+            context_pack_hint=hint,
+            schema_version=value.schema_version,
+        )
+    return value
+
+
+def build_unresolved_question(
+    *,
+    exact_question: str,
+    why_prior_deterministic_stages_could_not_resolve: str,
+    evidence_available: Sequence[str] = (),
+    evidence_missing: Sequence[str],
+    candidate_decisions_answer_could_change: Sequence[str],
+    minimum_specialist_capability: str | MinimumSpecialistCapability,
+    response_enum: Sequence[str] | Mapping[str, Any],
+    context_budget: int = 4096,
+    context_pack_hint: str = "",
+    question_id: str | None = None,
+) -> UnresolvedQuestion:
+    """Build one sealed unresolved question and derive its identity.
+
+    Callers may supply ``question_id`` only when it equals the canonical
+    identity.  This prevents caller-selected unrelated identities while still
+    allowing rehydration of already-sealed records.
+    """
+
+    if isinstance(response_enum, Mapping):
+        enum_values = _canonical_response_enum(response_enum)
+    else:
+        enum_values = _canonical_response_enum(response_enum)
+    placeholder = UnresolvedQuestion(
+        question_id="sha256:" + ("0" * 64),
+        exact_question=exact_question,
+        why_prior_deterministic_stages_could_not_resolve=(
+            why_prior_deterministic_stages_could_not_resolve
+        ),
+        evidence_available=tuple(evidence_available),
+        evidence_missing=tuple(evidence_missing),
+        candidate_decisions_answer_could_change=tuple(
+            candidate_decisions_answer_could_change
+        ),
+        minimum_specialist_capability=(
+            minimum_specialist_capability.value
+            if isinstance(minimum_specialist_capability, MinimumSpecialistCapability)
+            else str(minimum_specialist_capability)
+        ),
+        response_enum=enum_values,
+        context_budget=context_budget,
+        context_pack_hint=context_pack_hint,
+    )
+    # Validate shape without identity, then seal.
+    exact = _normalize_question_text(
+        placeholder.exact_question,
+        label="exact_question",
+        maximum=UNRESOLVED_QUESTION_MAX_TEXT_CHARS,
+    )
+    reason = _normalize_question_text(
+        placeholder.why_prior_deterministic_stages_could_not_resolve,
+        label="why_prior_deterministic_stages_could_not_resolve",
+        maximum=UNRESOLVED_QUESTION_MAX_REASON_CHARS,
+    )
+    available = _canonical_evidence_texts(
+        placeholder.evidence_available, label="evidence_available"
+    )
+    missing = _canonical_evidence_texts(
+        placeholder.evidence_missing, label="evidence_missing", minimum_items=1
+    )
+    if set(available).intersection(missing):
+        raise IntentIRValidationError(
+            "evidence_available and evidence_missing must not overlap"
+        )
+    impacts = _canonical_decision_impacts(
+        placeholder.candidate_decisions_answer_could_change
+    )
+    capability = _coerce_minimum_specialist_capability(
+        placeholder.minimum_specialist_capability
+    )
+    if not (
+        1 <= placeholder.context_budget <= UNRESOLVED_QUESTION_MAX_CONTEXT_BUDGET
+    ):
+        raise IntentIRValidationError(
+            "context_budget must be an integer from 1 through "
+            f"{UNRESOLVED_QUESTION_MAX_CONTEXT_BUDGET}"
+        )
+    hint = placeholder.context_pack_hint.strip()
+    if hint:
+        _validate_identifier("context_pack_hint", hint)
+    identity_payload = {
+        "candidate_decisions_answer_could_change": impacts,
+        "context_budget": placeholder.context_budget,
+        "context_pack_hint": hint,
+        "evidence_available": available,
+        "evidence_missing": missing,
+        "exact_question": exact,
+        "minimum_specialist_capability": capability,
+        "response_schema": {"type": "string", "enum": list(enum_values)},
+        "why_prior_deterministic_stages_could_not_resolve": reason,
+    }
+    identity = unresolved_question_identity_for(identity_payload)
+    if question_id is not None and question_id != identity:
+        raise IntentIRValidationError(
+            "provided question_id does not match canonical question"
+        )
+    return validate_unresolved_question(
+        UnresolvedQuestion(
+            question_id=identity,
+            exact_question=exact,
+            why_prior_deterministic_stages_could_not_resolve=reason,
+            evidence_available=available,
+            evidence_missing=missing,
+            candidate_decisions_answer_could_change=impacts,
+            minimum_specialist_capability=capability,
+            response_enum=enum_values,
+            context_budget=placeholder.context_budget,
+            context_pack_hint=hint,
+        )
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class UnresolvedQuestionCapture:
+    """Semantic-only capture of named unresolved questions for one objective.
+
+    Parallel to :class:`RuleDrivenObjectiveDecomposition`.  The carrier binds
+    validated intent/normalization digests to a bounded, sorted set of sealed
+    questions.  It does not create a competing Intent IR, planner, or admission
+    authority, and typed specialist answers cannot execute tools.
+    """
+
+    intent_id: str
+    intent_sha256: str
+    idea_sha256: str
+    normalization_sha256: str
+    repository_id: str
+    board_namespace: str
+    questions: tuple[UnresolvedQuestion, ...] = ()
+    decomposition_sha256: str = ""
+    truncated: bool = False
+    reason_code: str = "explicit_questions"
+    capture_id: str = UNRESOLVED_QUESTION_CAPTURE_ID
+    capture_version: str = UNRESOLVED_QUESTION_CAPTURE_VERSION
+    schema_version: str = UNRESOLVED_QUESTION_CAPTURE_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_unresolved_question_capture(self)
+
+    @property
+    def schema(self) -> str:
+        return UNRESOLVED_QUESTION_CAPTURE_SCHEMA
+
+    @property
+    def authority(self) -> str:
+        return UNRESOLVED_QUESTION_AUTHORITY
+
+    @property
+    def is_completion_authority(self) -> bool:
+        return False
+
+    @property
+    def can_execute_tools(self) -> bool:
+        return False
+
+    @property
+    def callers_supply_authoritative_policy(self) -> bool:
+        return False
+
+    @property
+    def capture_sha256(self) -> str:
+        payload = self.to_dict()
+        canonical = json.dumps(
+            payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "authority": UNRESOLVED_QUESTION_AUTHORITY,
+            "board_namespace": self.board_namespace,
+            "can_execute_tools": False,
+            "capture_id": self.capture_id,
+            "capture_version": self.capture_version,
+            "decomposition_sha256": self.decomposition_sha256,
+            "idea_sha256": self.idea_sha256,
+            "intent_id": self.intent_id,
+            "intent_sha256": self.intent_sha256,
+            "normalization_sha256": self.normalization_sha256,
+            "questions": [question.to_dict() for question in self.questions],
+            "reason_code": self.reason_code,
+            "repository_id": self.repository_id,
+            "schema": UNRESOLVED_QUESTION_CAPTURE_SCHEMA,
+            "schema_version": self.schema_version,
+            "truncated": self.truncated,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "UnresolvedQuestionCapture":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "UnresolvedQuestionCapture mapping must be a mapping"
+            )
+        forbidden = sorted(
+            key for key in value if key in UNRESOLVED_QUESTION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "UnresolvedQuestionCapture forbids authoritative/tool fields: "
+                + ", ".join(forbidden)
+            )
+        allowed = {
+            "authority",
+            "board_namespace",
+            "can_execute_tools",
+            "capture_id",
+            "capture_sha256",
+            "capture_version",
+            "decomposition_sha256",
+            "idea_sha256",
+            "intent_id",
+            "intent_sha256",
+            "normalization_sha256",
+            "questions",
+            "reason_code",
+            "repository_id",
+            "schema",
+            "schema_version",
+            "truncated",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "UnresolvedQuestionCapture has unknown fields: " + ", ".join(unknown)
+            )
+        schema = value.get("schema", UNRESOLVED_QUESTION_CAPTURE_SCHEMA)
+        if schema != UNRESOLVED_QUESTION_CAPTURE_SCHEMA:
+            raise IntentIRValidationError(
+                f"Unsupported UnresolvedQuestionCapture schema: {schema!r}"
+            )
+        authority = value.get("authority", UNRESOLVED_QUESTION_AUTHORITY)
+        if authority != UNRESOLVED_QUESTION_AUTHORITY:
+            raise IntentIRValidationError(
+                "UnresolvedQuestionCapture cannot claim authority"
+            )
+        if "can_execute_tools" in value and value.get("can_execute_tools") is not False:
+            raise IntentIRValidationError(
+                "UnresolvedQuestionCapture typed output cannot execute tools"
+            )
+        questions_raw = value.get("questions", ())
+        if isinstance(questions_raw, (str, bytes, bytearray)) or not isinstance(
+            questions_raw, Iterable
+        ):
+            raise IntentIRValidationError(
+                "UnresolvedQuestionCapture.questions must be an iterable"
+            )
+        questions: list[UnresolvedQuestion] = []
+        for item in questions_raw:
+            if isinstance(item, UnresolvedQuestion):
+                questions.append(item)
+            elif isinstance(item, Mapping):
+                questions.append(UnresolvedQuestion.from_dict(item))
+            else:
+                raise IntentIRValidationError(
+                    "UnresolvedQuestionCapture.questions members must be mappings"
+                )
+        truncated = value.get("truncated", False)
+        if not isinstance(truncated, bool):
+            raise IntentIRValidationError(
+                "UnresolvedQuestionCapture.truncated must be a bool"
+            )
+        return cls(
+            intent_id=str(value.get("intent_id") or ""),
+            intent_sha256=str(value.get("intent_sha256") or ""),
+            idea_sha256=str(value.get("idea_sha256") or ""),
+            normalization_sha256=str(value.get("normalization_sha256") or ""),
+            repository_id=str(value.get("repository_id") or ""),
+            board_namespace=str(value.get("board_namespace") or ""),
+            questions=tuple(questions),
+            decomposition_sha256=str(value.get("decomposition_sha256") or ""),
+            truncated=truncated,
+            reason_code=str(value.get("reason_code") or ""),
+            capture_id=str(value.get("capture_id") or UNRESOLVED_QUESTION_CAPTURE_ID),
+            capture_version=str(
+                value.get("capture_version") or UNRESOLVED_QUESTION_CAPTURE_VERSION
+            ),
+            schema_version=str(
+                value.get("schema_version")
+                or UNRESOLVED_QUESTION_CAPTURE_SCHEMA_VERSION
+            ),
+        )
+
+
+def validate_unresolved_question_capture(
+    value: UnresolvedQuestionCapture | Mapping[str, Any],
+) -> UnresolvedQuestionCapture:
+    """Validate and return a :class:`UnresolvedQuestionCapture`."""
+
+    if isinstance(value, Mapping):
+        value = UnresolvedQuestionCapture.from_dict(value)
+    if not isinstance(value, UnresolvedQuestionCapture):
+        raise IntentIRValidationError(
+            "UnresolvedQuestionCapture mappings require from_dict or a typed value"
+        )
+    if value.schema_version != UNRESOLVED_QUESTION_CAPTURE_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported UnresolvedQuestionCapture schema_version: "
+            f"{value.schema_version!r}"
+        )
+    if value.capture_id != UNRESOLVED_QUESTION_CAPTURE_ID:
+        raise IntentIRValidationError(
+            "UnresolvedQuestionCapture.capture_id is unsupported: "
+            f"{value.capture_id!r}"
+        )
+    if value.capture_version != UNRESOLVED_QUESTION_CAPTURE_VERSION:
+        raise IntentIRValidationError(
+            "UnresolvedQuestionCapture.capture_version is unsupported: "
+            f"{value.capture_version!r}"
+        )
+    _validate_identifier("UnresolvedQuestionCapture.intent_id", value.intent_id)
+    _validate_sha256(
+        "UnresolvedQuestionCapture.intent_sha256", value.intent_sha256
+    )
+    _validate_sha256("UnresolvedQuestionCapture.idea_sha256", value.idea_sha256)
+    _validate_sha256(
+        "UnresolvedQuestionCapture.normalization_sha256",
+        value.normalization_sha256,
+    )
+    if value.decomposition_sha256:
+        _validate_sha256(
+            "UnresolvedQuestionCapture.decomposition_sha256",
+            value.decomposition_sha256,
+        )
+    _validate_string(
+        "UnresolvedQuestionCapture.repository_id", value.repository_id
+    )
+    if value.repository_id:
+        _validate_identifier(
+            "UnresolvedQuestionCapture.repository_id", value.repository_id
+        )
+    _validate_string(
+        "UnresolvedQuestionCapture.board_namespace", value.board_namespace
+    )
+    if value.board_namespace:
+        _validate_identifier(
+            "UnresolvedQuestionCapture.board_namespace", value.board_namespace
+        )
+    _validate_non_empty_string(
+        "UnresolvedQuestionCapture.reason_code", value.reason_code
+    )
+    _require_tuple("UnresolvedQuestionCapture.questions", value.questions)
+    if len(value.questions) > UNRESOLVED_QUESTION_MAX_QUESTIONS:
+        raise IntentIRValidationError(
+            "UnresolvedQuestionCapture.questions exceeds "
+            f"{UNRESOLVED_QUESTION_MAX_QUESTIONS} members"
+        )
+    validated_questions = tuple(
+        validate_unresolved_question(question) for question in value.questions
+    )
+    question_ids = [question.question_id for question in validated_questions]
+    _require_unique(question_ids, "UnresolvedQuestionCapture.questions question_id")
+    if question_ids != sorted(question_ids):
+        raise IntentIRValidationError(
+            "UnresolvedQuestionCapture.questions must be sorted by question_id"
+        )
+    if validated_questions != value.questions:
+        return UnresolvedQuestionCapture(
+            intent_id=value.intent_id,
+            intent_sha256=value.intent_sha256,
+            idea_sha256=value.idea_sha256,
+            normalization_sha256=value.normalization_sha256,
+            repository_id=value.repository_id,
+            board_namespace=value.board_namespace,
+            questions=validated_questions,
+            decomposition_sha256=value.decomposition_sha256,
+            truncated=value.truncated,
+            reason_code=value.reason_code.strip(),
+            capture_id=value.capture_id,
+            capture_version=value.capture_version,
+            schema_version=value.schema_version,
+        )
+    return value
+
+
+def _question_from_decomposition_gap(
+    decomposition: RuleDrivenObjectiveDecomposition,
+) -> UnresolvedQuestion:
+    reason_code = decomposition.reason_code or "unknown_objective_class"
+    if decomposition.truncated:
+        exact = (
+            "Which residual child fragments remain after rule-driven decomposition "
+            "truncation for this objective?"
+        )
+        reason = (
+            "Rule-driven decomposition matched a known class but truncated the "
+            "child-fragment DAG at the closed maximum."
+        )
+        missing = ("residual child fragment coverage",)
+        impacts = (
+            AdmissibleDecisionImpact.SMALL_LOCAL_MODEL.value,
+            AdmissibleDecisionImpact.MEDIUM_MODEL.value,
+        )
+        capability = MinimumSpecialistCapability.LOCAL_SMALL_SPECIALIST
+        answers = ("enumerate_residuals", "escalate_human")
+    elif reason_code == "ambiguous_objective_class":
+        exact = (
+            "Which known objective class should resolve this ambiguous supervisor "
+            "objective?"
+        )
+        reason = (
+            "Deterministic tag matching ranked more than one known objective class "
+            "with equal overlap."
+        )
+        missing = ("disambiguating objective-class evidence",)
+        impacts = (
+            AdmissibleDecisionImpact.DETERMINISTIC_ONLY.value,
+            AdmissibleDecisionImpact.SMALL_LOCAL_MODEL.value,
+            AdmissibleDecisionImpact.HUMAN_REVIEW_REQUIRED.value,
+        )
+        capability = MinimumSpecialistCapability.LOCAL_OR_REMOTE_MEDIUM
+        answers = ("select_class", "mark_unknown", "escalate_human")
+    else:
+        exact = (
+            "Which bounded specialist interpretation should cover the residual "
+            "objective after deterministic stages failed to match a known class?"
+        )
+        reason = (
+            "Rule-driven decomposition failed closed with empty children for an "
+            "unknown or unmatched objective class."
+        )
+        missing = ("known objective-class template match",)
+        impacts = (
+            AdmissibleDecisionImpact.SMALL_LOCAL_MODEL.value,
+            AdmissibleDecisionImpact.MEDIUM_MODEL.value,
+            AdmissibleDecisionImpact.HUMAN_REVIEW_REQUIRED.value,
+        )
+        capability = MinimumSpecialistCapability.LOCAL_OR_REMOTE_MEDIUM
+        answers = ("interpret_residual", "request_human", "abstain")
+    available = (
+        f"decomposition.reason_code:{reason_code}",
+        f"objective_class:{decomposition.objective_class}",
+    )
+    return build_unresolved_question(
+        exact_question=exact,
+        why_prior_deterministic_stages_could_not_resolve=reason,
+        evidence_available=available,
+        evidence_missing=missing,
+        candidate_decisions_answer_could_change=impacts,
+        minimum_specialist_capability=capability,
+        response_enum=answers,
+        context_budget=4096,
+        context_pack_hint="",
+    )
+
+
+def capture_unresolved_semantic_questions(
+    normalization: DeterministicObjectiveNormalization | Mapping[str, Any],
+    *,
+    decomposition: RuleDrivenObjectiveDecomposition | Mapping[str, Any] | None = None,
+    questions: Sequence[UnresolvedQuestion | Mapping[str, Any]] = (),
+    context_pack_hint: str = "",
+) -> UnresolvedQuestionCapture:
+    """Capture named unresolved semantic questions after deterministic stages.
+
+    This is a thin extension of the existing datasets-owned intent contracts:
+    it reuses :func:`validate_deterministic_objective_normalization` and, when
+    provided, :func:`validate_rule_driven_objective_decomposition`.  Explicit
+    questions are sealed as-is.  When no explicit questions are supplied and
+    decomposition failed closed, truncated, or remained unmatched, one named
+    residual question is derived.  The capture does not dispatch specialists,
+    execute tools, or create a competing planner subsystem.
+    """
+
+    if isinstance(normalization, Mapping):
+        forbidden = sorted(
+            key
+            for key in normalization
+            if key in UNRESOLVED_QUESTION_FORBIDDEN_FIELDS
+            or key in DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "unresolved-question capture rejects authority/tool escapes: "
+                + ", ".join(forbidden)
+            )
+    validated_normalization = validate_deterministic_objective_normalization(
+        normalization
+    )
+    validated_decomposition: RuleDrivenObjectiveDecomposition | None = None
+    decomposition_sha256 = ""
+    if decomposition is not None:
+        if isinstance(decomposition, Mapping):
+            forbidden = sorted(
+                key
+                for key in decomposition
+                if key in UNRESOLVED_QUESTION_FORBIDDEN_FIELDS
+                or key in RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_FORBIDDEN_FIELDS
+            )
+            if forbidden:
+                raise IntentIRValidationError(
+                    "unresolved-question capture rejects authority/tool escapes: "
+                    + ", ".join(forbidden)
+                )
+        validated_decomposition = validate_rule_driven_objective_decomposition(
+            decomposition
+        )
+        if (
+            validated_decomposition.intent_id != validated_normalization.intent_id
+            or validated_decomposition.normalization_sha256
+            != validated_normalization.normalization_sha256
+        ):
+            raise IntentIRValidationError(
+                "decomposition does not bind the supplied normalization"
+            )
+        decomposition_sha256 = validated_decomposition.decomposition_sha256
+
+    if isinstance(questions, (str, bytes, bytearray)) or not isinstance(
+        questions, Sequence
+    ):
+        raise IntentIRValidationError("questions must be a sequence")
+    sealed: list[UnresolvedQuestion] = []
+    for item in questions:
+        if isinstance(item, UnresolvedQuestion):
+            sealed.append(validate_unresolved_question(item))
+        elif isinstance(item, Mapping):
+            payload = dict(item)
+            if context_pack_hint and not payload.get("context_pack_hint"):
+                payload["context_pack_hint"] = context_pack_hint
+            if payload.get("question_id"):
+                sealed.append(validate_unresolved_question(payload))
+            else:
+                sealed.append(
+                    build_unresolved_question(
+                        exact_question=str(payload.get("exact_question") or ""),
+                        why_prior_deterministic_stages_could_not_resolve=str(
+                            payload.get(
+                                "why_prior_deterministic_stages_could_not_resolve"
+                            )
+                            or ""
+                        ),
+                        evidence_available=tuple(
+                            str(entry)
+                            for entry in payload.get("evidence_available", ())
+                        ),
+                        evidence_missing=tuple(
+                            str(entry)
+                            for entry in payload.get("evidence_missing", ())
+                        ),
+                        candidate_decisions_answer_could_change=tuple(
+                            str(entry)
+                            for entry in payload.get(
+                                "candidate_decisions_answer_could_change", ()
+                            )
+                        ),
+                        minimum_specialist_capability=str(
+                            payload.get("minimum_specialist_capability") or ""
+                        ),
+                        response_enum=(
+                            payload.get("response_schema")
+                            if isinstance(payload.get("response_schema"), Mapping)
+                            else payload.get("response_enum", ())
+                        ),
+                        context_budget=int(payload.get("context_budget", 4096)),
+                        context_pack_hint=str(
+                            payload.get("context_pack_hint") or context_pack_hint or ""
+                        ),
+                    )
+                )
+        else:
+            raise IntentIRValidationError(
+                "questions members must be UnresolvedQuestion values or mappings"
+            )
+
+    reason_code = "explicit_questions"
+    truncated = False
+    if not sealed and validated_decomposition is not None:
+        if (
+            not validated_decomposition.matched
+            or validated_decomposition.truncated
+            or validated_decomposition.objective_class
+            == KnownObjectiveClass.UNKNOWN.value
+        ):
+            sealed.append(_question_from_decomposition_gap(validated_decomposition))
+            reason_code = (
+                "derived_from_decomposition:"
+                + (validated_decomposition.reason_code or "unknown_objective_class")
+            )
+            truncated = validated_decomposition.truncated
+        else:
+            reason_code = "no_unresolved_questions"
+    elif not sealed:
+        reason_code = "no_unresolved_questions"
+
+    if len(sealed) > UNRESOLVED_QUESTION_MAX_QUESTIONS:
+        sealed = sealed[:UNRESOLVED_QUESTION_MAX_QUESTIONS]
+        truncated = True
+        reason_code = "truncated_questions"
+
+    if context_pack_hint:
+        hint = context_pack_hint.strip()
+        _validate_identifier("context_pack_hint", hint)
+        sealed = [
+            build_unresolved_question(
+                exact_question=question.exact_question,
+                why_prior_deterministic_stages_could_not_resolve=(
+                    question.why_prior_deterministic_stages_could_not_resolve
+                ),
+                evidence_available=question.evidence_available,
+                evidence_missing=question.evidence_missing,
+                candidate_decisions_answer_could_change=(
+                    question.candidate_decisions_answer_could_change
+                ),
+                minimum_specialist_capability=question.minimum_specialist_capability,
+                response_enum=question.response_enum,
+                context_budget=question.context_budget,
+                context_pack_hint=question.context_pack_hint or hint,
+            )
+            for question in sealed
+        ]
+
+    sealed.sort(key=lambda item: item.question_id)
+    result = UnresolvedQuestionCapture(
+        intent_id=validated_normalization.intent_id,
+        intent_sha256=validated_normalization.intent_sha256,
+        idea_sha256=validated_normalization.idea_sha256,
+        normalization_sha256=validated_normalization.normalization_sha256,
+        repository_id=validated_normalization.repository_id,
+        board_namespace=validated_normalization.board_namespace,
+        questions=tuple(sealed),
+        decomposition_sha256=decomposition_sha256,
+        truncated=truncated,
+        reason_code=reason_code,
+    )
+    return validate_unresolved_question_capture(result)
+
+
 __all__ = [
+    "AdmissibleDecisionImpact",
     "CollectionSemantics",
     "DETERMINISTIC_NORMALIZATION_AUTHORITY",
     "DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS",
@@ -2604,6 +3708,16 @@ __all__ = [
     "SUPERVISOR_OBJECTIVE_INTENT_MAX_TAGS",
     "SUPERVISOR_OBJECTIVE_INTENT_SCHEMA",
     "SUPERVISOR_OBJECTIVE_INTENT_SCHEMA_VERSION",
+    "UNRESOLVED_QUESTION_AUTHORITY",
+    "UNRESOLVED_QUESTION_CAPTURE_ID",
+    "UNRESOLVED_QUESTION_CAPTURE_SCHEMA",
+    "UNRESOLVED_QUESTION_CAPTURE_SCHEMA_VERSION",
+    "UNRESOLVED_QUESTION_CAPTURE_VERSION",
+    "UNRESOLVED_QUESTION_FORBIDDEN_FIELDS",
+    "UNRESOLVED_QUESTION_MAX_CONTEXT_BUDGET",
+    "UNRESOLVED_QUESTION_MAX_QUESTIONS",
+    "UNRESOLVED_QUESTION_SCHEMA",
+    "UNRESOLVED_QUESTION_SCHEMA_VERSION",
     "ControlEdgeKind",
     "DeterministicObjectiveNormalization",
     "GroundingKind",
@@ -2616,6 +3730,7 @@ __all__ = [
     "IntentStatement",
     "KnownObjectiveClass",
     "KnownObjectiveClassRule",
+    "MinimumSpecialistCapability",
     "NodeGrounding",
     "ObjectiveMaterializationReceipt",
     "ReviewStatus",
@@ -2626,15 +3741,22 @@ __all__ = [
     "StatementKind",
     "SupervisorObjectiveIntent",
     "SupervisorObjectiveSubmitterKind",
+    "UnresolvedQuestion",
+    "UnresolvedQuestionCapture",
+    "build_unresolved_question",
+    "capture_unresolved_semantic_questions",
     "decompose_supervisor_objective_by_rules",
     "idea_text_sha256",
     "list_known_objective_class_rules",
     "normalize_supervisor_objective_deterministically",
     "supervisor_objective_intent_sha256",
+    "unresolved_question_identity_for",
     "validate_deterministic_objective_normalization",
     "validate_intent_ir",
     "validate_objective_materialization_receipt",
     "validate_rule_driven_decomposition_child",
     "validate_rule_driven_objective_decomposition",
     "validate_supervisor_objective_intent",
+    "validate_unresolved_question",
+    "validate_unresolved_question_capture",
 ]
