@@ -1,0 +1,123 @@
+{
+  "authority": {
+    "canonical_semantic_identity": "ipfs_datasets_py",
+    "ducklake_authority": false,
+    "exact_bytes_cid_storage": "ipfs_kit_py",
+    "model_output_is_completion_authority": false,
+    "operational_admission": "ipfs_accelerate_py"
+  },
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "candidate_status": "implemented",
+  "changed_paths": [
+    "ipfs_datasets_py/logic/intent_ir/schema.py",
+    "tests/doep/test_doep_021_add_deterministic_normalization.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-021.json"
+  ],
+  "completion_authoritative": false,
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/intent_ir/schema.py",
+    "tests/doep/test_doep_021_add_deterministic_normalization.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-021.json"
+  ],
+  "goal_id": "DOEP-G030.S1",
+  "no_competing_subsystem_created": true,
+  "observed_at": "2026-09-09T00:00:00Z",
+  "outputs_present": {
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-021.json": true,
+    "ipfs_datasets_py/logic/intent_ir/schema.py": true,
+    "tests/doep/test_doep_021_add_deterministic_normalization.py": true
+  },
+  "parent_goal_id": "DOEP-G030",
+  "path_digests": {
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json": "sha256:a3ddd8d47ccf06a4710bdbb24379c78ebd731245f4561322b3ac99a9eaae17e5",
+    "ipfs_datasets_py/logic/intent_ir/schema.py": "sha256:f8617ff3707eae4e228d5e8580ec10086f468f2fdb3458cb5e2d809a16cc27ff",
+    "tests/doep/test_doep_021_add_deterministic_normalization.py": "sha256:6655ade3e5c60100ef73a074daba6496991d5f8bac2c3d7ed770cb8b30b2fdc5"
+  },
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "plan_revision": "DOEP-PLAN-V5",
+  "required_evidence": {
+    "changed_path_digest": "sha256:cb249527b40f6d766637b6488cf125264a0e3b54512bf2f41a2e83a028812f47",
+    "limitations": [
+      "Candidate DeterministicObjectiveNormalization receipt only; independent fenced supervisor admission is required.",
+      "Worker or model assertion alone is insufficient for task completion.",
+      "Normalization is semantic-only; proposed budget/risk/policy bindings are not admission authority.",
+      "Operational admission and execution remain with ipfs_accelerate_py.",
+      "Exact bytes, CID persistence, and recovery remain with ipfs_kit_py.",
+      "Digests bind the exact declared non-receipt outputs at observation time.",
+      "No competing Intent IR or objective subsystem was created; IntentIRDocument remains the skill-corpus contract."
+    ],
+    "receipt_cid": {
+      "reason": "ipfs CLI absent from sealed validation PATH; SHA-256 is not substituted for a CID.",
+      "status": "unavailable"
+    },
+    "source_commit_tree_gitlinks": {
+      "ipfs_accelerate_py": {
+        "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+        "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+      },
+      "ipfs_datasets_py": {
+        "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+        "tree": "456e09b51d6a07a3a5873436df24054768195320"
+      },
+      "ipfs_kit_py": {
+        "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+        "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+      },
+      "lift_coding": {
+        "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+        "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+      }
+    },
+    "test_proof_results": {
+      "proof_reason": "Deterministic normalization is exercised by pytest; no formal prover selected.",
+      "proof_selection": "verified_empty",
+      "validation_command": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/doep/test_doep_021_add_deterministic_normalization.py",
+        "-q"
+      ]
+    },
+    "verifier_admission": "pending_independent_fenced_supervisor"
+  },
+  "rollback": {
+    "destructive_effects": false,
+    "procedure": "Revert the four declared DOEP-021 outputs and invalidate consumers of DeterministicObjectiveNormalization; do not alter IntentIRDocument skill-corpus semantics, protected plan documents, or dependency-contract pyproject files."
+  },
+  "root_goal_id": "DOEP-G000",
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "supervisor_acceptance": {
+    "completion_authoritative": false,
+    "state": "pending_independent_fenced_supervisor"
+  },
+  "task_cid": "sha256:6fc54343c8d305bbdb16f4d61f369c37e46aab5d464638e45dcdefb7673d026c",
+  "task_id": "DOEP-021",
+  "title": "Add deterministic normalization",
+  "validation": {
+    "commands": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/doep/test_doep_021_add_deterministic_normalization.py",
+          "-q"
+        ],
+        "cwd": "external/ipfs_datasets",
+        "status": "candidate_local"
+      }
+    ]
+  },
+  "worker_completion_insufficient": true,
+  "write_scope": [
+    "ipfs_datasets_py/logic/intent_ir/schema.py",
+    "tests/doep/test_doep_021_add_deterministic_normalization.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-021.json"
+  ]
+}

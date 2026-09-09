@@ -9,11 +9,13 @@ separate content-addressed artifacts and are joined through identifiers.
 from __future__ import annotations
 
 import hashlib
+import json
+import posixpath
 import re
 from dataclasses import dataclass
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Sequence
 
 from ..ir_core.canonical import CollectionSchema, CollectionSemantics
 
@@ -86,6 +88,53 @@ OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS = frozenset(
         "fencing_epoch",
         "fencing_generation",
         "lease_id",
+        "plan",
+        "plan_root_cid",
+        "policy",
+        "policy_document",
+        "policy_id",
+        "policy_revision",
+        "quack_mutation",
+        "storage_authorization",
+        "task_cids",
+        "terminalize",
+    }
+)
+
+# Datasets-owned deterministic normalization identity (DOEP-021).  Extends the
+# existing SupervisorObjectiveIntent / materialization contracts with a
+# fail-closed, semantic-only normalization carrier.  It does not authorize
+# execution, admit policy, or complete objectives, and it is not a second
+# Intent IR or planner subsystem.
+DETERMINISTIC_NORMALIZATION_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/deterministic-normalization@1"
+)
+DETERMINISTIC_NORMALIZATION_SCHEMA_VERSION = "deterministic-normalization/v1"
+DETERMINISTIC_NORMALIZER_ID = (
+    "ipfs_datasets_py/logic/intent-ir/deterministic-normalizer@1"
+)
+DETERMINISTIC_NORMALIZER_VERSION = "1"
+DETERMINISTIC_NORMALIZATION_AUTHORITY = "semantic_only"
+DETERMINISTIC_NORMALIZATION_MAX_SCOPE_PATHS = 64
+_BUDGET_PROFILE_RE = re.compile(r"^B[0-9]$")
+_RISK_CLASS_RE = re.compile(r"^R[0-9]$")
+DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS = frozenset(
+    {
+        "authorization",
+        "authorization_decision",
+        "budgets",
+        "completion_authoritative",
+        "duckdb",
+        "ducklake",
+        "execution_authorization",
+        "fencing_epoch",
+        "fencing_generation",
+        "formal_plan",
+        "goal_cids",
+        "lease_id",
+        "objective_cid",
+        "objective_revision_cid",
+        "partial_order",
         "plan",
         "plan_root_cid",
         "policy",
@@ -1064,8 +1113,421 @@ def validate_objective_materialization_receipt(
     return receipt
 
 
+def supervisor_objective_intent_sha256(
+    intent: SupervisorObjectiveIntent | Mapping[str, Any],
+) -> str:
+    """Return the lowercase hex SHA-256 of a validated intent's canonical JSON."""
+
+    validated = validate_supervisor_objective_intent(intent)
+    canonical = json.dumps(
+        validated.to_dict(),
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _normalize_scope_path(path: Any, *, label: str) -> str:
+    if not isinstance(path, str):
+        raise IntentIRValidationError(f"{label} must be a string")
+    text = path.strip().replace("\\", "/")
+    if not text:
+        raise IntentIRValidationError(f"{label} must not be empty")
+    if text.startswith("/") or re.match(r"^[A-Za-z]:/", text):
+        raise IntentIRValidationError(f"{label} must be a relative path")
+    if any(part == ".." for part in text.split("/")):
+        raise IntentIRValidationError(f"{label} rejects parent-path escapes")
+    normalized = posixpath.normpath(text)
+    if normalized in {"", "."}:
+        return "."
+    if normalized.startswith("../") or normalized == ".." or normalized.startswith("/"):
+        raise IntentIRValidationError(f"{label} rejects parent-path escapes")
+    if normalized != text.rstrip("/"):
+        # Callers must supply already-lexically-normalized relative paths so
+        # normalization never silently rewrites declared scope.
+        raise IntentIRValidationError(f"{label} must be lexically normalized")
+    return normalized
+
+
+def _normalize_profile_token(
+    value: Any, *, label: str, pattern: re.Pattern[str]
+) -> str:
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise IntentIRValidationError(f"{label} must be a string")
+    text = value.strip()
+    if not text:
+        return ""
+    if not pattern.fullmatch(text):
+        raise IntentIRValidationError(f"{label} is not a closed profile token")
+    return text
+
+
+@dataclass(frozen=True, slots=True)
+class DeterministicObjectiveNormalization:
+    """Semantic-only result of deterministic supervisor-objective normalization.
+
+    Parallel to :class:`SupervisorObjectiveIntent` and
+    :class:`ObjectiveMaterializationReceipt`.  The carrier binds a validated
+    intent digest to normalized scope and non-authoritative budget/risk/policy
+    hints.  Accelerate alone admits operational policy, budgets, and execution.
+    """
+
+    intent_id: str
+    intent_sha256: str
+    idea_sha256: str
+    repository_id: str
+    board_namespace: str
+    title_hint: str = ""
+    tags: tuple[str, ...] = ()
+    scope_paths: tuple[str, ...] = ()
+    proposed_budget_profile: str = ""
+    proposed_risk_class: str = ""
+    policy_binding: str = ""
+    normalizer_id: str = DETERMINISTIC_NORMALIZER_ID
+    normalizer_version: str = DETERMINISTIC_NORMALIZER_VERSION
+    schema_version: str = DETERMINISTIC_NORMALIZATION_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_deterministic_objective_normalization(self)
+
+    @property
+    def schema(self) -> str:
+        return DETERMINISTIC_NORMALIZATION_SCHEMA
+
+    @property
+    def authority(self) -> str:
+        return DETERMINISTIC_NORMALIZATION_AUTHORITY
+
+    @property
+    def is_completion_authority(self) -> bool:
+        return False
+
+    @property
+    def callers_supply_authoritative_policy(self) -> bool:
+        return False
+
+    @property
+    def normalization_sha256(self) -> str:
+        payload = self.to_dict()
+        canonical = json.dumps(
+            payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "authority": DETERMINISTIC_NORMALIZATION_AUTHORITY,
+            "board_namespace": self.board_namespace,
+            "idea_sha256": self.idea_sha256,
+            "intent_id": self.intent_id,
+            "intent_sha256": self.intent_sha256,
+            "normalizer_id": self.normalizer_id,
+            "normalizer_version": self.normalizer_version,
+            "policy_binding": self.policy_binding,
+            "proposed_budget_profile": self.proposed_budget_profile,
+            "proposed_risk_class": self.proposed_risk_class,
+            "repository_id": self.repository_id,
+            "schema": DETERMINISTIC_NORMALIZATION_SCHEMA,
+            "schema_version": self.schema_version,
+            "scope_paths": list(self.scope_paths),
+            "tags": list(self.tags),
+            "title_hint": self.title_hint,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "DeterministicObjectiveNormalization":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "DeterministicObjectiveNormalization mapping must be a mapping"
+            )
+        forbidden = sorted(
+            key
+            for key in value
+            if key in DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "DeterministicObjectiveNormalization forbids authoritative fields: "
+                + ", ".join(forbidden)
+            )
+        allowed = {
+            "authority",
+            "board_namespace",
+            "idea_sha256",
+            "intent_id",
+            "intent_sha256",
+            "normalization_sha256",
+            "normalizer_id",
+            "normalizer_version",
+            "policy_binding",
+            "proposed_budget_profile",
+            "proposed_risk_class",
+            "repository_id",
+            "schema",
+            "schema_version",
+            "scope_paths",
+            "tags",
+            "title_hint",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "DeterministicObjectiveNormalization has unknown fields: "
+                + ", ".join(unknown)
+            )
+        schema = value.get("schema", DETERMINISTIC_NORMALIZATION_SCHEMA)
+        if schema != DETERMINISTIC_NORMALIZATION_SCHEMA:
+            raise IntentIRValidationError(
+                "Unsupported DeterministicObjectiveNormalization schema: "
+                f"{schema!r}"
+            )
+        authority = value.get("authority", DETERMINISTIC_NORMALIZATION_AUTHORITY)
+        if authority != DETERMINISTIC_NORMALIZATION_AUTHORITY:
+            raise IntentIRValidationError(
+                "DeterministicObjectiveNormalization cannot claim authority"
+            )
+        scope_raw = value.get("scope_paths", ())
+        if isinstance(scope_raw, str) or not isinstance(scope_raw, Iterable):
+            raise IntentIRValidationError(
+                "DeterministicObjectiveNormalization.scope_paths must be an iterable of strings"
+            )
+        tags_raw = value.get("tags", ())
+        if isinstance(tags_raw, str) or not isinstance(tags_raw, Iterable):
+            raise IntentIRValidationError(
+                "DeterministicObjectiveNormalization.tags must be an iterable of strings"
+            )
+        return cls(
+            intent_id=str(value.get("intent_id") or ""),
+            intent_sha256=str(value.get("intent_sha256") or ""),
+            idea_sha256=str(value.get("idea_sha256") or ""),
+            repository_id=str(value.get("repository_id") or ""),
+            board_namespace=str(value.get("board_namespace") or ""),
+            title_hint=str(value.get("title_hint") or ""),
+            tags=tuple(str(item) for item in tags_raw),
+            scope_paths=tuple(str(item) for item in scope_raw),
+            proposed_budget_profile=str(value.get("proposed_budget_profile") or ""),
+            proposed_risk_class=str(value.get("proposed_risk_class") or ""),
+            policy_binding=str(value.get("policy_binding") or ""),
+            normalizer_id=str(
+                value.get("normalizer_id") or DETERMINISTIC_NORMALIZER_ID
+            ),
+            normalizer_version=str(
+                value.get("normalizer_version") or DETERMINISTIC_NORMALIZER_VERSION
+            ),
+            schema_version=str(
+                value.get("schema_version")
+                or DETERMINISTIC_NORMALIZATION_SCHEMA_VERSION
+            ),
+        )
+
+
+def validate_deterministic_objective_normalization(
+    value: DeterministicObjectiveNormalization | Mapping[str, Any],
+) -> DeterministicObjectiveNormalization:
+    """Validate and return a :class:`DeterministicObjectiveNormalization`."""
+
+    if isinstance(value, Mapping):
+        value = DeterministicObjectiveNormalization.from_dict(value)
+    if not isinstance(value, DeterministicObjectiveNormalization):
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization mappings require from_dict or a typed value"
+        )
+    if value.schema_version != DETERMINISTIC_NORMALIZATION_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported DeterministicObjectiveNormalization schema_version: "
+            f"{value.schema_version!r}"
+        )
+    if value.normalizer_id != DETERMINISTIC_NORMALIZER_ID:
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization.normalizer_id is unsupported: "
+            f"{value.normalizer_id!r}"
+        )
+    if value.normalizer_version != DETERMINISTIC_NORMALIZER_VERSION:
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization.normalizer_version is unsupported: "
+            f"{value.normalizer_version!r}"
+        )
+    _validate_identifier(
+        "DeterministicObjectiveNormalization.intent_id", value.intent_id
+    )
+    _validate_sha256(
+        "DeterministicObjectiveNormalization.intent_sha256", value.intent_sha256
+    )
+    _validate_sha256(
+        "DeterministicObjectiveNormalization.idea_sha256", value.idea_sha256
+    )
+    _validate_string(
+        "DeterministicObjectiveNormalization.repository_id", value.repository_id
+    )
+    if value.repository_id:
+        _validate_identifier(
+            "DeterministicObjectiveNormalization.repository_id",
+            value.repository_id,
+        )
+    _validate_string(
+        "DeterministicObjectiveNormalization.board_namespace", value.board_namespace
+    )
+    if value.board_namespace:
+        _validate_identifier(
+            "DeterministicObjectiveNormalization.board_namespace",
+            value.board_namespace,
+        )
+    _validate_string(
+        "DeterministicObjectiveNormalization.title_hint", value.title_hint
+    )
+    _require_tuple("DeterministicObjectiveNormalization.tags", value.tags)
+    _validate_string_items("DeterministicObjectiveNormalization.tags", value.tags)
+    _require_unique(value.tags, "DeterministicObjectiveNormalization.tags member")
+    if list(value.tags) != sorted(value.tags):
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization.tags must be sorted"
+        )
+    _require_tuple(
+        "DeterministicObjectiveNormalization.scope_paths", value.scope_paths
+    )
+    if len(value.scope_paths) > DETERMINISTIC_NORMALIZATION_MAX_SCOPE_PATHS:
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization.scope_paths exceeds "
+            f"{DETERMINISTIC_NORMALIZATION_MAX_SCOPE_PATHS} members"
+        )
+    normalized_paths = tuple(
+        _normalize_scope_path(
+            path, label=f"DeterministicObjectiveNormalization.scope_paths[{index}]"
+        )
+        for index, path in enumerate(value.scope_paths)
+    )
+    _require_unique(
+        normalized_paths, "DeterministicObjectiveNormalization.scope_paths member"
+    )
+    if normalized_paths != value.scope_paths:
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization.scope_paths must be lexically normalized"
+        )
+    if list(value.scope_paths) != sorted(value.scope_paths):
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization.scope_paths must be sorted"
+        )
+    budget = _normalize_profile_token(
+        value.proposed_budget_profile,
+        label="DeterministicObjectiveNormalization.proposed_budget_profile",
+        pattern=_BUDGET_PROFILE_RE,
+    )
+    if budget != value.proposed_budget_profile:
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization.proposed_budget_profile is invalid"
+        )
+    risk = _normalize_profile_token(
+        value.proposed_risk_class,
+        label="DeterministicObjectiveNormalization.proposed_risk_class",
+        pattern=_RISK_CLASS_RE,
+    )
+    if risk != value.proposed_risk_class:
+        raise IntentIRValidationError(
+            "DeterministicObjectiveNormalization.proposed_risk_class is invalid"
+        )
+    _validate_string(
+        "DeterministicObjectiveNormalization.policy_binding", value.policy_binding
+    )
+    if value.policy_binding:
+        _validate_identifier(
+            "DeterministicObjectiveNormalization.policy_binding",
+            value.policy_binding,
+        )
+    return value
+
+
+def normalize_supervisor_objective_deterministically(
+    intent: SupervisorObjectiveIntent | Mapping[str, Any],
+    *,
+    scope_paths: Sequence[str] | None = None,
+    proposed_budget_profile: str = "",
+    proposed_risk_class: str = "",
+    policy_binding: str = "",
+) -> DeterministicObjectiveNormalization:
+    """Deterministically validate and normalize one supervisor objective intent.
+
+    This is a thin extension of the existing datasets-owned intent contracts:
+    it reuses :func:`validate_supervisor_objective_intent`, normalizes scope
+    paths, and records non-authoritative budget/risk/policy bindings.  It does
+    not create a competing Intent IR document, planner, or admission authority.
+    """
+
+    if isinstance(intent, Mapping):
+        forbidden = sorted(
+            key
+            for key in intent
+            if key in DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS
+            or key in SUPERVISOR_OBJECTIVE_INTENT_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "deterministic normalization rejects authority/path escapes: "
+                + ", ".join(forbidden)
+            )
+    validated = validate_supervisor_objective_intent(intent)
+    raw_paths = () if scope_paths is None else scope_paths
+    if isinstance(raw_paths, (str, bytes, bytearray)) or not isinstance(
+        raw_paths, Sequence
+    ):
+        raise IntentIRValidationError("scope_paths must be a sequence of strings")
+    normalized_paths = sorted(
+        {
+            _normalize_scope_path(path, label=f"scope_paths[{index}]")
+            for index, path in enumerate(raw_paths)
+        }
+    )
+    if len(normalized_paths) > DETERMINISTIC_NORMALIZATION_MAX_SCOPE_PATHS:
+        raise IntentIRValidationError(
+            "scope_paths exceeds "
+            f"{DETERMINISTIC_NORMALIZATION_MAX_SCOPE_PATHS} members"
+        )
+    budget = _normalize_profile_token(
+        proposed_budget_profile,
+        label="proposed_budget_profile",
+        pattern=_BUDGET_PROFILE_RE,
+    )
+    risk = _normalize_profile_token(
+        proposed_risk_class,
+        label="proposed_risk_class",
+        pattern=_RISK_CLASS_RE,
+    )
+    binding = policy_binding.strip() if isinstance(policy_binding, str) else ""
+    if policy_binding is not None and not isinstance(policy_binding, str):
+        raise IntentIRValidationError("policy_binding must be a string")
+    if binding:
+        _validate_identifier("policy_binding", binding)
+    tags = tuple(sorted(set(validated.tags)))
+    result = DeterministicObjectiveNormalization(
+        intent_id=validated.intent_id,
+        intent_sha256=supervisor_objective_intent_sha256(validated),
+        idea_sha256=validated.idea_sha256,
+        repository_id=validated.repository_id,
+        board_namespace=validated.board_namespace,
+        title_hint=validated.title_hint.strip(),
+        tags=tags,
+        scope_paths=tuple(normalized_paths),
+        proposed_budget_profile=budget,
+        proposed_risk_class=risk,
+        policy_binding=binding,
+    )
+    return validate_deterministic_objective_normalization(result)
+
+
 __all__ = [
     "CollectionSemantics",
+    "DETERMINISTIC_NORMALIZATION_AUTHORITY",
+    "DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS",
+    "DETERMINISTIC_NORMALIZATION_MAX_SCOPE_PATHS",
+    "DETERMINISTIC_NORMALIZATION_SCHEMA",
+    "DETERMINISTIC_NORMALIZATION_SCHEMA_VERSION",
+    "DETERMINISTIC_NORMALIZER_ID",
+    "DETERMINISTIC_NORMALIZER_VERSION",
     "INTENT_IR_COLLECTION_SCHEMA",
     "INTENT_IR_SCHEMA_VERSION",
     "INTENT_IR_COLLECTION_SEMANTICS",
@@ -1079,6 +1541,7 @@ __all__ = [
     "SUPERVISOR_OBJECTIVE_INTENT_SCHEMA",
     "SUPERVISOR_OBJECTIVE_INTENT_SCHEMA_VERSION",
     "ControlEdgeKind",
+    "DeterministicObjectiveNormalization",
     "GroundingKind",
     "IntentAction",
     "IntentControlEdge",
@@ -1096,6 +1559,9 @@ __all__ = [
     "SupervisorObjectiveIntent",
     "SupervisorObjectiveSubmitterKind",
     "idea_text_sha256",
+    "normalize_supervisor_objective_deterministically",
+    "supervisor_objective_intent_sha256",
+    "validate_deterministic_objective_normalization",
     "validate_intent_ir",
     "validate_objective_materialization_receipt",
     "validate_supervisor_objective_intent",
