@@ -371,6 +371,18 @@ live-application = false
 live-client = false
 release-claim = false
 
+[tool.ipfs-datasets-py.release-candidate-gate]
+schema = "ipfs_datasets_py/assurance/release-candidate-gate-binding@1"
+interface = "DatasetsReleaseCandidateGateBinding@1"
+task-id = "PCPR-093"
+goal-id = "PCPR-G900"
+objective-kind = "declared_release_candidate_gate_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
 scope = "complete-authoritative-validation-environment"

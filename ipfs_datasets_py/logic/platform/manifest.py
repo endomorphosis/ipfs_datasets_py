@@ -334,6 +334,16 @@ DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_INTERFACE: Final = (
 DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/security-and-correctness-audit-package-binding@1"
 )
+# PCPR-093 Datasets binding to Accelerate-owned objective-to-release
+# candidate gate. Handshake identity only; live Supervisor.run stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted. Closed release remains PCPR-094.
+DATASETS_RELEASE_CANDIDATE_GATE_INTERFACE: Final = (
+    "DatasetsReleaseCandidateGateBinding@1"
+)
+DATASETS_RELEASE_CANDIDATE_GATE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/release-candidate-gate-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -609,6 +619,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_THREAT_MODEL_INTERFACE: "1",
             DATASETS_TRUSTED_COMPUTING_BASE_INTERFACE: "1",
             DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_INTERFACE: "1",
+            DATASETS_RELEASE_CANDIDATE_GATE_INTERFACE: "1",
         }
     )
 
@@ -678,6 +689,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_security_and_correctness_audit_package": (
                 DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_SCHEMA
             ),
+            "datasets_release_candidate_gate": DATASETS_RELEASE_CANDIDATE_GATE_SCHEMA,
         }
     )
 
@@ -727,6 +739,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "threat_model": "1",
             "trusted_computing_base": "1",
             "security_and_correctness_audit_package": "1",
+            "release_candidate_gate": "1",
         }
     )
 
