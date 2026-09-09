@@ -1,0 +1,58 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "task_id": "DOEP-052",
+  "task_cid": "sha256:d976f744a4e99067273da9285ba8b759827f8a5f2a7081eaea1ef5227420ff73",
+  "title": "Add PlanDelta contract",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "goal_id": "DOEP-G060.S1",
+  "parent_goal_id": "DOEP-G060",
+  "root_goal_id": "DOEP-G000",
+  "candidate_status": "implemented",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_052_add_plandelta_contract.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-052.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-052.json"
+  ],
+  "changed_paths": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_052_add_plandelta_contract.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-052.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-052.json"
+  ],
+  "path_digests": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": "sha256:70f596c0eaf0dc6ca405ed6d30d7f24a63ed3b82670fa5ae8924ae895f7563a5",
+    "tests/doep/test_doep_052_add_plandelta_contract.py": "sha256:7b2ed2ea701480b9fb5fde9ea7b443811ce778744e3164d25e6f6cdaf59f6a0f",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-052.json": "sha256:83e19c3b15f9d15bfcb1e7fb4b466cbf05c9a5a2e0507ee4c53e4cbd7ab647dc"
+  },
+  "required_evidence": {
+    "test_proof_results": {
+      "validation_command": ["python3", "-m", "pytest", "tests/doep/test_doep_052_add_plandelta_contract.py", "-q"],
+      "proof_selection": "verified_empty",
+      "proof_reason": "The contract is exercised by independent pytest; no formal prover was selected."
+    },
+    "receipt_cid": {"status": "unavailable", "reason": "No IPFS CLI was used; SHA-256 is not substituted for a CID."},
+    "verifier_admission": "pending_independent_fenced_supervisor",
+    "limitations": [
+      "Candidate receipt only; independent fenced supervisor admission is required.",
+      "PlanDelta does not grant operational admission, refill materialization, or completion authority.",
+      "Accelerate owns operational PlanDelta@1 admission; this contract only names the impacted suffix.",
+      "History cannot be rewritten; unaffected tasks and receipts are preserved.",
+      "Ordinary refill is model-free and limited to the impacted suffix.",
+      "Worker or model assertion alone is insufficient."
+    ]
+  },
+  "supervisor_acceptance": {"state": "pending_independent_fenced_supervisor", "completion_authoritative": false},
+  "write_scope": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_052_add_plandelta_contract.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-052.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-052.json"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-output@1",
+  "task_id": "DOEP-052",
+  "task_cid": "sha256:d976f744a4e99067273da9285ba8b759827f8a5f2a7081eaea1ef5227420ff73",
+  "title": "Add PlanDelta contract",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "owning_repository": "ipfs_datasets_py",
+  "root_goal_id": "DOEP-G000",
+  "parent_goal_id": "DOEP-G060",
+  "goal_id": "DOEP-G060.S1",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "primary_output": "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+  "declared_outputs": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_052_add_plandelta_contract.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-052.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-052.json"
+  ],
+  "plan_delta_contract": {
+    "module": "ipfs_datasets_py.logic.external_work_plan_obligations",
+    "class_name": "PlanDelta",
+    "schema": "ipfs_datasets_py/logic/external-work-plan-delta@1",
+    "schema_version": "external-work-plan-delta/v1",
+    "parallel_to": "PlanTerms",
+    "competing_subsystem_created": false,
+    "operational_admission_owner": "ipfs_accelerate_py",
+    "semantic_identity_owner": "ipfs_datasets_py",
+    "history_preserving": true,
+    "model_free_refill": true,
+    "completion_authoritative": false
+  }
+}
