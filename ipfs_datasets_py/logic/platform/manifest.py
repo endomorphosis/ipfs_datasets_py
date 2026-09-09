@@ -367,6 +367,19 @@ DATASETS_RESIDUAL_GAP_REPORT_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/residual-gap-report-binding@1"
 )
 
+# PCPR-096 Datasets binding to Accelerate-owned objective-to-release
+# next-bounded-pilot recommendation. Handshake identity only; live
+# Supervisor.run stays typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted. The recommended pilot is
+# synthetic, is not created, and does not create a successor campaign.
+DATASETS_NEXT_BOUNDED_PILOT_INTERFACE: Final = (
+    "DatasetsNextBoundedPilotBinding@1"
+)
+DATASETS_NEXT_BOUNDED_PILOT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/next-bounded-pilot-binding@1"
+)
+
+
 # ---------------------------------------------------------------------------
 # Interface / schema identities
 # ---------------------------------------------------------------------------
@@ -644,6 +657,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_RELEASE_CANDIDATE_GATE_INTERFACE: "1",
             DATASETS_PROMOTION_OR_NON_PROMOTION_INTERFACE: "1",
             DATASETS_RESIDUAL_GAP_REPORT_INTERFACE: "1",
+            DATASETS_NEXT_BOUNDED_PILOT_INTERFACE: "1",
         }
     )
 
@@ -718,6 +732,7 @@ def _default_schema_roots() -> Mapping[str, str]:
                 DATASETS_PROMOTION_OR_NON_PROMOTION_SCHEMA
             ),
             "datasets_residual_gap_report": DATASETS_RESIDUAL_GAP_REPORT_SCHEMA,
+            "datasets_next_bounded_pilot": DATASETS_NEXT_BOUNDED_PILOT_SCHEMA,
         }
     )
 
@@ -770,6 +785,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "release_candidate_gate": "1",
             "promotion_or_non_promotion": "1",
             "residual_gap_report": "1",
+            "next_bounded_pilot": "1",
         }
     )
 
