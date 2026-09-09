@@ -227,6 +227,42 @@ UNRESOLVED_QUESTION_FORBIDDEN_FIELDS = frozenset(
 )
 _QUESTION_IDENTITY_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
+# Datasets-owned logic-constrained residual interpretation (DOEP-026).  Extends
+# the existing unresolved-question capture with sealed, closed-enum answers for
+# residual semantic gaps.  Answers are constrained to each question's typed
+# response_enum; the carrier does not dispatch specialists, execute tools,
+# admit policy, or complete objectives, and it is not a second Intent IR,
+# planner, or competing subsystem.
+LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/logic-constrained-residual-interpretation@1"
+)
+LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA_VERSION = (
+    "logic-constrained-residual-interpretation/v1"
+)
+LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/logic-constrained-residual-answer@1"
+)
+LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA_VERSION = (
+    "logic-constrained-residual-answer/v1"
+)
+LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_ID = (
+    "ipfs_datasets_py/logic/intent-ir/logic-constrained-residual-interpreter@1"
+)
+LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_VERSION = "1"
+LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY = "semantic_only"
+LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_MAX_ANSWERS = UNRESOLVED_QUESTION_MAX_QUESTIONS
+LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_MAX_REASON_CHARS = 2048
+LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_FORBIDDEN_FIELDS = frozenset(
+    UNRESOLVED_QUESTION_FORBIDDEN_FIELDS
+    | {
+        "freeform_answer",
+        "prose_answer",
+        "natural_language_answer",
+        "tool_result",
+        "provider_completion",
+    }
+)
+
 
 class IntentIRValidationError(ValueError):
     """Raised when an Intent IR document violates its canonical contract."""
@@ -3678,6 +3714,779 @@ def capture_unresolved_semantic_questions(
     return validate_unresolved_question_capture(result)
 
 
+@dataclass(frozen=True, slots=True)
+class LogicConstrainedResidualAnswer:
+    """One closed-enum residual answer bound to a sealed unresolved question.
+
+    The selected answer must be a member of the question's typed response_enum.
+    Free-form prose and tool execution are forbidden.  Accelerate alone admits
+    specialist dispatch and operational completion.
+    """
+
+    question_id: str
+    selected_answer: str
+    abstained: bool = False
+    reason_code: str = "enum_selected"
+    schema_version: str = LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_logic_constrained_residual_answer(self)
+
+    @property
+    def schema(self) -> str:
+        return LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA
+
+    @property
+    def authority(self) -> str:
+        return LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY
+
+    @property
+    def is_completion_authority(self) -> bool:
+        return False
+
+    @property
+    def can_execute_tools(self) -> bool:
+        return False
+
+    @property
+    def callers_supply_authoritative_policy(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "abstained": self.abstained,
+            "authority": LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY,
+            "can_execute_tools": False,
+            "question_id": self.question_id,
+            "reason_code": self.reason_code,
+            "schema": LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA,
+            "schema_version": self.schema_version,
+            "selected_answer": self.selected_answer,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "LogicConstrainedResidualAnswer":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualAnswer mapping must be a mapping"
+            )
+        forbidden = sorted(
+            key
+            for key in value
+            if key in LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualAnswer forbids authoritative/tool fields: "
+                + ", ".join(forbidden)
+            )
+        allowed = {
+            "abstained",
+            "authority",
+            "can_execute_tools",
+            "question_id",
+            "reason_code",
+            "schema",
+            "schema_version",
+            "selected_answer",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualAnswer has unknown fields: "
+                + ", ".join(unknown)
+            )
+        schema = value.get("schema", LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA)
+        if schema != LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA:
+            raise IntentIRValidationError(
+                f"Unsupported LogicConstrainedResidualAnswer schema: {schema!r}"
+            )
+        authority = value.get(
+            "authority", LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY
+        )
+        if authority != LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY:
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualAnswer cannot claim authority"
+            )
+        if "can_execute_tools" in value and value.get("can_execute_tools") is not False:
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualAnswer typed output cannot execute tools"
+            )
+        abstained = value.get("abstained", False)
+        if not isinstance(abstained, bool):
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualAnswer.abstained must be a bool"
+            )
+        return cls(
+            question_id=str(value.get("question_id") or ""),
+            selected_answer=str(value.get("selected_answer") or ""),
+            abstained=abstained,
+            reason_code=str(value.get("reason_code") or "enum_selected"),
+            schema_version=str(
+                value.get("schema_version")
+                or LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA_VERSION
+            ),
+        )
+
+
+def validate_logic_constrained_residual_answer(
+    value: LogicConstrainedResidualAnswer | Mapping[str, Any],
+    *,
+    allowed_answers: Sequence[str] | None = None,
+) -> LogicConstrainedResidualAnswer:
+    """Validate and return one sealed residual answer."""
+
+    if isinstance(value, Mapping):
+        value = LogicConstrainedResidualAnswer.from_dict(value)
+    if not isinstance(value, LogicConstrainedResidualAnswer):
+        raise IntentIRValidationError(
+            "LogicConstrainedResidualAnswer mappings require from_dict or a typed value"
+        )
+    if value.schema_version != LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported LogicConstrainedResidualAnswer schema_version: "
+            f"{value.schema_version!r}"
+        )
+    if not isinstance(value.question_id, str) or not _QUESTION_IDENTITY_RE.fullmatch(
+        value.question_id
+    ):
+        raise IntentIRValidationError(
+            "LogicConstrainedResidualAnswer.question_id must be a sha256 identity"
+        )
+    answer = _normalize_question_text(
+        value.selected_answer,
+        label="LogicConstrainedResidualAnswer.selected_answer",
+        maximum=UNRESOLVED_QUESTION_MAX_RESPONSE_VALUE_CHARS,
+    )
+    reason = _normalize_question_text(
+        value.reason_code,
+        label="LogicConstrainedResidualAnswer.reason_code",
+        maximum=LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_MAX_REASON_CHARS,
+    )
+    if allowed_answers is not None:
+        closed = tuple(allowed_answers)
+        if answer not in closed:
+            raise IntentIRValidationError(
+                "selected_answer is outside the question response_enum logic constraint"
+            )
+        if value.abstained and answer not in {"abstain", "request_human", "escalate_human"}:
+            # Abstention must still pick a closed abstain/escalate enum member when
+            # the question exposes one; otherwise reject.
+            if "abstain" in closed or "request_human" in closed or "escalate_human" in closed:
+                raise IntentIRValidationError(
+                    "abstained answers must select a closed abstain/escalate enum member"
+                )
+    if (
+        answer != value.selected_answer
+        or reason != value.reason_code
+    ):
+        return LogicConstrainedResidualAnswer(
+            question_id=value.question_id,
+            selected_answer=answer,
+            abstained=value.abstained,
+            reason_code=reason,
+            schema_version=value.schema_version,
+        )
+    return value
+
+
+def build_logic_constrained_residual_answer(
+    *,
+    question: UnresolvedQuestion | Mapping[str, Any],
+    selected_answer: str,
+    abstained: bool = False,
+    reason_code: str = "enum_selected",
+) -> LogicConstrainedResidualAnswer:
+    """Build one residual answer constrained by a sealed question's response_enum."""
+
+    sealed_question = validate_unresolved_question(question)
+    return validate_logic_constrained_residual_answer(
+        LogicConstrainedResidualAnswer(
+            question_id=sealed_question.question_id,
+            selected_answer=selected_answer,
+            abstained=abstained,
+            reason_code=reason_code,
+        ),
+        allowed_answers=sealed_question.response_enum,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class LogicConstrainedResidualInterpretation:
+    """Semantic-only residual interpretation after unresolved-question capture.
+
+    Parallel to :class:`UnresolvedQuestionCapture`.  Seals closed-enum answers
+    for residual questions without creating a competing Intent IR, planner, or
+    admission authority.  Typed answers cannot execute tools.
+    """
+
+    intent_id: str
+    intent_sha256: str
+    idea_sha256: str
+    normalization_sha256: str
+    capture_sha256: str
+    repository_id: str
+    board_namespace: str
+    answers: tuple[LogicConstrainedResidualAnswer, ...] = ()
+    decomposition_sha256: str = ""
+    available_capability_ids: tuple[str, ...] = ()
+    repository_analysis_cid: str = ""
+    truncated: bool = False
+    reason_code: str = "explicit_answers"
+    interpreter_id: str = LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_ID
+    interpreter_version: str = LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_VERSION
+    schema_version: str = LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_logic_constrained_residual_interpretation(self)
+
+    @property
+    def schema(self) -> str:
+        return LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA
+
+    @property
+    def authority(self) -> str:
+        return LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY
+
+    @property
+    def is_completion_authority(self) -> bool:
+        return False
+
+    @property
+    def can_execute_tools(self) -> bool:
+        return False
+
+    @property
+    def callers_supply_authoritative_policy(self) -> bool:
+        return False
+
+    @property
+    def interpretation_sha256(self) -> str:
+        payload = self.to_dict()
+        canonical = json.dumps(
+            payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "answers": [answer.to_dict() for answer in self.answers],
+            "authority": LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY,
+            "available_capability_ids": list(self.available_capability_ids),
+            "board_namespace": self.board_namespace,
+            "can_execute_tools": False,
+            "capture_sha256": self.capture_sha256,
+            "decomposition_sha256": self.decomposition_sha256,
+            "idea_sha256": self.idea_sha256,
+            "intent_id": self.intent_id,
+            "intent_sha256": self.intent_sha256,
+            "interpreter_id": self.interpreter_id,
+            "interpreter_version": self.interpreter_version,
+            "normalization_sha256": self.normalization_sha256,
+            "reason_code": self.reason_code,
+            "repository_analysis_cid": self.repository_analysis_cid,
+            "repository_id": self.repository_id,
+            "schema": LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA,
+            "schema_version": self.schema_version,
+            "truncated": self.truncated,
+        }
+
+    @classmethod
+    def from_dict(
+        cls, value: Mapping[str, Any]
+    ) -> "LogicConstrainedResidualInterpretation":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualInterpretation mapping must be a mapping"
+            )
+        forbidden = sorted(
+            key
+            for key in value
+            if key in LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualInterpretation forbids authoritative/tool "
+                "fields: " + ", ".join(forbidden)
+            )
+        allowed = {
+            "answers",
+            "authority",
+            "available_capability_ids",
+            "board_namespace",
+            "can_execute_tools",
+            "capture_sha256",
+            "decomposition_sha256",
+            "idea_sha256",
+            "intent_id",
+            "intent_sha256",
+            "interpretation_sha256",
+            "interpreter_id",
+            "interpreter_version",
+            "normalization_sha256",
+            "reason_code",
+            "repository_analysis_cid",
+            "repository_id",
+            "schema",
+            "schema_version",
+            "truncated",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualInterpretation has unknown fields: "
+                + ", ".join(unknown)
+            )
+        schema = value.get("schema", LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA)
+        if schema != LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA:
+            raise IntentIRValidationError(
+                "Unsupported LogicConstrainedResidualInterpretation schema: "
+                f"{schema!r}"
+            )
+        authority = value.get(
+            "authority", LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY
+        )
+        if authority != LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY:
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualInterpretation cannot claim authority"
+            )
+        if "can_execute_tools" in value and value.get("can_execute_tools") is not False:
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualInterpretation typed output cannot execute tools"
+            )
+        answers_raw = value.get("answers", ())
+        if isinstance(answers_raw, (str, bytes, bytearray)) or not isinstance(
+            answers_raw, Sequence
+        ):
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualInterpretation.answers must be a sequence"
+            )
+        answers: list[LogicConstrainedResidualAnswer] = []
+        for item in answers_raw:
+            if isinstance(item, LogicConstrainedResidualAnswer):
+                answers.append(item)
+            elif isinstance(item, Mapping):
+                answers.append(LogicConstrainedResidualAnswer.from_dict(item))
+            else:
+                raise IntentIRValidationError(
+                    "LogicConstrainedResidualInterpretation.answers members must be "
+                    "mappings"
+                )
+        truncated = value.get("truncated", False)
+        if not isinstance(truncated, bool):
+            raise IntentIRValidationError(
+                "LogicConstrainedResidualInterpretation.truncated must be a bool"
+            )
+        return cls(
+            intent_id=str(value.get("intent_id") or ""),
+            intent_sha256=str(value.get("intent_sha256") or ""),
+            idea_sha256=str(value.get("idea_sha256") or ""),
+            normalization_sha256=str(value.get("normalization_sha256") or ""),
+            capture_sha256=str(value.get("capture_sha256") or ""),
+            repository_id=str(value.get("repository_id") or ""),
+            board_namespace=str(value.get("board_namespace") or ""),
+            answers=tuple(answers),
+            decomposition_sha256=str(value.get("decomposition_sha256") or ""),
+            available_capability_ids=tuple(
+                str(item) for item in value.get("available_capability_ids", ())
+            ),
+            repository_analysis_cid=str(value.get("repository_analysis_cid") or ""),
+            truncated=truncated,
+            reason_code=str(value.get("reason_code") or "explicit_answers"),
+            interpreter_id=str(
+                value.get("interpreter_id") or LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_ID
+            ),
+            interpreter_version=str(
+                value.get("interpreter_version")
+                or LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_VERSION
+            ),
+            schema_version=str(
+                value.get("schema_version")
+                or LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA_VERSION
+            ),
+        )
+
+
+def validate_logic_constrained_residual_interpretation(
+    value: LogicConstrainedResidualInterpretation | Mapping[str, Any],
+    *,
+    question_capture: UnresolvedQuestionCapture | Mapping[str, Any] | None = None,
+) -> LogicConstrainedResidualInterpretation:
+    """Validate and return a :class:`LogicConstrainedResidualInterpretation`."""
+
+    if isinstance(value, Mapping):
+        value = LogicConstrainedResidualInterpretation.from_dict(value)
+    if not isinstance(value, LogicConstrainedResidualInterpretation):
+        raise IntentIRValidationError(
+            "LogicConstrainedResidualInterpretation mappings require from_dict "
+            "or a typed value"
+        )
+    if value.schema_version != LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported LogicConstrainedResidualInterpretation schema_version: "
+            f"{value.schema_version!r}"
+        )
+    if value.interpreter_id != LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_ID:
+        raise IntentIRValidationError(
+            "LogicConstrainedResidualInterpretation.interpreter_id is unsupported: "
+            f"{value.interpreter_id!r}"
+        )
+    if value.interpreter_version != LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_VERSION:
+        raise IntentIRValidationError(
+            "LogicConstrainedResidualInterpretation.interpreter_version is "
+            f"unsupported: {value.interpreter_version!r}"
+        )
+    _validate_identifier(
+        "LogicConstrainedResidualInterpretation.intent_id", value.intent_id
+    )
+    _validate_sha256(
+        "LogicConstrainedResidualInterpretation.intent_sha256", value.intent_sha256
+    )
+    _validate_sha256(
+        "LogicConstrainedResidualInterpretation.idea_sha256", value.idea_sha256
+    )
+    _validate_sha256(
+        "LogicConstrainedResidualInterpretation.normalization_sha256",
+        value.normalization_sha256,
+    )
+    _validate_sha256(
+        "LogicConstrainedResidualInterpretation.capture_sha256", value.capture_sha256
+    )
+    if value.decomposition_sha256:
+        _validate_sha256(
+            "LogicConstrainedResidualInterpretation.decomposition_sha256",
+            value.decomposition_sha256,
+        )
+    _validate_string(
+        "LogicConstrainedResidualInterpretation.repository_id", value.repository_id
+    )
+    if value.repository_id:
+        _validate_identifier(
+            "LogicConstrainedResidualInterpretation.repository_id",
+            value.repository_id,
+        )
+    _validate_string(
+        "LogicConstrainedResidualInterpretation.board_namespace",
+        value.board_namespace,
+    )
+    if value.board_namespace:
+        _validate_identifier(
+            "LogicConstrainedResidualInterpretation.board_namespace",
+            value.board_namespace,
+        )
+    _validate_non_empty_string(
+        "LogicConstrainedResidualInterpretation.reason_code", value.reason_code
+    )
+    reason_code = value.reason_code.strip()
+    _require_tuple(
+        "LogicConstrainedResidualInterpretation.answers", value.answers
+    )
+    if len(value.answers) > LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_MAX_ANSWERS:
+        raise IntentIRValidationError(
+            "LogicConstrainedResidualInterpretation.answers exceeds "
+            f"{LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_MAX_ANSWERS} members"
+        )
+
+    allowed_by_question: dict[str, tuple[str, ...]] | None = None
+    sealed_capture: UnresolvedQuestionCapture | None = None
+    if question_capture is not None:
+        sealed_capture = validate_unresolved_question_capture(question_capture)
+        if sealed_capture.capture_sha256 != value.capture_sha256:
+            raise IntentIRValidationError(
+                "interpretation capture_sha256 does not match the supplied capture"
+            )
+        if (
+            sealed_capture.intent_id != value.intent_id
+            or sealed_capture.intent_sha256 != value.intent_sha256
+            or sealed_capture.idea_sha256 != value.idea_sha256
+            or sealed_capture.normalization_sha256 != value.normalization_sha256
+        ):
+            raise IntentIRValidationError(
+                "interpretation does not bind the supplied unresolved-question capture"
+            )
+        if sealed_capture.decomposition_sha256 and (
+            sealed_capture.decomposition_sha256 != value.decomposition_sha256
+        ):
+            raise IntentIRValidationError(
+                "interpretation decomposition_sha256 does not match the capture"
+            )
+        allowed_by_question = {
+            question.question_id: question.response_enum
+            for question in sealed_capture.questions
+        }
+
+    validated_answers: list[LogicConstrainedResidualAnswer] = []
+    for answer in value.answers:
+        allowed = None
+        if allowed_by_question is not None:
+            if answer.question_id not in allowed_by_question:
+                raise IntentIRValidationError(
+                    "residual answer references a question_id absent from the capture"
+                )
+            allowed = allowed_by_question[answer.question_id]
+        validated_answers.append(
+            validate_logic_constrained_residual_answer(answer, allowed_answers=allowed)
+        )
+    question_ids = [answer.question_id for answer in validated_answers]
+    _require_unique(
+        question_ids,
+        "LogicConstrainedResidualInterpretation.answers question_id",
+    )
+    if question_ids != sorted(question_ids):
+        raise IntentIRValidationError(
+            "LogicConstrainedResidualInterpretation.answers must be sorted by "
+            "question_id"
+        )
+    if allowed_by_question is not None:
+        expected_ids = sorted(allowed_by_question)
+        if expected_ids and sorted(question_ids) != expected_ids:
+            raise IntentIRValidationError(
+                "residual answers must cover every unresolved question exactly once"
+            )
+
+    capabilities = tuple(value.available_capability_ids)
+    if isinstance(value.available_capability_ids, (str, bytes, bytearray)):
+        raise IntentIRValidationError(
+            "available_capability_ids must be a sequence of strings"
+        )
+    for capability_id in capabilities:
+        _validate_identifier(
+            "LogicConstrainedResidualInterpretation.available_capability_ids member",
+            capability_id,
+        )
+    _require_unique(
+        capabilities,
+        "LogicConstrainedResidualInterpretation.available_capability_ids member",
+    )
+    if list(capabilities) != sorted(capabilities):
+        raise IntentIRValidationError(
+            "LogicConstrainedResidualInterpretation.available_capability_ids must be "
+            "sorted"
+        )
+    analysis_cid = value.repository_analysis_cid.strip()
+    if analysis_cid:
+        _validate_identifier(
+            "LogicConstrainedResidualInterpretation.repository_analysis_cid",
+            analysis_cid,
+        )
+
+    if (
+        tuple(validated_answers) != value.answers
+        or reason_code != value.reason_code
+        or capabilities != value.available_capability_ids
+        or analysis_cid != value.repository_analysis_cid
+    ):
+        return LogicConstrainedResidualInterpretation(
+            intent_id=value.intent_id,
+            intent_sha256=value.intent_sha256,
+            idea_sha256=value.idea_sha256,
+            normalization_sha256=value.normalization_sha256,
+            capture_sha256=value.capture_sha256,
+            repository_id=value.repository_id,
+            board_namespace=value.board_namespace,
+            answers=tuple(validated_answers),
+            decomposition_sha256=value.decomposition_sha256,
+            available_capability_ids=capabilities,
+            repository_analysis_cid=analysis_cid,
+            truncated=value.truncated,
+            reason_code=reason_code,
+            interpreter_id=value.interpreter_id,
+            interpreter_version=value.interpreter_version,
+            schema_version=value.schema_version,
+        )
+    return value
+
+
+def interpret_logic_constrained_residuals(
+    normalization: DeterministicObjectiveNormalization | Mapping[str, Any],
+    *,
+    question_capture: UnresolvedQuestionCapture | Mapping[str, Any],
+    answers: Sequence[
+        LogicConstrainedResidualAnswer | Mapping[str, Any] | tuple[str, str]
+    ] = (),
+    available_capability_ids: Sequence[str] = (),
+    repository_analysis_cid: str = "",
+) -> LogicConstrainedResidualInterpretation:
+    """Interpret residual questions with logic-constrained closed-enum answers.
+
+    This is a thin extension of the existing datasets-owned intent contracts:
+    it reuses :func:`validate_deterministic_objective_normalization` and
+    :func:`validate_unresolved_question_capture`.  Explicit answers must select
+    a member of each question's response_enum.  When the capture has no
+    questions, the interpretation is empty.  The interpreter does not dispatch
+    specialists, execute tools, or create a competing planner subsystem.
+    """
+
+    if isinstance(normalization, Mapping):
+        forbidden = sorted(
+            key
+            for key in normalization
+            if key in LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_FORBIDDEN_FIELDS
+            or key in DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "residual interpretation rejects authority/tool escapes: "
+                + ", ".join(forbidden)
+            )
+    validated_normalization = validate_deterministic_objective_normalization(
+        normalization
+    )
+    if isinstance(question_capture, Mapping):
+        forbidden = sorted(
+            key
+            for key in question_capture
+            if key in LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_FORBIDDEN_FIELDS
+            or key in UNRESOLVED_QUESTION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "residual interpretation rejects authority/tool escapes: "
+                + ", ".join(forbidden)
+            )
+    validated_capture = validate_unresolved_question_capture(question_capture)
+    if (
+        validated_capture.intent_id != validated_normalization.intent_id
+        or validated_capture.normalization_sha256
+        != validated_normalization.normalization_sha256
+        or validated_capture.intent_sha256 != validated_normalization.intent_sha256
+        or validated_capture.idea_sha256 != validated_normalization.idea_sha256
+    ):
+        raise IntentIRValidationError(
+            "question capture does not bind the supplied normalization"
+        )
+
+    questions_by_id = {
+        question.question_id: question for question in validated_capture.questions
+    }
+    if isinstance(answers, (str, bytes, bytearray)) or not isinstance(
+        answers, Sequence
+    ):
+        raise IntentIRValidationError("answers must be a sequence")
+
+    sealed: list[LogicConstrainedResidualAnswer] = []
+    for item in answers:
+        if isinstance(item, LogicConstrainedResidualAnswer):
+            question = questions_by_id.get(item.question_id)
+            if question is None:
+                raise IntentIRValidationError(
+                    "residual answer references a question_id absent from the capture"
+                )
+            sealed.append(
+                validate_logic_constrained_residual_answer(
+                    item, allowed_answers=question.response_enum
+                )
+            )
+        elif isinstance(item, tuple) and len(item) == 2:
+            question_id, selected = item
+            question = questions_by_id.get(str(question_id))
+            if question is None:
+                raise IntentIRValidationError(
+                    "residual answer references a question_id absent from the capture"
+                )
+            sealed.append(
+                build_logic_constrained_residual_answer(
+                    question=question,
+                    selected_answer=str(selected),
+                )
+            )
+        elif isinstance(item, Mapping):
+            payload = dict(item)
+            question_id = str(payload.get("question_id") or "")
+            question = questions_by_id.get(question_id)
+            if question is None and question_id:
+                raise IntentIRValidationError(
+                    "residual answer references a question_id absent from the capture"
+                )
+            if question is None and len(questions_by_id) == 1 and not question_id:
+                question = next(iter(questions_by_id.values()))
+                payload["question_id"] = question.question_id
+            if question is None:
+                raise IntentIRValidationError(
+                    "residual answer requires a question_id bound to the capture"
+                )
+            sealed.append(
+                build_logic_constrained_residual_answer(
+                    question=question,
+                    selected_answer=str(payload.get("selected_answer") or ""),
+                    abstained=bool(payload.get("abstained", False)),
+                    reason_code=str(payload.get("reason_code") or "enum_selected"),
+                )
+            )
+        else:
+            raise IntentIRValidationError(
+                "answers members must be LogicConstrainedResidualAnswer values, "
+                "mappings, or (question_id, selected_answer) pairs"
+            )
+
+    if isinstance(available_capability_ids, (str, bytes, bytearray)) or not isinstance(
+        available_capability_ids, Sequence
+    ):
+        raise IntentIRValidationError(
+            "available_capability_ids must be a sequence of strings"
+        )
+    capabilities = tuple(
+        sorted(
+            {
+                str(item).strip()
+                for item in available_capability_ids
+                if str(item).strip()
+            }
+        )
+    )
+    for capability_id in capabilities:
+        _validate_identifier("available_capability_ids member", capability_id)
+    if repository_analysis_cid is not None and not isinstance(
+        repository_analysis_cid, str
+    ):
+        raise IntentIRValidationError("repository_analysis_cid must be a string")
+    analysis_cid = repository_analysis_cid.strip() if repository_analysis_cid else ""
+    if analysis_cid:
+        _validate_identifier("repository_analysis_cid", analysis_cid)
+
+    truncated = False
+    if not validated_capture.questions:
+        if sealed:
+            raise IntentIRValidationError(
+                "answers cannot be supplied when the capture has no unresolved questions"
+            )
+        reason_code = "no_residuals"
+    elif not sealed:
+        raise IntentIRValidationError(
+            "residual answers must cover every unresolved question exactly once"
+        )
+    else:
+        reason_code = "explicit_answers"
+
+    if len(sealed) > LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_MAX_ANSWERS:
+        sealed = sealed[:LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_MAX_ANSWERS]
+        truncated = True
+        reason_code = "truncated_answers"
+
+    sealed.sort(key=lambda item: item.question_id)
+    result = LogicConstrainedResidualInterpretation(
+        intent_id=validated_normalization.intent_id,
+        intent_sha256=validated_normalization.intent_sha256,
+        idea_sha256=validated_normalization.idea_sha256,
+        normalization_sha256=validated_normalization.normalization_sha256,
+        capture_sha256=validated_capture.capture_sha256,
+        repository_id=validated_normalization.repository_id,
+        board_namespace=validated_normalization.board_namespace,
+        answers=tuple(sealed),
+        decomposition_sha256=validated_capture.decomposition_sha256,
+        available_capability_ids=capabilities,
+        repository_analysis_cid=analysis_cid,
+        truncated=truncated,
+        reason_code=reason_code,
+    )
+    return validate_logic_constrained_residual_interpretation(
+        result, question_capture=validated_capture
+    )
+
+
 __all__ = [
     "AdmissibleDecisionImpact",
     "CollectionSemantics",
@@ -3692,6 +4501,15 @@ __all__ = [
     "INTENT_IR_SCHEMA_VERSION",
     "INTENT_IR_COLLECTION_SEMANTICS",
     "LEGACY_INTENT_IR_SCHEMA_VERSION",
+    "LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA",
+    "LOGIC_CONSTRAINED_RESIDUAL_ANSWER_SCHEMA_VERSION",
+    "LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_AUTHORITY",
+    "LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_FORBIDDEN_FIELDS",
+    "LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_MAX_ANSWERS",
+    "LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA",
+    "LOGIC_CONSTRAINED_RESIDUAL_INTERPRETATION_SCHEMA_VERSION",
+    "LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_ID",
+    "LOGIC_CONSTRAINED_RESIDUAL_INTERPRETER_VERSION",
     "OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS",
     "OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA",
     "OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION",
@@ -3730,6 +4548,8 @@ __all__ = [
     "IntentStatement",
     "KnownObjectiveClass",
     "KnownObjectiveClassRule",
+    "LogicConstrainedResidualAnswer",
+    "LogicConstrainedResidualInterpretation",
     "MinimumSpecialistCapability",
     "NodeGrounding",
     "ObjectiveMaterializationReceipt",
@@ -3743,16 +4563,20 @@ __all__ = [
     "SupervisorObjectiveSubmitterKind",
     "UnresolvedQuestion",
     "UnresolvedQuestionCapture",
+    "build_logic_constrained_residual_answer",
     "build_unresolved_question",
     "capture_unresolved_semantic_questions",
     "decompose_supervisor_objective_by_rules",
     "idea_text_sha256",
+    "interpret_logic_constrained_residuals",
     "list_known_objective_class_rules",
     "normalize_supervisor_objective_deterministically",
     "supervisor_objective_intent_sha256",
     "unresolved_question_identity_for",
     "validate_deterministic_objective_normalization",
     "validate_intent_ir",
+    "validate_logic_constrained_residual_answer",
+    "validate_logic_constrained_residual_interpretation",
     "validate_objective_materialization_receipt",
     "validate_rule_driven_decomposition_child",
     "validate_rule_driven_objective_decomposition",

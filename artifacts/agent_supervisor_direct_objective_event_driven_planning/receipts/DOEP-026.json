@@ -1,0 +1,124 @@
+{
+  "authority": {
+    "canonical_semantic_identity": "ipfs_datasets_py",
+    "ducklake_authority": false,
+    "exact_bytes_cid_storage": "ipfs_kit_py",
+    "model_output_is_completion_authority": false,
+    "operational_admission": "ipfs_accelerate_py"
+  },
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "candidate_status": "implemented",
+  "changed_paths": [
+    "ipfs_datasets_py/logic/intent_ir/schema.py",
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-026.json"
+  ],
+  "completion_authoritative": false,
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/intent_ir/schema.py",
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-026.json"
+  ],
+  "goal_id": "DOEP-G030.S2",
+  "no_competing_subsystem_created": true,
+  "observed_at": "2026-09-09T00:00:00Z",
+  "outputs_present": {
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-026.json": true,
+    "ipfs_datasets_py/logic/intent_ir/schema.py": true,
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py": true
+  },
+  "parent_goal_id": "DOEP-G030",
+  "path_digests": {
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json": "sha256:be4b3025f711564167bc053f66f0fdc69bbee76288132935785904cd53c3ff03",
+    "ipfs_datasets_py/logic/intent_ir/schema.py": "sha256:89f25b2f7e2ed5faf2c01a42cbbea0e94c2f70e7e30ac95988b1b62c4f07af71",
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py": "sha256:f9d76fc81d9107eaee75b8ebba4c224805232117862144599f1808aa05bc8d83"
+  },
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "plan_revision": "DOEP-PLAN-V5",
+  "required_evidence": {
+    "changed_path_digest": "sha256:8f4c9331eee7cb59cd13ea9cfe8122988cb0a96d093656dd1447420b9303bf2f",
+    "limitations": [
+      "Candidate LogicConstrainedResidualInterpretation receipt only; independent fenced supervisor admission is required.",
+      "Worker or model assertion alone is insufficient for task completion.",
+      "Residual interpretation is semantic-only; it does not dispatch specialists, execute tools, or grant completion authority.",
+      "Typed residual answers are closed string enums constrained by each unresolved question and cannot execute tools.",
+      "Operational admission and execution remain with ipfs_accelerate_py.",
+      "Exact bytes, CID persistence, and recovery remain with ipfs_kit_py.",
+      "Digests bind the exact declared non-receipt outputs at observation time.",
+      "No competing Intent IR or objective subsystem was created; IntentIRDocument remains the skill-corpus contract."
+    ],
+    "receipt_cid": {
+      "reason": "ipfs CLI absent from sealed validation PATH; SHA-256 is not substituted for a CID.",
+      "status": "unavailable"
+    },
+    "source_commit_tree_gitlinks": {
+      "ipfs_accelerate_py": {
+        "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+        "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+      },
+      "ipfs_datasets_py": {
+        "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+        "tree": "456e09b51d6a07a3a5873436df24054768195320"
+      },
+      "ipfs_kit_py": {
+        "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+        "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+      },
+      "lift_coding": {
+        "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+        "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+      }
+    },
+    "test_proof_results": {
+      "proof_reason": "Logic-constrained residual interpretation is exercised by pytest; no formal prover selected.",
+      "proof_selection": "verified_empty",
+      "validation_command": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
+        "-q"
+      ]
+    },
+    "verifier_admission": "pending_independent_fenced_supervisor"
+  },
+  "rollback": {
+    "destructive_effects": false,
+    "procedure": "Revert the four declared DOEP-026 outputs and invalidate consumers of LogicConstrainedResidualInterpretation; do not alter IntentIRDocument skill-corpus semantics, DeterministicObjectiveNormalization, RuleDrivenObjectiveDecomposition, UnresolvedQuestionCapture, protected plan documents, or dependency-contract pyproject files."
+  },
+  "root_goal_id": "DOEP-G000",
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "supervisor_acceptance": {
+    "completion_authoritative": false,
+    "state": "pending_independent_fenced_supervisor"
+  },
+  "task_cid": "sha256:4ab35f3d7e16a40e9c3ca9447929d149d79c54daf9f62ff955a45b37cea2c3fc",
+  "task_id": "DOEP-026",
+  "title": "Add logic-constrained residual interpretation",
+  "validation": {
+    "commands": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
+          "-q"
+        ],
+        "cwd": "external/ipfs_datasets",
+        "status": "candidate_local"
+      }
+    ]
+  },
+  "worker_completion_insufficient": true,
+  "write_scope": [
+    "ipfs_datasets_py/logic/intent_ir/schema.py",
+    "tests/doep/test_doep_026_add_logic_constrained_residual_interpretation.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-026.json"
+  ]
+}
