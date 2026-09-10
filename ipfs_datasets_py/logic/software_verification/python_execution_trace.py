@@ -1138,9 +1138,9 @@ class PythonExecutionTracer:
                 except TraceCancellation as cancelled:
                     self._cancelled = cancelled
                     self._admission_open = False
-                except HermeticIsolationError:
+                except (PythonExecutionTraceError, ProgramExecutionError):
                     raise
-                except BaseException as error:
+                except Exception as error:
                     raised = error
         finally:
             sys.settrace(previous_trace)
@@ -1166,18 +1166,27 @@ class PythonExecutionTracer:
         self._denied_effects.append(name)
         self._unavailable.add("external")
         if self._admission_open and self.policy.admits(EventKind.EXTERNAL.value):
-            frame = sys._getframe(1)
-            while frame is not None and _is_internal_frame(frame):
-                frame = frame.f_back
-            if frame is not None:
-                self._emit(
-                    frame,
-                    EventKind.EXTERNAL.value,
-                    payload={"denied": True, "effect": name},
-                    observation_status=ObservationStatus.UNAVAILABLE.value,
-                    completeness=CompletenessClaim.PARTIAL.value,
-                    extra_unavailable=("external",),
-                )
+            # Unlike ordinary trace callbacks, denial hooks run inside the
+            # target call. Do not recursively trace the evidence builder.
+            previous_trace, previous_profile = sys.gettrace(), sys.getprofile()
+            sys.settrace(None)
+            sys.setprofile(None)
+            try:
+                frame = sys._getframe(1)
+                while frame is not None and _is_internal_frame(frame):
+                    frame = frame.f_back
+                if frame is not None:
+                    self._emit(
+                        frame,
+                        EventKind.EXTERNAL.value,
+                        payload={"denied": True, "effect": name},
+                        observation_status=ObservationStatus.UNAVAILABLE.value,
+                        completeness=CompletenessClaim.PARTIAL.value,
+                        extra_unavailable=("external",),
+                    )
+            finally:
+                sys.settrace(previous_trace)
+                sys.setprofile(previous_profile)
 
     def _subject_frame(self, frame: FrameType) -> bool:
         if self._target_code is None or _is_internal_frame(frame):
@@ -1293,7 +1302,7 @@ class PythonExecutionTracer:
             if type(arg) is str:
                 payload = {"bounded": True, "type": "str"}
             else:
-                summary, redacted = self.redactor.redact_value(
+                summary, redacted, _remaining_budget = self.redactor.redact_value(
                     arg, budget=min(256, self.policy.max_payload_bytes)
                 )
                 payload = {"bounded": True, "value": _drop_secret_keys(summary)}
@@ -1652,7 +1661,7 @@ class PythonExecutionTracer:
             self._unavailable.add("trace_prefix")
         if cancelled is not None:
             self._unavailable.add("cancelled")
-        result_summary, result_redacted = self.redactor.redact_value(
+        result_summary, result_redacted, _remaining_budget = self.redactor.redact_value(
             result, budget=min(512, self.policy.max_payload_bytes)
         )
         self._redacted.update(result_redacted)
