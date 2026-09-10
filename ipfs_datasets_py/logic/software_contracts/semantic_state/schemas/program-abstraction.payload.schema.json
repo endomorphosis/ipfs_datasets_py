@@ -1,0 +1,387 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/program-abstraction.payload.schema.json",
+  "title": "State-abstraction profiles and abstract-state identity v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned versioned next-call, next-event, inverse-trace, and repair abstraction profiles, canonical abstract-state identity, soundness results, and work receipts. Only declared irrelevant addresses, timestamps, IDs, paths, order, values, and heap regions may be normalized. Unknown relevance widens rather than normalizes. Unproved heap or value omission cannot admit reuse. Uncertainty and unsound profiles fail closed. Canonical bytes and CIDv1 come from software_contracts.content over ir_core collection-canonical DAG-JSON. Unknown fields, unsupported schema versions, floats, and nonfinite numbers are rejected.",
+  "oneOf": [
+    { "$ref": "#/$defs/stateAbstractionProfile" },
+    { "$ref": "#/$defs/canonicalAbstractState" },
+    { "$ref": "#/$defs/abstractionSoundnessResult" },
+    { "$ref": "#/$defs/stateAbstractionReceipt" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringSet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nfcString" }
+    },
+    "nfcStringSetNonEmpty": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nfcString" }
+    },
+    "strictDagJson": {
+      "description": "Strict DAG-JSON value: null, bool, safe int, string, array, or string-keyed object. Floats and host types are rejected by the Python decoder.",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        { "type": "string", "maxLength": 16384 },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/strictDagJson" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+        }
+      ]
+    },
+    "strictObject": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+    },
+    "programLanguage": {
+      "type": "string",
+      "enum": ["python"]
+    },
+    "queryFamily": {
+      "type": "string",
+      "enum": ["next_call", "next_event", "inverse_trace", "repair"]
+    },
+    "irrelevantCategory": {
+      "type": "string",
+      "enum": [
+        "addresses",
+        "timestamps",
+        "ids",
+        "paths",
+        "order",
+        "values",
+        "heap_regions"
+      ]
+    },
+    "irrelevantCategorySet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/irrelevantCategory" }
+    },
+    "observationStatus": {
+      "type": "string",
+      "enum": ["observed", "unavailable", "redacted", "inferred_untrusted"]
+    },
+    "completenessClaim": {
+      "type": "string",
+      "enum": ["full_state", "partial", "unavailable"]
+    },
+    "abstractionSoundnessClaim": {
+      "type": "string",
+      "enum": ["over_approximation", "under_approximation", "exact", "unknown"]
+    },
+    "forbiddenIdentityFields": {
+      "not": {
+        "anyOf": [
+          { "required": ["timestamp"] },
+          { "required": ["timestamps"] },
+          { "required": ["wall_clock"] },
+          { "required": ["observed_at"] },
+          { "required": ["hostname"] },
+          { "required": ["pid"] },
+          { "required": ["embedding"] },
+          { "required": ["embeddings"] },
+          { "required": ["similarity"] },
+          { "required": ["hnsw"] },
+          { "required": ["secret"] },
+          { "required": ["password"] },
+          { "required": ["api_key"] },
+          { "required": ["access_token"] },
+          { "required": ["raw_memory"] }
+        ]
+      }
+    },
+    "reuseClosedWhenUnknown": {
+      "if": {
+        "properties": {
+          "soundness_claim": {
+            "enum": ["unknown", "under_approximation"]
+          }
+        },
+        "required": ["soundness_claim"]
+      },
+      "then": {
+        "properties": { "reuse_admitted": { "const": false } }
+      }
+    },
+    "completenessConstraints": {
+      "allOf": [
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "unavailable_dimensions": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "completeness_claim": { "enum": ["partial", "unavailable"] }
+            },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "unavailable_dimensions": { "minItems": 1 }
+            },
+            "required": ["unavailable_dimensions"]
+          }
+        }
+      ]
+    },
+    "stateAbstractionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "profile_name",
+        "query_family",
+        "relevant_dimensions",
+        "irrelevant_normalizations",
+        "omitted_heap_regions",
+        "omitted_value_paths",
+        "heap_omission_proved",
+        "value_omission_proved",
+        "soundness_claim",
+        "unavailable_dimensions",
+        "environment_binding_cid",
+        "transition_slice_cid",
+        "profile_version",
+        "reuse_admitted",
+        "abstraction_profile_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.state-abstraction-profile@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "profile_name": { "$ref": "#/$defs/nfcString" },
+        "query_family": { "$ref": "#/$defs/queryFamily" },
+        "relevant_dimensions": { "$ref": "#/$defs/nfcStringSetNonEmpty" },
+        "irrelevant_normalizations": { "$ref": "#/$defs/irrelevantCategorySet" },
+        "omitted_heap_regions": { "$ref": "#/$defs/nfcStringSet" },
+        "omitted_value_paths": { "$ref": "#/$defs/nfcStringSet" },
+        "heap_omission_proved": { "type": "boolean" },
+        "value_omission_proved": { "type": "boolean" },
+        "soundness_claim": { "$ref": "#/$defs/abstractionSoundnessClaim" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "environment_binding_cid": { "$ref": "#/$defs/cidOrNull" },
+        "transition_slice_cid": { "$ref": "#/$defs/cidOrNull" },
+        "profile_version": { "$ref": "#/$defs/nfcString" },
+        "reuse_admitted": { "type": "boolean" },
+        "abstraction_profile_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        { "$ref": "#/$defs/forbiddenIdentityFields" },
+        { "$ref": "#/$defs/reuseClosedWhenUnknown" },
+        {
+          "if": {
+            "properties": { "query_family": { "const": "inverse_trace" } },
+            "required": ["query_family"]
+          },
+          "then": {
+            "properties": {
+              "irrelevant_normalizations": {
+                "not": { "contains": { "const": "order" } }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "soundness_claim": { "const": "exact" } },
+            "required": ["soundness_claim"]
+          },
+          "then": {
+            "properties": {
+              "omitted_heap_regions": { "maxItems": 0 },
+              "omitted_value_paths": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "heap_omission_proved": { "const": false } },
+            "required": ["heap_omission_proved"]
+          },
+          "then": {
+            "properties": {
+              "omitted_heap_regions": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "value_omission_proved": { "const": false } },
+            "required": ["value_omission_proved"]
+          },
+          "then": {
+            "properties": {
+              "omitted_value_paths": { "maxItems": 0 }
+            }
+          }
+        }
+      ]
+    },
+    "canonicalAbstractState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "query_family",
+        "abstraction_profile_cid",
+        "tree_cid",
+        "environment_binding_cid",
+        "code_cid",
+        "abstract_state",
+        "unavailable_dimensions",
+        "observation_status",
+        "completeness_claim",
+        "canonical_abstract_state_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.canonical-abstract-state@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "query_family": { "$ref": "#/$defs/queryFamily" },
+        "abstraction_profile_cid": { "$ref": "#/$defs/cid" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "code_cid": { "$ref": "#/$defs/cid" },
+        "abstract_state": { "$ref": "#/$defs/strictObject" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "observation_status": { "$ref": "#/$defs/observationStatus" },
+        "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
+        "canonical_abstract_state_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        { "$ref": "#/$defs/forbiddenIdentityFields" },
+        { "$ref": "#/$defs/completenessConstraints" }
+      ]
+    },
+    "abstractionSoundnessResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "query_family",
+        "abstraction_profile_cid",
+        "soundness_claim",
+        "reuse_admitted",
+        "omitted_heap_proved",
+        "omitted_values_proved",
+        "unknown_relevance_dimensions",
+        "unavailable_dimensions",
+        "transition_slice_cid",
+        "abstraction_soundness_result_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.abstraction-soundness-result@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "query_family": { "$ref": "#/$defs/queryFamily" },
+        "abstraction_profile_cid": { "$ref": "#/$defs/cid" },
+        "soundness_claim": { "$ref": "#/$defs/abstractionSoundnessClaim" },
+        "reuse_admitted": { "type": "boolean" },
+        "omitted_heap_proved": { "type": "boolean" },
+        "omitted_values_proved": { "type": "boolean" },
+        "unknown_relevance_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "transition_slice_cid": { "$ref": "#/$defs/cidOrNull" },
+        "abstraction_soundness_result_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        { "$ref": "#/$defs/forbiddenIdentityFields" },
+        { "$ref": "#/$defs/reuseClosedWhenUnknown" },
+        {
+          "if": {
+            "properties": {
+              "unknown_relevance_dimensions": { "minItems": 1 }
+            },
+            "required": ["unknown_relevance_dimensions"]
+          },
+          "then": {
+            "properties": { "reuse_admitted": { "const": false } }
+          }
+        }
+      ]
+    },
+    "stateAbstractionReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "query_family",
+        "raw_execution_state_cid",
+        "abstract_program_state_cid",
+        "canonical_abstract_state_cid",
+        "abstraction_profile_cid",
+        "soundness_result_cid",
+        "soundness_claim",
+        "reuse_admitted",
+        "unavailable_dimensions",
+        "state_abstraction_receipt_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-abstraction-receipt@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "query_family": { "$ref": "#/$defs/queryFamily" },
+        "raw_execution_state_cid": { "$ref": "#/$defs/cid" },
+        "abstract_program_state_cid": { "$ref": "#/$defs/cid" },
+        "canonical_abstract_state_cid": { "$ref": "#/$defs/cid" },
+        "abstraction_profile_cid": { "$ref": "#/$defs/cid" },
+        "soundness_result_cid": { "$ref": "#/$defs/cid" },
+        "soundness_claim": { "$ref": "#/$defs/abstractionSoundnessClaim" },
+        "reuse_admitted": { "type": "boolean" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "state_abstraction_receipt_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        { "$ref": "#/$defs/forbiddenIdentityFields" },
+        { "$ref": "#/$defs/reuseClosedWhenUnknown" }
+      ]
+    }
+  }
+}
