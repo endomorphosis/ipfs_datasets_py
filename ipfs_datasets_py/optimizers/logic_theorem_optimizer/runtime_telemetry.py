@@ -31,6 +31,40 @@ from typing import Any, Final, Optional
 RUNTIME_TELEMETRY_SCHEMA_VERSION: Final = "legal-ir-runtime-telemetry-v1"
 RUNTIME_PHASE_TELEMETRY_SCHEMA_VERSION: Final = RUNTIME_TELEMETRY_SCHEMA_VERSION
 RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION: Final = "legal-ir-runtime-resources-v1"
+COST_ACCOUNTING_SCHEMA_VERSION: Final = "legal-ir-cost-accounting-v1"
+
+PAPER_COST_PHASES: Final = (
+    "setup",
+    "preparation",
+    "annotation",
+    "target_construction",
+    "features",
+    "indexing",
+    "updates_selection",
+    "model_calls",
+    "failed_attempts",
+    "proof_reconstruction",
+    "validation",
+    "review",
+)
+REQUIRED_PAPER_COST_PHASES: Final = frozenset(PAPER_COST_PHASES)
+COST_QUANTITY_KINDS: Final = ("measured", "estimated", "provider", "unmeasured")
+COST_QUANTITIES: Final = (
+    "elapsed_seconds",
+    "cpu_seconds",
+    "gpu_seconds",
+    "provider_units",
+    "memory_gib",
+    "human_review_seconds",
+)
+COST_UNITS: Final = {
+    "elapsed_seconds": "seconds",
+    "cpu_seconds": "cpu_seconds",
+    "gpu_seconds": "gpu_seconds",
+    "provider_units": "provider_units",
+    "memory_gib": "gibibytes",
+    "human_review_seconds": "seconds",
+}
 
 LEGAL_IR_VIEW_PHASES: Final = (
     "legal_ir_view.deontic",
@@ -110,7 +144,12 @@ _SAFE_ATTRIBUTE_KEYS: Final = frozenset(
         "block",
         "cache_enabled",
         "cache_kind",
+        "cache_state",
+        "cost_kind",
+        "cost_unit",
         "dataset",
+        "device",
+        "device_kind",
         "enabled",
         "epoch_count",
         "error_type",
@@ -118,18 +157,24 @@ _SAFE_ATTRIBUTE_KEYS: Final = frozenset(
         "failure_count",
         "formula_count",
         "frame_candidate_count",
+        "hardware",
+        "hardware_id",
         "max_inner_iterations",
         "max_items",
         "metric_sample_id",
         "mode",
         "obligation_count",
+        "observation_kind",
         "parallel_workers",
         "phase_alias",
+        "precision",
+        "quantity_kind",
         "reason",
         "sample_count",
         "sample_index",
         "sample_timeout_seconds",
         "scope",
+        "speedup_status",
         "stage",
         "status",
         "train_sample_count",
@@ -139,6 +184,44 @@ _SAFE_ATTRIBUTE_KEYS: Final = frozenset(
         "worker_id",
     }
 )
+
+_PAPER_COST_PHASE_ALIASES: Final = {
+    "setup": "setup",
+    "merge": "setup",
+    "state_persistence": "setup",
+    "codex_queue_wait": "setup",
+    "preparation": "preparation",
+    "sampling": "preparation",
+    "annotation": "annotation",
+    "target_construction": "target_construction",
+    "compilation": "target_construction",
+    "decoding": "target_construction",
+    "compiler_ir_train": "target_construction",
+    "features": "features",
+    "embeddings": "features",
+    "indexing": "indexing",
+    "cache_lookup": "indexing",
+    "premise_selection": "indexing",
+    "updates_selection": "updates_selection",
+    "projection_training": "updates_selection",
+    "gradient_updates": "updates_selection",
+    "model_calls": "model_calls",
+    "leanstral_queue": "model_calls",
+    "leanstral_inference": "model_calls",
+    "failed_attempts": "failed_attempts",
+    "retry": "failed_attempts",
+    "retries": "failed_attempts",
+    "failed_candidate": "failed_attempts",
+    "proof_search": "failed_attempts",
+    "solver_execution": "failed_attempts",
+    "proof_reconstruction": "proof_reconstruction",
+    "lean_reconstruction": "proof_reconstruction",
+    "validation": "validation",
+    "bridge_evaluation": "validation",
+    "disagreement_export": "validation",
+    "review": "review",
+    "human_review": "review",
+}
 
 
 def _utc_now() -> str:
@@ -162,6 +245,23 @@ def canonical_runtime_phase(phase: str) -> str:
     if value.startswith("legal_ir_view."):
         return value if value in REQUIRED_RUNTIME_PHASES else "legal_ir_view.unknown"
     return _PHASE_ALIASES.get(value, value)
+
+
+def canonical_paper_cost_phase(phase: str) -> str:
+    """Map a runtime or paper phase label onto the AF-020 cost catalog."""
+
+    value = str(phase or "").strip().lower().replace(" ", "_").replace("/", "_")
+    if value in REQUIRED_PAPER_COST_PHASES:
+        return value
+    if value.startswith("legal_ir_view."):
+        return "target_construction"
+    mapped = _PAPER_COST_PHASE_ALIASES.get(value)
+    if mapped:
+        return mapped
+    runtime = canonical_runtime_phase(value)
+    if runtime.startswith("legal_ir_view."):
+        return "target_construction"
+    return _PAPER_COST_PHASE_ALIASES.get(runtime, "setup")
 
 
 def _safe_identifier(value: Any) -> str:
@@ -999,6 +1099,14 @@ class RuntimeTelemetry:
             "status": str(status or "unknown")[:64],
             "unit_count": round(units, 6),
             "throughput_per_second": round(units / duration, 9) if duration > 0 else 0.0,
+            "throughput_status": (
+                "measured"
+                if duration > 0 and units > 0
+                else "undefined_zero_duration"
+                if duration <= 0
+                else "undefined_zero_units"
+            ),
+            "cost_phase": canonical_paper_cost_phase(span.phase),
             "cache_hit": observed_cache_hit,
             "resources_start": span.resource_start.to_dict(),
             "resources_end": resource_end.to_dict(),
@@ -1263,6 +1371,8 @@ class RuntimeTelemetry:
                 "duration_seconds": round(seconds, 9),
                 "unit_count": round(units, 6),
                 "throughput_per_second": round(units / seconds, 9) if seconds else 0.0,
+                "throughput_status": "measured" if seconds > 0 and units > 0 else "unmeasured",
+                "cost_phase": canonical_paper_cost_phase(phase),
                 "cache_hits": hits,
                 "cache_misses": misses,
                 "cache_hit_rate": round(hits / lookups, 9) if lookups else None,
@@ -1298,6 +1408,11 @@ class RuntimeTelemetry:
         }
 
     summary = to_dict
+
+    def cost_ledger(self, **kwargs: Any) -> "CostLedger":
+        """Build a paper-facing cost ledger from retained spans."""
+
+        return CostLedger.from_telemetry(self, **kwargs)
 
 
 def _summarize_resources(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -1358,6 +1473,458 @@ def _summarize_resources(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]
     return summary
 
 
+def _finite_nonnegative(value: Any) -> Optional[float]:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number) or number < 0.0:
+        return None
+    return number
+
+
+def classify_cost_quantity(
+    value: Any,
+    *,
+    quantity: str,
+    observed: bool = True,
+    kind: Optional[str] = None,
+    hardware_available: Optional[bool] = None,
+    reason: str = "",
+) -> dict[str, Any]:
+    """Return an explicit measured/estimated/provider/unmeasured cost cell.
+
+    Unavailable hardware is never rewritten as a measured zero.  CPU seconds
+    are never inferred from elapsed wall time.  Estimated and provider figures
+    stay labeled as such.
+    """
+
+    name = str(quantity or "elapsed_seconds")
+    unit = COST_UNITS.get(name, name)
+    requested = str(kind or "").strip().lower() or None
+    if requested not in COST_QUANTITY_KINDS and requested is not None:
+        requested = None
+    number = _finite_nonnegative(value)
+    hardware_blocks_gpu = name == "gpu_seconds" and hardware_available is not True
+    if hardware_blocks_gpu:
+        return {
+            "quantity": name,
+            "unit": unit,
+            "value": None,
+            "kind": "unmeasured",
+            "observed": False,
+            "reason": reason
+            or "CUDA/GPU hardware unavailable or unmeasured; not a zero-cost result",
+        }
+    if requested in {"estimated", "provider"}:
+        return {
+            "quantity": name,
+            "unit": unit,
+            "value": None if number is None else round(number, 9),
+            "kind": requested,
+            "observed": bool(observed and number is not None),
+            "reason": reason or f"{requested} cost is not a wall-clock measurement",
+        }
+    if not observed or number is None:
+        return {
+            "quantity": name,
+            "unit": unit,
+            "value": None,
+            "kind": "unmeasured",
+            "observed": False,
+            "reason": reason or f"{name} was not independently observed",
+        }
+    return {
+        "quantity": name,
+        "unit": unit,
+        "value": round(number, 9),
+        "kind": "measured",
+        "observed": True,
+        "reason": reason or "retained run or usage record",
+    }
+
+
+def gpu_cost_from_observation(
+    gpu_seconds: Any = None,
+    *,
+    cuda_available: Optional[bool] = None,
+    gpu_telemetry_available: Optional[bool] = None,
+    claimed_hardware: str = "",
+    reason: str = "",
+) -> dict[str, Any]:
+    """GPU seconds are unmeasured unless CUDA actually ran."""
+
+    claimed = str(claimed_hardware or "").strip().lower()
+    hardware_ok = cuda_available is True or (
+        claimed in {"cuda", "gpu"} and gpu_telemetry_available is True
+    )
+    if not hardware_ok:
+        return classify_cost_quantity(
+            None,
+            quantity="gpu_seconds",
+            observed=False,
+            hardware_available=False,
+            reason=reason
+            or "CUDA/GPU hardware unavailable or unmeasured; not a zero-cost result",
+        )
+    return classify_cost_quantity(
+        gpu_seconds,
+        quantity="gpu_seconds",
+        observed=gpu_seconds is not None,
+        hardware_available=True,
+        reason=reason,
+    )
+
+
+def hardware_precision_record(
+    *,
+    hardware: str,
+    precision: str,
+    cache_state: str,
+    cuda_available: Optional[bool] = None,
+    gpu_telemetry_available: Optional[bool] = None,
+    device: str = "",
+    notes: str = "",
+) -> dict[str, Any]:
+    """Return the explicit hardware/precision/cache fields required by AF-020."""
+
+    hw = str(hardware or "unmeasured").strip() or "unmeasured"
+    prec = str(precision or "unmeasured").strip() or "unmeasured"
+    cache = str(cache_state or "unknown").strip() or "unknown"
+    return {
+        "hardware": hw,
+        "precision": prec,
+        "cache_state": cache,
+        "device": str(device or hw),
+        "cuda_available": cuda_available,
+        "gpu_telemetry_available": bool(gpu_telemetry_available),
+        "notes": notes,
+    }
+
+
+def matched_throughput(
+    baseline: Optional[Mapping[str, Any]],
+    treatment: Optional[Mapping[str, Any]],
+    *,
+    comparison: str = "speedup",
+) -> dict[str, Any]:
+    """Compute throughput/speedup only from matched actual runs.
+
+    Missing CUDA, unmatched samples, synthetic dry-runs, or incomplete
+    hardware/precision/cache labels yield ``unmeasured`` with a null value.
+    Unavailable hardware is never a 0.0 or 1.0x result.
+    """
+
+    def _run(payload: Optional[Mapping[str, Any]], label: str) -> dict[str, Any]:
+        if not isinstance(payload, Mapping):
+            return {"ok": False, "reason": f"{label} actual run is absent"}
+        if payload.get("synthetic") or payload.get("dry_run"):
+            return {"ok": False, "reason": f"{label} is a dry-run/synthetic summary"}
+        status = str(payload.get("execution_status") or payload.get("status") or "")
+        if status and status not in {"measured", "ok", "success"}:
+            return {"ok": False, "reason": f"{label} was not a measured actual run ({status})"}
+        elapsed = _finite_nonnegative(
+            payload.get("elapsed_seconds")
+            if payload.get("elapsed_seconds") is not None
+            else payload.get("duration_seconds")
+        )
+        if elapsed is None or elapsed <= 0.0:
+            return {"ok": False, "reason": f"{label} has no measured positive elapsed seconds"}
+        hardware = str(payload.get("hardware") or "").strip()
+        precision = str(payload.get("precision") or "").strip()
+        cache_state = str(payload.get("cache_state") or "").strip()
+        if not hardware or hardware == "unmeasured":
+            return {"ok": False, "reason": f"{label} hardware is not explicit"}
+        if not precision or precision == "unmeasured":
+            return {"ok": False, "reason": f"{label} precision is not explicit"}
+        if not cache_state or cache_state in {"unknown", "unmeasured"}:
+            return {"ok": False, "reason": f"{label} cache state is not explicit"}
+        units = _finite_nonnegative(payload.get("unit_count"))
+        sample_ids = payload.get("sample_ids")
+        identity = payload.get("matched_identity") or sample_ids or payload.get("unit_identity")
+        return {
+            "ok": True,
+            "elapsed_seconds": elapsed,
+            "unit_count": units,
+            "hardware": hardware,
+            "precision": precision,
+            "cache_state": cache_state,
+            "identity": identity,
+            "throughput_per_second": None if units is None or elapsed <= 0 else units / elapsed,
+        }
+
+    left = _run(baseline, "baseline")
+    right = _run(treatment, "treatment")
+    if not left["ok"] or not right["ok"]:
+        return {
+            "schema_version": COST_ACCOUNTING_SCHEMA_VERSION,
+            "comparison": comparison,
+            "status": "unmeasured",
+            "value": None,
+            "unit": "ratio",
+            "reason": left.get("reason") or right.get("reason") or "matched actual runs are unavailable",
+            "unavailable_hardware_is_zero_cost": False,
+        }
+    if left["identity"] is not None and right["identity"] is not None and left["identity"] != right["identity"]:
+        return {
+            "schema_version": COST_ACCOUNTING_SCHEMA_VERSION,
+            "comparison": comparison,
+            "status": "unmeasured",
+            "value": None,
+            "unit": "ratio",
+            "reason": "sample/unit identities do not match across the compared runs",
+            "unavailable_hardware_is_zero_cost": False,
+        }
+    if left["unit_count"] is not None and right["unit_count"] is not None and left["unit_count"] != right["unit_count"]:
+        return {
+            "schema_version": COST_ACCOUNTING_SCHEMA_VERSION,
+            "comparison": comparison,
+            "status": "unmeasured",
+            "value": None,
+            "unit": "ratio",
+            "reason": "unit counts are not matched across the compared runs",
+            "unavailable_hardware_is_zero_cost": False,
+        }
+    speedup = left["elapsed_seconds"] / right["elapsed_seconds"]
+    return {
+        "schema_version": COST_ACCOUNTING_SCHEMA_VERSION,
+        "comparison": comparison,
+        "status": "measured",
+        "value": round(speedup, 9),
+        "unit": "ratio",
+        "baseline_elapsed_seconds": left["elapsed_seconds"],
+        "treatment_elapsed_seconds": right["elapsed_seconds"],
+        "baseline_throughput_per_second": left["throughput_per_second"],
+        "treatment_throughput_per_second": right["throughput_per_second"],
+        "hardware": {"baseline": left["hardware"], "treatment": right["hardware"]},
+        "precision": {"baseline": left["precision"], "treatment": right["precision"]},
+        "cache_state": {"baseline": left["cache_state"], "treatment": right["cache_state"]},
+        "reason": "matched actual runs with explicit hardware, precision, and cache state",
+        "unavailable_hardware_is_zero_cost": False,
+    }
+
+
+def cost_record_from_span(span: Mapping[str, Any], *, run_id: str = "") -> dict[str, Any]:
+    """Convert a runtime span into a paper cost observation."""
+
+    resources_end = span.get("resources_end") if isinstance(span.get("resources_end"), Mapping) else {}
+    resources_start = span.get("resources_start") if isinstance(span.get("resources_start"), Mapping) else {}
+    cuda_available = resources_end.get("cuda_available")
+    if cuda_available is None:
+        cuda_available = resources_start.get("cuda_available")
+    gpu_available = bool(
+        resources_end.get("gpu_telemetry_available") or resources_start.get("gpu_telemetry_available")
+    )
+    attributes = span.get("attributes") if isinstance(span.get("attributes"), Mapping) else {}
+    cache_hit = span.get("cache_hit")
+    if cache_hit is True:
+        cache_state = "hit"
+    elif cache_hit is False:
+        cache_state = "miss"
+    else:
+        cache_state = str(attributes.get("cache_state") or "unused")
+    status = str(span.get("status") or "unknown")
+    elapsed = classify_cost_quantity(
+        span.get("duration_seconds"),
+        quantity="elapsed_seconds",
+        observed=span.get("duration_seconds") is not None,
+    )
+    return {
+        "schema_version": COST_ACCOUNTING_SCHEMA_VERSION,
+        "run_id": run_id or span.get("run_id") or "",
+        "span_id": span.get("span_id"),
+        "phase": canonical_paper_cost_phase(str(span.get("cost_phase") or span.get("phase") or "")),
+        "runtime_phase": span.get("phase"),
+        "status": status,
+        "includes_failure": status not in {"ok", "success", "measured"},
+        "elapsed_seconds": elapsed,
+        "cpu_seconds": classify_cost_quantity(
+            None,
+            quantity="cpu_seconds",
+            observed=False,
+            reason="process CPU seconds are not inferred from wall time",
+        ),
+        "gpu_seconds": gpu_cost_from_observation(
+            None,
+            cuda_available=cuda_available if isinstance(cuda_available, bool) else None,
+            gpu_telemetry_available=gpu_available,
+        ),
+        "provider_units": classify_cost_quantity(
+            attributes.get("provider_units"),
+            quantity="provider_units",
+            observed=attributes.get("provider_units") is not None,
+            kind="provider" if attributes.get("provider_units") is not None else None,
+        ),
+        "memory_gib": classify_cost_quantity(
+            None,
+            quantity="memory_gib",
+            observed=False,
+            reason="RSS snapshots are not converted into billed memory-GiB",
+        ),
+        "human_review_seconds": classify_cost_quantity(
+            attributes.get("human_review_seconds"),
+            quantity="human_review_seconds",
+            observed=attributes.get("human_review_seconds") is not None,
+        ),
+        "hardware": hardware_precision_record(
+            hardware="cuda" if cuda_available is True else "cpu",
+            precision=str(attributes.get("precision") or "unmeasured"),
+            cache_state=cache_state,
+            cuda_available=cuda_available if isinstance(cuda_available, bool) else None,
+            gpu_telemetry_available=gpu_available,
+        ),
+        "unit_count": span.get("unit_count"),
+        "throughput_status": span.get("throughput_status") or "unmeasured",
+    }
+
+
+class CostLedger:
+    """Reconcile per-record usage with phase totals, including setup and failures."""
+
+    def __init__(self) -> None:
+        self.records: list[dict[str, Any]] = []
+        self._phase_elapsed: dict[str, float] = defaultdict(float)
+        self._phase_count: Counter[str] = Counter()
+        self._phase_measured_count: Counter[str] = Counter()
+        self._phase_failures: Counter[str] = Counter()
+        self._phase_setup: Counter[str] = Counter()
+        self._measured_elapsed_sum = 0.0
+        self._unmeasured_quantities: Counter[str] = Counter()
+
+    def add(self, record: Mapping[str, Any]) -> dict[str, Any]:
+        payload = dict(record)
+        phase = canonical_paper_cost_phase(str(payload.get("phase") or "setup"))
+        payload["phase"] = phase
+        payload.setdefault("schema_version", COST_ACCOUNTING_SCHEMA_VERSION)
+        elapsed = payload.get("elapsed_seconds")
+        if not isinstance(elapsed, Mapping):
+            elapsed = classify_cost_quantity(
+                payload.get("elapsed_seconds_value"),
+                quantity="elapsed_seconds",
+                observed=payload.get("elapsed_seconds_value") is not None,
+            )
+            payload["elapsed_seconds"] = elapsed
+        if elapsed.get("kind") == "measured" and elapsed.get("value") is not None:
+            self._phase_elapsed[phase] += float(elapsed["value"])
+            self._phase_measured_count[phase] += 1
+            self._measured_elapsed_sum += float(elapsed["value"])
+        else:
+            self._unmeasured_quantities["elapsed_seconds"] += 1
+        for quantity in COST_QUANTITIES:
+            cell = payload.get(quantity)
+            if isinstance(cell, Mapping) and cell.get("kind") == "unmeasured":
+                self._unmeasured_quantities[quantity] += 1
+        self._phase_count[phase] += 1
+        if payload.get("includes_failure") or str(payload.get("status") or "") in {
+            "error",
+            "failure",
+            "failed",
+            "timeout",
+            "cancelled",
+            "invalid",
+        }:
+            self._phase_failures[phase] += 1
+            payload["includes_failure"] = True
+        if phase == "setup" or payload.get("includes_setup"):
+            self._phase_setup[phase] += 1
+            payload["includes_setup"] = True
+        gpu = payload.get("gpu_seconds")
+        if isinstance(gpu, Mapping) and gpu.get("kind") == "measured" and gpu.get("value") == 0.0:
+            hardware = payload.get("hardware") if isinstance(payload.get("hardware"), Mapping) else {}
+            if hardware.get("cuda_available") is not True:
+                raise ValueError("unavailable GPU hardware cannot be recorded as a measured zero")
+        self.records.append(payload)
+        return payload
+
+    def add_span(self, span: Mapping[str, Any], *, run_id: str = "") -> dict[str, Any]:
+        return self.add(cost_record_from_span(span, run_id=run_id))
+
+    @classmethod
+    def from_telemetry(cls, telemetry: RuntimeTelemetry, **kwargs: Any) -> "CostLedger":
+        ledger = cls()
+        block = telemetry.to_dict(**kwargs)
+        for span in block.get("spans") or ():
+            if isinstance(span, Mapping):
+                ledger.add_span(span, run_id=str(block.get("run_id") or telemetry.run_id))
+        return ledger
+
+    def phase_totals(self) -> dict[str, Any]:
+        totals: dict[str, Any] = {}
+        for phase in PAPER_COST_PHASES:
+            measured_count = int(self._phase_measured_count.get(phase, 0))
+            count = int(self._phase_count.get(phase, 0))
+            elapsed = (
+                round(self._phase_elapsed.get(phase, 0.0), 9) if measured_count else None
+            )
+            totals[phase] = {
+                "phase": phase,
+                "record_count": count,
+                "measured_elapsed_record_count": measured_count,
+                "measured_elapsed_seconds": elapsed,
+                "failure_record_count": int(self._phase_failures.get(phase, 0)),
+                "setup_record_count": int(self._phase_setup.get(phase, 0)),
+                "present": count > 0,
+                "measured_elapsed_present": measured_count > 0,
+            }
+        return totals
+
+    def reconcile(self, *, independent_elapsed_sum: Optional[float] = None) -> dict[str, Any]:
+        phase_sum = round(sum(self._phase_elapsed.values()), 9)
+        record_sum = round(self._measured_elapsed_sum, 9)
+        independent = _finite_nonnegative(independent_elapsed_sum)
+        mismatches: list[str] = []
+        if abs(phase_sum - record_sum) > 1e-9:
+            mismatches.append(
+                f"phase elapsed {phase_sum} != retained-record elapsed {record_sum}"
+            )
+        if independent is not None and abs(phase_sum - round(independent, 9)) > 1e-6:
+            mismatches.append(
+                f"phase elapsed {phase_sum} != independently summed usage {round(independent, 9)}"
+            )
+        return {
+            "schema_version": COST_ACCOUNTING_SCHEMA_VERSION,
+            "ok": not mismatches,
+            "phase_measured_elapsed_seconds": phase_sum,
+            "record_measured_elapsed_seconds": record_sum,
+            "independent_elapsed_seconds": None if independent is None else round(independent, 9),
+            "record_count": len(self.records),
+            "failure_record_count": int(sum(self._phase_failures.values())),
+            "setup_record_count": int(sum(self._phase_setup.values())),
+            "unmeasured_quantity_counts": dict(self._unmeasured_quantities),
+            "phase_totals": self.phase_totals(),
+            "mismatches": mismatches,
+            "includes_setup": True,
+            "includes_failures": True,
+        }
+
+    def to_dict(self, *, independent_elapsed_sum: Optional[float] = None) -> dict[str, Any]:
+        return {
+            "schema_version": COST_ACCOUNTING_SCHEMA_VERSION,
+            "phase_catalog": list(PAPER_COST_PHASES),
+            "records": list(self.records),
+            "reconciliation": self.reconcile(independent_elapsed_sum=independent_elapsed_sum),
+        }
+
+
+def attach_cost_accounting(
+    summary: dict[str, Any],
+    telemetry: RuntimeTelemetry,
+    *,
+    cycle: Optional[int] = None,
+) -> dict[str, Any]:
+    """Attach the paper-facing cost ledger beside runtime telemetry."""
+
+    ledger = telemetry.cost_ledger(latest_cycle=cycle, max_spans=None)
+    block = ledger.to_dict()
+    summary["cost_accounting_schema_version"] = COST_ACCOUNTING_SCHEMA_VERSION
+    summary["paper_cost_phase_catalog"] = list(PAPER_COST_PHASES)
+    summary["cost_accounting"] = block
+    summary["cost_reconciliation"] = block["reconciliation"]
+    return block
+
+
 def attach_runtime_telemetry(
     summary: dict[str, Any],
     telemetry: RuntimeTelemetry,
@@ -1394,8 +1961,15 @@ RuntimePhaseTelemetry = RuntimeTelemetry
 
 
 __all__ = [
+    "COST_ACCOUNTING_SCHEMA_VERSION",
+    "COST_QUANTITIES",
+    "COST_QUANTITY_KINDS",
+    "COST_UNITS",
+    "CostLedger",
     "LEGAL_IR_VIEW_PHASES",
+    "PAPER_COST_PHASES",
     "PhaseTelemetry",
+    "REQUIRED_PAPER_COST_PHASES",
     "REQUIRED_RUNTIME_PHASES",
     "RUNTIME_PHASES",
     "RUNTIME_PHASE_TELEMETRY_SCHEMA_VERSION",
@@ -1405,8 +1979,15 @@ __all__ = [
     "RuntimePhaseTelemetry",
     "RuntimeSpan",
     "RuntimeTelemetry",
+    "attach_cost_accounting",
     "attach_runtime_telemetry",
+    "canonical_paper_cost_phase",
     "canonical_runtime_phase",
+    "classify_cost_quantity",
     "collect_resource_snapshot",
+    "cost_record_from_span",
+    "gpu_cost_from_observation",
+    "hardware_precision_record",
+    "matched_throughput",
     "sanitize_telemetry_attributes",
 ]
