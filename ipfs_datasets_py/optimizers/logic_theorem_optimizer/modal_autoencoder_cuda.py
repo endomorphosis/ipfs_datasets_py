@@ -659,6 +659,16 @@ def _safe_distribution(
     }
 
 
+def _emit_packed_progress(autoencoder: Any, stage: str, **payload: Any) -> None:
+    callback = getattr(autoencoder, "_packed_training_progress_callback", None)
+    if callable(callback):
+        try:
+            callback({"stage": stage, **payload})
+        except Exception:
+            # The observer retains a sticky failure; arithmetic stays unchanged.
+            pass
+
+
 def _activity_blueprint(
     autoencoder: Any,
     samples: Sequence[Any],
@@ -678,6 +688,12 @@ def _activity_blueprint(
         return None
     mapping = getattr(autoencoder.state, component)
     width = len(columns)
+    _emit_packed_progress(autoencoder, "blueprint_dimensions", component=component, kind=kind,
+                         rows=len(rows), columns=width, sample_count=len(samples),
+                         parameter_scalars=len(rows) * width,
+                         activity_scalars=len(rows) * len(samples),
+                         parameter_fp32_bytes=4 * len(rows) * width,
+                         activity_fp32_bytes=4 * len(rows) * len(samples))
     values: List[tuple[float, ...]] = []
     if kind == "vector":
         for row in rows:
@@ -854,6 +870,11 @@ def _legal_blueprints(
         for name in legal_names
     )
     global_scale = max(0.0, float(autoencoder.legal_ir_view_logit_scale))
+    if legal_names and global_scale > 0.0:
+        _emit_packed_progress(autoencoder, "blueprint_dimensions", component="legal_ir_view_logits",
+                             kind="scalar_map", rows=1, columns=len(legal_names), sample_count=len(samples),
+                             parameter_scalars=len(legal_names), activity_scalars=len(samples),
+                             parameter_fp32_bytes=4 * len(legal_names), activity_fp32_bytes=4 * len(samples))
     blueprints = [
         _BlockBlueprint(
             component="legal_ir_view_logits",
@@ -1200,7 +1221,9 @@ def apply_packed_projection_update(
         report.losses = {"total": 0.0}
         return report
     try:
+        _emit_packed_progress(autoencoder, "before_blueprint_build", sample_count=len(sample_list))
         blueprints = _build_blueprints(autoencoder, sample_list, state, update_targets)
+        _emit_packed_progress(autoencoder, "after_blueprint_build", block_count=len(blueprints))
         if not blueprints:
             # Some disabled heads intentionally expose no canonical trainable
             # rows (the default modal-family head is one).  Still execute and
@@ -1291,6 +1314,8 @@ def apply_packed_projection_update(
         report.parameter_count = session.parameter_count
         report.parameter_dtype = str(torch.float32)
 
+        _emit_packed_progress(autoencoder, "session_ready", parameter_count=session.parameter_count,
+                             block_count=len(session.blocks))
         base_outputs = _base_outputs(autoencoder, sample_list, state)
         base_bytes = sum(_bytes_for_tensor(value) for value in base_outputs)
         _record_transfer(
@@ -1307,6 +1332,7 @@ def apply_packed_projection_update(
         mixed_precision = mixed_requested and _bf16_numerically_safe(state, blueprints)
         # Session tensors already own the copied values and activities.
         del blueprints
+        _emit_packed_progress(autoencoder, "blueprints_released")
         report.mixed_precision_checked = mixed_requested
         report.mixed_precision_safe = mixed_precision
         report.activation_dtype = str(torch.bfloat16 if mixed_precision else torch.float32)
@@ -1356,7 +1382,9 @@ def apply_packed_projection_update(
                 max(0.0, float(l2_regularization)),
                 mixed_precision,
             )
+            _emit_packed_progress(autoencoder, "before_backward", chunk_start=start, chunk_stop=stop)
             total.backward()
+            _emit_packed_progress(autoencoder, "after_backward", chunk_start=start, chunk_stop=stop)
             actual_steps += 1
             report.kernel_launch_count += kernels + 1
             for name, value in losses.items():
@@ -1418,7 +1446,9 @@ def apply_packed_projection_update(
             for parameter in session.parameters:
                 parameter.grad = None
 
+        _emit_packed_progress(autoencoder, "before_scatter", parameter_count=session.parameter_count)
         scatter_bytes = _scatter_blocks(autoencoder, session)
+        _emit_packed_progress(autoencoder, "after_scatter", parameter_count=session.parameter_count)
         _record_transfer(
             profiler,
             report,
