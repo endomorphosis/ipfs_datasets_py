@@ -6967,6 +6967,7 @@ class AdaptiveModalAutoencoder:
         """
         started_at = time.time()
         self._cuda_residency_reports = []
+        self._packed_cpu_reports = []
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
@@ -7032,13 +7033,14 @@ class AdaptiveModalAutoencoder:
             )
         if normalized_update_backend not in {
             "cuda_resident",
+            "packed_cpu",
             "native",
             "legacy",
             "legacy_device",
             "python_sparse_batch",
         }:
             raise ValueError(
-                "projection_update_backend must be auto, cuda_resident, native, "
+                "projection_update_backend must be auto, cuda_resident, packed_cpu, native, "
                 "legacy_device, or python_sparse_batch"
             )
 
@@ -8033,6 +8035,11 @@ class AdaptiveModalAutoencoder:
             "projection_profile": projection_profile,
             "projection_profile_enabled": profiler is not None,
             "projection_cuda_residency": cuda_residency,
+            "projection_packed_cpu": {
+                "enabled": normalized_update_backend == "packed_cpu",
+                "reports": list(self._packed_cpu_reports[-64:]),
+                "fallback_allowed": False,
+            },
             "projection_update_backend": normalized_update_backend,
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
@@ -8106,6 +8113,8 @@ class AdaptiveModalAutoencoder:
         packed feature/parameter tensors and performs forward loss, backward,
         clipping, and the optimizer step on the selected CUDA device.  It never
         enters this method recursively or invokes a legacy per-sample updater.
+        The explicit ``packed_cpu`` backend uses the identical packed executor
+        on CPU and rejects failures without any historical-update fallback.
         """
         sample_list = list(samples)
         target_tuple = tuple(str(target) for target in update_targets)
@@ -8115,6 +8124,27 @@ class AdaptiveModalAutoencoder:
             raise StateTransactionConflictError(
                 "projection update batch requires an active state transaction"
             )
+        if normalized_backend == "packed_cpu":
+            # This explicit backend runs the same packed autograd/SGD executor
+            # on CPU. Failed admission/update must never become a nudge update.
+            from .modal_autoencoder_cuda import apply_cpu_reference_projection_update
+
+            report = apply_cpu_reference_projection_update(
+                self, sample_list, update_targets=target_tuple,
+                learning_rate=learning_rate, l2_regularization=l2_regularization,
+                profiler=profiler,
+            )
+            reports = list(getattr(self, "_packed_cpu_reports", ()))
+            reports.append(report.to_dict())
+            self._packed_cpu_reports = reports[-256:]
+            if not report.admitted or not report.applied:
+                raise RuntimeError(f"packed CPU update rejected: {report.fallback_reason}")
+            norm_report = legal_ir_trainable_head_transaction_delta_norm_report(
+                transaction, self.state, learning_rate=learning_rate,
+            )
+            norm_report["backend_report"] = report.to_dict()
+            norm_report["projection_update_backend"] = "packed_cpu"
+            return norm_report
         if normalized_backend == "cuda_resident":
             try:
                 from .modal_autoencoder_cuda import (

@@ -1115,6 +1115,7 @@ def _loss_chunk(
             losses["l2"] = (
                 sum((parameter.float().square().sum() for parameter in session.parameters), zero.float())
                 * float(l2_regularization)
+                * (float(stop - start) / denominator)
                 / float(scalar_count)
             )
             kernel_count += len(session.parameters) + 1
@@ -1144,21 +1145,29 @@ def _scatter_blocks(
     moved = 0
     for name in sorted(session.blocks):
         block = session.blocks[name]
-        values = block.parameter.detach().float().cpu()
-        moved += _bytes_for_tensor(values)
+        # Compare against the admitted FP32 value before transferring/scattering.
+        # An unchanged gathered row must not insert zeros or dirty a transaction.
+        changed = block.parameter.detach() != block.initial
         mapping = getattr(autoencoder.state, block.component)
         if block.kind == "scalar_map":
-            for column_index, column in enumerate(block.columns):
-                mapping[column] = float(values[0, column_index].item())
-        elif block.kind == "vector":
-            for row_index, row in enumerate(block.rows):
-                mapping[row] = [float(value) for value in values[row_index].tolist()]
+            indices = block.torch.nonzero(changed[0], as_tuple=False).flatten()
+            values = block.parameter.detach()[0, indices].float().cpu()
+            moved += _bytes_for_tensor(values)
+            for offset, column_index in enumerate(indices.cpu().tolist()):
+                mapping[block.columns[column_index]] = float(values[offset].item())
         else:
-            for row_index, row in enumerate(block.rows):
-                mapping[row] = {
-                    column: float(values[row_index, column_index].item())
-                    for column_index, column in enumerate(block.columns)
-                }
+            indices = block.torch.nonzero(changed.any(dim=1), as_tuple=False).flatten()
+            values = block.parameter.detach()[indices].float().cpu()
+            moved += _bytes_for_tensor(values)
+            for offset, row_index in enumerate(indices.cpu().tolist()):
+                row = block.rows[row_index]
+                if block.kind == "vector":
+                    mapping[row] = [float(value) for value in values[offset].tolist()]
+                else:
+                    mapping[row] = {
+                        column: float(values[offset, column_index].item())
+                        for column_index, column in enumerate(block.columns)
+                    }
     return moved
 
 
@@ -1210,13 +1219,15 @@ def apply_packed_projection_update(
                 normalized = targets / targets.sum(dim=1, keepdim=True).clamp_min(1.0e-12)
                 total = total + (
                     -(normalized * state.torch.log_softmax(family_logits.float(), dim=1)).sum(dim=1)
-                ).masked_select(state.family_mask).mean()
+                ).masked_select(state.family_mask).sum() / float(len(sample_list))
             if target_set.intersection({"legal_ir_view_logits", "legal_ir_view_global_logits"}) and legal_logits.shape[1]:
                 targets = state.legal_ir_targets.float()
                 normalized = targets / targets.sum(dim=1, keepdim=True).clamp_min(1.0e-12)
                 total = total + (
                     -(normalized * state.torch.log_softmax(legal_logits.float(), dim=1)).sum(dim=1)
-                ).masked_select(state.legal_ir_mask).mean()
+                ).masked_select(state.legal_ir_mask).sum() / float(len(sample_list))
+            if not bool(state.torch.isfinite(total).item()):
+                raise FloatingPointError("non-finite packed no-op loss")
             report.applied = True
             report.loss_dtype = str(state.torch.float32)
             report.parameter_dtype = str(state.torch.float32)
@@ -1370,6 +1381,8 @@ def apply_packed_projection_update(
         report.gradient_accumulation_steps = actual_steps
         report.gradient_norm = _gradient_norm(torch, session.parameters)
         _implicit_sync(profiler, report, "cuda_packed_gradient_norm")
+        if not math.isfinite(report.gradient_norm):
+            raise FloatingPointError("non-finite packed training gradient")
         max_grad_norm = _env_float(
             "IPFS_DATASETS_MODAL_AUTOENCODER_CUDA_MAX_GRAD_NORM",
             10.0,
