@@ -209,6 +209,18 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("unless", "unless"),
     ("except", "except"),
 )
+EXCEPTION_SCOPE_RULE_ID = "af014-executable-exception-scoping/v1"
+_EXCEPTION_SCOPE_PREFIX_KEYS = frozenset(
+    {
+        "except_as_otherwise_provided",
+        "except_as_provided_in",
+        "except_to_the_extent",
+        "except_that",
+        "except_as",
+        "unless",
+        "except",
+    }
+)
 _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "when": "when",
     "until": "until",
@@ -2870,6 +2882,7 @@ class DeterministicModalLogicCodec:
                 source_text=normalized_text,
             )
         modal_ir = _enrich_modal_ir_formula_clauses(modal_ir)
+        modal_ir = _apply_executable_exception_scoping(modal_ir)
 
         resolved_source_embedding = list(source_embedding) if source_embedding is not None else stable_mock_embedding(
             normalized_text,
@@ -6276,6 +6289,172 @@ def _typed_clause_key_value(
     return None
 
 
+def _is_exception_scope_cue_text(cue_text: str) -> bool:
+    """True when a cue is a typed exception prefix (not a generic proviso)."""
+    normalized = _clean_non_empty_string(cue_text).lower().replace(" ", "_")
+    if not normalized:
+        return False
+    if normalized in _EXCEPTION_SCOPE_PREFIX_KEYS:
+        return True
+    return normalized.startswith("except") or normalized == "unless"
+
+
+def _exception_scope_tokens(exceptions: Sequence[str]) -> set[str]:
+    tokens: set[str] = set()
+    for exception in exceptions:
+        typed = _typed_clause_key_value(str(exception), clause_type="exception")
+        scoped_value = typed[1] if typed is not None else ""
+        if not scoped_value:
+            continue
+        tokens.update(
+            token
+            for token in re.findall(r"[a-z0-9]+", scoped_value.lower())
+            if token and token not in {"as", "that", "the", "to", "in", "of"}
+        )
+    return tokens
+
+
+def _pre_exception_source_tokens(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> set[str]:
+    span_text = _semantic_source_span_text(modal_ir=modal_ir, formula=formula)
+    if not span_text:
+        span_text = _formula_source_span_text(modal_ir=modal_ir, formula=formula)
+    if not span_text:
+        return set()
+    lowered = span_text.lower()
+    earliest: int | None = None
+    for prefix_text, prefix_key in _EXCEPTION_PREFIXES:
+        if prefix_key not in _EXCEPTION_SCOPE_PREFIX_KEYS:
+            continue
+        pattern = re.compile(rf"(?<!\w){re.escape(prefix_text)}(?!\w)", re.IGNORECASE)
+        match = pattern.search(lowered)
+        if match is None:
+            continue
+        if earliest is None or match.start() < earliest:
+            earliest = match.start()
+    prefix_text_span = span_text[:earliest] if earliest is not None else span_text
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", prefix_text_span.lower())
+        if token
+    }
+
+
+def _strip_exception_scope_tokens(
+    value: str,
+    *,
+    drop_tokens: set[str],
+) -> str:
+    cleaned = _clean_non_empty_string(value)
+    if not cleaned or not drop_tokens:
+        return cleaned
+    parts = [part for part in cleaned.split("_") if part]
+    if not parts:
+        return cleaned
+    kept = [part for part in parts if part.lower() not in drop_tokens]
+    if not kept:
+        return cleaned
+    return "_".join(kept)
+
+
+def _apply_executable_exception_scoping(modal_ir: ModalIRDocument) -> ModalIRDocument:
+    """Keep exception scope distinct from governing predicates without T4 guidance.
+
+    This is an executable compiler/decompiler contract, not a learned-parameter
+    overlay.  It does not drop independently specified source meaning, and it
+    does not treat a round-trip that omits the same exception as fidelity.
+    """
+    if not modal_ir.formulas:
+        return modal_ir
+    updated_formulas: List[ModalIRFormula] = []
+    changed = False
+    scoped_formula_count = 0
+    for formula in modal_ir.formulas:
+        resolved_exceptions = list(getattr(formula, "exceptions", []) or [])
+        if not resolved_exceptions:
+            resolved_exceptions = _resolved_formula_exceptions(
+                modal_ir=modal_ir,
+                formula=formula,
+            )
+        cue_text = _clean_non_empty_string(formula.metadata.get("cue"))
+        cue_is_exception = _is_exception_scope_cue_text(cue_text)
+        drop_tokens = set()
+        if resolved_exceptions and not cue_is_exception:
+            drop_tokens = _exception_scope_tokens(resolved_exceptions)
+            keep_tokens = _pre_exception_source_tokens(
+                modal_ir=modal_ir,
+                formula=formula,
+            )
+            drop_tokens -= keep_tokens
+        predicate = formula.predicate
+        new_name = _strip_exception_scope_tokens(
+            predicate.name,
+            drop_tokens=drop_tokens,
+        )
+        new_arguments = [
+            (
+                f"{argument.split(':', 1)[0]}:{_strip_exception_scope_tokens(argument.split(':', 1)[1], drop_tokens=drop_tokens)}"
+                if ":" in argument
+                else _strip_exception_scope_tokens(argument, drop_tokens=drop_tokens)
+            )
+            for argument in list(predicate.arguments or [])
+        ]
+        new_role = "exception" if cue_is_exception else predicate.role
+        metadata = dict(formula.metadata)
+        formula_changed = False
+        if resolved_exceptions != list(getattr(formula, "exceptions", []) or []):
+            formula_changed = True
+        if new_name != predicate.name or new_arguments != list(predicate.arguments or []) or new_role != predicate.role:
+            predicate = replace(
+                predicate,
+                name=new_name,
+                arguments=new_arguments,
+                role=new_role,
+            )
+            formula_changed = True
+        if resolved_exceptions or cue_is_exception:
+            metadata["exception_scope_rule"] = EXCEPTION_SCOPE_RULE_ID
+            metadata["exception_scope_role"] = new_role or "clause"
+            metadata["exception_tokens_excluded_from_predicate"] = bool(
+                drop_tokens
+            )
+            metadata["exception_scope_source"] = "executable_compiler_rule"
+            if metadata != dict(formula.metadata):
+                formula_changed = True
+            scoped_formula_count += 1
+        if formula_changed:
+            updated_formulas.append(
+                replace(
+                    formula,
+                    predicate=predicate,
+                    exceptions=list(resolved_exceptions),
+                    metadata=metadata,
+                )
+            )
+            changed = True
+        else:
+            updated_formulas.append(formula)
+    document_metadata = dict(modal_ir.metadata)
+    desired_document_metadata = {
+        "exception_scope_rule": EXCEPTION_SCOPE_RULE_ID,
+        "exception_scope_formula_count": scoped_formula_count,
+        "exception_scope_source": "executable_compiler_rule",
+    }
+    if any(document_metadata.get(key) != value for key, value in desired_document_metadata.items()):
+        document_metadata.update(desired_document_metadata)
+        changed = True
+    if not changed:
+        return modal_ir
+    return replace(
+        modal_ir,
+        formulas=updated_formulas,
+        metadata=document_metadata,
+    )
+
+
 def _enrich_modal_ir_formula_clauses(modal_ir: ModalIRDocument) -> ModalIRDocument:
     """Backfill formula clause lists from deterministic metadata/span resolvers."""
     if not modal_ir.formulas:
@@ -6505,12 +6684,40 @@ def _inferred_exception_values_from_source_span(
     max_tokens: int = 40,
 ) -> List[str]:
     span_text = _formula_source_span_text(modal_ir=modal_ir, formula=formula)
+    inferred = _exception_clauses_from_span_text(
+        span_text,
+        cue_key=_clean_non_empty_string(formula.metadata.get("cue")).lower().replace(
+            " ",
+            "_",
+        ),
+        max_candidates=max_candidates,
+        max_tokens=max_tokens,
+    )
+    if inferred:
+        return inferred
+    semantic = _semantic_source_span_text(modal_ir=modal_ir, formula=formula)
+    if semantic and semantic != span_text:
+        return _exception_clauses_from_span_text(
+            semantic,
+            cue_key=_clean_non_empty_string(formula.metadata.get("cue")).lower().replace(
+                " ",
+                "_",
+            ),
+            max_candidates=max_candidates,
+            max_tokens=max_tokens,
+        )
+    return []
+
+
+def _exception_clauses_from_span_text(
+    span_text: str,
+    *,
+    cue_key: str = "",
+    max_candidates: int = 2,
+    max_tokens: int = 40,
+) -> List[str]:
     if not span_text:
         return []
-    cue_key = _clean_non_empty_string(formula.metadata.get("cue")).lower().replace(
-        " ",
-        "_",
-    )
     ordered_prefixes = sorted(
         _EXCEPTION_PREFIXES,
         key=lambda item: len(item[0]),

@@ -38,7 +38,17 @@ _CONDITION_PREFIXES = (
     "before",
     "upon",
 )
-_EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
+_EXCEPTION_PREFIXES = (
+    "except as otherwise provided",
+    "except as provided in",
+    "except as provided by",
+    "except to the extent",
+    "except that",
+    "except as",
+    "unless",
+    "except",
+)
+EXCEPTION_SCOPE_RULE_ID = "af014-executable-exception-scoping/v1"
 _CONDITIONAL_SCOPE_PHRASES = (
     "any person who",
     "any person that",
@@ -1874,10 +1884,27 @@ class SpaCyModalIRCompiler:
         for index, cue in enumerate(eligible_cues, start=1):
             sentence = _sentence_for_cue(encoding.sentences, cue)
             tokens = _tokens_for_span(encoding.tokens, sentence.start_char, sentence.end_char)
-            predicate = _predicate_from_tokens(tokens, cue)
             conditions, exceptions = _conditions_and_exceptions_from_sentence(
                 sentence.text
             )
+            predicate = _predicate_from_tokens(
+                tokens,
+                cue,
+                sentence_text=sentence.text,
+                sentence_start_char=sentence.start_char,
+            )
+            formula_metadata = {
+                "cue": cue.cue,
+                "cue_start_char": cue.start_char,
+                "cue_end_char": cue.end_char,
+                "encoder": "spacy_modal_codec_v1",
+            }
+            if exceptions or _is_exception_scope_cue_text(cue.cue):
+                formula_metadata["exception_scope_rule"] = EXCEPTION_SCOPE_RULE_ID
+                formula_metadata["exception_scope_role"] = _role_for_cue(cue)
+                formula_metadata["exception_tokens_excluded_from_predicate"] = (
+                    not _is_exception_scope_cue_text(cue.cue)
+                )
             formulas.append(
                 ModalIRFormula(
                     formula_id=f"{encoding.document_id}:spacy:f{index:04d}",
@@ -1896,12 +1923,7 @@ class SpaCyModalIRCompiler:
                     ),
                     conditions=conditions,
                     exceptions=exceptions,
-                    metadata={
-                        "cue": cue.cue,
-                        "cue_start_char": cue.start_char,
-                        "cue_end_char": cue.end_char,
-                        "encoder": "spacy_modal_codec_v1",
-                    },
+                    metadata=formula_metadata,
                 )
             )
         if encoding.normalized_text:
@@ -2088,6 +2110,7 @@ class SpaCyModalIRCompiler:
             metadata={
                 "citation": encoding.citation,
                 "deterministic_parser": "spacy_modal_codec_v1",
+                "exception_scope_rule": EXCEPTION_SCOPE_RULE_ID,
                 "llm_call_count": 0,
                 "model_name": encoding.model_name,
                 "sentence_count": len(encoding.sentences),
@@ -8222,19 +8245,77 @@ def _tokens_for_span(
     ]
 
 
+def _is_exception_scope_cue_text(cue_text: str) -> bool:
+    """True when a modal cue is an exception-scope prefix, not a governing condition."""
+    normalized = (cue_text or "").strip().lower()
+    if not normalized:
+        return False
+    for prefix in sorted(_EXCEPTION_PREFIXES, key=lambda value: (-len(value), value)):
+        if normalized == prefix or normalized.startswith(f"{prefix} "):
+            return True
+    return False
+
+
+def _exception_clause_spans(sentence_text: str) -> List[tuple[int, int]]:
+    """Character spans of exception clauses relative to the sentence text."""
+    normalized = _normalize(sentence_text)
+    if not normalized:
+        return []
+    spans: List[tuple[int, int]] = []
+    for prefix in sorted(_EXCEPTION_PREFIXES, key=lambda value: (-len(value), value)):
+        pattern = re.compile(rf"(?<!\w){re.escape(prefix)}(?!\w)", re.IGNORECASE)
+        for match in pattern.finditer(normalized):
+            fragment = normalized[match.start() :]
+            clause = _CLAUSE_DELIMITER_RE.split(fragment, maxsplit=1)[0]
+            end = match.start() + len(clause)
+            if end > match.start():
+                spans.append((match.start(), end))
+    if not spans:
+        return []
+    spans.sort(key=lambda item: (item[0], -(item[1] - item[0])))
+    merged: List[tuple[int, int]] = []
+    for start, end in spans:
+        if merged and start < merged[-1][1]:
+            continue
+        merged.append((start, end))
+    return merged
+
+
 def _predicate_from_tokens(
     tokens: Sequence[SpaCyTokenFeature],
     cue: SpaCyModalCueFeature,
+    *,
+    sentence_text: str = "",
+    sentence_start_char: int = 0,
 ) -> ModalIRPredicate:
+    exception_spans = _exception_clause_spans(sentence_text)
+    cue_is_exception = _is_exception_scope_cue_text(cue.cue)
+
+    def _in_exception_scope(token: SpaCyTokenFeature) -> bool:
+        if cue_is_exception or not exception_spans:
+            return False
+        relative_start = token.start_char - sentence_start_char
+        relative_end = token.end_char - sentence_start_char
+        for start, end in exception_spans:
+            if relative_start < end and relative_end > start:
+                return True
+        return False
+
     after_cue = [
         token.normalized()
         for token in tokens
-        if token.start_char >= cue.end_char and token.is_alpha and not token.is_stop
+        if token.start_char >= cue.end_char
+        and token.is_alpha
+        and not token.is_stop
+        and not _in_exception_scope(token)
     ]
     before_cue = [
         token.normalized()
         for token in tokens
-        if token.end_char <= cue.start_char and token.is_alpha and not token.is_stop
+        if token.end_char <= cue.start_char
+        and token.is_alpha
+        and not token.is_stop
+        and not _in_exception_scope(token)
     ]
     predicate_terms = after_cue[:6] or before_cue[-6:] or [cue.label]
     arguments = []
@@ -8250,6 +8331,8 @@ def _predicate_from_tokens(
 
 
 def _role_for_cue(cue: SpaCyModalCueFeature) -> str:
+    if _is_exception_scope_cue_text(cue.cue):
+        return "exception"
     if cue.family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value:
         return "condition"
     if cue.family == ModalLogicFamily.TEMPORAL.value:
@@ -8286,6 +8369,7 @@ def _normalized_clause_phrase(text: str) -> str:
 
 
 __all__ = [
+    "EXCEPTION_SCOPE_RULE_ID",
     "modal_ambiguity_signals",
     "SpaCyLegalEncoder",
     "SpaCyLegalEncoding",
