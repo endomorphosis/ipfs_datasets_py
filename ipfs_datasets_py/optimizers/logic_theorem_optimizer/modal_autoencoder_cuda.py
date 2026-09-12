@@ -1305,6 +1305,8 @@ def apply_packed_projection_update(
             default=True,
         )
         mixed_precision = mixed_requested and _bf16_numerically_safe(state, blueprints)
+        # Session tensors already own the copied values and activities.
+        del blueprints
         report.mixed_precision_checked = mixed_requested
         report.mixed_precision_safe = mixed_precision
         report.activation_dtype = str(torch.bfloat16 if mixed_precision else torch.float32)
@@ -1409,6 +1411,12 @@ def apply_packed_projection_update(
             count=report.kernel_launch_count,
             already_counted=True,
         )
+
+        if str(state.device).split(":", 1)[0] == "cpu":
+            # Norms and SGD have consumed gradients; avoid retaining them
+            # while scattering the updated tensors into Python state rows.
+            for parameter in session.parameters:
+                parameter.grad = None
 
         scatter_bytes = _scatter_blocks(autoencoder, session)
         _record_transfer(
