@@ -1,18 +1,22 @@
-"""Planning proof obligations, bounded-plan terms, PlanDelta, assume-guarantee contracts, and equivalence elimination.
+"""Planning proof obligations, bounded-plan terms, PlanDelta, assume-guarantee contracts, equivalence elimination, and SupervisorPatchPlan.
 
-The terms, deltas, assume-guarantee records, and equivalence-elimination
-records in this module describe a plan; they never grant execution or
-completion authority.  Operational admission remains the responsibility of
-the supervisor that independently verifies the recorded acceptance evidence.
-PlanDelta, PlanAssumeGuarantee, and PlanEquivalenceElimination are
-deliberately parallel to PlanTerms and PlanObligation: they are not a new
-planner and are not a competing operational subsystem.  Accelerate owns
-operational PlanDelta@1, assume-guarantee, and equivalence-elimination
-admission; this record only names the impacted suffix, the preserved
-unaffected set, model-free refill identities, compositional substitutions
-whose guarantees apply only when assumptions are satisfied and current
-admitted guarantee receipts exist, and equivalent-task and equivalent-plan
-classes whose elimination requires current admitted equivalence evidence.
+The terms, deltas, assume-guarantee records, equivalence-elimination
+records, and supervisor patch plans in this module describe a plan; they
+never grant execution or completion authority.  Operational admission
+remains the responsibility of the supervisor that independently verifies
+the recorded acceptance evidence.  PlanDelta, PlanAssumeGuarantee,
+PlanEquivalenceElimination, and SupervisorPatchPlan are deliberately
+parallel to PlanTerms and PlanObligation: they are not a new planner and
+are not a competing operational subsystem.  Accelerate owns operational
+PlanDelta@1, assume-guarantee, equivalence-elimination, and
+SupervisorPatchPlan admission; this record only names the impacted suffix,
+the preserved unaffected set, model-free refill identities, compositional
+substitutions whose guarantees apply only when assumptions are satisfied
+and current admitted guarantee receipts exist, equivalent-task and
+equivalent-plan classes whose elimination requires current admitted
+equivalence evidence, and typed patch plans whose model assertion is never
+patch acceptance evidence.  A SupervisorPatchPlan cannot grant mutation,
+merge, or completion authority.
 """
 
 from __future__ import annotations
@@ -45,6 +49,12 @@ PLAN_EQUIVALENCE_ELIMINATION_SCHEMA: Final[str] = (
 )
 PLAN_EQUIVALENCE_ELIMINATION_SCHEMA_VERSION: Final[str] = (
     "external-work-plan-equivalence-elimination/v1"
+)
+SUPERVISOR_PATCH_PLAN_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/logic/external-work-plan-supervisor-patch-plan@1"
+)
+SUPERVISOR_PATCH_PLAN_SCHEMA_VERSION: Final[str] = (
+    "external-work-plan-supervisor-patch-plan/v1"
 )
 KINDS: Final[frozenset[str]] = frozenset(
     {
@@ -90,6 +100,39 @@ EQUIVALENCE_KINDS: Final[frozenset[str]] = frozenset(
         "semantic_identity",
         "logical_equivalence",
         "canonical_equivalent",
+    }
+)
+SUPERVISOR_PATCH_PLAN_FORBIDDEN_FIELDS: Final[frozenset[str]] = frozenset(
+    PLAN_EQUIVALENCE_ELIMINATION_FORBIDDEN_FIELDS
+    | {
+        "applied_diff",
+        "merge_decision",
+        "mutation_ledger",
+        "self_granted_acceptance",
+        "synthesized_bytes",
+        "worktree_id",
+    }
+)
+PATCH_PLAN_KINDS: Final[frozenset[str]] = frozenset(
+    {
+        "typed_edit",
+        "unresolved_question",
+        "no_change",
+        "refusal",
+    }
+)
+PATCH_SYNTHESIS_ORIGINS: Final[frozenset[str]] = frozenset(
+    {
+        "deterministic_allowlist",
+        "bounded_model_assisted",
+        "none",
+    }
+)
+PATCH_EDIT_OPERATIONS: Final[frozenset[str]] = frozenset(
+    {
+        "replace",
+        "insert",
+        "delete",
     }
 )
 
@@ -142,6 +185,24 @@ def _validated_equivalence_kind(value: str, *, field: str) -> str:
     if kind not in EQUIVALENCE_KINDS:
         raise ObligationError(f"unsupported equivalence kind: {kind}")
     return kind
+
+
+def _validated_closed_token(
+    value: str,
+    *,
+    field: str,
+    allowed: frozenset[str],
+    label: str,
+) -> str:
+    """Return a closed, independently checkable contract token."""
+    token = _validated_text(value, field=field)
+    if token.lower() in {"worker assertion", "model assertion", "self assertion"}:
+        raise ObligationError(f"{label} requires independent verification")
+    if any(character.isspace() for character in token):
+        raise ObligationError(f"{field} must not contain whitespace")
+    if token not in allowed:
+        raise ObligationError(f"unsupported {label}: {token}")
+    return token
 
 
 def _parse_nested_records(
@@ -1239,6 +1300,397 @@ def eliminate_equivalent_plans(
     return _collapse_equivalent_ids(
         plan_ids, field="plan_ids", replacement=replacement
     )
+
+
+@dataclass(frozen=True)
+class SupervisorPatchEdit:
+    """One named edit inside a typed supervisor patch plan.
+
+    The edit names a declared path, operation, and semantic intent.  It is
+    not a mutation, unified diff, merge decision, or completion authority.
+    """
+
+    edit_id: str
+    path: str
+    operation: str
+    intent: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "edit_id", _validated_identifier(self.edit_id, field="edit_id")
+        )
+        object.__setattr__(
+            self, "path", _validated_identifier(self.path, field="path")
+        )
+        object.__setattr__(
+            self,
+            "operation",
+            _validated_closed_token(
+                self.operation,
+                field="operation",
+                allowed=PATCH_EDIT_OPERATIONS,
+                label="patch edit operation",
+            ),
+        )
+        object.__setattr__(
+            self, "intent", _validated_text(self.intent, field="intent")
+        )
+
+    def to_dict(self) -> Mapping[str, str]:
+        return MappingProxyType(
+            {
+                "edit_id": self.edit_id,
+                "path": self.path,
+                "operation": self.operation,
+                "intent": self.intent,
+            }
+        )
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "SupervisorPatchEdit":
+        if not isinstance(payload, Mapping):
+            raise ObligationError("supervisor patch edit must be an object")
+        allowed = {"edit_id", "path", "operation", "intent"}
+        unknown = set(payload).difference(allowed)
+        if unknown:
+            raise ObligationError(
+                f"unknown supervisor patch edit field: {sorted(unknown)[0]}"
+            )
+        return cls(
+            edit_id=str(payload.get("edit_id") or ""),
+            path=str(payload.get("path") or ""),
+            operation=str(payload.get("operation") or ""),
+            intent=str(payload.get("intent") or ""),
+        )
+
+
+@dataclass(frozen=True)
+class SupervisorPatchPlan:
+    """Typed deterministic-first supervisor patch plan.
+
+    ``SupervisorPatchPlan`` is deliberately parallel to :class:`PlanTerms`,
+    :class:`PlanDelta`, :class:`PlanAssumeGuarantee`, and
+    :class:`PlanEquivalenceElimination`.  It is not a new planner, not a
+    synthesizer, not a merger, and is not a competing operational subsystem.
+    A model assertion is never patch acceptance evidence.  Typed edits must
+    declare their scope and remain semantically nonempty.  The record cannot
+    grant mutation, merge, or completion authority.  Operational admission
+    remains accelerate-owned; this record only names the typed patch plan,
+    its declared paths, synthesis origin, and independently checkable
+    acceptance conditions.
+    """
+
+    patch_plan_id: str
+    base_plan_revision: str
+    task_id: str
+    context_pack_id: str
+    kind: str
+    synthesis_origin: str
+    target_paths: tuple[str, ...]
+    edits: tuple[SupervisorPatchEdit, ...]
+    acceptance_conditions: tuple[AcceptanceCondition, ...] = ()
+    schema: str = SUPERVISOR_PATCH_PLAN_SCHEMA
+    schema_version: str = SUPERVISOR_PATCH_PLAN_SCHEMA_VERSION
+    semantic_nonempty: bool = True
+    scope_bounded: bool = True
+    model_assertion_is_acceptance: bool = False
+    acceptance_requires_independent_evidence: bool = True
+    mutation_authoritative: bool = False
+    history_preserving: bool = True
+    completion_authoritative: bool = False
+
+    def __post_init__(self) -> None:
+        if self.schema != SUPERVISOR_PATCH_PLAN_SCHEMA:
+            raise ObligationError("unsupported supervisor patch plan schema")
+        if self.schema_version != SUPERVISOR_PATCH_PLAN_SCHEMA_VERSION:
+            raise ObligationError(
+                "unsupported supervisor patch plan schema version"
+            )
+        if self.completion_authoritative:
+            raise ObligationError(
+                "supervisor patch plan cannot grant completion authority"
+            )
+        if self.mutation_authoritative:
+            raise ObligationError(
+                "supervisor patch plan cannot grant mutation authority"
+            )
+        if not self.history_preserving:
+            raise ObligationError("supervisor patch plan must preserve history")
+        if not self.scope_bounded:
+            raise ObligationError(
+                "supervisor patch plan must remain scope-bounded"
+            )
+        if self.model_assertion_is_acceptance:
+            raise ObligationError(
+                "model assertion is never patch acceptance evidence"
+            )
+        if not self.acceptance_requires_independent_evidence:
+            raise ObligationError(
+                "patch acceptance requires independent evidence"
+            )
+        object.__setattr__(
+            self,
+            "patch_plan_id",
+            _validated_identifier(self.patch_plan_id, field="patch_plan_id"),
+        )
+        object.__setattr__(
+            self,
+            "base_plan_revision",
+            _validated_identifier(
+                self.base_plan_revision, field="base_plan_revision"
+            ),
+        )
+        object.__setattr__(
+            self, "task_id", _validated_identifier(self.task_id, field="task_id")
+        )
+        object.__setattr__(
+            self,
+            "context_pack_id",
+            _validated_identifier(self.context_pack_id, field="context_pack_id"),
+        )
+        kind = _validated_closed_token(
+            self.kind,
+            field="kind",
+            allowed=PATCH_PLAN_KINDS,
+            label="patch plan kind",
+        )
+        object.__setattr__(self, "kind", kind)
+        origin = _validated_closed_token(
+            self.synthesis_origin,
+            field="synthesis_origin",
+            allowed=PATCH_SYNTHESIS_ORIGINS,
+            label="patch synthesis origin",
+        )
+        object.__setattr__(self, "synthesis_origin", origin)
+        object.__setattr__(
+            self,
+            "target_paths",
+            _validated_ids(self.target_paths, field="target_paths"),
+        )
+        edits = tuple(self.edits)
+        if not all(isinstance(item, SupervisorPatchEdit) for item in edits):
+            raise ObligationError(
+                "edits must contain SupervisorPatchEdit values"
+            )
+        edit_ids = tuple(item.edit_id for item in edits)
+        if len(set(edit_ids)) != len(edit_ids):
+            raise ObligationError("edit IDs must be unique")
+        edit_paths = tuple(item.path for item in edits)
+        if len(set(edit_paths)) != len(edit_paths):
+            raise ObligationError("edit paths must be unique")
+        object.__setattr__(self, "edits", edits)
+        conditions = tuple(self.acceptance_conditions)
+        if not all(isinstance(item, AcceptanceCondition) for item in conditions):
+            raise ObligationError(
+                "acceptance_conditions must contain AcceptanceCondition values"
+            )
+        if len({item.condition_id for item in conditions}) != len(conditions):
+            raise ObligationError("acceptance condition IDs must be unique")
+        object.__setattr__(self, "acceptance_conditions", conditions)
+        declared = set(self.target_paths)
+        outside = [path for path in edit_paths if path not in declared]
+        if outside:
+            raise ObligationError(
+                "edit path must be inside the declared scope"
+            )
+        typed_edit = kind == "typed_edit"
+        if typed_edit:
+            if origin == "none":
+                raise ObligationError(
+                    "typed patch plan requires a deterministic-first synthesis origin"
+                )
+            if not self.target_paths:
+                raise ObligationError("typed patch plan requires declared scope")
+            if not edits:
+                raise ObligationError(
+                    "typed patch plan requires at least one named edit"
+                )
+            if not self.semantic_nonempty:
+                raise ObligationError(
+                    "typed patch plan must be semantically nonempty"
+                )
+            if not conditions:
+                raise ObligationError(
+                    "typed patch plan requires independent acceptance evidence"
+                )
+        else:
+            if origin != "none":
+                raise ObligationError(
+                    "non-edit patch plan synthesis origin must be none"
+                )
+            if edits:
+                raise ObligationError(
+                    "non-edit patch plan must not contain edits"
+                )
+            if self.semantic_nonempty:
+                raise ObligationError(
+                    "non-edit patch plan must not claim semantic-nonempty"
+                )
+        object.__setattr__(self, "semantic_nonempty", bool(typed_edit))
+        object.__setattr__(self, "scope_bounded", True)
+        object.__setattr__(self, "model_assertion_is_acceptance", False)
+        object.__setattr__(self, "acceptance_requires_independent_evidence", True)
+        object.__setattr__(self, "mutation_authoritative", False)
+        object.__setattr__(self, "history_preserving", True)
+        object.__setattr__(self, "completion_authoritative", False)
+
+    def to_dict(self) -> Mapping[str, Any]:
+        typed_edit = self.kind == "typed_edit"
+        return MappingProxyType(
+            {
+                "schema": self.schema,
+                "schema_version": self.schema_version,
+                "patch_plan_id": self.patch_plan_id,
+                "base_plan_revision": self.base_plan_revision,
+                "task_id": self.task_id,
+                "context_pack_id": self.context_pack_id,
+                "kind": self.kind,
+                "synthesis_origin": self.synthesis_origin,
+                "target_paths": list(self.target_paths),
+                "edits": [dict(item.to_dict()) for item in self.edits],
+                "acceptance_conditions": [
+                    dict(item.to_dict()) for item in self.acceptance_conditions
+                ],
+                "semantic_nonempty": typed_edit,
+                "scope_bounded": True,
+                "model_assertion_is_acceptance": False,
+                "acceptance_requires_independent_evidence": True,
+                "mutation_authoritative": False,
+                "history_preserving": True,
+                "completion_authoritative": False,
+            }
+        )
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "SupervisorPatchPlan":
+        if not isinstance(payload, Mapping):
+            raise ObligationError("supervisor patch plan must be an object")
+        forbidden = set(payload).intersection(SUPERVISOR_PATCH_PLAN_FORBIDDEN_FIELDS)
+        if forbidden:
+            raise ObligationError(
+                "supervisor patch plan contains operational authority field(s): "
+                f"{sorted(forbidden)[0]}"
+            )
+        allowed = {
+            "schema",
+            "schema_version",
+            "patch_plan_id",
+            "base_plan_revision",
+            "task_id",
+            "context_pack_id",
+            "kind",
+            "synthesis_origin",
+            "target_paths",
+            "edits",
+            "acceptance_conditions",
+            "semantic_nonempty",
+            "scope_bounded",
+            "model_assertion_is_acceptance",
+            "acceptance_requires_independent_evidence",
+            "mutation_authoritative",
+            "history_preserving",
+            "completion_authoritative",
+        }
+        unknown = set(payload).difference(allowed)
+        if unknown:
+            raise ObligationError(
+                f"unknown supervisor patch plan field: {sorted(unknown)[0]}"
+            )
+        raw_conditions = payload.get("acceptance_conditions") or ()
+        if not isinstance(raw_conditions, Sequence) or isinstance(
+            raw_conditions, (str, bytes)
+        ):
+            raise ObligationError("acceptance_conditions must be a sequence")
+        conditions = []
+        for item in raw_conditions:
+            if isinstance(item, AcceptanceCondition):
+                conditions.append(item)
+            elif isinstance(item, Mapping):
+                conditions.append(AcceptanceCondition(**dict(item)))
+            else:
+                raise ObligationError("acceptance condition must be an object")
+        return cls(
+            patch_plan_id=str(payload.get("patch_plan_id") or ""),
+            base_plan_revision=str(payload.get("base_plan_revision") or ""),
+            task_id=str(payload.get("task_id") or ""),
+            context_pack_id=str(payload.get("context_pack_id") or ""),
+            kind=str(payload.get("kind") or ""),
+            synthesis_origin=str(payload.get("synthesis_origin") or ""),
+            target_paths=tuple(payload.get("target_paths") or ()),
+            edits=_parse_nested_records(
+                payload.get("edits") or (),
+                field="edits",
+                record_type=SupervisorPatchEdit,
+                parse_mapping=SupervisorPatchEdit.from_dict,
+            ),
+            acceptance_conditions=tuple(conditions),
+            schema=str(payload.get("schema", SUPERVISOR_PATCH_PLAN_SCHEMA)),
+            schema_version=str(
+                payload.get(
+                    "schema_version", SUPERVISOR_PATCH_PLAN_SCHEMA_VERSION
+                )
+            ),
+            semantic_nonempty=bool(
+                payload["semantic_nonempty"]
+                if "semantic_nonempty" in payload
+                else str(payload.get("kind") or "") == "typed_edit"
+            ),
+            scope_bounded=bool(payload.get("scope_bounded", True)),
+            model_assertion_is_acceptance=bool(
+                payload.get("model_assertion_is_acceptance", False)
+            ),
+            acceptance_requires_independent_evidence=bool(
+                payload.get("acceptance_requires_independent_evidence", True)
+            ),
+            mutation_authoritative=bool(
+                payload.get("mutation_authoritative", False)
+            ),
+            history_preserving=bool(payload.get("history_preserving", True)),
+            completion_authoritative=bool(
+                payload.get("completion_authoritative", False)
+            ),
+        )
+
+
+def validate_supervisor_patch_plan(
+    value: Mapping[str, Any] | SupervisorPatchPlan,
+) -> SupervisorPatchPlan:
+    """Validate canonical supervisor patch plan; no caller can self-admit it."""
+    plan = (
+        value
+        if isinstance(value, SupervisorPatchPlan)
+        else SupervisorPatchPlan.from_dict(value)
+    )
+    if plan.completion_authoritative:
+        raise ObligationError(
+            "supervisor patch plan cannot grant completion authority"
+        )
+    if plan.mutation_authoritative:
+        raise ObligationError(
+            "supervisor patch plan cannot grant mutation authority"
+        )
+    if plan.model_assertion_is_acceptance:
+        raise ObligationError(
+            "model assertion is never patch acceptance evidence"
+        )
+    if not plan.acceptance_requires_independent_evidence:
+        raise ObligationError("patch acceptance requires independent evidence")
+    if not plan.scope_bounded:
+        raise ObligationError("supervisor patch plan must remain scope-bounded")
+    if not plan.history_preserving:
+        raise ObligationError("supervisor patch plan must preserve history")
+    return plan
+
+
+def declared_supervisor_patch_scope(
+    value: Mapping[str, Any] | SupervisorPatchPlan,
+) -> tuple[str, ...]:
+    """Return the declared target paths of a validated supervisor patch plan.
+
+    The helper names scope only.  It does not apply edits, admit a merge, or
+    grant completion authority.
+    """
+    return validate_supervisor_patch_plan(value).target_paths
 
 
 @dataclass(frozen=True)

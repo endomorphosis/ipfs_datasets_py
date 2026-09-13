@@ -1,0 +1,128 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "task_id": "DOEP-090",
+  "task_cid": "sha256:5229e3dfff281ca24ffc0bbc4f074f19c2a768fc359a56e1084ab1e5fe908c7e",
+  "title": "Define SupervisorPatchPlan",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "goal_id": "DOEP-G100.S1",
+  "parent_goal_id": "DOEP-G100",
+  "root_goal_id": "DOEP-G000",
+  "candidate_status": "implemented",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "base_repositories": {
+    "ipfs_accelerate_py": {
+      "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+      "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+    },
+    "ipfs_datasets_py": {
+      "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+      "tree": "456e09b51d6a07a3a5873436df24054768195320"
+    },
+    "ipfs_kit_py": {
+      "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+      "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+    },
+    "lift_coding": {
+      "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+      "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+    }
+  },
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_090_define_supervisorpatchplan.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-090.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-090.json"
+  ],
+  "changed_paths": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_090_define_supervisorpatchplan.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-090.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-090.json"
+  ],
+  "write_scope": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_090_define_supervisorpatchplan.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-090.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-090.json"
+  ],
+  "outputs_present": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": true,
+    "tests/doep/test_doep_090_define_supervisorpatchplan.py": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-090.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-090.json": true
+  },
+  "path_digests": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": "sha256:f32b34abbe7167188585efed7ae1cbca3b83cafb666e28f9c7a441eb88d8bbce",
+    "tests/doep/test_doep_090_define_supervisorpatchplan.py": "sha256:75c4a3c2577393e54062a36a5074f52bbe6876aa7cf84558a1d994fb01bceef6",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-090.json": "sha256:a0b80879fac0c98c0b13b2c301af5b8c02a3ecdb83609bb5cc7115f02cc83445"
+  },
+  "required_evidence": {
+    "source_commit_tree_gitlinks": {
+      "ipfs_accelerate_py": {
+        "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+        "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+      },
+      "ipfs_datasets_py": {
+        "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+        "tree": "456e09b51d6a07a3a5873436df24054768195320"
+      },
+      "ipfs_kit_py": {
+        "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+        "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+      },
+      "lift_coding": {
+        "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+        "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+      }
+    },
+    "test_proof_results": {
+      "validation_command": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/doep/test_doep_090_define_supervisorpatchplan.py",
+        "-q"
+      ],
+      "proof_selection": "verified_empty",
+      "proof_reason": "The contract is exercised by independent pytest over SupervisorPatchPlan; no formal prover was selected."
+    },
+    "receipt_cid": {
+      "status": "unavailable",
+      "reason": "No IPFS CLI was used; SHA-256 is not substituted for a CID."
+    },
+    "verifier_admission": "pending_independent_fenced_supervisor",
+    "limitations": [
+      "Candidate receipt only; independent fenced supervisor admission is required.",
+      "SupervisorPatchPlan does not grant operational admission, mutation, merge, or completion authority.",
+      "Accelerate owns operational SupervisorPatchPlan admission; this contract only names the typed patch plan, declared scope, synthesis origin, and independent acceptance conditions.",
+      "A model assertion is never patch acceptance evidence; worker or model assertion is insufficient.",
+      "Typed edits must remain scope-bounded and semantically nonempty.",
+      "History is preserved: the record cannot rewrite accepted evidence.",
+      "Worker or model assertion alone is insufficient."
+    ]
+  },
+  "validation": {
+    "commands": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/doep/test_doep_090_define_supervisorpatchplan.py",
+          "-q"
+        ],
+        "cwd": "external/ipfs_datasets",
+        "status": "candidate_local"
+      }
+    ]
+  },
+  "supervisor_acceptance": {
+    "state": "pending_independent_fenced_supervisor",
+    "completion_authoritative": false
+  }
+}
