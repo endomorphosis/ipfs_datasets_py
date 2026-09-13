@@ -16,9 +16,13 @@ from typing import Any
 from ipfs_datasets_py.logic.software_contracts.content import (
     canonical_dag_json_bytes, cid_for_bytes, cid_for_structured, validate_cid,
 )
+from .git_decoder_profile import (
+    GitBlobDecoderProfile, GitBlobDecoderBudget, DEFAULT_DECODER_PROFILE,
+    DEFAULT_DECODER_BUDGET, EXPLICIT_DECODER_ADDRESS_BYTES, admit_decoder_profile,
+)
 from .chunked_snapshot import (
     BlobChunk, ChunkedBlob, ChunkedRepositorySnapshot, ChunkedSnapshotLimits,
-    GIT_DECODER_CONFIG, MAX_FRAME_BYTES, MAX_GIT_DECODER_ADDRESS_BYTES,
+    GIT_DECODER_CONFIG, MAX_FRAME_BYTES,
 )
 from .committed_snapshot import CommittedPopulationEntry, preflight_committed_repository
 from .snapshot import RepositorySnapshot, SNAPSHOT_SCHEMA, SnapshotError, _git_oid
@@ -115,16 +119,31 @@ def parse_chunked_snapshot_manifest(
     expected_snapshot_cid: str, blocks: Mapping[str, bytes], *, repository_id: str,
     expected_commit: str, expected_tree: str, expected_population_cid: str,
     limits: ChunkedSnapshotLimits = ChunkedSnapshotLimits(),
+    decoder_profile: GitBlobDecoderProfile = DEFAULT_DECODER_PROFILE,
+    decoder_budget: GitBlobDecoderBudget = DEFAULT_DECODER_BUDGET,
 ) -> ChunkedRepositorySnapshot:
     """Admit a closed reference DAG; no contained source-hash claim is verified."""
     if not isinstance(limits, ChunkedSnapshotLimits):
         raise SnapshotError("manifest admission requires typed limits")
+    profile = admit_decoder_profile(decoder_profile, decoder_budget)
     # At most one blob plus two index pages per entry, and one root.
     graph = _Graph(blocks, limits.max_metadata_bytes, 3 * limits.max_entries + 1)
-    root = _closed(graph.read(expected_snapshot_cid), {
-        "schema", "repository_id", "git_commit", "git_tree", "population_cid", "scope",
-        "entry_pages", "blob_pages", "entry_count", "unique_blob_count", "limits",
-        "git_decoder_address_bytes", "git_decoder_config"}, "ipfs-datasets.git-chunked-snapshot@1")
+    payload = graph.read(expected_snapshot_cid)
+    schema = payload.get("schema") if type(payload) is dict else None
+    if schema not in {"ipfs-datasets.git-chunked-snapshot@1", "ipfs-datasets.git-chunked-snapshot@2"}:
+        raise SnapshotError("unsupported Git decoder manifest schema")
+    fields = {"schema", "repository_id", "git_commit", "git_tree", "population_cid", "scope",
+              "entry_pages", "blob_pages", "entry_count", "unique_blob_count", "limits",
+              "git_decoder_address_bytes", "git_decoder_config"}
+    if schema.endswith("@2"):
+        fields.add("git_decoder_profile")
+    root = _closed(payload, fields, schema)
+    if schema.endswith("@1"):
+        if profile != DEFAULT_DECODER_PROFILE:
+            raise SnapshotError("Git decoder profile differs from immutable v1 request")
+    elif (profile.address_space_bytes != EXPLICIT_DECODER_ADDRESS_BYTES
+          or canonical_dag_json_bytes(root["git_decoder_profile"]) != canonical_dag_json_bytes(profile.payload())):
+        raise SnapshotError("Git decoder profile differs from immutable v2 request")
     if (root["repository_id"], root["git_commit"], root["git_tree"], root["population_cid"], root["scope"]) != (
             repository_id, expected_commit, expected_tree, expected_population_cid, "complete-committed"):
         raise SnapshotError("manifest differs from requested committed population")
@@ -140,7 +159,8 @@ def parse_chunked_snapshot_manifest(
         raise SnapshotError("invalid declared manifest limits") from exc
     if any(getattr(declared, name) > value for name, value in asdict(limits).items()):
         raise SnapshotError("manifest exceeds qualified admission limits")
-    if (root["git_decoder_address_bytes"] != MAX_GIT_DECODER_ADDRESS_BYTES
+    if (type(root["git_decoder_address_bytes"]) is not int
+            or root["git_decoder_address_bytes"] != profile.address_space_bytes
             or root["git_decoder_config"] != dict(GIT_DECODER_CONFIG)):
         raise SnapshotError("manifest changes fixed Git decoder bounds")
     if graph.total > declared.max_metadata_bytes:
@@ -224,7 +244,7 @@ def parse_chunked_snapshot_manifest(
     if set(sizes) != {blob.git_object_oid for blob in blobs} or len(blobs) != _integer(root["unique_blob_count"], "blob_count"):
         raise SnapshotError("blob index population or count does not verify")
     result = ChunkedRepositorySnapshot(repository_id, expected_commit, expected_tree, expected_population_cid,
-                                       tuple(entries), tuple(blobs), declared)
+                                       tuple(entries), tuple(blobs), declared, profile)
     cid, canonical = result.manifest_blocks()
     if cid != expected_snapshot_cid:
         raise SnapshotError("chunked manifest root is not canonical")
@@ -235,6 +255,8 @@ def parse_chunked_snapshot_manifest(
 def admit_chunked_snapshot_manifest(
     repository, expected_snapshot_cid: str, blocks: Mapping[str, bytes], *, repository_id: str,
     expected_commit: str, expected_tree: str, limits: ChunkedSnapshotLimits = ChunkedSnapshotLimits(),
+    decoder_profile: GitBlobDecoderProfile = DEFAULT_DECODER_PROFILE,
+    decoder_budget: GitBlobDecoderBudget = DEFAULT_DECODER_BUDGET,
 ) -> ChunkedRepositorySnapshot:
     """Bind closed manifest metadata to the current exact Git population.
 
@@ -242,12 +264,14 @@ def admit_chunked_snapshot_manifest(
     """
     if not isinstance(limits, ChunkedSnapshotLimits):
         raise SnapshotError("manifest admission requires typed limits")
+    admit_decoder_profile(decoder_profile, decoder_budget)
     plan = preflight_committed_repository(repository, repository_id=repository_id,
                                          expected_commit=expected_commit, expected_tree=expected_tree,
                                          max_entries=limits.max_entries, max_metadata_bytes=limits.max_metadata_bytes)
     result = parse_chunked_snapshot_manifest(expected_snapshot_cid, blocks, repository_id=repository_id,
                                              expected_commit=expected_commit, expected_tree=expected_tree,
-                                             expected_population_cid=plan.population_cid, limits=limits)
+                                             expected_population_cid=plan.population_cid, limits=limits,
+                                             decoder_profile=decoder_profile, decoder_budget=decoder_budget)
     if result.entries != plan.entries:
         raise SnapshotError("admitted manifest substitutes committed population entries")
     return result
