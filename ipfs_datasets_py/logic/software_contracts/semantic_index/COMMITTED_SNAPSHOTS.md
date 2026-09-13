@@ -33,6 +33,13 @@ local blob size; symlinks count their committed blob bytes. Metadata overflow or
 unavailable object sizes fail closed. Entry, per-blob and total size deficiencies
 are reported together, and acquisition refuses them before requesting any blob.
 
+Metadata Git commands use 8 MiB pack windows, a 32 MiB packed-object mapping
+limit and a 16 MiB delta-base cache, matching the chunked blob decoder. This
+lets metadata inspection read large pack files under a caller's address-space
+limit without attempting a mapping as large as the pack. These Git settings
+bound mappings and caches; they do not impose a total process memory limit or
+change metadata/output budgets, source checks, or the committed population.
+
 Complete scope bypasses traversal exclusions only. Existing opaque handling for
 malformed paths, symlinks, gitlinks and unsupported contents remains visible.
 Gitlinks require separate admitted repository acquisitions for forest coverage.
