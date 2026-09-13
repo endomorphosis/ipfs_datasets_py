@@ -32,23 +32,27 @@ from .snapshot import (
 MAX_FRAME_BYTES = 1024 * 1024
 MAX_MATERIALIZED_FILE_BYTES = 4 * 1024 * 1024
 MAX_RETAINED_SOURCE_BYTES = 128 * 1024 * 1024
-MAX_GIT_DECODER_ADDRESS_BYTES = 128 * 1024 * 1024
-GIT_DECODER_CONFIG = (("core.packedGitWindowSize", "8388608"),
-                      ("core.packedGitLimit", "33554432"),
-                      ("core.deltaBaseCacheLimit", "16777216"))
-_GIT_STREAM_LAUNCHER = (
-    "import os,resource,sys; "
-    "n=int(sys.argv[1]); resource.setrlimit(resource.RLIMIT_AS,(n,n)); "
-    "os.execvp('git',['git',*sys.argv[2:]])"
+from .git_decoder_profile import (
+    GitBlobDecoderProfile, GitBlobDecoderBudget,
+    DEFAULT_DECODER_PROFILE, DEFAULT_DECODER_BUDGET,
+    DEFAULT_DECODER_ADDRESS_BYTES, DECODER_CONFIG, DECODER_LAUNCHER,
+    admit_decoder_profile, require_decoder_profile, validate_decoder_profile,
 )
+
+# The legacy public constants and default v1 manifest remain unchanged.
+MAX_GIT_DECODER_ADDRESS_BYTES = DEFAULT_DECODER_ADDRESS_BYTES
+GIT_DECODER_CONFIG = DECODER_CONFIG
+_GIT_STREAM_LAUNCHER = DECODER_LAUNCHER
+
 
 
 class GitBlobDecoderError(GitSnapshotError):
     """The bounded decoder failed; content verification did not complete."""
 
-    def __init__(self):
+    def __init__(self, decoder_profile=DEFAULT_DECODER_PROFILE):
         super().__init__("bounded Git blob decoder failed or warned")
-        self.decoder_address_limit_bytes = MAX_GIT_DECODER_ADDRESS_BYTES
+        self.decoder_address_limit_bytes = decoder_profile.address_space_bytes
+        self.decoder_profile = decoder_profile.payload()
 
 
 @dataclass(frozen=True)
@@ -96,6 +100,7 @@ class ChunkedRepositorySnapshot:
     entries: tuple[CommittedPopulationEntry, ...]
     blobs: tuple[ChunkedBlob, ...]
     limits: ChunkedSnapshotLimits
+    decoder_profile: GitBlobDecoderProfile = DEFAULT_DECODER_PROFILE
 
     def manifest_blocks(self) -> tuple[str, dict[str, bytes]]:
         """Return a bounded manifest DAG; every structured block is a frame.
@@ -104,6 +109,7 @@ class ChunkedRepositorySnapshot:
         is deliberately absent. A serialized manifest is a reference claim;
         projection must reverify the objects before using their identities.
         """
+        profile = validate_decoder_profile(self.decoder_profile)
         blocks: dict[str, bytes] = {}
         retained = 0
 
@@ -138,28 +144,34 @@ class ChunkedRepositorySnapshot:
         blob_pages = pages(({"git_object_oid": blob.git_object_oid,
                              "manifest_cid": put(blob.payload())} for blob in self.blobs), "blobs")
         entry_pages = pages((entry.to_dict() for entry in self.entries), "entries")
-        root = put({"schema": "ipfs-datasets.git-chunked-snapshot@1",
+        root_payload = {"schema": "ipfs-datasets.git-chunked-snapshot@1",
                     "repository_id": self.repository_id, "git_commit": self.git_commit,
                     "git_tree": self.git_tree, "population_cid": self.population_cid,
                     "scope": "complete-committed", "entry_pages": entry_pages,
                     "blob_pages": blob_pages, "entry_count": len(self.entries),
                     "unique_blob_count": len(self.blobs), "limits": asdict(self.limits),
-                    "git_decoder_address_bytes": MAX_GIT_DECODER_ADDRESS_BYTES,
-                    "git_decoder_config": dict(GIT_DECODER_CONFIG)})
-        return root, blocks
+                    "git_decoder_address_bytes": profile.address_space_bytes,
+                    "git_decoder_config": dict(GIT_DECODER_CONFIG)}
+        if profile != DEFAULT_DECODER_PROFILE:
+            root_payload.update(schema="ipfs-datasets.git-chunked-snapshot@2",
+                                git_decoder_address_bytes=profile.address_space_bytes,
+                                git_decoder_profile=profile.payload())
+        return put(root_payload), blocks
 
     @property
     def snapshot_cid(self) -> str:
         return self.manifest_blocks()[0]
 
 
-def _git_blob_frames(root: Path, oid: str, size: int, frame_bytes: int) -> Iterator[bytes]:
+def _git_blob_frames(root: Path, oid: str, size: int, frame_bytes: int, *,
+                     decoder_profile=DEFAULT_DECODER_PROFILE) -> Iterator[bytes]:
     """Stream a fixed object without a subprocess capture_output accumulator."""
+    profile = validate_decoder_profile(decoder_profile)
     env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
     try:
         child = subprocess.Popen(
             [sys.executable, "-I", "-S", "-B", "-c", _GIT_STREAM_LAUNCHER,
-             str(MAX_GIT_DECODER_ADDRESS_BYTES),
+             str(profile.address_space_bytes),
              "--no-optional-locks", "--no-replace-objects", "-c", "core.fsmonitor=false",
              *(arg for key, value in GIT_DECODER_CONFIG for arg in ("-c", key + "=" + value)),
              "-c", "core.hooksPath=/dev/null", "-C", str(root), "cat-file", "blob", oid],
@@ -203,7 +215,7 @@ def _git_blob_frames(root: Path, oid: str, size: int, frame_bytes: int) -> Itera
         except subprocess.TimeoutExpired as exc:
             raise GitCommandTimeout("committed blob stream timed out") from exc
         if child.returncode or errors:
-            raise GitBlobDecoderError()
+            raise GitBlobDecoderError(profile)
         if received != size:
             raise GitSnapshotError("committed blob stream was truncated")
     except BaseException:
@@ -220,7 +232,8 @@ def _git_blob_frames(root: Path, oid: str, size: int, frame_bytes: int) -> Itera
 
 
 def _hash_blob(root: Path, oid: str, size: int, frame_bytes: int,
-               *, capture: bool = False, capture_chunk: int | None = None) -> tuple[ChunkedBlob, bytes | None]:
+               *, capture: bool = False, capture_chunk: int | None = None,
+               decoder_profile=DEFAULT_DECODER_PROFILE) -> tuple[ChunkedBlob, bytes | None]:
     digest = hashlib.sha1() if len(oid) == 40 else hashlib.sha256()
     digest.update(b"blob " + str(size).encode("ascii") + b"\0")
     chunks, retained, offset = [], bytearray() if capture or capture_chunk is not None else None, 0
@@ -239,7 +252,8 @@ def _hash_blob(root: Path, oid: str, size: int, frame_bytes: int,
                 retained.extend(frame)
             yield frame
 
-    with closing(_git_blob_frames(root, oid, size, frame_bytes)) as frames:
+    options = {} if decoder_profile == DEFAULT_DECODER_PROFILE else {"decoder_profile": decoder_profile}
+    with closing(_git_blob_frames(root, oid, size, frame_bytes, **options)) as frames:
         source_cid = cid_for_byte_chunks(observed(frames), max_chunk_bytes=frame_bytes)
     if offset != size or digest.hexdigest() != oid:
         raise GitSnapshotError("streamed bytes differ from committed object identity")
@@ -280,18 +294,22 @@ def _observe(repository, commit, tree, identity, limits):
 def snapshot_chunked_repository(
     repository: str | os.PathLike[str], *, expected_commit: str, expected_tree: str,
     repository_id: str, limits: ChunkedSnapshotLimits = ChunkedSnapshotLimits(),
+    decoder_profile: GitBlobDecoderProfile = DEFAULT_DECODER_PROFILE,
+    decoder_budget: GitBlobDecoderBudget = DEFAULT_DECODER_BUDGET,
 ) -> ChunkedRepositorySnapshot:
     """Hash the complete population, retaining bounded references only."""
     if not isinstance(limits, ChunkedSnapshotLimits):
         raise SnapshotError("chunked acquisition requires typed limits")
+    profile = admit_decoder_profile(decoder_profile, decoder_budget)
     root = Path(repository).resolve(strict=True)
     plan, sizes = _observe(root, expected_commit, expected_tree, repository_id, limits)
     before = _fence(root, plan.commit, plan.tree, limits.max_metadata_bytes)
-    blobs = tuple(_hash_blob(root, oid, size, limits.frame_bytes)[0] for oid, size in sorted(sizes.items()))
+    blobs = tuple(_hash_blob(root, oid, size, limits.frame_bytes, decoder_profile=profile)[0]
+                  for oid, size in sorted(sizes.items()))
     if _fence(root, plan.commit, plan.tree, limits.max_metadata_bytes) != before:
         raise GitSnapshotError("source index changed during chunked acquisition")
     result = ChunkedRepositorySnapshot(repository_id, plan.commit, plan.tree,
-                                       plan.population_cid, plan.entries, blobs, limits)
+                                       plan.population_cid, plan.entries, blobs, limits, profile)
     result.manifest_blocks()  # No result escapes before all manifest bounds pass.
     return result
 
@@ -307,6 +325,8 @@ class ChunkedProjection:
 def read_chunked_blob_frame(
     repository: str | os.PathLike[str], chunked: ChunkedRepositorySnapshot,
     *, git_object_oid: str, chunk_index: int,
+    decoder_profile: GitBlobDecoderProfile = DEFAULT_DECODER_PROFILE,
+    decoder_budget: GitBlobDecoderBudget = DEFAULT_DECODER_BUDGET,
 ) -> bytes:
     """Return one bounded frame after rehashing its complete immutable blob.
 
@@ -316,6 +336,7 @@ def read_chunked_blob_frame(
     """
     if not isinstance(chunked, ChunkedRepositorySnapshot):
         raise SnapshotError("frame read requires a chunked snapshot")
+    profile = require_decoder_profile(chunked.decoder_profile, decoder_profile, decoder_budget)
     root = Path(repository).resolve(strict=True)
     plan, sizes = _observe(root, chunked.git_commit, chunked.git_tree,
                            chunked.repository_id, chunked.limits)
@@ -332,7 +353,7 @@ def read_chunked_blob_frame(
     chunked.manifest_blocks()
     before = _fence(root, plan.commit, plan.tree, chunked.limits.max_metadata_bytes)
     observed, data = _hash_blob(root, git_object_oid, sizes[git_object_oid],
-                                chunked.limits.frame_bytes, capture_chunk=chunk_index)
+                                chunked.limits.frame_bytes, capture_chunk=chunk_index, decoder_profile=profile)
     if observed != claim:
         raise GitSnapshotError("streamed blob does not verify chunked manifest")
     if _fence(root, plan.commit, plan.tree, chunked.limits.max_metadata_bytes) != before:
@@ -344,6 +365,8 @@ def project_chunked_repository(
     repository: str | os.PathLike[str], chunked: ChunkedRepositorySnapshot,
     *, max_file_bytes: int = MAX_MATERIALIZED_FILE_BYTES,
     max_total_bytes: int = MAX_RETAINED_SOURCE_BYTES,
+    decoder_profile: GitBlobDecoderProfile = DEFAULT_DECODER_PROFILE,
+    decoder_budget: GitBlobDecoderBudget = DEFAULT_DECODER_BUDGET,
 ) -> ChunkedProjection:
     """Reverify every blob, retaining only bounded inputs for legacy scanners.
 
@@ -357,6 +380,7 @@ def project_chunked_repository(
         raise SnapshotError("projection limits must be positive integers")
     if max_file_bytes > MAX_MATERIALIZED_FILE_BYTES or max_total_bytes > MAX_RETAINED_SOURCE_BYTES:
         raise SnapshotError("projection exceeds fixed retained-content bounds")
+    profile = require_decoder_profile(chunked.decoder_profile, decoder_profile, decoder_budget)
     root = Path(repository).resolve(strict=True)
     plan, sizes = _observe(root, chunked.git_commit, chunked.git_tree,
                            chunked.repository_id, chunked.limits)
@@ -376,7 +400,8 @@ def project_chunked_repository(
     before = _fence(root, plan.commit, plan.tree, chunked.limits.max_metadata_bytes)
     captured = {}
     for oid, size in sorted(sizes.items()):
-        observed, data = _hash_blob(root, oid, size, chunked.limits.frame_bytes, capture=oid in capture)
+        observed, data = _hash_blob(root, oid, size, chunked.limits.frame_bytes, capture=oid in capture,
+                                    decoder_profile=profile)
         if observed != claims[oid]:
             raise GitSnapshotError("streamed blob does not verify chunked manifest")
         if data is not None:
@@ -408,4 +433,4 @@ def project_chunked_repository(
 
 __all__ = ["BlobChunk", "ChunkedBlob", "ChunkedSnapshotLimits", "ChunkedRepositorySnapshot",
            "ChunkedProjection", "snapshot_chunked_repository", "project_chunked_repository",
-           "read_chunked_blob_frame", "GitBlobDecoderError"]
+           "read_chunked_blob_frame", "GitBlobDecoderError", "GitBlobDecoderProfile", "GitBlobDecoderBudget"]
