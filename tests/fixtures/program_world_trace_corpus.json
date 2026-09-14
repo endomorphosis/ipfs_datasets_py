@@ -1,0 +1,476 @@
+{
+  "adversarial_assurance": {
+    "model_nominations_never_labels": true,
+    "related_families_cannot_cross_partitions": true,
+    "secret_hidden_test_private_reasoning_unadmitted_source_excluded": true
+  },
+  "corpus_id": "program-world-trace-corpus-v1",
+  "description": "Compact SAWM-023 execution-trace recipes. Rows are grouping/partition seeds; CIDs and admission receipts are computed at build time.",
+  "forbidden_rights": [
+    "arbitrary_transcript",
+    "credentials",
+    "hidden_test",
+    "private_chain_of_thought",
+    "private_witness",
+    "tenant_private",
+    "unadmitted_production",
+    "unknown_rights"
+  ],
+  "grouping_keys": [
+    "repository",
+    "commit",
+    "task",
+    "function",
+    "failure",
+    "mutant",
+    "proof",
+    "procedure"
+  ],
+  "interface": "ExecutionTraceCorpus@1",
+  "label_authorities": [
+    "static",
+    "runtime",
+    "proof",
+    "test",
+    "human",
+    "mechanical_counterexample"
+  ],
+  "language": "python",
+  "leakage_keys": [
+    "family_id",
+    "task",
+    "function",
+    "failure",
+    "mutant",
+    "proof",
+    "procedure"
+  ],
+  "leakage_policy": {
+    "mode": "related_family_partition_fence",
+    "rules": [
+      "entire_related_family_in_single_partition",
+      "no_cross_partition_family_members",
+      "no_cross_partition_task_function_failure_mutant_proof_procedure",
+      "cross_repository_uses_disjoint_repository"
+    ]
+  },
+  "negative_examples": [
+    {
+      "family_id": "family:neg-unknown-rights",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "unknown_source",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "internal",
+      "rights_class": "unknown_rights",
+      "row_id": "neg-unknown-rights",
+      "source_class": "unknown_rights",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-hidden-test",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "hidden_case",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "hidden_test": true,
+      "label_authority": "test",
+      "language": "python",
+      "partition": "held_out",
+      "privacy_class": "internal",
+      "rights_class": "hidden_test",
+      "row_id": "neg-hidden-test",
+      "source_class": "hidden_test",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-private-reasoning",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "reason",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "human",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "internal",
+      "rights_class": "private_chain_of_thought",
+      "row_id": "neg-private-reasoning",
+      "source_class": "private_chain_of_thought",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-credentials",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "login",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "training",
+      "password": "not-a-real-secret",
+      "privacy_class": "internal",
+      "rights_class": "credentials",
+      "row_id": "neg-credentials",
+      "source_class": "first_party_hermetic",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-unadmitted-production",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "prod_handler",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "internal",
+      "rights_class": "unadmitted_production",
+      "row_id": "neg-unadmitted-production",
+      "source_class": "unadmitted_production",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-tenant-private",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "tenant_job",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "private",
+      "rights_class": "tenant_private",
+      "row_id": "neg-tenant-private",
+      "source_class": "tenant_private",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-private-witness",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "witness",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "proof",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "internal",
+      "rights_class": "private_witness",
+      "row_id": "neg-private-witness",
+      "source_class": "private_witness",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-arbitrary-transcript",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "chat",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "human",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "internal",
+      "rights_class": "arbitrary_transcript",
+      "row_id": "neg-arbitrary-transcript",
+      "source_class": "arbitrary_transcript",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-model-nomination",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "predict_next",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label": "model_guess",
+      "label_authority": "model_nomination",
+      "language": "python",
+      "model_nomination": "model_guess",
+      "partition": "training",
+      "privacy_class": "internal",
+      "rights_class": "first_party_hermetic",
+      "row_id": "neg-model-nomination",
+      "source_class": "first_party_hermetic",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:neg-missing-tree",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "unbound",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "internal",
+      "rights_class": "first_party_hermetic",
+      "row_id": "neg-missing-tree",
+      "source_class": "first_party_hermetic"
+    },
+    {
+      "family_id": "family:neg-restricted-privacy",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "restricted",
+        "repository": "ipfs_datasets_py",
+        "task": "SAWM-023"
+      },
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "restricted",
+      "rights_class": "first_party_hermetic",
+      "row_id": "neg-restricted-privacy",
+      "source_class": "first_party_hermetic",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    }
+  ],
+  "partitions": [
+    "training",
+    "development",
+    "held_out",
+    "adversarial",
+    "cross_repository",
+    "ood"
+  ],
+  "rows": [
+    {
+      "family_id": "family:hermetic-add",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "add",
+        "procedure": "procedure:hermetic-add",
+        "proof": "proof:add-postcondition",
+        "repository": "ipfs_datasets_py",
+        "task": "task:hermetic-add"
+      },
+      "label": "return_add",
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "internal",
+      "query_family": "next_call",
+      "rights_class": "first_party_hermetic",
+      "row_id": "train-hermetic-add",
+      "source_class": "first_party_hermetic",
+      "source_id": "src:add",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:synthetic-mul",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "mul",
+        "procedure": "procedure:synthetic-mul",
+        "repository": "ipfs_datasets_py",
+        "task": "task:synthetic-mul"
+      },
+      "label": "return_mul",
+      "label_authority": "static",
+      "language": "python",
+      "partition": "training",
+      "privacy_class": "internal",
+      "query_family": "next_call",
+      "rights_class": "synthetic_program",
+      "row_id": "train-synthetic-mul",
+      "source_class": "synthetic_program",
+      "source_id": "src:mul",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:instrumented-div",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "div",
+        "procedure": "procedure:instrumented-div",
+        "repository": "ipfs_datasets_py",
+        "task": "task:instrumented-div"
+      },
+      "label": "return_div",
+      "label_authority": "test",
+      "language": "python",
+      "partition": "development",
+      "privacy_class": "internal",
+      "query_family": "next_call",
+      "rights_class": "instrumented_test",
+      "row_id": "dev-instrumented-div",
+      "source_class": "instrumented_test",
+      "source_id": "src:div",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:dynamic-call",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "dispatch",
+        "procedure": "procedure:dynamic-call",
+        "repository": "ipfs_datasets_py",
+        "task": "task:dynamic-call"
+      },
+      "label": "call_dispatch",
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "development",
+      "privacy_class": "internal",
+      "query_family": "next_event",
+      "rights_class": "admitted_dynamic_edge",
+      "row_id": "dev-dynamic-call",
+      "source_class": "admitted_dynamic_edge",
+      "source_id": "src:dispatch",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:static-edge",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "resolve_target",
+        "procedure": "procedure:static-edge",
+        "repository": "ipfs_datasets_py",
+        "task": "task:static-edge"
+      },
+      "label": "call_resolve_target",
+      "label_authority": "static",
+      "language": "python",
+      "partition": "held_out",
+      "privacy_class": "internal",
+      "query_family": "next_call",
+      "rights_class": "admitted_static_edge",
+      "row_id": "held-static-edge",
+      "source_class": "admitted_static_edge",
+      "source_id": "src:resolve_target",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:observed-yield",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "generate",
+        "procedure": "procedure:observed-yield",
+        "repository": "ipfs_datasets_py",
+        "task": "task:observed-yield"
+      },
+      "label": "yield_generate",
+      "label_authority": "runtime",
+      "language": "python",
+      "partition": "held_out",
+      "privacy_class": "internal",
+      "query_family": "inverse_trace",
+      "rights_class": "instrumented_test",
+      "row_id": "held-observed-yield",
+      "source_class": "observed",
+      "source_id": "src:generate",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:mutant-offbyone",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "failure": "off-by-one",
+        "function": "increment",
+        "mutant": "mutant:off-by-one",
+        "procedure": "procedure:mutant-offbyone",
+        "repository": "ipfs_datasets_py",
+        "task": "task:mutant-offbyone"
+      },
+      "label": "mutant_increment",
+      "label_authority": "test",
+      "language": "python",
+      "partition": "adversarial",
+      "privacy_class": "internal",
+      "query_family": "repair",
+      "rights_class": "adversarial_mutant",
+      "row_id": "adv-mutant-offbyone",
+      "source_class": "adversarial_mutant",
+      "source_id": "src:increment",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:counterexample-none",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "failure": "none-deref",
+        "function": "none_guard",
+        "procedure": "procedure:counterexample-none",
+        "proof": "proof:none-guard-cex",
+        "repository": "ipfs_datasets_py",
+        "task": "task:counterexample-none"
+      },
+      "label": "counterexample_none_guard",
+      "label_authority": "mechanical_counterexample",
+      "language": "python",
+      "partition": "adversarial",
+      "privacy_class": "internal",
+      "query_family": "repair",
+      "rights_class": "mechanical_counterexample",
+      "row_id": "adv-counterexample",
+      "source_class": "mechanical_counterexample",
+      "source_id": "src:none_guard",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    },
+    {
+      "family_id": "family:kit-open",
+      "grouping": {
+        "commit": "commit-kit-v1",
+        "function": "open_store",
+        "procedure": "procedure:kit-open",
+        "repository": "ipfs_kit_py",
+        "task": "task:kit-open"
+      },
+      "label": "call_open_store",
+      "label_authority": "static",
+      "language": "python",
+      "partition": "cross_repository",
+      "privacy_class": "public",
+      "query_family": "next_call",
+      "rights_class": "admitted_public",
+      "row_id": "xref-kit-open",
+      "source_class": "admitted_public",
+      "source_id": "src:open_store",
+      "tree_id": "tree:ipfs_kit_py:exact-v1"
+    },
+    {
+      "family_id": "family:repair-wrap",
+      "grouping": {
+        "commit": "commit-datasets-v1",
+        "function": "wrap_handler",
+        "procedure": "procedure:repair-wrap",
+        "repository": "ipfs_datasets_py",
+        "task": "task:repair-wrap"
+      },
+      "label": "operator_wrap_handler",
+      "label_authority": "human",
+      "language": "python",
+      "partition": "ood",
+      "privacy_class": "internal",
+      "query_family": "repair",
+      "rights_class": "rights_cleared_review",
+      "row_id": "ood-repair-wrap",
+      "source_class": "rights_cleared_review",
+      "source_id": "src:wrap_handler",
+      "tree_id": "tree:ipfs_datasets_py:exact-v1"
+    }
+  ],
+  "schema_version": "sawm/trace-corpus@1",
+  "task_id": "SAWM-023"
+}
