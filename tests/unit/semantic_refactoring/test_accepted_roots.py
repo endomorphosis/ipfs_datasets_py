@@ -15,6 +15,7 @@ from ipfs_datasets_py.semantic_refactoring.accepted_roots import (
     PRODUCER_INTERFACE,
     REQUIRED_CLAUSES,
     admit_spar_accepted_root,
+    subject_binding_cid,
     validate_subject,
 )
 
@@ -50,6 +51,7 @@ def test_valid_subject_without_clause_evidence_is_not_admitted():
     assert receipt["evidence_cids"] == []
     assert receipt["profile_cid"] == "profile:sealed"
     assert receipt["goal_cids"] == [f"goal:{i}" for i in range(32)]
+    assert receipt["subject_cid"] == subject_binding_cid(validate_subject(_subject()))
 
 
 def test_caller_supplied_accepted_boolean_cannot_admit_a_root():

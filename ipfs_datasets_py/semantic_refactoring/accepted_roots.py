@@ -7,6 +7,7 @@ Worker booleans, nominated reports, and task counts cannot admit a root.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 from collections.abc import Mapping
@@ -61,8 +62,17 @@ def _canonical(value: Any) -> bytes:
     ).encode()
 
 
+_CID_PREFIX: Final[bytes] = b"\x01\xa9\x02\x12\x20"
+
+
 def _digest(value: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value)).hexdigest()
+
+
+def subject_binding_cid(value: Mapping[str, Any]) -> str:
+    """SPAR closeout subject binding CID; not semantic acceptance authority."""
+    digest = hashlib.sha256(_canonical(dict(value))).digest()
+    return "b" + base64.b32encode(_CID_PREFIX + digest).decode("ascii").rstrip("=").lower()
 
 
 def _text(value: Any, name: str) -> str:
@@ -199,6 +209,7 @@ def admit_spar_accepted_root(subject: Mapping[str, Any]) -> dict[str, Any]:
         "fixed_point_accepted": outcomes["fixed_point_accepted"]["accepted"],
         "evidence_cids": evidence_cids,
         "subject_digest": _digest(closed),
+        "subject_cid": subject_binding_cid(closed),
         "reason": MODE_FLOORS if not clauses_accepted else MISSING,
     }
     if (
