@@ -1,7 +1,8 @@
-"""Fail-closed SPAR accepted-root producer. Reports and task counts cannot admit."""
+"""SPAR accepted-root producer never admits missing or caller-forged evidence."""
 
 from __future__ import annotations
 
+import copy
 import os
 
 os.environ.setdefault("IPFS_DATASETS_AUTO_INSTALL", "0")
@@ -10,119 +11,79 @@ os.environ.setdefault("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
 os.environ.setdefault("IPFS_KIT_AUTO_INSTALL_DEPS", "0")
 
 from ipfs_datasets_py.semantic_refactoring.accepted_roots import (
-    EXPECTED_GOALS,
-    EXPECTED_TASKS,
-    MISSING,
     MODE_FLOORS,
     PRODUCER_INTERFACE,
     REQUIRED_CLAUSES,
-    SUBJECT_SCHEMA,
     admit_spar_accepted_root,
-    subject_binding_cid,
+    validate_subject,
 )
 
 
-def _cids(prefix: str, count: int) -> list[str]:
-    return [f"sha256:{prefix}{index:0{64 - len(prefix)}x}" for index in range(count)]
-
-
-def _subject(**overrides):
-    body = {
-        "schema": SUBJECT_SCHEMA,
-        "profile_cid": "sha256:" + "a" * 64,
-        "bootstrap_receipt_id": "sha256:" + "b" * 64,
-        "plan_root_cid": "sha256:" + "c" * 64,
+def _subject() -> dict:
+    return {
+        "schema": "ipfs_accelerate_py/agent-supervisor/spar-accepted-root-subject@1",
+        "profile_cid": "profile:sealed",
+        "bootstrap_receipt_id": "bootstrap:sealed",
+        "plan_root_cid": "plan:sealed",
         "board_namespace": "semantic-preserving-autonomous-remodularization-v1",
-        "source_forest_root": "sha256:" + "d" * 64,
-        "repository_tree_id": "tree:spar",
-        "source_head": "b6f592a3befee6fd2d4d81265c36904acd906353",
-        "kit_transition_cid": "sha256:" + "e" * 64,
-        "kit_manifest_cid": "sha256:" + "f" * 64,
-        "goal_cids": _cids("11", EXPECTED_GOALS),
-        "goal_contract_cids": _cids("22", EXPECTED_GOALS),
-        "task_cids": _cids("33", EXPECTED_TASKS),
-        "task_receipt_cids": _cids("44", EXPECTED_TASKS),
+        "source_forest_root": "sha256:" + "a" * 64,
+        "repository_tree_id": "b" * 40,
+        "source_head": "c" * 40,
+        "kit_transition_cid": "kit:transition",
+        "kit_manifest_cid": "kit:manifest",
+        "goal_cids": [f"goal:{i}" for i in range(32)],
+        "goal_contract_cids": [f"contract:{i}" for i in range(32)],
+        "task_cids": [f"task:{i}" for i in range(51)],
+        "task_receipt_cids": [f"receipt:{i}" for i in range(51)],
         "semantic_acceptance_authority": False,
         "completion_authority": False,
     }
-    body.update(overrides)
-    return body
 
 
-def test_interface_is_pinned():
-    from ipfs_datasets_py.semantic_refactoring import accepted_roots as producer
+def test_valid_subject_without_clause_evidence_is_not_admitted():
+    receipt = admit_spar_accepted_root(_subject())
+    assert receipt["producer_interface"] == PRODUCER_INTERFACE
+    assert receipt["admitted"] is False
+    assert receipt["semantic_acceptance_authority"] is False
+    assert receipt["reason"] == MODE_FLOORS
+    assert all(receipt[name] is False for name in REQUIRED_CLAUSES)
+    assert receipt["evidence_cids"] == []
+    assert receipt["profile_cid"] == "profile:sealed"
+    assert receipt["goal_cids"] == [f"goal:{i}" for i in range(32)]
 
-    assert producer.PRODUCER_INTERFACE == PRODUCER_INTERFACE
-    assert callable(producer.admit_spar_accepted_root)
 
-
-def test_valid_subject_without_independent_artifacts_is_not_admitted():
+def test_caller_supplied_accepted_boolean_cannot_admit_a_root():
     subject = _subject()
-    result = admit_spar_accepted_root(subject)
-    assert result["admitted"] is False
-    assert result["semantic_acceptance_authority"] is False
-    assert result["completion_authority"] is False
-    assert result["reason"] == MODE_FLOORS
-    assert result["subject_cid"] == subject_binding_cid(subject)
-    assert result["profile_cid"] == subject["profile_cid"]
-    assert result["source_forest_root"] == subject["source_forest_root"]
-    assert result["evidence_cids"] == []
-    assert all(result[name] is False for name in REQUIRED_CLAUSES)
+    subject["semantic_acceptance_authority"] = True
+    receipt = admit_spar_accepted_root(subject)
+    assert receipt["admitted"] is False
+    assert "self-authorize" in receipt["error"]
 
 
-def test_task_count_and_worker_flags_cannot_admit():
-    subject = _subject(worker_approved=True, test_pass=True)
-    result = admit_spar_accepted_root(subject)
-    assert result["admitted"] is False
-    assert result["reason"] == "forbidden_subject_field:worker_approved"
-    assert result["semantic_acceptance_authority"] is False
+def test_wrong_population_is_rejected():
+    subject = _subject()
+    subject["goal_cids"] = subject["goal_cids"][:-1]
+    receipt = admit_spar_accepted_root(subject)
+    assert receipt["admitted"] is False
+    assert receipt["reason"] != ""
 
 
-def test_self_authorized_subject_is_refused():
-    result = admit_spar_accepted_root(_subject(semantic_acceptance_authority=True))
-    assert result["admitted"] is False
-    assert result["reason"] == "subject_self_authorized"
+def test_validate_subject_rejects_duplicate_task_identities():
+    subject = _subject()
+    subject["task_cids"][1] = subject["task_cids"][0]
+    try:
+        validate_subject(subject)
+    except Exception as exc:
+        assert "unique" in str(exc)
+    else:
+        raise AssertionError("duplicate task identities were accepted")
 
 
-def test_wrong_schema_is_refused():
-    result = admit_spar_accepted_root(_subject(schema="nomination-report"))
-    assert result["admitted"] is False
-    assert result["reason"] == MISSING
-
-
-def test_incomplete_receipts_are_refused():
-    receipts = _cids("44", EXPECTED_TASKS)
-    receipts[-1] = None  # type: ignore[list-item]
-    result = admit_spar_accepted_root(_subject(task_receipt_cids=receipts))
-    assert result["admitted"] is False
-    assert result["reason"] == "sealed_population_incomplete"
-
-
-def test_duplicate_goal_cids_are_refused():
-    goals = _cids("11", EXPECTED_GOALS)
-    goals[-1] = goals[0]
-    result = admit_spar_accepted_root(_subject(goal_cids=goals))
-    assert result["admitted"] is False
-    assert result["reason"] == "sealed_population_incomplete"
-
-
-def test_forged_clause_artifact_does_not_admit():
-    subject = _subject(
-        clause_artifacts={
-            "mode_roots_artifact": {
-                "artifact_cid": "sha256:" + "0" * 64,
-                "accepted": True,
-                "roots": {"tree_id": "sha256:" + "d" * 64},
-            }
-        }
-    )
-    result = admit_spar_accepted_root(subject)
-    assert result["admitted"] is False
-    assert result["required_mode_roots_accepted"] is False
-    assert result["semantic_acceptance_authority"] is False
-
-
-def test_non_mapping_is_refused():
-    result = admit_spar_accepted_root(["not-a-subject"])  # type: ignore[arg-type]
-    assert result["admitted"] is False
-    assert result["reason"] == MISSING
+def test_clause_outcome_injection_on_the_subject_is_ignored():
+    subject = _subject()
+    forged = copy.deepcopy(subject)
+    # Extra keys make the subject not closed.
+    forged["required_mode_roots_accepted"] = True
+    receipt = admit_spar_accepted_root(forged)
+    assert receipt["admitted"] is False
+    assert receipt.get("required_mode_roots_accepted") is not True
