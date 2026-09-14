@@ -1,0 +1,271 @@
+{
+  "schema": "ipfs-datasets.software-verification.program-trace-corpus@1",
+  "language": "python",
+  "tree_identity": "sawm-023-program-world-trace-corpus-v1",
+  "checkpoint_lineage": null,
+  "rows": [
+    {
+      "row_id": "trace:hermetic:add",
+      "origin": "hermetic",
+      "partition": "training",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "add",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "add-return"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "public",
+      "source_kind": "first-party-hermetic",
+      "event_kinds": ["call", "return"],
+      "label_kind": "observed_event_sequence"
+    },
+    {
+      "row_id": "trace:hermetic:mul",
+      "origin": "hermetic",
+      "partition": "training",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "mul",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "mul-return"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "public",
+      "source_kind": "first-party-hermetic",
+      "event_kinds": ["call", "return"],
+      "label_kind": "observed_event_sequence"
+    },
+    {
+      "row_id": "trace:synthetic:clamp",
+      "origin": "synthetic",
+      "partition": "development",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "clamp",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "clamp-branch"
+      },
+      "rights": "synthetic-admitted",
+      "privacy_class": "public",
+      "source_kind": "synthetic-generator",
+      "event_kinds": ["call", "branch", "return"],
+      "label_kind": "synthetic_event_sequence"
+    },
+    {
+      "row_id": "trace:hermetic:div",
+      "origin": "hermetic",
+      "partition": "held_out",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "div",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "div-return"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "public",
+      "source_kind": "first-party-hermetic",
+      "event_kinds": ["call", "return"],
+      "label_kind": "observed_event_sequence"
+    },
+    {
+      "row_id": "trace:adversarial:eval",
+      "origin": "adversarial",
+      "partition": "adversarial",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "eval_probe",
+        "failure": "none",
+        "mutant": "eval-getattr",
+        "proof": "none",
+        "procedure": "none"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "public",
+      "source_kind": "adversarial-mutant",
+      "event_kinds": ["call", "external"],
+      "label_kind": "adversarial_mutant_sequence"
+    },
+    {
+      "row_id": "trace:adversarial:boom",
+      "origin": "adversarial",
+      "partition": "adversarial",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "boom",
+        "failure": "ValueError",
+        "mutant": "raise-handler",
+        "proof": "none",
+        "procedure": "none"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "public",
+      "source_kind": "adversarial-mutant",
+      "event_kinds": ["call", "raise", "catch", "return"],
+      "label_kind": "observed_exception"
+    },
+    {
+      "row_id": "trace:observed:kit-digest",
+      "origin": "observed",
+      "partition": "cross_repository",
+      "groups": {
+        "repository": "ipfs_kit_py",
+        "commit": "kit-fixture-v1",
+        "task": "SAWM-011",
+        "function": "digest_bytes",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "digest-return"
+      },
+      "rights": "public-rights-cleared",
+      "privacy_class": "public",
+      "source_kind": "observed-admitted",
+      "event_kinds": ["call", "return"],
+      "label_kind": "observed_event_sequence"
+    },
+    {
+      "row_id": "trace:observed:ood-getattr",
+      "origin": "observed",
+      "partition": "ood",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "ood_getattr",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "dynamic-attr"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "public",
+      "source_kind": "observed-admitted",
+      "event_kinds": ["call", "unavailable"],
+      "label_kind": "observed_event_sequence"
+    }
+  ],
+  "exclusions": [
+    {
+      "row_id": "exclude:secret",
+      "origin": "observed",
+      "partition": "training",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "secret_holder",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "none"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "public",
+      "source_kind": "first-party-hermetic",
+      "event_kinds": ["call", "return"],
+      "label_kind": "observed_event_sequence",
+      "password": "must-not-enter-corpus"
+    },
+    {
+      "row_id": "exclude:hidden-test",
+      "origin": "observed",
+      "partition": "training",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "hidden_suite",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "none"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "public",
+      "source_kind": "hidden-test",
+      "event_kinds": ["call", "return"],
+      "label_kind": "observed_event_sequence"
+    },
+    {
+      "row_id": "exclude:private-reasoning",
+      "origin": "observed",
+      "partition": "training",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "reasoner",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "none"
+      },
+      "rights": "first-party-admitted",
+      "privacy_class": "private",
+      "source_kind": "private-reasoning",
+      "event_kinds": ["call", "return"],
+      "label_kind": "observed_event_sequence"
+    },
+    {
+      "row_id": "exclude:unadmitted-source",
+      "origin": "observed",
+      "partition": "training",
+      "groups": {
+        "repository": "unknown",
+        "commit": "unknown",
+        "task": "none",
+        "function": "prod_trace",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "none"
+      },
+      "rights": "unknown-rights",
+      "privacy_class": "public",
+      "source_kind": "unadmitted-production",
+      "event_kinds": ["call", "return"],
+      "label_kind": "observed_event_sequence"
+    },
+    {
+      "row_id": "exclude:model-nomination",
+      "origin": "synthetic",
+      "partition": "training",
+      "groups": {
+        "repository": "ipfs_datasets_py",
+        "commit": "fixture-tree-v1",
+        "task": "SAWM-023",
+        "function": "predicted_call",
+        "failure": "none",
+        "mutant": "none",
+        "proof": "none",
+        "procedure": "none"
+      },
+      "rights": "synthetic-admitted",
+      "privacy_class": "public",
+      "source_kind": "synthetic-generator",
+      "event_kinds": ["call", "return"],
+      "label_kind": "model_nomination"
+    }
+  ]
+}
