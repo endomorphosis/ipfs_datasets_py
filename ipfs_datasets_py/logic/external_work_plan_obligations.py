@@ -1,22 +1,27 @@
-"""Planning proof obligations, bounded-plan terms, PlanDelta, assume-guarantee contracts, equivalence elimination, and SupervisorPatchPlan.
+"""Planning proof obligations, bounded-plan terms, PlanDelta, assume-guarantee contracts, equivalence elimination, SupervisorPatchPlan, and CrossSupervisorTaskRequest.
 
 The terms, deltas, assume-guarantee records, equivalence-elimination
-records, and supervisor patch plans in this module describe a plan; they
-never grant execution or completion authority.  Operational admission
-remains the responsibility of the supervisor that independently verifies
-the recorded acceptance evidence.  PlanDelta, PlanAssumeGuarantee,
-PlanEquivalenceElimination, and SupervisorPatchPlan are deliberately
+records, supervisor patch plans, and cross-supervisor task requests in
+this module describe a plan; they never grant execution or completion
+authority.  Operational admission remains the responsibility of the
+supervisor that independently verifies the recorded acceptance evidence.
+PlanDelta, PlanAssumeGuarantee, PlanEquivalenceElimination,
+SupervisorPatchPlan, and CrossSupervisorTaskRequest are deliberately
 parallel to PlanTerms and PlanObligation: they are not a new planner and
 are not a competing operational subsystem.  Accelerate owns operational
-PlanDelta@1, assume-guarantee, equivalence-elimination, and
-SupervisorPatchPlan admission; this record only names the impacted suffix,
-the preserved unaffected set, model-free refill identities, compositional
-substitutions whose guarantees apply only when assumptions are satisfied
-and current admitted guarantee receipts exist, equivalent-task and
-equivalent-plan classes whose elimination requires current admitted
-equivalence evidence, and typed patch plans whose model assertion is never
-patch acceptance evidence.  A SupervisorPatchPlan cannot grant mutation,
-merge, or completion authority.
+PlanDelta@1, assume-guarantee, equivalence-elimination,
+SupervisorPatchPlan, and cross-supervisor task-request admission; this
+record only names the impacted suffix, the preserved unaffected set,
+model-free refill identities, compositional substitutions whose
+guarantees apply only when assumptions are satisfied and current admitted
+guarantee receipts exist, equivalent-task and equivalent-plan classes
+whose elimination requires current admitted equivalence evidence, typed
+patch plans whose model assertion is never patch acceptance evidence,
+and cross-supervisor task requests that siblings exchange as events,
+never as database writes.  A SupervisorPatchPlan cannot grant mutation,
+merge, or completion authority.  A CrossSupervisorTaskRequest cannot
+grant mutation, completion, terminalization, or direct state-write
+authority.
 """
 
 from __future__ import annotations
@@ -133,6 +138,37 @@ PATCH_EDIT_OPERATIONS: Final[frozenset[str]] = frozenset(
         "replace",
         "insert",
         "delete",
+    }
+)
+CROSS_SUPERVISOR_TASK_REQUEST_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/logic/external-work-plan-cross-supervisor-task-request@1"
+)
+CROSS_SUPERVISOR_TASK_REQUEST_SCHEMA_VERSION: Final[str] = (
+    "external-work-plan-cross-supervisor-task-request/v1"
+)
+CROSS_SUPERVISOR_TASK_REQUEST_CAPABILITY: Final[str] = "task-request"
+CROSS_SUPERVISOR_TASK_REQUEST_CAPABILITIES: Final[frozenset[str]] = frozenset(
+    {CROSS_SUPERVISOR_TASK_REQUEST_CAPABILITY}
+)
+CROSS_SUPERVISOR_TASK_REQUEST_CARRIERS: Final[frozenset[str]] = frozenset({"event"})
+CROSS_SUPERVISOR_TASK_REQUEST_EFFECTS: Final[frozenset[str]] = frozenset(
+    {"event_exchange"}
+)
+CROSS_SUPERVISOR_TASK_REQUEST_FORBIDDEN_FIELDS: Final[frozenset[str]] = frozenset(
+    SUPERVISOR_PATCH_PLAN_FORBIDDEN_FIELDS
+    | {
+        "append_event",
+        "consume",
+        "database_path",
+        "duckdb_path",
+        "ducklake_path",
+        "mark_consumed",
+        "owner_mutation",
+        "policy_pointer",
+        "save_consumer_checkpoint",
+        "sql",
+        "state_write",
+        "write_database",
     }
 )
 
@@ -1691,6 +1727,380 @@ def declared_supervisor_patch_scope(
     grant completion authority.
     """
     return validate_supervisor_patch_plan(value).target_paths
+
+
+@dataclass(frozen=True)
+class CrossSupervisorTaskRequest:
+    """Semantic identity of a cross-supervisor task request.
+
+    ``CrossSupervisorTaskRequest`` is deliberately parallel to
+    :class:`PlanTerms`, :class:`PlanDelta`, :class:`PlanAssumeGuarantee`,
+    :class:`PlanEquivalenceElimination`, and :class:`SupervisorPatchPlan`.
+    It is not a new planner, not a sibling task bus, not a sibling
+    database, and is not a competing operational subsystem.  Sibling
+    supervisors exchange these requests as events, never as database
+    writes.  The record cannot grant mutation, completion,
+    terminalization, or direct state-write authority.  Operational
+    admission remains accelerate-owned; this record only names the
+    requesting and receiving supervisors, the requested task, the bound
+    intent, context pack, and patch plan, the event carrier, and
+    independently checkable acceptance conditions.
+    """
+
+    request_id: str
+    base_plan_revision: str
+    requesting_supervisor_id: str
+    receiving_supervisor_id: str
+    task_id: str
+    intent_id: str
+    context_pack_id: str
+    patch_plan_id: str
+    carrier_event_id: str
+    capability: str = CROSS_SUPERVISOR_TASK_REQUEST_CAPABILITY
+    carrier: str = "event"
+    requested_effect: str = "event_exchange"
+    acceptance_conditions: tuple[AcceptanceCondition, ...] = ()
+    schema: str = CROSS_SUPERVISOR_TASK_REQUEST_SCHEMA
+    schema_version: str = CROSS_SUPERVISOR_TASK_REQUEST_SCHEMA_VERSION
+    database_write: bool = False
+    direct_state_write: bool = False
+    terminalize_task: bool = False
+    worker_assertion_is_authority: bool = False
+    acceptance_requires_independent_evidence: bool = True
+    mutation_authoritative: bool = False
+    history_preserving: bool = True
+    completion_authoritative: bool = False
+
+    def __post_init__(self) -> None:
+        if self.schema != CROSS_SUPERVISOR_TASK_REQUEST_SCHEMA:
+            raise ObligationError(
+                "unsupported cross-supervisor task request schema"
+            )
+        if self.schema_version != CROSS_SUPERVISOR_TASK_REQUEST_SCHEMA_VERSION:
+            raise ObligationError(
+                "unsupported cross-supervisor task request schema version"
+            )
+        if self.completion_authoritative:
+            raise ObligationError(
+                "cross-supervisor task request cannot grant completion authority"
+            )
+        if self.mutation_authoritative:
+            raise ObligationError(
+                "cross-supervisor task request cannot grant mutation authority"
+            )
+        if not self.history_preserving:
+            raise ObligationError(
+                "cross-supervisor task request must preserve history"
+            )
+        if self.database_write:
+            raise ObligationError(
+                "cross-supervisor task request cannot write a database"
+            )
+        if self.direct_state_write:
+            raise ObligationError(
+                "cross-supervisor task request cannot perform a direct state write"
+            )
+        if self.terminalize_task:
+            raise ObligationError(
+                "cross-supervisor task request cannot terminalize a task"
+            )
+        if self.worker_assertion_is_authority:
+            raise ObligationError(
+                "worker assertion is not cross-supervisor task request authority"
+            )
+        if not self.acceptance_requires_independent_evidence:
+            raise ObligationError(
+                "cross-supervisor task request requires independent evidence"
+            )
+        object.__setattr__(
+            self,
+            "request_id",
+            _validated_identifier(self.request_id, field="request_id"),
+        )
+        object.__setattr__(
+            self,
+            "base_plan_revision",
+            _validated_identifier(
+                self.base_plan_revision, field="base_plan_revision"
+            ),
+        )
+        object.__setattr__(
+            self,
+            "requesting_supervisor_id",
+            _validated_identifier(
+                self.requesting_supervisor_id, field="requesting_supervisor_id"
+            ),
+        )
+        object.__setattr__(
+            self,
+            "receiving_supervisor_id",
+            _validated_identifier(
+                self.receiving_supervisor_id, field="receiving_supervisor_id"
+            ),
+        )
+        if self.requesting_supervisor_id == self.receiving_supervisor_id:
+            raise ObligationError("a supervisor is not its own sibling")
+        object.__setattr__(
+            self, "task_id", _validated_identifier(self.task_id, field="task_id")
+        )
+        object.__setattr__(
+            self,
+            "intent_id",
+            _validated_identifier(self.intent_id, field="intent_id"),
+        )
+        object.__setattr__(
+            self,
+            "context_pack_id",
+            _validated_identifier(self.context_pack_id, field="context_pack_id"),
+        )
+        object.__setattr__(
+            self,
+            "patch_plan_id",
+            _validated_identifier(self.patch_plan_id, field="patch_plan_id"),
+        )
+        object.__setattr__(
+            self,
+            "carrier_event_id",
+            _validated_identifier(
+                self.carrier_event_id, field="carrier_event_id"
+            ),
+        )
+        object.__setattr__(
+            self,
+            "capability",
+            _validated_closed_token(
+                self.capability,
+                field="capability",
+                allowed=CROSS_SUPERVISOR_TASK_REQUEST_CAPABILITIES,
+                label="cross-supervisor task request capability",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "carrier",
+            _validated_closed_token(
+                self.carrier,
+                field="carrier",
+                allowed=CROSS_SUPERVISOR_TASK_REQUEST_CARRIERS,
+                label="cross-supervisor task request carrier",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "requested_effect",
+            _validated_closed_token(
+                self.requested_effect,
+                field="requested_effect",
+                allowed=CROSS_SUPERVISOR_TASK_REQUEST_EFFECTS,
+                label="cross-supervisor task request effect",
+            ),
+        )
+        conditions = tuple(self.acceptance_conditions)
+        if not conditions:
+            raise ObligationError(
+                "cross-supervisor task request requires independent acceptance evidence"
+            )
+        if not all(isinstance(item, AcceptanceCondition) for item in conditions):
+            raise ObligationError(
+                "acceptance_conditions must contain AcceptanceCondition values"
+            )
+        if len({item.condition_id for item in conditions}) != len(conditions):
+            raise ObligationError("acceptance condition IDs must be unique")
+        object.__setattr__(self, "acceptance_conditions", conditions)
+        object.__setattr__(self, "database_write", False)
+        object.__setattr__(self, "direct_state_write", False)
+        object.__setattr__(self, "terminalize_task", False)
+        object.__setattr__(self, "worker_assertion_is_authority", False)
+        object.__setattr__(self, "acceptance_requires_independent_evidence", True)
+        object.__setattr__(self, "mutation_authoritative", False)
+        object.__setattr__(self, "history_preserving", True)
+        object.__setattr__(self, "completion_authoritative", False)
+
+    def to_dict(self) -> Mapping[str, Any]:
+        return MappingProxyType(
+            {
+                "schema": self.schema,
+                "schema_version": self.schema_version,
+                "request_id": self.request_id,
+                "base_plan_revision": self.base_plan_revision,
+                "requesting_supervisor_id": self.requesting_supervisor_id,
+                "receiving_supervisor_id": self.receiving_supervisor_id,
+                "task_id": self.task_id,
+                "intent_id": self.intent_id,
+                "context_pack_id": self.context_pack_id,
+                "patch_plan_id": self.patch_plan_id,
+                "carrier_event_id": self.carrier_event_id,
+                "capability": self.capability,
+                "carrier": self.carrier,
+                "requested_effect": self.requested_effect,
+                "acceptance_conditions": [
+                    dict(item.to_dict()) for item in self.acceptance_conditions
+                ],
+                "database_write": False,
+                "direct_state_write": False,
+                "terminalize_task": False,
+                "worker_assertion_is_authority": False,
+                "acceptance_requires_independent_evidence": True,
+                "mutation_authoritative": False,
+                "history_preserving": True,
+                "completion_authoritative": False,
+            }
+        )
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "CrossSupervisorTaskRequest":
+        if not isinstance(payload, Mapping):
+            raise ObligationError("cross-supervisor task request must be an object")
+        forbidden = set(payload).intersection(
+            CROSS_SUPERVISOR_TASK_REQUEST_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise ObligationError(
+                "cross-supervisor task request contains operational authority field(s): "
+                f"{sorted(forbidden)[0]}"
+            )
+        allowed = {
+            "schema",
+            "schema_version",
+            "request_id",
+            "base_plan_revision",
+            "requesting_supervisor_id",
+            "receiving_supervisor_id",
+            "task_id",
+            "intent_id",
+            "context_pack_id",
+            "patch_plan_id",
+            "carrier_event_id",
+            "capability",
+            "carrier",
+            "requested_effect",
+            "acceptance_conditions",
+            "database_write",
+            "direct_state_write",
+            "terminalize_task",
+            "worker_assertion_is_authority",
+            "acceptance_requires_independent_evidence",
+            "mutation_authoritative",
+            "history_preserving",
+            "completion_authoritative",
+        }
+        unknown = set(payload).difference(allowed)
+        if unknown:
+            raise ObligationError(
+                f"unknown cross-supervisor task request field: {sorted(unknown)[0]}"
+            )
+        raw_conditions = payload.get("acceptance_conditions") or ()
+        if not isinstance(raw_conditions, Sequence) or isinstance(
+            raw_conditions, (str, bytes)
+        ):
+            raise ObligationError("acceptance_conditions must be a sequence")
+        conditions = []
+        for item in raw_conditions:
+            if isinstance(item, AcceptanceCondition):
+                conditions.append(item)
+            elif isinstance(item, Mapping):
+                conditions.append(AcceptanceCondition(**dict(item)))
+            else:
+                raise ObligationError("acceptance condition must be an object")
+        return cls(
+            request_id=str(payload.get("request_id") or ""),
+            base_plan_revision=str(payload.get("base_plan_revision") or ""),
+            requesting_supervisor_id=str(
+                payload.get("requesting_supervisor_id") or ""
+            ),
+            receiving_supervisor_id=str(
+                payload.get("receiving_supervisor_id") or ""
+            ),
+            task_id=str(payload.get("task_id") or ""),
+            intent_id=str(payload.get("intent_id") or ""),
+            context_pack_id=str(payload.get("context_pack_id") or ""),
+            patch_plan_id=str(payload.get("patch_plan_id") or ""),
+            carrier_event_id=str(payload.get("carrier_event_id") or ""),
+            capability=str(
+                payload.get("capability", CROSS_SUPERVISOR_TASK_REQUEST_CAPABILITY)
+            ),
+            carrier=str(payload.get("carrier", "event")),
+            requested_effect=str(payload.get("requested_effect", "event_exchange")),
+            acceptance_conditions=tuple(conditions),
+            schema=str(
+                payload.get("schema", CROSS_SUPERVISOR_TASK_REQUEST_SCHEMA)
+            ),
+            schema_version=str(
+                payload.get(
+                    "schema_version", CROSS_SUPERVISOR_TASK_REQUEST_SCHEMA_VERSION
+                )
+            ),
+            database_write=bool(payload.get("database_write", False)),
+            direct_state_write=bool(payload.get("direct_state_write", False)),
+            terminalize_task=bool(payload.get("terminalize_task", False)),
+            worker_assertion_is_authority=bool(
+                payload.get("worker_assertion_is_authority", False)
+            ),
+            acceptance_requires_independent_evidence=bool(
+                payload.get("acceptance_requires_independent_evidence", True)
+            ),
+            mutation_authoritative=bool(
+                payload.get("mutation_authoritative", False)
+            ),
+            history_preserving=bool(payload.get("history_preserving", True)),
+            completion_authoritative=bool(
+                payload.get("completion_authoritative", False)
+            ),
+        )
+
+
+def validate_cross_supervisor_task_request(
+    value: Mapping[str, Any] | CrossSupervisorTaskRequest,
+) -> CrossSupervisorTaskRequest:
+    """Validate canonical cross-supervisor task request; no caller can self-admit it."""
+    request = (
+        value
+        if isinstance(value, CrossSupervisorTaskRequest)
+        else CrossSupervisorTaskRequest.from_dict(value)
+    )
+    if request.completion_authoritative:
+        raise ObligationError(
+            "cross-supervisor task request cannot grant completion authority"
+        )
+    if request.mutation_authoritative:
+        raise ObligationError(
+            "cross-supervisor task request cannot grant mutation authority"
+        )
+    if request.database_write or request.direct_state_write:
+        raise ObligationError(
+            "cross-supervisor task request cannot perform a direct state write"
+        )
+    if request.terminalize_task:
+        raise ObligationError(
+            "cross-supervisor task request cannot terminalize a task"
+        )
+    if request.worker_assertion_is_authority:
+        raise ObligationError(
+            "worker assertion is not cross-supervisor task request authority"
+        )
+    if not request.acceptance_requires_independent_evidence:
+        raise ObligationError(
+            "cross-supervisor task request requires independent evidence"
+        )
+    if not request.history_preserving:
+        raise ObligationError(
+            "cross-supervisor task request must preserve history"
+        )
+    if request.requesting_supervisor_id == request.receiving_supervisor_id:
+        raise ObligationError("a supervisor is not its own sibling")
+    return request
+
+
+def declared_cross_supervisor_task_request_parties(
+    value: Mapping[str, Any] | CrossSupervisorTaskRequest,
+) -> tuple[str, str]:
+    """Return the requesting and receiving supervisors of a validated request.
+
+    The helper names parties only.  It does not dispatch the request, write
+    sibling state, terminalize a task, or grant completion authority.
+    """
+    request = validate_cross_supervisor_task_request(value)
+    return request.requesting_supervisor_id, request.receiving_supervisor_id
 
 
 @dataclass(frozen=True)

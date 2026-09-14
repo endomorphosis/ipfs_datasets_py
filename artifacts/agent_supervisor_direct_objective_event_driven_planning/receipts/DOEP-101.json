@@ -1,0 +1,128 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "task_id": "DOEP-101",
+  "task_cid": "sha256:cb18791854d0bb217017d3e60773b6b30a0f4c7361222ee3a68321da409d7a0a",
+  "title": "Add cross-supervisor task requests",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "goal_id": "DOEP-G110.S1",
+  "parent_goal_id": "DOEP-G110",
+  "root_goal_id": "DOEP-G000",
+  "candidate_status": "implemented",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "base_repositories": {
+    "ipfs_accelerate_py": {
+      "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+      "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+    },
+    "ipfs_datasets_py": {
+      "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+      "tree": "456e09b51d6a07a3a5873436df24054768195320"
+    },
+    "ipfs_kit_py": {
+      "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+      "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+    },
+    "lift_coding": {
+      "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+      "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+    }
+  },
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_101_add_cross_supervisor_task_requests.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-101.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-101.json"
+  ],
+  "changed_paths": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_101_add_cross_supervisor_task_requests.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-101.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-101.json"
+  ],
+  "write_scope": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_101_add_cross_supervisor_task_requests.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-101.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-101.json"
+  ],
+  "outputs_present": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": true,
+    "tests/doep/test_doep_101_add_cross_supervisor_task_requests.py": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-101.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-101.json": true
+  },
+  "path_digests": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": "sha256:b6904b5bc48add4e81564a882d6427cdd794a01e5828494cbb40eadb1dde6f67",
+    "tests/doep/test_doep_101_add_cross_supervisor_task_requests.py": "sha256:f4546a4905390065a6404501043ae90d8523f3b233679af43af6daae38d57c84",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-101.json": "sha256:91d6f27421bd6763bb6fec7b3d8d6df1f311caec3ac744ccbb7b200f3ac84b35"
+  },
+  "required_evidence": {
+    "source_commit_tree_gitlinks": {
+      "ipfs_accelerate_py": {
+        "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+        "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+      },
+      "ipfs_datasets_py": {
+        "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+        "tree": "456e09b51d6a07a3a5873436df24054768195320"
+      },
+      "ipfs_kit_py": {
+        "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+        "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+      },
+      "lift_coding": {
+        "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+        "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+      }
+    },
+    "test_proof_results": {
+      "validation_command": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/doep/test_doep_101_add_cross_supervisor_task_requests.py",
+        "-q"
+      ],
+      "proof_selection": "verified_empty",
+      "proof_reason": "The contract is exercised by independent pytest over CrossSupervisorTaskRequest; no formal prover was selected."
+    },
+    "receipt_cid": {
+      "status": "unavailable",
+      "reason": "No IPFS CLI was used; SHA-256 is not substituted for a CID."
+    },
+    "verifier_admission": "pending_independent_fenced_supervisor",
+    "limitations": [
+      "Candidate receipt only; independent fenced supervisor admission is required.",
+      "CrossSupervisorTaskRequest does not grant operational admission, mutation, completion, terminalization, or direct state-write authority.",
+      "Accelerate owns operational cross-supervisor task-request admission; this contract only names the requesting and receiving supervisors, requested task, bound intent, context pack, patch plan, event carrier, and independent acceptance conditions.",
+      "Sibling supervisors exchange task requests as events, never as database writes.",
+      "A worker or model assertion is not request admission evidence.",
+      "History is preserved: the record cannot rewrite accepted evidence.",
+      "Worker or model assertion alone is insufficient."
+    ]
+  },
+  "validation": {
+    "commands": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/doep/test_doep_101_add_cross_supervisor_task_requests.py",
+          "-q"
+        ],
+        "cwd": "external/ipfs_datasets",
+        "status": "candidate_local"
+      }
+    ]
+  },
+  "supervisor_acceptance": {
+    "state": "pending_independent_fenced_supervisor",
+    "completion_authoritative": false
+  }
+}
