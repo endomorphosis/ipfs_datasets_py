@@ -1,0 +1,241 @@
+{
+  "schema": "program-world-trace-corpus-recipe/v1",
+  "interface": "ExecutionTraceCorpus@1",
+  "corpus_id": "program-world-trace-corpus-v1",
+  "task_id": "SAWM-023",
+  "goal_id": "SAWM-G051",
+  "language": "python",
+  "network_policy": "offline",
+  "defaults": {
+    "rights_class": "first_party_hermetic",
+    "privacy_class": "public",
+    "language": "python",
+    "repository_id": "ipfs_datasets_py",
+    "commit_id": "sawm-023-fixture",
+    "tree_seed": "sawm-023-first-party-tree",
+    "environment_seed": "python-hermetic-env",
+    "ground_truth_kind": "runtime",
+    "polarity": "positive",
+    "event_kinds": ["call", "return"]
+  },
+  "recipes": [
+    {
+      "row_id": "train-hermetic-add",
+      "partition": "training",
+      "source_kind": "first_party_hermetic",
+      "family_id": "fam-arith-add",
+      "task_id": "task-arith-add",
+      "function_id": "fn-add",
+      "procedure_id": "proc-add",
+      "ground_truth_kind": "runtime",
+      "labels": {"expected_symbol": "add", "expected_outcome": "return"}
+    },
+    {
+      "row_id": "train-static-edge",
+      "partition": "training",
+      "source_kind": "admitted_static_edge",
+      "rights_class": "first_party_hermetic",
+      "family_id": "fam-static-callgraph",
+      "task_id": "task-static-callgraph",
+      "function_id": "fn-callgraph",
+      "ground_truth_kind": "static",
+      "event_kinds": ["call", "return", "observe"],
+      "labels": {"expected_symbol": "callgraph", "expected_outcome": "edge"}
+    },
+    {
+      "row_id": "train-counterexample-div0",
+      "partition": "training",
+      "source_kind": "mechanical_counterexample",
+      "family_id": "fam-div0",
+      "task_id": "task-div0",
+      "function_id": "fn-div",
+      "failure_id": "fail-zerodivision",
+      "proof_id": "proof-div0-counterexample",
+      "ground_truth_kind": "negative",
+      "polarity": "negative",
+      "event_kinds": ["call", "raise", "catch"],
+      "labels": {
+        "polarity": "negative",
+        "exception_type": "ZeroDivisionError",
+        "expected_outcome": "raise"
+      }
+    },
+    {
+      "row_id": "dev-instrumented-parse",
+      "partition": "development",
+      "source_kind": "instrumented_test",
+      "rights_class": "observed_first_party",
+      "family_id": "fam-parse",
+      "task_id": "task-parse",
+      "function_id": "fn-parse",
+      "ground_truth_kind": "test",
+      "event_kinds": ["call", "line", "return"],
+      "labels": {"test_status": "passed", "expected_symbol": "parse"}
+    },
+    {
+      "row_id": "dev-dynamic-edge",
+      "partition": "development",
+      "source_kind": "admitted_dynamic_edge",
+      "rights_class": "observed_first_party",
+      "family_id": "fam-dynamic-dispatch",
+      "task_id": "task-dynamic-dispatch",
+      "function_id": "fn-dispatch",
+      "ground_truth_kind": "runtime",
+      "event_kinds": ["call", "branch", "return"],
+      "labels": {"expected_symbol": "dispatch", "expected_outcome": "return"}
+    },
+    {
+      "row_id": "held-hermetic-sort",
+      "partition": "held_out",
+      "source_kind": "first_party_hermetic",
+      "family_id": "fam-sort",
+      "task_id": "task-sort",
+      "function_id": "fn-sort",
+      "procedure_id": "proc-sort",
+      "ground_truth_kind": "runtime",
+      "labels": {"expected_symbol": "sort", "expected_outcome": "return"}
+    },
+    {
+      "row_id": "held-rights-cleared-review",
+      "partition": "held_out",
+      "source_kind": "rights_cleared_review",
+      "rights_class": "rights_cleared_review",
+      "family_id": "fam-review-normalize",
+      "task_id": "task-review-normalize",
+      "function_id": "fn-normalize",
+      "ground_truth_kind": "human",
+      "labels": {"expected_symbol": "normalize", "proof_status": "reviewed"}
+    },
+    {
+      "row_id": "adv-mutant-eq",
+      "partition": "adversarial",
+      "source_kind": "adversarial_mutant",
+      "rights_class": "adversarial_generated",
+      "family_id": "fam-mut-eq",
+      "task_id": "task-mut-eq",
+      "function_id": "fn-eq-mutant",
+      "mutant_id": "mut-eq-boundary",
+      "failure_id": "fail-eq-boundary",
+      "ground_truth_kind": "test",
+      "polarity": "negative",
+      "event_kinds": ["call", "raise", "handler"],
+      "labels": {
+        "polarity": "negative",
+        "test_status": "failed",
+        "expected_outcome": "raise"
+      }
+    },
+    {
+      "row_id": "cross-public-hash",
+      "partition": "cross_repository",
+      "source_kind": "admitted_public",
+      "rights_class": "admitted_public",
+      "repository_id": "admitted-public-hashlib",
+      "commit_id": "public-hash-snapshot",
+      "tree_seed": "sawm-023-cross-repository-tree",
+      "family_id": "fam-ext-hash",
+      "task_id": "task-ext-hash",
+      "function_id": "fn-sha256",
+      "ground_truth_kind": "runtime",
+      "labels": {"expected_symbol": "sha256", "expected_outcome": "return"}
+    },
+    {
+      "row_id": "ood-synthetic-async",
+      "partition": "ood",
+      "source_kind": "synthetic_program",
+      "rights_class": "synthetic_generated",
+      "tree_seed": "sawm-023-ood-tree",
+      "family_id": "fam-ood-async",
+      "task_id": "task-ood-async",
+      "function_id": "fn-async-gather",
+      "ground_truth_kind": "runtime",
+      "event_kinds": ["call", "await", "yield", "return"],
+      "labels": {"expected_symbol": "gather", "expected_event_kind": "await"}
+    }
+  ],
+  "reject_recipes": [
+    {
+      "row_id": "reject-unknown-rights",
+      "partition": "training",
+      "source_kind": "unknown_rights",
+      "rights_class": "unknown",
+      "family_id": "fam-reject-unknown-rights",
+      "function_id": "fn-reject-unknown-rights",
+      "expect": "reject",
+      "expect_reasons": ["unknown_rights"]
+    },
+    {
+      "row_id": "reject-private-privacy",
+      "partition": "training",
+      "privacy_class": "private",
+      "family_id": "fam-reject-private",
+      "function_id": "fn-reject-private",
+      "expect": "reject",
+      "expect_reasons": ["privacy_not_admitted"]
+    },
+    {
+      "row_id": "reject-missing-tree",
+      "partition": "training",
+      "tree_cid": "",
+      "family_id": "fam-reject-missing-tree",
+      "function_id": "fn-reject-missing-tree",
+      "expect": "reject",
+      "expect_reasons": ["missing_tree_cid"]
+    },
+    {
+      "row_id": "reject-secret-material",
+      "partition": "training",
+      "family_id": "fam-reject-secret",
+      "function_id": "fn-reject-secret",
+      "labels": {"expected_outcome": "password=super-secret-value"},
+      "expect": "reject",
+      "expect_reasons": ["secret_material"]
+    },
+    {
+      "row_id": "reject-hidden-test",
+      "partition": "held_out",
+      "source_kind": "hidden_test",
+      "family_id": "fam-reject-hidden",
+      "function_id": "fn-reject-hidden",
+      "expect": "reject",
+      "expect_reasons": ["hidden_test"]
+    },
+    {
+      "row_id": "reject-private-reasoning",
+      "partition": "training",
+      "source_kind": "private_chain_of_thought",
+      "family_id": "fam-reject-cot",
+      "function_id": "fn-reject-cot",
+      "expect": "reject",
+      "expect_reasons": ["private_reasoning"]
+    },
+    {
+      "row_id": "reject-unadmitted-production",
+      "partition": "training",
+      "source_kind": "unadmitted_production",
+      "family_id": "fam-reject-prod",
+      "function_id": "fn-reject-prod",
+      "expect": "reject",
+      "expect_reasons": ["unadmitted_source"]
+    },
+    {
+      "row_id": "reject-model-nomination",
+      "partition": "training",
+      "family_id": "fam-reject-nomination",
+      "function_id": "fn-reject-nomination",
+      "ground_truth_kind": "model_nomination",
+      "expect": "reject",
+      "expect_reasons": ["model_nomination_label"]
+    },
+    {
+      "row_id": "reject-tenant-private",
+      "partition": "training",
+      "source_kind": "tenant_private",
+      "privacy_class": "tenant_private",
+      "family_id": "fam-reject-tenant",
+      "function_id": "fn-reject-tenant",
+      "expect": "reject",
+      "expect_reasons": ["tenant_private", "privacy_not_admitted"]
+    }
+  ]
+}
