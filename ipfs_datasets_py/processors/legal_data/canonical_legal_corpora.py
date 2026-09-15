@@ -255,7 +255,10 @@ def infer_canonical_legal_corpus_for_dataset_id(dataset_id: str) -> CanonicalLeg
         "justicedao/caselaw_access_project_embeddings",
     }:
         return get_canonical_legal_corpus("caselaw_access_project")
-    if normalized == "justicedao/american_municipal_law":
+    if normalized in {
+        "justicedao/american_municipal_law",
+        "endomorphosis/american_municipal_law",
+    }:
         return get_canonical_legal_corpus("municipal_laws")
     if normalized.startswith("justicedao/ipfs_france_laws"):
         return get_canonical_legal_corpus("france_laws")
@@ -265,12 +268,81 @@ def infer_canonical_legal_corpus_for_dataset_id(dataset_id: str) -> CanonicalLeg
         return get_canonical_legal_corpus("germany_laws")
     if normalized.startswith("justicedao/ipfs_netherlands_laws"):
         return get_canonical_legal_corpus("netherlands_laws")
+    if normalized.startswith("endomorphosis/ipfs_france_laws"):
+        return get_canonical_legal_corpus("france_laws")
+    if normalized.startswith("endomorphosis/ipfs_spain_laws"):
+        return get_canonical_legal_corpus("spain_laws")
+    if normalized.startswith("endomorphosis/ipfs_germany_laws"):
+        return get_canonical_legal_corpus("germany_laws")
+    if normalized.startswith("endomorphosis/ipfs_netherlands_laws"):
+        return get_canonical_legal_corpus("netherlands_laws")
+
+    snapshot_corpus = _canonical_corpus_from_snapshot_dataset_id(normalized)
+    if snapshot_corpus is not None:
+        return snapshot_corpus
 
     raise KeyError(f"Unknown canonical legal corpus dataset id: {dataset_id}")
 
 
+def _canonical_corpus_from_snapshot(entry: Any) -> CanonicalLegalCorpus:
+    core_key = str(getattr(entry, "core_corpus_key", "") or "").strip()
+    if core_key:
+        return get_canonical_legal_corpus(core_key)
+    slug = str(getattr(entry, "canonical_slug", "") or getattr(entry, "slug", "") or "country")
+    key = f"{slug}_laws"
+    return CanonicalLegalCorpus(
+        key=key,
+        display_name=f"{entry.display_name} Laws",
+        hf_dataset_id=str(entry.source_dataset_id),
+        legal_branch=str(entry.branch or "international"),
+        country_codes=(str(entry.country_code).upper(),),
+        local_root_name=key,
+        jsonld_dir_name=f"{key}_jsonld",
+        parquet_dir_name=f"{key}_parquet_cid",
+        combined_parquet_filename="laws.parquet",
+        combined_embeddings_filename="articles.parquet",
+    )
+
+
+def _canonical_corpus_from_snapshot_dataset_id(dataset_id: str) -> CanonicalLegalCorpus | None:
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers.international.catalog import (
+            infer_snapshot_corpus_for_dataset_id,
+        )
+    except Exception:
+        return None
+    try:
+        entry = infer_snapshot_corpus_for_dataset_id(dataset_id)
+    except KeyError:
+        return None
+    return _canonical_corpus_from_snapshot(entry)
+
+
 def list_canonical_legal_corpora() -> List[CanonicalLegalCorpus]:
     return [value for _, value in sorted(_CORPORA.items())]
+
+
+def list_snapshot_legal_corpora(*, include_aliases: bool = False) -> List[CanonicalLegalCorpus]:
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers.international.catalog import list_snapshot_corpora
+    except Exception:
+        return []
+    corpora: List[CanonicalLegalCorpus] = []
+    seen: set[str] = set()
+    for entry in list_snapshot_corpora(include_aliases=include_aliases):
+        corpus = _canonical_corpus_from_snapshot(entry)
+        if corpus.key in seen:
+            continue
+        seen.add(corpus.key)
+        corpora.append(corpus)
+    return corpora
+
+
+def list_all_legal_corpora() -> List[CanonicalLegalCorpus]:
+    merged: Dict[str, CanonicalLegalCorpus] = {corpus.key: corpus for corpus in list_canonical_legal_corpora()}
+    for corpus in list_snapshot_legal_corpora(include_aliases=False):
+        merged.setdefault(corpus.key, corpus)
+    return [merged[key] for key in sorted(merged)]
 
 
 def list_canonical_legal_corpora_by_branch(branch: str) -> List[CanonicalLegalCorpus]:

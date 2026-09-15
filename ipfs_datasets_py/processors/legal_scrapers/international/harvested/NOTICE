@@ -1,0 +1,9 @@
+Harvested official-gazette collectors from Hugging Face
+endomorphosis/legal_scrapers (AGPL-3.0) and per-dataset scrapers/
+folders under endomorphosis/ipfs_*_laws.
+
+Sandbox paths (/workspace/legal-corpora, /home/box/...) were rewritten
+to IPFS_DATASETS_LEGAL_CORPORA_ROOT / IPFS_DATASETS_LEGAL_COLLECTORS_ROOT.
+
+These scripts download official gazette texts for research corpora.
+They are not legal advice. The official gazette prevails.

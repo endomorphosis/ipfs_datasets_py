@@ -1597,6 +1597,44 @@ async def scrape_netherlands_laws_from_parameters(
         }
 
 
+async def scrape_legal_data_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Unified scrape entrypoint for native US/NL scrapers and harvested gazette collectors."""
+    try:
+        from .international.api import scrape_legal_data
+
+        jurisdiction = (
+            parameters.get("jurisdiction")
+            or parameters.get("country")
+            or parameters.get("country_code")
+            or parameters.get("source")
+        )
+        if not jurisdiction:
+            raise ValueError("jurisdiction is required")
+        result = scrape_legal_data(
+            str(jurisdiction),
+            mode=str(parameters.get("mode") or "snapshot"),
+            output_dir=parameters.get("output_dir"),
+            collectors_dir=parameters.get("collectors_dir"),
+            parameters=parameters,
+            dry_run=bool(parameters.get("dry_run")),
+        )
+        result.setdefault("metadata", {})
+        result["metadata"]["tool_version"] = tool_version
+        return result
+    except Exception as e:
+        logger.error("Unified legal scrape failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": [],
+            "metadata": {"tool_version": tool_version},
+        }
+
+
 async def scrape_municipal_codes_from_parameters(
     parameters: Dict[str, Any],
     *,

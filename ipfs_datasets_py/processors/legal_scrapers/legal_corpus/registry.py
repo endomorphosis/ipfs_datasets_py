@@ -44,6 +44,15 @@ def _load_builtin(key: str) -> None:
     module_name = _BUILTIN_IMPORTS.get(_normalize_key(key))
     if module_name:
         import_module(module_name)
+        return
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers.international.adapters import (
+            register_snapshot_jurisdiction,
+        )
+
+        register_snapshot_jurisdiction(key)
+    except Exception:
+        return
 
 
 def get_jurisdiction(key: str) -> LegalCorpusJurisdiction:

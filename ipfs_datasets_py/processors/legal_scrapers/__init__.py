@@ -91,6 +91,7 @@ from .legal_dataset_api import (
     scrape_us_code_from_parameters,
     scrape_federal_laws_from_parameters,
     scrape_netherlands_laws_from_parameters,
+    scrape_legal_data_from_parameters,
     scrape_municipal_codes_from_parameters,
     setup_legal_tools_venv_from_parameters,
     ingest_caselaw_access_vectors_from_parameters,
@@ -114,6 +115,15 @@ from .legal_dataset_api import (
     search_caselaw_access_vectors_with_centroids_from_parameters,
     ingest_caselaw_access_vector_bundle_from_parameters,
 )
+from .international.api import (
+    harvest_legal_collectors,
+    list_legal_sources,
+    resolve_legal_source,
+    scrape_legal_data,
+)
+from .regions import Africa, Americas, AsiaPacific, Europe, MENA, get_region, list_regions
+from .state import State
+from .municipal import Municipal
 
 # Re-export key functions from scrapers for direct access.
 try:

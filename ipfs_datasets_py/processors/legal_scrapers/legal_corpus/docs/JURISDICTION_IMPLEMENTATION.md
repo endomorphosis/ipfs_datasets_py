@@ -92,3 +92,9 @@ The Netherlands implementation lives in
 `ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.jurisdiction` and
 adapts the existing BWBR catalog-backed pipeline behind these interfaces. Its
 existing CLI commands remain backward compatible.
+
+Harvested Hugging Face gazette collectors are wrapped by
+`ipfs_datasets_py.processors.legal_scrapers.international` behind the same
+interfaces. Use `scrape_legal_data(jurisdiction, mode="snapshot"|"collect"|"native")`
+as the unified API. Snapshot corpora are research snapshots, not official
+consolidations, and are not legal advice.
