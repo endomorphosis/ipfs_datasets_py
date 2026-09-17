@@ -495,3 +495,28 @@ def test_route_logic_hierarchy_greedy_child_when_confident(
     assert view["leaf"] == "obligation"
     assert view["switches_converter"] is False
     assert view["rewrites_ir"] is False
+
+
+def test_leanstral_draft_verify_fail_open_does_not_admit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        observe_conversion_verify,
+    )
+
+    view = observe_conversion_verify(
+        "The agency shall provide notice.",
+        "obligation(agency, provide_notice)",
+        view_id="leanstral_draft",
+    )
+    assert view["escalate"] is False
+    assert view["drops_formula"] is False
+    assert view["accepted_as_authority"] is False
+    assert view["view_id"] == "leanstral_draft"

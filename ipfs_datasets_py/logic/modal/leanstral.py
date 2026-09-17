@@ -1159,6 +1159,21 @@ def leanstral_draft_guidance(
         if proposal is not None
         else []
     )
+    if accepted and candidates:
+        try:
+            from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_conversion_verify,
+            )
+
+            first = str(candidates[0].get("candidate") or "")
+            source = str(getattr(task, "source_span", "") or "")
+            observe_conversion_verify(
+                source,
+                first,
+                view_id="leanstral_draft",
+            )
+        except Exception:
+            pass
     rule_hints = (
         [dict(hint) for hint in proposal.deterministic_rule_hints] if proposal is not None else []
     )
