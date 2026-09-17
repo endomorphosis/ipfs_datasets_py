@@ -45,6 +45,10 @@ _VIEW_TO_FAMILY = {
     "security_ir": "authorization",
 }
 _LAST_FAMILY = threading.local()
+_LAST_ROUTE = threading.local()
+FAMILY_CHILDREN: dict[str, tuple[str, ...]] = {
+    "deontic": ("obligation", "permission", "prohibition"),
+}
 
 
 @dataclass(frozen=True)
@@ -570,6 +574,102 @@ def observe_logic_family(clause: str, *, produced_view: str = "fol") -> dict[str
         return payload
 
 
+def last_logic_route() -> dict[str, Any]:
+    value = getattr(_LAST_ROUTE, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def route_logic_hierarchy(
+    clause: str,
+    *,
+    produced_view: str = "fol",
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """Greedy Choice over declared family children. Never switches converters."""
+
+    base = classify_logic_family(
+        clause,
+        produced_view=produced_view,
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+        timeout=timeout,
+    )
+    family = str(base.get("family") or "first_order")
+    payload = dict(base)
+    payload["switches_converter"] = False
+    payload["rewrites_ir"] = False
+    payload["path"] = [family]
+    payload["leaf"] = family
+    children = FAMILY_CHILDREN.get(family) or ()
+    if (
+        payload.get("specificity") != "group"
+        or not children
+        or not typesafe_permitted(
+            privacy_class=privacy_class,
+            remote_disclosure_permitted=remote_disclosure_permitted,
+        )
+    ):
+        _LAST_ROUTE.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Choice, system_one
+
+    try:
+        result = system_one(
+            {"clause": str(clause or "")[:240], "family": family},
+            {
+                "child": Choice(
+                    instructions={
+                        "question": (
+                            "Which declared child of `family` best matches `clause`?"
+                        ),
+                        "inspect": "`clause`",
+                    },
+                    criteria={
+                        "obligation": {"what": "shall / must / duty"},
+                        "permission": {"what": "may / can / allowed"},
+                        "prohibition": {"what": "must not / shall not / forbidden"},
+                    },
+                )
+            },
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = list(payload.get("reason_codes") or []) + [
+            "child_choice_fail_open"
+        ]
+        _LAST_ROUTE.value = dict(payload)
+        return payload
+    answer = (getattr(result, "choices", None) or {}).get("child")
+    picked = str(getattr(answer, "choice", "") or "").strip()
+    conf = float(getattr(answer, "confidence", 0.0) or 0.0)
+    if picked in children and conf >= COARSE_CONFIDENCE:
+        payload["path"] = [family, picked]
+        payload["leaf"] = picked
+    payload["child_confidence"] = round(conf, 4)
+    payload["switches_converter"] = False
+    _LAST_ROUTE.value = dict(payload)
+    return payload
+
+
+def observe_logic_route(clause: str, *, produced_view: str = "fol") -> dict[str, Any]:
+    try:
+        return route_logic_hierarchy(clause, produced_view=produced_view)
+    except Exception:
+        fallback = _VIEW_TO_FAMILY.get(produced_view, "first_order")
+        payload = {
+            "accepted_as_authority": False,
+            "rewrites_ir": False,
+            "switches_converter": False,
+            "family": fallback,
+            "path": [fallback],
+            "leaf": fallback,
+        }
+        _LAST_ROUTE.value = dict(payload)
+        return payload
+
+
 def last_conversion_verify() -> dict[str, Any]:
     value = getattr(_LAST_VERIFY, "value", None)
     return dict(value) if isinstance(value, Mapping) else {}
@@ -755,6 +855,9 @@ __all__ = [
     "last_cross_view_lint",
     "last_logic_family",
     "observe_logic_family",
+    "observe_logic_route",
+    "route_logic_hierarchy",
+    "last_logic_route",
     "last_formula_lint",
     "last_formula_rank",
     "last_smt_triage",

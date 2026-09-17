@@ -10,6 +10,8 @@ from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
     last_formula_lint,
     last_formula_rank,
     last_logic_family,
+    last_logic_route,
+    route_logic_hierarchy,
     lint_formula_against_clause,
     observe_formula_clause_lint,
     rank_allowlisted_formulas,
@@ -434,4 +436,62 @@ def test_classify_logic_family_low_confidence_coarsens(
     view = classify_logic_family("shall pay rent", produced_view="deontic")
     assert view["specificity"] == "family"
     assert view["family"] == "deontic"
+    assert view["rewrites_ir"] is False
+
+
+def test_route_logic_hierarchy_fail_open_does_not_switch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    view = route_logic_hierarchy("All humans are mortal", produced_view="fol")
+    assert view["switches_converter"] is False
+    assert view["rewrites_ir"] is False
+    assert view["leaf"] == "first_order"
+    assert view["path"] == ["first_order"]
+    assert last_logic_route()["switches_converter"] is False
+
+
+def test_route_logic_hierarchy_greedy_child_when_confident(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.integrations.typesafe_advisor.typesafe_permitted",
+        lambda **_kwargs: True,
+    )
+
+    class _Choice:
+        def __init__(self, instructions=None, criteria=None) -> None:
+            self.instructions = instructions
+            self.criteria = criteria
+
+    def fake_system_one(_state, questions, **_kwargs):
+        if "family" in questions:
+            return SimpleNamespace(
+                choices={"family": SimpleNamespace(choice="deontic", confidence=0.95)}
+            )
+        return SimpleNamespace(
+            choices={"child": SimpleNamespace(choice="obligation", confidence=0.96)}
+        )
+
+    import sys
+    import types as _types
+
+    parent = sys.modules.get("ipfs_accelerate_py")
+    if parent is None:
+        parent = _types.ModuleType("ipfs_accelerate_py")
+        monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
+    stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
+    stub.Choice = _Choice
+    stub.system_one = fake_system_one
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
+    view = route_logic_hierarchy("The tenant shall pay rent", produced_view="deontic")
+    assert view["path"] == ["deontic", "obligation"]
+    assert view["leaf"] == "obligation"
+    assert view["switches_converter"] is False
     assert view["rewrites_ir"] is False

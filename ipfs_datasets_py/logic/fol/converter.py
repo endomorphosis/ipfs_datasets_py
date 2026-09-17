@@ -279,6 +279,7 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
                     observe_conversion_verify,
                     observe_formula_clause_lint,
                     observe_logic_family,
+                    observe_logic_route,
                 )
 
                 fol_formula.metadata["typesafe_lint"] = observe_formula_clause_lint(
@@ -297,6 +298,9 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
                     view_id="fol",
                 )
                 fol_formula.metadata["typesafe_family"] = observe_logic_family(
+                    text, produced_view="fol"
+                )
+                fol_formula.metadata["typesafe_route"] = observe_logic_route(
                     text, produced_view="fol"
                 )
             except Exception:

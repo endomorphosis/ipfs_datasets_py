@@ -266,6 +266,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 observe_conversion_verify,
                 observe_formula_clause_lint,
                 observe_logic_family,
+                observe_logic_route,
             )
 
             formula = str(
@@ -280,6 +281,9 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 str(input_data or ""), formula, view_id="deontic"
             )
             result.metadata["typesafe_family"] = observe_logic_family(
+                str(input_data or ""), produced_view="deontic"
+            )
+            result.metadata["typesafe_route"] = observe_logic_route(
                 str(input_data or ""), produced_view="deontic"
             )
         except Exception:
