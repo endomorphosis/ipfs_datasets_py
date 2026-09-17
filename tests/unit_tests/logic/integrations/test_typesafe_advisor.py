@@ -5,9 +5,11 @@ from types import SimpleNamespace
 import pytest
 
 from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+    classify_logic_family,
     last_conversion_verify,
     last_formula_lint,
     last_formula_rank,
+    last_logic_family,
     lint_formula_against_clause,
     observe_formula_clause_lint,
     rank_allowlisted_formulas,
@@ -381,3 +383,55 @@ def test_verify_any_flag_escalates_without_dropping(
     assert view["escalate"] is True
     assert view["drops_formula"] is False
     assert view["flags"]["formula::hallucinated"] == pytest.approx(0.95)
+
+
+def test_classify_logic_family_fail_open_keeps_converter_family(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    view = classify_logic_family("All humans are mortal", produced_view="fol")
+    assert view["family"] == "first_order"
+    assert view["specificity"] == "group"
+    assert view["rewrites_ir"] is False
+    assert last_logic_family()["family"] == "first_order"
+
+
+def test_classify_logic_family_low_confidence_coarsens(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.integrations.typesafe_advisor.typesafe_permitted",
+        lambda **_kwargs: True,
+    )
+
+    class _Result:
+        choices = {
+            "family": SimpleNamespace(choice="program", confidence=0.2),
+        }
+
+    class _Choice:
+        def __init__(self, instructions=None, criteria=None) -> None:
+            self.instructions = instructions
+            self.criteria = criteria
+
+    import sys
+    import types as _types
+
+    parent = sys.modules.get("ipfs_accelerate_py")
+    if parent is None:
+        parent = _types.ModuleType("ipfs_accelerate_py")
+        monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
+    stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
+    stub.Choice = _Choice
+    stub.system_one = lambda *_a, **_k: _Result()
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
+    view = classify_logic_family("shall pay rent", produced_view="deontic")
+    assert view["specificity"] == "family"
+    assert view["family"] == "deontic"
+    assert view["rewrites_ir"] is False

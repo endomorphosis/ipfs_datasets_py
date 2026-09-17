@@ -278,6 +278,7 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
                 from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
                     observe_conversion_verify,
                     observe_formula_clause_lint,
+                    observe_logic_family,
                 )
 
                 fol_formula.metadata["typesafe_lint"] = observe_formula_clause_lint(
@@ -294,6 +295,9 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
                     formula_string,
                     parts=parts,
                     view_id="fol",
+                )
+                fol_formula.metadata["typesafe_family"] = observe_logic_family(
+                    text, produced_view="fol"
                 )
             except Exception:
                 pass

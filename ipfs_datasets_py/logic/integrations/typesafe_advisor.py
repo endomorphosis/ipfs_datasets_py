@@ -28,6 +28,23 @@ _LAST = threading.local()
 _LAST_SMT = threading.local()
 _LAST_VERIFY = threading.local()
 VERIFY_FIRE = 0.7
+COARSE_CONFIDENCE = 0.9
+LOGIC_FAMILIES: tuple[str, ...] = (
+    "first_order",
+    "deontic",
+    "temporal",
+    "program",
+    "authorization",
+)
+_VIEW_TO_FAMILY = {
+    "fol": "first_order",
+    "deontic": "deontic",
+    "tdfol": "temporal",
+    "intent": "first_order",
+    "ui_ux": "deontic",
+    "security_ir": "authorization",
+}
+_LAST_FAMILY = threading.local()
 
 
 @dataclass(frozen=True)
@@ -454,6 +471,105 @@ def lint_formula_against_clause(
     return payload
 
 
+def last_logic_family() -> dict[str, Any]:
+    value = getattr(_LAST_FAMILY, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def classify_logic_family(
+    clause: str,
+    *,
+    produced_view: str = "fol",
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """Choice over closed logic families. Low confidence → coarser tag only.
+
+    Never rewrites the produced formula. Fail-open keeps the converter's family
+    at specificity ``group``.
+    """
+
+    fallback = _VIEW_TO_FAMILY.get(str(produced_view or "fol"), "first_order")
+    payload = {
+        "accepted_as_authority": False,
+        "rewrites_ir": False,
+        "family": fallback,
+        "specificity": "group",
+        "confidence": 0.0,
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_FAMILY.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Choice, system_one
+
+    try:
+        result = system_one(
+            {"clause": str(clause or "")[:240], "produced_view": fallback},
+            {
+                "family": Choice(
+                    instructions={
+                        "question": (
+                            "Which closed logic family best matches `clause`?"
+                        ),
+                        "inspect": "`clause`",
+                    },
+                    criteria={
+                        "first_order": {
+                            "what": "Classical first-order / FOL facts and implications"
+                        },
+                        "deontic": {
+                            "what": "Obligations, permissions, prohibitions"
+                        },
+                        "temporal": {
+                            "what": "Time, workflows, until/always operators"
+                        },
+                        "program": {
+                            "what": "Hoare / dynamic skill effects"
+                        },
+                        "authorization": {
+                            "what": "Tool or resource permissions"
+                        },
+                    },
+                )
+            },
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_FAMILY.value = dict(payload)
+        return payload
+    answer = (getattr(result, "choices", None) or {}).get("family")
+    picked = str(getattr(answer, "choice", "") or "").strip()
+    conf = float(getattr(answer, "confidence", 0.0) or 0.0)
+    if picked not in LOGIC_FAMILIES:
+        picked = fallback
+    payload["family"] = picked if conf >= COARSE_CONFIDENCE else fallback
+    payload["specificity"] = "group" if conf >= COARSE_CONFIDENCE else "family"
+    payload["confidence"] = round(conf, 4)
+    payload["reason_codes"] = ["composed_in_code", "confidence_gated"]
+    _LAST_FAMILY.value = dict(payload)
+    return payload
+
+
+def observe_logic_family(clause: str, *, produced_view: str = "fol") -> dict[str, Any]:
+    try:
+        return classify_logic_family(clause, produced_view=produced_view)
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "rewrites_ir": False,
+            "family": _VIEW_TO_FAMILY.get(produced_view, "first_order"),
+            "specificity": "group",
+        }
+        _LAST_FAMILY.value = dict(payload)
+        return payload
+
+
 def last_conversion_verify() -> dict[str, Any]:
     value = getattr(_LAST_VERIFY, "value", None)
     return dict(value) if isinstance(value, Mapping) else {}
@@ -634,8 +750,11 @@ def observe_formula_clause_lint(
 __all__ = [
     "AdvisoryReceipt",
     "is_trap_family",
+    "classify_logic_family",
     "last_conversion_verify",
     "last_cross_view_lint",
+    "last_logic_family",
+    "observe_logic_family",
     "last_formula_lint",
     "last_formula_rank",
     "last_smt_triage",
