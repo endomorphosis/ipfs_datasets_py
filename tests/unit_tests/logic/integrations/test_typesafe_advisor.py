@@ -299,3 +299,21 @@ def test_intent_route_typecheck_not_skipped_without_key(
     assert receipt.parse_typecheck is not None
     assert receipt.parse_typecheck.typechecked is True
     assert receipt.is_proof is False
+
+
+def test_ui_and_security_view_lints_fail_open_without_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    ui = observe_formula_clause_lint("confirm(pay)", "O(confirm(pay))", view_id="ui_ux")
+    sec = observe_formula_clause_lint("sec-sample", "formula:state:s1", view_id="security_ir")
+    assert ui["rewrites_ir"] is False
+    assert ui["drops_formula"] is False
+    assert sec["accepted_as_authority"] is False
+    assert sec["view_id"] == "security_ir"

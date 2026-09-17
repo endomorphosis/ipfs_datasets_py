@@ -469,6 +469,22 @@ def compile_ui_formalization(inputs: FormalizationInputs) -> UIFormalizationArti
         ),
         result_authority=ResultAuthority.ADVISORY,
     )
+    try:
+        from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+            observe_formula_clause_lint,
+        )
+
+        clause = ""
+        formula = ""
+        if inputs.action_bindings:
+            clause = str(getattr(inputs.action_bindings[0], "action_id", "") or "")
+        if tdfol is not None and tdfol.formulas:
+            formula = str(tdfol.formulas[0].proposition or "")
+        elif dcec is not None:
+            formula = "dcec"
+        observe_formula_clause_lint(clause, formula, view_id="ui_ux")
+    except Exception:
+        pass
     return artifact
 
 

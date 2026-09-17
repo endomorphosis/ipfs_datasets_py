@@ -740,6 +740,19 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
                 "unsupported_extension_count": len(declaration.extensions),
             },
         )
+        try:
+            from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_formula_clause_lint,
+            )
+
+            first = formulas[0].formula_id if formulas else ""
+            observe_formula_clause_lint(
+                str(sample.sample_id or ""),
+                str(first or ""),
+                view_id="security_ir",
+            )
+        except Exception:
+            pass
         return FormalizationArtifact.from_sample(
             sample,
             compiler_config=config,
