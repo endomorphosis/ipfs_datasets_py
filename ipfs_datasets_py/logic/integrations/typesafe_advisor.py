@@ -46,6 +46,7 @@ _VIEW_TO_FAMILY = {
 }
 _LAST_FAMILY = threading.local()
 _LAST_ROUTE = threading.local()
+_LAST_ACTION = threading.local()
 FAMILY_CHILDREN: dict[str, tuple[str, ...]] = {
     "deontic": ("obligation", "permission", "prohibition"),
 }
@@ -670,6 +671,106 @@ def observe_logic_route(clause: str, *, produced_view: str = "fol") -> dict[str,
         return payload
 
 
+def last_declared_action() -> dict[str, Any]:
+    value = getattr(_LAST_ACTION, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def suggest_declared_action(
+    clause: str,
+    *,
+    allowed_actions: Sequence[str] = (),
+    allowed_paths: Sequence[str] = (),
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """Choice over already-declared compiler actions. Never invents paths."""
+
+    allowed = tuple(
+        dict.fromkeys(str(item).strip() for item in allowed_actions if str(item).strip())
+    )[:8]
+    paths = tuple(
+        dict.fromkeys(str(item).strip() for item in allowed_paths if str(item).strip())
+    )[:8]
+    payload = {
+        "accepted_as_authority": False,
+        "invents_action": False,
+        "invents_path": False,
+        "rewrites_ir": False,
+        "action": "",
+        "allowed_actions": list(allowed),
+        "allowed_paths": list(paths),
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    if not allowed or not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_ACTION.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Choice, system_one
+
+    try:
+        result = system_one(
+            {
+                "clause": str(clause or "")[:240],
+                "allowed_actions": list(allowed),
+                "allowed_paths": list(paths),
+            },
+            {
+                "action": Choice(
+                    instructions={
+                        "question": (
+                            "Which declared `allowed_actions` item matches `clause`?"
+                        ),
+                        "inspect": "`clause`",
+                    },
+                    criteria={
+                        ident: {"what": ident, "not_for": "any other listed action"}
+                        for ident in allowed
+                    },
+                )
+            },
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_ACTION.value = dict(payload)
+        return payload
+    picked = str(
+        getattr((getattr(result, "choices", None) or {}).get("action"), "choice", "")
+        or ""
+    ).strip()
+    payload["action"] = picked if picked in allowed else ""
+    payload["reason_codes"] = ["composed_in_code", "declared_actions_only"]
+    _LAST_ACTION.value = dict(payload)
+    return payload
+
+
+def observe_declared_action(
+    clause: str,
+    *,
+    allowed_actions: Sequence[str] = (),
+    allowed_paths: Sequence[str] = (),
+) -> dict[str, Any]:
+    try:
+        return suggest_declared_action(
+            clause,
+            allowed_actions=allowed_actions,
+            allowed_paths=allowed_paths,
+        )
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "invents_action": False,
+            "invents_path": False,
+            "action": "",
+        }
+        _LAST_ACTION.value = dict(payload)
+        return payload
+
+
 def last_conversion_verify() -> dict[str, Any]:
     value = getattr(_LAST_VERIFY, "value", None)
     return dict(value) if isinstance(value, Mapping) else {}
@@ -858,6 +959,9 @@ __all__ = [
     "observe_logic_route",
     "route_logic_hierarchy",
     "last_logic_route",
+    "last_declared_action",
+    "observe_declared_action",
+    "suggest_declared_action",
     "last_formula_lint",
     "last_formula_rank",
     "last_smt_triage",

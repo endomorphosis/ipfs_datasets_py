@@ -571,3 +571,73 @@ def test_modal_decompiler_verify_fail_open_does_not_rewrite(
     assert view["drops_formula"] is False
     assert view["accepted_as_authority"] is False
     assert view["view_id"] == "modal_decompiler"
+
+
+def test_suggest_declared_action_fail_open_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        last_declared_action,
+        suggest_declared_action,
+    )
+
+    view = suggest_declared_action(
+        "reconstruction loss is high",
+        allowed_actions=(
+            "refine_decompiler_template",
+            "refine_modal_registry_rule",
+        ),
+        allowed_paths=("ipfs_datasets_py/logic/modal/decompiler.py",),
+    )
+    assert view["action"] == ""
+    assert view["invents_action"] is False
+    assert view["invents_path"] is False
+    assert last_declared_action()["action"] == ""
+
+
+def test_suggest_declared_action_drops_unknown_choice(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.integrations.typesafe_advisor.typesafe_permitted",
+        lambda **_kwargs: True,
+    )
+
+    class _Choice:
+        def __init__(self, instructions=None, criteria=None) -> None:
+            self.instructions = instructions
+            self.criteria = criteria
+
+    class _Result:
+        choices = {
+            "action": SimpleNamespace(choice="delete_locks", confidence=0.99),
+        }
+
+    import sys
+    import types as _types
+
+    parent = sys.modules.get("ipfs_accelerate_py")
+    if parent is None:
+        parent = _types.ModuleType("ipfs_accelerate_py")
+        monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
+    stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
+    stub.Choice = _Choice
+    stub.system_one = lambda *_a, **_k: _Result()
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        suggest_declared_action,
+    )
+
+    view = suggest_declared_action(
+        "reconstruction loss is high",
+        allowed_actions=("refine_decompiler_template",),
+    )
+    assert view["action"] == ""
+    assert view["invents_action"] is False

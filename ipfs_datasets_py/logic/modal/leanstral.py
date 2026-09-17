@@ -1187,6 +1187,19 @@ def leanstral_draft_guidance(
     proof_obligation_ids = _theorem_registry_ids(task.theorem_registry)
     target_metrics = _string_sequence(change_spec.get("target_metrics"))
     allowed_paths = _string_sequence(change_spec.get("allowed_paths"))
+    if not action:
+        try:
+            from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_declared_action,
+            )
+
+            observe_declared_action(
+                str(getattr(task, "source_span", "") or ""),
+                allowed_actions=tuple(_COMPILER_CHANGE_CONTRACTS),
+                allowed_paths=allowed_paths,
+            )
+        except Exception:
+            pass
     theorem_templates = _string_sequence(change_spec.get("theorem_templates"))
     mutation_cases = _string_sequence(change_spec.get("mutation_cases"))
     ranked_features, feature_groups = _leanstral_guidance_features(
