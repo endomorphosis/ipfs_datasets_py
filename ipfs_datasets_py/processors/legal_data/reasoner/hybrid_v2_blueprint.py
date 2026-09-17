@@ -1857,7 +1857,7 @@ def build_v2_compiler_parity_report(
         if not all(checks.values()):
             inconsistencies.append(entry)
 
-    return {
+    report = {
         "summary": {
             "norm_count": len(norms),
             "dcec_count": len(dcec),
@@ -1868,6 +1868,18 @@ def build_v2_compiler_parity_report(
         "entries": entries,
         "inconsistencies": inconsistencies,
     }
+    try:
+        from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+            observe_cross_view_lint,
+        )
+
+        report["typesafe_cross_view"] = observe_cross_view_lint(
+            dcec_formulas=dcec,
+            tdfol_formulas=tdfol,
+        )
+    except Exception:
+        pass
+    return report
 
 
 def _lexicon_lookup(overrides: Dict[str, str], key: str, fallback: str) -> str:

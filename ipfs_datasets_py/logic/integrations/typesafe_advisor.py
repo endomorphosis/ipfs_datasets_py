@@ -89,6 +89,87 @@ def last_formula_lint() -> dict[str, Any]:
 _LAST_RANK = threading.local()
 
 
+_LAST_CROSS_VIEW = threading.local()
+
+
+def last_cross_view_lint() -> dict[str, Any]:
+    value = getattr(_LAST_CROSS_VIEW, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def lint_cross_view_formulas(
+    dcec_formulas: Sequence[str] = (),
+    tdfol_formulas: Sequence[str] = (),
+    *,
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """Advisory noul: do DCEC and TDFOL views mention the same actors?
+
+    Never satisfies compiler parity. Never rewrites formulas.
+    """
+
+    payload = {
+        "accepted_as_authority": False,
+        "satisfies_parity": False,
+        "rewrites_ir": False,
+        "same_actors": 0.0,
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_CROSS_VIEW.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Noul, system_one
+
+    dcec = [str(item)[:240] for item in dcec_formulas if str(item).strip()][:4]
+    tdfol = [str(item)[:240] for item in tdfol_formulas if str(item).strip()][:4]
+    try:
+        result = system_one(
+            {"dcec": dcec, "tdfol": tdfol},
+            {
+                "same_actors": Noul(
+                    instructions={
+                        "question": (
+                            "Do `dcec` and `tdfol` mention the same obligation actors?"
+                        ),
+                        "compare": ["`dcec`", "`tdfol`"],
+                    },
+                ),
+            },
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_CROSS_VIEW.value = dict(payload)
+        return payload
+    noul = float(
+        getattr((getattr(result, "nouls", None) or {}).get("same_actors"), "noul", 0.0)
+        or 0.0
+    )
+    payload["same_actors"] = round(noul, 4)
+    payload["reason_codes"] = ["composed_in_code", "advisory_lint_only"]
+    payload["satisfies_parity"] = False
+    _LAST_CROSS_VIEW.value = dict(payload)
+    return payload
+
+
+def observe_cross_view_lint(**kwargs: Any) -> dict[str, Any]:
+    try:
+        return lint_cross_view_formulas(**kwargs)
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "satisfies_parity": False,
+            "rewrites_ir": False,
+        }
+        _LAST_CROSS_VIEW.value = dict(payload)
+        return payload
+
+
 def last_smt_triage() -> dict[str, Any]:
     value = getattr(_LAST_SMT, "value", None)
     return dict(value) if isinstance(value, Mapping) else {}
@@ -416,9 +497,12 @@ def observe_formula_clause_lint(
 __all__ = [
     "AdvisoryReceipt",
     "is_trap_family",
+    "last_cross_view_lint",
     "last_formula_lint",
     "last_formula_rank",
     "last_smt_triage",
+    "lint_cross_view_formulas",
+    "observe_cross_view_lint",
     "observe_smt_triage",
     "triage_smt_goal",
     "lint_formula_against_clause",

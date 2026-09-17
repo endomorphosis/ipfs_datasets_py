@@ -212,3 +212,66 @@ def test_smt_triage_without_key_still_runs_solver(
     assert view["action"] == "run_solver"
     assert view["skips_solver"] is False
     assert view["verified"] is False
+
+
+def test_cross_view_lint_cannot_satisfy_parity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.integrations.typesafe_advisor.typesafe_permitted",
+        lambda **_kwargs: True,
+    )
+
+    class _Result:
+        nouls = {"same_actors": SimpleNamespace(noul=0.99, confidence=0.99)}
+
+    class _Noul:
+        def __init__(self, instructions=None, criteria=None) -> None:
+            self.instructions = instructions
+
+    import sys
+    import types as _types
+
+    parent = sys.modules.get("ipfs_accelerate_py")
+    if parent is None:
+        parent = _types.ModuleType("ipfs_accelerate_py")
+        monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
+    stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
+    stub.Noul = _Noul
+    stub.system_one = lambda *_a, **_k: _Result()
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        last_cross_view_lint,
+        lint_cross_view_formulas,
+    )
+
+    view = lint_cross_view_formulas(
+        dcec_formulas=["forall t (A -> O(Pay))"],
+        tdfol_formulas=["forall t (A -> O(Pay,t))"],
+    )
+    assert view["same_actors"] == pytest.approx(0.99)
+    assert view["satisfies_parity"] is False
+    assert view["accepted_as_authority"] is False
+    assert last_cross_view_lint()["satisfies_parity"] is False
+
+
+def test_cross_view_lint_without_key_does_not_satisfy_parity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        lint_cross_view_formulas,
+    )
+
+    view = lint_cross_view_formulas(
+        dcec_formulas=["forall t (A -> O(Pay))"],
+        tdfol_formulas=["forall t (A -> F(Pay,t))"],
+    )
+    assert view["satisfies_parity"] is False
+    assert view["rewrites_ir"] is False
