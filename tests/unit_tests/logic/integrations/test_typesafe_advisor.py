@@ -275,3 +275,27 @@ def test_cross_view_lint_without_key_does_not_satisfy_parity(
     )
     assert view["satisfies_parity"] is False
     assert view["rewrites_ir"] is False
+
+
+def test_intent_route_typecheck_not_skipped_without_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    from ipfs_datasets_py.logic.intent_ir.formalize.typed_compiler import (
+        route_intent_view,
+    )
+
+    receipt = route_intent_view(
+        "facts",
+        formulas=({"formula_id": "f1", "expression": "P(x)"},),
+        source_kind="declaration",
+    )
+    assert receipt.parse_typecheck is not None
+    assert receipt.parse_typecheck.typechecked is True
+    assert receipt.is_proof is False

@@ -2006,6 +2006,21 @@ def route_intent_view(
             fail_on_unsupported=fail_on_unsupported,
         )
         diagnostics.extend(parse_receipt.diagnostics)
+        try:
+            from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_formula_clause_lint,
+            )
+
+            formula_id = ""
+            if parse_receipt.candidates:
+                formula_id = str(parse_receipt.candidates[0].formula_id or "")
+            observe_formula_clause_lint(
+                str(label or "")[:240],
+                formula_id,
+                view_id="intent",
+            )
+        except Exception:
+            pass
 
     tool_receipt: ToolAuthorityReceipt | None = None
     if tool_id or route.view_name == "tool_permissions":
