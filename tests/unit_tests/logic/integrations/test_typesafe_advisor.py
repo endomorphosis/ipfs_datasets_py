@@ -6,8 +6,10 @@ import pytest
 
 from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
     last_formula_lint,
+    last_formula_rank,
     lint_formula_against_clause,
     observe_formula_clause_lint,
+    rank_allowlisted_formulas,
     typesafe_permitted,
 )
 
@@ -99,3 +101,56 @@ def test_fol_converter_keeps_formula_without_key(monkeypatch: pytest.MonkeyPatch
     lint = (result.output.metadata or {}).get("typesafe_lint") or {}
     assert lint.get("drops_formula") is False
     assert lint.get("rewrites_ir") is False
+
+
+def test_rank_allowlisted_formulas_fail_open_keeps_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    ranked = rank_allowlisted_formulas(("cand-b", "cand-a", "cand-evil-kept"))
+    assert ranked == ("cand-b", "cand-a", "cand-evil-kept")
+    view = last_formula_rank()
+    assert view["invents_ids"] is False
+    assert view["admits_candidate"] is False
+    assert "cand-invented" not in view["ranked_ids"]
+
+
+def test_rank_allowlisted_formulas_drops_unknown_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.integrations.typesafe_advisor.typesafe_permitted",
+        lambda **_kwargs: True,
+    )
+
+    class _Result:
+        nouls = {
+            "matches_cand-low": SimpleNamespace(noul=0.1),
+            "matches_cand-high": SimpleNamespace(noul=0.9),
+            "matches_invented": SimpleNamespace(noul=1.0),
+        }
+
+    class _Noul:
+        def __init__(self, instructions=None, criteria=None) -> None:
+            self.instructions = instructions
+
+    import sys
+    import types as _types
+
+    parent = sys.modules.get("ipfs_accelerate_py")
+    if parent is None:
+        parent = _types.ModuleType("ipfs_accelerate_py")
+        monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
+    stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
+    stub.Noul = _Noul
+    stub.system_one = lambda *_a, **_k: _Result()
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
+    ranked = rank_allowlisted_formulas(("cand-low", "cand-high"))
+    assert ranked == ("cand-high", "cand-low")
+    assert "invented" not in ranked

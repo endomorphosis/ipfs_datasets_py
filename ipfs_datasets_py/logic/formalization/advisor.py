@@ -1132,6 +1132,20 @@ class BoundedFormalizationAdvisor:
         if len(candidate_ids) != len(set(candidate_ids)):
             raise AdvisorValidationError("candidate IDs must be unique")
         validated = tuple(self._validate_candidate(item, request) for item in decoded)
+        try:
+            from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_formula_rank,
+            )
+
+            observe_formula_rank(
+                tuple(item.candidate_id for item in validated),
+                summaries={
+                    item.candidate_id: item.candidate_id for item in validated
+                },
+                obligation_id=request.artifact.sample_id,
+            )
+        except Exception:
+            pass
         return AdvisorResult(
             candidates=validated,
             model_identity=request.checkpoint.model_identity,

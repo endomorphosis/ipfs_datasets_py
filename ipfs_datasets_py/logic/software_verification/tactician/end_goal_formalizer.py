@@ -1246,6 +1246,20 @@ class EndGoalFormalizer:
                     "caller text was mutated during formalization"
                 )
 
+            try:
+                from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                    observe_formula_rank,
+                )
+
+                observe_formula_rank(
+                    tuple(
+                        str(getattr(item, "candidate_id", "") or "")
+                        for item in candidates
+                    ),
+                    obligation_id=str(request_digest or "")[:128],
+                )
+            except Exception:
+                pass
             return EndGoalFormalizerResult(
                 status=status,
                 request_digest=request_digest,

@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Sequence
 
 REMOTE_BLOCKED_PRIVACY = frozenset({"local_only", "forbidden_external"})
 ADVISOR_SCHEMA = "ipfs_datasets_py/logic/typesafe-formula-lint@1"
@@ -73,6 +73,103 @@ def typesafe_permitted(
 def last_formula_lint() -> dict[str, Any]:
     value = getattr(_LAST, "value", None)
     return dict(value) if isinstance(value, Mapping) else {}
+
+
+_LAST_RANK = threading.local()
+
+
+def last_formula_rank() -> dict[str, Any]:
+    value = getattr(_LAST_RANK, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def rank_allowlisted_formulas(
+    formula_ids: Sequence[str],
+    *,
+    summaries: Mapping[str, str] | None = None,
+    obligation_id: str = "",
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> tuple[str, ...]:
+    """Order existing formula/candidate ids. Fail-open to input order.
+
+    Never invents ids. Never rewrites IR. Never admits a candidate.
+    """
+
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for item in formula_ids:
+        ident = str(item).strip()
+        if not ident or ident in seen:
+            continue
+        seen.add(ident)
+        ordered.append(ident)
+        if len(ordered) >= 8:
+            break
+    payload = {
+        "accepted_as_authority": False,
+        "invents_ids": False,
+        "admits_candidate": False,
+        "rewrites_ir": False,
+        "obligation_id": str(obligation_id or "")[:128],
+        "ranked_ids": list(ordered),
+        "matches": {},
+    }
+    if not ordered:
+        _LAST_RANK.value = dict(payload)
+        return ()
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_RANK.value = dict(payload)
+        return tuple(ordered)
+    from ipfs_accelerate_py.typesafe_inference import Noul, system_one
+
+    texts = {
+        ident: str((summaries or {}).get(ident) or ident)[:240] for ident in ordered
+    }
+    questions = {
+        f"matches_{ident}": Noul(
+            instructions={
+                "question": (
+                    f"Does `formulas.{ident}.summary` match `obligation.id`?"
+                ),
+                "inspect": f"`formulas.{ident}.summary`",
+            },
+        )
+        for ident in ordered
+    }
+    try:
+        result = system_one(
+            {
+                "obligation": {"id": str(obligation_id or "")[:128]},
+                "formulas": {
+                    ident: {"id": ident, "summary": texts[ident]} for ident in ordered
+                },
+            },
+            questions,
+            timeout=timeout,
+        )
+    except Exception:
+        _LAST_RANK.value = dict(payload)
+        return tuple(ordered)
+    nouls = getattr(result, "nouls", None) or {}
+    matches = {
+        ident: round(
+            float(getattr(nouls.get(f"matches_{ident}"), "noul", 0.0) or 0.0), 4
+        )
+        for ident in ordered
+    }
+    ranked = sorted(
+        ordered,
+        key=lambda ident: (-matches.get(ident, 0.0), ordered.index(ident)),
+    )
+    payload["ranked_ids"] = list(ranked)
+    payload["matches"] = matches
+    _LAST_RANK.value = dict(payload)
+    return tuple(ranked)
 
 
 def lint_formula_against_clause(
@@ -148,6 +245,32 @@ def lint_formula_against_clause(
     return payload
 
 
+def observe_formula_rank(
+    formula_ids: Sequence[str],
+    *,
+    summaries: Mapping[str, str] | None = None,
+    obligation_id: str = "",
+) -> tuple[str, ...]:
+    """Never-raises ranking of already-allowlisted ids."""
+
+    try:
+        return rank_allowlisted_formulas(
+            formula_ids, summaries=summaries, obligation_id=obligation_id
+        )
+    except Exception:
+        ordered = tuple(
+            str(item).strip() for item in formula_ids if str(item).strip()
+        )
+        _LAST_RANK.value = {
+            "accepted_as_authority": False,
+            "invents_ids": False,
+            "admits_candidate": False,
+            "rewrites_ir": False,
+            "ranked_ids": list(ordered[:8]),
+        }
+        return ordered[:8]
+
+
 def observe_formula_clause_lint(
     clause: str,
     formula: str,
@@ -167,7 +290,10 @@ def observe_formula_clause_lint(
 __all__ = [
     "AdvisoryReceipt",
     "last_formula_lint",
+    "last_formula_rank",
     "lint_formula_against_clause",
     "observe_formula_clause_lint",
+    "observe_formula_rank",
+    "rank_allowlisted_formulas",
     "typesafe_permitted",
 ]
