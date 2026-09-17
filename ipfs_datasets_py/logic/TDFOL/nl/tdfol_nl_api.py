@@ -179,6 +179,17 @@ class NLParser:
                     "temporal": [{"text": t.text, "type": t.type} for t in doc.temporal],
                     "modalities": doc.modalities,
                 }
+            try:
+                from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                    observe_formula_clause_lint,
+                )
+
+                first = formulas[0].formula_string if formulas else ""
+                result.metadata["typesafe_lint"] = observe_formula_clause_lint(
+                    text, first, view_id="tdfol"
+                )
+            except Exception:
+                pass
 
         except Exception as e:
             result.success = False

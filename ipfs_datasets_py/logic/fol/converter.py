@@ -274,6 +274,16 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
                     "conversion_time_ms": (time.time() - start_time) * 1000,
                 },
             )
+            try:
+                from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                    observe_formula_clause_lint,
+                )
+
+                fol_formula.metadata["typesafe_lint"] = observe_formula_clause_lint(
+                    text, formula_string, view_id="fol"
+                )
+            except Exception:
+                pass
 
             # Record success in monitoring
             if self.enable_monitoring and self.monitor:

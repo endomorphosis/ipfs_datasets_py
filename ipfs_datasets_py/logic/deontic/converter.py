@@ -261,6 +261,21 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "blockers": list(getattr(legal_norm_ir, "blockers", [])),
             },
         )
+        try:
+            from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_formula_clause_lint,
+            )
+
+            formula = str(
+                getattr(output, "formula_string", None)
+                or getattr(output, "formula", None)
+                or ""
+            )
+            result.metadata["typesafe_lint"] = observe_formula_clause_lint(
+                str(input_data or ""), formula, view_id="deontic"
+            )
+        except Exception:
+            pass
         return result
 
     def validate_input(self, text: str) -> ValidationResult:
