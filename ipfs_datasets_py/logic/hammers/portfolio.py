@@ -679,6 +679,18 @@ class SolverPortfolio:
         _require_nonempty_str(request_id, field_name="request_id", owner="SolverPortfolio.run")
 
         permitted, denied = self.resolve_attempts(attempts)
+        try:
+            from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_smt_triage,
+            )
+
+            blob = ""
+            if permitted:
+                spec, _path = permitted[0]
+                blob = str(getattr(spec.translation, "translated_text", None) or "")
+            observe_smt_triage(smtlib=blob[:2000], case_id=str(request_id or "")[:64])
+        except Exception:
+            pass
         if not permitted:
             return PortfolioRunResult(request_id=request_id, denied=denied)
 

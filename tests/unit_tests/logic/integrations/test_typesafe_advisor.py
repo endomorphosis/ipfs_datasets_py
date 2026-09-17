@@ -154,3 +154,61 @@ def test_rank_allowlisted_formulas_drops_unknown_ids(
     ranked = rank_allowlisted_formulas(("cand-low", "cand-high"))
     assert ranked == ("cand-high", "cand-low")
     assert "invented" not in ranked
+
+
+def test_smt_trap_forces_solver_without_http(monkeypatch: pytest.MonkeyPatch) -> None:
+    called: list[int] = []
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.integrations.typesafe_advisor.typesafe_permitted",
+        lambda **_kwargs: True,
+    )
+
+    def boom(*_a, **_k):
+        called.append(1)
+        raise AssertionError("system_one must not run on FP/BV traps")
+
+    import sys
+    import types as _types
+
+    parent = sys.modules.get("ipfs_accelerate_py")
+    if parent is None:
+        parent = _types.ModuleType("ipfs_accelerate_py")
+        monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
+    stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
+    stub.Noul = object
+    stub.Choice = object
+    stub.system_one = boom
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        last_smt_triage,
+        triage_smt_goal,
+    )
+
+    view = triage_smt_goal(
+        smtlib="(set-logic QF_FP)\n(check-sat)\n",
+        case_id="float32_trap",
+    )
+    assert view["action"] == "run_solver"
+    assert view["skips_solver"] is False
+    assert view["verified"] is False
+    assert view["trap_family"] is True
+    assert called == []
+    assert last_smt_triage()["hint_only"] is True
+
+
+def test_smt_triage_without_key_still_runs_solver(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import triage_smt_goal
+
+    view = triage_smt_goal(smtlib="(assert true)\n(check-sat)\n", case_id="easy")
+    assert view["action"] == "run_solver"
+    assert view["skips_solver"] is False
+    assert view["verified"] is False

@@ -14,7 +14,18 @@ from typing import Any, Mapping, Optional, Sequence
 
 REMOTE_BLOCKED_PRIVACY = frozenset({"local_only", "forbidden_external"})
 ADVISOR_SCHEMA = "ipfs_datasets_py/logic/typesafe-formula-lint@1"
+TRAP_SMT_MARKERS = (
+    "FloatingPoint",
+    "BitVec",
+    "fp.add",
+    "fp.eq",
+    "bvslt",
+    "bvmul",
+    "QF_FP",
+    "QF_BV",
+)
 _LAST = threading.local()
+_LAST_SMT = threading.local()
 
 
 @dataclass(frozen=True)
@@ -76,6 +87,121 @@ def last_formula_lint() -> dict[str, Any]:
 
 
 _LAST_RANK = threading.local()
+
+
+def last_smt_triage() -> dict[str, Any]:
+    value = getattr(_LAST_SMT, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def is_trap_family(*, smtlib: str = "", case_id: str = "") -> bool:
+    ident = str(case_id or "").casefold()
+    if ident.startswith("float") or ident.startswith("bv") or "uninterpreted" in ident:
+        return True
+    blob = str(smtlib or "")
+    return any(marker in blob for marker in TRAP_SMT_MARKERS)
+
+
+def triage_smt_goal(
+    *,
+    smtlib: str = "",
+    english: str = "",
+    case_id: str = "",
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """Advisory sat/unsat hint. Always spends solvers. Never VERIFIED.
+
+    FP/BV traps skip HTTP and still run the portfolio.
+    """
+
+    trap = is_trap_family(smtlib=smtlib, case_id=case_id)
+    payload = {
+        "accepted_as_authority": False,
+        "skips_solver": False,
+        "verified": False,
+        "hint_only": True,
+        "action": "run_solver",
+        "claim_status": "",
+        "trap_family": trap,
+        "reason_codes": ["trap_family_force_solver", "skip_typesafe_http"]
+        if trap
+        else ["privacy_or_unconfigured"],
+    }
+    if trap:
+        _LAST_SMT.value = dict(payload)
+        return payload
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        payload["privacy_blocked"] = str(privacy_class or "").casefold() in REMOTE_BLOCKED_PRIVACY
+        _LAST_SMT.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Choice, Noul, system_one
+
+    try:
+        result = system_one(
+            {
+                "english": str(english or "")[:240],
+                "smtlib": str(smtlib or "")[:800],
+                "case_id": str(case_id or "")[:64],
+            },
+            {
+                "claim_status": Choice(
+                    instructions={
+                        "question": "What does SMT-LIB check-sat return?",
+                        "focus": "sat, unsat, or unknown. Not a kernel verdict.",
+                    },
+                    criteria={
+                        "sat": {"what": "Assertions can hold together"},
+                        "unsat": {"what": "Assertions contradict"},
+                        "unknown": {"what": "Cannot decide"},
+                    },
+                ),
+                "uses_fp_or_bv": Noul(
+                    instructions={
+                        "question": "Does `smtlib` use floating-point or bit-vector theory?",
+                        "inspect": "`smtlib`",
+                    },
+                ),
+                "likely_unsat": Noul(
+                    instructions={
+                        "question": "Do the assertions look contradictory?",
+                        "inspect": "`english`",
+                    },
+                ),
+            },
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_SMT.value = dict(payload)
+        return payload
+    choice = getattr((getattr(result, "choices", None) or {}).get("claim_status"), "choice", "")
+    status = str(choice or "").strip().lower()
+    if status not in {"sat", "unsat", "unknown"}:
+        status = "unknown"
+    payload["claim_status"] = status
+    payload["reason_codes"] = ["composed_in_code", "hint_only", "always_run_solver"]
+    _LAST_SMT.value = dict(payload)
+    return payload
+
+
+def observe_smt_triage(**kwargs: Any) -> dict[str, Any]:
+    try:
+        return triage_smt_goal(**kwargs)
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "skips_solver": False,
+            "verified": False,
+            "hint_only": True,
+            "action": "run_solver",
+        }
+        _LAST_SMT.value = dict(payload)
+        return payload
 
 
 def last_formula_rank() -> dict[str, Any]:
@@ -289,8 +415,12 @@ def observe_formula_clause_lint(
 
 __all__ = [
     "AdvisoryReceipt",
+    "is_trap_family",
     "last_formula_lint",
     "last_formula_rank",
+    "last_smt_triage",
+    "observe_smt_triage",
+    "triage_smt_goal",
     "lint_formula_against_clause",
     "observe_formula_clause_lint",
     "observe_formula_rank",

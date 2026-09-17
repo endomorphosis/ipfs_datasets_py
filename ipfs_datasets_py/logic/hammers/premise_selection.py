@@ -988,6 +988,17 @@ def select_premises(
         excluded=excluded_records,
     )
     result.validate()
+    try:
+        from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+            observe_formula_rank,
+        )
+
+        observe_formula_rank(
+            tuple(item.premise_id for item in selected_premises),
+            obligation_id=str(goal.theorem_id or "")[:128],
+        )
+    except Exception:
+        pass
     return result
 
 
