@@ -5,12 +5,14 @@ from types import SimpleNamespace
 import pytest
 
 from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+    last_conversion_verify,
     last_formula_lint,
     last_formula_rank,
     lint_formula_against_clause,
     observe_formula_clause_lint,
     rank_allowlisted_formulas,
     typesafe_permitted,
+    verify_conversion_fields,
 )
 
 
@@ -317,3 +319,65 @@ def test_ui_and_security_view_lints_fail_open_without_key(
     assert ui["drops_formula"] is False
     assert sec["accepted_as_authority"] is False
     assert sec["view_id"] == "security_ir"
+
+
+def test_verify_conversion_fields_fail_open_does_not_escalate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    view = verify_conversion_fields(
+        "All humans are mortal",
+        "∀x.(Human(x) → Mortal(x))",
+        parts={"pred_0": "Human"},
+    )
+    assert view["escalate"] is False
+    assert view["drops_formula"] is False
+    assert view["rewrites_ir"] is False
+    assert last_conversion_verify()["escalate"] is False
+
+
+def test_verify_any_flag_escalates_without_dropping(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.integrations.typesafe_advisor.typesafe_permitted",
+        lambda **_kwargs: True,
+    )
+
+    class _Result:
+        nouls = {
+            "formula::hallucinated": SimpleNamespace(noul=0.95),
+            "formula::off_target": SimpleNamespace(noul=0.2),
+            "formula::incomplete": SimpleNamespace(noul=0.1),
+            "pred_0::hallucinated": SimpleNamespace(noul=0.1),
+        }
+
+    class _Noul:
+        def __init__(self, instructions=None, criteria=None) -> None:
+            self.instructions = instructions
+
+    import sys
+    import types as _types
+
+    parent = sys.modules.get("ipfs_accelerate_py")
+    if parent is None:
+        parent = _types.ModuleType("ipfs_accelerate_py")
+        monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
+    stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
+    stub.Noul = _Noul
+    stub.system_one = lambda *_a, **_k: _Result()
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
+    view = verify_conversion_fields(
+        "All humans are mortal",
+        "∀x.(Cat(x) → Mortal(x))",
+        parts={"pred_0": "Cat"},
+    )
+    assert view["escalate"] is True
+    assert view["drops_formula"] is False
+    assert view["flags"]["formula::hallucinated"] == pytest.approx(0.95)

@@ -26,6 +26,8 @@ TRAP_SMT_MARKERS = (
 )
 _LAST = threading.local()
 _LAST_SMT = threading.local()
+_LAST_VERIFY = threading.local()
+VERIFY_FIRE = 0.7
 
 
 @dataclass(frozen=True)
@@ -452,6 +454,141 @@ def lint_formula_against_clause(
     return payload
 
 
+def last_conversion_verify() -> dict[str, Any]:
+    value = getattr(_LAST_VERIFY, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def verify_conversion_fields(
+    clause: str,
+    formula: str,
+    *,
+    parts: Mapping[str, str] | None = None,
+    view_id: str = "fol",
+    fire: float = VERIFY_FIRE,
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """SDE-style per-field noul battery. True = something is wrong.
+
+    Escalate if any flag exceeds ``fire``. Never rewrites or drops the formula.
+    """
+
+    fields = {
+        str(key).strip()[:32]: str(value or "")[:64]
+        for key, value in dict(parts or {}).items()
+        if str(key).strip() and str(value or "").strip()
+    }
+    if len(fields) > 6:
+        fields = dict(list(fields.items())[:6])
+    payload = {
+        "accepted_as_authority": False,
+        "rewrites_ir": False,
+        "drops_formula": False,
+        "escalate": False,
+        "fire": float(fire),
+        "flags": {},
+        "view_id": str(view_id or "fol")[:32],
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_VERIFY.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Noul, system_one
+
+    questions: dict[str, Any] = {
+        "formula::hallucinated": Noul(
+            instructions={
+                "question": (
+                    "Is `formula` unsupported by, or absent from, `clause`?"
+                ),
+                "compare": ["`formula`", "`clause`"],
+            },
+        ),
+        "formula::off_target": Noul(
+            instructions={
+                "question": (
+                    "Was `formula` pulled from incidental wording rather than "
+                    "the claim in `clause`?"
+                ),
+                "compare": ["`formula`", "`clause`"],
+            },
+        ),
+        "formula::incomplete": Noul(
+            instructions={
+                "question": (
+                    "Does `formula` omit an actor or modality that `clause` supports?"
+                ),
+                "compare": ["`formula`", "`clause`"],
+            },
+        ),
+    }
+    for name, token in fields.items():
+        questions[f"{name}::hallucinated"] = Noul(
+            instructions={
+                "question": (
+                    f"Is extracted token `{token}` unsupported by `clause`?"
+                ),
+                "inspect": "`clause`",
+            },
+        )
+    try:
+        result = system_one(
+            {
+                "clause": str(clause or "")[:240],
+                "formula": str(formula or "")[:240],
+                "parts": fields,
+                "view_id": payload["view_id"],
+            },
+            questions,
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_VERIFY.value = dict(payload)
+        return payload
+    nouls = getattr(result, "nouls", None) or {}
+    flags: dict[str, float] = {}
+    fired = False
+    threshold = float(fire)
+    for key in questions:
+        noul = float(getattr(nouls.get(key), "noul", 0.0) or 0.0)
+        flags[key] = round(noul, 4)
+        if noul > threshold:
+            fired = True
+    payload["flags"] = flags
+    payload["escalate"] = fired
+    payload["reason_codes"] = ["composed_in_code", "any_flag_gate"]
+    _LAST_VERIFY.value = dict(payload)
+    return payload
+
+
+def observe_conversion_verify(
+    clause: str,
+    formula: str,
+    *,
+    parts: Mapping[str, str] | None = None,
+    view_id: str = "fol",
+) -> dict[str, Any]:
+    try:
+        return verify_conversion_fields(
+            clause, formula, parts=parts, view_id=view_id
+        )
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "rewrites_ir": False,
+            "drops_formula": False,
+            "escalate": False,
+        }
+        _LAST_VERIFY.value = dict(payload)
+        return payload
+
+
 def observe_formula_rank(
     formula_ids: Sequence[str],
     *,
@@ -497,10 +634,13 @@ def observe_formula_clause_lint(
 __all__ = [
     "AdvisoryReceipt",
     "is_trap_family",
+    "last_conversion_verify",
     "last_cross_view_lint",
     "last_formula_lint",
     "last_formula_rank",
     "last_smt_triage",
+    "observe_conversion_verify",
+    "verify_conversion_fields",
     "lint_cross_view_formulas",
     "observe_cross_view_lint",
     "observe_smt_triage",

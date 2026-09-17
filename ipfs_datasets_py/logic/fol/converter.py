@@ -276,11 +276,24 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
             )
             try:
                 from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                    observe_conversion_verify,
                     observe_formula_clause_lint,
                 )
 
                 fol_formula.metadata["typesafe_lint"] = observe_formula_clause_lint(
                     text, formula_string, view_id="fol"
+                )
+
+                names = self._extract_predicate_names(predicates)
+                parts = {
+                    f"pred_{index}": str(name)
+                    for index, name in enumerate(names[:6])
+                }
+                fol_formula.metadata["typesafe_verify"] = observe_conversion_verify(
+                    text,
+                    formula_string,
+                    parts=parts,
+                    view_id="fol",
                 )
             except Exception:
                 pass

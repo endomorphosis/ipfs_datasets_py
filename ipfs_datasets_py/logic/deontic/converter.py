@@ -263,6 +263,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         )
         try:
             from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_conversion_verify,
                 observe_formula_clause_lint,
             )
 
@@ -272,6 +273,9 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 or ""
             )
             result.metadata["typesafe_lint"] = observe_formula_clause_lint(
+                str(input_data or ""), formula, view_id="deontic"
+            )
+            result.metadata["typesafe_verify"] = observe_conversion_verify(
                 str(input_data or ""), formula, view_id="deontic"
             )
         except Exception:
