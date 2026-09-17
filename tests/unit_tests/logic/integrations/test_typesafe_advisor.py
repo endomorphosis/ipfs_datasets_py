@@ -520,3 +520,29 @@ def test_leanstral_draft_verify_fail_open_does_not_admit(
     assert view["drops_formula"] is False
     assert view["accepted_as_authority"] is False
     assert view["view_id"] == "leanstral_draft"
+
+
+def test_intent_decompiler_verify_fail_open_does_not_rewrite(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        observe_conversion_verify,
+    )
+
+    view = observe_conversion_verify(
+        "decl-1",
+        "formula:goal:g1",
+        parts={"goals": "g1", "modalities": "intended", "guards": ""},
+        view_id="intent_decompiler",
+    )
+    assert view["rewrites_ir"] is False
+    assert view["drops_formula"] is False
+    assert view["accepted_as_authority"] is False
+    assert view["view_id"] == "intent_decompiler"

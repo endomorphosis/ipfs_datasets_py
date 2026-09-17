@@ -403,7 +403,7 @@ class IntentDecompiler:
                         "guard_statement_id": edge.get("guard_statement_id"),
                     }
 
-        return DecompiledIntentReview(
+        review = DecompiledIntentReview(
             declaration_id=artifact.declaration_id,
             declaration_digest=artifact.declaration_digest,
             goals=FrozenMap(goals),
@@ -415,6 +415,26 @@ class IntentDecompiler:
             formula_ids=FrozenMap(formula_ids),
             unsupported_formula_ids=tuple(unsupported),
         )
+        try:
+            from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_conversion_verify,
+            )
+
+            observe_conversion_verify(
+                str(artifact.declaration_id or ""),
+                ",".join(str(item) for item in list(formula_ids.values())[:6]),
+                parts={
+                    "goals": ",".join(list(goals)[:4]),
+                    "modalities": ",".join(
+                        str(value)[:32] for value in list(modalities.values())[:4]
+                    ),
+                    "guards": ",".join(list(guards)[:4]),
+                },
+                view_id="intent_decompiler",
+            )
+        except Exception:
+            pass
+        return review
 
     decompile_for_review = decompile
 
