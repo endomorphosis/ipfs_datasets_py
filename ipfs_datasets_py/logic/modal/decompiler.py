@@ -3007,6 +3007,18 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         str(value) for value in document.metadata.get("parser_warnings", []) if value is not None
     ]
     reconstructed_text = _sentence_from_phrases(phrases)
+    try:
+        from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+            observe_conversion_verify,
+        )
+
+        observe_conversion_verify(
+            str(document.normalized_text or "")[:240],
+            reconstructed_text[:240],
+            view_id="modal_decompiler",
+        )
+    except Exception:
+        pass
     return DecodedModalText(
         source_id=document.document_id,
         text=reconstructed_text,
