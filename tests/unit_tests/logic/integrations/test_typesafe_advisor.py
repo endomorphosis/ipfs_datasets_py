@@ -229,11 +229,21 @@ def test_cross_view_lint_cannot_satisfy_parity(
     )
 
     class _Result:
-        nouls = {"same_actors": SimpleNamespace(noul=0.99, confidence=0.99)}
+        nouls = {
+            "same_actors": SimpleNamespace(noul=0.99, confidence=0.99),
+            "same_modality": SimpleNamespace(noul=0.9),
+            "same_temporal": SimpleNamespace(noul=0.8),
+        }
+        scores = {"link_state": SimpleNamespace(score=1.94, confidence=0.92)}
 
     class _Noul:
         def __init__(self, instructions=None, criteria=None) -> None:
             self.instructions = instructions
+
+    class _Score:
+        def __init__(self, instructions=None, criteria=None) -> None:
+            self.instructions = instructions
+            self.criteria = criteria
 
     import sys
     import types as _types
@@ -244,6 +254,7 @@ def test_cross_view_lint_cannot_satisfy_parity(
         monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
     stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
     stub.Noul = _Noul
+    stub.Score = _Score
     stub.system_one = lambda *_a, **_k: _Result()
     monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
     from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
@@ -256,6 +267,8 @@ def test_cross_view_lint_cannot_satisfy_parity(
         tdfol_formulas=["forall t (A -> O(Pay,t))"],
     )
     assert view["same_actors"] == pytest.approx(0.99)
+    assert view["outcome"] == "same"
+    assert view["curator"] is False
     assert view["satisfies_parity"] is False
     assert view["accepted_as_authority"] is False
     assert last_cross_view_lint()["satisfies_parity"] is False
@@ -281,6 +294,8 @@ def test_cross_view_lint_without_key_does_not_satisfy_parity(
     )
     assert view["satisfies_parity"] is False
     assert view["rewrites_ir"] is False
+    assert view["outcome"] == "different"
+    assert view["curator"] is False
 
 
 def test_intent_route_typecheck_not_skipped_without_key(

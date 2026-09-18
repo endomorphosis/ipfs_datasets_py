@@ -1873,10 +1873,12 @@ def build_v2_compiler_parity_report(
             observe_cross_view_lint,
         )
 
-        report["typesafe_cross_view"] = observe_cross_view_lint(
+        lint = observe_cross_view_lint(
             dcec_formulas=dcec,
             tdfol_formulas=tdfol,
         )
+        report["typesafe_cross_view"] = lint
+        report["typesafe_alignment"] = lint
     except Exception:
         pass
     return report

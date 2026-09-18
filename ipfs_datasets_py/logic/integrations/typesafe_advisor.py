@@ -139,6 +139,11 @@ def lint_cross_view_formulas(
         "satisfies_parity": False,
         "rewrites_ir": False,
         "same_actors": 0.0,
+        "same_modality": 0.0,
+        "same_temporal": 0.0,
+        "link_score": 0.0,
+        "outcome": "different",
+        "curator": False,
         "reason_codes": ["privacy_or_unconfigured"],
     }
     if not typesafe_permitted(
@@ -147,18 +152,47 @@ def lint_cross_view_formulas(
     ):
         _LAST_CROSS_VIEW.value = dict(payload)
         return payload
-    from ipfs_accelerate_py.typesafe_inference import Noul, system_one
+    from ipfs_accelerate_py.typesafe_inference import Noul, Score, system_one
 
     dcec = [str(item)[:240] for item in dcec_formulas if str(item).strip()][:4]
     tdfol = [str(item)[:240] for item in tdfol_formulas if str(item).strip()][:4]
+    levels = (
+        "They describe two different obligations.",
+        "They describe closely related obligations that may or may not be the same one.",
+        "They describe one and the same obligation.",
+    )
+    outcomes = ("different", "related", "same")
     try:
         result = system_one(
             {"dcec": dcec, "tdfol": tdfol},
             {
+                "link_state": Score(
+                    instructions={
+                        "question": "How do the DCEC and TDFOL views relate as obligations?",
+                        "compare": ["`dcec`", "`tdfol`"],
+                    },
+                    criteria=list(levels),
+                ),
                 "same_actors": Noul(
                     instructions={
                         "question": (
                             "Do `dcec` and `tdfol` mention the same obligation actors?"
+                        ),
+                        "compare": ["`dcec`", "`tdfol`"],
+                    },
+                ),
+                "same_modality": Noul(
+                    instructions={
+                        "question": (
+                            "Do `dcec` and `tdfol` use the same deontic modality?"
+                        ),
+                        "compare": ["`dcec`", "`tdfol`"],
+                    },
+                ),
+                "same_temporal": Noul(
+                    instructions={
+                        "question": (
+                            "Do `dcec` and `tdfol` describe the same temporal window?"
                         ),
                         "compare": ["`dcec`", "`tdfol`"],
                     },
@@ -170,15 +204,29 @@ def lint_cross_view_formulas(
         payload["reason_codes"] = ["typesafe_error_fail_open"]
         _LAST_CROSS_VIEW.value = dict(payload)
         return payload
-    noul = float(
-        getattr((getattr(result, "nouls", None) or {}).get("same_actors"), "noul", 0.0)
-        or 0.0
+    nouls = getattr(result, "nouls", None) or {}
+    scores = getattr(result, "scores", None) or {}
+    payload["same_actors"] = round(
+        float(getattr(nouls.get("same_actors"), "noul", 0.0) or 0.0), 4
     )
-    payload["same_actors"] = round(noul, 4)
-    payload["reason_codes"] = ["composed_in_code", "advisory_lint_only"]
+    payload["same_modality"] = round(
+        float(getattr(nouls.get("same_modality"), "noul", 0.0) or 0.0), 4
+    )
+    payload["same_temporal"] = round(
+        float(getattr(nouls.get("same_temporal"), "noul", 0.0) or 0.0), 4
+    )
+    link = float(getattr(scores.get("link_state"), "score", 0.0) or 0.0)
+    payload["link_score"] = round(link, 4)
+    index = min(int(link + 0.5), 2)
+    payload["outcome"] = outcomes[index]
+    payload["curator"] = payload["outcome"] == "related"
+    payload["reason_codes"] = ["composed_in_code", "advisory_lint_only", "nearest_level"]
     payload["satisfies_parity"] = False
     _LAST_CROSS_VIEW.value = dict(payload)
     return payload
+
+
+align_cross_view_entities = lint_cross_view_formulas
 
 
 def observe_cross_view_lint(**kwargs: Any) -> dict[str, Any]:
@@ -967,6 +1015,7 @@ __all__ = [
     "last_smt_triage",
     "observe_conversion_verify",
     "verify_conversion_fields",
+    "align_cross_view_entities",
     "lint_cross_view_formulas",
     "observe_cross_view_lint",
     "observe_smt_triage",
