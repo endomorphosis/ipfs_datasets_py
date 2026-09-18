@@ -223,17 +223,29 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
             self.monitor.record_operation_start("fol_conversion")
 
         try:
+            parse_text = text
+            try:
+                from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                    observe_line_stitch,
+                )
+
+                stitched = observe_line_stitch(text)
+                candidate = str(stitched.get("text") or "")
+                if candidate and stitched.get("generates_text") is False:
+                    parse_text = candidate
+            except Exception:
+                parse_text = text
             # Extract predicates using NLP or regex
             if self.use_nlp and self.nlp:
-                predicates = extract_predicates_nlp(text, use_spacy=True)
-                relations = extract_logical_relations_nlp(text, use_spacy=True)
+                predicates = extract_predicates_nlp(parse_text, use_spacy=True)
+                relations = extract_logical_relations_nlp(parse_text, use_spacy=True)
             else:
-                predicates = extract_predicates(text)
-                relations = extract_logical_relations(text)
+                predicates = extract_predicates(parse_text)
+                relations = extract_logical_relations(parse_text)
 
             # Parse quantifiers and operators
-            quantifiers = parse_quantifiers(text)
-            operators = parse_logical_operators(text)
+            quantifiers = parse_quantifiers(parse_text)
+            operators = parse_logical_operators(parse_text)
 
             # Build FOL formula
             formula_string = build_fol_formula(quantifiers, predicates, operators, relations)
@@ -268,6 +280,7 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
                 confidence=confidence,
                 metadata={
                     "source_text": text,
+                    "parse_text": parse_text,
                     "validation": validation,
                     "predicates_count": len(predicates),
                     "quantifiers_count": len(quantifiers),

@@ -8,6 +8,7 @@ hammer / kernel. No API key → no HTTP; converters keep their existing path.
 from __future__ import annotations
 
 import os
+import re
 import threading
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Sequence
@@ -112,6 +113,10 @@ def last_formula_lint() -> dict[str, Any]:
 
 _LAST_RANK = threading.local()
 _LAST_EVIDENCE = threading.local()
+_LAST_STITCH = threading.local()
+JOIN_AFTER_DANGLING = 0.2
+JOIN_AFTER_TERMINAL = 0.5
+_TERMINAL_END = re.compile(r'[.!?:;…]["\')\]]*$')
 EVIDENCE_THRESHOLDS = {
     "injection_max": 0.70,
     "contradicts_min": 0.70,
@@ -599,6 +604,115 @@ def gate_evidence_passages(
     payload["reason_codes"] = ["composed_in_code", "thresholds_in_code"]
     _LAST_EVIDENCE.value = dict(payload)
     return payload
+
+
+def last_line_stitch() -> dict[str, Any]:
+    value = getattr(_LAST_STITCH, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def stitch_hard_wrapped_lines(
+    text: str,
+    *,
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """Merge hard-wrapped lines. Output characters come only from the input.
+
+    Fail-open keeps the original text. Never generates formulas or markup.
+    """
+
+    original = str(text or "")
+    payload = {
+        "accepted_as_authority": False,
+        "generates_text": False,
+        "rewrites_ir": False,
+        "text": original,
+        "original": original,
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    raw_lines = original.split("\n")
+    lines: list[dict[str, Any]] = []
+    gap = False
+    for raw in raw_lines:
+        stripped = re.sub(r"[\t ]+", " ", raw).strip()
+        if not stripped:
+            gap = bool(lines)
+            continue
+        lines.append({"text": stripped, "gap": gap})
+        gap = False
+        if len(lines) >= 17:
+            break
+    if len(lines) < 2 or not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_STITCH.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Noul, system_one
+
+    questions: dict[str, Any] = {}
+    for index in range(1, len(lines)):
+        if lines[index]["gap"]:
+            continue
+        ident = f"L{index:03d}"
+        questions[ident] = Noul(
+            instructions={
+                "question": (
+                    f"Does line L{index:03d} pick up mid-sentence, continuing "
+                    f"a sentence left unfinished at the end of line L{index - 1:03d}?"
+                ),
+            },
+        )
+    if not questions:
+        _LAST_STITCH.value = dict(payload)
+        return payload
+    tagged = "\n".join(
+        f"{chr(10) if item['gap'] else ''}L{i:03d}| {item['text']}"
+        for i, item in enumerate(lines)
+    )
+    try:
+        result = system_one({"lines": tagged}, questions, timeout=timeout)
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_STITCH.value = dict(payload)
+        return payload
+    nouls = getattr(result, "nouls", None) or {}
+    joins = [0.0] * len(lines)
+    for index in range(1, len(lines)):
+        ident = f"L{index:03d}"
+        joins[index] = float(getattr(nouls.get(ident), "noul", 0.0) or 0.0)
+    blocks: list[str] = []
+    for index, line in enumerate(lines):
+        bar = (
+            JOIN_AFTER_TERMINAL
+            if index and _TERMINAL_END.search(lines[index - 1]["text"])
+            else JOIN_AFTER_DANGLING
+        )
+        if blocks and not line["gap"] and joins[index] >= bar:
+            blocks[-1] += " " + line["text"]
+        else:
+            blocks.append(line["text"])
+    merged = "\n".join(blocks)
+    payload["text"] = merged
+    payload["reason_codes"] = ["composed_in_code", "characters_from_input"]
+    _LAST_STITCH.value = dict(payload)
+    return payload
+
+
+def observe_line_stitch(text: str) -> dict[str, Any]:
+    try:
+        return stitch_hard_wrapped_lines(text)
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "generates_text": False,
+            "text": str(text or ""),
+            "original": str(text or ""),
+        }
+        _LAST_STITCH.value = dict(payload)
+        return payload
 
 
 def lint_formula_against_clause(
@@ -1167,6 +1281,9 @@ __all__ = [
     "verify_conversion_fields",
     "align_cross_view_entities",
     "gate_evidence_passages",
+    "last_line_stitch",
+    "observe_line_stitch",
+    "stitch_hard_wrapped_lines",
     "last_evidence_gate",
     "route_evidence_answers",
     "lint_cross_view_formulas",

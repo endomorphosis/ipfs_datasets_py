@@ -219,6 +219,68 @@ def test_gate_evidence_passages_fail_open_keeps_ids(
     assert last_evidence_gate()["rewrites_ir"] is False
 
 
+def test_stitch_hard_wrapped_lines_fail_open_keeps_original(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        last_line_stitch,
+        stitch_hard_wrapped_lines,
+    )
+
+    original = "All humans are\nmortal."
+    view = stitch_hard_wrapped_lines(original)
+    assert view["text"] == original
+    assert view["generates_text"] is False
+    assert view["original"] == original
+    assert last_line_stitch()["rewrites_ir"] is False
+
+
+def test_stitch_merge_uses_only_input_characters(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.integrations.typesafe_advisor.typesafe_permitted",
+        lambda **_kwargs: True,
+    )
+
+    class _Noul:
+        def __init__(self, instructions=None, criteria=None) -> None:
+            self.instructions = instructions
+
+    class _Result:
+        nouls = {"L001": SimpleNamespace(noul=0.8)}
+
+    import sys
+    import types as _types
+
+    parent = sys.modules.get("ipfs_accelerate_py")
+    if parent is None:
+        parent = _types.ModuleType("ipfs_accelerate_py")
+        monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", parent)
+    stub = _types.ModuleType("ipfs_accelerate_py.typesafe_inference")
+    stub.Noul = _Noul
+    stub.system_one = lambda *_a, **_k: _Result()
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.typesafe_inference", stub)
+    from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+        stitch_hard_wrapped_lines,
+    )
+
+    original = "All humans are\nmortal."
+    view = stitch_hard_wrapped_lines(original)
+    assert view["generates_text"] is False
+    assert view["text"] == "All humans are mortal."
+    compact = view["text"].replace(" ", "")
+    source = original.replace("\n", "").replace(" ", "")
+    assert compact == source
+
+
 def test_smt_trap_forces_solver_without_http(monkeypatch: pytest.MonkeyPatch) -> None:
     called: list[int] = []
     monkeypatch.setattr(
