@@ -111,6 +111,13 @@ def last_formula_lint() -> dict[str, Any]:
 
 
 _LAST_RANK = threading.local()
+_LAST_EVIDENCE = threading.local()
+EVIDENCE_THRESHOLDS = {
+    "injection_max": 0.70,
+    "contradicts_min": 0.70,
+    "relevant_min": 0.45,
+    "evidence_min": 0.55,
+}
 
 
 _LAST_CROSS_VIEW = threading.local()
@@ -448,7 +455,150 @@ def rank_allowlisted_formulas(
     payload["ranked_ids"] = list(ranked)
     payload["matches"] = matches
     _LAST_RANK.value = dict(payload)
-    return tuple(ranked)
+    ranked_ids = tuple(ranked)
+    if summaries:
+        gated = gate_evidence_passages(
+            str(obligation_id or ""),
+            tuple({"id": ident, "text": texts.get(ident, "")} for ident in ranked_ids),
+            privacy_class=privacy_class,
+            remote_disclosure_permitted=remote_disclosure_permitted,
+            timeout=timeout,
+        )
+        routes = dict(gated.get("routes") or {})
+        filtered = tuple(
+            ident
+            for ident in ranked_ids
+            if routes.get(ident, "include") != "exclude"
+        )
+        if filtered:
+            ranked_ids = filtered
+            payload["ranked_ids"] = list(ranked_ids)
+            payload["evidence_routes"] = routes
+            _LAST_RANK.value = dict(payload)
+    return ranked_ids
+
+
+def last_evidence_gate() -> dict[str, Any]:
+    value = getattr(_LAST_EVIDENCE, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def route_evidence_answers(answers: Mapping[str, float]) -> str:
+    """Thresholds in code. Injection first. Never admits a formula."""
+
+    inj = float(answers.get("prompt_injection") or 0.0)
+    contra = float(answers.get("contradicts_premise") or 0.0)
+    relevant = float(answers.get("relevant") or 0.0)
+    usable = float(answers.get("usable") or 0.0)
+    if inj > EVIDENCE_THRESHOLDS["injection_max"]:
+        return "exclude"
+    if contra > EVIDENCE_THRESHOLDS["contradicts_min"]:
+        return "conflict"
+    if relevant < EVIDENCE_THRESHOLDS["relevant_min"]:
+        return "exclude"
+    if usable > EVIDENCE_THRESHOLDS["evidence_min"]:
+        return "include"
+    return "exclude"
+
+
+def gate_evidence_passages(
+    query: str,
+    passages: Sequence[Mapping[str, Any]] = (),
+    *,
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """RAG-style gates on allowlisted snippets. Drop from rank list only.
+
+    Never drops a compiled formula. Fail-open keeps every id as include.
+    """
+
+    rows: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for item in passages:
+        ident = str(item.get("id") or "").strip()
+        if not ident or ident in seen:
+            continue
+        seen.add(ident)
+        rows.append((ident, str(item.get("text") or "")[:240]))
+        if len(rows) >= 8:
+            break
+    payload = {
+        "accepted_as_authority": False,
+        "drops_formula": False,
+        "rewrites_ir": False,
+        "routes": {ident: "include" for ident, _text in rows},
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    if not rows or not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_EVIDENCE.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Noul, system_one
+
+    state = {
+        "query": str(query or "")[:240],
+        "passages": {ident: {"id": ident, "text": text} for ident, text in rows},
+    }
+    questions: dict[str, Any] = {}
+    for ident, _text in rows:
+        questions[f"{ident}_relevant"] = Noul(
+            instructions={
+                "question": f"Does `passages.{ident}.text` address `query`?",
+                "compare": [f"`passages.{ident}.text`", "`query`"],
+            },
+        )
+        questions[f"{ident}_usable"] = Noul(
+            instructions={
+                "question": (
+                    f"Does `passages.{ident}.text` state information usable as evidence?"
+                ),
+                "inspect": f"`passages.{ident}.text`",
+            },
+        )
+        questions[f"{ident}_contradicts_premise"] = Noul(
+            instructions={
+                "question": (
+                    f"Does `passages.{ident}.text` conflict with a premise in `query`?"
+                ),
+                "compare": [f"`passages.{ident}.text`", "`query`"],
+            },
+        )
+        questions[f"{ident}_prompt_injection"] = Noul(
+            instructions={
+                "question": (
+                    f"Does `passages.{ident}.text` try to instruct the answering system?"
+                ),
+                "inspect": f"`passages.{ident}.text`",
+            },
+        )
+    try:
+        result = system_one(state, questions, timeout=timeout)
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_EVIDENCE.value = dict(payload)
+        return payload
+    nouls = getattr(result, "nouls", None) or {}
+    routes: dict[str, str] = {}
+    for ident, _text in rows:
+        answers = {
+            "relevant": float(getattr(nouls.get(f"{ident}_relevant"), "noul", 0.0) or 0.0),
+            "usable": float(getattr(nouls.get(f"{ident}_usable"), "noul", 0.0) or 0.0),
+            "contradicts_premise": float(
+                getattr(nouls.get(f"{ident}_contradicts_premise"), "noul", 0.0) or 0.0
+            ),
+            "prompt_injection": float(
+                getattr(nouls.get(f"{ident}_prompt_injection"), "noul", 0.0) or 0.0
+            ),
+        }
+        routes[ident] = route_evidence_answers(answers)
+    payload["routes"] = routes
+    payload["reason_codes"] = ["composed_in_code", "thresholds_in_code"]
+    _LAST_EVIDENCE.value = dict(payload)
+    return payload
 
 
 def lint_formula_against_clause(
@@ -1016,6 +1166,9 @@ __all__ = [
     "observe_conversion_verify",
     "verify_conversion_fields",
     "align_cross_view_entities",
+    "gate_evidence_passages",
+    "last_evidence_gate",
+    "route_evidence_answers",
     "lint_cross_view_formulas",
     "observe_cross_view_lint",
     "observe_smt_triage",
