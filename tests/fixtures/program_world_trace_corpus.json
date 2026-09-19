@@ -1,0 +1,80 @@
+{
+  "rows": [
+    {
+      "row_id": "train-1",
+      "partition": "training",
+      "repository_id": "repo:alpha",
+      "commit_cid": "bafkreitraincommit0000000000000000000000000000000001",
+      "task_cid": "bafkreitraintask000000000000000000000000000000000001",
+      "function_id": "fn.add",
+      "family_id": "family-add",
+      "rights_admitted": true,
+      "privacy_admitted": true,
+      "tree_cid": "bafkreitraintree000000000000000000000000000000000001",
+      "failure": false
+    },
+    {
+      "row_id": "dev-1",
+      "partition": "development",
+      "repository_id": "repo:alpha",
+      "commit_cid": "bafkreidevcommit000000000000000000000000000000000001",
+      "task_cid": "bafkreidevtask00000000000000000000000000000000000001",
+      "function_id": "fn.mul",
+      "family_id": "family-mul",
+      "rights_admitted": true,
+      "privacy_admitted": true,
+      "tree_cid": "bafkreidevtree00000000000000000000000000000000000001",
+      "failure": false
+    },
+    {
+      "row_id": "held-1",
+      "partition": "held_out",
+      "repository_id": "repo:alpha",
+      "commit_cid": "bafkreiheldcommit00000000000000000000000000000000001",
+      "task_cid": "bafkreiheldtask0000000000000000000000000000000000001",
+      "function_id": "fn.sub",
+      "family_id": "family-sub",
+      "rights_admitted": true,
+      "privacy_admitted": true,
+      "tree_cid": "bafkreiheldtree0000000000000000000000000000000000001",
+      "negative_example": true
+    },
+    {
+      "row_id": "adv-1",
+      "partition": "adversarial",
+      "repository_id": "repo:alpha",
+      "commit_cid": "bafkreiadvcommit000000000000000000000000000000000001",
+      "task_cid": "bafkreiadvtask00000000000000000000000000000000000001",
+      "function_id": "fn.div",
+      "family_id": "family-div",
+      "rights_admitted": true,
+      "privacy_admitted": true,
+      "tree_cid": "bafkreiadvtree00000000000000000000000000000000000001",
+      "mutant": true
+    },
+    {
+      "row_id": "cross-1",
+      "partition": "cross_repository",
+      "repository_id": "repo:beta",
+      "commit_cid": "bafkreicrosscommit0000000000000000000000000000000001",
+      "task_cid": "bafkreicrosstask000000000000000000000000000000000001",
+      "function_id": "fn.add",
+      "family_id": "family-cross",
+      "rights_admitted": true,
+      "privacy_admitted": true,
+      "tree_cid": "bafkreicrosstree000000000000000000000000000000000001"
+    },
+    {
+      "row_id": "ood-1",
+      "partition": "ood",
+      "repository_id": "repo:gamma",
+      "commit_cid": "bafkreioodcommit000000000000000000000000000000000001",
+      "task_cid": "bafkreioodtask00000000000000000000000000000000000001",
+      "function_id": "fn.mod",
+      "family_id": "family-ood",
+      "rights_admitted": true,
+      "privacy_admitted": true,
+      "tree_cid": "bafkreioodtree00000000000000000000000000000000000001"
+    }
+  ]
+}

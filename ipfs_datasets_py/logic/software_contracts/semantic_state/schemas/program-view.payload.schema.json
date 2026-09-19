@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ipfs-datasets.program-view.payload.schema.json",
+  "type": "object",
+  "required": ["view", "source_cid", "privacy_admitted"],
+  "properties": {
+    "view": {
+      "type": "string",
+      "enum": [
+        "text", "ast", "cfg", "call", "data_flow", "symbolic_ir", "proof",
+        "trace", "failure", "dataset", "legal", "security", "intent", "procedure"
+      ]
+    },
+    "source_cid": { "type": "string", "minLength": 1 },
+    "privacy_admitted": { "type": "boolean", "const": true },
+    "freshness": { "type": "string", "enum": ["fresh", "stale"] }
+  },
+  "additionalProperties": false
+}
