@@ -2008,6 +2008,7 @@ def route_intent_view(
         diagnostics.extend(parse_receipt.diagnostics)
         try:
             from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_formula_citation,
                 observe_formula_clause_lint,
             )
 
@@ -2015,6 +2016,11 @@ def route_intent_view(
             if parse_receipt.candidates:
                 formula_id = str(parse_receipt.candidates[0].formula_id or "")
             observe_formula_clause_lint(
+                str(label or "")[:240],
+                formula_id,
+                view_id="intent",
+            )
+            observe_formula_citation(
                 str(label or "")[:240],
                 formula_id,
                 view_id="intent",

@@ -742,12 +742,19 @@ class SecurityIRFormalizationAdapter(FormalizationCompiler):
         )
         try:
             from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                observe_formula_citation,
                 observe_formula_clause_lint,
             )
 
             first = formulas[0].formula_id if formulas else ""
+            source = str(getattr(sample, "source_text", "") or sample.sample_id or "")
             observe_formula_clause_lint(
-                str(sample.sample_id or ""),
+                source,
+                str(first or ""),
+                view_id="security_ir",
+            )
+            observe_formula_citation(
+                source,
                 str(first or ""),
                 view_id="security_ir",
             )

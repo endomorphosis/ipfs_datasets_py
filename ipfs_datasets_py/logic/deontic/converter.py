@@ -264,9 +264,12 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         try:
             from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
                 observe_conversion_verify,
+                observe_extracted_span,
+                observe_formula_citation,
                 observe_formula_clause_lint,
                 observe_logic_family,
                 observe_logic_route,
+                observe_supporting_line,
             )
 
             formula = str(
@@ -285,6 +288,27 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             )
             result.metadata["typesafe_route"] = observe_logic_route(
                 str(input_data or ""), produced_view="deontic"
+            )
+            result.metadata["typesafe_citation"] = observe_formula_citation(
+                str(input_data or ""), formula, view_id="deontic"
+            )
+            spans: List[str] = []
+            for norm in legal_norm_irs or (
+                [legal_norm_ir] if legal_norm_ir is not None else []
+            ):
+                for value in (
+                    getattr(norm, "actor", ""),
+                    getattr(norm, "action", ""),
+                    *list(getattr(norm, "actor_entities", None) or ()),
+                ):
+                    token = str(value or "").strip()
+                    if token:
+                        spans.append(token)
+            result.metadata["typesafe_pick"] = observe_extracted_span(
+                str(input_data or ""), spans, view_id="deontic"
+            )
+            result.metadata["typesafe_find"] = observe_supporting_line(
+                str(input_data or ""), formula, view_id="deontic"
             )
         except Exception:
             pass

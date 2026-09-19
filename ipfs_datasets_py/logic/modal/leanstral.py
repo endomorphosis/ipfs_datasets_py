@@ -1163,11 +1163,17 @@ def leanstral_draft_guidance(
         try:
             from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
                 observe_conversion_verify,
+                observe_formula_citation,
             )
 
             first = str(candidates[0].get("candidate") or "")
             source = str(getattr(task, "source_span", "") or "")
             observe_conversion_verify(
+                source,
+                first,
+                view_id="leanstral_draft",
+            )
+            observe_formula_citation(
                 source,
                 first,
                 view_id="leanstral_draft",

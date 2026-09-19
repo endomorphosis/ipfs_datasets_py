@@ -290,9 +290,12 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
             try:
                 from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
                     observe_conversion_verify,
+                    observe_extracted_span,
+                    observe_formula_citation,
                     observe_formula_clause_lint,
                     observe_logic_family,
                     observe_logic_route,
+                    observe_supporting_line,
                 )
 
                 fol_formula.metadata["typesafe_lint"] = observe_formula_clause_lint(
@@ -315,6 +318,15 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
                 )
                 fol_formula.metadata["typesafe_route"] = observe_logic_route(
                     text, produced_view="fol"
+                )
+                fol_formula.metadata["typesafe_citation"] = observe_formula_citation(
+                    text, formula_string, view_id="fol"
+                )
+                fol_formula.metadata["typesafe_pick"] = observe_extracted_span(
+                    text, names, view_id="fol"
+                )
+                fol_formula.metadata["typesafe_find"] = observe_supporting_line(
+                    text, formula_string, view_id="fol"
                 )
             except Exception:
                 pass

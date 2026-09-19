@@ -11,6 +11,7 @@ import os
 import re
 import threading
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from typing import Any, Mapping, Optional, Sequence
 
 REMOTE_BLOCKED_PRIVACY = frozenset({"local_only", "forbidden_external"})
@@ -28,8 +29,51 @@ TRAP_SMT_MARKERS = (
 _LAST = threading.local()
 _LAST_SMT = threading.local()
 _LAST_VERIFY = threading.local()
+_LAST_CITATION = threading.local()
+_LAST_PICK = threading.local()
+_LAST_DATE = threading.local()
+_LAST_FIND = threading.local()
 VERIFY_FIRE = 0.7
+NOUL_UNCERTAIN_LOW = 0.30
 COARSE_CONFIDENCE = 0.9
+ACTION_MIN_CONFIDENCE = 0.60
+CITATION_AUTO_ACCEPT = 0.8
+DATE_REVIEW_BELOW = 0.60
+DATE_YEAR_MIN = 1900
+DATE_YEAR_MAX = 2050
+FIND_MAX_LINES = 17
+FIND_EXISTS_HIGH = 0.70
+FIND_EXISTS_LOW = 0.35
+RANK_SHORTLIST = 3
+FITS_THRESHOLD = 0.30
+CITATION_CHOICES = ("supports", "contradicts", "says_nothing")
+PICK_NONE = "none"
+PICK_MAX = 8
+DATE_MONTHS = {
+    "January": 1,
+    "February": 2,
+    "March": 3,
+    "April": 4,
+    "May": 5,
+    "June": 6,
+    "July": 7,
+    "August": 8,
+    "September": 9,
+    "October": 10,
+    "November": 11,
+    "December": 12,
+}
+DATE_WEEKDAYS = (
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+)
+_YEAR_IN_TEXT = re.compile(r"\b(19\d{2}|20\d{2})\b")
+_CURLY_QUOTES = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})
 LOGIC_FAMILIES: tuple[str, ...] = (
     "first_order",
     "deontic",
@@ -116,6 +160,19 @@ _LAST_EVIDENCE = threading.local()
 _LAST_STITCH = threading.local()
 JOIN_AFTER_DANGLING = 0.2
 JOIN_AFTER_TERMINAL = 0.5
+CLASSIFY_MAX_BLOCKS = 8
+HEADING_MAX_CHARS = 90
+STEP_THRESHOLD = 0.5
+BLOCK_TYPES = (
+    "heading",
+    "paragraph",
+    "list_item",
+    "quote",
+    "code",
+    "callout",
+)
+HEADING_LEVELS = ("title", "section", "subsection")
+CALLOUT_KINDS = ("note", "tip", "warning")
 _TERMINAL_END = re.compile(r'[.!?:;…]["\')\]]*$')
 EVIDENCE_THRESHOLDS = {
     "injection_max": 0.70,
@@ -406,6 +463,9 @@ def rank_allowlisted_formulas(
         "obligation_id": str(obligation_id or "")[:128],
         "ranked_ids": list(ordered),
         "matches": {},
+        "shortlist": [],
+        "fits": {},
+        "suggested": "",
     }
     if not ordered:
         _LAST_RANK.value = dict(payload)
@@ -480,7 +540,111 @@ def rank_allowlisted_formulas(
             payload["ranked_ids"] = list(ranked_ids)
             payload["evidence_routes"] = routes
             _LAST_RANK.value = dict(payload)
+    confirmed = _confirm_ranked_shortlist(
+        obligation_id=str(obligation_id or "")[:128],
+        shortlist=tuple(ranked_ids[:RANK_SHORTLIST]),
+        texts=texts,
+        timeout=timeout,
+    )
+    payload["shortlist"] = list(confirmed["shortlist"])
+    payload["fits"] = dict(confirmed["fits"])
+    payload["suggested"] = str(confirmed["suggested"] or "")
+    payload["reason_codes"] = list(confirmed.get("reason_codes") or ["composed_in_code"])
+    _LAST_RANK.value = dict(payload)
     return ranked_ids
+
+
+def _confirm_ranked_shortlist(
+    *,
+    obligation_id: str,
+    shortlist: Sequence[str],
+    texts: Mapping[str, str],
+    timeout: float,
+) -> dict[str, Any]:
+    """Second pass: Choice over the shortlist plus ``fits::id`` nouls.
+
+    If the best fits noul is under ``FITS_THRESHOLD``, suggest nothing.
+    Never invents ids. Does not rewrite the first-pass ranking.
+    """
+
+    names = tuple(
+        ident for ident in shortlist if str(ident).strip()
+    )[:RANK_SHORTLIST]
+    payload: dict[str, Any] = {
+        "shortlist": list(names),
+        "fits": {},
+        "suggested": "",
+        "reason_codes": ["composed_in_code"],
+    }
+    if not names:
+        payload["reason_codes"] = ["no_shortlist"]
+        return payload
+    try:
+        from ipfs_accelerate_py.typesafe_inference import Choice, Noul, system_one
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        return payload
+    questions: dict[str, Any] = {
+        "which": Choice(
+            instructions={
+                "question": (
+                    "Which shortlisted formula is the right one for `obligation.id`?"
+                ),
+                "inspect": "`formulas`",
+            },
+            criteria={
+                ident: {"what": str(texts.get(ident) or ident)[:240]}
+                for ident in names
+            },
+        )
+    }
+    for ident in names:
+        questions[f"fits::{ident}"] = Noul(
+            instructions={
+                "question": (
+                    f"Does formula `{ident}` do the specific thing "
+                    "`obligation.id` asks for?"
+                ),
+                "inspect": f"`formulas.{ident}.summary`",
+            },
+        )
+    try:
+        result = system_one(
+            {
+                "obligation": {"id": obligation_id},
+                "formulas": {
+                    ident: {"id": ident, "summary": str(texts.get(ident) or ident)[:240]}
+                    for ident in names
+                },
+            },
+            questions,
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        return payload
+    nouls = getattr(result, "nouls", None) or {}
+    fits = {
+        ident: round(
+            float(getattr(nouls.get(f"fits::{ident}"), "noul", 0.0) or 0.0), 4
+        )
+        for ident in names
+    }
+    payload["fits"] = fits
+    best = max(fits.values()) if fits else 0.0
+    if best < FITS_THRESHOLD:
+        payload["reason_codes"] = ["composed_in_code", "nothing_fits"]
+        return payload
+    winner = str(
+        getattr((getattr(result, "choices", None) or {}).get("which"), "choice", "")
+        or ""
+    ).strip()
+    if winner not in names:
+        payload["reason_codes"] = ["composed_in_code", "unknown_choice"]
+        return payload
+    payload["suggested"] = winner
+    payload["reason_codes"] = ["composed_in_code", "shortlist_confirm"]
+    return payload
 
 
 def last_evidence_gate() -> dict[str, Any]:
@@ -606,6 +770,167 @@ def gate_evidence_passages(
     return payload
 
 
+def last_supporting_line() -> dict[str, Any]:
+    value = getattr(_LAST_FIND, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _tagged_source_lines(
+    text: str, *, limit: int = FIND_MAX_LINES
+) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+    for raw in str(text or "").splitlines():
+        stripped = re.sub(r"[\t ]+", " ", raw).strip()
+        if not stripped:
+            continue
+        rows.append((f"L{len(rows):03d}", stripped))
+        if len(rows) >= limit:
+            break
+    return rows
+
+
+def find_supporting_line(
+    source: str,
+    query: str,
+    *,
+    view_id: str = "fol",
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """Choice over existing line ids plus an exists noul.
+
+    Ranking cannot invent a line. ``exists`` decides whether any line answers
+    ``query``. Text is copied from the source only.
+    """
+
+    rows = _tagged_source_lines(source)
+    payload: dict[str, Any] = {
+        "accepted_as_authority": False,
+        "rewrites_ir": False,
+        "drops_formula": False,
+        "invents_ids": False,
+        "line_id": "",
+        "line_text": "",
+        "exists": 0.0,
+        "verdict": "",
+        "ranked": [],
+        "view_id": str(view_id or "fol")[:32],
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    if not rows:
+        payload["reason_codes"] = ["no_lines"]
+        _LAST_FIND.value = dict(payload)
+        return payload
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_FIND.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Choice, Noul, system_one
+
+    ids = [ident for ident, _text in rows]
+    by_id = {ident: text for ident, text in rows}
+    tagged = "\n".join(f"{ident}| {text}" for ident, text in rows)
+    ask = str(query or "")[:240]
+    try:
+        result = system_one(
+            {
+                "lines": tagged,
+                "query": ask,
+                "view_id": payload["view_id"],
+            },
+            {
+                "where": Choice(
+                    instructions={
+                        "question": (
+                            "Which line of `lines` contains the answer to `query`?"
+                        ),
+                        "inspect": "`lines`",
+                    },
+                    criteria={ident: {"what": ident} for ident in ids},
+                ),
+                "exists": Noul(
+                    instructions={
+                        "question": (
+                            "Does any line of `lines` address or answer `query`?"
+                        ),
+                        "inspect": "`lines`",
+                    },
+                ),
+            },
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_FIND.value = dict(payload)
+        return payload
+    where = (getattr(result, "choices", None) or {}).get("where")
+    picked = str(getattr(where, "choice", "") or "").strip()
+    if picked not in by_id:
+        picked = ""
+    probs = dict(getattr(where, "probabilities", None) or {})
+    ranked_ids = sorted(
+        ids,
+        key=lambda ident: (
+            -float(probs.get(ident, 0.0) or 0.0),
+            ids.index(ident),
+        ),
+    )
+    if not probs and picked:
+        ranked_ids = [picked] + [ident for ident in ids if ident != picked]
+    ranked = [
+        {
+            "id": ident,
+            "score": round(float(probs.get(ident, 0.0) or 0.0), 4),
+            "text": by_id[ident],
+        }
+        for ident in ranked_ids[:4]
+    ]
+    exists = float(
+        getattr((getattr(result, "nouls", None) or {}).get("exists"), "noul", 0.0)
+        or 0.0
+    )
+    if exists >= FIND_EXISTS_HIGH:
+        verdict = "answered"
+    elif exists < FIND_EXISTS_LOW:
+        verdict = "absent"
+    else:
+        verdict = "partial"
+    payload["line_id"] = picked
+    payload["line_text"] = by_id.get(picked, "")
+    payload["exists"] = round(exists, 4)
+    payload["verdict"] = verdict
+    payload["ranked"] = ranked
+    payload["reason_codes"] = ["composed_in_code", "line_ids_from_source"]
+    _LAST_FIND.value = dict(payload)
+    return payload
+
+
+def observe_supporting_line(
+    source: str,
+    query: str,
+    *,
+    view_id: str = "fol",
+) -> dict[str, Any]:
+    """Never-raises wrapper. Does not rewrite IR or admit a source span."""
+
+    try:
+        return find_supporting_line(source, query, view_id=view_id)
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "rewrites_ir": False,
+            "drops_formula": False,
+            "invents_ids": False,
+            "line_id": "",
+            "verdict": "",
+        }
+        _LAST_FIND.value = dict(payload)
+        return payload
+
+
 def last_line_stitch() -> dict[str, Any]:
     value = getattr(_LAST_STITCH, "value", None)
     return dict(value) if isinstance(value, Mapping) else {}
@@ -627,9 +952,11 @@ def stitch_hard_wrapped_lines(
     payload = {
         "accepted_as_authority": False,
         "generates_text": False,
+        "generates_markup": False,
         "rewrites_ir": False,
         "text": original,
         "original": original,
+        "blocks": [],
         "reason_codes": ["privacy_or_unconfigured"],
     }
     raw_lines = original.split("\n")
@@ -683,22 +1010,139 @@ def stitch_hard_wrapped_lines(
     for index in range(1, len(lines)):
         ident = f"L{index:03d}"
         joins[index] = float(getattr(nouls.get(ident), "noul", 0.0) or 0.0)
-    blocks: list[str] = []
+    block_rows: list[dict[str, Any]] = []
     for index, line in enumerate(lines):
         bar = (
             JOIN_AFTER_TERMINAL
             if index and _TERMINAL_END.search(lines[index - 1]["text"])
             else JOIN_AFTER_DANGLING
         )
-        if blocks and not line["gap"] and joins[index] >= bar:
-            blocks[-1] += " " + line["text"]
+        if block_rows and not line["gap"] and joins[index] >= bar:
+            block_rows[-1]["text"] += " " + line["text"]
         else:
-            blocks.append(line["text"])
-    merged = "\n".join(blocks)
+            block_rows.append({"text": line["text"], "gap": bool(line["gap"])})
+    merged = "\n".join(item["text"] for item in block_rows)
     payload["text"] = merged
     payload["reason_codes"] = ["composed_in_code", "characters_from_input"]
+    payload["blocks"] = _classify_stitched_blocks(
+        block_rows, timeout=timeout
+    )
     _LAST_STITCH.value = dict(payload)
     return payload
+
+
+def _classify_stitched_blocks(
+    block_rows: Sequence[Mapping[str, Any]],
+    *,
+    timeout: float = 15.0,
+) -> list[dict[str, Any]]:
+    """Pass-2 Choice over stitched blocks. Labels only; characters stay from input."""
+
+    rows = list(block_rows)[:CLASSIFY_MAX_BLOCKS]
+    labeled = [
+        {
+            "id": f"B{index:03d}",
+            "text": str(item.get("text") or ""),
+            "type": "",
+            "confidence": 0.0,
+            "hlevel": "",
+            "step": 0.0,
+            "ordered": False,
+            "callout": "",
+        }
+        for index, item in enumerate(rows)
+        if str(item.get("text") or "").strip()
+    ]
+    if not labeled:
+        return []
+    try:
+        from ipfs_accelerate_py.typesafe_inference import Choice, Noul, system_one
+    except Exception:
+        return labeled
+    questions: dict[str, Any] = {}
+    for item in labeled:
+        bid = item["id"]
+        questions[f"type_{bid}"] = Choice(
+            instructions={
+                "question": f"What kind of content is block {bid}?",
+                "inspect": "`blocks`",
+            },
+            criteria={
+                "heading": {
+                    "what": "A short label or title, not a full sentence of content"
+                },
+                "paragraph": {
+                    "what": "Running prose of one or more complete sentences"
+                },
+                "list_item": {
+                    "what": "One entry in a list of parallel items"
+                },
+                "quote": {"what": "Words attributed to a person or source"},
+                "code": {"what": "Code, a shell command, or a config snippet"},
+                "callout": {
+                    "what": "A warning, tip, or note set apart from the main text"
+                },
+            },
+        )
+        if len(item["text"]) <= HEADING_MAX_CHARS:
+            questions[f"hlevel_{bid}"] = Choice(
+                instructions={
+                    "question": (
+                        f"As a heading, what level would block {bid} occupy?"
+                    )
+                },
+                criteria={
+                    "title": {"what": "The title of the whole document"},
+                    "section": {"what": "A major section heading"},
+                    "subsection": {"what": "A minor heading under a section"},
+                },
+            )
+        questions[f"step_{bid}"] = Noul(
+            instructions={
+                "question": (
+                    f"Is block {bid} a step in a sequence where order matters?"
+                )
+            },
+        )
+        questions[f"callout_{bid}"] = Choice(
+            instructions={"question": f"What kind of aside is block {bid}?"},
+            criteria={
+                "note": {"what": "Neutral extra information"},
+                "tip": {"what": "A helpful suggestion"},
+                "warning": {"what": "A caution about harm or failure"},
+            },
+        )
+    tagged = "\n".join(f"{item['id']}| {item['text']}" for item in labeled)
+    try:
+        result = system_one({"blocks": tagged}, questions, timeout=timeout)
+    except Exception:
+        return labeled
+    choices = getattr(result, "choices", None) or {}
+    nouls = getattr(result, "nouls", None) or {}
+    for item in labeled:
+        bid = item["id"]
+        type_answer = choices.get(f"type_{bid}")
+        picked = str(getattr(type_answer, "choice", "") or "").strip()
+        item["type"] = picked if picked in BLOCK_TYPES else "paragraph"
+        item["confidence"] = round(
+            float(getattr(type_answer, "confidence", 0.0) or 0.0), 4
+        )
+        if item["type"] == "heading":
+            level = str(
+                getattr(choices.get(f"hlevel_{bid}"), "choice", "") or ""
+            ).strip()
+            item["hlevel"] = level if level in HEADING_LEVELS else "section"
+        if item["type"] == "list_item":
+            item["step"] = round(
+                float(getattr(nouls.get(f"step_{bid}"), "noul", 0.0) or 0.0), 4
+            )
+            item["ordered"] = item["step"] >= STEP_THRESHOLD
+        if item["type"] == "callout":
+            kind = str(
+                getattr(choices.get(f"callout_{bid}"), "choice", "") or ""
+            ).strip()
+            item["callout"] = kind if kind in CALLOUT_KINDS else "note"
+    return labeled
 
 
 def observe_line_stitch(text: str) -> dict[str, Any]:
@@ -708,8 +1152,10 @@ def observe_line_stitch(text: str) -> dict[str, Any]:
         payload = {
             "accepted_as_authority": False,
             "generates_text": False,
+            "generates_markup": False,
             "text": str(text or ""),
             "original": str(text or ""),
+            "blocks": [],
         }
         _LAST_STITCH.value = dict(payload)
         return payload
@@ -1011,6 +1457,7 @@ def suggest_declared_action(
         "invents_path": False,
         "rewrites_ir": False,
         "action": "",
+        "confidence": 0.0,
         "allowed_actions": list(allowed),
         "allowed_paths": list(paths),
         "reason_codes": ["privacy_or_unconfigured"],
@@ -1050,12 +1497,20 @@ def suggest_declared_action(
         payload["reason_codes"] = ["typesafe_error_fail_open"]
         _LAST_ACTION.value = dict(payload)
         return payload
-    picked = str(
-        getattr((getattr(result, "choices", None) or {}).get("action"), "choice", "")
-        or ""
-    ).strip()
-    payload["action"] = picked if picked in allowed else ""
-    payload["reason_codes"] = ["composed_in_code", "declared_actions_only"]
+    answer = (getattr(result, "choices", None) or {}).get("action")
+    picked = str(getattr(answer, "choice", "") or "").strip()
+    conf = float(getattr(answer, "confidence", 0.0) or 0.0)
+    payload["confidence"] = round(conf, 4)
+    if picked not in allowed or conf < ACTION_MIN_CONFIDENCE:
+        payload["action"] = ""
+        payload["reason_codes"] = [
+            "composed_in_code",
+            "declared_actions_only",
+            "low_confidence" if picked in allowed else "unknown_choice",
+        ]
+    else:
+        payload["action"] = picked
+        payload["reason_codes"] = ["composed_in_code", "declared_actions_only"]
     _LAST_ACTION.value = dict(payload)
     return payload
 
@@ -1101,7 +1556,9 @@ def verify_conversion_fields(
 ) -> dict[str, Any]:
     """SDE-style per-field noul battery. True = something is wrong.
 
-    Escalate if any flag exceeds ``fire``. Never rewrites or drops the formula.
+    Escalate if any flag exceeds ``fire``. Flags in
+    ``[NOUL_UNCERTAIN_LOW, fire]`` are ``uncertain`` and do not escalate.
+    Never rewrites or drops the formula.
     """
 
     fields = {
@@ -1116,6 +1573,7 @@ def verify_conversion_fields(
         "rewrites_ir": False,
         "drops_formula": False,
         "escalate": False,
+        "uncertain": False,
         "fire": float(fire),
         "flags": {},
         "view_id": str(view_id or "fol")[:32],
@@ -1183,15 +1641,21 @@ def verify_conversion_fields(
     nouls = getattr(result, "nouls", None) or {}
     flags: dict[str, float] = {}
     fired = False
+    in_band = False
     threshold = float(fire)
     for key in questions:
         noul = float(getattr(nouls.get(key), "noul", 0.0) or 0.0)
         flags[key] = round(noul, 4)
         if noul > threshold:
             fired = True
+        elif noul >= NOUL_UNCERTAIN_LOW:
+            in_band = True
     payload["flags"] = flags
     payload["escalate"] = fired
+    payload["uncertain"] = bool(in_band and not fired)
     payload["reason_codes"] = ["composed_in_code", "any_flag_gate"]
+    if payload["uncertain"]:
+        payload["reason_codes"] = list(payload["reason_codes"]) + ["uncertain_band"]
     _LAST_VERIFY.value = dict(payload)
     return payload
 
@@ -1213,8 +1677,572 @@ def observe_conversion_verify(
             "rewrites_ir": False,
             "drops_formula": False,
             "escalate": False,
+            "uncertain": False,
         }
         _LAST_VERIFY.value = dict(payload)
+        return payload
+
+
+def last_formula_citation() -> dict[str, Any]:
+    value = getattr(_LAST_CITATION, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _normalize_citation_text(text: str) -> str:
+    """Collapse whitespace and fold curly quotes so a quote matches across wraps."""
+
+    return re.sub(r"\s+", " ", str(text or "").translate(_CURLY_QUOTES)).strip()
+
+
+def check_formula_citation(
+    source: str,
+    formula: str,
+    *,
+    quote: str = "",
+    view_id: str = "fol",
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+    auto_accept: float = CITATION_AUTO_ACCEPT,
+) -> dict[str, Any]:
+    """String-match the quote first, then Choice how the source relates to the formula.
+
+    A missing quote is ``fabricated`` with no HTTP. Cookbook ``verified`` is stored
+    as ``supports`` — never kernel VERIFIED or Leanstral accepted.
+    """
+
+    payload: dict[str, Any] = {
+        "accepted_as_authority": False,
+        "rewrites_ir": False,
+        "drops_formula": False,
+        "verdict": "",
+        "confidence": 0.0,
+        "auto": False,
+        "status": "privacy_or_unconfigured",
+        "view_id": str(view_id or "fol")[:32],
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    needle = _normalize_citation_text(quote)
+    haystack = _normalize_citation_text(source)
+    if needle:
+        if not haystack or needle not in haystack:
+            payload["status"] = "missing"
+            payload["verdict"] = "fabricated"
+            payload["auto"] = True
+            payload["confidence"] = None
+            payload["reason_codes"] = ["string_match", "fabricated_no_http"]
+            _LAST_CITATION.value = dict(payload)
+            return payload
+        payload["status"] = "found"
+    else:
+        payload["status"] = "section-only"
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_CITATION.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Choice, system_one
+
+    try:
+        result = system_one(
+            {
+                "claim": str(formula or "")[:240],
+                "section": str(source or "")[:800],
+                "view_id": payload["view_id"],
+            },
+            {
+                "relation": Choice(
+                    instructions={
+                        "question": "How does the section relate to the claim?",
+                        "compare": ["`section`", "`claim`"],
+                    },
+                    criteria={
+                        "supports": {
+                            "what": (
+                                "The section states the claim or directly "
+                                "implies that it is true"
+                            )
+                        },
+                        "contradicts": {
+                            "what": (
+                                "The section states the opposite of the claim "
+                                "or implies it is false"
+                            )
+                        },
+                        "says_nothing": {
+                            "what": (
+                                "The section does not address what the claim "
+                                "asserts, either way"
+                            )
+                        },
+                    },
+                )
+            },
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_CITATION.value = dict(payload)
+        return payload
+    answer = (getattr(result, "choices", None) or {}).get("relation")
+    picked = str(getattr(answer, "choice", "") or "").strip()
+    if picked not in CITATION_CHOICES:
+        picked = "says_nothing"
+    conf = float(getattr(answer, "confidence", 0.0) or 0.0)
+    payload["verdict"] = picked
+    payload["confidence"] = round(conf, 4)
+    payload["auto"] = conf >= float(auto_accept)
+    payload["reason_codes"] = ["composed_in_code", "citation_check", "advisory_only"]
+    _LAST_CITATION.value = dict(payload)
+    return payload
+
+
+def observe_formula_citation(
+    source: str,
+    formula: str,
+    *,
+    quote: str = "",
+    view_id: str = "fol",
+) -> dict[str, Any]:
+    """Never-raises wrapper. Does not rewrite IR or admit proofs."""
+
+    try:
+        return check_formula_citation(
+            source, formula, quote=quote, view_id=view_id
+        )
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "rewrites_ir": False,
+            "drops_formula": False,
+            "verdict": "",
+            "auto": False,
+        }
+        _LAST_CITATION.value = dict(payload)
+        return payload
+
+
+def last_extracted_span() -> dict[str, Any]:
+    value = getattr(_LAST_PICK, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def pick_extracted_span(
+    clause: str,
+    candidates: Sequence[str],
+    *,
+    view_id: str = "fol",
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """Choice among regex/NLP-extracted spans plus ``none``.
+
+    Copies the pick verbatim. Never invents a name. Callers keep the full
+    extracted set; this is sidecar metadata only.
+    """
+
+    ordered = tuple(
+        dict.fromkeys(
+            str(item).strip()
+            for item in candidates
+            if str(item).strip() and str(item).strip().casefold() != PICK_NONE
+        )
+    )[:PICK_MAX]
+    payload: dict[str, Any] = {
+        "accepted_as_authority": False,
+        "rewrites_ir": False,
+        "drops_formula": False,
+        "invents_span": False,
+        "pick": "",
+        "candidates": list(ordered),
+        "confidence": 0.0,
+        "view_id": str(view_id or "fol")[:32],
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    if not ordered:
+        payload["reason_codes"] = ["no_candidates"]
+        _LAST_PICK.value = dict(payload)
+        return payload
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_PICK.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Choice, system_one
+
+    criteria = {
+        ident: {"what": ident, "not_for": "any other listed span"}
+        for ident in ordered
+    }
+    criteria[PICK_NONE] = {"what": "None of these is the requested value."}
+    try:
+        result = system_one(
+            {
+                "clause": str(clause or "")[:240],
+                "candidates": list(ordered),
+                "view_id": payload["view_id"],
+            },
+            {
+                "pick": Choice(
+                    instructions={
+                        "question": (
+                            "Which extracted span is the primary predicate "
+                            "or actor named by `clause`?"
+                        ),
+                        "inspect": "`clause`",
+                    },
+                    criteria=criteria,
+                )
+            },
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_PICK.value = dict(payload)
+        return payload
+    answer = (getattr(result, "choices", None) or {}).get("pick")
+    picked = str(getattr(answer, "choice", "") or "").strip()
+    conf = float(getattr(answer, "confidence", 0.0) or 0.0)
+    payload["confidence"] = round(conf, 4)
+    allowed = set(ordered) | {PICK_NONE}
+    if picked not in allowed:
+        payload["pick"] = PICK_NONE
+        payload["reason_codes"] = ["composed_in_code", "unknown_choice"]
+    else:
+        payload["pick"] = picked
+        payload["reason_codes"] = ["composed_in_code", "pre_parsed_pick"]
+    _LAST_PICK.value = dict(payload)
+    return payload
+
+
+def observe_extracted_span(
+    clause: str,
+    candidates: Sequence[str],
+    *,
+    view_id: str = "fol",
+) -> dict[str, Any]:
+    """Never-raises wrapper. Does not rewrite the extracted set."""
+
+    try:
+        return pick_extracted_span(clause, candidates, view_id=view_id)
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "rewrites_ir": False,
+            "drops_formula": False,
+            "invents_span": False,
+            "pick": "",
+        }
+        _LAST_PICK.value = dict(payload)
+        return payload
+
+
+def last_clause_date() -> dict[str, Any]:
+    value = getattr(_LAST_DATE, "value", None)
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _years_in_clause(clause: str) -> tuple[str, ...]:
+    found: list[str] = []
+    for match in _YEAR_IN_TEXT.findall(str(clause or "")):
+        year = int(match)
+        if DATE_YEAR_MIN <= year <= DATE_YEAR_MAX and match not in found:
+            found.append(match)
+        if len(found) >= PICK_MAX:
+            break
+    return tuple(found)
+
+
+def _date_part(
+    parts: Mapping[str, Any], key: str
+) -> tuple[str, float]:
+    raw = parts.get(key) if isinstance(parts.get(key), Mapping) else {}
+    choice = str((raw or {}).get("choice") or "none").strip() or "none"
+    conf = float((raw or {}).get("confidence") or 0.0)
+    return choice, conf
+
+
+def assemble_date_parts(
+    parts: Mapping[str, Any],
+    *,
+    today: date,
+) -> dict[str, Any]:
+    """Turn TypeSafe date *parts* into a calendar date in Python.
+
+    The model never adds numbers or does weekday arithmetic.
+    """
+
+    mode, mode_conf = _date_part(parts, "mode")
+    confs = [mode_conf]
+
+    def _result(resolved: date | None, note: str) -> dict[str, Any]:
+        usable = [float(item) for item in confs]
+        confidence = min(usable) if usable else 0.0
+        incomplete = resolved is None
+        needs_review = incomplete or confidence < DATE_REVIEW_BELOW
+        return {
+            "date": resolved.isoformat() if resolved is not None else "",
+            "mode": mode,
+            "confidence": round(confidence, 4),
+            "needs_review": needs_review,
+            "incomplete": incomplete,
+            "note": note,
+        }
+
+    if mode == "none":
+        return _result(None, "no such date stated")
+    if mode == "absolute":
+        month, month_conf = _date_part(parts, "month")
+        day, day_conf = _date_part(parts, "day")
+        year, year_conf = _date_part(parts, "year")
+        confs += [month_conf, day_conf, year_conf]
+        if month not in DATE_MONTHS or day in {"none", ""} or not day.isdigit():
+            return _result(None, "absolute date incomplete")
+        if year == "out_of_range":
+            return _result(
+                None, f"year outside {DATE_YEAR_MIN}-{DATE_YEAR_MAX}"
+            )
+        month_num = DATE_MONTHS[month]
+        day_num = int(day)
+        if year == "none":
+            try:
+                resolved = date(today.year, month_num, day_num)
+            except ValueError:
+                return _result(None, f"impossible date: {month} {day}")
+            if resolved < today - timedelta(days=31):
+                try:
+                    resolved = date(today.year + 1, month_num, day_num)
+                except ValueError:
+                    return _result(None, f"impossible date: {month} {day}")
+            return _result(resolved, "")
+        if not year.isdigit():
+            return _result(None, "absolute date incomplete")
+        try:
+            return _result(date(int(year), month_num, day_num), "")
+        except ValueError:
+            return _result(None, f"impossible date: {year}-{month}-{day}")
+    if mode == "relative":
+        anchor, anchor_conf = _date_part(parts, "day_anchor")
+        confs.append(anchor_conf)
+        if anchor == "today":
+            return _result(today, "")
+        if anchor == "tomorrow":
+            return _result(today + timedelta(days=1), "")
+        if anchor == "day_after":
+            return _result(today + timedelta(days=2), "")
+        if anchor == "weekday":
+            weekday, weekday_conf = _date_part(parts, "weekday")
+            offset, offset_conf = _date_part(parts, "week_offset")
+            confs += [weekday_conf, offset_conf]
+            if weekday not in DATE_WEEKDAYS:
+                return _result(None, "relative weekday not read")
+            weekday_index = DATE_WEEKDAYS.index(weekday)
+            this_monday = today - timedelta(days=today.weekday())
+            if offset == "next":
+                resolved = this_monday + timedelta(days=7 + weekday_index)
+            elif offset == "current":
+                resolved = this_monday + timedelta(days=weekday_index)
+            else:
+                resolved = today + timedelta(
+                    days=(weekday_index - today.weekday()) % 7
+                )
+            return _result(resolved, "")
+        return _result(None, "relative day not read")
+    return _result(None, f"unrecognized mode: {mode}")
+
+
+def extract_clause_date(
+    clause: str,
+    *,
+    role: str = "the primary date stated in the clause",
+    today: date | None = None,
+    view_id: str = "tdfol",
+    privacy_class: str = "repository_private",
+    remote_disclosure_permitted: bool = True,
+    timeout: float = 15.0,
+) -> dict[str, Any]:
+    """TypeSafe reads date parts; code assembles the calendar date."""
+
+    today = today or date.today()
+    payload: dict[str, Any] = {
+        "accepted_as_authority": False,
+        "rewrites_ir": False,
+        "drops_formula": False,
+        "date": "",
+        "mode": "",
+        "confidence": 0.0,
+        "needs_review": False,
+        "incomplete": False,
+        "note": "",
+        "parts": {},
+        "view_id": str(view_id or "tdfol")[:32],
+        "reason_codes": ["privacy_or_unconfigured"],
+    }
+    if not typesafe_permitted(
+        privacy_class=privacy_class,
+        remote_disclosure_permitted=remote_disclosure_permitted,
+    ):
+        _LAST_DATE.value = dict(payload)
+        return payload
+    from ipfs_accelerate_py.typesafe_inference import Choice, system_one
+
+    absent = "The document does not state this, or it is not this kind of date."
+    years = _years_in_clause(clause)
+    year_criteria = {
+        year: {"what": year} for year in years
+    }
+    year_criteria["out_of_range"] = {
+        "what": (
+            f"A year is stated but is outside {DATE_YEAR_MIN}-{DATE_YEAR_MAX}"
+        )
+    }
+    year_criteria["none"] = {"what": "No year is stated for this date."}
+    labeled = str(role or "the primary date stated in the clause").strip()[:80]
+    questions = {
+        "mode": Choice(
+            instructions={
+                "question": (
+                    f"How is {labeled} written? absolute names a month; "
+                    "relative is today/tomorrow/weekday; none if unstated."
+                ),
+                "inspect": "`clause`",
+            },
+            criteria={
+                "absolute": {"what": "A calendar date naming a month"},
+                "relative": {"what": "A date relative to today"},
+                "none": {"what": "The document does not state this date"},
+            },
+        ),
+        "month": Choice(
+            instructions={
+                "question": f"If {labeled} is absolute, which month?",
+                "inspect": "`clause`",
+            },
+            criteria={
+                **{name: {"what": name} for name in DATE_MONTHS},
+                "none": {"what": absent},
+            },
+        ),
+        "day": Choice(
+            instructions={
+                "question": (
+                    f"If {labeled} is absolute, which day of the month (1-31)?"
+                ),
+                "inspect": "`clause`",
+            },
+            criteria={
+                **{str(day): {"what": str(day)} for day in range(1, 32)},
+                "none": {"what": absent},
+            },
+        ),
+        "year": Choice(
+            instructions={
+                "question": f"If {labeled} is absolute, which year?",
+                "inspect": "`clause`",
+            },
+            criteria=year_criteria,
+        ),
+        "day_anchor": Choice(
+            instructions={
+                "question": (
+                    f"If {labeled} is relative, which day is it relative to today?"
+                ),
+                "inspect": "`clause`",
+            },
+            criteria={
+                "today": {"what": "today"},
+                "tomorrow": {"what": "tomorrow"},
+                "day_after": {"what": "the day after tomorrow"},
+                "weekday": {"what": "a named weekday"},
+                "none": {"what": absent},
+            },
+        ),
+        "weekday": Choice(
+            instructions={
+                "question": f"If {labeled} names a weekday, which one?",
+                "inspect": "`clause`",
+            },
+            criteria={
+                **{name: {"what": name} for name in DATE_WEEKDAYS},
+                "none": {"what": absent},
+            },
+        ),
+        "week_offset": Choice(
+            instructions={
+                "question": (
+                    f"If {labeled} names a weekday, which week: current, next, or none?"
+                ),
+                "inspect": "`clause`",
+            },
+            criteria={
+                "current": {"what": "this week"},
+                "next": {"what": "next week"},
+                "none": {"what": absent},
+            },
+        ),
+    }
+    try:
+        result = system_one(
+            {
+                "clause": str(clause or "")[:240],
+                "role": labeled,
+                "view_id": payload["view_id"],
+            },
+            questions,
+            timeout=timeout,
+        )
+    except Exception:
+        payload["reason_codes"] = ["typesafe_error_fail_open"]
+        _LAST_DATE.value = dict(payload)
+        return payload
+    parts: dict[str, dict[str, Any]] = {}
+    choices = getattr(result, "choices", None) or {}
+    for key in questions:
+        answer = choices.get(key)
+        parts[key] = {
+            "choice": str(getattr(answer, "choice", "") or "").strip() or "none",
+            "confidence": round(
+                float(getattr(answer, "confidence", 0.0) or 0.0), 4
+            ),
+        }
+    assembled = assemble_date_parts(parts, today=today)
+    payload["parts"] = parts
+    payload["date"] = assembled["date"]
+    payload["mode"] = assembled["mode"]
+    payload["confidence"] = assembled["confidence"]
+    payload["needs_review"] = assembled["needs_review"]
+    payload["incomplete"] = assembled["incomplete"]
+    payload["note"] = assembled["note"]
+    payload["reason_codes"] = ["composed_in_code", "date_parts_only"]
+    _LAST_DATE.value = dict(payload)
+    return payload
+
+
+def observe_clause_date(
+    clause: str,
+    *,
+    role: str = "the primary date stated in the clause",
+    today: date | None = None,
+    view_id: str = "tdfol",
+) -> dict[str, Any]:
+    """Never-raises wrapper. Does not rewrite TDFOL formulas."""
+
+    try:
+        return extract_clause_date(
+            clause, role=role, today=today, view_id=view_id
+        )
+    except Exception:
+        payload = {
+            "accepted_as_authority": False,
+            "rewrites_ir": False,
+            "drops_formula": False,
+            "date": "",
+            "incomplete": False,
+        }
+        _LAST_DATE.value = dict(payload)
         return payload
 
 
@@ -1274,9 +2302,22 @@ __all__ = [
     "last_declared_action",
     "observe_declared_action",
     "suggest_declared_action",
+    "assemble_date_parts",
+    "extract_clause_date",
+    "find_supporting_line",
+    "last_clause_date",
+    "last_extracted_span",
+    "last_supporting_line",
+    "last_formula_citation",
     "last_formula_lint",
     "last_formula_rank",
     "last_smt_triage",
+    "check_formula_citation",
+    "observe_clause_date",
+    "observe_extracted_span",
+    "observe_formula_citation",
+    "observe_supporting_line",
+    "pick_extracted_span",
     "observe_conversion_verify",
     "verify_conversion_fields",
     "align_cross_view_entities",

@@ -181,12 +181,38 @@ class NLParser:
                 }
             try:
                 from ipfs_datasets_py.logic.integrations.typesafe_advisor import (
+                    observe_clause_date,
+                    observe_extracted_span,
+                    observe_formula_citation,
                     observe_formula_clause_lint,
+                    observe_supporting_line,
                 )
 
                 first = formulas[0].formula_string if formulas else ""
                 result.metadata["typesafe_lint"] = observe_formula_clause_lint(
                     text, first, view_id="tdfol"
+                )
+                result.metadata["typesafe_date"] = observe_clause_date(
+                    text, view_id="tdfol"
+                )
+                result.metadata["typesafe_find"] = observe_supporting_line(
+                    text, first, view_id="tdfol"
+                )
+                result.metadata["typesafe_citation"] = observe_formula_citation(
+                    text, first, view_id="tdfol"
+                )
+                spans: list[str] = []
+                for item in getattr(doc, "temporal", ()) or ():
+                    token = str(getattr(item, "text", "") or "").strip()
+                    if token:
+                        spans.append(token)
+                if not spans:
+                    for item in getattr(doc, "entities", ()) or ():
+                        token = str(getattr(item, "text", "") or "").strip()
+                        if token:
+                            spans.append(token)
+                result.metadata["typesafe_pick"] = observe_extracted_span(
+                    text, spans, view_id="tdfol"
                 )
             except Exception:
                 pass
