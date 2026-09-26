@@ -1,0 +1,74 @@
+{
+  "nl_admin_level": {
+    "adm1": 12,
+    "municipality": 347
+  },
+  "nl_code_portal": "https://lokaleregelgeving.overheid.nl/",
+  "nl_rows": 359,
+  "nl_url_class": {
+    "none": 3,
+    "official_site": 356
+  },
+  "nl_water_boards_excluded": "Q13138621",
+  "nl_wikidata_class": {
+    "Q134390": 12,
+    "Q2039348": 344,
+    "Q3237519": 3
+  },
+  "paths": {
+    "crosswalk": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/processors/legal_scrapers/municipal/seeds/us_gnis_crosswalk.jsonl",
+    "nl": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/processors/legal_scrapers/municipal/seeds/europe/NL.jsonl",
+    "us": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/processors/legal_scrapers/municipal/seeds/americas/US.jsonl"
+  },
+  "us_distinct_qids": 7100,
+  "us_match": {
+    "ambiguous": 25,
+    "matched": 7118
+  },
+  "us_p856_host_count": 6437,
+  "us_p856_hosts_outside_known_code_hosts": {
+    "angelscamp.gov": 2,
+    "ci.ammon.id.us": 2,
+    "cityofdavenportiowa.com": 2,
+    "cityofdublin.org": 2,
+    "cityofenterprise.net": 2,
+    "cityofglendalewv.com": 2,
+    "cityofguthrie.com": 2,
+    "cityofroma.net": 2,
+    "cityofventura.ca.gov": 2,
+    "cob.us": 2,
+    "crosslake.govoffice.com": 2,
+    "kawerak.org": 3,
+    "kirtlandohio.com": 2,
+    "lagrange-ga.org": 2,
+    "lasalle-il.gov": 2,
+    "laverkin.org": 2,
+    "lawrenceburgtn.gov": 2,
+    "lees-summit.mo.us": 2,
+    "louisvilleky.gov": 2,
+    "lyonedia.com": 3,
+    "magnolia-ar.com": 2,
+    "marshallco.net": 2,
+    "mayvilleportland.com": 2,
+    "michigannd.com": 2,
+    "nesscountychamber.com": 4,
+    "pasco-wa.gov": 2,
+    "prcity.com": 2,
+    "reilesacresnd.org": 2,
+    "rocklakend.com": 2,
+    "sansompark.org": 2,
+    "showcase.netins.net": 2,
+    "sites.google.com": 7,
+    "skyways.lib.ks.us": 9,
+    "skyways.org": 3,
+    "tshaonline.org": 5,
+    "veldacity.org": 2,
+    "walnut-creek.org": 2,
+    "waycrossga.com": 2,
+    "wrtc.com": 2,
+    "wymorebluesprings.com": 2
+  },
+  "us_rows": 7143,
+  "us_rows_with_p856_host_not_already_in_seed": 195,
+  "us_with_second_gnis": 7072
+}

@@ -1,17 +1,15 @@
-"""Disk-spill helpers for large country IR builds (SQLite FTS neighbors + BM25 TF).
+"""Disk-spill helpers for large country IR builds (DuckDB + parquet).
 
 Design (CoS / DO OOM lesson):
 - Embeddings: checkpointed .npy via vectors.encode_corpus (unchanged).
-- Neighbors for n >= SQLITE_THRESHOLD (40k): SQLite FTS5 title-only MATCH streaming
-  into neighbor_*.pkl shards under cache/<slug>_bm25_spill/ — never hold full
-  neighbor matrix in RAM during streaming.
-- BM25 TF: stream tokenize → SQLite WITHOUT ROWID → posting parquet parts.
-- Package: use package.package_release_sequential / package_from_spill so corpus,
-  bm25, graph, vectors are never all resident together; neighbor edges can be
-  streamed from shards into graph then spilled as graph.pkl.
+- Neighbors for n >= DUCKDB_THRESHOLD (40k): DuckDB FTS over corpus parquet,
+  streamed into neighbor_*.parquet shards — never hold the full neighbor
+  matrix in RAM.
+- BM25 TF: stream tokenize → DuckDB → posting parquet parts.
+- Package: sequential parquet write so corpus, bm25, graph, vectors are never
+  all resident together.
 
-Resume-safe: existing FTS DB / neighbor shards / bm25_*.parquet are reused when
-row counts match.
+No SQLite. Intermediate and published artifacts are parquet / DuckDB.
 """
 from __future__ import annotations
 
@@ -19,7 +17,6 @@ import gc
 import json
 import math
 import pickle
-import sqlite3
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator
@@ -41,7 +38,8 @@ from .graph import _adjacency, _edge, build_graph
 from .mem import MemAbort, checkpoint, log_mem
 from .tokenize import tokenize
 
-SQLITE_THRESHOLD = 40_000
+DUCKDB_THRESHOLD = 40_000
+SQLITE_THRESHOLD = DUCKDB_THRESHOLD  # backward-compatible alias; not SQLite
 BATCH = 256
 NEIGHBOR_SHARD = 5_000
 NEIGHBOR_K = 8
@@ -68,19 +66,24 @@ def load_pickle(path: Path) -> Any:
         return pickle.load(f)
 
 
-def quote_fts_term(term: str) -> str:
-    return '"' + term.replace('"', '""') + '"'
-
-
 def _idf(n_docs: int, df: int) -> float:
     return math.log((n_docs - df + 0.5) / (df + 0.5) + 1.0)
 
 
-def sqlite_ready(db_path: Path, expected: int) -> bool:
+def _require_duckdb():
+    try:
+        import duckdb  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError("duckdb is required for sparse GraphRAG spill (no sqlite)") from exc
+    return duckdb
+
+
+def duckdb_ready(db_path: Path, expected: int) -> bool:
     if not db_path.is_file():
         return False
+    duckdb = _require_duckdb()
     try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        conn = duckdb.connect(str(db_path), read_only=True)
         n = int(conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0])
         conn.close()
         return n == expected
@@ -88,265 +91,49 @@ def sqlite_ready(db_path: Path, expected: int) -> bool:
         return False
 
 
-def build_sqlite_fts(
+def build_sqlite_fts(*args, **kwargs):  # pragma: no cover - removed
+    raise RuntimeError("SQLite FTS is removed; use DuckDB parquet neighbors")
+
+
+def neighbors_via_duckdb(
     corpus_path: Path,
-    db_path: Path,
-    expected: int,
-    *,
-    batch: int = BATCH,
-    log: Callable[[str], None] | None = None,
-) -> int:
-    """Contentless FTS5 over title+body; documents table holds query_text."""
-    if db_path.exists():
-        db_path.unlink()
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
-    try:
-        conn.executescript(
-            """
-            PRAGMA journal_mode = OFF;
-            PRAGMA synchronous = OFF;
-            PRAGMA temp_store = MEMORY;
-            PRAGMA locking_mode = EXCLUSIVE;
-            PRAGMA page_size = 32768;
-            CREATE TABLE documents (
-                document_index INTEGER PRIMARY KEY,
-                entry_cid TEXT NOT NULL UNIQUE,
-                title TEXT NOT NULL,
-                query_text TEXT NOT NULL
-            );
-            CREATE VIRTUAL TABLE documents_fts USING fts5(
-                title,
-                body,
-                content='',
-                columnsize=1,
-                tokenize='unicode61 remove_diacritics 2'
-            );
-            """
-        )
-        pf = pq.ParquetFile(corpus_path)
-        n = 0
-        meta_batch: list[tuple] = []
-        fts_batch: list[tuple] = []
-        conn.execute("BEGIN")
-        for batch_tbl in pf.iter_batches(
-            batch_size=batch, columns=["document_index", "entry_cid", "title", "body"]
-        ):
-            cols = batch_tbl.to_pydict()
-            for i in range(len(cols["document_index"])):
-                di = int(cols["document_index"][i])
-                title = str(cols["title"][i] or "")
-                body = str(cols["body"][i] or "")
-                cid = str(cols["entry_cid"][i])
-                qtext = title.strip() if title.strip() else body[:800]
-                meta_batch.append((di, cid, title, qtext))
-                fts_batch.append((di + 1, title, body))
-                if len(meta_batch) >= batch:
-                    conn.executemany(
-                        "INSERT INTO documents(document_index, entry_cid, title, query_text) "
-                        "VALUES (?,?,?,?)",
-                        meta_batch,
-                    )
-                    conn.executemany(
-                        "INSERT INTO documents_fts(rowid, title, body) VALUES (?,?,?)",
-                        fts_batch,
-                    )
-                    n += len(meta_batch)
-                    meta_batch.clear()
-                    fts_batch.clear()
-                    if n % 20_000 == 0:
-                        checkpoint(f"fts_insert@{n}", row=n, every_n=20_000, log=log)
-                        gc.collect()
-        if meta_batch:
-            conn.executemany(
-                "INSERT INTO documents(document_index, entry_cid, title, query_text) "
-                "VALUES (?,?,?,?)",
-                meta_batch,
-            )
-            conn.executemany(
-                "INSERT INTO documents_fts(rowid, title, body) VALUES (?,?,?)",
-                fts_batch,
-            )
-            n += len(meta_batch)
-        conn.commit()
-        conn.execute("INSERT INTO documents_fts(documents_fts) VALUES('optimize')")
-        conn.commit()
-        conn.execute(
-            "CREATE VIRTUAL TABLE documents_vocab USING fts5vocab(documents_fts, 'row')"
-        )
-        conn.commit()
-        got = int(conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0])
-        assert got == n == expected, (got, n, expected)
-        return n
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
-        gc.collect()
-
-
-def load_df_map(conn: sqlite3.Connection, df_cap: int = DF_CAP) -> dict[str, int]:
-    df_map: dict[str, int] = {}
-    for term, doc in conn.execute(
-        "SELECT term, doc FROM documents_vocab WHERE doc <= ?", (df_cap,)
-    ):
-        df_map[str(term)] = int(doc)
-    return df_map
-
-
-def select_query_terms(query_text: str, df_map: dict[str, int]) -> list[str]:
-    toks = tokenize(query_text)[:24]
-    seen: set[str] = set()
-    cands: list[tuple[int, str]] = []
-    for t in toks:
-        if t in seen or len(t) < 2:
-            continue
-        seen.add(t)
-        if t not in df_map:
-            continue
-        cands.append((df_map[t], t))
-    cands.sort()
-    return [t for _, t in cands[:MAX_QTERMS]]
-
-
-def stream_neighbors_to_shards(
-    db_path: Path,
     spill: Path,
     n_docs: int,
     *,
     k: int = NEIGHBOR_K,
-    shard: int = NEIGHBOR_SHARD,
-    batch: int = BATCH,
-    df_cap: int = DF_CAP,
     resume: bool = True,
     log: Callable[[str], None] | None = None,
 ) -> list[Path]:
-    """Stream FTS5 title-only neighbors into neighbor_START_END.pkl shards.
+    """DuckDB FTS over corpus parquet → neighbor_*.parquet shards. No SQLite."""
+    from .duckdb_store import build_fts_index, stream_neighbors_to_parquet
 
-    Does not assemble the full neighbor list. Resume skips shards already on disk
-    whose end index is covered (contiguous from 0).
-    """
+    spill = Path(spill)
     spill.mkdir(parents=True, exist_ok=True)
-    existing = sorted(spill.glob("neighbors_*.pkl"))
-    buf_start = 0
-    shard_paths: list[Path] = []
-    if resume and existing:
-        # Contiguous cover from 0
-        covered = 0
-        for sp in existing:
-            parts = sp.stem.split("_")
-            # neighbors_000000_005000
-            try:
-                start_i, end_i = int(parts[1]), int(parts[2])
-            except (IndexError, ValueError):
-                continue
-            if start_i != covered:
-                break
-            shard_paths.append(sp)
-            covered = end_i
-        buf_start = covered
-        if buf_start >= n_docs:
-            if log:
-                log(f"neighbors resume complete {buf_start}/{n_docs}")
-            return shard_paths
+    db_path = spill / "neighbors.duckdb"
+    if not duckdb_ready(db_path, n_docs):
+        if db_path.exists():
+            db_path.unlink()
         if log:
-            log(f"neighbors resume from {buf_start}/{n_docs} shards={len(shard_paths)}")
-        # Drop non-contiguous leftover shards beyond covered
-        for sp in existing:
-            if sp not in shard_paths:
-                sp.unlink(missing_ok=True)
+            log(f"building duckdb fts n={n_docs} -> {db_path}")
+        build_fts_index(corpus_path, db_path, n_docs, log=log)
     else:
-        for sp in existing:
-            sp.unlink(missing_ok=True)
-
-    conn_rw = sqlite3.connect(str(db_path))
-    row = conn_rw.execute(
-        "SELECT name FROM sqlite_master WHERE name='documents_vocab'"
-    ).fetchone()
-    if row is None:
-        conn_rw.execute(
-            "CREATE VIRTUAL TABLE documents_vocab USING fts5vocab(documents_fts, 'row')"
-        )
-        conn_rw.commit()
-    df_map = load_df_map(conn_rw, df_cap)
-    conn_rw.close()
-    spill_pickle(spill / "df_map_meta.pkl", {"n_rare": len(df_map), "df_cap": df_cap})
-    if log:
-        log(f"vocab rare_terms={len(df_map)} df_cap={df_cap}")
-
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-    conn.row_factory = sqlite3.Row
-    buf: list = []
-    done = buf_start
-    score_sql = f"-bm25(documents_fts, {TITLE_W}, {BODY_W})"
-    last_idx = buf_start - 1
-    try:
-        while True:
-            rows = conn.execute(
-                "SELECT document_index, entry_cid, query_text FROM documents "
-                "WHERE document_index > ? ORDER BY document_index LIMIT ?",
-                (last_idx, batch),
-            ).fetchall()
-            if not rows:
-                break
-            for row in rows:
-                di = int(row["document_index"])
-                terms = select_query_terms(str(row["query_text"]), df_map)
-                if not terms:
-                    neigh: list = []
-                else:
-                    expr = " OR ".join("title : " + quote_fts_term(t) for t in terms)
-                    sql = (
-                        "SELECT d.document_index, " + score_sql + " AS score "
-                        "FROM documents_fts "
-                        "JOIN documents AS d ON d.document_index = documents_fts.rowid - 1 "
-                        "WHERE documents_fts MATCH ? AND d.document_index != ? "
-                        "ORDER BY score DESC, d.document_index LIMIT ?"
-                    )
-                    hits = conn.execute(sql, (expr, di, k)).fetchall()
-                    neigh = [
-                        (int(h["document_index"]), max(0.0, float(h["score"])), list(terms)[:4])
-                        for h in hits
-                    ]
-                while buf_start + len(buf) < di:
-                    buf.append([])
-                buf.append(neigh)
-                last_idx = di
-                done += 1
-                if len(buf) >= shard:
-                    end = buf_start + len(buf)
-                    sp = spill / f"neighbors_{buf_start:06d}_{end:06d}.pkl"
-                    spill_pickle(sp, buf)
-                    shard_paths.append(sp)
-                    checkpoint(
-                        f"neighbors_shard_{buf_start}_{end}",
-                        log=log,
-                    )
-                    buf_start = end
-                    buf = []
-                    gc.collect()
-                if done % 5_000 == 0:
-                    checkpoint(f"neighbors_stream", row=done, every_n=5_000, log=log)
-        if buf:
-            end = buf_start + len(buf)
-            sp = spill / f"neighbors_{buf_start:06d}_{end:06d}.pkl"
-            spill_pickle(sp, buf)
-            shard_paths.append(sp)
-            if log:
-                log(f"neighbors shard final {buf_start}:{end}/{n_docs}")
         if log:
-            log(f"bm25 neighbors streamed done={done} n_docs={n_docs} shards={len(shard_paths)}")
-        return shard_paths
-    finally:
-        conn.close()
-        del df_map
-        gc.collect()
+            log(f"reusing duckdb fts n={n_docs} path={db_path}")
+    return stream_neighbors_to_parquet(
+        db_path, spill, n_docs, k=k, resume=resume, log=log
+    )
 
 
 def iter_neighbor_shards(spill: Path) -> Iterator[tuple[int, list]]:
-    """Yield (start_index, shard_list) without loading all shards."""
-    paths = sorted(spill.glob("neighbors_*.pkl"))
+    """Yield (start_index, shard_list) from parquet neighbor shards."""
+    from .duckdb_store import iter_neighbor_parquet_shards
+
+    parquet = list(Path(spill).glob("neighbors_*.parquet"))
+    if parquet:
+        yield from iter_neighbor_parquet_shards(spill)
+        return
+    # Legacy pickle shards (pre-DuckDB). Do not create new ones.
+    paths = sorted(Path(spill).glob("neighbors_*.pkl"))
     for sp in paths:
         parts = sp.stem.split("_")
         start_i = int(parts[1])
@@ -369,30 +156,9 @@ def assemble_neighbors_streaming(spill: Path, n_docs: int) -> list:
     return neighbors
 
 
-def neighbors_via_sqlite(
-    corpus_path: Path,
-    spill: Path,
-    n_docs: int,
-    *,
-    k: int = NEIGHBOR_K,
-    resume: bool = True,
-    log: Callable[[str], None] | None = None,
-) -> list[Path]:
-    """Ensure FTS DB + neighbor shards; return shard paths (not full list)."""
-    spill.mkdir(parents=True, exist_ok=True)
-    db_path = spill / "fts.sqlite"
-    if not sqlite_ready(db_path, n_docs):
-        if db_path.exists():
-            db_path.unlink()
-        if log:
-            log(f"building sqlite fts n={n_docs} -> {db_path}")
-        build_sqlite_fts(corpus_path, db_path, n_docs, log=log)
-    else:
-        if log:
-            log(f"reusing sqlite fts n={n_docs} path={db_path}")
-    return stream_neighbors_to_shards(
-        db_path, spill, n_docs, k=k, resume=resume, log=log
-    )
+def neighbors_via_sqlite(*args, **kwargs):
+    """Removed. Sparse GraphRAG neighbors are DuckDB/parquet only."""
+    return neighbors_via_duckdb(*args, **kwargs)
 
 
 def build_graph_from_neighbor_shards(
@@ -492,33 +258,35 @@ def build_bm25_tf_spill(
     batch: int = 512,
     log: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
-    """Stream tokenize corpus → SQLite TF → bm25_documents/postings parquet + stats.
+    """Stream tokenize corpus → DuckDB TF → bm25_documents/postings parquet + stats.
 
-    Resume: if bm25_documents.parquet + bm25_postings.parquet + bm25_stats.pkl exist
+    Resume: if bm25_documents.parquet + bm25_postings.parquet + bm25_stats.json exist
     with matching n_docs, reuse.
     """
     spill.mkdir(parents=True, exist_ok=True)
     docs_path = spill / "bm25_documents.parquet"
     post_path = spill / "bm25_postings.parquet"
+    stats_json = spill / "bm25_stats.json"
     stats_path = spill / "bm25_stats.pkl"
-    if docs_path.is_file() and post_path.is_file() and stats_path.is_file():
-        stats = load_pickle(stats_path)
-        if int(stats.get("n_docs", -1)) == n_docs:
+    if docs_path.is_file() and post_path.is_file():
+        stats = None
+        if stats_json.is_file():
+            stats = json.loads(stats_json.read_text(encoding="utf-8"))
+        elif stats_path.is_file():
+            stats = load_pickle(stats_path)
+        if stats is not None and int(stats.get("n_docs", -1)) == n_docs:
             if log:
                 log(f"reusing bm25 spill n_docs={n_docs}")
             return {"stats": stats, "documents": docs_path, "postings": post_path}
 
-    bm25_sql = spill / "bm25_tf.sqlite"
-    if bm25_sql.exists():
-        bm25_sql.unlink()
-    conn = sqlite3.connect(str(bm25_sql))
-    conn.execute("PRAGMA journal_mode=OFF")
-    conn.execute("PRAGMA synchronous=OFF")
-    conn.execute("PRAGMA temp_store=MEMORY")
-    conn.execute("PRAGMA locking_mode=EXCLUSIVE")
+    duckdb = _require_duckdb()
+    bm25_db = spill / "bm25_tf.duckdb"
+    if bm25_db.exists():
+        bm25_db.unlink()
+    conn = duckdb.connect(str(bm25_db))
     conn.execute(
-        "CREATE TABLE tf (term TEXT NOT NULL, doc INTEGER NOT NULL, "
-        "ttf INTEGER NOT NULL, btf INTEGER NOT NULL, PRIMARY KEY(term, doc)) WITHOUT ROWID"
+        "CREATE TABLE tf (term VARCHAR NOT NULL, doc INTEGER NOT NULL, "
+        "ttf INTEGER NOT NULL, btf INTEGER NOT NULL)"
     )
     title_len = np.zeros(n_docs, dtype=np.int32)
     body_len = np.zeros(n_docs, dtype=np.int32)
@@ -549,7 +317,6 @@ def build_bm25_tf_spill(
     ]
     processed = 0
     batch_rows: list[tuple] = []
-    conn.execute("BEGIN")
     for batch_tbl in pf.iter_batches(batch_size=batch, columns=cols):
         d = batch_tbl.to_pydict()
         m = len(d["document_index"])
@@ -593,9 +360,7 @@ def build_bm25_tf_spill(
                 }
             )
             if len(batch_rows) >= 20_000:
-                conn.executemany(
-                    "INSERT OR REPLACE INTO tf VALUES (?,?,?,?)", batch_rows
-                )
+                conn.executemany("INSERT INTO tf VALUES (?, ?, ?, ?)", batch_rows)
                 batch_rows.clear()
         processed += m
         if len(meta_buf) >= 20_000:
@@ -612,7 +377,7 @@ def build_bm25_tf_spill(
             checkpoint(f"bm25_tf_tokenize", row=processed, every_n=20_000, log=log)
             gc.collect()
     if batch_rows:
-        conn.executemany("INSERT OR REPLACE INTO tf VALUES (?,?,?,?)", batch_rows)
+        conn.executemany("INSERT INTO tf VALUES (?, ?, ?, ?)", batch_rows)
         batch_rows.clear()
     if meta_buf:
         dfm = pd.DataFrame(meta_buf)
@@ -623,9 +388,8 @@ def build_bm25_tf_spill(
         dfm.to_parquet(meta_path, index=False)
         del dfm
         meta_buf.clear()
-    conn.commit()
     if log:
-        log("bm25 tf spilled; writing documents")
+        log("bm25 tf spilled to duckdb; writing documents")
 
     doc_len = (title_len * TITLE_WEIGHT + body_len * BODY_WEIGHT).astype(np.float64)
     avgdl = float(doc_len.mean()) if n_docs else 0.0
@@ -696,7 +460,7 @@ def build_bm25_tf_spill(
 
     for term, doc, ttf, btf in conn.execute(
         "SELECT term, doc, ttf, btf FROM tf ORDER BY term, doc"
-    ):
+    ).fetchall():
         term = str(term)
         if cur_term is None:
             cur_term = term
@@ -749,9 +513,9 @@ def build_bm25_tf_spill(
         "n_posting_rows": int(out_rows),
         "n_postings": int(n_postings),
     }
-    spill_pickle(stats_path, stats)
+    stats_json.write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
     try:
-        bm25_sql.unlink()
+        bm25_db.unlink()
     except Exception:
         pass
     if log:
@@ -759,5 +523,10 @@ def build_bm25_tf_spill(
     return {"stats": stats, "documents": docs_path, "postings": post_path}
 
 
-def should_use_sqlite(n_docs: int, threshold: int = SQLITE_THRESHOLD) -> bool:
+def should_use_spill(n_docs: int, threshold: int = DUCKDB_THRESHOLD) -> bool:
     return n_docs >= threshold
+
+
+def should_use_sqlite(n_docs: int, threshold: int = DUCKDB_THRESHOLD) -> bool:
+    """Alias: large-corpus path is DuckDB/parquet, not SQLite."""
+    return should_use_spill(n_docs, threshold)

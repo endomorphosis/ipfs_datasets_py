@@ -1,0 +1,266 @@
+{"qid": "Q46395", "label": "British Overseas Territories", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 14}
+{"qid": "Q139553870", "label": "charter county", "action": "fetch", "admin_level": "county", "source": "label", "rows": 0}
+{"qid": "Q15063611", "label": "city in the state of New York", "action": "fetch", "admin_level": "state", "source": "label", "rows": 61}
+{"qid": "Q3301053", "label": "consolidated city-county", "action": "fetch", "admin_level": "county", "source": "label", "rows": 39}
+{"qid": "Q13410400", "label": "county of Alabama", "action": "fetch", "admin_level": "county", "source": "label", "rows": 67}
+{"qid": "Q13217186", "label": "county of Arizona", "action": "fetch", "admin_level": "county", "source": "label", "rows": 15}
+{"qid": "Q11774062", "label": "county of Arkansas", "action": "fetch", "admin_level": "county", "source": "label", "rows": 75}
+{"qid": "Q13212489", "label": "county of California", "action": "fetch", "admin_level": "county", "source": "label", "rows": 43}
+{"qid": "Q13410403", "label": "county of Colorado", "action": "fetch", "admin_level": "county", "source": "label", "rows": 64}
+{"qid": "Q13414354", "label": "county of Connecticut", "action": "fetch", "admin_level": "county", "source": "label", "rows": 8}
+{"qid": "Q13410411", "label": "county of Delaware", "action": "fetch", "admin_level": "county", "source": "label", "rows": 3}
+{"qid": "Q13410422", "label": "county of Florida", "action": "fetch", "admin_level": "county", "source": "label", "rows": 67}
+{"qid": "Q13410428", "label": "county of Georgia", "action": "fetch", "admin_level": "county", "source": "label", "rows": 159}
+{"qid": "Q13410431", "label": "county of Hawaii", "action": "fetch", "admin_level": "county", "source": "label", "rows": 5}
+{"qid": "Q13410433", "label": "county of Idaho", "action": "fetch", "admin_level": "county", "source": "label", "rows": 44}
+{"qid": "Q11812346", "label": "county of Illinois", "action": "fetch", "admin_level": "county", "source": "label", "rows": 102}
+{"qid": "Q13410438", "label": "county of Indiana", "action": "fetch", "admin_level": "county", "source": "label", "rows": 92}
+{"qid": "Q11774149", "label": "county of Iowa", "action": "fetch", "admin_level": "county", "source": "label", "rows": 99}
+{"qid": "Q13410444", "label": "county of Kansas", "action": "fetch", "admin_level": "county", "source": "label", "rows": 105}
+{"qid": "Q13410447", "label": "county of Kentucky", "action": "fetch", "admin_level": "county", "source": "label", "rows": 120}
+{"qid": "Q13410454", "label": "county of Maine", "action": "fetch", "admin_level": "county", "source": "label", "rows": 16}
+{"qid": "Q13410464", "label": "county of Maryland", "action": "fetch", "admin_level": "county", "source": "label", "rows": 23}
+{"qid": "Q13410485", "label": "county of Massachusetts", "action": "fetch", "admin_level": "county", "source": "label", "rows": 14}
+{"qid": "Q13410496", "label": "county of Michigan", "action": "fetch", "admin_level": "county", "source": "label", "rows": 83}
+{"qid": "Q12262532", "label": "county of Minnesota", "action": "fetch", "admin_level": "county", "source": "label", "rows": 87}
+{"qid": "Q13410508", "label": "county of Mississippi", "action": "fetch", "admin_level": "county", "source": "label", "rows": 82}
+{"qid": "Q13410520", "label": "county of Missouri", "action": "fetch", "admin_level": "county", "source": "label", "rows": 114}
+{"qid": "Q13414358", "label": "county of Montana", "action": "fetch", "admin_level": "county", "source": "label", "rows": 57}
+{"qid": "Q13414361", "label": "county of Nebraska", "action": "fetch", "admin_level": "county", "source": "label", "rows": 93}
+{"qid": "Q13414369", "label": "county of Nevada", "action": "fetch", "admin_level": "county", "source": "label", "rows": 16}
+{"qid": "Q603715", "label": "county of New Brunswick", "action": "fetch", "admin_level": "county", "source": "label", "rows": 15}
+{"qid": "Q13414753", "label": "county of New Hampshire", "action": "fetch", "admin_level": "county", "source": "label", "rows": 10}
+{"qid": "Q13414754", "label": "county of New Jersey", "action": "fetch", "admin_level": "county", "source": "label", "rows": 21}
+{"qid": "Q13414755", "label": "county of New Mexico", "action": "fetch", "admin_level": "county", "source": "label", "rows": 33}
+{"qid": "Q13414757", "label": "county of New York", "action": "fetch", "admin_level": "county", "source": "label", "rows": 62}
+{"qid": "Q13414758", "label": "county of North Carolina", "action": "fetch", "admin_level": "county", "source": "label", "rows": 100}
+{"qid": "Q12178655", "label": "county of North Dakota", "action": "fetch", "admin_level": "county", "source": "label", "rows": 53}
+{"qid": "Q13414759", "label": "county of Ohio", "action": "fetch", "admin_level": "county", "source": "label", "rows": 88}
+{"qid": "Q13414760", "label": "county of Oklahoma", "action": "fetch", "admin_level": "county", "source": "label", "rows": 77}
+{"qid": "Q13414761", "label": "county of Oregon", "action": "fetch", "admin_level": "county", "source": "label", "rows": 36}
+{"qid": "Q13414763", "label": "county of Pennsylvania", "action": "fetch", "admin_level": "county", "source": "label", "rows": 67}
+{"qid": "Q13414764", "label": "county of Rhode Island", "action": "fetch", "admin_level": "county", "source": "label", "rows": 5}
+{"qid": "Q13414765", "label": "county of South Carolina", "action": "fetch", "admin_level": "county", "source": "label", "rows": 46}
+{"qid": "Q12037308", "label": "county of South Dakota", "action": "fetch", "admin_level": "county", "source": "label", "rows": 66}
+{"qid": "Q13415366", "label": "county of Tennessee", "action": "fetch", "admin_level": "county", "source": "label", "rows": 95}
+{"qid": "Q11774097", "label": "county of Texas", "action": "fetch", "admin_level": "county", "source": "label", "rows": 254}
+{"qid": "Q13415365", "label": "county of Utah", "action": "fetch", "admin_level": "county", "source": "label", "rows": 29}
+{"qid": "Q13415367", "label": "county of Vermont", "action": "fetch", "admin_level": "county", "source": "label", "rows": 14}
+{"qid": "Q13415368", "label": "county of Virginia", "action": "fetch", "admin_level": "county", "source": "label", "rows": 95}
+{"qid": "Q13415369", "label": "county of Washington", "action": "fetch", "admin_level": "county", "source": "label", "rows": 39}
+{"qid": "Q13415370", "label": "county of West Virginia", "action": "fetch", "admin_level": "county", "source": "label", "rows": 55}
+{"qid": "Q12178928", "label": "county of Wisconsin", "action": "fetch", "admin_level": "county", "source": "label", "rows": 72}
+{"qid": "Q13415371", "label": "county of Wyoming", "action": "fetch", "admin_level": "county", "source": "label", "rows": 23}
+{"qid": "Q1261535", "label": "dry county", "action": "fetch", "admin_level": "county", "source": "label", "rows": 0}
+{"qid": "Q117286571", "label": "planning region of Connecticut", "action": "fetch", "admin_level": "region", "source": "label", "rows": 9}
+{"qid": "Q21518270", "label": "state or insular area capital of the United States", "action": "fetch", "admin_level": "state", "source": "label", "rows": 23}
+{"qid": "Q257978", "label": "statutory city in the Czech Republic", "action": "fetch", "admin_level": "republic", "source": "label", "rows": 26}
+{"qid": "Q139559546", "label": "wet county", "action": "fetch", "admin_level": "county", "source": "label", "rows": 0}
+{"qid": "Q106533981", "label": "district", "action": "fetch", "admin_level": "district", "source": "label", "rows": 0}
+{"qid": "Q13220372", "label": "district of Abkhazia", "action": "fetch", "admin_level": "district", "source": "label", "rows": 7}
+{"qid": "Q123266", "label": "district of Albania", "action": "fetch", "admin_level": "district", "source": "label", "rows": 24}
+{"qid": "Q13417250", "label": "district of Azerbaijan", "action": "fetch", "admin_level": "district", "source": "label", "rows": 67}
+{"qid": "Q765865", "label": "district of Belize", "action": "fetch", "admin_level": "district", "source": "label", "rows": 6}
+{"qid": "Q831889", "label": "district of Bhutan", "action": "fetch", "admin_level": "district", "source": "label", "rows": 20}
+{"qid": "Q50427", "label": "district of Brunei Darussalam", "action": "fetch", "admin_level": "district", "source": "label", "rows": 4}
+{"qid": "Q59136", "label": "district of Cyprus", "action": "fetch", "admin_level": "district", "source": "label", "rows": 8}
+{"qid": "Q20717263", "label": "district of Ivory Coast", "action": "fetch", "admin_level": "district", "source": "label", "rows": 13}
+{"qid": "Q2915243", "label": "district of Kosovo", "action": "fetch", "admin_level": "district", "source": "label", "rows": 7}
+{"qid": "Q844531", "label": "district of Lesotho", "action": "fetch", "admin_level": "district", "source": "label", "rows": 10}
+{"qid": "Q48242", "label": "district of Libya", "action": "fetch", "admin_level": "district", "source": "label", "rows": 33}
+{"qid": "Q12806962", "label": "district of Ljubljana", "action": "fetch", "admin_level": "district", "source": "label", "rows": 17}
+{"qid": "Q216888", "label": "district of Luxembourg", "action": "fetch", "admin_level": "district", "source": "label", "rows": 0}
+{"qid": "Q15068450", "label": "district of Moldova", "action": "fetch", "admin_level": "district", "source": "label", "rows": 32}
+{"qid": "Q4389092", "label": "district of Moscow", "action": "fetch", "admin_level": "district", "source": "label", "rows": 128}
+{"qid": "Q319796", "label": "district of Nauru", "action": "fetch", "admin_level": "district", "source": "label", "rows": 14}
+{"qid": "Q3032141", "label": "district of Portugal", "action": "fetch", "admin_level": "district", "source": "label", "rows": 18}
+{"qid": "Q1070167", "label": "district of Samoa", "action": "fetch", "admin_level": "district", "source": "label", "rows": 11}
+{"qid": "Q648681", "label": "district of Serbia", "action": "fetch", "admin_level": "district", "source": "label", "rows": 30}
+{"qid": "Q1149621", "label": "district of Seychelles", "action": "fetch", "admin_level": "district", "source": "label", "rows": 28}
+{"qid": "Q1649296", "label": "district of Suriname", "action": "fetch", "admin_level": "district", "source": "label", "rows": 12}
+{"qid": "Q1230132", "label": "district of The Bahamas", "action": "fetch", "admin_level": "district", "source": "label", "rows": 33}
+{"qid": "Q1139753", "label": "district or dependency of Mauritius", "action": "fetch", "admin_level": "district", "source": "label", "rows": 0}
+{"qid": "Q193560", "label": "districts of Israel", "action": "fetch", "admin_level": "district", "source": "label", "rows": 7}
+{"qid": "Q448801", "label": "Greater district town", "action": "fetch", "admin_level": "district", "source": "label", "rows": 79}
+{"qid": "Q1548518", "label": "large district town", "action": "fetch", "admin_level": "district", "source": "label", "rows": 44}
+{"qid": "Q3032041", "label": "local service district of New Brunswick", "action": "fetch", "admin_level": "district", "source": "label", "rows": 80}
+{"qid": "Q54935786", "label": "medium-sized district town", "action": "fetch", "admin_level": "district", "source": "label", "rows": 139}
+{"qid": "Q779426", "label": "urban district of Hungary", "action": "fetch", "admin_level": "district", "source": "label", "rows": 0}
+{"qid": "Q55612423", "label": "general law municipality", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q140044897", "label": "home rule municipality of Colorado", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q15210668", "label": "lower-tier municipality of Ontario", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 241}
+{"qid": "Q741821", "label": "municipality of East Timor", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 13}
+{"qid": "Q1363145", "label": "municipality of Lithuania", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 10}
+{"qid": "Q14292916", "label": "municipality of San Marino", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 10}
+{"qid": "Q66126784", "label": "municipality of Sonora", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q2997091", "label": "municipality of Tamaulipas", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q27676431", "label": "naskapi village municipality", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q14846916", "label": "provincial municipality of Cambodia", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q1996198", "label": "regional corporation or municipality of Trinidad and Tobago", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 4}
+{"qid": "Q141481559", "label": "rural municipality", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q14762300", "label": "single-tier municipality", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 120}
+{"qid": "Q123432159", "label": "specialized municipality in Alberta", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 5}
+{"qid": "Q136825005", "label": "swing municipality", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q27676424", "label": "united townships municipality", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 2}
+{"qid": "Q16295254", "label": "upper-tier municipality", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 26}
+{"qid": "Q27676420", "label": "village municipality of Quebec", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 42}
+{"qid": "Q5177127", "label": "Great Parish of the Independent State of Croatia", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 10}
+{"qid": "Q106458918", "label": "parish", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 0}
+{"qid": "Q27676524", "label": "parish municipality", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 127}
+{"qid": "Q20757176", "label": "parish municipality of Denmark", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 0}
+{"qid": "Q1647142", "label": "parish of Antigua and Barbuda", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 6}
+{"qid": "Q1631888", "label": "parish of Barbados", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 11}
+{"qid": "Q1405085", "label": "parish of Dominica", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 10}
+{"qid": "Q531645", "label": "parish of Grenada", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 6}
+{"qid": "Q3365965", "label": "parish of Guernsey", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 10}
+{"qid": "Q2140214", "label": "parish of Jersey", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 12}
+{"qid": "Q13410524", "label": "parish of Louisiana", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 64}
+{"qid": "Q1750854", "label": "parish of Saint Kitts and Nevis", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 14}
+{"qid": "Q1870831", "label": "parish of Saint Vincent and the Grenadines", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 6}
+{"qid": "Q3712150", "label": "Administrative divisions of Czechoslovakia", "action": "drop", "source": "label"}
+{"qid": "Q16532593", "label": "autonomous city of Spain", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 2}
+{"qid": "Q604886", "label": "charter city of the United States", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q43263", "label": "federal subject of Russia", "action": "fetch", "admin_level": "state", "source": "label", "rows": 89}
+{"qid": "Q20528428", "label": "federative entity of Mexico", "action": "fetch", "admin_level": "state", "source": "label", "rows": 1}
+{"qid": "Q1266818", "label": "independent city in the United States", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 41}
+{"qid": "Q138649734", "label": "integrated special city of South Korea", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q12769662", "label": "kraj", "action": "fetch", "admin_level": "region", "source": "label", "rows": 0}
+{"qid": "Q1248049", "label": "Land", "action": "fetch", "admin_level": "state", "source": "label", "rows": 24}
+{"qid": "Q482821", "label": "metropolitan city of South Korea", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 5}
+{"qid": "Q83020", "label": "provincial city", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 3}
+{"qid": "Q16181672", "label": "special autonomous city in South Korea", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q7574799", "label": "Special City of Korea", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q7574798", "label": "special city of North Korea", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q13410522", "label": "borough of Alaska", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 14}
+{"qid": "Q4946304", "label": "borough of Connecticut", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 8}
+{"qid": "Q408804", "label": "borough of New York City", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 5}
+{"qid": "Q777120", "label": "borough of Pennsylvania", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 954}
+{"qid": "Q10840672", "label": "Business core city (Japan)", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 2}
+{"qid": "Q27676414", "label": "city", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q1749269", "label": "city designated by government ordinance", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 20}
+{"qid": "Q11422368", "label": "city for international conferences and tourism", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 29}
+{"qid": "Q138164278", "label": "city in Arizona", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 4}
+{"qid": "Q130629332", "label": "city in Quebec", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q13218357", "label": "city of California", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 160}
+{"qid": "Q110071194", "label": "city of Illinois", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 24}
+{"qid": "Q139903024", "label": "city of Michigan", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 8}
+{"qid": "Q110292529", "label": "city of Minnesota", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 6}
+{"qid": "Q132680629", "label": "city of North Carolina", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 543}
+{"qid": "Q134844639", "label": "city of North Dakota", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 24}
+{"qid": "Q108569710", "label": "city of Ohio", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 69}
+{"qid": "Q21010817", "label": "city of Pennsylvania", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 55}
+{"qid": "Q138010797", "label": "city of Texas", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 13}
+{"qid": "Q111874502", "label": "city of West Virginia", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 3}
+{"qid": "Q15221256", "label": "city of Wisconsin", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 2}
+{"qid": "Q27676416", "label": "city or town of Quebec", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 216}
+{"qid": "Q10929914", "label": "city status", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q925381", "label": "city with powiat rights in Poland", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 67}
+{"qid": "Q9391358", "label": "city with public health center", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 5}
+{"qid": "Q3678424", "label": "city with special status", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 7}
+{"qid": "Q114186378", "label": "city-level government in Indonesia", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 93}
+{"qid": "Q22927548", "label": "commune in merger-association", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q2989454", "label": "commune nouvelle", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 3}
+{"qid": "Q22927616", "label": "commune of France with specific status", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q18534366", "label": "commune of Medellín", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 16}
+{"qid": "Q84669937", "label": "commune of New Caledonia", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 33}
+{"qid": "Q1137833", "label": "core city of Japan", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 61}
+{"qid": "Q17290932", "label": "Cree reserved land", "action": "fetch", "admin_level": "state", "source": "label", "rows": 9}
+{"qid": "Q3558965", "label": "Cree village", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 8}
+{"qid": "Q111031767", "label": "hamlet of Ohio", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q110071230", "label": "incorporated town of Illinois", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 23}
+{"qid": "Q141162078", "label": "independent city in Virginia", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 37}
+{"qid": "Q22865", "label": "independent city of Germany", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 4}
+{"qid": "Q130335918", "label": "indigenous commune", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q27824520", "label": "Inuit reserved land", "action": "fetch", "admin_level": "state", "source": "label", "rows": 14}
+{"qid": "Q1548525", "label": "large independent city of Lower Saxony", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 7}
+{"qid": "Q1214953", "label": "large village of Hungary", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 5}
+{"qid": "Q6643749", "label": "list of towns in Nova Scotia", "action": "drop", "source": "label"}
+{"qid": "Q2154459", "label": "New England town", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 577}
+{"qid": "Q28656402", "label": "new town in Alberta", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q115861271", "label": "northern village", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 10}
+{"qid": "Q3559003", "label": "northern village", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 14}
+{"qid": "Q1145012", "label": "special city of Japan", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 32}
+{"qid": "Q140044940", "label": "statutory town of Colorado", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 2}
+{"qid": "Q6641762", "label": "summer village in Alberta", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 51}
+{"qid": "Q55430416", "label": "town in Alberta", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 105}
+{"qid": "Q138164972", "label": "town in Arizona", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q52132873", "label": "town in New Brunswick", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 20}
+{"qid": "Q1059478", "label": "town of Japan", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 771}
+{"qid": "Q139961091", "label": "town of Maryland", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 14}
+{"qid": "Q106071004", "label": "town of New York", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 928}
+{"qid": "Q110256876", "label": "town of Pennsylvania", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q132172647", "label": "town of West Virginia", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 11}
+{"qid": "Q140401875", "label": "town with a double name", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 7}
+{"qid": "Q115885364", "label": "Tribal town", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 1}
+{"qid": "Q6644696", "label": "village in Alberta", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 82}
+{"qid": "Q110071217", "label": "village of Illinois", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 951}
+{"qid": "Q4174776", "label": "village of Japan", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 191}
+{"qid": "Q6644759", "label": "village of New Brunswick", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 22}
+{"qid": "Q108569739", "label": "village of Ohio", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 590}
+{"qid": "Q4073603", "label": "ashkharh", "action": "drop", "source": "label"}
+{"qid": "Q757549", "label": "atoll of the Maldives", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 21}
+{"qid": "Q20732232", "label": "autonomous island of the Comoros", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 3}
+{"qid": "Q17325066", "label": "autonomous sector of Guinea-Bissau", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 1}
+{"qid": "Q4826865", "label": "autonomous territorial unit", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 2}
+{"qid": "Q11625999", "label": "Branch Secretariat", "action": "drop", "source": "label"}
+{"qid": "Q4426538", "label": "Community Development Council", "action": "drop", "source": "label"}
+{"qid": "Q3336843", "label": "constituent country of the United Kingdom", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 4}
+{"qid": "Q59369306", "label": "Council of Tuvalu", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 8}
+{"qid": "Q3559207", "label": "decentralized administration of Greece", "action": "fetch", "admin_level": "region", "source": "label", "rows": 7}
+{"qid": "Q106534046", "label": "dependency", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 0}
+{"qid": "Q46260602", "label": "dependency of Antigua and Barbuda", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 2}
+{"qid": "Q55433027", "label": "dependency of Fiji", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 1}
+{"qid": "Q878040", "label": "division of Bangladesh", "action": "fetch", "admin_level": "region", "source": "label", "rows": 8}
+{"qid": "Q15646524", "label": "division of Fiji", "action": "fetch", "admin_level": "region", "source": "label", "rows": 4}
+{"qid": "Q20740204", "label": "division of Tonga", "action": "fetch", "admin_level": "region", "source": "label", "rows": 5}
+{"qid": "Q4160883", "label": "dzongdey", "action": "fetch", "admin_level": "region", "source": "label", "rows": 4}
+{"qid": "Q140937749", "label": "entity of Bosnia and Herzegovina", "action": "fetch", "admin_level": "region", "source": "label", "rows": 2}
+{"qid": "Q12479773", "label": "first-level administrative country subdivision in Indonesia", "action": "fetch", "admin_level": "province", "source": "label", "rows": 7}
+{"qid": "Q17305516", "label": "island group of Kiribati", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 3}
+{"qid": "Q1210300", "label": "Mkhare", "action": "fetch", "admin_level": "region", "source": "label", "rows": 11}
+{"qid": "Q17484900", "label": "Outer islands of Mauritius", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 0}
+{"qid": "Q719487", "label": "overseas collectivity of France", "action": "fetch", "admin_level": "territory", "source": "label", "rows": 6}
+{"qid": "Q11076354", "label": "provincial administration commission", "action": "drop", "source": "label"}
+{"qid": "Q109429530", "label": "provincial-level subdivision of Vietnam", "action": "fetch", "admin_level": "province", "source": "label", "rows": 0}
+{"qid": "Q1753792", "label": "quarter of Saint Lucia", "action": "fetch", "admin_level": "district", "source": "label", "rows": 8}
+{"qid": "Q109382914", "label": "regional capital in Saudi Arabia", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q20899166", "label": "regional capital of France", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q119627394", "label": "regional government", "action": "drop", "source": "label"}
+{"qid": "Q2371398", "label": "Regional Service Commission", "action": "drop", "source": "label"}
+{"qid": "Q12883402", "label": "sheading", "action": "fetch", "admin_level": "parish", "source": "label", "rows": 6}
+{"qid": "Q615794", "label": "suyu", "action": "drop", "source": "label"}
+{"qid": "Q56557664", "label": "şəhər", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 11}
+{"qid": "Q56064719", "label": "census area of Alaska", "action": "drop", "source": "label"}
+{"qid": "Q124655903", "label": "council of governments in Connecticut", "action": "drop", "source": "label"}
+{"qid": "Q27554593", "label": "dzielnica of Lublin", "action": "fetch", "admin_level": "district", "source": "label", "rows": 27}
+{"qid": "Q133997300", "label": "Einheitsgemeinde of Lower Saxony", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 286}
+{"qid": "Q6838968", "label": "kozhuun", "action": "fetch", "admin_level": "district", "source": "label", "rows": 6}
+{"qid": "Q1175519", "label": "megyei város", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q42619282", "label": "municipal okrug of Saint Petersburg", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 37}
+{"qid": "Q114186325", "label": "Regency-level government in Indonesia", "action": "fetch", "admin_level": "district", "source": "label", "rows": 422}
+{"qid": "Q2989369", "label": "rural community of New Brunswick", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 33}
+{"qid": "Q107105851", "label": "transitional metropolitan council", "action": "drop", "source": "label"}
+{"qid": "Q107105862", "label": "transitional metropolitan substructure", "action": "drop", "source": "label"}
+{"qid": "Q25340975", "label": "transitional representative council", "action": "drop", "source": "label"}
+{"qid": "Q18632459", "label": "ulus", "action": "fetch", "admin_level": "district", "source": "label", "rows": 184}
+{"qid": "Q7900181", "label": "urban township of Michigan", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q15063142", "label": "urban township of Minnesota", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 150}
+{"qid": "Q7900183", "label": "urban township of Ohio", "action": "fetch", "admin_level": "municipality", "source": "label", "rows": 0}
+{"qid": "Q1577513", "label": "commune of Burundi", "action": "fetch", "admin_level": "municipality", "source": "audit", "rows": 45}
+{"qid": "Q41806250", "label": "parish of Bermuda", "action": "fetch", "admin_level": "parish", "source": "audit", "rows": 9}
+{"qid": "Q48731335", "label": "village of Brunei", "action": "fetch", "admin_level": "municipality", "source": "audit", "rows": 423}
+{"qid": "Q7703797", "label": "Territory of the Democratic Republic of the Congo", "action": "fetch", "admin_level": "territory", "source": "audit", "rows": 147}
+{"qid": "Q1958165", "label": "district of the Republic of the Congo", "action": "fetch", "admin_level": "district", "source": "audit", "rows": 93}
+{"qid": "Q3327903", "label": "municipality of the Federated States of Micronesia", "action": "fetch", "admin_level": "municipality", "source": "audit", "rows": 132}
+{"qid": "Q655851", "label": "department of Gabon", "action": "fetch", "admin_level": "department", "source": "audit", "rows": 50}
+{"qid": "Q1504917", "label": "district of the Gambia", "action": "fetch", "admin_level": "district", "source": "audit", "rows": 40}
+{"qid": "Q20733617", "label": "rural community of Kyrgyzstan", "action": "fetch", "admin_level": "municipality", "source": "audit", "rows": 187}
+{"qid": "Q5283521", "label": "district of Laos", "action": "fetch", "admin_level": "district", "source": "audit", "rows": 166}
+{"qid": "Q2421044", "label": "district of Liberia", "action": "fetch", "admin_level": "district", "source": "audit", "rows": 149}
+{"qid": "Q505830", "label": "district of Sudan", "action": "fetch", "admin_level": "district", "source": "audit", "rows": 204}
+{"qid": "Q3559024", "label": "village of Senegal", "action": "fetch", "admin_level": "municipality", "source": "audit", "rows": 748}
+{"qid": "Q369385", "label": "rural community of Senegal", "action": "fetch", "admin_level": "municipality", "source": "audit", "rows": 215}
+{"qid": "Q2989649", "label": "commune of Senegal", "action": "fetch", "admin_level": "municipality", "source": "audit", "rows": 309}
+{"qid": "Q279479", "label": "county of South Sudan", "action": "fetch", "admin_level": "county", "source": "audit", "rows": 80}
+{"qid": "Q22671115", "label": "district of Tonga", "action": "fetch", "admin_level": "district", "source": "audit", "rows": 24}
+{"qid": "Q28822032", "label": "cadastral municipality of Serbia", "action": "fetch", "admin_level": "municipality", "source": "audit", "rows": 5814}

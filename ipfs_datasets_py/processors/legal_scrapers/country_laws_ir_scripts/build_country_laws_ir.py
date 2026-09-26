@@ -24,7 +24,10 @@ def main() -> int:
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--neighbor-k", type=int, default=8)
     ap.add_argument("--skip-vectors", action="store_true")
-    ap.add_argument("--upload", action="store_true", help="Opt-in Hub upload (default: off)")
+    ap.add_argument("--upload", action="store_true", help="Opt-in Hub upload to justicedao (requires HF_TOKEN)")
+    ap.add_argument("--mode", default="auto", choices=["auto", "full", "delta"],
+                    help="auto skips unchanged source revisions and reuses embeddings by entry_cid")
+    ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
     result = build_country(
         args.source,
@@ -33,21 +36,26 @@ def main() -> int:
         device=args.device,
         neighbor_k=args.neighbor_k,
         skip_vectors=args.skip_vectors,
+        mode=args.mode,
+        force=args.force,
     )
-    print(json.dumps({
+    payload = {
         "out": result["out"],
         "target_hub_id": result.get("target_hub_id") or target_repo(result["country"]),
-        "counts": result["counts"],
-        "normalization": {
-            "n_laws_in": result["normalization"]["n_laws_in"],
-            "n_articles_in": result["normalization"]["n_articles_in"],
-            "n_out": result["normalization"]["n_out"],
-            "unit": result["normalization"]["unit"],
-            "drops": result["normalization"]["drops"],
-        },
+        "skipped": result.get("skipped", False),
+        "incremental": result.get("incremental"),
         "vector_blocker": result.get("vector_blocker"),
         "schema_version": result.get("schema_version"),
-    }, indent=2, ensure_ascii=False))
+    }
+    if result.get("counts") is not None:
+        payload["counts"] = result["counts"]
+    if result.get("normalization"):
+        payload["normalization"] = {
+            k: result["normalization"].get(k)
+            for k in ("n_laws_in", "n_articles_in", "n_out", "unit", "drops")
+            if k in result["normalization"] or result["normalization"].get(k) is not None
+        }
+    print(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
     return 0
 
 

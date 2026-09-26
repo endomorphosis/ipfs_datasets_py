@@ -14,7 +14,11 @@ import pandas as pd
 from . import MAX_ROWS_PER_FILE, SCHEMA_VERSION
 
 MODEL_NAME = "thenlper/gte-small"
+MODEL_REVISION = "17e1f347d17fe144873b1201da91788898c639cd"
 DIMENSION = 384
+MAX_SEQ_LENGTH = 512
+DEFAULT_DEVICE = "cuda"
+SUPPORTED_DEVICES = frozenset({"cpu", "cuda", "cuda:0", "mps", "auto"})
 MAX_ROWS_PER_CENTROID = 8192
 MAX_SHARDS_PER_CENTROID = 2
 
@@ -24,41 +28,108 @@ def _l2_normalize(x: np.ndarray, eps: float = 1e-12) -> np.ndarray:
     return x / np.maximum(n, eps)
 
 
-def embeddings_available() -> bool:
+def device_is_available(device: str) -> bool:
+    """Probe accelerator availability without loading a model."""
+    name = str(device or "").strip().lower()
+    if not name or name == "cpu":
+        return True
     try:
-        import torch  # noqa: F401
-        from sentence_transformers import SentenceTransformer  # noqa: F401
+        import torch
+    except Exception:
+        return False
+    if name.startswith("cuda"):
+        return bool(
+            getattr(torch, "cuda", None)
+            and torch.backends.cuda.is_built()
+            and torch.cuda.is_available()
+        )
+    if name == "mps":
+        mps = getattr(getattr(torch, "backends", None), "mps", None)
+        return bool(mps is not None and mps.is_available())
+    return False
+
+
+def select_device(requested: str = DEFAULT_DEVICE) -> tuple[str, bool]:
+    """Prefer CUDA like US Code / Open US Law; fall back to CPU."""
+    req = str(requested or DEFAULT_DEVICE).strip().lower() or DEFAULT_DEVICE
+    if req == "auto":
+        req = "cuda"
+    if req not in SUPPORTED_DEVICES and not req.startswith("cuda:"):
+        raise ValueError(f"unsupported embedding device: {requested!r}")
+    if device_is_available(req):
+        return req, False
+    return "cpu", True
+
+
+def ensure_embedding_stack() -> bool:
+    """Lazy-import / lazy-install transformers + sentence-transformers.
+
+    Matches ``ipfs_datasets_py.auto_installer.ensure_module`` used by other
+    GraphRAG producers. Importing this module must not pip-install; first
+    encode may.
+    """
+    import os
+
+    os.environ.setdefault("TRANSFORMERS_NO_TORCHVISION", "1")
+    try:
+        import sentence_transformers  # noqa: F401
+        import transformers  # noqa: F401
 
         return True
     except Exception:
+        pass
+    try:
+        from ipfs_datasets_py.auto_installer import ensure_module, install_for_component
+
+        install_for_component("graphrag")
+        ensure_module("torchvision", "torchvision")
+        ensure_module("transformers", "transformers")
+        module = ensure_module("sentence_transformers", "sentence-transformers")
+        return module is not None
+    except Exception:
         return False
+
+
+def embeddings_available() -> bool:
+    return ensure_embedding_stack()
+
+
+def _is_real_vector(vec: object) -> bool:
+    try:
+        arr = np.asarray(vec, dtype=np.float32).reshape(-1)
+    except Exception:
+        return False
+    if arr.shape[0] != DIMENSION:
+        return False
+    if not np.isfinite(arr).all():
+        return False
+    return float(np.linalg.norm(arr)) > 1e-6
 
 
 def encode_corpus(
     corpus: pd.DataFrame,
     batch_size: int = 64,
-    device: str = "cpu",
+    device: str = DEFAULT_DEVICE,
     checkpoint_path: str | None = None,
     chunk_size: int = 4096,
 ) -> np.ndarray:
-    """Encode corpus texts with gte-small in chunks; persist checkpoints when given."""
+    """Encode corpus texts with pinned gte-small on CUDA when available."""
     import json
     import os
     from datetime import datetime, timezone
     from pathlib import Path as _Path
 
+    if not ensure_embedding_stack():
+        raise RuntimeError(
+            "sentence-transformers is required for production GTE embeddings; "
+            "lazy install failed (python -m ipfs_datasets_py.auto_installer)"
+        )
     from sentence_transformers import SentenceTransformer
 
     from .auth import configure_hf
 
     configure_hf()
-    cache_root = _Path(os.environ.get("COUNTRY_LAWS_IR_ROOT", str(_Path.home() / ".ipfs_datasets" / "country-laws-ir"))) / "cache" / "hf"
-    os.environ.setdefault("HF_HOME", str(cache_root))
-    os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
-    os.environ.setdefault(
-        "SENTENCE_TRANSFORMERS_HOME",
-        str(cache_root / "sentence-transformers"),
-    )
+    device, _fallback = select_device(device)
     texts = []
     for rec in corpus.itertuples(index=False):
         title = getattr(rec, "title", None) or getattr(rec, "instrument_title", "") or ""
@@ -70,12 +141,22 @@ def encode_corpus(
     done = 0
     ckpt = _Path(checkpoint_path) if checkpoint_path else None
     meta_path = ckpt.with_suffix(".json") if ckpt else None
-    meta_n = None
+    cache_root = _Path(
+        os.environ.get(
+            "COUNTRY_LAWS_IR_ROOT",
+            str(_Path.home() / ".ipfs_datasets" / "country-laws-ir"),
+        )
+    ) / "cache" / "hf"
+    os.environ.setdefault("HF_HOME", str(cache_root))
+    os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
+    os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", str(cache_root / "sentence-transformers"))
     if meta_path is not None and meta_path.exists():
         try:
             meta_n = json.loads(meta_path.read_text(encoding="utf-8")).get("n")
         except Exception:
             meta_n = None
+    else:
+        meta_n = None
     if ckpt is not None and ckpt.exists():
         cached = np.load(ckpt)
         same_corpus = meta_n is None or int(meta_n) == n
@@ -87,56 +168,76 @@ def encode_corpus(
         ):
             done = int(cached.shape[0])
             out[:done] = cached.astype(np.float32, copy=False)
-            print(f"embeddings resume {done}/{n} from {ckpt}", flush=True)
-        else:
-            print(
-                f"embeddings checkpoint shape {getattr(cached, 'shape', None)} "
-                f"meta_n={meta_n} incompatible with {(n, DIMENSION)}; restarting",
-                flush=True,
+        if done >= n:
+            return out
+
+    lock_fh = None
+    if device.startswith("cuda"):
+        import fcntl
+
+        lock_path = _Path(
+            os.environ.get(
+                "COUNTRY_LAWS_IR_ROOT",
+                str(_Path.home() / ".ipfs_datasets" / "country-laws-ir"),
             )
-    if done >= n:
-        return out
-    model = SentenceTransformer(MODEL_NAME, device=device)
-    while done < n:
-        j = min(done + int(chunk_size), n)
-        chunk = model.encode(
-            texts[done:j],
-            batch_size=batch_size,
-            show_progress_bar=True,
-            convert_to_numpy=True,
-            normalize_embeddings=True,
+        ) / "cuda.encode.lock"
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        lock_fh = open(lock_path, "a", encoding="utf-8")
+        fcntl.flock(lock_fh.fileno(), fcntl.LOCK_EX)
+    try:
+        model = SentenceTransformer(
+            MODEL_NAME,
+            revision=MODEL_REVISION,
+            device=device,
         )
-        out[done:j] = np.asarray(chunk, dtype=np.float32)
-        done = j
-        print(f"embeddings checkpoint {done}/{n}", flush=True)
         try:
-            from .mem import checkpoint as _mem_checkpoint
-            _mem_checkpoint(f"embeddings@{done}", row=done, every_n=max(chunk_size, 4096))
-        except Exception as _mem_exc:
-            # MemAbort should propagate; other import issues are non-fatal
-            from .mem import MemAbort
-            if isinstance(_mem_exc, MemAbort):
-                raise
-        if ckpt is not None:
-            ckpt.parent.mkdir(parents=True, exist_ok=True)
-            tmp = ckpt.with_name(ckpt.name + ".tmp.npy")
-            np.save(tmp, out[:done])
-            tmp.replace(ckpt)
-            if meta_path is not None:
-                meta_path.write_text(
-                    json.dumps(
-                        {
-                            "n": n,
-                            "done": done,
-                            "dimension": DIMENSION,
-                            "model_name": MODEL_NAME,
-                            "ts": datetime.now(timezone.utc).isoformat(),
-                        }
+            model.max_seq_length = MAX_SEQ_LENGTH
+        except Exception:
+            pass
+        while done < n:
+            j = min(done + int(chunk_size), n)
+            chunk = model.encode(
+                texts[done:j],
+                batch_size=batch_size,
+                show_progress_bar=True,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+            )
+            out[done:j] = np.asarray(chunk, dtype=np.float32)
+            done = j
+            if ckpt is not None:
+                ckpt.parent.mkdir(parents=True, exist_ok=True)
+                tmp = ckpt.with_name(ckpt.name + ".tmp.npy")
+                np.save(tmp, out[:done])
+                tmp.replace(ckpt)
+                if meta_path is not None:
+                    meta_path.write_text(
+                        json.dumps(
+                            {
+                                "n": n,
+                                "done": done,
+                                "dimension": DIMENSION,
+                                "model_name": MODEL_NAME,
+                                "ts": datetime.now(timezone.utc).isoformat(),
+                            }
+                        )
+                        + "\n",
+                        encoding="utf-8",
                     )
-                    + "\n",
-                    encoding="utf-8",
-                )
-    return out
+        return out
+    finally:
+        if lock_fh is not None:
+            import fcntl as _fcntl
+
+            _fcntl.flock(lock_fh.fileno(), _fcntl.LOCK_UN)
+            lock_fh.close()
+        try:
+            import torch as _torch
+
+            if _torch.cuda.is_available():
+                _torch.cuda.empty_cache()
+        except Exception:
+            pass
 
 
 def _spherical_kmeans(x: np.ndarray, k: int, iters: int = 12, seed: int = 0) -> np.ndarray:
@@ -160,25 +261,29 @@ def _spherical_kmeans(x: np.ndarray, k: int, iters: int = 12, seed: int = 0) -> 
 
 
 def _recursive_clusters(x: np.ndarray, max_size: int = MAX_ROWS_PER_FILE) -> list[np.ndarray]:
+    """Split vectors into shards of at most *max_size* without unbounded recursion.
+
+    Spherical k-means can fail to split (all points one label). In that case
+    fall back to an even index split so layout cannot recurse forever.
+    """
     n = len(x)
-    idx = np.arange(n)
-    if n <= max_size:
-        return [idx]
-    labels = _spherical_kmeans(x, k=2)
-    clusters = []
-    for lab in (0, 1):
-        members = idx[labels == lab]
-        if len(members) == 0:
+    if n == 0:
+        return []
+    pending: list[np.ndarray] = [np.arange(n)]
+    clusters: list[np.ndarray] = []
+    while pending:
+        idx = pending.pop()
+        if len(idx) <= max_size:
+            clusters.append(idx)
             continue
-        if len(members) <= max_size:
-            clusters.append(members)
-        else:
-            sub = _recursive_clusters(x[members], max_size=max_size)
-            clusters.extend([members[s] for s in sub])
-    if not clusters:
-        mid = n // 2
-        return [idx[:mid], idx[mid:]]
-    return clusters
+        labels = _spherical_kmeans(x[idx], k=2)
+        parts = [idx[labels == lab] for lab in (0, 1)]
+        parts = [p for p in parts if len(p)]
+        if len(parts) < 2 or max(len(p) for p in parts) == len(idx):
+            mid = len(idx) // 2
+            parts = [idx[:mid], idx[mid:]]
+        pending.extend(parts)
+    return clusters or [np.arange(n)]
 
 
 def layout_vectors(corpus: pd.DataFrame, embeddings: np.ndarray) -> dict[str, Any]:
@@ -333,3 +438,85 @@ def layout_stub_vectors(corpus: pd.DataFrame, reason: str) -> dict[str, Any]:
             ],
         },
     }
+
+
+def assemble_embeddings(
+    corpus: pd.DataFrame,
+    prior_by_cid: dict[str, list[float]] | None = None,
+    *,
+    encode_missing: bool = True,
+    batch_size: int = 64,
+    device: str = DEFAULT_DEVICE,
+    checkpoint_path: str | None = None,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Align a (n, 384) matrix to *corpus* row order.
+
+    Reuse is CID-keyed and only accepts real GTE vectors (finite, 384-d,
+    non-zero). Stub/zero priors are treated as missing and re-encoded on
+    CUDA when available — the US Code / Open US Law contract.
+    """
+    n = int(len(corpus))
+    out = np.zeros((n, DIMENSION), dtype=np.float32)
+    prior = prior_by_cid or {}
+    reused_idx: list[int] = []
+    missing_idx: list[int] = []
+    cids = corpus["entry_cid"].astype(str).tolist() if n else []
+    for i, cid in enumerate(cids):
+        vec = prior.get(cid)
+        if not _is_real_vector(vec):
+            missing_idx.append(i)
+            continue
+        out[i] = np.asarray(vec, dtype=np.float32).reshape(-1)
+        reused_idx.append(i)
+
+    report: dict[str, Any] = {
+        "n_docs": n,
+        "n_reused": len(reused_idx),
+        "n_encoded": 0,
+        "n_missing": len(missing_idx),
+        "model_name": MODEL_NAME,
+        "model_revision": MODEL_REVISION,
+        "dimension": DIMENSION,
+        "status": "reused" if not missing_idx else "partial",
+    }
+    resolved, fallback = select_device(device)
+    report["device"] = resolved
+    report["device_fallback"] = fallback
+    if not missing_idx:
+        report["status"] = "reused"
+        return _l2_normalize(out) if n else out, report
+    if not encode_missing:
+        report["status"] = "incomplete"
+        return out, report
+    if not ensure_embedding_stack():
+        report["status"] = "stub_missing_encoder"
+        report["reason"] = "sentence-transformers/transformers lazy install failed"
+        return out, report
+
+    missing = corpus.iloc[missing_idx].reset_index(drop=True)
+    encoded = encode_corpus(
+        missing,
+        batch_size=batch_size,
+        device=resolved,
+        checkpoint_path=checkpoint_path,
+    )
+    for local_i, corpus_i in enumerate(missing_idx):
+        out[corpus_i] = encoded[local_i]
+    report["n_encoded"] = int(len(missing_idx))
+    report["n_missing"] = 0
+    report["status"] = "merged"
+    return _l2_normalize(out), report
+
+
+def embeddings_by_cid(corpus: pd.DataFrame, matrix: np.ndarray) -> dict[str, list[float]]:
+    """Project a row-aligned embedding matrix back to a CID map."""
+    out: dict[str, list[float]] = {}
+    if corpus is None or corpus.empty:
+        return out
+    x = np.asarray(matrix, dtype=np.float32)
+    cids = corpus["entry_cid"].astype(str).tolist()
+    for i, cid in enumerate(cids):
+        if i >= len(x):
+            break
+        out[cid] = x[i].astype(np.float32).tolist()
+    return out

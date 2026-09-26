@@ -42,6 +42,12 @@ class Release:
         return pd.read_parquet(path)
 
     def bm25(self, query: str, top_k: int = 10) -> list[dict]:
+        try:
+            from .duckdb_store import bm25_search
+
+            return bm25_search(self.root, query, top_k=top_k)
+        except Exception:
+            pass
         q_terms = tokenize(query)[:MAX_QUERY_TERMS]
         if not q_terms:
             return []
@@ -124,6 +130,12 @@ class Release:
         return out
 
     def neighbors(self, node_cid: str, direction: str = "both", limit: int = 25) -> list[dict]:
+        try:
+            from .duckdb_store import graph_neighbors
+
+            return graph_neighbors(self.root, node_cid, direction=direction, limit=limit)
+        except Exception:
+            pass
         dirs = ["incoming", "outgoing"] if direction == "both" else [direction]
         hits = []
         for d in dirs:
@@ -146,6 +158,11 @@ class Release:
         hits.sort(key=lambda r: (-(r["score"] or 0), r["neighbor_cid"]))
         return hits[:limit]
 
+    def cite(self, citation: str, cite_format: str = "any", limit: int = 25) -> list[dict]:
+        from .duckdb_store import cite_search
+
+        return cite_search(self.root, citation, cite_format=cite_format, limit=limit)
+
 
 def _print(rows: list[dict]) -> None:
     print(json.dumps(rows, indent=2, ensure_ascii=False))
@@ -164,14 +181,28 @@ def main(argv: list[str] | None = None) -> int:
     p_vec.add_argument("query")
     p_vec.add_argument("--top-k", type=int, default=10)
     p_vec.add_argument("--candidate-centroids", type=int, default=4)
-    p_vec.add_argument("--device", default="cpu")
+    p_vec.add_argument("--device", default="cuda")
 
     p_g = sub.add_parser("graph")
     g_sub = p_g.add_subparsers(dest="graph_cmd", required=True)
     p_n = g_sub.add_parser("neighbors")
     p_n.add_argument("node_cid")
-    p_n.add_argument("--direction", default="both", choices=["both", "incoming", "outgoing"])
+    p_n.add_argument(
+        "--direction",
+        default="both",
+        choices=["both", "in", "out", "incoming", "outgoing"],
+    )
     p_n.add_argument("--limit", type=int, default=25)
+
+    p_cite = sub.add_parser("cite")
+    p_cite.add_argument("citation")
+    p_cite.add_argument(
+        "--format",
+        dest="cite_format",
+        default="any",
+        choices=["any", "bluebook", "official"],
+    )
+    p_cite.add_argument("--limit", type=int, default=25)
 
     args = ap.parse_args(argv)
     rel = Release(Path(args.local_dir))
@@ -181,6 +212,8 @@ def main(argv: list[str] | None = None) -> int:
         _print(rel.vector(args.query, top_k=args.top_k, candidate_centroids=args.candidate_centroids, device=args.device))
     elif args.cmd == "graph" and args.graph_cmd == "neighbors":
         _print(rel.neighbors(args.node_cid, direction=args.direction, limit=args.limit))
+    elif args.cmd == "cite":
+        _print(rel.cite(args.citation, cite_format=args.cite_format, limit=args.limit))
     return 0
 
 

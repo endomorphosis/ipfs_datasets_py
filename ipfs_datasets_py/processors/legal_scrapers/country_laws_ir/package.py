@@ -34,8 +34,11 @@ def package_release(
     country: dict[str, Any],
     code_root: Path,
     normalization_report: dict[str, Any] | None = None,
+    extra_manifest: dict[str, Any] | None = None,
+    wipe: bool = True,
+    skip_bm25_graph: bool = False,
 ) -> dict[str, Any]:
-    if out.exists():
+    if wipe and out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True, exist_ok=True)
     indexes_dir = out / "indexes"
@@ -51,78 +54,95 @@ def package_release(
     )
     write_parquet(indexes_dir / "corpus_chunks.parquet", _index_df(corpus_idx))
 
-    bm25_doc_idx = write_sharded(
-        bm25["documents"],
-        out / "data" / "bm25" / "documents",
-        "data/bm25/documents",
-        kind="bm25_documents",
-        key_col="entry_cid",
-        index_col="document_index",
-    )
-    write_parquet(indexes_dir / "bm25_document_chunks.parquet", _index_df(bm25_doc_idx))
+    if skip_bm25_graph:
+        bm25_doc_idx = []
+        posting_idx = []
+        postings = pd.DataFrame()
+        node_idx = []
+        edge_idx = []
+        in_idx = []
+        out_idx = []
+        incoming = pd.DataFrame()
+        outgoing = pd.DataFrame()
+        bm25 = bm25 or {"documents": pd.DataFrame(), "postings": pd.DataFrame(), "stats": {}}
+        graph = graph or {"nodes": pd.DataFrame(), "edges": pd.DataFrame(), "stats": {}}
+    else:
+        bm25_doc_idx = write_sharded(
+            bm25["documents"],
+            out / "data" / "bm25" / "documents",
+            "data/bm25/documents",
+            kind="bm25_documents",
+            key_col="entry_cid",
+            index_col="document_index",
+        )
+        write_parquet(indexes_dir / "bm25_document_chunks.parquet", _index_df(bm25_doc_idx))
 
-    postings = bm25["postings"]
-    posting_idx = write_sharded(
-        postings,
-        out / "data" / "bm25" / "postings",
-        "data/bm25/postings",
-        kind="bm25_postings",
-        key_col="term",
-    )
-    for row, part_start in zip(posting_idx, range(len(posting_idx))):
-        shard_df = postings.iloc[part_start * MAX_ROWS_PER_FILE : (part_start + 1) * MAX_ROWS_PER_FILE]
-        row["term_count"] = int(shard_df["term"].nunique()) if not shard_df.empty else 0
-        row["posting_count"] = int(shard_df["document_indices"].map(len).sum()) if not shard_df.empty else 0
-        row["token_instance_count"] = row["posting_count"]
-    write_parquet(indexes_dir / "bm25_keyword_shards.parquet", _index_df(posting_idx))
+        postings = bm25["postings"]
+        posting_idx = write_sharded(
+            postings,
+            out / "data" / "bm25" / "postings",
+            "data/bm25/postings",
+            kind="bm25_postings",
+            key_col="term",
+        )
+        for row, part_start in zip(posting_idx, range(len(posting_idx))):
+            shard_df = postings.iloc[
+                part_start * MAX_ROWS_PER_FILE : (part_start + 1) * MAX_ROWS_PER_FILE
+            ]
+            row["term_count"] = int(shard_df["term"].nunique()) if not shard_df.empty else 0
+            row["posting_count"] = (
+                int(shard_df["document_indices"].map(len).sum()) if not shard_df.empty else 0
+            )
+            row["token_instance_count"] = row["posting_count"]
+        write_parquet(indexes_dir / "bm25_keyword_shards.parquet", _index_df(posting_idx))
 
-    node_idx = write_sharded(
-        graph["nodes"],
-        out / "data" / "graph" / "nodes",
-        "data/graph/nodes",
-        kind="graph_nodes",
-        key_col="node_cid",
-    )
-    write_parquet(indexes_dir / "graph_node_chunks.parquet", _index_df(node_idx))
+        node_idx = write_sharded(
+            graph["nodes"],
+            out / "data" / "graph" / "nodes",
+            "data/graph/nodes",
+            kind="graph_nodes",
+            key_col="node_cid",
+        )
+        write_parquet(indexes_dir / "graph_node_chunks.parquet", _index_df(node_idx))
 
-    edge_idx = write_sharded(
-        graph["edges"],
-        out / "data" / "graph" / "edges",
-        "data/graph/edges",
-        kind="graph_edges",
-        key_col="edge_cid",
-    )
-    write_parquet(indexes_dir / "graph_edge_chunks.parquet", _index_df(edge_idx))
+        edge_idx = write_sharded(
+            graph["edges"],
+            out / "data" / "graph" / "edges",
+            "data/graph/edges",
+            kind="graph_edges",
+            key_col="edge_cid",
+        )
+        write_parquet(indexes_dir / "graph_edge_chunks.parquet", _index_df(edge_idx))
 
-    incoming = graph["incoming"]
-    outgoing = graph["outgoing"]
-    in_idx = write_sharded(
-        incoming if incoming is not None and not incoming.empty else pd.DataFrame(
-            columns=["node_cid", "page_index", "direction"]
-        ),
-        out / "data" / "graph" / "adjacency" / "incoming",
-        "data/graph/adjacency/incoming",
-        kind="graph_incoming_adjacency",
-        key_col="node_cid",
-    )
-    out_idx = write_sharded(
-        outgoing if outgoing is not None and not outgoing.empty else pd.DataFrame(
-            columns=["node_cid", "page_index", "direction"]
-        ),
-        out / "data" / "graph" / "adjacency" / "outgoing",
-        "data/graph/adjacency/outgoing",
-        kind="graph_outgoing_adjacency",
-        key_col="node_cid",
-    )
-    for rows, direction in ((in_idx, "incoming"), (out_idx, "outgoing")):
-        for r in rows:
-            r["direction"] = direction
-            r["adjacency_count"] = r.get("row_count", 0)
-            r["node_count"] = r.get("row_count", 0)
-            r["first_page_index"] = 0
-            r["last_page_index"] = 0
-    write_parquet(indexes_dir / "graph_incoming_adjacency.parquet", _index_df(in_idx))
-    write_parquet(indexes_dir / "graph_outgoing_adjacency.parquet", _index_df(out_idx))
+        incoming = graph["incoming"]
+        outgoing = graph["outgoing"]
+        in_idx = write_sharded(
+            incoming
+            if incoming is not None and not incoming.empty
+            else pd.DataFrame(columns=["node_cid", "page_index", "direction"]),
+            out / "data" / "graph" / "adjacency" / "incoming",
+            "data/graph/adjacency/incoming",
+            kind="graph_incoming_adjacency",
+            key_col="node_cid",
+        )
+        out_idx = write_sharded(
+            outgoing
+            if outgoing is not None and not outgoing.empty
+            else pd.DataFrame(columns=["node_cid", "page_index", "direction"]),
+            out / "data" / "graph" / "adjacency" / "outgoing",
+            "data/graph/adjacency/outgoing",
+            kind="graph_outgoing_adjacency",
+            key_col="node_cid",
+        )
+        for rows, direction in ((in_idx, "incoming"), (out_idx, "outgoing")):
+            for r in rows:
+                r["direction"] = direction
+                r["adjacency_count"] = r.get("row_count", 0)
+                r["node_count"] = r.get("row_count", 0)
+                r["first_page_index"] = 0
+                r["last_page_index"] = 0
+        write_parquet(indexes_dir / "graph_incoming_adjacency.parquet", _index_df(in_idx))
+        write_parquet(indexes_dir / "graph_outgoing_adjacency.parquet", _index_df(out_idx))
 
     vectors_df = vectors["vectors"]
     # Drop null embeddings for stub releases so parquet stays typed; keep rows when present.
@@ -195,8 +215,8 @@ def package_release(
         "bm25_documents": int(len(bm25["documents"])),
         "bm25_keyword_shards": len(posting_idx),
         "bm25_posting_rows": int(len(postings)),
-        "bm25_postings": int(bm25["stats"]["n_postings"]),
-        "bm25_terms": int(bm25["stats"]["n_terms"]),
+        "bm25_postings": int((bm25.get("stats") or {}).get("n_postings") or 0),
+        "bm25_terms": int((bm25.get("stats") or {}).get("n_terms") or 0),
         "corpus_chunks": len(corpus_idx),
         "corpus_rows": int(len(corpus)),
         "graph_edge_chunks": len(edge_idx),
@@ -214,13 +234,28 @@ def package_release(
         "n_laws": n_laws,
         "n_articles": n_articles,
     }
+    if skip_bm25_graph and extra_manifest and extra_manifest.get("sparse"):
+        sparse = extra_manifest["sparse"]
+        bm25_counts = (sparse.get("bm25") or {}).get("counts") or {}
+        graph_counts = sparse.get("graph") or {}
+        counts.update(
+            {k: int(v) for k, v in bm25_counts.items() if isinstance(v, (int, float))}
+        )
+        if graph_counts.get("node_count") is not None:
+            counts["graph_nodes"] = int(graph_counts["node_count"])
+        if graph_counts.get("edge_count") is not None:
+            counts["graph_edges"] = int(graph_counts["edge_count"])
 
     def idx_desc(name: str) -> dict[str, Any]:
         path = indexes_dir / name
+        if not path.is_file():
+            return {"relative_path": f"indexes/{name}", "present": False}
         return file_descriptor(path, f"indexes/{name}")
 
     hub_id = target_repo(country["slug"])
-    edge_types = graph["stats"].get("edge_types") or [
+    bm25_stats = bm25.get("stats") if isinstance(bm25.get("stats"), dict) else {}
+    graph_stats = graph.get("stats") if isinstance(graph.get("stats"), dict) else {}
+    edge_types = graph_stats.get("edge_types") or [
         "HAS_JURISDICTION",
         "HAS_LANGUAGE",
         "BELONGS_TO_LAW",
@@ -237,16 +272,27 @@ def package_release(
         "dataset_revision": source_meta["source_revision"],
         "country": country,
         "disclaimer": "Research snapshot. Not legal advice. The official gazette / authentic source prevails.",
-        "bm25": {k: bm25["stats"][k] for k in (
-            "k1", "b", "title_weight", "body_weight", "average_document_length",
-            "tokenizer", "max_query_terms", "posting_rows_per_record", "terms_per_shard",
-        )},
+        "bm25": {
+            k: bm25_stats.get(k)
+            for k in (
+                "k1",
+                "b",
+                "title_weight",
+                "body_weight",
+                "average_document_length",
+                "tokenizer",
+                "max_query_terms",
+                "posting_rows_per_record",
+                "terms_per_shard",
+            )
+        },
         "counts": counts,
         "parquet": {
             "compression": "zstd",
             "compression_level": 6,
             "max_rows_per_file": MAX_ROWS_PER_FILE,
             "row_group_size": MAX_ROWS_PER_FILE,
+            "query_engine": "duckdb",
         },
         "graph": {
             "adjacency_pointers_per_row": ADJ_POINTERS_PER_ROW,
@@ -324,10 +370,43 @@ def package_release(
         },
         "source": source_meta,
     }
+    if extra_manifest:
+        manifest.update(extra_manifest)
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    _write_readme(out, country, source_meta, counts, bm25["stats"], graph["stats"], vectors["stats"], hub_id)
+    _write_readme(
+        out,
+        country,
+        source_meta,
+        counts,
+        bm25_stats,
+        graph_stats,
+        vectors.get("stats") if isinstance(vectors.get("stats"), dict) else {},
+        hub_id,
+        normalization_report=normalization_report,
+    )
     _write_gitattributes(out)
+    _write_dataset_configs(out)
     return manifest
+
+
+def _write_dataset_configs(out: Path) -> None:
+    configs = {
+        "country-laws-ir-graphrag/v1": {
+            "data_files": {
+                "corpus": "data/corpus/*.parquet",
+                "bm25_documents": "data/bm25/documents/*.parquet",
+                "bm25_postings": "data/bm25/postings/*.parquet",
+                "graph_nodes": "data/graph/nodes/*.parquet",
+                "graph_edges": "data/graph/edges/*.parquet",
+                "graph_adjacency_out": "data/graph/adjacency/out/*.parquet",
+                "graph_adjacency_in": "data/graph/adjacency/in/*.parquet",
+                "vectors": "data/vectors/*.parquet",
+            }
+        }
+    }
+    (out / "dataset_configs.json").write_text(
+        json.dumps(configs, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def _write_gitattributes(out: Path) -> None:
@@ -336,6 +415,55 @@ def _write_gitattributes(out: Path) -> None:
         "*.bin filter=lfs diff=lfs merge=lfs -text\n",
         encoding="utf-8",
     )
+
+
+def _size_category(n: int) -> str:
+    if n < 1000:
+        return "n<1K"
+    if n < 10_000:
+        return "1K<n<10K"
+    if n < 100_000:
+        return "10K<n<100K"
+    if n < 1_000_000:
+        return "100K<n<1M"
+    if n < 10_000_000:
+        return "1M<n<10M"
+    return "n>10M"
+
+
+def _card_languages(normalization_report: dict[str, Any] | None) -> list[str]:
+    if not normalization_report:
+        return []
+    seen: list[str] = []
+    majority = str(normalization_report.get("document_language_majority") or "").strip()
+    breakdown = normalization_report.get("language_breakdown") or {}
+    ordered = []
+    if majority:
+        ordered.append(majority)
+    ordered.extend(
+        sorted(
+            (str(k) for k in breakdown if k),
+            key=lambda k: -int(breakdown.get(k) or 0),
+        )
+    )
+    for raw in ordered:
+        lang = str(raw).strip().lower().replace("_", "-").split("-")[0]
+        if lang and lang not in seen and lang not in {"und", "none", "null"}:
+            seen.append(lang)
+        if len(seen) >= 8:
+            break
+    return seen
+
+
+def _adj_glob(out: Path, direction: str) -> str:
+    aliases = {
+        "out": ("out", "outgoing"),
+        "in": ("in", "incoming"),
+    }
+    for name in aliases.get(direction, (direction,)):
+        if (out / "data" / "graph" / "adjacency" / name).is_dir():
+            return f"data/graph/adjacency/{name}/*.parquet"
+    return f"data/graph/adjacency/{direction}/*.parquet"
 
 
 def _write_readme(
@@ -347,67 +475,49 @@ def _write_readme(
     graph_stats: dict[str, Any],
     vector_stats: dict[str, Any],
     hub_id: str,
+    normalization_report: dict[str, Any] | None = None,
 ) -> None:
     slug = country["slug"]
-    name = country["name"]
-    src = source_meta["source_dataset"]
-    rev = source_meta["source_revision"]
-    vec_status = vector_stats.get("status", "embedded")
+    name = country.get("name") or slug
+    src = source_meta.get("source_dataset") or ""
+    rev = source_meta.get("source_revision") or ""
+    vec_status = (vector_stats or {}).get("status", "embedded")
+    n_docs = int((counts or {}).get("corpus_rows") or 0)
+    languages = _card_languages(normalization_report)
+    import yaml
+
+    card = {
+        "license": "other",
+        "task_categories": ["text-retrieval"],
+        "tags": [
+            "legal",
+            "law",
+            "graphrag",
+            "bm25",
+            "research",
+            "not-legal-advice",
+            str(slug),
+        ],
+        "pretty_name": f"{name} laws IR (CID-keyed GraphRAG)",
+        "size_categories": [_size_category(n_docs)],
+        "configs": [
+            {"config_name": "corpus", "data_files": [{"split": "train", "path": "data/corpus/*.parquet"}]},
+            {"config_name": "bm25_documents", "data_files": [{"split": "train", "path": "data/bm25/documents/*.parquet"}]},
+            {"config_name": "bm25_postings", "data_files": [{"split": "train", "path": "data/bm25/postings/*.parquet"}]},
+            {"config_name": "bm25_keyword_index", "data_files": [{"split": "train", "path": "indexes/bm25_keyword_shards.parquet"}]},
+            {"config_name": "vectors", "data_files": [{"split": "train", "path": "data/vectors/*.parquet"}]},
+            {"config_name": "vector_meta_index", "data_files": [{"split": "train", "path": "indexes/vector_chunks.parquet"}]},
+            {"config_name": "graph_nodes", "data_files": [{"split": "train", "path": "data/graph/nodes/*.parquet"}]},
+            {"config_name": "graph_edges", "data_files": [{"split": "train", "path": "data/graph/edges/*.parquet"}]},
+            {"config_name": "graph_outgoing_adjacency", "data_files": [{"split": "train", "path": _adj_glob(out, "out")}]},
+            {"config_name": "graph_incoming_adjacency", "data_files": [{"split": "train", "path": _adj_glob(out, "in")}]},
+        ],
+    }
+    if languages:
+        card["language"] = languages
+    front = yaml.safe_dump(card, sort_keys=False, allow_unicode=True)
     text = f"""---
-license: other
-task_categories:
-- text-retrieval
-tags:
-- legal
-- law
-- graphrag
-- bm25
-- research
-- not-legal-advice
-- {slug}
-pretty_name: {name} laws IR (CID-keyed GraphRAG)
-configs:
-- config_name: corpus
-  data_files:
-  - split: train
-    path: data/corpus/*.parquet
-- config_name: bm25_documents
-  data_files:
-  - split: train
-    path: data/bm25/documents/*.parquet
-- config_name: bm25_postings
-  data_files:
-  - split: train
-    path: data/bm25/postings/*.parquet
-- config_name: bm25_keyword_index
-  data_files:
-  - split: train
-    path: indexes/bm25_keyword_shards.parquet
-- config_name: vectors
-  data_files:
-  - split: train
-    path: data/vectors/*.parquet
-- config_name: vector_meta_index
-  data_files:
-  - split: train
-    path: indexes/vector_chunks.parquet
-- config_name: graph_nodes
-  data_files:
-  - split: train
-    path: data/graph/nodes/*.parquet
-- config_name: graph_edges
-  data_files:
-  - split: train
-    path: data/graph/edges/*.parquet
-- config_name: graph_outgoing_adjacency
-  data_files:
-  - split: train
-    path: data/graph/adjacency/outgoing/*.parquet
-- config_name: graph_incoming_adjacency
-  data_files:
-  - split: train
-    path: data/graph/adjacency/incoming/*.parquet
----
+{front}---
 
 # {name} legislation IR (CID-keyed sparse GraphRAG)
 
@@ -427,14 +537,14 @@ Target Hub id (packaging metadata only): `{hub_id}`.
 
 | Field | Value |
 | --- | --- |
-| Laws (corpus units) | {counts['n_laws']} |
-| Articles (corpus units) | {counts['n_articles']} |
-| Canonical docs | {counts['corpus_rows']} |
-| BM25 terms | {counts['bm25_terms']} |
-| BM25 postings | {counts['bm25_postings']} |
-| Graph nodes | {counts['graph_nodes']} |
-| Graph edges | {counts['graph_edges']} |
-| Vectors | {counts['vector_rows']} × {vector_stats['dimension']}-d `{vector_stats['model_name']}` ({vec_status}) |
+| Laws (corpus units) | {(counts or {}).get('n_laws', 0)} |
+| Articles (corpus units) | {(counts or {}).get('n_articles', 0)} |
+| Canonical docs | {(counts or {}).get('corpus_rows', 0)} |
+| BM25 terms | {(counts or {}).get('bm25_terms', 0)} |
+| BM25 postings | {(counts or {}).get('bm25_postings', 0)} |
+| Graph nodes | {(counts or {}).get('graph_nodes', 0)} |
+| Graph edges | {(counts or {}).get('graph_edges', 0)} |
+| Vectors | {(counts or {}).get('vector_rows', 0)} × {(vector_stats or {}).get('dimension', 384)}-d `{(vector_stats or {}).get('model_name', 'thenlper/gte-small')}` ({vec_status}) |
 
 ## Canonical fields
 
@@ -546,6 +656,7 @@ def package_release_sequential(
     code_root: Path,
     normalization_report: dict[str, Any] | None = None,
     expected_rows: int | None = None,
+    extra_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Write release layout one section at a time (never hold corpus+bm25+graph+vectors).
 
@@ -753,6 +864,8 @@ def package_release_sequential(
 
     def idx_desc(name: str) -> dict[str, Any]:
         path = indexes_dir / name
+        if not path.is_file():
+            return {"relative_path": f"indexes/{name}", "present": False}
         return file_descriptor(path, f"indexes/{name}")
 
     manifest = {
@@ -765,7 +878,7 @@ def package_release_sequential(
         "dataset_revision": source_meta["source_revision"],
         "country": country,
         "disclaimer": "Research snapshot. Not legal advice. The official gazette / authentic source prevails.",
-        "bm25": {k: bm25_stats[k] for k in (
+        "bm25": {k: (bm25_stats or {}).get(k) for k in (
             "k1", "b", "title_weight", "body_weight", "average_document_length",
             "tokenizer", "max_query_terms", "posting_rows_per_record", "terms_per_shard",
         ) if k in bm25_stats},
@@ -835,11 +948,24 @@ def package_release_sequential(
         },
         "source": source_meta,
     }
+    if extra_manifest:
+        manifest.update(extra_manifest)
     (out / "manifest.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
-    _write_readme(out, country, source_meta, counts, bm25_stats, gstats, vstats, hub_id)
+    _write_readme(
+        out,
+        country,
+        source_meta,
+        counts,
+        bm25_stats,
+        gstats,
+        vstats,
+        hub_id,
+        normalization_report=normalization_report,
+    )
     _write_gitattributes(out)
+    _write_dataset_configs(out)
     checkpoint("package_seq_done")
     return manifest
 
@@ -853,14 +979,20 @@ def package_from_spill(
     code_root: Path,
     normalization_report: dict[str, Any] | None = None,
     expected_rows: int | None = None,
+    extra_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Package from spill dir artifacts: bm25_*.parquet, bm25_stats.pkl, graph.pkl, vectors.pkl."""
+    """Package from spill dir artifacts: bm25_*.parquet, bm25_stats.json, graph.pkl, vectors.pkl."""
+    import json as _json
     import pickle as _pickle
 
     spill = Path(spill)
-    stats_path = spill / "bm25_stats.pkl"
-    with stats_path.open("rb") as f:
-        bm25_stats = _pickle.load(f)
+    stats_json = spill / "bm25_stats.json"
+    stats_pkl = spill / "bm25_stats.pkl"
+    if stats_json.is_file():
+        bm25_stats = _json.loads(stats_json.read_text(encoding="utf-8"))
+    else:
+        with stats_pkl.open("rb") as f:
+            bm25_stats = _pickle.load(f)
     return package_release_sequential(
         out,
         corpus_path=Path(corpus_path),
@@ -874,4 +1006,5 @@ def package_from_spill(
         code_root=Path(code_root),
         normalization_report=normalization_report,
         expected_rows=expected_rows,
+        extra_manifest=extra_manifest,
     )

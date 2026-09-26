@@ -21,6 +21,15 @@ FACET_FIELDS = (
 )
 ADJ_POINTERS_PER_ROW = 4096
 ADJ_POINTERS_PER_SHARD = 8192
+_LABEL_MAX = 4096
+
+
+def _graph_label(text: str, fallback: str) -> str:
+    """Node labels are capped at 4096 characters. The full value stays in properties."""
+    cleaned = str(text or "").replace("\x00", "").strip() or fallback
+    if len(cleaned) > _LABEL_MAX:
+        return cleaned[: _LABEL_MAX - 3] + "..."
+    return cleaned
 
 
 def _facet_cid(kind: str, value: str) -> str:
@@ -68,7 +77,7 @@ def build_graph(
             "node_cid": law_cid,
             "node_type": "law",
             "entry_cid": "",
-            "label": getattr(rec, "instrument_title", None) or instrument_id,
+            "label": _graph_label(getattr(rec, "instrument_title", None) or instrument_id, instrument_id),
             "properties_json": _json(
                 {
                     "instrument_id": instrument_id,
@@ -85,14 +94,19 @@ def build_graph(
         nodes.append(law_node)
 
     for rec in corpus.itertuples(index=False):
-        node_type = "law_entry" if rec.record_type == "law" else "article"
+        if rec.record_type == "law":
+            node_type = "law_entry"
+        elif rec.record_type == "notice":
+            node_type = "notice"
+        else:
+            node_type = "article"
         title = getattr(rec, "title", None) or getattr(rec, "instrument_title", None) or rec.source_id
         nodes.append(
             {
                 "node_cid": rec.entry_cid,
                 "node_type": node_type,
                 "entry_cid": rec.entry_cid,
-                "label": title,
+                "label": _graph_label(title or rec.source_id, str(rec.source_id)),
                 "properties_json": _props_tuple(rec),
                 "schema_version": SCHEMA_VERSION,
             }
@@ -112,7 +126,7 @@ def build_graph(
                         "node_cid": fc,
                         "node_type": f"facet_{kind}",
                         "entry_cid": "",
-                        "label": f"{kind}:{value}",
+                        "label": _graph_label(f"{kind}:{value}", kind),
                         "properties_json": _json({"kind": kind, "value": value}),
                         "schema_version": SCHEMA_VERSION,
                     }
@@ -130,7 +144,7 @@ def build_graph(
                         "node_cid": fc,
                         "node_type": "facet_eli",
                         "entry_cid": "",
-                        "label": f"eli:{eli}",
+                        "label": _graph_label(f"eli:{eli}", "eli"),
                         "properties_json": _json({"kind": "eli", "value": eli}),
                         "schema_version": SCHEMA_VERSION,
                     }
@@ -146,7 +160,7 @@ def build_graph(
                         "node_cid": fc,
                         "node_type": "facet_identifier",
                         "entry_cid": "",
-                        "label": f"identifier:{ident}",
+                        "label": _graph_label(f"identifier:{ident}", "identifier"),
                         "properties_json": _json({"kind": "identifier", "value": ident}),
                         "schema_version": SCHEMA_VERSION,
                     }
@@ -157,7 +171,7 @@ def build_graph(
 
         law_cid = str(row_map.get("law_cid") or "")
         instrument_id = str(row_map.get("instrument_id") or "")
-        if rec.record_type == "article":
+        if rec.record_type in {"article", "section"}:
             parent = entry_by_instrument.get(instrument_id) or law_cid
             if parent and parent != rec.entry_cid:
                 edges.append(

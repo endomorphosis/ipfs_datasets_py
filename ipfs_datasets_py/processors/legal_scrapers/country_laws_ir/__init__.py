@@ -1,6 +1,6 @@
 """Country-law CID-keyed sparse GraphRAG packager (SkillCenter / publicus-ir family)."""
 
-__version__ = "0.3.0"
+__version__ = "0.5.0"
 # Layout matches SkillCenter HF release / publicus-ir family; schema string is domain-specific.
 SCHEMA_VERSION = "country-laws-ir-graphrag/v1"
 LAYOUT_FAMILY = "skillcenter-huggingface-release/v3"

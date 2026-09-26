@@ -2,14 +2,38 @@
 
 Belgium, Portugal, and Lithuania are incomplete Wayback harvests and are
 excluded from indexing. american_municipal_law is out of scope.
+
+The static ``COUNTRIES`` list is the fail-closed baseline. ``refresh_from_hub``
+persists a sidecar cache of newly listed Hub datasets so incremental scrapes
+of additional jurisdictions are indexable without a code change.
 """
 
 from __future__ import annotations
 
+import json
+import os
+from pathlib import Path
 from typing import Any
 
-EXCLUDED_SLUGS = {"belgium", "portugal", "lithuania"}
+EXCLUDED_SLUGS = {"belgium", "portugal", "lithuania", "ghana"}
 EXCLUDED_REPOS = {f"endomorphosis/ipfs_{s}_laws" for s in EXCLUDED_SLUGS}
+
+_SKIP_REASONS = {
+    "belgium": "incomplete Wayback harvest (Justel / Moniteur belge archive shard)",
+    "portugal": "incomplete Wayback harvest (Diário da República archive shard)",
+    "lithuania": "incomplete Wayback harvest (e-TAR archive shard)",
+    "ghana": "thin scrape; Act PDF path blocked by robots",
+}
+
+
+def catalog_cache_path() -> Path:
+    root = Path(
+        os.environ.get(
+            "COUNTRY_LAWS_IR_ROOT",
+            str(Path.home() / ".ipfs_datasets" / "country-laws-ir"),
+        )
+    )
+    return root / "catalog_cache.json"
 
 # Hub listing as of 2026-09-03. Refresh via `python -m country_laws_ir catalog --refresh`.
 COUNTRIES: list[dict[str, Any]] = [
@@ -88,6 +112,54 @@ COUNTRIES: list[dict[str, Any]] = [
 ]
 
 
+def load_cached_countries() -> list[dict[str, Any]]:
+    path = catalog_cache_path()
+    if not path.is_file():
+        return []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    rows = payload.get("countries") if isinstance(payload, dict) else payload
+    if not isinstance(rows, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if isinstance(row, dict) and row.get("slug") and row.get("repo"):
+            out.append(dict(row))
+    return out
+
+
+def persist_catalog(countries: list[dict[str, Any]], path: Path | None = None) -> Path:
+    dest = path or catalog_cache_path()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "n": len(countries),
+        "indexable": sum(1 for c in countries if c.get("indexable")),
+        "countries": countries,
+    }
+    dest.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return dest
+
+
+def merge_country_rows(
+    baseline: list[dict[str, Any]],
+    extra: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Static catalog wins on slug; Hub extras fill gaps."""
+    by_slug = {str(row["slug"]): dict(row) for row in baseline if row.get("slug")}
+    for row in extra:
+        slug = str(row.get("slug") or "")
+        if not slug or slug in by_slug:
+            continue
+        by_slug[slug] = dict(row)
+    return [by_slug[k] for k in sorted(by_slug)]
+
+
+def all_countries() -> list[dict[str, Any]]:
+    return merge_country_rows(COUNTRIES, load_cached_countries())
+
+
 def get_country(source: str) -> dict[str, Any]:
     source = source.strip()
     # Local filtered pack: directory with data/laws.parquet (+ optional pack_meta.json)
@@ -133,7 +205,7 @@ def get_country(source: str) -> dict[str, Any]:
     if "/" in source:
         slug = source.rsplit("/", 1)[-1]
     slug = slug.removeprefix("ipfs_").removesuffix("_laws").removesuffix("-ir")
-    for row in COUNTRIES:
+    for row in all_countries():
         if row["slug"] == slug or row["repo"] == source or row["repo"].endswith("/" + source):
             return dict(row)
     if source.startswith("endomorphosis/ipfs_") and source.endswith("_laws"):
@@ -143,20 +215,20 @@ def get_country(source: str) -> dict[str, Any]:
             "repo": source,
             "name": inferred.replace("_", " ").title(),
             "indexable": inferred not in EXCLUDED_SLUGS,
-            "skip_reason": "incomplete Wayback harvest" if inferred in EXCLUDED_SLUGS else None,
+            "skip_reason": _SKIP_REASONS.get(inferred),
         }
     raise KeyError(f"Unknown country-law source: {source}")
 
 
 def indexable_countries() -> list[dict[str, Any]]:
-    return [c for c in COUNTRIES if c.get("indexable")]
+    return [c for c in all_countries() if c.get("indexable")]
 
 
 def target_repo(slug: str) -> str:
     return f"justicedao/ipfs_{slug}_laws_ir"
 
 
-def refresh_from_hub() -> list[dict[str, Any]]:
+def refresh_from_hub(*, persist: bool = True) -> list[dict[str, Any]]:
     """Anonymous Hub listing of public endomorphosis/ipfs_*_laws datasets."""
     from huggingface_hub import HfApi
 
@@ -175,9 +247,10 @@ def refresh_from_hub() -> list[dict[str, Any]]:
             "repo": ds_id,
             "name": slug.replace("_", " ").title(),
             "indexable": slug not in EXCLUDED_SLUGS,
-            "skip_reason": (
-                "incomplete Wayback harvest" if slug in EXCLUDED_SLUGS else None
-            ),
+            "skip_reason": _SKIP_REASONS.get(slug),
         })
     found.sort(key=lambda r: r["slug"])
-    return found
+    merged = merge_country_rows(COUNTRIES, found)
+    if persist:
+        persist_catalog(merged)
+    return merged

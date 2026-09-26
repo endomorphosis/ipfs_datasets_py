@@ -145,6 +145,7 @@ nl_test_output/
 nl_test_output_docs/
 *.tar.gz
 *.jsonl
+!ipfs_datasets_py/processors/legal_scrapers/municipal/seeds/**/*.jsonl
 !tests/fixtures/logic_pipeline_benchmark/corpus.jsonl
 !tests/fixtures/logic_pipeline_benchmark/adversarial/controls.jsonl
 !tests/fixtures/legal_ir/hammer_failure_replay.jsonl

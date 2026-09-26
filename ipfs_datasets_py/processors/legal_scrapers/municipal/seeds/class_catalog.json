@@ -1,0 +1,7292 @@
+[
+  {
+    "qid": "Q3712150",
+    "label": "Administrative divisions of Czechoslovakia",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q207299",
+    "label": "administrative region of Greece",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q4073603",
+    "label": "ashkharh",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q757549",
+    "label": "atoll of the Maldives",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q16532593",
+    "label": "autonomous city of Spain",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q10742",
+    "label": "autonomous community of Spain",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q20732232",
+    "label": "autonomous island of the Comoros",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q15629146",
+    "label": "autonomous province of Serbia",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q135650554",
+    "label": "autonomous region of Nicaragua",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q2914565",
+    "label": "autonomous region of Portugal",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q17325066",
+    "label": "autonomous sector of Guinea-Bissau",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q4826865",
+    "label": "autonomous territorial unit",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q11625999",
+    "label": "Branch Secretariat",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q46395",
+    "label": "British Overseas Territories",
+    "role": "adm1",
+    "admin_level": "territory",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q953822",
+    "label": "canton of Costa Rica",
+    "role": "adm1",
+    "admin_level": "canton",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q1146429",
+    "label": "canton of Luxembourg",
+    "role": "adm1",
+    "admin_level": "canton",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q23058",
+    "label": "canton of Switzerland",
+    "role": "adm1",
+    "admin_level": "canton",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q17291456",
+    "label": "canton of the Helvetic Republic",
+    "role": "adm1",
+    "admin_level": "canton",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q604886",
+    "label": "charter city of the United States",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q139553870",
+    "label": "charter county",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q15063611",
+    "label": "city in the state of New York",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1093829",
+    "label": "city in the United States",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q12131624",
+    "label": "city in Ukraine",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q5123999",
+    "label": "city of regional significance of Ukraine",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q12266391",
+    "label": "city of republican significance",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q12102963",
+    "label": "city specifically designated in the state plan",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15127838",
+    "label": "city under state jurisdiction in Latvia",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q681277",
+    "label": "city with county rights",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q99308423",
+    "label": "commune of Monaco",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q838185",
+    "label": "communities, regions, and language areas of Belgium",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q4426538",
+    "label": "Community Development Council",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q29414133",
+    "label": "community of Cyprus Republic",
+    "role": "adm1",
+    "admin_level": "republic",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q60351842",
+    "label": "Complex of Communities of Cyprus Republic",
+    "role": "adm1",
+    "admin_level": "republic",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3301053",
+    "label": "consolidated city-county",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3336843",
+    "label": "constituent country of the United Kingdom",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q59369306",
+    "label": "Council of Tuvalu",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q91083372",
+    "label": "county in Czechoslovakia",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13410400",
+    "label": "county of Alabama",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q104251",
+    "label": "county of Albania",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13217186",
+    "label": "county of Arizona",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q11774062",
+    "label": "county of Arkansas",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13212489",
+    "label": "county of California",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1289426",
+    "label": "county of China",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q13410403",
+    "label": "county of Colorado",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414354",
+    "label": "county of Connecticut",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q57053",
+    "label": "county of Croatia",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13410411",
+    "label": "county of Delaware",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q876730",
+    "label": "county of Denmark",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q189672",
+    "label": "county of Estonia",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13410422",
+    "label": "county of Florida",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410428",
+    "label": "county of Georgia",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410431",
+    "label": "county of Hawaii",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q188604",
+    "label": "county of Hungary",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13410433",
+    "label": "county of Idaho",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q11812346",
+    "label": "county of Illinois",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410438",
+    "label": "county of Indiana",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q11774149",
+    "label": "county of Iowa",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410444",
+    "label": "county of Kansas",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410447",
+    "label": "county of Kentucky",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q269218",
+    "label": "county of Kenya",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q874821",
+    "label": "county of Liberia",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13410454",
+    "label": "county of Maine",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410464",
+    "label": "county of Maryland",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410485",
+    "label": "county of Massachusetts",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410496",
+    "label": "county of Michigan",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q12262532",
+    "label": "county of Minnesota",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410508",
+    "label": "county of Mississippi",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13410520",
+    "label": "county of Missouri",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q4469598",
+    "label": "County of Moldova",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13414358",
+    "label": "county of Montana",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414361",
+    "label": "county of Nebraska",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414369",
+    "label": "county of Nevada",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q603715",
+    "label": "county of New Brunswick",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414753",
+    "label": "county of New Hampshire",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414754",
+    "label": "county of New Jersey",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414755",
+    "label": "county of New Mexico",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414757",
+    "label": "county of New York",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414758",
+    "label": "county of North Carolina",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q12178655",
+    "label": "county of North Dakota",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q192299",
+    "label": "county of Norway",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q11774771",
+    "label": "county of Nova Scotia",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13414759",
+    "label": "county of Ohio",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414760",
+    "label": "county of Oklahoma",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414761",
+    "label": "county of Oregon",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414763",
+    "label": "county of Pennsylvania",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13414764",
+    "label": "county of Rhode Island",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1776764",
+    "label": "county of Romania",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13414765",
+    "label": "county of South Carolina",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q12037308",
+    "label": "county of South Dakota",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q17143371",
+    "label": "county of South Korea",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q200547",
+    "label": "county of Sweden",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q706447",
+    "label": "county of Taiwan",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q13415366",
+    "label": "county of Tennessee",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q11774097",
+    "label": "county of Texas",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q47168",
+    "label": "county of the United States",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13415365",
+    "label": "county of Utah",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13415367",
+    "label": "county of Vermont",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13415368",
+    "label": "county of Virginia",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13415369",
+    "label": "county of Washington",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13415370",
+    "label": "county of West Virginia",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q12178928",
+    "label": "county of Wisconsin",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13415371",
+    "label": "county of Wyoming",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q13360155",
+    "label": "county or county-equivalent",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1188782",
+    "label": "county-equivalent",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1070990",
+    "label": "county-level city of China",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q3559207",
+    "label": "decentralized administration of Greece",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q792929",
+    "label": "department of Benin",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q250050",
+    "label": "department of Bolivia",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q2566190",
+    "label": "department of Burkina Faso",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q215655",
+    "label": "department of Colombia",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q475214",
+    "label": "department of El Salvador",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q27448",
+    "label": "department of Guatemala",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q62127",
+    "label": "department of Haiti",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q728145",
+    "label": "department of Honduras",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q822715",
+    "label": "department of Nicaragua",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q815068",
+    "label": "department of Paraguay",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q861184",
+    "label": "department of Peru",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15631887",
+    "label": "department of the Batavian Republic",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q92938359",
+    "label": "department of the Cisalpine Republic",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15623448",
+    "label": "department of the Duchy of Warsaw",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q868893",
+    "label": "department of the Republic of the Congo",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q56059",
+    "label": "department of Uruguay",
+    "role": "adm1",
+    "admin_level": "department",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q106534046",
+    "label": "dependency",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q46260602",
+    "label": "dependency of Antigua and Barbuda",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q55433027",
+    "label": "dependency of Fiji",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q26561",
+    "label": "development region of Nepal",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q878040",
+    "label": "division of Bangladesh",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q15646524",
+    "label": "division of Fiji",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q20740204",
+    "label": "division of Tonga",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1261535",
+    "label": "dry county",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q4160883",
+    "label": "dzongdey",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q20732250",
+    "label": "economic prefecture of the Central African Republic",
+    "role": "adm1",
+    "admin_level": "prefecture",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q19833031",
+    "label": "emirate of the United Arab Emirates",
+    "role": "adm1",
+    "admin_level": "emirate",
+    "depth": 1,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q140937749",
+    "label": "entity of Bosnia and Herzegovina",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q261543",
+    "label": "federal state of Austria",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q43263",
+    "label": "federal subject of Russia",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q22080713",
+    "label": "federal territory of Brazil",
+    "role": "adm1",
+    "admin_level": "territory",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1221156",
+    "label": "federated state of Germany",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q20528428",
+    "label": "federative entity of Mexico",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q485258",
+    "label": "federative unit of Brazil",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q12479773",
+    "label": "first-level administrative country subdivision in Indonesia",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q10864048",
+    "label": "first-level administrative division",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 0,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q671370",
+    "label": "general governorate of the Russian Empire",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q867606",
+    "label": "governorate of Bahrain",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q204910",
+    "label": "governorate of Egypt",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q841753",
+    "label": "governorate of Iraq",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q867567",
+    "label": "governorate of Jordan",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q842876",
+    "label": "governorate of Kuwait",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q844713",
+    "label": "governorate of Lebanon",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q517351",
+    "label": "governorate of Syria",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q50495",
+    "label": "governorate of the State of Palestine",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q690084",
+    "label": "governorate of Tunisia",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q331130",
+    "label": "governorate of Yemen",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q641078",
+    "label": "governorates of Oman",
+    "role": "adm1",
+    "admin_level": "governorate",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1266818",
+    "label": "independent city in the United States",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q137178959",
+    "label": "indigenous region of Panama",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q462778",
+    "label": "insular area of the United States",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q138649734",
+    "label": "integrated special city of South Korea",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q2115448",
+    "label": "intra-city territory of a federal city",
+    "role": "adm1",
+    "admin_level": "territory",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q17305516",
+    "label": "island group of Kiribati",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q12769662",
+    "label": "kraj",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1248049",
+    "label": "Land",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q3074936",
+    "label": "local government in the Republic of Ireland",
+    "role": "adm1",
+    "admin_level": "republic",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q482821",
+    "label": "metropolitan city of South Korea",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1210300",
+    "label": "Mkhare",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q209824",
+    "label": "oblast of Bulgaria",
+    "role": "adm1",
+    "admin_level": "oblast",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q91610157",
+    "label": "oblast of Bulgaria pre 1999",
+    "role": "adm1",
+    "admin_level": "oblast",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q17484900",
+    "label": "Outer islands of Mauritius",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q719487",
+    "label": "overseas collectivity of France",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q13997861",
+    "label": "partido of Buenos Aires Province",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q117286571",
+    "label": "planning region of Connecticut",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q50337",
+    "label": "prefecture of Japan",
+    "role": "adm1",
+    "admin_level": "prefecture",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q69936573",
+    "label": "prefecture of Taiwan under Japanese rule",
+    "role": "adm1",
+    "admin_level": "prefecture",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q843886",
+    "label": "prefecture of the Central African Republic",
+    "role": "adm1",
+    "admin_level": "prefecture",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q748149",
+    "label": "prefecture-level city of China",
+    "role": "adm1",
+    "admin_level": "prefecture",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q106531650",
+    "label": "province",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q136093978",
+    "label": "province",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q12084012",
+    "label": "province level division of the Republic of China",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q158683",
+    "label": "province of Afghanistan",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q240601",
+    "label": "province of Algeria",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q329028",
+    "label": "province of Angola",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q44753",
+    "label": "province of Argentina",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q514860",
+    "label": "province of Armenia",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q616981",
+    "label": "province of Brazil",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q476075",
+    "label": "province of Burundi",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q7252589",
+    "label": "province of Cambodia",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q11828004",
+    "label": "province of Canada",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q640262",
+    "label": "province of Chad",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1075520",
+    "label": "province of Costa Rica",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q115291",
+    "label": "province of Cuba",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q719987",
+    "label": "province of Ecuador",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q867597",
+    "label": "province of Equatorial Guinea",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q653596",
+    "label": "province of Gabon",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q18592472",
+    "label": "province of Guinea-Bissau",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q27612211",
+    "label": "province of India",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q5098",
+    "label": "province of Indonesia",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 0,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1344695",
+    "label": "province of Iran",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15673297",
+    "label": "province of Laos",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q864133",
+    "label": "province of Madagascar",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q50399",
+    "label": "province of Mongolia",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q695469",
+    "label": "province of Mozambique",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q22049119",
+    "label": "province of Nepal",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15620174",
+    "label": "province of North Korea",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15058985",
+    "label": "province of Pakistan",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1382893",
+    "label": "province of Panama",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1053630",
+    "label": "province of Papua New Guinea",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q871217",
+    "label": "province of Rwanda",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15728204",
+    "label": "province of Saudi Arabia",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1145005",
+    "label": "province of Sierra Leone",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q191093",
+    "label": "province of South Africa",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q4925355",
+    "label": "province of South Korea",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q861559",
+    "label": "province of Sri Lanka",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1051411",
+    "label": "province of São Tomé and Príncipe",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q50198",
+    "label": "province of Thailand",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q654140",
+    "label": "province of the Democratic Republic of the Congo",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q913337",
+    "label": "province of the Dominican Republic",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q26344166",
+    "label": "province of the Kingdom of the Two Sicilies",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q18592110",
+    "label": "province of the Maldives",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q134390",
+    "label": "province of the Netherlands",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q24746",
+    "label": "province of the Philippines",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q17379685",
+    "label": "Province of the Republic of Artsakh",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1025116",
+    "label": "province of the Solomon Islands",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q48336",
+    "label": "province of Turkey",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q847299",
+    "label": "province of Vanuatu",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15313730",
+    "label": "province of Zambia",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q492042",
+    "label": "province of Zimbabwe",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q2879",
+    "label": "province or territory of Canada",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q119608727",
+    "label": "province-level division",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q47092120",
+    "label": "provinces of the Qing Empire",
+    "role": "adm1",
+    "admin_level": "province",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q11076354",
+    "label": "provincial administration commission",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q83020",
+    "label": "provincial city",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q109429530",
+    "label": "provincial-level subdivision of Vietnam",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1753792",
+    "label": "quarter of Saint Lucia",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q209325",
+    "label": "region of Belarus",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q83057",
+    "label": "region of Belgium",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q867094",
+    "label": "region of Burkina Faso",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q869042",
+    "label": "region of Cameroon",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q590080",
+    "label": "region of Chile",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q20724764",
+    "label": "region of Czechoslovakia",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q62326",
+    "label": "region of Denmark",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1202812",
+    "label": "region of Djibouti",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q22696381",
+    "label": "region of Equatorial Guinea",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q874223",
+    "label": "region of Eritrea",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1069042",
+    "label": "region of Eswatini",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1057504",
+    "label": "region of Ethiopia",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q193512",
+    "label": "region of Finland",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q36784",
+    "label": "region of France",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1052743",
+    "label": "region of Ghana",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1067116",
+    "label": "region of Guinea",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q2087773",
+    "label": "region of Guyana",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q842100",
+    "label": "region of Iceland",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q16110",
+    "label": "region of Italy",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q836672",
+    "label": "region of Kazakhstan",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q693039",
+    "label": "region of Kyrgyzstan",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q971831",
+    "label": "region of Madagascar",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q3271886",
+    "label": "region of Malawi",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q743074",
+    "label": "region of Mali",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q7309296",
+    "label": "region of Malta",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q846327",
+    "label": "region of Mauritania",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q845643",
+    "label": "region of Morocco",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15072454",
+    "label": "region of Myanmar",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q608843",
+    "label": "region of Namibia",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q216712",
+    "label": "region of New Zealand",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q859869",
+    "label": "region of Niger",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q27535996",
+    "label": "region of Nigeria",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q847667",
+    "label": "region of Senegal",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15057583",
+    "label": "region of Slovakia",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1137691",
+    "label": "region of Somaliland",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q104117291",
+    "label": "region of Spain",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q867545",
+    "label": "region of Tajikistan",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q845820",
+    "label": "region of Tanzania",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q38911",
+    "label": "region of the Czech Republic",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15646510",
+    "label": "region of the Gambia",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q24698",
+    "label": "region of the Philippines",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q139228",
+    "label": "region of Togo",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q12014176",
+    "label": "region of Turkmenistan",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q3076685",
+    "label": "region of Uganda",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q84823091",
+    "label": "region of Ukraine",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q842420",
+    "label": "region of Uzbekistan",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q3455648",
+    "label": "Regional Authorities in Ireland",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q109382914",
+    "label": "regional capital in Saudi Arabia",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q20899166",
+    "label": "regional capital of France",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q20732239",
+    "label": "regional corporation of Trinidad and Tobago",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1022469",
+    "label": "regional council of Israel",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q119627394",
+    "label": "regional government",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2371398",
+    "label": "Regional Service Commission",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q236036",
+    "label": "republic of the Soviet Union",
+    "role": "adm1",
+    "admin_level": "republic",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q12883402",
+    "label": "sheading",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q111127635",
+    "label": "special administrative region in East Timor",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q16181672",
+    "label": "special autonomous city in South Korea",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q7574799",
+    "label": "Special City of Korea",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q7574798",
+    "label": "special city of North Korea",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q11279677",
+    "label": "special self-governing province and state of South Korea",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q20683492",
+    "label": "special statute region of Chad",
+    "role": "adm1",
+    "admin_level": "region",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q106458883",
+    "label": "state",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q109329953",
+    "label": "state city of Latvia",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q5852411",
+    "label": "state of Australia",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q12443800",
+    "label": "state of India",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 0,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15149663",
+    "label": "state of Mexico",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q17315624",
+    "label": "state of Myanmar",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q465842",
+    "label": "state of Nigeria",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1044181",
+    "label": "state of Palau",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q496539",
+    "label": "state of South Sudan",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q746290",
+    "label": "state of Sudan",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q65183056",
+    "label": "state of the Federal Republic of Central America",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15618452",
+    "label": "state of the Federated States of Micronesia",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q113136497",
+    "label": "state of the German Confederation 1815–1848 & 1850–1866",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1801891",
+    "label": "state of the German Democratic Republic",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q501094",
+    "label": "state of Venezuela",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q21518270",
+    "label": "state or insular area capital of the United States",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q178712",
+    "label": "state or territory of Australia",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q50464",
+    "label": "states and federal territories of Malaysia",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q131541",
+    "label": "states and union territories of India",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q257978",
+    "label": "statutory city in the Czech Republic",
+    "role": "adm1",
+    "admin_level": "republic",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q615794",
+    "label": "suyu",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q106532582",
+    "label": "territory",
+    "role": "adm1",
+    "admin_level": "territory",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q9357527",
+    "label": "territory of Canada",
+    "role": "adm1",
+    "admin_level": "territory",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q15127012",
+    "label": "town in the United States",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q35657",
+    "label": "U.S. state",
+    "role": "adm1",
+    "admin_level": "state",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q467745",
+    "label": "union territory of India",
+    "role": "adm1",
+    "admin_level": "territory",
+    "depth": 0,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q33101426",
+    "label": "urban council in Ukraine",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q7900180",
+    "label": "urban township of the United States",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q150093",
+    "label": "voivodeship of Poland",
+    "role": "adm1",
+    "admin_level": "voivodeship",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q139559546",
+    "label": "wet county",
+    "role": "adm1",
+    "admin_level": "county",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q56557664",
+    "label": "şəhər",
+    "role": "adm1",
+    "admin_level": "adm1",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q12131640",
+    "label": "city of district significance",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q106533981",
+    "label": "district",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q134626",
+    "label": "district capital",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1589568",
+    "label": "district municipality",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3327871",
+    "label": "district municipality",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q17301072",
+    "label": "district municipality of Lithuania",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13220372",
+    "label": "district of Abkhazia",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q496825",
+    "label": "district of Afghanistan",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q123266",
+    "label": "district of Albania",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q13417250",
+    "label": "district of Azerbaijan",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q2043199",
+    "label": "district of Belarus",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q765865",
+    "label": "district of Belize",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q831889",
+    "label": "district of Bhutan",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q57368",
+    "label": "district of Botswana",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q50427",
+    "label": "district of Brunei Darussalam",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q59136",
+    "label": "district of Cyprus",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q690840",
+    "label": "district of Ethiopia",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q545769",
+    "label": "district of Ghana",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q20717263",
+    "label": "district of Ivory Coast",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q2643128",
+    "label": "district of Kazakhstan",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q2915243",
+    "label": "district of Kosovo",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q844531",
+    "label": "district of Lesotho",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q48242",
+    "label": "district of Libya",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q12806962",
+    "label": "district of Ljubljana",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q216888",
+    "label": "district of Luxembourg",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1994931",
+    "label": "district of Malaysia",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q15068450",
+    "label": "district of Moldova",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1518096",
+    "label": "district of Mongolia",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q4389092",
+    "label": "district of Moscow",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q319796",
+    "label": "district of Nauru",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q3710488",
+    "label": "district of Panama",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q2179958",
+    "label": "district of Peru",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q3032141",
+    "label": "district of Portugal",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1070167",
+    "label": "district of Samoa",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q648681",
+    "label": "district of Serbia",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1149621",
+    "label": "district of Seychelles",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1230110",
+    "label": "district of Sri Lanka",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q1649296",
+    "label": "district of Suriname",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q2409750",
+    "label": "district of Tanzania",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q1230132",
+    "label": "district of The Bahamas",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q15630895",
+    "label": "district of the German Democratic Republic",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q2631599",
+    "label": "district of Uzbekistan",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q5283558",
+    "label": "district of Zimbabwe",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q1139753",
+    "label": "district or dependency of Mauritius",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q193560",
+    "label": "districts of Israel",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q448801",
+    "label": "Greater district town",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q15234658",
+    "label": "Improvement Districts of Alberta",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1548518",
+    "label": "large district town",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q28916128",
+    "label": "local government district",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3032041",
+    "label": "local service district of New Brunswick",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q54935786",
+    "label": "medium-sized district town",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q4296769",
+    "label": "metropolitan district",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q60849925",
+    "label": "municipal district in Russia",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q14762205",
+    "label": "municipal district of Alberta",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q29473607",
+    "label": "municipal district of Drymos",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15731904",
+    "label": "municipal district of Nova Scotia",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6936314",
+    "label": "municipal district of Quebec",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1187580",
+    "label": "non-metropolitan district",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q85796467",
+    "label": "regional district in British Columbia",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q4414032",
+    "label": "rural district of Kazakhstan",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q64636958",
+    "label": "school district of Oregon",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q779426",
+    "label": "urban district of Hungary",
+    "role": "district",
+    "admin_level": "district",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q10401396",
+    "label": "administrative village",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q18285253",
+    "label": "Alberta special area",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q4291381",
+    "label": "amalgamated hromada",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q666943",
+    "label": "associated commune",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q515483",
+    "label": "baladiyya",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15273785",
+    "label": "Belgian municipality with the title of city",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q10501047",
+    "label": "birth domicile",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13081391",
+    "label": "Bjelimići",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q4946305",
+    "label": "borough in the United States",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13410522",
+    "label": "borough of Alaska",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q4946304",
+    "label": "borough of Connecticut",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2911266",
+    "label": "borough of New Jersey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q408804",
+    "label": "borough of New York City",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q777120",
+    "label": "borough of Pennsylvania",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q10840672",
+    "label": "Business core city (Japan)",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1019292",
+    "label": "Bäuert",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q114178",
+    "label": "Bürgerkommune",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3284867",
+    "label": "cendea",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q56064719",
+    "label": "census area of Alaska",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2689658",
+    "label": "central municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1381899",
+    "label": "centrally-governed cities of Vietnam",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15253706",
+    "label": "city",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q27676414",
+    "label": "city",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3505887",
+    "label": "city council",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1749269",
+    "label": "city designated by government ordinance",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q11422368",
+    "label": "city for international conferences and tourism",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q55440238",
+    "label": "city in Alberta",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q138164278",
+    "label": "city in Arizona",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q60458065",
+    "label": "city in British Columbia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q130626256",
+    "label": "city in Canada",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q130627817",
+    "label": "city in Manitoba",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q130628050",
+    "label": "city in New Brunswick",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2974552",
+    "label": "city in New Jersey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q44551483",
+    "label": "city in Newfoundland and Labrador",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q130629307",
+    "label": "city in Nova Scotia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q130629319",
+    "label": "city in Ontario",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q130629327",
+    "label": "city in Prince Edward Island",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q130629332",
+    "label": "city in Quebec",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q130627673",
+    "label": "city in Saskatchewan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q110571169",
+    "label": "city in Saudi Arabia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6960199",
+    "label": "city municipality of Slovenia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q13218357",
+    "label": "city of California",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q110071194",
+    "label": "city of Illinois",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3199141",
+    "label": "city of Indonesia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q494721",
+    "label": "city of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q139903024",
+    "label": "city of Michigan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q110292529",
+    "label": "city of Minnesota",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q132680629",
+    "label": "city of North Carolina",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q134844639",
+    "label": "city of North Dakota",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q108569710",
+    "label": "city of Ohio",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q63440326",
+    "label": "city of Oregon",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q21010817",
+    "label": "city of Pennsylvania",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q29045252",
+    "label": "city of South Korea",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q70036182",
+    "label": "city of Taiwan under Japanese rule",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q138010797",
+    "label": "city of Texas",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q111874502",
+    "label": "city of West Virginia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q15221256",
+    "label": "city of Wisconsin",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q27676416",
+    "label": "city or town of Quebec",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q10929914",
+    "label": "city status",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q587089",
+    "label": "city with municipal rights",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q925381",
+    "label": "city with powiat rights in Poland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q9391358",
+    "label": "city with public health center",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3678424",
+    "label": "city with special status",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q5124045",
+    "label": "city with special status",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q117351913",
+    "label": "city, town or village of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q114186378",
+    "label": "city-level government in Indonesia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1021096",
+    "label": "civic community",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q56293109",
+    "label": "Civic community",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q10433151",
+    "label": "civic municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3266850",
+    "label": "commune",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q112226256",
+    "label": "commune et commune nouvelle",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q22927548",
+    "label": "commune in merger-association",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2989454",
+    "label": "commune nouvelle",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2989398",
+    "label": "commune of Algeria",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q132730984",
+    "label": "commune of Burundi",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3076994",
+    "label": "commune of Cameroon",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1840161",
+    "label": "commune of Chile",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q484170",
+    "label": "commune of France",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q22927616",
+    "label": "commune of France with specific status",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3685462",
+    "label": "commune of Haiti",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3192808",
+    "label": "commune of Madagascar",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1758856",
+    "label": "commune of Mali",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2989470",
+    "label": "commune of Mauritania",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q18534366",
+    "label": "commune of Medellín",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q4229812",
+    "label": "commune of Moldova",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q84669937",
+    "label": "commune of New Caledonia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q659103",
+    "label": "commune of Romania",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q17176508",
+    "label": "commune of the Central African Republic",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2389082",
+    "label": "commune of Vietnam",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q3111821",
+    "label": "community of New Brunswick",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q5780443",
+    "label": "comuna of Colombia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q747074",
+    "label": "comune of Italy",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1633408",
+    "label": "concelho",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q12712989",
+    "label": "concelho of Cape Verde",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1137833",
+    "label": "core city of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1441562",
+    "label": "coterminous municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q106072745",
+    "label": "coterminous town-village of New York",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q5055981",
+    "label": "council of Asturies",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q124655903",
+    "label": "council of governments in Connecticut",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q17290932",
+    "label": "Cree reserved land",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3558965",
+    "label": "Cree village",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q7819319",
+    "label": "Czech municipality with expanded powers",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q21869758",
+    "label": "delegated commune",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1208802",
+    "label": "direct-administered municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q499073",
+    "label": "direct-controlled municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q18663566",
+    "label": "dissolved municipality of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q18646840",
+    "label": "divorce municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1434401",
+    "label": "dzielnica",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q27554593",
+    "label": "dzielnica of Lublin",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1815926",
+    "label": "effective rural municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q133997300",
+    "label": "Einheitsgemeinde of Lower Saxony",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2215397",
+    "label": "English-language word \"city\"",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q70697",
+    "label": "Feuerschaugemeinde",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15221304",
+    "label": "first-class city",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15221373",
+    "label": "fourth-class city",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2280389",
+    "label": "fusion municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q55612423",
+    "label": "general law municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q15334",
+    "label": "gmina",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3752524",
+    "label": "gmina's auxiliary unit of Poland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1232414",
+    "label": "Großgemeinde",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q111031767",
+    "label": "hamlet of Ohio",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q11983070",
+    "label": "Herredskommune",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q140044897",
+    "label": "home rule municipality of Colorado",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q104841013",
+    "label": "hromada",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q132133526",
+    "label": "illegal municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q9283961",
+    "label": "incorporated town",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q110071230",
+    "label": "incorporated town of Illinois",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q141162078",
+    "label": "independent city in Virginia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q22865",
+    "label": "independent city of Germany",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q130335918",
+    "label": "indigenous commune",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1307779",
+    "label": "integrated municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q27824520",
+    "label": "Inuit reserved land",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q134462885",
+    "label": "island municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q71111443",
+    "label": "Jewish political community",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q55118936",
+    "label": "Kirchgemeinde",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q99691499",
+    "label": "kommune",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1751950",
+    "label": "Korporationsgemeinde",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6838968",
+    "label": "kozhuun",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q122733837",
+    "label": "Ladin municipalities of South Tyrol",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q4314343",
+    "label": "language border municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1548525",
+    "label": "large independent city of Lower Saxony",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1214953",
+    "label": "large village of Hungary",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2218838",
+    "label": "list of municipalities in Nova Scotia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6643749",
+    "label": "list of towns in Nova Scotia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q20522070",
+    "label": "Local community (Slovenia)",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1288520",
+    "label": "local council in Israel",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q719592",
+    "label": "local council of Malta",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1867183",
+    "label": "local government area of Australia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q1639634",
+    "label": "local government area of Nigeria",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q12504393",
+    "label": "local government in Indonesia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2762194",
+    "label": "local government in Israel",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6925531",
+    "label": "Local industrial councils in Israel",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3327873",
+    "label": "local municipality of Quebec",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1500352",
+    "label": "local municipality of South Africa",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q211690",
+    "label": "London borough",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q15210668",
+    "label": "lower-tier municipality of Ontario",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q562061",
+    "label": "market municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q100341898",
+    "label": "market municipality of Germany",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1175519",
+    "label": "megyei város",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1002812",
+    "label": "metropolitan borough",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q6024226",
+    "label": "metropolitan municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1530824",
+    "label": "metropolitan municipality in South Africa",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2716259",
+    "label": "metropolitan municipality in Turkey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q2229627",
+    "label": "millionaire municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q113637359",
+    "label": "monohromada",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q128599115",
+    "label": "municipal building authority",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q348884",
+    "label": "municipal community",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13420058",
+    "label": "municipal community in Sweden",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1849719",
+    "label": "municipal formation in Russia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3788231",
+    "label": "municipal government in Canada",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3350075",
+    "label": "municipal okrug",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q42619282",
+    "label": "municipal okrug of Saint Petersburg",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q25505751",
+    "label": "municipal school",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q16739079",
+    "label": "municipalities of Cyprus Republic",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q737681",
+    "label": "municipalities with language facilities",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15284",
+    "label": "municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q27676428",
+    "label": "municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q123433484",
+    "label": "municipality in Alberta",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q262166",
+    "label": "municipality in Germany",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1544184",
+    "label": "Municipality in Prussia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q17110751",
+    "label": "municipality in Saskatchewan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q135669842",
+    "label": "municipality in the GDR",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3327870",
+    "label": "municipality in the United States",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q768307",
+    "label": "municipality of Albania",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q125576665",
+    "label": "municipality of Andalucía",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q378508",
+    "label": "municipality of Angola",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q61763947",
+    "label": "municipality of Aragon",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3243765",
+    "label": "municipality of Argentina",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q667509",
+    "label": "municipality of Austria",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15129871",
+    "label": "municipality of Azerbaijan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q23759397",
+    "label": "municipality of Bangladesh",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q493522",
+    "label": "municipality of Belgium",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q17134625",
+    "label": "municipality of Bermuda",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1062710",
+    "label": "municipality of Bolivia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3184121",
+    "label": "municipality of Brazil",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1906268",
+    "label": "municipality of Bulgaria",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q123095923",
+    "label": "municipality of Cantabria",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q125577012",
+    "label": "municipality of Castile and León",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q125577043",
+    "label": "municipality of Castilla-La Mancha",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q33146843",
+    "label": "municipality of Catalonia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2555896",
+    "label": "municipality of Colombia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q140044899",
+    "label": "municipality of Colorado",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q57058",
+    "label": "municipality of Croatia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q558330",
+    "label": "municipality of Cuba",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2177636",
+    "label": "municipality of Denmark",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q741821",
+    "label": "municipality of East Timor",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q3556889",
+    "label": "municipality of El Salvador",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q612229",
+    "label": "municipality of Estonia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q125576927",
+    "label": "municipality of Extremadura",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q856076",
+    "label": "municipality of Finland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2276925",
+    "label": "municipality of Galicia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2655841",
+    "label": "municipality of Georgia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q76514543",
+    "label": "municipality of Georgia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q1349648",
+    "label": "municipality of Greece",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q16423979",
+    "label": "municipality of Greenland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1872284",
+    "label": "municipality of Guatemala",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2602693",
+    "label": "municipality of Honduras",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2590631",
+    "label": "municipality of Hungary",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q955655",
+    "label": "municipality of Iceland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q110071154",
+    "label": "municipality of Illinois",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q112684326",
+    "label": "municipality of India",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q20110574",
+    "label": "municipality of Iran",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1054813",
+    "label": "municipality of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q109279933",
+    "label": "municipality of Jordan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q123680441",
+    "label": "municipality of La Rioja",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3345345",
+    "label": "municipality of Latvia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q6936383",
+    "label": "municipality of Lebanon",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15650103",
+    "label": "municipality of Libya",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q16124843",
+    "label": "municipality of Libya",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q203300",
+    "label": "municipality of Liechtenstein",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1363145",
+    "label": "municipality of Lithuania",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q2919801",
+    "label": "municipality of Luxembourg",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1952852",
+    "label": "municipality of Mexico",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1963041",
+    "label": "municipality of Moldova",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q838549",
+    "label": "municipality of Montenegro",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q56036687",
+    "label": "municipality of Mozambique",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q125577114",
+    "label": "municipality of Navarre",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3492039",
+    "label": "municipality of Nepal",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q54115138",
+    "label": "municipality of New Jersey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q318727",
+    "label": "municipality of Nicaragua",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q605291",
+    "label": "municipality of Niger",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q646793",
+    "label": "municipality of North Macedonia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q755707",
+    "label": "municipality of Norway",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q108569731",
+    "label": "municipality of Ohio",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3327899",
+    "label": "municipality of Ontario",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q136721998",
+    "label": "Municipality of Palestine type A",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q917092",
+    "label": "municipality of Paraguay",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q110076354",
+    "label": "municipality of Peru",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13217644",
+    "label": "municipality of Portugal",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q263639",
+    "label": "municipality of Puerto Rico",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q685320",
+    "label": "municipality of Qatar",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q640364",
+    "label": "municipality of Romania",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q14292916",
+    "label": "municipality of San Marino",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q108800505",
+    "label": "municipality of Saudi Arabia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6784672",
+    "label": "municipality of Slovakia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q328584",
+    "label": "municipality of Slovenia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q66126784",
+    "label": "municipality of Sonora",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2666845",
+    "label": "municipality of South Africa",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q64515521",
+    "label": "Municipality of South Vietnam",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2074737",
+    "label": "municipality of Spain",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q127448",
+    "label": "municipality of Sweden",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q70208",
+    "label": "municipality of Switzerland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q2997091",
+    "label": "municipality of Tamaulipas",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q125576962",
+    "label": "municipality of the Canary Islands",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q5153359",
+    "label": "municipality of the Czech Republic",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6005581",
+    "label": "municipality of the Dominican Republic",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q856079",
+    "label": "municipality of the Faroe Islands",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q17268368",
+    "label": "municipality of the Federation of Bosnia and Herzegovina",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q65133814",
+    "label": "municipality of the Independent State of Croatia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2039348",
+    "label": "municipality of the Netherlands",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q24764",
+    "label": "municipality of the Philippines",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6936404",
+    "label": "municipality of the State of Palestine",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q123754112",
+    "label": "municipality of the Valencian Community",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q41067667",
+    "label": "municipality of Tunisia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q123165444",
+    "label": "municipality of Turkey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2460358",
+    "label": "municipality of Turkey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q110977456",
+    "label": "municipality of Uganda",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3685434",
+    "label": "municipality of Uruguay",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3327920",
+    "label": "municipality of Venezuela",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q18918041",
+    "label": "municipality of West Bengal",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2101494",
+    "label": "municipality type in Switzerland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q7841907",
+    "label": "municipality with authorized municipal office",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15978299",
+    "label": "municipality with town privileges in the Czech Republic",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q116457956",
+    "label": "municipality without town privileges in Germany",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1763214",
+    "label": "municipio",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q31835971",
+    "label": "Munizipalität",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q16155707",
+    "label": "městys",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q965956",
+    "label": "Nansana",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q27676431",
+    "label": "naskapi village municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2154459",
+    "label": "New England town",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q28656402",
+    "label": "new town in Alberta",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q115791821",
+    "label": "Nisga'a village",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q116196862",
+    "label": "northern hamlet of Saskatchewan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q115861271",
+    "label": "northern village",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3559003",
+    "label": "northern village",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q2183520",
+    "label": "obec",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q692680",
+    "label": "Ortsgemeinde",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q41778911",
+    "label": "Ortsgemeinde of Rhineland-Palatinate",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2248015",
+    "label": "overflow municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1153975",
+    "label": "people's commune",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q11663839",
+    "label": "progressive municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q114166460",
+    "label": "provincial government of Indonesia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q14846916",
+    "label": "provincial municipality of Cambodia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q89031988",
+    "label": "provincial municipality of Turkey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q5154047",
+    "label": "quarter/commune of Cambodia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q123127825",
+    "label": "regencies and cities of Indonesia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3191695",
+    "label": "regency of Indonesia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q114186325",
+    "label": "Regency-level government in Indonesia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q114166528",
+    "label": "Regency/City-level government in Indonesia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1996198",
+    "label": "regional corporation or municipality of Trinidad and Tobago",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1388464",
+    "label": "regional municipality in Canada",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q14762890",
+    "label": "regional municipality of Ontario",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q60740115",
+    "label": "resort municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6636519",
+    "label": "resort village in Saskatchewan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2148181",
+    "label": "Rhode",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q20826981",
+    "label": "Rural community (local government)",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2989369",
+    "label": "rural community of New Brunswick",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q15071808",
+    "label": "rural council of Belarus",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q12336315",
+    "label": "rural municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q141481559",
+    "label": "rural municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1650922",
+    "label": "rural municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6637174",
+    "label": "rural municipality in Saskatchewan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1802801",
+    "label": "rural municipality of Austria",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3327874",
+    "label": "rural municipality of Canada",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q28122896",
+    "label": "rural municipality of Estonia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q29467088",
+    "label": "rural municipality of Nepal",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3504085",
+    "label": "rural municipality of Poland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q11722303",
+    "label": "rural municipality of Sweden and Finland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q634099",
+    "label": "rural settlement in Russia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15221310",
+    "label": "second-class city",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q14502790",
+    "label": "settlement of Hungary",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q14762300",
+    "label": "single-tier municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q954172",
+    "label": "sparse municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1145012",
+    "label": "special city of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q5327704",
+    "label": "special ward of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q123432159",
+    "label": "specialized municipality in Alberta",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q262882",
+    "label": "statutory city of Austria",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q140044940",
+    "label": "statutory town of Colorado",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q28544871",
+    "label": "sub-metropolitan municipality of Nepal",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15141625",
+    "label": "subdistrict municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6641762",
+    "label": "summer village in Alberta",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3298871",
+    "label": "sundown town",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q136825005",
+    "label": "swing municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q18670606",
+    "label": "tehsil of Pakistan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q941036",
+    "label": "territorial authority of New Zealand",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q116175792",
+    "label": "territorial hamlet of Canada",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1155688",
+    "label": "thesaban",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13025342",
+    "label": "thesaban mueang",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15141632",
+    "label": "thesaban nakhon",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15221370",
+    "label": "third-class city",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2195811",
+    "label": "titular city",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q55430416",
+    "label": "town in Alberta",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q138164972",
+    "label": "town in Arizona",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q135396264",
+    "label": "town in California",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15105893",
+    "label": "town in Croatia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13218690",
+    "label": "town in Hungary",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q135396321",
+    "label": "town in Indiana",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q131905118",
+    "label": "town in Manitoba",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q52132873",
+    "label": "town in New Brunswick",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q59341087",
+    "label": "town in Nova Scotia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15068900",
+    "label": "town in Prince Edward Island",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6643756",
+    "label": "town in Saskatchewan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q1059478",
+    "label": "town of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q139961091",
+    "label": "town of Maryland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q7829892",
+    "label": "town of New Jersey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q106071004",
+    "label": "town of New York",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q44529188",
+    "label": "town of Newfoundland and Labrador",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q110256876",
+    "label": "town of Pennsylvania",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q100503226",
+    "label": "town of the United Kingdom",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15411644",
+    "label": "town of Virginia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q132172647",
+    "label": "town of West Virginia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q7130304",
+    "label": "town panchayat",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q140401875",
+    "label": "town with a double name",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q27676422",
+    "label": "township municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q3327864",
+    "label": "township municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q55774719",
+    "label": "township municipality in Ontario",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q7830262",
+    "label": "township of Myanmar",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q7830213",
+    "label": "township of New Jersey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2367508",
+    "label": "township of Taiwan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 0,
+    "root": "gap",
+    "done": true
+  },
+  {
+    "qid": "Q107011587",
+    "label": "transitional council",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q107105851",
+    "label": "transitional metropolitan council",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q107105862",
+    "label": "transitional metropolitan substructure",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q25340975",
+    "label": "transitional representative council",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q115885364",
+    "label": "Tribal town",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q18632459",
+    "label": "ulus",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q115857060",
+    "label": "undivided municipality in Czechia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q15974307",
+    "label": "Unitary municipality in Germany",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q27676424",
+    "label": "united townships municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q16295254",
+    "label": "upper-tier municipality",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q42744322",
+    "label": "urban municipality in Germany",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2616791",
+    "label": "urban municipality of Poland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q13626398",
+    "label": "urban okrug in Russia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q2661988",
+    "label": "urban settlement in Russia",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q7900181",
+    "label": "urban township of Michigan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q15063142",
+    "label": "urban township of Minnesota",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q7900183",
+    "label": "urban township of Ohio",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q3491915",
+    "label": "urban-rural municipality of Poland",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q98651954",
+    "label": "Viertelsgemeinde",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q7930708",
+    "label": "village council",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q6644696",
+    "label": "village in Alberta",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q6644778",
+    "label": "village in Saskatchewan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q27676420",
+    "label": "village municipality of Quebec",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q96857311",
+    "label": "village of Guam",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 1,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q110071217",
+    "label": "village of Illinois",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q4174776",
+    "label": "village of Japan",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q6644759",
+    "label": "village of New Brunswick",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q7930612",
+    "label": "village of New Jersey",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 2,
+    "root": "Q15284",
+    "done": true
+  },
+  {
+    "qid": "Q108569739",
+    "label": "village of Ohio",
+    "role": "municipality",
+    "admin_level": "municipality",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q5177127",
+    "label": "Great Parish of the Independent State of Croatia",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q106458918",
+    "label": "parish",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q27676524",
+    "label": "parish municipality",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q20757176",
+    "label": "parish municipality of Denmark",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q24279",
+    "label": "parish of Andorra",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q1647142",
+    "label": "parish of Antigua and Barbuda",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1631888",
+    "label": "parish of Barbados",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1405085",
+    "label": "parish of Dominica",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q531645",
+    "label": "parish of Grenada",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q3365965",
+    "label": "parish of Guernsey",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q936955",
+    "label": "parish of Jamaica",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": true
+  },
+  {
+    "qid": "Q2140214",
+    "label": "parish of Jersey",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q13410524",
+    "label": "parish of Louisiana",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 3,
+    "root": "Q15284",
+    "done": false
+  },
+  {
+    "qid": "Q1750854",
+    "label": "parish of Saint Kitts and Nevis",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  },
+  {
+    "qid": "Q1870831",
+    "label": "parish of Saint Vincent and the Grenadines",
+    "role": "parish",
+    "admin_level": "parish",
+    "depth": 1,
+    "root": "Q10864048",
+    "done": false
+  }
+]
