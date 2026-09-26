@@ -132,6 +132,29 @@ _HIERARCHY_HEADER_RE = re.compile(
     re.IGNORECASE,
 )
 _ENUM_LABEL_RE = re.compile(r"\(([A-Za-z0-9]+)\)")
+# Spelled durations are source text, not invented numerals. A digit duration
+# still has to be followed by its unit. Bare "within this Union" is not a duration.
+_SPELLED_SMALL = (
+    r"twenty[\s-](?:one|two|three|four|five|six|seven|eight|nine)"
+    r"|thirty[\s-](?:one|two|three|four|five|six|seven|eight|nine)"
+    r"|forty[\s-](?:one|two|three|four|five|six|seven|eight|nine)"
+    r"|fifty[\s-](?:one|two|three|four|five|six|seven|eight|nine)"
+    r"|sixty[\s-](?:one|two|three|four|five|six|seven|eight|nine)"
+    r"|seventy[\s-](?:one|two|three|four|five|six|seven|eight|nine)"
+    r"|eighty[\s-](?:one|two|three|four|five|six|seven|eight|nine)"
+    r"|ninety[\s-](?:one|two|three|four|five|six|seven|eight|nine)"
+    r"|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen"
+    r"|ten|one|two|three|four|five|six|seven|eight|nine"
+    r"|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety"
+)
+_DURATION_UNIT = r"(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?|hours?)"
+_SPELLED_DURATION = rf"(?:{_SPELLED_SMALL})\s+{_DURATION_UNIT}"
+_DIGIT_DURATION = rf"\d+\s+{_DURATION_UNIT}"
+_ACTION_TEMPORAL_CUT = (
+    r"before\s+(?:january|february|march|april|may|june|july|august|september|october|november|december|\d)"
+    r"|after\s+(?:january|february|march|april|may|june|july|august|september|october|november|december|\d|notice|consultation)"
+    rf"|within\s+(?:{_DIGIT_DURATION}|every\s+subsequent\s+term\s+of\s+{_SPELLED_DURATION}|{_SPELLED_DURATION})"
+)
 _MODAL_RE = re.compile(
     r"""
     (?P<subject>
@@ -198,9 +221,26 @@ _MODAL_RE = re.compile(
     )
     \s*,?\s+
     (?P<action>.+?)
-    (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
+    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
+    + _ACTION_TEMPORAL_CUT
+    + r"""|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|(?:,\s+(?:the\s+)?(?!which\b|who\b|that\b|or\b|and\b|nor\b|but\b)[A-Za-z][A-Za-z'’\-]*(?:\s+(?!which\b|who\b|that\b)[A-Za-z'’\-]+){0,6}\s+shall\b)|[.]|(?:\:(?!\s*[\"“—]))|$)
     """,
     re.IGNORECASE | re.VERBOSE,
+)
+_HEREBY_PROHIBITED_RE = re.compile(
+    r"(?P<subject>.+?)\s+is\s+hereby\s+prohibited\b",
+    re.IGNORECASE,
+)
+_TAKE_EFFECT_RE = re.compile(
+    r"(?P<subject>.+?)\s+(?P<modal>shall)\s+(?P<action>take effect\b.*)$",
+    re.IGNORECASE,
+)
+_COMMA_SUBJECT_MODAL_RE = re.compile(
+    r"(?P<subject>[A-Z][^.;]{0,300}?),\s+"
+    r"(?P<modal>shall\s+not|must\s+not|may\s+not|shall|must|may)\s+"
+    r"(?P<action>.+?)"
+    r"(?=(?:;(?!\s*or\b))|[.:]|$)",
+    re.IGNORECASE,
 )
 _IMPLICIT_MODAL_RE = re.compile(
     r"""
@@ -213,7 +253,9 @@ _IMPLICIT_MODAL_RE = re.compile(
     )
     \s+
     (?P<action>.+?)
-    (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
+    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
+    + _ACTION_TEMPORAL_CUT
+    + r"""|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|(?:,\s+(?:the\s+)?(?!which\b|who\b|that\b|or\b|and\b|nor\b|but\b)[A-Za-z][A-Za-z'’\-]*(?:\s+(?!which\b|who\b|that\b)[A-Za-z'’\-]+){0,6}\s+shall\b)|[.]|(?:\:(?!\s*[\"“—]))|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
@@ -276,6 +318,18 @@ _INSTRUMENT_EXPIRATION_RE = re.compile(
     r"(?:expires|shall\s+expire|terminates|shall\s+terminate)\s+(?P<anchor>.+?)(?:[.;:]|$)",
     re.IGNORECASE,
 )
+_DECLARATIVE_COPULA_RE = re.compile(
+    r"(?P<subject>.+?)\s+(?:is|are)\s+(?P<action>(?:reserved to|citizens of)\b.*)$",
+    re.IGNORECASE,
+)
+# A constitutional repeal names the article. It is not a U.S. Code "§ N. Repealed." note.
+_HEREBY_REPEALED_RE = re.compile(
+    r"\b(?P<subject>the\s+[A-Za-z0-9][A-Za-z0-9\-]*"
+    r"(?:\s+[A-Za-z0-9][A-Za-z0-9\-]*){0,8}\s+article\s+of\s+amendment\b"
+    r"(?:\s+to\s+the\s+Constitution\s+of\s+the\s+United\s+States)?)"
+    r"\s+is\s+hereby\s+repealed\b",
+    re.IGNORECASE,
+)
 _SECTION_STATUS_RE = re.compile(
     r"(?:(?P<section_marker>(?:secs?\.?|sections?|§{1,2})\s*[0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*)\s*[\.:]?\s*)?"
     r"\b(?P<status>repealed|omitted|reserved|transferred|renumbered|redesignated)\b"
@@ -318,20 +372,61 @@ _MONEY_RE = re.compile(
     r"(?:\$\s?\d[\d,]*(?:\.\d{2})?|\b\d[\d,]*\s+dollars?\b)",
     re.IGNORECASE,
 )
-_CLAUSE_END_RE = r"(?:,|[.]\s|[.]$|$)"
+_CLAUSE_END_RE = r"(?:,|;|[.]\s|[.]$|$)"
+_IF_COMMA_RE = re.compile(
+    r"\bif\s*,\s*(?P<body>.+),\s+(?:the\s+)?[A-Z][^,;]{0,80}?\s+shall\b",
+    re.IGNORECASE,
+)
 _CONDITION_PATTERNS = [
-    ("if", rf"\bif\s+(.+?)(?:,|\s+then|[.]$|$)"),
+    # "If, <preamble>, the Vice President elect shall ..." keeps the preamble.
+    ("if", r"\bif\s*,\s*(.+),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
+    # "If the Congress, <timing>, determines by two-thirds vote, the Vice President shall"
+    ("if", r"\bif\s+(.+?),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
+    # "if the House shall not choose ..., before the fourth day of March ..., then"
+    ("if", r"\bif\s+(.+?,\s+before\s+the\s+.+?),\s+then\b"),
+    # "if Vacancies happen by Resignation, or otherwise, during the Recess ..., the Executive may"
+    ("if", r"\bif\s+(.+?,\s+or\s+otherwise,\s+during\s+the\s+.+?),\s+the\s+"),
+    # "if there be more than one ..., and have an equal Number of Votes, then"
+    ("if", r"\bif\s+(.+?,\s+and\s+have\s+an\s+equal\s+.+?),\s+then\b"),
+    ("if", rf"\bif\s+(.+?)(?:,|;|\s+then|[.]$|$)"),
+    # A comma before the verb is still inside the whenever/when that governs the later shall.
+    ("whenever", r"\b(whenever\s+.+?),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
+    ("whenever", rf"\b(whenever\s+.+?){_CLAUSE_END_RE}"),
+    ("until", rf"\b(until\s+.+?){_CLAUSE_END_RE}"),
+    ("when", r"\bwhen\s+(.+?),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
+    # "when the right to vote ... is denied, the basis ... shall be reduced"
+    ("when", r"\bwhen\s+(.+?),\s+the\s+[^,;]{0,80}?\s+shall\b"),
     ("when", rf"\bwhen\s+(.+?){_CLAUSE_END_RE}"),
     ("where", rf"\bwhere\s+(.+?){_CLAUSE_END_RE}"),
-    ("provided_that", rf"\bprovided that\s+(.+?){_CLAUSE_END_RE}"),
-    ("subject_to", rf"\bsubject to\s+(.+?){_CLAUSE_END_RE}"),
-    ("in_case", rf"\bin case\s+(.+?){_CLAUSE_END_RE}"),
+    # "Provided that no Amendment shall affect" is a prohibition, not a proviso condition.
+    ("provided_that", rf"\bprovided that\s+(?!no\b)(.+?){_CLAUSE_END_RE}"),
+    # "territory subject to the jurisdiction" is not the proviso "subject to".
+    ("subject_to", rf"\bsubject to\s+(?!(?:the|their|its|his|her)\s+jurisdiction\b)(.+?){_CLAUSE_END_RE}"),
+    # Keep the words "in case", including ", or of his Death, ... Inability to discharge".
+    ("in_case", r"\b(in case\s+.+?),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
+    ("in_case", rf"\b(in case\s+.+?){_CLAUSE_END_RE}"),
 ]
 _EXCEPTION_PATTERNS = [
+    # "unless on the testimony of two witnesses, or on confession" is one exception.
+    ("unless", r"\bunless\s+(.+?,\s+or\s+.+?)(?:[.;]|$)"),
+    # "unless ... prevent its Return, in which Case it shall not be a Law."
+    ("unless", r"\bunless\s+(.+?,\s+in\s+which\s+case\s+.+?)(?:[.;]|$)"),
+    # "unless ... as provided in the Constitution, within seven years"
+    ("unless", r"\bunless\s+(.+?,\s+as\s+provided\s+in\s+[^,;]+)"),
+    # "unless the Vice President ..., transmit within four days ..."
+    ("unless", r"\bunless\s+(.+?,\s+transmit\s+.+?)(?:[.;]|$)"),
     ("unless", rf"\bunless\s+(.+?){_CLAUSE_END_RE}"),
+    # "No Person except a natural born Citizen, or a Citizen ..., shall"
+    # The class runs through the comma before shall. It is one exception.
+    ("except", r"\bexcept\s+(.+),\s+(?:shall|must|may)\b"),
+    (
+        "except",
+        r"\bexcept\s+(.+?)\s*,\s*(?=be\b|accept\b|have\b|make\b|take\b)",
+    ),
     ("except", rf"\bexcept\s+(?:for\s+)?(.+?){_CLAUSE_END_RE}"),
     ("without", rf"\bwithout\s+(.+?){_CLAUSE_END_RE}"),
-    ("absent", rf"\babsent\s+(.+?){_CLAUSE_END_RE}"),
+    # "absent a warrant" is an exception. "absent Members" is not.
+    ("absent", rf"\babsent\s+(?=(?:a|an|the|any|such|this)\b)(.+?){_CLAUSE_END_RE}"),
     ("with_exception_of", rf"\bwith the exception of\s+(.+?){_CLAUSE_END_RE}"),
     ("other_than", rf"\bother than\s+(.+?){_CLAUSE_END_RE}"),
     ("excluding", rf"\bexcluding\s+(.+?){_CLAUSE_END_RE}"),
@@ -385,6 +480,11 @@ _TEMPORAL_PATTERNS = [
     ),
     (
         "deadline",
+        "minimum_duration",
+        r"\b(?:at\s+least|(?:a\s+)?minimum\s+of)\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?))(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)",
+    ),
+    (
+        "deadline",
         "before_date",
         r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})",
     ),
@@ -412,6 +512,16 @@ _TEMPORAL_PATTERNS = [
         "for_duration",
         r"\bfor\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?))",
     ),
+    (
+        "deadline",
+        "within_duration",
+        r"\bwithin\s+(\d+\s+hours?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;(]|$)",
+    ),
+    (
+        "deadline",
+        "within_duration",
+        rf"\bwithin\s+((?:every\s+subsequent\s+term\s+of\s+)?{_SPELLED_DURATION}(?:\s*\([^)]*\))?(?:\s+(?:after|for|from|to)\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;(]|$)",
+    ),
 ]
 _DEFINITION_RE = re.compile(
     r"\b(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b",
@@ -430,7 +540,8 @@ _UNQUOTED_DEFINED_TERM_RE = re.compile(
 )
 _LEADING_DETERMINERS_RE = re.compile(r"^(?:the|a|an|any|each|every|such|no)\s+", re.IGNORECASE)
 _TRAILING_NOISE_RE = re.compile(
-    r"\s+(?:in accordance with|pursuant to|under|as provided in|except as provided in)\s+.+$",
+    r"\s+(?:in accordance with|pursuant to|as provided in|except as provided in)\s+.+$"
+    r"|\s+under\s+(?:section|title|chapter|paragraph|subsection|part)\b.+$",
     re.IGNORECASE,
 )
 _PASSIVE_BY_RE = re.compile(r"^be\s+([A-Za-z][A-Za-z0-9'’\-]*)\s+by\s+(.+)$", re.IGNORECASE)
@@ -480,9 +591,29 @@ _LEADING_COMPOUND_MENTAL_STATE_RE = re.compile(
     re.IGNORECASE,
 )
 _RECIPIENT_RE = re.compile(
-    r"\b(?:to|for|with|of)\s+((?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})$",
+    r"\b(?:to|for)\s+((?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})$",
     re.IGNORECASE,
 )
+# "send the notice to the clerk" is a recipient. "eligible to the Office" and
+# "power to enforce" are not: no giving verb governs that to/for.
+_RECIPIENT_TRANSFER_RE = re.compile(
+    r"\b(?:give|gives|given|send|sends|sent|present|presents|presented|"
+    r"deliver|delivers|delivered|transmit|transmits|transmitted|"
+    r"pay|pays|paid|submit|submits|submitted|provide|provides|provided|"
+    r"direct|directs|directed|issue|issues|issued|return|returns|returned|"
+    r"render|renders|rendered|furnish|furnishes|furnished|serve|serves|served|"
+    r"remit|remits|remitted|award|awards|awarded|offer|offers|offered|"
+    r"tender|tenders|tendered)\b"
+    r"(?:\s+\S+){0,8}\s*$",
+    re.IGNORECASE,
+)
+_NOT_RECIPIENT_HEAD = frozenset({
+    "be", "do", "fill", "pay", "lay", "make", "provide", "regulate", "support",
+    "raise", "collect", "borrow", "coin", "fix", "grant", "issue", "hold",
+    "take", "give", "send", "appoint", "choose", "chuse", "elect", "vest",
+    "consist", "secure", "promote", "establish", "define", "punish", "try",
+    "which", "whom",
+})
 _DEFINITION_BODY_RE = re.compile(
     r"\b(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b\s+(.+)$",
     re.IGNORECASE,
@@ -651,6 +782,8 @@ def extract_normative_elements(
     _apply_document_penalty_context(elements, str(text or ""))
     _apply_enforcement_context(elements)
     _apply_conflict_context(elements)
+    for element in elements:
+        _keep_without_phrase(element)
     return elements
 
 
@@ -1649,10 +1782,109 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 )
             ]
 
-    for match in _MODAL_RE.finditer(sentence):
+    for proviso in _PROVIDED_THAT_NO_RE.finditer(sentence):
+        proviso_subject = _clean_phrase(proviso.group("subject"))
+        proviso_action = _clean_action(proviso.group("action"))
+        if not proviso_subject or not proviso_action:
+            continue
+        proviso_element = _finalize_element(
+            _build_element(
+                sentence=sentence,
+                document_type=document_type,
+                norm_type="prohibition",
+                deontic_operator="F",
+                modal="shall not",
+                subject_text=proviso_subject,
+                action_text=proviso_action,
+                support_span=proviso.span(),
+                field_spans={
+                    "subject": list(proviso.span("subject")),
+                    "action": list(proviso.span("action")),
+                },
+                extraction_method="deterministic_provided_that_no_v1",
+            )
+        )
+        action_text = f"Provided that {proviso_action}"
+        proviso_element["action"] = [action_text]
+        if proviso_element.get("action_object"):
+            proviso_element["action_object"] = f"Provided that {proviso_element['action_object']}"
+        elements.append(proviso_element)
+
+    as_then = _AS_THEN_SHALL_NOT_RE.match(sentence.strip())
+    if as_then and not elements:
+        subject_text = _clean_phrase(as_then.group("subject"))
+        action_text = _clean_action(as_then.group("action"))
+        if subject_text and action_text and not re.search(r"\bshall\b", subject_text, flags=re.IGNORECASE):
+            element = _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type="prohibition",
+                    deontic_operator="F",
+                    modal="shall not",
+                    subject_text=subject_text,
+                    action_text=action_text,
+                    support_span=as_then.span(),
+                    field_spans={
+                        "subject": list(as_then.span("subject")),
+                        "action": list(as_then.span("action")),
+                    },
+                    extraction_method="deterministic_as_then_shall_not_v1",
+                )
+            )
+            admitted = " ".join(as_then.group("as").split())
+            if admitted:
+                _with_condition(element, admitted)
+            return [element]
+
+    effect_elements = _effect_before_approval_elements(sentence, document_type)
+    if effect_elements and not elements:
+        return effect_elements
+
+    relative_head = _RELATIVE_HEAD_SHALL_RE.match(sentence)
+    if relative_head and not elements:
+        subject_text = _clean_phrase(relative_head.group("subject"))
+        action_text = _clean_action(relative_head.group("action"))
+        modal = re.sub(r"\s+", " ", relative_head.group("modal").lower()).strip()
+        if (
+            subject_text
+            and action_text
+            and " to which " not in subject_text.lower()
+            and not re.search(r"\b(?:shall|must|may)\b", subject_text, flags=re.IGNORECASE)
+        ):
+            norm_type, deontic_operator = classify_modal(modal)
+            element = _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type=norm_type,
+                    deontic_operator=deontic_operator,
+                    modal=modal,
+                    subject_text=subject_text,
+                    action_text=action_text,
+                    support_span=relative_head.span(),
+                    field_spans={
+                        "subject": list(relative_head.span("subject")),
+                        "modal": list(relative_head.span("modal")),
+                        "action": list(relative_head.span("action")),
+                    },
+                    extraction_method="deterministic_relative_head_shall_v1",
+                )
+            )
+            which = " ".join(relative_head.group("which").split())
+            if which:
+                _with_condition(element, which)
+            return [element]
+
+    pending_after = ""
+    matches = list(_MODAL_RE.finditer(sentence))
+    for index, match in enumerate(matches):
         modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
         norm_type, deontic_operator = classify_modal(modal)
         raw_subject = match.group("subject")
+        coordinated = _coordinated_no_head(sentence, match)
+        if coordinated:
+            raw_subject = f"{coordinated} {raw_subject}"
         negated_subject = _has_leading_negated_subject(raw_subject)
         if deontic_operator in {"O", "P"} and negated_subject:
             norm_type, deontic_operator = "prohibition", "F"
@@ -1661,12 +1893,193 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             if negated_subject
             else _clean_phrase(raw_subject)
         )
-        subject_text = _trim_embedded_heading_subject(subject_text)
-        if subject_text.lower() in {"and", "or"}:
+        if_comma = _IF_COMMA_RE.search(sentence)
+        if if_comma and if_comma.start("body") <= match.start() < if_comma.end("body"):
             continue
-        action_text = _clean_action(match.group("action"))
+        subject_text = _trim_embedded_heading_subject(subject_text)
+        subject_text = re.sub(
+            r"^(?:if|when|whenever)\s+(?:not\s+)?",
+            "",
+            subject_text,
+            flags=re.IGNORECASE,
+        ).strip()
+        if subject_text.lower().startswith("be "):
+            continue
+        if subject_text.lower().startswith("provided that"):
+            continue
+        if subject_text.lower().startswith("immediately after") and _MODAL_RE.search(sentence, match.end()):
+            pending_after = " ".join(match.group(0).split()).strip(" ,.")
+            continue
+        if subject_text.lower().startswith("within ") and _MODAL_RE.search(sentence, match.end()):
+            continue
+        inverted_lead = subject_text.lower() in {"and", "or", "nor", "but", "neither"}
+        if _skip_subject(subject_text) and not inverted_lead:
+            continue
+        if _EMBEDDED_RELATIVE_SUBJECT_RE.match(subject_text) and any(
+            not _EMBEDDED_RELATIVE_SUBJECT_RE.match(_clean_phrase(later.group("subject") or ""))
+            for later in matches[index + 1 :]
+        ):
+            continue
+        subject_text = _expand_infinitive_subject(sentence, subject_text, match)
+        subject_text = _restore_provided_that(sentence, subject_text, match)
+        subject_text = _restore_otherwise(sentence, subject_text, match)
+        action_text = _keep_inhabitant_clause(
+            sentence,
+            _restore_interrupted_action(
+                sentence,
+                _clean_action(match.group("action")),
+                span=match.span(),
+            ),
+        )
+        power = _enumerated_power_before(sentence, match)
+        if power and power.lower() not in action_text.lower():
+            action_text = f"{power}, {action_text}"
+        follows = _as_follows_tail(sentence, match)
+        if follows and follows.lower() not in action_text.lower():
+            action_text = f"{action_text}, {follows}"
+        action_text = _flatten_relative_shall(action_text)
+        if inverted_lead:
+            repaired_subject, repaired_action = _split_inverted_action(action_text)
+            if not repaired_subject:
+                continue
+            subject_text = repaired_subject
+            action_text = repaired_action
+            if inverted_lead in {"nor", "neither"}:
+                norm_type, deontic_operator = "prohibition", "F"
+        lead = _clause_lead(sentence, match)
+        if lead and lead.lower() not in action_text.lower():
+            action_text = f"{action_text} {lead}"
+        colon_object = _colon_object(sentence, match)
+        if colon_object and colon_object.lower() not in action_text.lower():
+            action_text = f"{action_text} {colon_object}"
+        grant_without = _grant_without(sentence, match, deontic_operator)
+        if grant_without and grant_without.lower() not in action_text.lower():
+            action_text = f"{action_text} {grant_without}"
+        manner = _manner_phrase(sentence, match)
+        if manner and manner.lower() not in action_text.lower():
+            action_text = f"{action_text} {manner}"
+        if index + 1 == len(matches):
+            action_text = _append_elliptical_nor(sentence, action_text, start=match.end())
+        if pending_after and pending_after.lower() not in action_text.lower():
+            action_text = f"{action_text} {pending_after}"
+            pending_after = ""
+        if re.search(r",\s+shall\b", action_text, re.I) and re.match(
+            r"(?:whenever|except|whereof)\b",
+            match.group("subject").strip(),
+            re.I,
+        ):
+            continue
         subject_text, action_text = _normalize_passive_clause(subject_text, action_text)
         if not action_text:
+            continue
+        element = _finalize_element(
+            _build_element(
+                sentence=sentence,
+                document_type=document_type,
+                norm_type=norm_type,
+                deontic_operator=deontic_operator,
+                modal=modal,
+                subject_text=subject_text,
+                action_text=action_text,
+                support_span=match.span(),
+                field_spans={
+                    "subject": list(match.span("subject")),
+                    "modal": list(match.span("modal")),
+                    "action": list(match.span("action")),
+                },
+                extraction_method="deterministic_modal_clause_v2",
+            )
+        )
+        _attach_leading_case(element, sentence, match)
+        _drop_grant_without_exceptions(element)
+        elements.append(element)
+
+    for match in _INTERRUPTED_SHALL_RE.finditer(sentence):
+        if _modal_already_covered(_occupied(elements), match.start("action")):
+            continue
+        raw_subject = match.group("subject")
+        negated = _has_leading_negated_subject(raw_subject)
+        subject_text = (
+            _clean_negated_subject_phrase(raw_subject)
+            if negated
+            else _clean_phrase(raw_subject)
+        )
+        action_text = _clean_action(match.group("action"))
+        pre = " ".join((match.group("pre") or "").split())
+        if pre and pre.lower() not in action_text.lower():
+            action_text = f"{pre} {action_text}"
+        if _skip_subject(subject_text) or not subject_text or not action_text:
+            continue
+        norm_type, deontic_operator, modal = (
+            ("prohibition", "F", "shall not") if negated else ("obligation", "O", "shall")
+        )
+        delivered = ""
+        if negated:
+            parts = re.split(r",\s*but\s+shall\s+", action_text, maxsplit=1, flags=re.IGNORECASE)
+            if len(parts) == 2:
+                action_text, delivered = parts
+        elements.append(
+            _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type=norm_type,
+                    deontic_operator=deontic_operator,
+                    modal=modal,
+                    subject_text=subject_text,
+                    action_text=action_text,
+                    support_span=match.span(),
+                    field_spans={
+                        "subject": list(match.span("subject")),
+                        "action": list(match.span("action")),
+                    },
+                    extraction_method="deterministic_interrupted_shall_v1",
+                )
+            )
+        )
+        if delivered:
+            elements.append(
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type="obligation",
+                        deontic_operator="O",
+                        modal="shall",
+                        subject_text=subject_text,
+                        action_text=_clean_action(delivered),
+                        support_span=match.span(),
+                        field_spans={},
+                        extraction_method="deterministic_interrupted_shall_v1",
+                    )
+                )
+            )
+
+    for match in _COMMA_SUBJECT_MODAL_RE.finditer(sentence):
+        if _modal_already_covered(_occupied(elements), match.start("modal")):
+            continue
+        modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
+        norm_type, deontic_operator = classify_modal(modal)
+        raw_subject = match.group("subject")
+        subject_text = _outer_comma_subject(_clean_phrase(raw_subject))
+        action_text = _restore_interrupted_action(
+            sentence,
+            _clean_action(match.group("action")),
+            span=match.span(),
+        )
+        subject_text, action_text = _normalize_passive_clause(subject_text, action_text)
+        leading_no = bool(
+            re.search(r"\b(?:no|neither)\s+$", sentence[: match.start("subject")], flags=re.IGNORECASE)
+        )
+        if deontic_operator in {"O", "P"} and (
+            _has_leading_negated_subject(raw_subject)
+            or _has_leading_negated_subject(subject_text)
+            or leading_no
+        ):
+            norm_type, deontic_operator = "prohibition", "F"
+            subject_text = _clean_negated_subject_phrase(subject_text)
+        subject_text = _subject_without_except(subject_text)
+        if _skip_subject(subject_text) or not action_text or not subject_text:
             continue
         elements.append(
             _finalize_element(
@@ -1684,10 +2097,127 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                         "modal": list(match.span("modal")),
                         "action": list(match.span("action")),
                     },
-                    extraction_method="deterministic_modal_clause_v2",
+                    extraction_method="deterministic_comma_subject_modal_v1",
                 )
             )
         )
+
+    if not elements:
+        inverted = _INVERTED_SHALL_RE.search(sentence)
+        if inverted:
+            rest = " ".join(inverted.group("rest").split())
+            subject_match = _INVERTED_SUBJECT_RE.match(rest) or _INVERTED_COMMA_SUBJECT_RE.match(rest)
+            if subject_match:
+                subject_text = _clean_phrase(subject_match.group("subject"))
+                action_text = _clean_action(subject_match.group("action"))
+            else:
+                subject_text = "person" if re.search(r"\b(?:himself|herself|themselves)\b", rest, re.I) else ""
+                action_text = _clean_action(rest)
+            lead = inverted.group("lead").lower()
+            modal = re.sub(r"\s+", " ", inverted.group("modal").lower()).strip()
+            if lead == "nor" or modal.endswith("not"):
+                norm_type, deontic_operator = "prohibition", "F"
+            else:
+                norm_type, deontic_operator = classify_modal(modal)
+            if subject_text and action_text and not _skip_subject(subject_text):
+                elements.append(
+                    _finalize_element(
+                        _build_element(
+                            sentence=sentence,
+                            document_type=document_type,
+                            norm_type=norm_type,
+                            deontic_operator=deontic_operator,
+                            modal=modal,
+                            subject_text=subject_text,
+                            action_text=action_text,
+                            support_span=inverted.span(),
+                            field_spans={},
+                            extraction_method="deterministic_inverted_shall_v1",
+                        )
+                    )
+                )
+        prohibited = _HEREBY_PROHIBITED_RE.search(sentence)
+        if prohibited:
+            subject_text = _clean_phrase(prohibited.group("subject"))
+            if subject_text:
+                elements.append(
+                    _finalize_element(
+                        _build_element(
+                            sentence=sentence,
+                            document_type=document_type,
+                            norm_type="prohibition",
+                            deontic_operator="F",
+                            modal="shall not",
+                            subject_text=subject_text,
+                            action_text="be done",
+                            support_span=prohibited.span(),
+                            field_spans={
+                                "subject": list(prohibited.span("subject")),
+                                "action": list(prohibited.span()),
+                            },
+                            extraction_method="deterministic_hereby_prohibited_v1",
+                        )
+                    )
+                )
+        for match in _TAKE_EFFECT_RE.finditer(sentence):
+            if elements:
+                break
+            subject_text = _clean_phrase(match.group("subject"))
+            action_text = _clean_action(match.group("action"))
+            if not subject_text or not action_text:
+                continue
+            elements.append(
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type="obligation",
+                        deontic_operator="O",
+                        modal="shall",
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=match.span(),
+                        field_spans={
+                            "subject": list(match.span("subject")),
+                            "modal": list(match.span("modal")),
+                            "action": list(match.span("action")),
+                        },
+                        extraction_method="deterministic_take_effect_v1",
+                    )
+                )
+            )
+        for match in _COMMA_SUBJECT_MODAL_RE.finditer(sentence):
+            modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
+            norm_type, deontic_operator = classify_modal(modal)
+            subject_text = _clean_phrase(match.group("subject"))
+            action_text = _restore_interrupted_action(
+            sentence,
+            _clean_action(match.group("action")),
+            span=match.span(),
+        )
+            subject_text, action_text = _normalize_passive_clause(subject_text, action_text)
+            if not action_text or not subject_text:
+                continue
+            elements.append(
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type=norm_type,
+                        deontic_operator=deontic_operator,
+                        modal=modal,
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=match.span(),
+                        field_spans={
+                            "subject": list(match.span("subject")),
+                            "modal": list(match.span("modal")),
+                            "action": list(match.span("action")),
+                        },
+                        extraction_method="deterministic_comma_subject_modal_v1",
+                    )
+                )
+            )
 
     if elements:
         first_subject = (elements[0].get("subject") or [""])[0]
@@ -1703,6 +2233,9 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             if deontic_operator in {"O", "P"} and _has_leading_negated_subject(first_subject):
                 norm_type, deontic_operator = "prohibition", "F"
             action_text = _clean_action(match.group("action"))
+            manner = _manner_phrase(sentence, match)
+            if manner and manner.lower() not in action_text.lower():
+                action_text = f"{action_text} {manner}"
             subject_text, action_text = _normalize_passive_clause(first_subject, action_text)
             if not action_text:
                 continue
@@ -1726,7 +2259,7 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     )
                 )
             )
-        return elements
+        return _drop_shalls_inside_conditions(sentence, elements)
 
     for match in _IMPERSONAL_NORM_RE.finditer(sentence):
         if match.group("unlawful"):
@@ -1821,8 +2354,57 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             )
         ]
 
+    declarative_match = _DECLARATIVE_COPULA_RE.search(sentence)
+    if declarative_match:
+        subject_text = _clean_phrase(declarative_match.group("subject"))
+        action_text = _clean_action("be " + declarative_match.group("action"))
+        if subject_text and action_text:
+            return [
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type="obligation",
+                        deontic_operator="O",
+                        modal="shall",
+                        subject_text=subject_text,
+                        action_text=action_text,
+                        support_span=declarative_match.span(),
+                        field_spans={
+                            "subject": list(declarative_match.span("subject")),
+                            "action": list(declarative_match.span("action")),
+                        },
+                        extraction_method="deterministic_declarative_copula_v1",
+                    )
+                )
+            ]
+
+    hereby_repealed = _HEREBY_REPEALED_RE.search(sentence)
+    if hereby_repealed and not elements:
+        subject_text = _clean_phrase(hereby_repealed.group("subject"))
+        if subject_text:
+            return [
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type="instrument_lifecycle",
+                        deontic_operator="LIFE",
+                        modal="is hereby repealed",
+                        subject_text=subject_text,
+                        action_text="be repealed",
+                        support_span=hereby_repealed.span(),
+                        field_spans={
+                            "subject": list(hereby_repealed.span("subject")),
+                            "action": list(hereby_repealed.span()),
+                        },
+                        extraction_method="deterministic_hereby_repealed_v1",
+                    )
+                )
+            ]
+
     section_status_match = _SECTION_STATUS_RE.search(sentence)
-    if section_status_match:
+    if section_status_match and not elements:
         return [
             _finalize_element(
                 _build_section_status_lifecycle_element(
@@ -2133,6 +2715,16 @@ def _extract_section_status_lifecycle_elements(
             normalized_text,
             match,
             later_matches=matches[index + 1 :],
+        ):
+            continue
+        status_name = match.group("status").lower()
+        window = normalized_text[max(0, match.start() - 160) : match.end()]
+        if status_name == "repealed" and _HEREBY_REPEALED_RE.search(window):
+            continue
+        if status_name == "reserved" and re.search(
+            r"\b(?:is|are)\s+reserved\s+to\b",
+            normalized_text,
+            flags=re.IGNORECASE,
         ):
             continue
         elements.append(
@@ -3737,6 +4329,13 @@ def extract_penalty_details(text: str, action: str = "") -> Dict[str, Any]:
     maximum_amount = _penalty_bound(combined, "maximum")
     sanction_class = classify_sanction_class(combined)
     sanction_modality = classify_sanction_modality(combined)
+    # "excessive fines" is the prohibited act, not a sanction attached to another duty.
+    if (
+        not sanction_class
+        and not amounts
+        and not re.search(r"\b(?:jail|imprison|imprisonment|custody)\b", lower)
+    ):
+        return {}
     return {
         "raw_text": combined,
         "sanction_class": sanction_class,
@@ -3842,6 +4441,9 @@ def extract_procedure_details(text: str, action: str = "") -> Dict[str, Any]:
         return {}
     event_mentions = extract_procedure_event_mentions(combined)
     event_relations = extract_procedure_event_relations(combined, action, events)
+    # One verb, such as "issue a writ", is the act. A procedure needs a chain.
+    if len(events) < 2 and not event_relations:
+        return {}
     return {
         "events": events,
         "event_chain": [
@@ -4202,6 +4804,8 @@ def classify_modal(modal: str) -> tuple[str, str]:
         "can not",
         "is prohibited from",
         "are prohibited from",
+        "is hereby prohibited",
+        "are hereby prohibited",
         "is forbidden to",
         "are forbidden to",
     }:
@@ -4227,22 +4831,26 @@ def _clean_phrase(value: str) -> str:
 
 def _has_leading_negated_subject(value: Any) -> bool:
     text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:").lower()
-    return bool(re.match(r"^(?:(?:then|and|or|but)\s+)?(?:no|none)\b", text))
+    return bool(re.match(
+        r"^(?:(?:then|and|or|but)\s+)*(?:that\s+)?(?:no|none|neither)\b",
+        text,
+    ))
 
 
 def _clean_negated_subject_phrase(value: Any) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:")
-    text = re.sub(
-        r"^(?:(?:then|and|or|but)\s+)?(?:no|none)\s+",
-        "",
-        text,
-        flags=re.IGNORECASE,
-    ).strip()
+    text = re.sub(r"^(?:(?:then|and|or|but)\s+)*(?:that\s+)?", "", text, flags=re.IGNORECASE).strip()
+    # "No Person" must not be repeated. "Neither A nor B" names both actors, so it stays.
+    text = re.sub(r"^(?:no|none)\s+", "", text, flags=re.IGNORECASE).strip()
     return _clean_phrase(text)
 
 
 def _trim_embedded_heading_subject(value: str) -> str:
-    """Drop catchline text accidentally glued before a determiner-led actor."""
+    """Drop catchline text accidentally glued before a determiner-led actor.
+
+    ``of the Electors`` is not a catchline. That mention stays inside the
+    subject. The F-logic fixture records it; it does not become the actor.
+    """
 
     text = _clean_phrase(value)
     matches = list(
@@ -4254,6 +4862,9 @@ def _trim_embedded_heading_subject(value: str) -> str:
     )
     if not matches:
         return text
+    prefix = text[: matches[-1].start()]
+    if re.search(r"\b(?:of|by|from|having|who|which|nor|neither)\b", prefix, re.I):
+        return text
     actor = _clean_phrase(matches[-1].group("actor"))
     if actor and classify_legal_entity(actor) in {
         "government_actor",
@@ -4263,6 +4874,694 @@ def _trim_embedded_heading_subject(value: str) -> str:
     }:
         return actor
     return text
+
+
+_PAREN_INTERRUPTER_RE = re.compile(
+    r"\bshall\s*,?\s*(?P<pre>[^,]{0,80}?)\s*,\s*"
+    r"(?P<kind>except|without|unless)\s+"
+    r"(?P<body>.+?)\s*,\s*"
+    r"(?P<rest>(?:be|accept|have|make|take|do|give|receive|pay|hold|grant|enter|pass|discharge|lay|keep|engage)\b[^;.]*)",
+    re.IGNORECASE,
+)
+_SHALL_COMMA_VERB_RE = re.compile(
+    r"\bshall\s*,\s*(?P<pre>.+?)\s*,\s*(?P<rest>be\b[^;.]*)",
+    re.IGNORECASE,
+)
+_INVERTED_SHALL_RE = re.compile(
+    r"\b(?P<lead>nor|and|but|or)\s+(?P<modal>shall(?:\s+not)?|must(?:\s+not)?)\s+(?P<rest>.+)$",
+    re.IGNORECASE,
+)
+_INVERTED_SUBJECT_RE = re.compile(
+    r"^(?P<subject>(?:any|a|an|the|no|each|every|such|private)\s+[^,;]{0,80}?)\s+"
+    r"(?P<action>(?:be|deprive|deny|hold|make|have|take|accept|grant|lay|enter|pass|receive|enjoy|issue|appoint|nominate|subject)\b.+)$",
+    re.IGNORECASE,
+)
+# "nor shall Vessels bound to, or from, one State, be obliged"
+_INVERTED_COMMA_SUBJECT_RE = re.compile(
+    r"^(?P<subject>.+?)\s*,\s*"
+    r"(?P<action>(?:be|deprive|deny|hold|make|have|take|accept|grant|lay|enter|pass|receive|enjoy|issue|appoint|nominate|subject)\b.+)$",
+    re.IGNORECASE,
+)
+_EMBEDDED_RELATIVE_SUBJECT_RE = re.compile(r"^(?:and|or|but)\s+those\b", re.IGNORECASE)
+_INFINITIVE_SUBJECT_RE = re.compile(r"^to\s+[A-Za-z]+$", re.IGNORECASE)
+_CLAUSE_LEAD_RE = re.compile(
+    r"(?:^|[;:])\s*(?:(?:and|but|nor|or)\s+)?(?P<lead>for\s+[^,;:]{3,160})\s*,\s*$",
+    re.IGNORECASE,
+)
+_LEADING_CASE_RE = re.compile(
+    r"^(?:in\s+(?:all|every)\b|before\b|thereafter\b|(?:but\s+)?in\s+\w+ing\b|in\s+\w+\s+at\b)",
+    re.IGNORECASE,
+)
+_PROVIDED_THAT_NO_RE = re.compile(
+    r"\bprovided\s+that\s+no\s+(?P<subject>.+?)\s+shall\s+(?P<action>.+?)"
+    r"(?=;\s*and\s+that\b|[.]|$)",
+    re.IGNORECASE | re.DOTALL,
+)
+# "The Migration or Importation of such Persons as any of the States shall think proper, shall not be prohibited"
+_AS_THEN_SHALL_NOT_RE = re.compile(
+    r"^(?P<subject>the\s+.+?\s+or\s+.+?)\s+(?P<as>as\s+any\s+of\s+.+?\s+shall\s+.+?),\s+"
+    r"(?P<modal>shall\s+not)\s+(?P<action>.+)$",
+    re.IGNORECASE | re.DOTALL,
+)
+# "Every Order, Resolution, or Vote to which ... may be necessary ... shall be presented"
+_RELATIVE_HEAD_SHALL_RE = re.compile(
+    r"^(?P<subject>.+?)\s+(?P<which>to\s+which\b.+?)\s+(?P<modal>shall(?:\s+not)?|must(?:\s+not)?)\s+(?P<action>.+)$",
+    re.IGNORECASE,
+)
+# "before the Same shall take Effect, shall be approved ... or being disapproved ... shall be repassed"
+_BEFORE_EFFECT_RE = re.compile(
+    r"^(?:and\s+)?before\s+(?P<when>the\s+same\s+shall\s+.+?)\s*,\s*shall\s+(?P<rest>.+)$",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _span_pair(value: object) -> tuple[int, int] | None:
+    if isinstance(value, (list, tuple)) and len(value) == 2:
+        return int(value[0]), int(value[1])
+    return None
+
+
+def _element_span(element: dict) -> tuple[int, int] | None:
+    return _span_pair(element.get("support_span"))
+
+
+def _overlaps(left: tuple[int, int], right: tuple[int, int]) -> bool:
+    return not (left[1] <= right[0] or right[1] <= left[0])
+
+
+def _mostly_inside(span: tuple[int, int], containers: list[tuple[int, int]]) -> bool:
+    width = max(1, span[1] - span[0])
+    for left, right in containers:
+        overlap = min(span[1], right) - max(span[0], left)
+        if overlap >= width * 0.6:
+            return True
+    return False
+
+
+def _manner_shall(sentence: str, element: dict) -> bool:
+    """``as they shall`` is a manner clause, not a second duty."""
+
+    subject = " ".join(str(part) for part in element.get("subject") or []).casefold()
+    if subject.startswith("in such manner") or re.search(
+        r"\bas\s+(?:they|he|she|it|congress|the legislature)\s*$",
+        subject,
+    ):
+        return True
+    span = _element_span(element)
+    if span is None:
+        return False
+    prefix = sentence[max(0, span[0] - 16) : span[0]].casefold()
+    return bool(re.search(r"\bas\s+(?:each\s+|the\s+)?$", prefix))
+
+
+def _detail_governs(kind: str, detail: tuple[int, int], element: dict, duties: list) -> bool:
+    """A leading if goes to the next duty. A trailing unless goes to the previous one."""
+
+    ours = _element_span(element)
+    if ours is None:
+        return False
+    if _overlaps(detail, ours):
+        return True
+    if kind == "condition":
+        overlapping = [
+            item for item in duties
+            if _overlaps(detail, _element_span(item) or (0, 0))
+        ]
+        if overlapping:
+            return element in overlapping
+        after = [item for item in duties if (_element_span(item) or (0, 0))[0] >= detail[1]]
+        return bool(after) and after[0] is element
+    if kind in {"exception", "temporal"}:
+        before = [item for item in duties if (_element_span(item) or (0, 0))[1] <= detail[0]]
+        if not before:
+            after = [item for item in duties if (_element_span(item) or (0, 0))[0] >= detail[1]]
+            return bool(after) and after[0] is element
+        if before[-1] is not element:
+            return False
+        return not any(detail[0] > (_element_span(item) or (0, 0))[0] >= ours[1] for item in duties)
+    return False
+
+
+def _scope_details(sentence: str, elements: list) -> None:
+    duties = [item for item in elements if _element_span(item)]
+    duties.sort(key=lambda item: (_element_span(item) or (0, 0))[0])
+    if len(duties) < 2:
+        return
+    groups = (
+        ("condition", "condition_details", extract_condition_details(sentence)),
+        ("exception", "exception_details", extract_exception_details(sentence)),
+        ("temporal", "temporal_constraint_details", extract_temporal_constraint_details(sentence)),
+    )
+    for element in duties:
+        action = " ".join(str(part) for part in element.get("action") or []).casefold()
+        for kind, key, details in groups:
+            scoped = []
+            for item in element.get(key) or []:
+                surface = str(item.get("normalized_text") or item.get("value") or "").casefold()
+                if surface and surface in action:
+                    continue
+                span = _span_pair(item.get("span"))
+                if span is not None and not _detail_governs(kind, span, element, duties):
+                    continue
+                scoped.append(item)
+            element[key] = scoped
+            legacy = {
+                "condition_details": "conditions",
+                "exception_details": "exceptions",
+                "temporal_constraint_details": "temporal_constraints",
+            }.get(key)
+            if legacy:
+                element[legacy] = scoped
+        element["slot_details_scoped"] = True
+
+
+def _drop_shalls_inside_conditions(sentence: str, elements: list) -> list:
+    """A shall inside an if, until, or unless is not a second duty.
+
+    Kept when every shall is inside a condition, as in "if he approve he shall sign."
+    A manner clause (``as they shall``) is dropped when another duty remains.
+    Each remaining duty keeps only the conditions and exceptions that govern it.
+    """
+
+    containers: list[tuple[int, int]] = []
+    for item in list(extract_condition_details(sentence)) + list(extract_exception_details(sentence)):
+        span = _span_pair(item.get("span"))
+        if span is not None:
+            containers.append(span)
+    if len(elements) < 2:
+        for element in elements:
+            _dedupe_slot_surfaces(element)
+        return elements
+    kept = []
+    for element in elements:
+        span = _element_span(element)
+        if element.get("extraction_method") == "deterministic_provided_that_no_v1":
+            kept.append(element)
+            continue
+        if _contained_by_other(element, elements):
+            continue
+        if span is not None and containers and _mostly_inside(span, containers):
+            continue
+        if _manner_shall(sentence, element):
+            continue
+        kept.append(element)
+    kept = kept or elements
+    _scope_details(sentence, kept)
+    for element in kept:
+        _dedupe_slot_surfaces(element)
+    return kept
+
+
+def _dedupe_slot_surfaces(element: dict) -> None:
+    """Coalesce competing prefix extractions of the *same* source clause.
+
+    Text containment alone is not evidence of redundancy: ``revoked`` and
+    ``not revoked`` at different locations can carry opposite conditions.
+    Missing or inconsistent provenance is retained rather than guessed away.
+    """
+
+    def source_span(value):
+        if (isinstance(value, (list, tuple)) and len(value) == 2
+                and all(type(part) is int for part in value)
+                and 0 <= value[0] < value[1]):
+            return tuple(value)
+        return None
+
+    def same_source_prefix(short, long, surface, other):
+        if not surface or not other.startswith(surface) or len(surface) >= len(other):
+            return False
+        if other[len(surface)].isalnum() or other[len(surface)] == "_":
+            return False
+        if not short.get("clause_type") or short.get("clause_type") != long.get("clause_type"):
+            return False
+        if not short.get("type") or short.get("type") != long.get("type"):
+            return False
+        a, b = source_span(short.get("span")), source_span(long.get("span"))
+        ca, cb = source_span(short.get("clause_span")), source_span(long.get("clause_span"))
+        return bool(a and b and ca and cb and a[0] == b[0] and a[1] < b[1]
+                    and ca[0] == cb[0] <= a[0] and a[1] <= ca[1] <= cb[1]
+                    and b[1] <= cb[1])
+
+    pairs = (
+        ("condition_details", "conditions"),
+        ("exception_details", "exceptions"),
+        ("temporal_constraint_details", "temporal_constraints"),
+    )
+    for key, legacy in pairs:
+        details = list(element.get(key) or [])
+        surfaces = [
+            str(item.get("normalized_text") or item.get("value") or "").casefold()
+            for item in details
+        ]
+        deduped = []
+        for item, surface in zip(details, surfaces):
+            if any(same_source_prefix(item, candidate, surface, other)
+                   for candidate, other in zip(details, surfaces)):
+                continue
+            deduped.append(item)
+        element[key] = deduped
+        if legacy in element:
+            element[legacy] = deduped
+
+
+def _contained_by_other(element: dict, elements: list) -> bool:
+    span = _element_span(element)
+    if span is None:
+        return False
+    for other in elements:
+        if other is element:
+            continue
+        other_span = _element_span(other)
+        if other_span is None or other_span == span:
+            continue
+        if other_span[0] <= span[0] and span[1] <= other_span[1]:
+            return True
+    return False
+
+
+def _split_inverted_action(action_text: str) -> tuple[str, str]:
+    """``nor shall any person be subject`` stores the person, not ``nor``."""
+
+    match = _INVERTED_SUBJECT_RE.match(action_text or "") or _INVERTED_COMMA_SUBJECT_RE.match(action_text or "")
+    if not match:
+        return "", ""
+    return _clean_phrase(match.group("subject")), _clean_action(match.group("action"))
+
+
+def _with_condition(element: dict, surface: str) -> dict:
+    text = " ".join(str(surface or "").split())
+    if not text:
+        return element
+    detail = {
+        "type": "condition",
+        "clause_type": "when",
+        "raw_text": text,
+        "normalized_text": text.lower(),
+        "value": text.lower(),
+        "span": [0, len(text)],
+        "clause_span": [0, len(text)],
+    }
+    element["condition_details"] = list(element.get("condition_details") or []) + [detail]
+    element["conditions"] = list(element.get("conditions") or []) + [text.lower()]
+    return element
+
+
+def _effect_before_approval_elements(sentence: str, document_type: str) -> list:
+    """Split approval and repassage. ``before the Same shall take Effect`` is the time."""
+
+    match = _BEFORE_EFFECT_RE.match(sentence.strip())
+    if not match:
+        return []
+    when = " ".join(match.group("when").split())
+    parts = re.split(
+        r",\s*or\s+being\s+disapproved\s+by\s+him,\s*shall\s+",
+        match.group("rest"),
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )
+    if len(parts) != 2:
+        return []
+    rows = []
+    for action, extra in (
+        (parts[0], ""),
+        (parts[1], "being disapproved by him"),
+    ):
+        action_text = _clean_action(action)
+        if not action_text:
+            continue
+        element = _finalize_element(
+            _build_element(
+                sentence=sentence,
+                document_type=document_type,
+                norm_type="obligation",
+                deontic_operator="O",
+                modal="shall",
+                subject_text="the Same",
+                action_text=action_text,
+                support_span=match.span(),
+                field_spans={},
+                extraction_method="deterministic_before_effect_v1",
+            )
+        )
+        _with_condition(element, f"before {when}")
+        if extra:
+            _with_condition(element, extra)
+        rows.append(element)
+    return rows
+
+
+def _subject_without_except(subject: str) -> str:
+    """``Person except a natural born Citizen`` names the person. The class is an exception."""
+
+    parts = re.split(r"\bexcept\b", subject or "", maxsplit=1, flags=re.IGNORECASE)
+    if len(parts) == 2 and parts[0].strip():
+        return parts[0].strip(" ,")
+    return subject
+
+
+def _skip_subject(subject: str) -> bool:
+    """Relative and continuation words are not the duty-bearer."""
+
+    key = " ".join(str(subject or "").split()).lower()
+    if key in {"and", "or", "nor", "but", "which", "who", "that", "or which", "and which"}:
+        return True
+    if key.startswith(("to which ", "to whom ", "in which ", "for which ", "of which ")):
+        return True
+    return key.startswith(("until ", "if ", "when ", "where "))
+
+
+_INTERRUPTED_SHALL_RE = re.compile(
+    r"(?P<subject>[A-Z][^.;]{0,400}?),\s+shall\s*,\s*(?P<pre>[^,]+),\s+"
+    r"(?P<action>[A-Za-z][^;.]*)",
+    re.IGNORECASE,
+)
+
+
+def _occupied(elements: list) -> list[tuple[int, int]]:
+    spans = []
+    for element in elements:
+        span = element.get("support_span") or []
+        if isinstance(span, list) and len(span) == 2:
+            spans.append((int(span[0]), int(span[1])))
+    return spans
+
+
+def _modal_already_covered(spans: list[tuple[int, int]], start: int) -> bool:
+    return any(left <= start < right for left, right in spans)
+
+
+def _outer_comma_subject(subject: str) -> str:
+    """Drop a whenever or except clause glued in front of the real actor."""
+
+    text = re.sub(r",\s+whenever\b.+$", "", subject, flags=re.IGNORECASE).strip()
+    text = re.sub(r",\s+except\b.+$", "", text, flags=re.IGNORECASE).strip()
+    return text
+
+
+def _enumerated_power_before(sentence: str, match: re.Match[str]) -> str:
+    """``To raise and support Armies, but no Appropriation`` keeps the power."""
+
+    window = sentence[: match.start("subject")] + (match.group("subject") or "")
+    found = re.search(
+        r"(?P<head>\bTo\s+[A-Za-z]+(?:\s+[A-Za-z]+){1,8})\s*,\s*but\s+no\b",
+        window,
+        flags=re.IGNORECASE,
+    )
+    if not found:
+        return ""
+    return " ".join(found.group("head").split())
+
+
+def _keep_inhabitant_clause(sentence: str, action_text: str) -> str:
+    """Keep ``who shall not, when elected, be an Inhabitant`` in the same duty."""
+
+    match = re.search(r"\b(when elected, be an Inhabitant\b[^.]*)", sentence, re.IGNORECASE)
+    if not match or "who shall not" not in action_text.lower():
+        return action_text
+    rest = match.group(1)
+    if rest.lower() in action_text.lower():
+        return action_text
+    return action_text.rstrip(", ") + ", " + rest
+
+
+def _coordinated_no_head(sentence: str, match: re.Match[str]) -> str:
+    """``No Capitation, or other direct, Tax`` is one negated subject, not ``Tax``."""
+
+    found = re.search(
+        r"\b(?P<head>no\s+[^.;:]{0,80}?,\s+or\s+[^,;:]{0,60}),\s*$",
+        sentence[: match.start("subject")],
+        flags=re.IGNORECASE,
+    )
+    if not found:
+        return ""
+    return " ".join(found.group("head").split())
+
+
+def _manner_phrase(sentence: str, match: re.Match[str]) -> str:
+    """``in such Manner as they shall direct`` stays on the duty. It is not a second shall."""
+
+    found = re.search(
+        r"\bin such manner\b[^.;]*",
+        sentence[match.end() :],
+        flags=re.IGNORECASE,
+    )
+    if not found:
+        return ""
+    return " ".join(found.group(0).split()).rstrip(" ,")
+
+
+def _grant_without(sentence: str, match: re.Match[str], deontic_operator: str) -> str:
+    """``without apportionment`` modifies a grant. It is not an exception to the grant.
+
+    ``without the consent`` on a prohibition stays an exception and is not appended here.
+    """
+
+    if deontic_operator != "O":
+        return ""
+    found = re.match(
+        r"\s*((?:without\s+(?!(?:the\s+)?(?:consent|approval|permission|leave|order|warrant)\b)[^.;]*)+)",
+        sentence[match.end() :],
+        flags=re.IGNORECASE,
+    )
+    if not found:
+        return ""
+    return " ".join(found.group(1).split()).rstrip(" ,")
+
+
+def _drop_grant_without_exceptions(element: dict) -> None:
+    """Do not render a grant-modifying ``without`` as ``unless``."""
+
+    if element.get("deontic_operator") != "O":
+        return
+    kept = []
+    texts = []
+    for item in element.get("exception_details") or []:
+        if not isinstance(item, dict):
+            continue
+        text = str(item.get("normalized_text") or item.get("value") or "")
+        if str(item.get("clause_type") or "") == "without" and not re.match(
+            r"(?:the\s+)?(?:consent|approval|permission|leave|order|warrant)\b",
+            text,
+            flags=re.IGNORECASE,
+        ):
+            continue
+        kept.append(item)
+        if text:
+            texts.append(text)
+    element["exception_details"] = kept
+    element["exceptions"] = texts
+
+
+def _keep_without_phrase(element: dict) -> None:
+    """Keep an affirmative duty's ``without`` phrase on its action/object.
+
+    A prohibition qualified by ``without consent`` has a consent exception.
+    Keep that structured exception, and all explicit ``except`` clauses, so
+    closed-vocabulary object projection cannot silently discard them.
+    """
+
+    withouts: list[str] = []
+    kept = []
+    texts = []
+    prohibition = (
+        element.get("norm_type") == "prohibition"
+        or element.get("deontic_operator") == "F"
+        or element.get("modality") == "F"
+    )
+    for item in element.get("exception_details") or []:
+        if not isinstance(item, dict):
+            continue
+        kind = str(item.get("clause_type") or "")
+        if kind != "without" or prohibition:
+            kept.append(item)
+            text = str(item.get("normalized_text") or item.get("value") or "")
+            if text:
+                texts.append(text)
+            continue
+        body = " ".join(str(item.get("raw_text") or item.get("normalized_text") or item.get("value") or "").split())
+        if not body:
+            continue
+        if not body.lower().startswith(kind + " "):
+            body = f"{kind} {body}"
+        withouts.append(body)
+    if not withouts:
+        return
+    element["exception_details"] = kept
+    element["exceptions"] = texts
+    obj = str(element.get("action_object") or "").strip()
+    action = " ".join(str(part) for part in (element.get("action") or [])).strip()
+    for phrase in withouts:
+        if phrase.lower() in obj.lower() or phrase.lower() in action.lower():
+            continue
+        if obj:
+            obj = f"{obj} {phrase}"
+        elif action:
+            action = f"{action} {phrase}"
+        else:
+            obj = phrase
+    if obj:
+        element["action_object"] = obj
+    if action:
+        element["action"] = [action]
+
+
+def _colon_object(sentence: str, match: re.Match[str]) -> str:
+    """The noun phrase after ``shall appoint:`` is the object, not a new duty.
+
+    A colon before another shall stays a clause break. That text is not appended.
+    """
+
+    found = re.match(
+        r"\s*:\s*(?P<object>[A-Z].+?)(?=;\s+[A-Za-z]|\.|$)",
+        sentence[match.end() :],
+        flags=re.DOTALL,
+    )
+    if not found:
+        return ""
+    object_text = " ".join(found.group("object").split()).rstrip(" ;")
+    if not object_text or re.search(r"\b(?:shall|must|may)\b", object_text, flags=re.IGNORECASE):
+        return ""
+    return object_text
+
+
+def _append_elliptical_nor(sentence: str, action_text: str, *, start: int) -> str:
+    """``nor in time of war`` continues the same duty when no modal is repeated."""
+
+    found = re.search(
+        r"[,;]\s+(?P<tail>nor\s+(?!shall\b|must\b|may\b).+)$",
+        sentence[start:],
+        flags=re.IGNORECASE,
+    )
+    if not found:
+        return action_text
+    tail = " ".join(found.group("tail").split()).rstrip(".")
+    if not tail or tail.lower() in action_text.lower():
+        return action_text
+    return f"{action_text}, {tail}"
+
+
+def _clause_lead(sentence: str, match: re.Match[str]) -> str:
+    """``for any Speech or Debate`` sits before the subject. It is part of that duty."""
+
+    found = _CLAUSE_LEAD_RE.search(sentence[: match.start("subject")])
+    if not found:
+        return ""
+    return " ".join(found.group("lead").split())
+
+
+def _restore_otherwise(sentence: str, subject: str, match: re.Match[str]) -> str:
+    """``otherwise, the President shall resume`` keeps otherwise."""
+
+    if re.search(r"(?:^|[;])\s*otherwise,\s*$", sentence[: match.start("subject")], flags=re.IGNORECASE):
+        return f"Otherwise, {subject}"
+    return subject
+
+
+def _flatten_relative_shall(action: str) -> str:
+    """A qualification's inner shall is not a second duty.
+
+    ``who shall not have attained`` stays in the same sentence without a modal
+    the next compile would treat as another rule.
+    """
+
+    text = re.sub(r"\bshall\s+not\s+have\s+attained\b", "has not attained", action, flags=re.IGNORECASE)
+    text = re.sub(
+        r"\bshall\s+not\s*,\s*when\s+elected\s*,\s*be\b",
+        "when elected, is not",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(r"\b(he|she)\s+shall\s+be\b", r"\1 is", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(who|which|that)\s+shall\s+not\b", r"\1 has not", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(who|which|that)\s+shall\b", r"\1", text, flags=re.IGNORECASE)
+    return text
+
+
+def _as_follows_tail(sentence: str, match: re.Match[str]) -> str:
+    """``be elected, as follows`` introduces the next clause. The words stay here."""
+
+    if re.match(r"\s*,?\s*as\s+follows\b", sentence[match.end() :], flags=re.IGNORECASE):
+        return "as follows"
+    return ""
+
+
+def _restore_provided_that(sentence: str, subject: str, match: re.Match[str]) -> str:
+    """``Provided, That the legislature`` keeps Provided. It is not only ``That``."""
+
+    if not re.match(r"that\b", subject or "", flags=re.IGNORECASE):
+        return subject
+    if re.search(r"provided,\s*$", sentence[: match.start("subject")], flags=re.IGNORECASE):
+        return f"Provided, {subject}"
+    return subject
+
+
+def _expand_infinitive_subject(sentence: str, subject: str, match: re.Match[str]) -> str:
+    """``the right of citizens ... to vote`` is the subject, not the bare infinitive.
+
+    A subject that would swallow an earlier shall is left alone.
+    """
+
+    if not _INFINITIVE_SUBJECT_RE.match(subject or ""):
+        return subject
+    window = sentence[: match.end("subject")]
+    expanded = re.search(
+        r"(?P<full>(?:the|a|an)\s+.+?\s+" + re.escape(subject) + r")\s*$",
+        window,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if not expanded:
+        return subject
+    full = " ".join(expanded.group("full").split())
+    if re.search(r"\b(?:shall|must|may)\b", full, flags=re.IGNORECASE):
+        return subject
+    return full
+
+
+def _attach_leading_case(element: dict, sentence: str, match: re.Match[str]) -> None:
+    """``In all Cases affecting Ambassadors`` governs the later shall. It is not dropped."""
+
+    prefix = " ".join(sentence[: match.start("subject")].strip(" ,;").split())
+    if not prefix or not _LEADING_CASE_RE.match(prefix):
+        return
+    blob = " ".join(str(part) for part in element.get("action") or []).casefold()
+    if prefix.casefold() in blob:
+        return
+    detail = {
+        "type": "condition",
+        "clause_type": "when",
+        "raw_text": prefix,
+        "normalized_text": prefix.lower(),
+        "value": prefix.lower(),
+        "span": [0, match.start("subject")],
+        "clause_span": [0, match.start("subject")],
+    }
+    element["condition_details"] = list(element.get("condition_details") or []) + [detail]
+    element["conditions"] = list(element.get("conditions") or []) + [prefix.lower()]
+
+
+def _restore_interrupted_action(
+    sentence: str,
+    action_text: str,
+    *,
+    span: tuple[int, int] | None = None,
+) -> str:
+    """Put the verb back when a parenthetical except/without sat in front of it.
+
+    The repair belongs to the clause that contains the interrupter. A later
+    shall does not inherit that verb.
+    """
+
+    match = _PAREN_INTERRUPTER_RE.search(sentence) or _SHALL_COMMA_VERB_RE.search(sentence)
+    if not match:
+        return action_text
+    if span is not None and not (span[0] <= match.start() < span[1]):
+        return action_text
+    rest = _clean_phrase(match.group("rest"))
+    pre = _clean_phrase(match.group("pre"))
+    if not rest or rest.lower() in action_text.lower():
+        return action_text
+    combined = f"{pre} {rest}".strip() if pre else rest
+    return _clean_action(combined)
 
 
 def _clean_action(value: str) -> str:
@@ -4276,8 +5575,19 @@ def _first_verb(action: str) -> str:
     return words[0].lower() if words else ""
 
 
+# A duration numeral is kept only when a unit already follows it in the text.
+# An ordinal already written in the token (12th) stays whole. Other
+# digit-leading tokens stay dropped, so a missing numeral is not invented.
+_OBJECT_TOKEN_RE = re.compile(
+    r"\d+(?=\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\b)"
+    r"|\d+(?:st|nd|rd|th)\b"
+    r"|\d+d\b"
+    r"|[A-Za-z][A-Za-z0-9'’\-]*"
+)
+
+
 def _action_object(action: str) -> str:
-    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", _action_without_mental_state(action) or "")
+    words = _OBJECT_TOKEN_RE.findall(_action_without_mental_state(action) or "")
     return " ".join(words[1:]).strip() if len(words) > 1 else ""
 
 
@@ -4323,8 +5633,7 @@ def _normalize_passive_clause(subject_text: str, action_text: str) -> tuple[str,
     agent = _clean_phrase(match.group(2))
     verb = _PAST_PARTICIPLE_BASE.get(participle)
     if not verb:
-        verb = re.sub(r"ied$", "y", participle)
-        verb = re.sub(r"ed$", "", verb)
+        return subject_text, action_text
     object_text = _clean_phrase(subject_text)
     normalized_action = f"{verb} {object_text}".strip()
     return agent or subject_text, normalized_action
@@ -4364,7 +5673,14 @@ def extract_action_recipient(action: str) -> str:
     match = _RECIPIENT_RE.search(str(action or "").strip())
     if not match:
         return ""
-    recipient = _clean_phrase(match.group(1))
+    if not _RECIPIENT_TRANSFER_RE.search(str(action or "")[: match.start()]):
+        return ""
+    raw_recipient = match.group(1).strip()
+    head = _LEADING_DETERMINERS_RE.sub("", raw_recipient).split()
+    head = head[0].lower() if head else ""
+    if head in _NOT_RECIPIENT_HEAD:
+        return ""
+    recipient = _clean_phrase(raw_recipient)
     if recipient.lower() in {
         "law",
         "regulation",
@@ -4537,8 +5853,27 @@ def extract_conditions(sentence: str) -> List[str]:
     return [item["normalized_text"] for item in extract_condition_details(sentence)]
 
 
+def _is_qualification_when(sentence: str, item: Dict[str, Any]) -> bool:
+    """``who ... when elected`` stays on the qualification. It is not ``if elected``."""
+
+    if str(item.get("clause_type") or "") != "when":
+        return False
+    span = item.get("clause_span") or item.get("span") or []
+    if not isinstance(span, (list, tuple)) or len(span) != 2:
+        return False
+    start = int(span[0])
+    if not re.match(r"when\s+elected\b", sentence[start:], flags=re.IGNORECASE):
+        return False
+    prefix = sentence[:start]
+    return bool(
+        re.search(r"\b(?:shall|must|may)\b", prefix, flags=re.IGNORECASE)
+        and re.search(r"\b(?:who|which|that)\b", prefix, flags=re.IGNORECASE)
+    )
+
+
 def extract_condition_details(sentence: str) -> List[Dict[str, Any]]:
-    return _extract_clause_details(sentence, _CONDITION_PATTERNS, "condition")
+    details = _extract_clause_details(sentence, _CONDITION_PATTERNS, "condition")
+    return [item for item in details if not _is_qualification_when(sentence, item)]
 
 
 def extract_override_clauses(sentence: str) -> List[str]:
@@ -4649,7 +5984,10 @@ def extract_temporal_constraint_details(sentence: str) -> List[Dict[str, Any]]:
                 value_part, anchor_part = value.split(" after ", 1)
                 anchor = anchor_part.strip()
                 value = f"{value_part.strip()} after {anchor}"
-            key = (constraint_type, value, match.start(), match.end())
+            display = value
+            if temporal_kind == "within_duration" and not display.startswith("within "):
+                display = f"within {display}"
+            key = (constraint_type, display, match.start(), match.end())
             if key in seen:
                 continue
             seen.add(key)
@@ -4657,15 +5995,32 @@ def extract_temporal_constraint_details(sentence: str) -> List[Dict[str, Any]]:
                 {
                     "type": constraint_type,
                     "temporal_kind": temporal_kind,
-                    "value": value,
+                    "value": display,
                     "anchor": anchor,
                     **normalize_temporal_value(value),
                     "raw_text": match.group(0).strip(),
-                    "normalized_text": value,
+                    "normalized_text": display,
                     "span": [match.start(), match.end()],
                 }
             )
-    return details
+    containers: list[tuple[int, int]] = []
+    for item in extract_condition_details(sentence) + extract_exception_details(sentence):
+        span = item.get("clause_span") or item.get("span") or []
+        if isinstance(span, (list, tuple)) and len(span) == 2:
+            containers.append((int(span[0]), int(span[1])))
+    if not containers:
+        return details
+    kept: list[dict[str, Any]] = []
+    for item in details:
+        span = item.get("span") or []
+        if not isinstance(span, (list, tuple)) or len(span) != 2:
+            kept.append(item)
+            continue
+        start, end = int(span[0]), int(span[1])
+        if any(left <= start and end <= right for left, right in containers):
+            continue
+        kept.append(item)
+    return kept
 
 
 def normalize_temporal_value(value: str) -> Dict[str, Any]:
@@ -4719,8 +6074,15 @@ def _extract_clause_details(
     for clause_type, pattern in patterns:
         for match in re.finditer(pattern, sentence, flags=re.IGNORECASE):
             value = match.group(1).strip()
+            end = match.end(1)
+            start = match.start(1)
+            if match.start() > 0 and sentence[match.start() - 1] == "(":
+                paren = value.find(")")
+                if paren >= 0:
+                    value = value[:paren].strip()
+                    end = start + paren
             normalized = value.lower()
-            key = (clause_type, normalized, match.start(1), match.end(1))
+            key = (clause_type, normalized, start, end)
             if key in seen:
                 continue
             seen.add(key)
@@ -4730,7 +6092,7 @@ def _extract_clause_details(
                     "clause_type": clause_type,
                     "raw_text": value,
                     "normalized_text": normalized,
-                    "span": [match.start(1), match.end(1)],
+                    "span": [start, end],
                     "clause_span": [match.start(), match.end()],
                 }
             )

@@ -1,0 +1,112 @@
+{
+  "admitted": false,
+  "artifacts": [
+    {
+      "bytes": 2569243,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r4/tests/campaign-jobs-tests-r1-receipt.json",
+      "sha256": "695f11431f7f88b26e9fbc03cfe2608394744a2755edc5af0050424ae5c97c79"
+    },
+    {
+      "bytes": 42343,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r7/probe/campaign-report.json",
+      "sha256": "6ed0a2f5aab9bb320c3568628e61ccc61617d29daa9d1ef2fd988d4fe32eb1a0"
+    },
+    {
+      "bytes": 43397,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r7/audit-receipt.json",
+      "sha256": "f1a7b3ecb8d215b2797d6ad96e629bb4d53061ece6841430c319cb2fd5e9c36c"
+    }
+  ],
+  "bridge_names_ran": [],
+  "checks": {
+    "archived_artifact_probe_passed": true,
+    "artifact_and_protected_bytes_current": true,
+    "combined_same_source_qualification": false,
+    "legacy_job_bytes_verified": true,
+    "offline_regression_capture_passed": true,
+    "outer_resource_audit_completed": false,
+    "probe_package_sources_current": true,
+    "test_and_helper_files_current": true
+  },
+  "cold_run_claim": false,
+  "constitution_formalized": false,
+  "embedding_inference_performed": false,
+  "global_holdout_verified": false,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 441
+  },
+  "legacy_schema_counts": {
+    "autoencoder-training-job-v1": 8,
+    "autoencoder-training-job-v2": 13,
+    "autoencoder-training-job-v3": 14,
+    "autoencoder-training-job-v4": 4,
+    "autoencoder-training-job-v5": 2,
+    "autoencoder-training-job-v6": 2,
+    "autoencoder-training-job-v7": 5
+  },
+  "legal_ir_evaluate_provers": false,
+  "metric_disk_cache_flag": 0,
+  "model_speed_claim": false,
+  "native_training_validation_deferred": true,
+  "os_page_cache_controlled": false,
+  "outer_audit_error": {
+    "message": "missing resource path: /tmp/pytest-of-barberb/pytest-2409",
+    "type": "DaemonResourceError"
+  },
+  "passed": false,
+  "phase_seconds": {
+    "archived_job_identity_verification": 0.2561132329283282,
+    "checkpoint_provenance_only": 7.115292828530073e-05,
+    "decode_exact_batch_manifest": 0.008297279011458158,
+    "offline_consumer_open_after_registry_close": 7.910114864003845,
+    "owner_export_including_consumer_verification": 22.91646622598637,
+    "stage_campaign_and_selected_artifacts": 0.14761924906633794,
+    "worker_input_verification_only": 7.6279949059244245
+  },
+  "production_registry_modified": false,
+  "publication_performed": false,
+  "resource_release_performed": false,
+  "retained_failed_reservation": "5f3497ae47224e3db174311ef6e3caa1",
+  "sample_count": 6,
+  "schema": "campaign-jobs-component-status-v1",
+  "scope": "separate offline component captures, not a combined qualified campaign",
+  "source_authority_authenticated": false,
+  "source_changes_between_captures": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/supervisor_dispatch.py",
+      "probe_sha256": "1d989b339a7c5e641463c406b34f1e2e7109dc9117219678e007491135f4f5a4",
+      "test_sha256": "7cb0dc72c809c4cbd4cdc9d24c2a7cd843872e23d5eae4d011891a57a6b17b33"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+      "probe_sha256": "c6bae57031172f598b598042dbab9ae3d96196f16f50ebdd37eb0309397cffd7",
+      "test_sha256": "4ec5a370ef0d555b8ea2df2a23d3ba853d007fc6dd6e94e972e599246b709c84"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/supervisor_router.py",
+      "probe_sha256": "8eee8541d677fe09f848453d0b56801eb1336fec139f3c65728635794b600d9b",
+      "test_sha256": "5fb2295c77018de9b2ce033cd06830b855388808c6e28db9a756bd6a12cc16df"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/supervisor_todo.py",
+      "probe_sha256": "3d921ed848d20706b589cbc00e3461e59f72e3cf4342c507dc744418b567a536",
+      "test_sha256": "b5419ec49e898b2ad9752ccf3f9e4e1d3e5793105d9fb85b680c51b9b995a090"
+    }
+  ],
+  "source_changes_since_probe": [],
+  "source_file_count": 7759,
+  "status_code": {
+    "bytes": 4029,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/record_status_r7.py",
+    "sha256": "706419af497b6a289a412d2e28ed7daf11fa800c3b6e993d9366df57becff13a"
+  },
+  "test_wall_seconds": 106.91295440401882,
+  "training_or_evaluation_performed": false,
+  "training_record_count": 3,
+  "validation_record_count": 3,
+  "weights_downloaded": false,
+  "worker_count": 1
+}

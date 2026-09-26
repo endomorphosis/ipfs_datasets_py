@@ -1,0 +1,2720 @@
+{
+  "admitted": false,
+  "archived_closeout": {
+    "bytes": 137815,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/campaign-batches-closeout-20260926-r1.json",
+    "sha256": "4a794b00e8f059098bc63c1139653c4cadfba4fdf5555f6d8b2ea38b6b921e5f"
+  },
+  "archived_registry_opened": false,
+  "artifacts": [
+    {
+      "bytes": 138414,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/audit-receipt.json",
+      "sha256": "1859070292b154e3a24b683c941c3e2a632c7a33790bad56cc6da29acfb1d357"
+    },
+    {
+      "bytes": 78086,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/profile-report.json",
+      "sha256": "7ba82e7f166caa492d3dccb55e4ca45b34aa53a9c3da9b6e5a3bc4806ac34b5d"
+    },
+    {
+      "bytes": 3793,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/resource-release.json",
+      "sha256": "a2f7765a1873882dd7f02d1e1fd5287d36908c5c2f4ae88efd423a6778cd1891"
+    },
+    {
+      "bytes": 1262695,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/sources-before.json",
+      "sha256": "2b70e323bbdf3de55ca6141b9823e59fbe4e429b2a12d7db22381d686dab1554"
+    },
+    {
+      "bytes": 124907,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/dependencies-before.json",
+      "sha256": "24ba0aa8450acdc5b33a55578f70f6225f0b296a8688246a34886ea18a2addac"
+    },
+    {
+      "bytes": 1262695,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/sources-after.json",
+      "sha256": "2b70e323bbdf3de55ca6141b9823e59fbe4e429b2a12d7db22381d686dab1554"
+    },
+    {
+      "bytes": 124907,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/dependencies-after.json",
+      "sha256": "24ba0aa8450acdc5b33a55578f70f6225f0b296a8688246a34886ea18a2addac"
+    },
+    {
+      "bytes": 1262695,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/sources-before.json",
+      "sha256": "2b70e323bbdf3de55ca6141b9823e59fbe4e429b2a12d7db22381d686dab1554"
+    },
+    {
+      "bytes": 124907,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/dependencies-before.json",
+      "sha256": "24ba0aa8450acdc5b33a55578f70f6225f0b296a8688246a34886ea18a2addac"
+    },
+    {
+      "bytes": 1262695,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/sources-after.json",
+      "sha256": "2b70e323bbdf3de55ca6141b9823e59fbe4e429b2a12d7db22381d686dab1554"
+    },
+    {
+      "bytes": 124907,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/dependencies-after.json",
+      "sha256": "24ba0aa8450acdc5b33a55578f70f6225f0b296a8688246a34886ea18a2addac"
+    },
+    {
+      "bytes": 137815,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/campaign-batches-closeout-20260926-r1.json",
+      "sha256": "4a794b00e8f059098bc63c1139653c4cadfba4fdf5555f6d8b2ea38b6b921e5f"
+    },
+    {
+      "bytes": 79086,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/template-job.json",
+      "sha256": "f2cd97f1858601a80cc6fe8b88252ce6a084a090627df78c6940960382f607ee"
+    },
+    {
+      "bytes": 92249,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/batches-report.json",
+      "sha256": "ec916d4432941f585d854f4214d3d2e42d842d64d6825d713fba8c2eb9c84ea9"
+    },
+    {
+      "bytes": 899805,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/generated-jobs.json",
+      "sha256": "0f5c6ab4622e08cfc83f421cdf2d08072338c70c00ba238dd2236a77eaf6dbe5"
+    },
+    {
+      "bytes": 23656893,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/3e/3e50f655022f60d17af9f1218525342320e24d0dd030cc3f2c7f9b91c18c57cd",
+      "sha256": "3e50f655022f60d17af9f1218525342320e24d0dd030cc3f2c7f9b91c18c57cd"
+    },
+    {
+      "bytes": 8477,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/35/354a965c2f84556f2b3dc0a1fcc8997ddddada3b718af3360399d93697377206",
+      "sha256": "354a965c2f84556f2b3dc0a1fcc8997ddddada3b718af3360399d93697377206"
+    },
+    {
+      "bytes": 79326,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/template-job.json",
+      "sha256": "7c6c640675565e67f12df8cdfff0a6962e4528333ab017441d34e0dcbe8f2e71"
+    },
+    {
+      "bytes": 901213,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/generated-jobs.json",
+      "sha256": "46c7d1d8a9c39577ca50e9a3cbb7f2d9b5cf4482d4bcd68224607c8d2328efa5"
+    },
+    {
+      "bytes": 23656941,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/13/13b6232d3402e0da8ca472c5f619b68fee5a8714eb033b7ca9f018889646654e",
+      "sha256": "13b6232d3402e0da8ca472c5f619b68fee5a8714eb033b7ca9f018889646654e"
+    },
+    {
+      "bytes": 8501,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/9e/9e3ec796d444daa0b7ae3bbe2d8143e356899621d675858417cef623ecfeb90f",
+      "sha256": "9e3ec796d444daa0b7ae3bbe2d8143e356899621d675858417cef623ecfeb90f"
+    },
+    {
+      "bytes": 105292,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1/audit-receipt.json",
+      "sha256": "78738f5ce4dfa00f1cf189ed1bdefb8850cbe67ea00d0e5442ce7a45dd4f5184"
+    }
+  ],
+  "audit_wall_seconds": 86.59470559598412,
+  "checks": {
+    "all_archived_dispositions_and_selected_closure_exact": true,
+    "all_artifact_bytes_current_at_close": true,
+    "audit_and_child_passed": true,
+    "captured_registry_records_queue_only": true,
+    "closeout_completed": true,
+    "direct_call_edge_counts_and_time_accounting_consistent": true,
+    "direct_call_edges_bounded_unique_and_rooted": true,
+    "direct_observations_artifact_exact": true,
+    "exact_archived_inputs_and_protected_current": true,
+    "exact_child_report_and_frozen_harness": true,
+    "exact_generated_jobs_vectors_roles_configs_and_identities": true,
+    "exact_produced_artifact_closure_current": true,
+    "exact_profile_scope_real_wrapper_counts": true,
+    "exact_sorted_observations_and_measurement_limits": true,
+    "exact_telemetry_scope_and_network_pin": true,
+    "failed_r1_preserved_unqualified_and_retained": true,
+    "generation_and_plan_artifacts_current": true,
+    "instrumented_timings_and_memory_scoped": true,
+    "new_plan_identity_and_preserved_policy": true,
+    "new_recipe_identity_independently_reconstructed": true,
+    "no_inflated_qualification_or_work_claim": true,
+    "owned_child_group_currently_dead": true,
+    "parent_guard_assertions_true": true,
+    "release_and_prior_retained_rows_current": true,
+    "release_and_retained_rows_still_current": true,
+    "resource_bounds_and_release_exact": true,
+    "source_and_dependency_chain_current": true,
+    "template_complete_staged_closure_current": true,
+    "template_data_and_synthetic_base_exact": true,
+    "three_batches_exact": true,
+    "trusted_prior_closeout_current": true,
+    "trusted_prior_closeout_passed": true,
+    "whole_source_dependency_harness_current_at_close": true
+  },
+  "closeout_code": {
+    "bytes": 41244,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/closeout.py",
+    "sha256": "b4079ac093fa25c2813ae8b96f47891e27270e34ae31488f29469064b090b90a"
+  },
+  "cold_run_claim": false,
+  "constitution_formalized": false,
+  "data_contract_parity": [
+    {
+      "corpus_manifest_artifact": {
+        "bytes": 435966,
+        "sha256": "140fa21a3d75f078a0029cefaa5eb7ef4d3a6f55744619c51054b88a2a254cf5"
+      },
+      "exact_archived_data_contract": true,
+      "ordinal": 0,
+      "produced_record_projection_artifact": {
+        "bytes": 34842,
+        "sha256": "ffde771dbe13247b8c91d2aef0ed06931327d566676829fc2e879337ba00dc73"
+      },
+      "training_count": 16,
+      "validation_count": 7
+    },
+    {
+      "corpus_manifest_artifact": {
+        "bytes": 440259,
+        "sha256": "100da6623a8184f2efe5fc0dfca072886c9341a019ab142155c6b66392e4303b"
+      },
+      "exact_archived_data_contract": true,
+      "ordinal": 1,
+      "produced_record_projection_artifact": {
+        "bytes": 34849,
+        "sha256": "93d576a09eb453d372486dbf04e7465567b77edf501a22022e4865abe51b3ba5"
+      },
+      "training_count": 16,
+      "validation_count": 7
+    },
+    {
+      "corpus_manifest_artifact": {
+        "bytes": 286183,
+        "sha256": "497991a1de062736758135eed3cbd8dd10f037ed746a64d6796f3226c750ca35"
+      },
+      "exact_archived_data_contract": true,
+      "ordinal": 2,
+      "produced_record_projection_artifact": {
+        "bytes": 22962,
+        "sha256": "6115a3705bad6c7add2305c57bbcfac962ec1419ec4ad8215a9df3c2f431f497"
+      },
+      "training_count": 8,
+      "validation_count": 7
+    }
+  ],
+  "dependency_file_count": 905,
+  "diagnostics": [],
+  "downloads_performed": false,
+  "embedding_inference_performed": false,
+  "expected_phase_call_counts": {
+    "constructor.EmbeddingReceiptSet": 8,
+    "constructor.SourcePartitions": 16,
+    "constructor.USCodeSourceInventory": 24,
+    "generation_root_load.load_embedding_receipt_set": 1,
+    "generation_root_load.load_source_partitions": 1,
+    "generation_root_load.load_uscode_source_inventory": 1,
+    "job.verify_direct": 3,
+    "owner_resolve.plan_job": 3,
+    "owner_resolve.template": 1,
+    "plan.seal": 1,
+    "prepare_campaign_batches": 1,
+    "projection.build": 3,
+    "root_load.load_embedding_receipt_set": 8,
+    "root_load.load_source_partitions": 8,
+    "root_load.load_uscode_source_inventory": 8
+  },
+  "final_attempt_bytes": 108265958,
+  "final_total_charged_bytes": 108265958,
+  "generated_jobs_artifact": {
+    "bytes": 901213,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/generated-jobs.json",
+    "sha256": "46c7d1d8a9c39577ca50e9a3cbb7f2d9b5cf4482d4bcd68224607c8d2328efa5"
+  },
+  "generation": {
+    "admitted": false,
+    "coverage": {
+      "alias_row_count": 92,
+      "deferred_training_input_count": 0,
+      "deferred_validation_input_count": 0,
+      "eligible_row_count": 62931,
+      "eligible_unique_input_count": 62839,
+      "embedded_training_input_count": 40,
+      "embedded_validation_input_count": 7,
+      "excluded_row_count": 0,
+      "physical_row_count": 62931,
+      "protected_canary_input_count": 3147,
+      "protected_holdout_input_count": 3143,
+      "selected_training_input_count": 40,
+      "selected_validation_input_count": 7,
+      "source_partition_counts": {
+        "canary": 3147,
+        "holdout": 3144,
+        "train": 50282,
+        "validation": 6358
+      },
+      "source_status_counts": {
+        "ready_published_text": 62931
+      },
+      "unique_embedding_status_counts": {
+        "embedded": 51,
+        "missing_input": 0,
+        "token_limit_exceeded": 13,
+        "unattempted": 62775
+      },
+      "unique_split_status_counts": {
+        "canary": {
+          "embedded": 0,
+          "missing_input": 0,
+          "token_limit_exceeded": 2,
+          "unattempted": 3145
+        },
+        "holdout": {
+          "embedded": 4,
+          "missing_input": 0,
+          "token_limit_exceeded": 0,
+          "unattempted": 3139
+        },
+        "train": {
+          "embedded": 40,
+          "missing_input": 0,
+          "token_limit_exceeded": 10,
+          "unattempted": 50157
+        },
+        "validation": {
+          "embedded": 7,
+          "missing_input": 0,
+          "token_limit_exceeded": 1,
+          "unattempted": 6334
+        }
+      }
+    },
+    "formalized": false,
+    "generation_artifact": {
+      "bytes": 23656941,
+      "sha256": "13b6232d3402e0da8ca472c5f619b68fee5a8714eb033b7ca9f018889646654e"
+    },
+    "global_holdout_verified": false,
+    "jobs": [
+      {
+        "corpus_manifest_artifact": {
+          "bytes": 435966,
+          "sha256": "140fa21a3d75f078a0029cefaa5eb7ef4d3a6f55744619c51054b88a2a254cf5"
+        },
+        "job_id": "campaign-job:50373633dea24dffed433282e79c8832e20d378fade67eb8a9d0ce258592eae8",
+        "job_spec_artifact": {
+          "bytes": 216998,
+          "sha256": "43cc4ac45c58d5a130707f3c6acb7e95634e39eb4ce6306ef5f183166b5ac8a1"
+        },
+        "job_spec_sha256": "43cc4ac45c58d5a130707f3c6acb7e95634e39eb4ce6306ef5f183166b5ac8a1",
+        "ordinal": 0,
+        "produced_record_projection_artifact": {
+          "bytes": 34842,
+          "sha256": "ffde771dbe13247b8c91d2aef0ed06931327d566676829fc2e879337ba00dc73"
+        },
+        "run_id": "campaign-run:50373633dea24dffed433282e79c8832e20d378fade67eb8a9d0ce258592eae8"
+      },
+      {
+        "corpus_manifest_artifact": {
+          "bytes": 440259,
+          "sha256": "100da6623a8184f2efe5fc0dfca072886c9341a019ab142155c6b66392e4303b"
+        },
+        "job_id": "campaign-job:af8acfc955d35b80182e0fef11fcc8e617cfe98714a61907bb56e85fa82465fe",
+        "job_spec_artifact": {
+          "bytes": 221239,
+          "sha256": "2fa42fdca6db006bbc1208b51a4836b437db38974d0604a47dfdbbcd276402a4"
+        },
+        "job_spec_sha256": "2fa42fdca6db006bbc1208b51a4836b437db38974d0604a47dfdbbcd276402a4",
+        "ordinal": 1,
+        "produced_record_projection_artifact": {
+          "bytes": 34849,
+          "sha256": "93d576a09eb453d372486dbf04e7465567b77edf501a22022e4865abe51b3ba5"
+        },
+        "run_id": "campaign-run:af8acfc955d35b80182e0fef11fcc8e617cfe98714a61907bb56e85fa82465fe"
+      },
+      {
+        "corpus_manifest_artifact": {
+          "bytes": 286183,
+          "sha256": "497991a1de062736758135eed3cbd8dd10f037ed746a64d6796f3226c750ca35"
+        },
+        "job_id": "campaign-job:f6e6b7aa7da65184efc307f9e5a967d76f47c1f043c3f6e02645f12f53ae098d",
+        "job_spec_artifact": {
+          "bytes": 144794,
+          "sha256": "202b4f843afce3d3b0249a85c66d0a600eca9947287d4c032df49cf661e6dee8"
+        },
+        "job_spec_sha256": "202b4f843afce3d3b0249a85c66d0a600eca9947287d4c032df49cf661e6dee8",
+        "ordinal": 2,
+        "produced_record_projection_artifact": {
+          "bytes": 22962,
+          "sha256": "6115a3705bad6c7add2305c57bbcfac962ec1419ec4ad8215a9df3c2f431f497"
+        },
+        "run_id": "campaign-run:f6e6b7aa7da65184efc307f9e5a967d76f47c1f043c3f6e02645f12f53ae098d"
+      }
+    ],
+    "page": {
+      "max_batches": 3,
+      "selected_batch_ordinals": [
+        0,
+        1,
+        2
+      ],
+      "start_batch": 0,
+      "total_batches": 3
+    },
+    "plan_artifact": {
+      "bytes": 8501,
+      "sha256": "9e3ec796d444daa0b7ae3bbe2d8143e356899621d675858417cef623ecfeb90f"
+    },
+    "promotion_performed": false,
+    "publication_performed": false,
+    "qualification_scope": "selected_source_inputs_and_registered_job_contracts_only",
+    "recipe_id": "sha256:67c8435011da37ba350e97c3a95ed66723a329e61a332f66851a01fc846bde86",
+    "run_ids": [
+      "campaign-run:50373633dea24dffed433282e79c8832e20d378fade67eb8a9d0ce258592eae8",
+      "campaign-run:af8acfc955d35b80182e0fef11fcc8e617cfe98714a61907bb56e85fa82465fe",
+      "campaign-run:f6e6b7aa7da65184efc307f9e5a967d76f47c1f043c3f6e02645f12f53ae098d"
+    ],
+    "schema_version": "autoencoder-campaign-generation-report-v1",
+    "source_authority_authenticated": false,
+    "target_membership_qualification": "not_configured",
+    "target_membership_verified": false,
+    "training_dispatched": false
+  },
+  "global_holdout_verified": false,
+  "harness_artifacts": [
+    {
+      "bytes": 13066,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile_common.py",
+      "sha256": "cce442b34413ab1a23f4eeae9b9d4926c02cb45f7fab48a93842740ef18f9f9d"
+    },
+    {
+      "bytes": 8602,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/run_profile.py",
+      "sha256": "5d1df39d53a1dfc51f9942fec2f9b07e4b3d4fa40c3e158608f596a82cd86827"
+    },
+    {
+      "bytes": 23996,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile_child.py",
+      "sha256": "b4e6b41497e97d0e508aff6759b08ca4a1ec65222bff5007404674f498a550c6"
+    }
+  ],
+  "input_artifacts": [
+    {
+      "bytes": 137815,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/campaign-batches-closeout-20260926-r1.json",
+      "sha256": "4a794b00e8f059098bc63c1139653c4cadfba4fdf5555f6d8b2ea38b6b921e5f"
+    },
+    {
+      "bytes": 79086,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/template-job.json",
+      "sha256": "f2cd97f1858601a80cc6fe8b88252ce6a084a090627df78c6940960382f607ee"
+    },
+    {
+      "bytes": 92249,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/batches-report.json",
+      "sha256": "ec916d4432941f585d854f4214d3d2e42d842d64d6825d713fba8c2eb9c84ea9"
+    },
+    {
+      "bytes": 79192,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/campaign-plan-closeout-20260926-r1.json",
+      "sha256": "9a8db09b90baa687534bae82352d0f014bbd5d8538f5e268cab42dd10eff3bd8"
+    },
+    {
+      "bytes": 79018,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/job.json",
+      "sha256": "52ab658dc43d59b932d00c2cc5b27f8d9bd2962a66b55f46457843c1a5215a1f"
+    },
+    {
+      "bytes": 25013,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/plan-report.json",
+      "sha256": "d223af488c61fce2efe9129e1347cb8558c095ed338bb82bce7efd55cdc5e756"
+    },
+    {
+      "bytes": 66165,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/campaign-workflow-closeout-20260926-r3.json",
+      "sha256": "d18abfeb4619d0972ecf8f7d0b40b5aa730ae757e76abbca63d77e5b8014fc46"
+    },
+    {
+      "bytes": 79161,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/job.json",
+      "sha256": "d814b1c223f132815742d65cf17609df435dfb38c2adb6283947d68b2c7caf6d"
+    },
+    {
+      "bytes": 16435,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/cycle-report.json",
+      "sha256": "d24df8feaf3703b16dc893d751ee83b1919d7f86e802fdb243843414e3a75dd4"
+    },
+    {
+      "bytes": 65265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/prepared-campaign-inputs-closeout-20260926-r2.json",
+      "sha256": "4c5b76fd442121a4b83b37bce3894ca4e41ba0b389c0ccd47bb643b40d0b4503"
+    },
+    {
+      "bytes": 79303,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/job.json",
+      "sha256": "98e8aeaf283c884117d0d945aaad359f0d01e125f8b790740eb3eecccb25705e"
+    },
+    {
+      "bytes": 43609,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/prepared-report.json",
+      "sha256": "e1469bf80a95483f18238ca02b4948e597d4b930f2d9ee807a7e25f81a909487"
+    },
+    {
+      "bytes": 852161,
+      "ctime_ns": 1790375716299193752,
+      "device": 66306,
+      "inode": 67005456,
+      "mtime_ns": 1790375716299193752,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/manifest.json",
+      "sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6"
+    },
+    {
+      "bytes": 3356154,
+      "ctime_ns": 1790375735059944812,
+      "device": 66306,
+      "inode": 67005522,
+      "mtime_ns": 1790375735059944812,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000000.parquet",
+      "sha256": "006b173b020f973fad27b7e1aef3a3df6ae77d01b233f241fbf8444776b24131"
+    },
+    {
+      "bytes": 3270567,
+      "ctime_ns": 1790375735073945063,
+      "device": 66306,
+      "inode": 67005523,
+      "mtime_ns": 1790375735073945063,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000001.parquet",
+      "sha256": "04f3f95ff2a7962363dcbc3760d3a62ee068619e9ee089c775842430b781cc15"
+    },
+    {
+      "bytes": 3312692,
+      "ctime_ns": 1790375735084945260,
+      "device": 66306,
+      "inode": 67005524,
+      "mtime_ns": 1790375735084945260,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000002.parquet",
+      "sha256": "edf647c3a7c56d989b84c76c1a2031d033ca98612a2bca778e1b560c6bc68248"
+    },
+    {
+      "bytes": 3313853,
+      "ctime_ns": 1790375735099945530,
+      "device": 66306,
+      "inode": 67005525,
+      "mtime_ns": 1790375735099945530,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000003.parquet",
+      "sha256": "da395636e01f91a8cec0d77b3d1b8411b18feb7a5641173e084f7ee315f9ac62"
+    },
+    {
+      "bytes": 3564013,
+      "ctime_ns": 1790375735113945781,
+      "device": 66306,
+      "inode": 67005526,
+      "mtime_ns": 1790375735113945781,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000004.parquet",
+      "sha256": "5c9e9e096cdce671eceb0b2dd882a220594162690652863a0a8de7e082815635"
+    },
+    {
+      "bytes": 3472609,
+      "ctime_ns": 1790375735126946014,
+      "device": 66306,
+      "inode": 67005527,
+      "mtime_ns": 1790375735126946014,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000005.parquet",
+      "sha256": "3f90103ff5fd2645b4123553193e9d6adb74331f2bff0cc0c6887aa9c245c553"
+    },
+    {
+      "bytes": 3301002,
+      "ctime_ns": 1790375735136946194,
+      "device": 66306,
+      "inode": 67005528,
+      "mtime_ns": 1790375735136946194,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000006.parquet",
+      "sha256": "612f8a966638d9707ea241bbf945d3cd5673f86fe78bcc6dbb9e5cac2809e4c8"
+    },
+    {
+      "bytes": 3589877,
+      "ctime_ns": 1790375735147946391,
+      "device": 66306,
+      "inode": 67005529,
+      "mtime_ns": 1790375735147946391,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000007.parquet",
+      "sha256": "4dabf0b1cf29651bde0f7cb48b78664190289dc667eb8b1eb2686769c7ed871f"
+    },
+    {
+      "bytes": 3237071,
+      "ctime_ns": 1790375735157946570,
+      "device": 66306,
+      "inode": 67005530,
+      "mtime_ns": 1790375735157946570,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000008.parquet",
+      "sha256": "cad48e8ae51c73bf4f0c8052b4668531a4b8c4299f87b2afd3086935aeb87848"
+    },
+    {
+      "bytes": 3476873,
+      "ctime_ns": 1790375735172946840,
+      "device": 66306,
+      "inode": 67005531,
+      "mtime_ns": 1790375735172946840,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000009.parquet",
+      "sha256": "dabcef786908f2310fabc442d88ae543da8189224bdfa76c851dfc2a78911961"
+    },
+    {
+      "bytes": 3325739,
+      "ctime_ns": 1790375735186947091,
+      "device": 66306,
+      "inode": 67005532,
+      "mtime_ns": 1790375735186947091,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000010.parquet",
+      "sha256": "eefabd2b1877e9ecc2457eeecc36b1ecd308705a431a5ecc3511e4e33b625bf3"
+    },
+    {
+      "bytes": 3391991,
+      "ctime_ns": 1790375735199947324,
+      "device": 66306,
+      "inode": 67005533,
+      "mtime_ns": 1790375735199947324,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000011.parquet",
+      "sha256": "07dd8437262e238fedf5ef48ceca650fc042fad1075d04b919a19348f7e0e828"
+    },
+    {
+      "bytes": 3428237,
+      "ctime_ns": 1790375735210947522,
+      "device": 66306,
+      "inode": 67005534,
+      "mtime_ns": 1790375735210947522,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000012.parquet",
+      "sha256": "439b43fc526ba347736f905c80973dcf74035c1fab58682af11ce70fcc83fd10"
+    },
+    {
+      "bytes": 3373426,
+      "ctime_ns": 1790375735224947773,
+      "device": 66306,
+      "inode": 67005535,
+      "mtime_ns": 1790375735224947773,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000013.parquet",
+      "sha256": "8ff341ff05104db0d1dce1259c060f2a566c9481158968cfd4d2d6ddd9b6d660"
+    },
+    {
+      "bytes": 3515455,
+      "ctime_ns": 1790375735236947988,
+      "device": 66306,
+      "inode": 67005536,
+      "mtime_ns": 1790375735236947988,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000014.parquet",
+      "sha256": "5efa52d8f414a3e742dbb2ba4545fb9881d9f90aeb640b7f085490586bc7ed5a"
+    },
+    {
+      "bytes": 1290201,
+      "ctime_ns": 1790375716309076075,
+      "device": 66306,
+      "inode": 67005459,
+      "mtime_ns": 1790375716309076075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/data/corpus/part-000015.parquet",
+      "sha256": "9a7693e41011a2e55cd7d31b15273cfbb5ec29ce900b7536df54c3ec5cc94cba"
+    },
+    {
+      "bytes": 47531987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/inventory/inventory.json",
+      "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef"
+    },
+    {
+      "bytes": 12187351,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/partitions/source-partitions.json",
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+    },
+    {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/native-embeddings-20260925-r2/embedding-production.json",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    {
+      "bytes": 9557340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/embedding-receipt-set.json",
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7"
+    },
+    {
+      "bytes": 10348,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/inventory-selection.json",
+      "sha256": "f326aa6bf79d6a8593b64c559beb82ef70108d8710a6f7b2a7d650a858627586"
+    },
+    {
+      "bytes": 75216,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/import-receipt.json",
+      "sha256": "513fa9976505ec4a133d039c8ae1e36f73394c4df8937a62a3194eeaf8996cad"
+    },
+    {
+      "bytes": 554,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000000.txt",
+      "sha256": "fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df"
+    },
+    {
+      "bytes": 13212,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000001.txt",
+      "sha256": "3dc02977872760fc0734ab41e9a8faeb84b003545ba297d21c8f7eae053d7e1a"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000002.txt",
+      "sha256": "8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000003.txt",
+      "sha256": "262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc"
+    },
+    {
+      "bytes": 1028,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000004.txt",
+      "sha256": "4aba62acb910b41dd37ecaa4a04af60d065d3e115db81e3cf626c48cfb57c6f8"
+    },
+    {
+      "bytes": 119,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000005.txt",
+      "sha256": "0784ffb94efcb730752841e5257c3621eea1cacf4eda8972fb0408a4d670ffdc"
+    },
+    {
+      "bytes": 820,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000006.txt",
+      "sha256": "b17c2c59dc055c99842c80e57f691c8645da290bc05450483faa73698c8eac7f"
+    },
+    {
+      "bytes": 4811,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000007.txt",
+      "sha256": "ebf1bad6c5bad852f01aa3cea73f85b33930f8a0606ed29c77b090cc7abdb274"
+    },
+    {
+      "bytes": 1116,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000008.txt",
+      "sha256": "ebdd505096a028ae96c030682e3fdaf884c9a41d7c32c4f1fe84925bff7af5b2"
+    },
+    {
+      "bytes": 31,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000009.txt",
+      "sha256": "27aa6f4f94af993c095b4190e04cafc6bc5b8822315324be63b2f41b4c014b30"
+    },
+    {
+      "bytes": 4779,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000010.txt",
+      "sha256": "4fe73cfc383162f5d0e7157f61a56ac9642fb44d636bde2ea1fadbbc74d09c7a"
+    },
+    {
+      "bytes": 746,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000011.txt",
+      "sha256": "d47bb48b75c875d896fb8396d277e5997ecb8edf1b28ccea4e578b645b5d37ee"
+    },
+    {
+      "bytes": 584,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000012.txt",
+      "sha256": "b1a0ea3c7c045d67947aaa665232ed39ef8f168b0153c94c7638b10460387e4a"
+    },
+    {
+      "bytes": 431,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000013.txt",
+      "sha256": "ae94239867b3d0a4b092ca70e50f2eced5e85ba13b3fe7d4f5c8905639d354d7"
+    },
+    {
+      "bytes": 1615,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000014.txt",
+      "sha256": "4451420cd80651fb2b1a466fa6e100adac8a885eb1601ed9cdcfc33cd224a3f1"
+    },
+    {
+      "bytes": 19400,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000015.txt",
+      "sha256": "b2acbeac9c777874e05d851f089878cc642965a4f2815555f30834ab989da62d"
+    },
+    {
+      "bytes": 1361,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000016.txt",
+      "sha256": "c363efaded62137d547ac8ca8c110760a2820efb8ab9b92ff5d81aa62a717111"
+    },
+    {
+      "bytes": 858,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000017.txt",
+      "sha256": "50dacb5b991f4302751857860a9786a6083261c2b6bba7010c827caa1355ad99"
+    },
+    {
+      "bytes": 1463,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000018.txt",
+      "sha256": "e5f873fd0183186c4ba9680c2edb4236ae7d1170740e87b43e0c0c0a39e10b81"
+    },
+    {
+      "bytes": 1161,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000019.txt",
+      "sha256": "50714cf7f07d36f1fcabec62da5909faa38ce0cd95f67b04d9816375a459c357"
+    },
+    {
+      "bytes": 299,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000020.txt",
+      "sha256": "550d1e9f7ba3ae319162d7ffe3ae81752ca5a9eaea3e3c5d56a77bb663f2dada"
+    },
+    {
+      "bytes": 201,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000021.txt",
+      "sha256": "a4c0984c33a52d197ddaac45d78729c9207c01f8dd09a7caf3fdf518cc9eba20"
+    },
+    {
+      "bytes": 551,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000022.txt",
+      "sha256": "760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a"
+    },
+    {
+      "bytes": 311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000023.txt",
+      "sha256": "1d8b68966bee6ea6006a63b61384839452177e72ff6b8cc61df7396b9ab024ab"
+    },
+    {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000024.txt",
+      "sha256": "7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb"
+    },
+    {
+      "bytes": 7062,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000025.txt",
+      "sha256": "a7b598f55ed20c5aae0c8d15f45729ca50954c3b55f1b4adb561c2982dac106e"
+    },
+    {
+      "bytes": 170,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000026.txt",
+      "sha256": "f01a585355f87a1470f3eee281548238665c26df18235e04deff9c9043be48cf"
+    },
+    {
+      "bytes": 14074,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000027.txt",
+      "sha256": "cb40afa4da329e32878f6a5d69db42b0c13fb064acfcc36e0a575618fc61fcda"
+    },
+    {
+      "bytes": 1725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000028.txt",
+      "sha256": "18adea4104e729277a801ab53ec7a65e270f1955efac3e9d9a5790546dfccf05"
+    },
+    {
+      "bytes": 1330,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000029.txt",
+      "sha256": "477e7cf840ab50ee58cc24c5afb435baac8bd5ae30aa9f4fff6bc89be87f3a20"
+    },
+    {
+      "bytes": 869,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000030.txt",
+      "sha256": "5a02f9c06e54c647af1b766af354890c88e85627f7dc2b01299fcc71e5e0b6db"
+    },
+    {
+      "bytes": 1177,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000031.txt",
+      "sha256": "33beab120126def5b557493c536ea332b032f1bf56208c9a5eec42cbc324a00d"
+    },
+    {
+      "bytes": 730,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000032.txt",
+      "sha256": "dc7c7fa865423107a82728e5ea67a0885aab6d5bcfaf014a2a49ed51ca9e4452"
+    },
+    {
+      "bytes": 1679,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000033.txt",
+      "sha256": "9405ae3578fc706c0aae4023e341bc425e20cf2d17885e22c45c537d68a5aab3"
+    },
+    {
+      "bytes": 2201,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000034.txt",
+      "sha256": "936d0fb19843fd3cae0ff2bbeb1efc0d618c2a233664cc19748a11f9f043dc23"
+    },
+    {
+      "bytes": 424,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000035.txt",
+      "sha256": "64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb"
+    },
+    {
+      "bytes": 2475,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000036.txt",
+      "sha256": "2cb441dc9f438f6c6aaaf19fb39f0d690887fc3170f11c433c1351ea31bad9ef"
+    },
+    {
+      "bytes": 1387,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000037.txt",
+      "sha256": "5dbe4f5a9ad87037893f25f1708a8f97aab918c7b89f4995fdbb39e0489f411f"
+    },
+    {
+      "bytes": 46,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000038.txt",
+      "sha256": "dd57f8f5c01c5863991d539d85d7b01ddfd515fa2e4591941f13ba9ff395a7c7"
+    },
+    {
+      "bytes": 10479,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000039.txt",
+      "sha256": "f94b9a4db8f3c6170700a30b21b85661edc3cac3a9cf18700c4770a788d91158"
+    },
+    {
+      "bytes": 411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000040.txt",
+      "sha256": "35ff123d1c0389c80b8d57e31c29118625c94f7d10a162194f9851caf86fe3d6"
+    },
+    {
+      "bytes": 4154,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000041.txt",
+      "sha256": "f35ebfcb33eebc563335d7b23f9b596d57b2cbbdb39ea4c419bce0875d1bf91a"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000042.txt",
+      "sha256": "c5a817ff96bc500e72f2c007e41438ee51f02bf061e03e1fac1ce5a5df081358"
+    },
+    {
+      "bytes": 3948,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000043.txt",
+      "sha256": "dca842e8e6bb3abc4a468c1989ea445e26bee30bdc5579abf3a521bf44e1a29a"
+    },
+    {
+      "bytes": 4622,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000044.txt",
+      "sha256": "4cac5e6467ecf157f0067075c4b1c17b4735f17809b35e8538ab878c7e6542fb"
+    },
+    {
+      "bytes": 741,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000045.txt",
+      "sha256": "48f11b76b1f732519cf72d964e1a0856f2f3ca9793c815edc59d0e8b826de406"
+    },
+    {
+      "bytes": 1242,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000046.txt",
+      "sha256": "e1f030da7c197b3dbb4d8537d4ff651a17595b67451104c0f94d75e1d26c61b5"
+    },
+    {
+      "bytes": 1987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000047.txt",
+      "sha256": "a81788120cd5c5ae5a5bafec013cc8af722cf17af934bb03d389d6019c2d1493"
+    },
+    {
+      "bytes": 311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000048.txt",
+      "sha256": "7fdad08e7ede322431214775ac6defb560f6651af2b59bdfdac386ed3437a633"
+    },
+    {
+      "bytes": 1293,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000049.txt",
+      "sha256": "df05b52d3d56b724a68c9e49cfaf29b2d856f0e3ea87323e09aeb72845bd3936"
+    },
+    {
+      "bytes": 3508,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000050.txt",
+      "sha256": "0c522156a05c3df35959fe71e7c65e877107efbe120d71cc0c557cfb0cdfe502"
+    },
+    {
+      "bytes": 510,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000051.txt",
+      "sha256": "5f28df14ff9d65d5532114eeb02c00d4e64fc96ac544afd3272d29a1b959d27d"
+    },
+    {
+      "bytes": 119,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000052.txt",
+      "sha256": "d2cd54bebe5f7e22064768a76e2e95360d070f5be79360c68c5040021c8ae101"
+    },
+    {
+      "bytes": 250,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000053.txt",
+      "sha256": "4afff3f8e9a7a635cafff26f219222782a06aaa5d7925a2ae29edc1e9b6facdc"
+    },
+    {
+      "bytes": 5017,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000054.txt",
+      "sha256": "e94a30294d76a638dd3e382e5491facf168e603dff524150463be9421b56217d"
+    },
+    {
+      "bytes": 1411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000055.txt",
+      "sha256": "c0723c969c8f178c9c8bba40c9ecab36e955e95794a703c82246da1a60493a55"
+    },
+    {
+      "bytes": 2634,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000056.txt",
+      "sha256": "16fe5feae36687f7efe307964be142b251a138b0fd4fe970010aca752c79d5c6"
+    },
+    {
+      "bytes": 340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000057.txt",
+      "sha256": "0fd89e5669641913db41cf9d6e59a7ed91a76a3482dae05787b42e0d9ef45af7"
+    },
+    {
+      "bytes": 2769,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000058.txt",
+      "sha256": "42eb411469b587b8cf5f05be9439ab3b72a7e67176f4b8b0c51f4aaf0f85b9b1"
+    },
+    {
+      "bytes": 406,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000059.txt",
+      "sha256": "8bb0705864cc417eefea628367763c4fa8317d00dbf297234890b44a6e276f28"
+    },
+    {
+      "bytes": 241,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000060.txt",
+      "sha256": "c48df2c9be38540e0b0e6f9e3f1c6a47d4a8cfa592ca27c3da8c47d6e58af87b"
+    },
+    {
+      "bytes": 1023,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000061.txt",
+      "sha256": "9c309f323aefd29d0e8a7002a252ddc3a03e0f98c91fd04209c99eef80ad6192"
+    },
+    {
+      "bytes": 2609,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000062.txt",
+      "sha256": "c01f0d5ac48edf8d29cc27950e3699b9cab75da101f61734845ee6d99a3d0bb3"
+    },
+    {
+      "bytes": 408,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000063.txt",
+      "sha256": "e5a9cd6b16add87321f31b5035feba1ae40bafb3f869bf8bc3ec4c9b480d4dba"
+    },
+    {
+      "bytes": 47531987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/38/38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+      "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef"
+    },
+    {
+      "bytes": 12187351,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/12/12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+    },
+    {
+      "bytes": 9557340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/fd/fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7",
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7"
+    },
+    {
+      "bytes": 9566,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/c1/c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4",
+      "sha256": "c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4"
+    },
+    {
+      "bytes": 111812,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/a7/a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3",
+      "sha256": "a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3"
+    },
+    {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/0e/0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    {
+      "bytes": 554,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/fb/fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df",
+      "sha256": "fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/8c/8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b",
+      "sha256": "8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/26/262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc",
+      "sha256": "262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc"
+    },
+    {
+      "bytes": 551,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/76/760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a",
+      "sha256": "760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a"
+    },
+    {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/7a/7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb",
+      "sha256": "7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb"
+    },
+    {
+      "bytes": 424,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/64/64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb",
+      "sha256": "64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-recapture-20260926/capture-r2/probe/artifacts/cf/cf6226a6cfaae4cae6a4e52f193b10333ff1a7b0b0ab1f4bc3b13184c05d869c",
+      "sha256": "cf6226a6cfaae4cae6a4e52f193b10333ff1a7b0b0ab1f4bc3b13184c05d869c"
+    },
+    {
+      "bytes": 47531987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/38/38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+      "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef"
+    },
+    {
+      "bytes": 12187351,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/12/12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+    },
+    {
+      "bytes": 9557340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/fd/fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7",
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7"
+    },
+    {
+      "bytes": 9566,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/c1/c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4",
+      "sha256": "c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4"
+    },
+    {
+      "bytes": 111812,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/a7/a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3",
+      "sha256": "a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/cf/cf6226a6cfaae4cae6a4e52f193b10333ff1a7b0b0ab1f4bc3b13184c05d869c",
+      "sha256": "cf6226a6cfaae4cae6a4e52f193b10333ff1a7b0b0ab1f4bc3b13184c05d869c"
+    },
+    {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/0e/0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    {
+      "bytes": 554,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/fb/fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df",
+      "sha256": "fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/8c/8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b",
+      "sha256": "8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/26/262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc",
+      "sha256": "262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc"
+    },
+    {
+      "bytes": 551,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/76/760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a",
+      "sha256": "760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a"
+    },
+    {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/7a/7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb",
+      "sha256": "7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb"
+    },
+    {
+      "bytes": 424,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-final-20260926/capture-r3/probe/artifacts/64/64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb",
+      "sha256": "64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb"
+    },
+    {
+      "bytes": 47531987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/38/38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+      "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef"
+    },
+    {
+      "bytes": 12187351,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/12/12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+    },
+    {
+      "bytes": 9557340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/fd/fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7",
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7"
+    },
+    {
+      "bytes": 9566,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/c1/c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4",
+      "sha256": "c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4"
+    },
+    {
+      "bytes": 111812,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/a7/a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3",
+      "sha256": "a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3"
+    },
+    {
+      "bytes": 3,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/ca/ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/0e/0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    {
+      "bytes": 554,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/fb/fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df",
+      "sha256": "fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/8c/8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b",
+      "sha256": "8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/26/262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc",
+      "sha256": "262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc"
+    },
+    {
+      "bytes": 551,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/76/760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a",
+      "sha256": "760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a"
+    },
+    {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/7a/7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb",
+      "sha256": "7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb"
+    },
+    {
+      "bytes": 424,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-plan-20260926/capture-r1/probe/artifacts/64/64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb",
+      "sha256": "64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb"
+    },
+    {
+      "bytes": 47531987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/38/38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+      "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef"
+    },
+    {
+      "bytes": 12187351,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/12/12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+    },
+    {
+      "bytes": 9557340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/fd/fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7",
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7"
+    },
+    {
+      "bytes": 9566,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/c1/c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4",
+      "sha256": "c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4"
+    },
+    {
+      "bytes": 111812,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/a7/a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3",
+      "sha256": "a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3"
+    },
+    {
+      "bytes": 3,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/ca/ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/0e/0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    {
+      "bytes": 554,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/fb/fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df",
+      "sha256": "fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/8c/8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b",
+      "sha256": "8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/26/262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc",
+      "sha256": "262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc"
+    },
+    {
+      "bytes": 551,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/76/760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a",
+      "sha256": "760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a"
+    },
+    {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/7a/7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb",
+      "sha256": "7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb"
+    },
+    {
+      "bytes": 424,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/64/64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb",
+      "sha256": "64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb"
+    },
+    {
+      "bytes": 34842,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/ff/ffde771dbe13247b8c91d2aef0ed06931327d566676829fc2e879337ba00dc73",
+      "sha256": "ffde771dbe13247b8c91d2aef0ed06931327d566676829fc2e879337ba00dc73"
+    },
+    {
+      "bytes": 435966,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/14/140fa21a3d75f078a0029cefaa5eb7ef4d3a6f55744619c51054b88a2a254cf5",
+      "sha256": "140fa21a3d75f078a0029cefaa5eb7ef4d3a6f55744619c51054b88a2a254cf5"
+    },
+    {
+      "bytes": 119,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/07/0784ffb94efcb730752841e5257c3621eea1cacf4eda8972fb0408a4d670ffdc",
+      "sha256": "0784ffb94efcb730752841e5257c3621eea1cacf4eda8972fb0408a4d670ffdc"
+    },
+    {
+      "bytes": 340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/0f/0fd89e5669641913db41cf9d6e59a7ed91a76a3482dae05787b42e0d9ef45af7",
+      "sha256": "0fd89e5669641913db41cf9d6e59a7ed91a76a3482dae05787b42e0d9ef45af7"
+    },
+    {
+      "bytes": 311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/1d/1d8b68966bee6ea6006a63b61384839452177e72ff6b8cc61df7396b9ab024ab",
+      "sha256": "1d8b68966bee6ea6006a63b61384839452177e72ff6b8cc61df7396b9ab024ab"
+    },
+    {
+      "bytes": 1615,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/44/4451420cd80651fb2b1a466fa6e100adac8a885eb1601ed9cdcfc33cd224a3f1",
+      "sha256": "4451420cd80651fb2b1a466fa6e100adac8a885eb1601ed9cdcfc33cd224a3f1"
+    },
+    {
+      "bytes": 741,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/48/48f11b76b1f732519cf72d964e1a0856f2f3ca9793c815edc59d0e8b826de406",
+      "sha256": "48f11b76b1f732519cf72d964e1a0856f2f3ca9793c815edc59d0e8b826de406"
+    },
+    {
+      "bytes": 1161,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/50/50714cf7f07d36f1fcabec62da5909faa38ce0cd95f67b04d9816375a459c357",
+      "sha256": "50714cf7f07d36f1fcabec62da5909faa38ce0cd95f67b04d9816375a459c357"
+    },
+    {
+      "bytes": 299,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/55/550d1e9f7ba3ae319162d7ffe3ae81752ca5a9eaea3e3c5d56a77bb663f2dada",
+      "sha256": "550d1e9f7ba3ae319162d7ffe3ae81752ca5a9eaea3e3c5d56a77bb663f2dada"
+    },
+    {
+      "bytes": 510,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/5f/5f28df14ff9d65d5532114eeb02c00d4e64fc96ac544afd3272d29a1b959d27d",
+      "sha256": "5f28df14ff9d65d5532114eeb02c00d4e64fc96ac544afd3272d29a1b959d27d"
+    },
+    {
+      "bytes": 311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/7f/7fdad08e7ede322431214775ac6defb560f6651af2b59bdfdac386ed3437a633",
+      "sha256": "7fdad08e7ede322431214775ac6defb560f6651af2b59bdfdac386ed3437a633"
+    },
+    {
+      "bytes": 406,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/8b/8bb0705864cc417eefea628367763c4fa8317d00dbf297234890b44a6e276f28",
+      "sha256": "8bb0705864cc417eefea628367763c4fa8317d00dbf297234890b44a6e276f28"
+    },
+    {
+      "bytes": 1679,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/94/9405ae3578fc706c0aae4023e341bc425e20cf2d17885e22c45c537d68a5aab3",
+      "sha256": "9405ae3578fc706c0aae4023e341bc425e20cf2d17885e22c45c537d68a5aab3"
+    },
+    {
+      "bytes": 1023,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/9c/9c309f323aefd29d0e8a7002a252ddc3a03e0f98c91fd04209c99eef80ad6192",
+      "sha256": "9c309f323aefd29d0e8a7002a252ddc3a03e0f98c91fd04209c99eef80ad6192"
+    },
+    {
+      "bytes": 201,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/a4/a4c0984c33a52d197ddaac45d78729c9207c01f8dd09a7caf3fdf518cc9eba20",
+      "sha256": "a4c0984c33a52d197ddaac45d78729c9207c01f8dd09a7caf3fdf518cc9eba20"
+    },
+    {
+      "bytes": 1361,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/c3/c363efaded62137d547ac8ca8c110760a2820efb8ab9b92ff5d81aa62a717111",
+      "sha256": "c363efaded62137d547ac8ca8c110760a2820efb8ab9b92ff5d81aa62a717111"
+    },
+    {
+      "bytes": 1293,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/df/df05b52d3d56b724a68c9e49cfaf29b2d856f0e3ea87323e09aeb72845bd3936",
+      "sha256": "df05b52d3d56b724a68c9e49cfaf29b2d856f0e3ea87323e09aeb72845bd3936"
+    },
+    {
+      "bytes": 1242,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/e1/e1f030da7c197b3dbb4d8537d4ff651a17595b67451104c0f94d75e1d26c61b5",
+      "sha256": "e1f030da7c197b3dbb4d8537d4ff651a17595b67451104c0f94d75e1d26c61b5"
+    },
+    {
+      "bytes": 1463,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/e5/e5f873fd0183186c4ba9680c2edb4236ae7d1170740e87b43e0c0c0a39e10b81",
+      "sha256": "e5f873fd0183186c4ba9680c2edb4236ae7d1170740e87b43e0c0c0a39e10b81"
+    },
+    {
+      "bytes": 34849,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/93/93d576a09eb453d372486dbf04e7465567b77edf501a22022e4865abe51b3ba5",
+      "sha256": "93d576a09eb453d372486dbf04e7465567b77edf501a22022e4865abe51b3ba5"
+    },
+    {
+      "bytes": 440259,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/10/100da6623a8184f2efe5fc0dfca072886c9341a019ab142155c6b66392e4303b",
+      "sha256": "100da6623a8184f2efe5fc0dfca072886c9341a019ab142155c6b66392e4303b"
+    },
+    {
+      "bytes": 1725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/18/18adea4104e729277a801ab53ec7a65e270f1955efac3e9d9a5790546dfccf05",
+      "sha256": "18adea4104e729277a801ab53ec7a65e270f1955efac3e9d9a5790546dfccf05"
+    },
+    {
+      "bytes": 2475,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/2c/2cb441dc9f438f6c6aaaf19fb39f0d690887fc3170f11c433c1351ea31bad9ef",
+      "sha256": "2cb441dc9f438f6c6aaaf19fb39f0d690887fc3170f11c433c1351ea31bad9ef"
+    },
+    {
+      "bytes": 1177,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/33/33beab120126def5b557493c536ea332b032f1bf56208c9a5eec42cbc324a00d",
+      "sha256": "33beab120126def5b557493c536ea332b032f1bf56208c9a5eec42cbc324a00d"
+    },
+    {
+      "bytes": 1028,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/4a/4aba62acb910b41dd37ecaa4a04af60d065d3e115db81e3cf626c48cfb57c6f8",
+      "sha256": "4aba62acb910b41dd37ecaa4a04af60d065d3e115db81e3cf626c48cfb57c6f8"
+    },
+    {
+      "bytes": 858,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/50/50dacb5b991f4302751857860a9786a6083261c2b6bba7010c827caa1355ad99",
+      "sha256": "50dacb5b991f4302751857860a9786a6083261c2b6bba7010c827caa1355ad99"
+    },
+    {
+      "bytes": 1387,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/5d/5dbe4f5a9ad87037893f25f1708a8f97aab918c7b89f4995fdbb39e0489f411f",
+      "sha256": "5dbe4f5a9ad87037893f25f1708a8f97aab918c7b89f4995fdbb39e0489f411f"
+    },
+    {
+      "bytes": 1987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/a8/a81788120cd5c5ae5a5bafec013cc8af722cf17af934bb03d389d6019c2d1493",
+      "sha256": "a81788120cd5c5ae5a5bafec013cc8af722cf17af934bb03d389d6019c2d1493"
+    },
+    {
+      "bytes": 431,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/ae/ae94239867b3d0a4b092ca70e50f2eced5e85ba13b3fe7d4f5c8905639d354d7",
+      "sha256": "ae94239867b3d0a4b092ca70e50f2eced5e85ba13b3fe7d4f5c8905639d354d7"
+    },
+    {
+      "bytes": 820,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/b1/b17c2c59dc055c99842c80e57f691c8645da290bc05450483faa73698c8eac7f",
+      "sha256": "b17c2c59dc055c99842c80e57f691c8645da290bc05450483faa73698c8eac7f"
+    },
+    {
+      "bytes": 1411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/c0/c0723c969c8f178c9c8bba40c9ecab36e955e95794a703c82246da1a60493a55",
+      "sha256": "c0723c969c8f178c9c8bba40c9ecab36e955e95794a703c82246da1a60493a55"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/c5/c5a817ff96bc500e72f2c007e41438ee51f02bf061e03e1fac1ce5a5df081358",
+      "sha256": "c5a817ff96bc500e72f2c007e41438ee51f02bf061e03e1fac1ce5a5df081358"
+    },
+    {
+      "bytes": 119,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/d2/d2cd54bebe5f7e22064768a76e2e95360d070f5be79360c68c5040021c8ae101",
+      "sha256": "d2cd54bebe5f7e22064768a76e2e95360d070f5be79360c68c5040021c8ae101"
+    },
+    {
+      "bytes": 730,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/dc/dc7c7fa865423107a82728e5ea67a0885aab6d5bcfaf014a2a49ed51ca9e4452",
+      "sha256": "dc7c7fa865423107a82728e5ea67a0885aab6d5bcfaf014a2a49ed51ca9e4452"
+    },
+    {
+      "bytes": 408,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/e5/e5a9cd6b16add87321f31b5035feba1ae40bafb3f869bf8bc3ec4c9b480d4dba",
+      "sha256": "e5a9cd6b16add87321f31b5035feba1ae40bafb3f869bf8bc3ec4c9b480d4dba"
+    },
+    {
+      "bytes": 1116,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/eb/ebdd505096a028ae96c030682e3fdaf884c9a41d7c32c4f1fe84925bff7af5b2",
+      "sha256": "ebdd505096a028ae96c030682e3fdaf884c9a41d7c32c4f1fe84925bff7af5b2"
+    },
+    {
+      "bytes": 170,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/f0/f01a585355f87a1470f3eee281548238665c26df18235e04deff9c9043be48cf",
+      "sha256": "f01a585355f87a1470f3eee281548238665c26df18235e04deff9c9043be48cf"
+    },
+    {
+      "bytes": 22962,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/61/6115a3705bad6c7add2305c57bbcfac962ec1419ec4ad8215a9df3c2f431f497",
+      "sha256": "6115a3705bad6c7add2305c57bbcfac962ec1419ec4ad8215a9df3c2f431f497"
+    },
+    {
+      "bytes": 286183,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/49/497991a1de062736758135eed3cbd8dd10f037ed746a64d6796f3226c750ca35",
+      "sha256": "497991a1de062736758135eed3cbd8dd10f037ed746a64d6796f3226c750ca35"
+    },
+    {
+      "bytes": 411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/35/35ff123d1c0389c80b8d57e31c29118625c94f7d10a162194f9851caf86fe3d6",
+      "sha256": "35ff123d1c0389c80b8d57e31c29118625c94f7d10a162194f9851caf86fe3d6"
+    },
+    {
+      "bytes": 869,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/5a/5a02f9c06e54c647af1b766af354890c88e85627f7dc2b01299fcc71e5e0b6db",
+      "sha256": "5a02f9c06e54c647af1b766af354890c88e85627f7dc2b01299fcc71e5e0b6db"
+    },
+    {
+      "bytes": 2201,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/93/936d0fb19843fd3cae0ff2bbeb1efc0d618c2a233664cc19748a11f9f043dc23",
+      "sha256": "936d0fb19843fd3cae0ff2bbeb1efc0d618c2a233664cc19748a11f9f043dc23"
+    },
+    {
+      "bytes": 584,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/b1/b1a0ea3c7c045d67947aaa665232ed39ef8f168b0153c94c7638b10460387e4a",
+      "sha256": "b1a0ea3c7c045d67947aaa665232ed39ef8f168b0153c94c7638b10460387e4a"
+    },
+    {
+      "bytes": 2609,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/c0/c01f0d5ac48edf8d29cc27950e3699b9cab75da101f61734845ee6d99a3d0bb3",
+      "sha256": "c01f0d5ac48edf8d29cc27950e3699b9cab75da101f61734845ee6d99a3d0bb3"
+    },
+    {
+      "bytes": 241,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/c4/c48df2c9be38540e0b0e6f9e3f1c6a47d4a8cfa592ca27c3da8c47d6e58af87b",
+      "sha256": "c48df2c9be38540e0b0e6f9e3f1c6a47d4a8cfa592ca27c3da8c47d6e58af87b"
+    },
+    {
+      "bytes": 746,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/d4/d47bb48b75c875d896fb8396d277e5997ecb8edf1b28ccea4e578b645b5d37ee",
+      "sha256": "d47bb48b75c875d896fb8396d277e5997ecb8edf1b28ccea4e578b645b5d37ee"
+    },
+    {
+      "bytes": 46,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/dd/dd57f8f5c01c5863991d539d85d7b01ddfd515fa2e4591941f13ba9ff395a7c7",
+      "sha256": "dd57f8f5c01c5863991d539d85d7b01ddfd515fa2e4591941f13ba9ff395a7c7"
+    },
+    {
+      "bytes": 23656893,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/3e/3e50f655022f60d17af9f1218525342320e24d0dd030cc3f2c7f9b91c18c57cd",
+      "sha256": "3e50f655022f60d17af9f1218525342320e24d0dd030cc3f2c7f9b91c18c57cd"
+    },
+    {
+      "bytes": 8477,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/artifacts/35/354a965c2f84556f2b3dc0a1fcc8997ddddada3b718af3360399d93697377206",
+      "sha256": "354a965c2f84556f2b3dc0a1fcc8997ddddada3b718af3360399d93697377206"
+    },
+    {
+      "bytes": 899805,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-20260926/capture-r1/probe/generated-jobs.json",
+      "sha256": "0f5c6ab4622e08cfc83f421cdf2d08072338c70c00ba238dd2236a77eaf6dbe5"
+    },
+    {
+      "bytes": 10777,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile_common.py",
+      "sha256": "4ea5cd25f7f947b3904cef15d12d527369482e3369e508ca24c30c9375bd7162"
+    },
+    {
+      "bytes": 8276,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/run_profile.py",
+      "sha256": "4006e76aff30753eef2e973f6002b5400817781fca0df6d7fc1ce6e406783713"
+    },
+    {
+      "bytes": 22587,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile_child.py",
+      "sha256": "6fb3f45c2026dda7874fde2b3ede47309318e6bb06f355b3bf5e86d768e7c255"
+    },
+    {
+      "bytes": 105292,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1/audit-receipt.json",
+      "sha256": "78738f5ce4dfa00f1cf189ed1bdefb8850cbe67ea00d0e5442ce7a45dd4f5184"
+    },
+    {
+      "bytes": 1529,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1/profile.log",
+      "sha256": "c2412b0f8fd0954f603db8a1794a3d754bb137e437545dc9d9b87d05c18e24df"
+    },
+    {
+      "bytes": 149491,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1/profile/prepare.pstats",
+      "sha256": "5c6e0e3605b4c0ac3728eadbb01c406aeed64f6517839bd4a485415af6e05a2c"
+    }
+  ],
+  "isolated_fixture_registry_modified": true,
+  "limitations": [
+    "Instrumented wall times include timing-wrapper overhead; nested inclusive times overlap and stack-exclusive values exclude only instrumented children. No speedup or uninstrumented baseline is inferred.",
+    "This retry uses direct timing observations, not cProfile. Failed historical pstats bytes are checked by exact SHA and size without deserialization, and remain unqualified.",
+    "Source/vector parity is independently compared with the exact passed archived closeout and its current artifacts; no model inference is repeated.",
+    "Queued-run and unchanged-head claims use captured records and guarded assertions; this closeout imports no package code and opens no database.",
+    "Resource control is cooperative admission with sampled RSS/storage; the reported process high-water RSS includes setup and parity checking.",
+    "File hashes establish observed capture and closeout boundaries, not an atomic filesystem snapshot or subsequent edits."
+  ],
+  "model_checkpoint_loaded": false,
+  "native_training_validation_deferred": true,
+  "new_native_runtime_qualification": false,
+  "os_page_cache_controlled": false,
+  "passed": true,
+  "phase_wrappers": {
+    "artifact.verify": {
+      "calls": 411,
+      "exclusive_within_instrumented_stack_seconds": 0.31530926492996514,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 0.31530926492996514
+    },
+    "cas.stage": {
+      "calls": 59,
+      "exclusive_within_instrumented_stack_seconds": 0.46624246786814183,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 0.4667321847518906
+    },
+    "constructor.EmbeddingReceiptSet": {
+      "calls": 8,
+      "exclusive_within_instrumented_stack_seconds": 2.489965393906459,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 26.422427246929146
+    },
+    "constructor.SourcePartitions": {
+      "calls": 16,
+      "exclusive_within_instrumented_stack_seconds": 30.519191246130504,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 48.17922704597004
+    },
+    "constructor.USCodeSourceInventory": {
+      "calls": 24,
+      "exclusive_within_instrumented_stack_seconds": 26.76555520610418,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 26.76555520610418
+    },
+    "generation_root_load.load_embedding_receipt_set": {
+      "calls": 1,
+      "exclusive_within_instrumented_stack_seconds": 8.176080882549286e-06,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 3.109491721028462
+    },
+    "generation_root_load.load_source_partitions": {
+      "calls": 1,
+      "exclusive_within_instrumented_stack_seconds": 8.5439532995224e-06,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 2.9308198449434713
+    },
+    "generation_root_load.load_uscode_source_inventory": {
+      "calls": 1,
+      "exclusive_within_instrumented_stack_seconds": 5.695968866348267e-06,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 1.1663276409963146
+    },
+    "job.verify_direct": {
+      "calls": 3,
+      "exclusive_within_instrumented_stack_seconds": 1.49002764839679,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 24.322051613940857
+    },
+    "owner_resolve.plan_job": {
+      "calls": 3,
+      "exclusive_within_instrumented_stack_seconds": 1.5768570691579953,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 24.636673038825393
+    },
+    "owner_resolve.template": {
+      "calls": 1,
+      "exclusive_within_instrumented_stack_seconds": 0.39824304601643234,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 7.880584163009189
+    },
+    "plan.seal": {
+      "calls": 1,
+      "exclusive_within_instrumented_stack_seconds": 0.038492234074510634,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 24.684386080945842
+    },
+    "prepare_campaign_batches": {
+      "calls": 1,
+      "exclusive_within_instrumented_stack_seconds": 1.854715010151267,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 67.28642542706802
+    },
+    "projection.build": {
+      "calls": 3,
+      "exclusive_within_instrumented_stack_seconds": 0.6843891880707815,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 0.6905825019348413
+    },
+    "root_load.load_embedding_receipt_set": {
+      "calls": 8,
+      "exclusive_within_instrumented_stack_seconds": 0.08392605069093406,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 26.50635329762008
+    },
+    "root_load.load_source_partitions": {
+      "calls": 8,
+      "exclusive_within_instrumented_stack_seconds": 0.09941511997021735,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 24.346180312917568
+    },
+    "root_load.load_uscode_source_inventory": {
+      "calls": 8,
+      "exclusive_within_instrumented_stack_seconds": 0.4776462409645319,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 9.58316564722918
+    },
+    "source_closure.rehash": {
+      "calls": 68,
+      "exclusive_within_instrumented_stack_seconds": 0.026427824632264674,
+      "failed_calls": 0,
+      "inclusive_wall_seconds": 0.026427824632264674
+    }
+  },
+  "plan_artifact": {
+    "bytes": 8501,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/9e/9e3ec796d444daa0b7ae3bbe2d8143e356899621d675858417cef623ecfeb90f",
+    "sha256": "9e3ec796d444daa0b7ae3bbe2d8143e356899621d675858417cef623ecfeb90f"
+  },
+  "prior_failed_profile": {
+    "artifacts": [
+      {
+        "bytes": 10777,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile_common.py",
+        "sha256": "4ea5cd25f7f947b3904cef15d12d527369482e3369e508ca24c30c9375bd7162"
+      },
+      {
+        "bytes": 8276,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/run_profile.py",
+        "sha256": "4006e76aff30753eef2e973f6002b5400817781fca0df6d7fc1ce6e406783713"
+      },
+      {
+        "bytes": 22587,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile_child.py",
+        "sha256": "6fb3f45c2026dda7874fde2b3ede47309318e6bb06f355b3bf5e86d768e7c255"
+      },
+      {
+        "bytes": 105292,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1/audit-receipt.json",
+        "sha256": "78738f5ce4dfa00f1cf189ed1bdefb8850cbe67ea00d0e5442ce7a45dd4f5184"
+      },
+      {
+        "bytes": 1529,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1/profile.log",
+        "sha256": "c2412b0f8fd0954f603db8a1794a3d754bb137e437545dc9d9b87d05c18e24df"
+      },
+      {
+        "bytes": 149491,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1/profile/prepare.pstats",
+        "sha256": "5c6e0e3605b4c0ac3728eadbb01c406aeed64f6517839bd4a485415af6e05a2c"
+      }
+    ],
+    "passed": false,
+    "qualification": "harness postprocessing failed; no final source guard or successful timing claim",
+    "reservation_id": "05a2312e42c545b492f4932490dc58b6",
+    "storage_bytes": 180000000
+  },
+  "process_group_observations": {
+    "274656": {
+      "birth": "100219082",
+      "live_processes": [],
+      "pid_reused": false
+    }
+  },
+  "process_high_water_rss_bytes": 763420672,
+  "produced_artifacts": [
+    {
+      "bytes": 79326,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/template-job.json",
+      "sha256": "7c6c640675565e67f12df8cdfff0a6962e4528333ab017441d34e0dcbe8f2e71"
+    },
+    {
+      "bytes": 23656941,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/13/13b6232d3402e0da8ca472c5f619b68fee5a8714eb033b7ca9f018889646654e",
+      "sha256": "13b6232d3402e0da8ca472c5f619b68fee5a8714eb033b7ca9f018889646654e"
+    },
+    {
+      "bytes": 8501,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/9e/9e3ec796d444daa0b7ae3bbe2d8143e356899621d675858417cef623ecfeb90f",
+      "sha256": "9e3ec796d444daa0b7ae3bbe2d8143e356899621d675858417cef623ecfeb90f"
+    },
+    {
+      "bytes": 216998,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/43/43cc4ac45c58d5a130707f3c6acb7e95634e39eb4ce6306ef5f183166b5ac8a1",
+      "sha256": "43cc4ac45c58d5a130707f3c6acb7e95634e39eb4ce6306ef5f183166b5ac8a1"
+    },
+    {
+      "bytes": 47531987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/38/38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+      "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef"
+    },
+    {
+      "bytes": 12187351,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/12/12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+    },
+    {
+      "bytes": 9557340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/fd/fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7",
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7"
+    },
+    {
+      "bytes": 34842,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/ff/ffde771dbe13247b8c91d2aef0ed06931327d566676829fc2e879337ba00dc73",
+      "sha256": "ffde771dbe13247b8c91d2aef0ed06931327d566676829fc2e879337ba00dc73"
+    },
+    {
+      "bytes": 435966,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/14/140fa21a3d75f078a0029cefaa5eb7ef4d3a6f55744619c51054b88a2a254cf5",
+      "sha256": "140fa21a3d75f078a0029cefaa5eb7ef4d3a6f55744619c51054b88a2a254cf5"
+    },
+    {
+      "bytes": 3,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/ca/ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/0e/0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    {
+      "bytes": 119,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/07/0784ffb94efcb730752841e5257c3621eea1cacf4eda8972fb0408a4d670ffdc",
+      "sha256": "0784ffb94efcb730752841e5257c3621eea1cacf4eda8972fb0408a4d670ffdc"
+    },
+    {
+      "bytes": 340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/0f/0fd89e5669641913db41cf9d6e59a7ed91a76a3482dae05787b42e0d9ef45af7",
+      "sha256": "0fd89e5669641913db41cf9d6e59a7ed91a76a3482dae05787b42e0d9ef45af7"
+    },
+    {
+      "bytes": 311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/1d/1d8b68966bee6ea6006a63b61384839452177e72ff6b8cc61df7396b9ab024ab",
+      "sha256": "1d8b68966bee6ea6006a63b61384839452177e72ff6b8cc61df7396b9ab024ab"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/26/262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc",
+      "sha256": "262e6953b5893bbd844389ef46540d2dcf902f7596e2fe9df9b7796a319783bc"
+    },
+    {
+      "bytes": 1615,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/44/4451420cd80651fb2b1a466fa6e100adac8a885eb1601ed9cdcfc33cd224a3f1",
+      "sha256": "4451420cd80651fb2b1a466fa6e100adac8a885eb1601ed9cdcfc33cd224a3f1"
+    },
+    {
+      "bytes": 741,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/48/48f11b76b1f732519cf72d964e1a0856f2f3ca9793c815edc59d0e8b826de406",
+      "sha256": "48f11b76b1f732519cf72d964e1a0856f2f3ca9793c815edc59d0e8b826de406"
+    },
+    {
+      "bytes": 1161,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/50/50714cf7f07d36f1fcabec62da5909faa38ce0cd95f67b04d9816375a459c357",
+      "sha256": "50714cf7f07d36f1fcabec62da5909faa38ce0cd95f67b04d9816375a459c357"
+    },
+    {
+      "bytes": 299,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/55/550d1e9f7ba3ae319162d7ffe3ae81752ca5a9eaea3e3c5d56a77bb663f2dada",
+      "sha256": "550d1e9f7ba3ae319162d7ffe3ae81752ca5a9eaea3e3c5d56a77bb663f2dada"
+    },
+    {
+      "bytes": 510,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/5f/5f28df14ff9d65d5532114eeb02c00d4e64fc96ac544afd3272d29a1b959d27d",
+      "sha256": "5f28df14ff9d65d5532114eeb02c00d4e64fc96ac544afd3272d29a1b959d27d"
+    },
+    {
+      "bytes": 424,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/64/64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb",
+      "sha256": "64ad7f6c0c77ad95830985442e54652ec142a2ec6c73afd6f78f49c8973dc2eb"
+    },
+    {
+      "bytes": 551,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/76/760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a",
+      "sha256": "760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a"
+    },
+    {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/7a/7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb",
+      "sha256": "7aba21491a3b2f2c445b6979c3153fd5920cff5051e3c864f4a5799901d1eecb"
+    },
+    {
+      "bytes": 311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/7f/7fdad08e7ede322431214775ac6defb560f6651af2b59bdfdac386ed3437a633",
+      "sha256": "7fdad08e7ede322431214775ac6defb560f6651af2b59bdfdac386ed3437a633"
+    },
+    {
+      "bytes": 406,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/8b/8bb0705864cc417eefea628367763c4fa8317d00dbf297234890b44a6e276f28",
+      "sha256": "8bb0705864cc417eefea628367763c4fa8317d00dbf297234890b44a6e276f28"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/8c/8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b",
+      "sha256": "8c98d9516b50d7e33560449636594164d5a6489664f62605dad4254a0e33581b"
+    },
+    {
+      "bytes": 1679,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/94/9405ae3578fc706c0aae4023e341bc425e20cf2d17885e22c45c537d68a5aab3",
+      "sha256": "9405ae3578fc706c0aae4023e341bc425e20cf2d17885e22c45c537d68a5aab3"
+    },
+    {
+      "bytes": 1023,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/9c/9c309f323aefd29d0e8a7002a252ddc3a03e0f98c91fd04209c99eef80ad6192",
+      "sha256": "9c309f323aefd29d0e8a7002a252ddc3a03e0f98c91fd04209c99eef80ad6192"
+    },
+    {
+      "bytes": 201,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/a4/a4c0984c33a52d197ddaac45d78729c9207c01f8dd09a7caf3fdf518cc9eba20",
+      "sha256": "a4c0984c33a52d197ddaac45d78729c9207c01f8dd09a7caf3fdf518cc9eba20"
+    },
+    {
+      "bytes": 1361,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/c3/c363efaded62137d547ac8ca8c110760a2820efb8ab9b92ff5d81aa62a717111",
+      "sha256": "c363efaded62137d547ac8ca8c110760a2820efb8ab9b92ff5d81aa62a717111"
+    },
+    {
+      "bytes": 1293,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/df/df05b52d3d56b724a68c9e49cfaf29b2d856f0e3ea87323e09aeb72845bd3936",
+      "sha256": "df05b52d3d56b724a68c9e49cfaf29b2d856f0e3ea87323e09aeb72845bd3936"
+    },
+    {
+      "bytes": 1242,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/e1/e1f030da7c197b3dbb4d8537d4ff651a17595b67451104c0f94d75e1d26c61b5",
+      "sha256": "e1f030da7c197b3dbb4d8537d4ff651a17595b67451104c0f94d75e1d26c61b5"
+    },
+    {
+      "bytes": 1463,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/e5/e5f873fd0183186c4ba9680c2edb4236ae7d1170740e87b43e0c0c0a39e10b81",
+      "sha256": "e5f873fd0183186c4ba9680c2edb4236ae7d1170740e87b43e0c0c0a39e10b81"
+    },
+    {
+      "bytes": 554,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/fb/fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df",
+      "sha256": "fbb5be5212262374f624243aaa10ac85881b8f6f8c78ed40f19ded31773600df"
+    },
+    {
+      "bytes": 221239,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/2f/2fa42fdca6db006bbc1208b51a4836b437db38974d0604a47dfdbbcd276402a4",
+      "sha256": "2fa42fdca6db006bbc1208b51a4836b437db38974d0604a47dfdbbcd276402a4"
+    },
+    {
+      "bytes": 34849,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/93/93d576a09eb453d372486dbf04e7465567b77edf501a22022e4865abe51b3ba5",
+      "sha256": "93d576a09eb453d372486dbf04e7465567b77edf501a22022e4865abe51b3ba5"
+    },
+    {
+      "bytes": 440259,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/10/100da6623a8184f2efe5fc0dfca072886c9341a019ab142155c6b66392e4303b",
+      "sha256": "100da6623a8184f2efe5fc0dfca072886c9341a019ab142155c6b66392e4303b"
+    },
+    {
+      "bytes": 1725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/18/18adea4104e729277a801ab53ec7a65e270f1955efac3e9d9a5790546dfccf05",
+      "sha256": "18adea4104e729277a801ab53ec7a65e270f1955efac3e9d9a5790546dfccf05"
+    },
+    {
+      "bytes": 2475,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/2c/2cb441dc9f438f6c6aaaf19fb39f0d690887fc3170f11c433c1351ea31bad9ef",
+      "sha256": "2cb441dc9f438f6c6aaaf19fb39f0d690887fc3170f11c433c1351ea31bad9ef"
+    },
+    {
+      "bytes": 1177,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/33/33beab120126def5b557493c536ea332b032f1bf56208c9a5eec42cbc324a00d",
+      "sha256": "33beab120126def5b557493c536ea332b032f1bf56208c9a5eec42cbc324a00d"
+    },
+    {
+      "bytes": 1028,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/4a/4aba62acb910b41dd37ecaa4a04af60d065d3e115db81e3cf626c48cfb57c6f8",
+      "sha256": "4aba62acb910b41dd37ecaa4a04af60d065d3e115db81e3cf626c48cfb57c6f8"
+    },
+    {
+      "bytes": 858,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/50/50dacb5b991f4302751857860a9786a6083261c2b6bba7010c827caa1355ad99",
+      "sha256": "50dacb5b991f4302751857860a9786a6083261c2b6bba7010c827caa1355ad99"
+    },
+    {
+      "bytes": 1387,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/5d/5dbe4f5a9ad87037893f25f1708a8f97aab918c7b89f4995fdbb39e0489f411f",
+      "sha256": "5dbe4f5a9ad87037893f25f1708a8f97aab918c7b89f4995fdbb39e0489f411f"
+    },
+    {
+      "bytes": 1987,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/a8/a81788120cd5c5ae5a5bafec013cc8af722cf17af934bb03d389d6019c2d1493",
+      "sha256": "a81788120cd5c5ae5a5bafec013cc8af722cf17af934bb03d389d6019c2d1493"
+    },
+    {
+      "bytes": 431,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/ae/ae94239867b3d0a4b092ca70e50f2eced5e85ba13b3fe7d4f5c8905639d354d7",
+      "sha256": "ae94239867b3d0a4b092ca70e50f2eced5e85ba13b3fe7d4f5c8905639d354d7"
+    },
+    {
+      "bytes": 820,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/b1/b17c2c59dc055c99842c80e57f691c8645da290bc05450483faa73698c8eac7f",
+      "sha256": "b17c2c59dc055c99842c80e57f691c8645da290bc05450483faa73698c8eac7f"
+    },
+    {
+      "bytes": 1411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/c0/c0723c969c8f178c9c8bba40c9ecab36e955e95794a703c82246da1a60493a55",
+      "sha256": "c0723c969c8f178c9c8bba40c9ecab36e955e95794a703c82246da1a60493a55"
+    },
+    {
+      "bytes": 36,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/c5/c5a817ff96bc500e72f2c007e41438ee51f02bf061e03e1fac1ce5a5df081358",
+      "sha256": "c5a817ff96bc500e72f2c007e41438ee51f02bf061e03e1fac1ce5a5df081358"
+    },
+    {
+      "bytes": 119,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/d2/d2cd54bebe5f7e22064768a76e2e95360d070f5be79360c68c5040021c8ae101",
+      "sha256": "d2cd54bebe5f7e22064768a76e2e95360d070f5be79360c68c5040021c8ae101"
+    },
+    {
+      "bytes": 730,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/dc/dc7c7fa865423107a82728e5ea67a0885aab6d5bcfaf014a2a49ed51ca9e4452",
+      "sha256": "dc7c7fa865423107a82728e5ea67a0885aab6d5bcfaf014a2a49ed51ca9e4452"
+    },
+    {
+      "bytes": 408,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/e5/e5a9cd6b16add87321f31b5035feba1ae40bafb3f869bf8bc3ec4c9b480d4dba",
+      "sha256": "e5a9cd6b16add87321f31b5035feba1ae40bafb3f869bf8bc3ec4c9b480d4dba"
+    },
+    {
+      "bytes": 1116,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/eb/ebdd505096a028ae96c030682e3fdaf884c9a41d7c32c4f1fe84925bff7af5b2",
+      "sha256": "ebdd505096a028ae96c030682e3fdaf884c9a41d7c32c4f1fe84925bff7af5b2"
+    },
+    {
+      "bytes": 170,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/f0/f01a585355f87a1470f3eee281548238665c26df18235e04deff9c9043be48cf",
+      "sha256": "f01a585355f87a1470f3eee281548238665c26df18235e04deff9c9043be48cf"
+    },
+    {
+      "bytes": 144794,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/20/202b4f843afce3d3b0249a85c66d0a600eca9947287d4c032df49cf661e6dee8",
+      "sha256": "202b4f843afce3d3b0249a85c66d0a600eca9947287d4c032df49cf661e6dee8"
+    },
+    {
+      "bytes": 22962,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/61/6115a3705bad6c7add2305c57bbcfac962ec1419ec4ad8215a9df3c2f431f497",
+      "sha256": "6115a3705bad6c7add2305c57bbcfac962ec1419ec4ad8215a9df3c2f431f497"
+    },
+    {
+      "bytes": 286183,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/49/497991a1de062736758135eed3cbd8dd10f037ed746a64d6796f3226c750ca35",
+      "sha256": "497991a1de062736758135eed3cbd8dd10f037ed746a64d6796f3226c750ca35"
+    },
+    {
+      "bytes": 411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/35/35ff123d1c0389c80b8d57e31c29118625c94f7d10a162194f9851caf86fe3d6",
+      "sha256": "35ff123d1c0389c80b8d57e31c29118625c94f7d10a162194f9851caf86fe3d6"
+    },
+    {
+      "bytes": 869,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/5a/5a02f9c06e54c647af1b766af354890c88e85627f7dc2b01299fcc71e5e0b6db",
+      "sha256": "5a02f9c06e54c647af1b766af354890c88e85627f7dc2b01299fcc71e5e0b6db"
+    },
+    {
+      "bytes": 2201,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/93/936d0fb19843fd3cae0ff2bbeb1efc0d618c2a233664cc19748a11f9f043dc23",
+      "sha256": "936d0fb19843fd3cae0ff2bbeb1efc0d618c2a233664cc19748a11f9f043dc23"
+    },
+    {
+      "bytes": 584,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/b1/b1a0ea3c7c045d67947aaa665232ed39ef8f168b0153c94c7638b10460387e4a",
+      "sha256": "b1a0ea3c7c045d67947aaa665232ed39ef8f168b0153c94c7638b10460387e4a"
+    },
+    {
+      "bytes": 2609,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/c0/c01f0d5ac48edf8d29cc27950e3699b9cab75da101f61734845ee6d99a3d0bb3",
+      "sha256": "c01f0d5ac48edf8d29cc27950e3699b9cab75da101f61734845ee6d99a3d0bb3"
+    },
+    {
+      "bytes": 241,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/c4/c48df2c9be38540e0b0e6f9e3f1c6a47d4a8cfa592ca27c3da8c47d6e58af87b",
+      "sha256": "c48df2c9be38540e0b0e6f9e3f1c6a47d4a8cfa592ca27c3da8c47d6e58af87b"
+    },
+    {
+      "bytes": 746,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/d4/d47bb48b75c875d896fb8396d277e5997ecb8edf1b28ccea4e578b645b5d37ee",
+      "sha256": "d47bb48b75c875d896fb8396d277e5997ecb8edf1b28ccea4e578b645b5d37ee"
+    },
+    {
+      "bytes": 46,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/artifacts/dd/dd57f8f5c01c5863991d539d85d7b01ddfd515fa2e4591941f13ba9ff395a7c7",
+      "sha256": "dd57f8f5c01c5863991d539d85d7b01ddfd515fa2e4591941f13ba9ff395a7c7"
+    },
+    {
+      "bytes": 20718,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/phase-observations.json",
+      "sha256": "b73ace9aad0e12067c9ebe559a6e96dcd0091e494773e995d8b4c28d60b54932"
+    },
+    {
+      "bytes": 901213,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/generated-jobs.json",
+      "sha256": "46c7d1d8a9c39577ca50e9a3cbb7f2d9b5cf4482d4bcd68224607c8d2328efa5"
+    }
+  ],
+  "production_registry_modified": false,
+  "profile_artifact": {
+    "bytes": 20718,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-retry-20260926/profile-r2/profile/phase-observations.json",
+    "sha256": "b73ace9aad0e12067c9ebe559a6e96dcd0091e494773e995d8b4c28d60b54932"
+  },
+  "profile_invocations": {
+    "prepare_campaign_batches": 1
+  },
+  "profiled_prepare_wall_seconds": 67.28643382701557,
+  "profiles": {
+    "caller_frame_inspection_used": false,
+    "cprofile_used": false,
+    "expected_calls": {
+      "constructor.EmbeddingReceiptSet": 8,
+      "constructor.SourcePartitions": 16,
+      "constructor.USCodeSourceInventory": 24,
+      "generation_root_load.load_embedding_receipt_set": 1,
+      "generation_root_load.load_source_partitions": 1,
+      "generation_root_load.load_uscode_source_inventory": 1,
+      "job.verify_direct": 3,
+      "owner_resolve.plan_job": 3,
+      "owner_resolve.template": 1,
+      "plan.seal": 1,
+      "prepare_campaign_batches": 1,
+      "projection.build": 3,
+      "root_load.load_embedding_receipt_set": 8,
+      "root_load.load_source_partitions": 8,
+      "root_load.load_uscode_source_inventory": 8
+    },
+    "final_inputs_complete_call_count_measured": false,
+    "final_inputs_complete_wall_measured": false,
+    "observed_calls": {
+      "artifact.verify": 411,
+      "cas.stage": 59,
+      "constructor.EmbeddingReceiptSet": 8,
+      "constructor.SourcePartitions": 16,
+      "constructor.USCodeSourceInventory": 24,
+      "generation_root_load.load_embedding_receipt_set": 1,
+      "generation_root_load.load_source_partitions": 1,
+      "generation_root_load.load_uscode_source_inventory": 1,
+      "job.verify_direct": 3,
+      "owner_resolve.plan_job": 3,
+      "owner_resolve.template": 1,
+      "plan.seal": 1,
+      "prepare_campaign_batches": 1,
+      "projection.build": 3,
+      "root_load.load_embedding_receipt_set": 8,
+      "root_load.load_source_partitions": 8,
+      "root_load.load_uscode_source_inventory": 8,
+      "source_closure.rehash": 68
+    },
+    "phase_call_edges": [
+      {
+        "calls": 1,
+        "child_phase": "prepare_campaign_batches",
+        "inclusive_wall_seconds": 67.28642542706802,
+        "parent_phase": null
+      },
+      {
+        "calls": 7,
+        "child_phase": "artifact.verify",
+        "inclusive_wall_seconds": 0.0004897168837487698,
+        "parent_phase": "cas.stage"
+      },
+      {
+        "calls": 8,
+        "child_phase": "constructor.SourcePartitions",
+        "inclusive_wall_seconds": 23.932461853022687,
+        "parent_phase": "constructor.EmbeddingReceiptSet"
+      },
+      {
+        "calls": 16,
+        "child_phase": "constructor.USCodeSourceInventory",
+        "inclusive_wall_seconds": 17.660035799839534,
+        "parent_phase": "constructor.SourcePartitions"
+      },
+      {
+        "calls": 1,
+        "child_phase": "root_load.load_embedding_receipt_set",
+        "inclusive_wall_seconds": 3.1094835449475795,
+        "parent_phase": "generation_root_load.load_embedding_receipt_set"
+      },
+      {
+        "calls": 1,
+        "child_phase": "root_load.load_source_partitions",
+        "inclusive_wall_seconds": 2.9308113009901717,
+        "parent_phase": "generation_root_load.load_source_partitions"
+      },
+      {
+        "calls": 1,
+        "child_phase": "root_load.load_uscode_source_inventory",
+        "inclusive_wall_seconds": 1.1663219450274482,
+        "parent_phase": "generation_root_load.load_uscode_source_inventory"
+      },
+      {
+        "calls": 3,
+        "child_phase": "root_load.load_embedding_receipt_set",
+        "inclusive_wall_seconds": 9.937496524886228,
+        "parent_phase": "job.verify_direct"
+      },
+      {
+        "calls": 3,
+        "child_phase": "root_load.load_source_partitions",
+        "inclusive_wall_seconds": 9.204930173931643,
+        "parent_phase": "job.verify_direct"
+      },
+      {
+        "calls": 3,
+        "child_phase": "root_load.load_uscode_source_inventory",
+        "inclusive_wall_seconds": 3.6834099831758067,
+        "parent_phase": "job.verify_direct"
+      },
+      {
+        "calls": 18,
+        "child_phase": "source_closure.rehash",
+        "inclusive_wall_seconds": 0.006187283550389111,
+        "parent_phase": "job.verify_direct"
+      },
+      {
+        "calls": 85,
+        "child_phase": "artifact.verify",
+        "inclusive_wall_seconds": 0.09952757053542882,
+        "parent_phase": "owner_resolve.plan_job"
+      },
+      {
+        "calls": 3,
+        "child_phase": "root_load.load_embedding_receipt_set",
+        "inclusive_wall_seconds": 10.154826896847226,
+        "parent_phase": "owner_resolve.plan_job"
+      },
+      {
+        "calls": 3,
+        "child_phase": "root_load.load_source_partitions",
+        "inclusive_wall_seconds": 9.25799235003069,
+        "parent_phase": "owner_resolve.plan_job"
+      },
+      {
+        "calls": 3,
+        "child_phase": "root_load.load_uscode_source_inventory",
+        "inclusive_wall_seconds": 3.5410604079952464,
+        "parent_phase": "owner_resolve.plan_job"
+      },
+      {
+        "calls": 18,
+        "child_phase": "source_closure.rehash",
+        "inclusive_wall_seconds": 0.006408744258806109,
+        "parent_phase": "owner_resolve.plan_job"
+      },
+      {
+        "calls": 14,
+        "child_phase": "artifact.verify",
+        "inclusive_wall_seconds": 0.03138615400530398,
+        "parent_phase": "owner_resolve.template"
+      },
+      {
+        "calls": 1,
+        "child_phase": "root_load.load_embedding_receipt_set",
+        "inclusive_wall_seconds": 3.304546330939047,
+        "parent_phase": "owner_resolve.template"
+      },
+      {
+        "calls": 1,
+        "child_phase": "root_load.load_source_partitions",
+        "inclusive_wall_seconds": 2.9524464879650623,
+        "parent_phase": "owner_resolve.template"
+      },
+      {
+        "calls": 1,
+        "child_phase": "root_load.load_uscode_source_inventory",
+        "inclusive_wall_seconds": 1.1923733110306785,
+        "parent_phase": "owner_resolve.template"
+      },
+      {
+        "calls": 6,
+        "child_phase": "source_closure.rehash",
+        "inclusive_wall_seconds": 0.0015888330526649952,
+        "parent_phase": "owner_resolve.template"
+      },
+      {
+        "calls": 6,
+        "child_phase": "artifact.verify",
+        "inclusive_wall_seconds": 0.00045101402793079615,
+        "parent_phase": "plan.seal"
+      },
+      {
+        "calls": 1,
+        "child_phase": "cas.stage",
+        "inclusive_wall_seconds": 0.008769794018007815,
+        "parent_phase": "plan.seal"
+      },
+      {
+        "calls": 3,
+        "child_phase": "owner_resolve.plan_job",
+        "inclusive_wall_seconds": 24.636673038825393,
+        "parent_phase": "plan.seal"
+      },
+      {
+        "calls": 299,
+        "child_phase": "artifact.verify",
+        "inclusive_wall_seconds": 0.18345480947755277,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 58,
+        "child_phase": "cas.stage",
+        "inclusive_wall_seconds": 0.4579623907338828,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 1,
+        "child_phase": "generation_root_load.load_embedding_receipt_set",
+        "inclusive_wall_seconds": 3.109491721028462,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 1,
+        "child_phase": "generation_root_load.load_source_partitions",
+        "inclusive_wall_seconds": 2.9308198449434713,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 1,
+        "child_phase": "generation_root_load.load_uscode_source_inventory",
+        "inclusive_wall_seconds": 1.1663276409963146,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 3,
+        "child_phase": "job.verify_direct",
+        "inclusive_wall_seconds": 24.322051613940857,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 1,
+        "child_phase": "owner_resolve.template",
+        "inclusive_wall_seconds": 7.880584163009189,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 1,
+        "child_phase": "plan.seal",
+        "inclusive_wall_seconds": 24.684386080945842,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 3,
+        "child_phase": "projection.build",
+        "inclusive_wall_seconds": 0.6905825019348413,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 8,
+        "child_phase": "source_closure.rehash",
+        "inclusive_wall_seconds": 0.006049649906344712,
+        "parent_phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 18,
+        "child_phase": "source_closure.rehash",
+        "inclusive_wall_seconds": 0.006193313864059746,
+        "parent_phase": "projection.build"
+      },
+      {
+        "calls": 8,
+        "child_phase": "constructor.EmbeddingReceiptSet",
+        "inclusive_wall_seconds": 26.422427246929146,
+        "parent_phase": "root_load.load_embedding_receipt_set"
+      },
+      {
+        "calls": 8,
+        "child_phase": "constructor.SourcePartitions",
+        "inclusive_wall_seconds": 24.24676519294735,
+        "parent_phase": "root_load.load_source_partitions"
+      },
+      {
+        "calls": 8,
+        "child_phase": "constructor.USCodeSourceInventory",
+        "inclusive_wall_seconds": 9.105519406264648,
+        "parent_phase": "root_load.load_uscode_source_inventory"
+      }
+    ],
+    "phase_wrappers": {
+      "artifact.verify": {
+        "calls": 411,
+        "exclusive_within_instrumented_stack_seconds": 0.31530926492996514,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.31530926492996514
+      },
+      "cas.stage": {
+        "calls": 59,
+        "exclusive_within_instrumented_stack_seconds": 0.46624246786814183,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.4667321847518906
+      },
+      "constructor.EmbeddingReceiptSet": {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 2.489965393906459,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.422427246929146
+      },
+      "constructor.SourcePartitions": {
+        "calls": 16,
+        "exclusive_within_instrumented_stack_seconds": 30.519191246130504,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 48.17922704597004
+      },
+      "constructor.USCodeSourceInventory": {
+        "calls": 24,
+        "exclusive_within_instrumented_stack_seconds": 26.76555520610418,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.76555520610418
+      },
+      "generation_root_load.load_embedding_receipt_set": {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 8.176080882549286e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 3.109491721028462
+      },
+      "generation_root_load.load_source_partitions": {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 8.5439532995224e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 2.9308198449434713
+      },
+      "generation_root_load.load_uscode_source_inventory": {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 5.695968866348267e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 1.1663276409963146
+      },
+      "job.verify_direct": {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 1.49002764839679,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.322051613940857
+      },
+      "owner_resolve.plan_job": {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 1.5768570691579953,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.636673038825393
+      },
+      "owner_resolve.template": {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 0.39824304601643234,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 7.880584163009189
+      },
+      "plan.seal": {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 0.038492234074510634,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.684386080945842
+      },
+      "prepare_campaign_batches": {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 1.854715010151267,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 67.28642542706802
+      },
+      "projection.build": {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 0.6843891880707815,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.6905825019348413
+      },
+      "root_load.load_embedding_receipt_set": {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.08392605069093406,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.50635329762008
+      },
+      "root_load.load_source_partitions": {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.09941511997021735,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.346180312917568
+      },
+      "root_load.load_uscode_source_inventory": {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.4776462409645319,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 9.58316564722918
+      },
+      "source_closure.rehash": {
+        "calls": 68,
+        "exclusive_within_instrumented_stack_seconds": 0.026427824632264674,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.026427824632264674
+      }
+    },
+    "prepare_invocations": 1,
+    "schema": "direct-original-call-timings-v1",
+    "top_exclusive_within_instrumented_stack": [
+      {
+        "calls": 16,
+        "exclusive_within_instrumented_stack_seconds": 30.519191246130504,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 48.17922704597004,
+        "phase": "constructor.SourcePartitions"
+      },
+      {
+        "calls": 24,
+        "exclusive_within_instrumented_stack_seconds": 26.76555520610418,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.76555520610418,
+        "phase": "constructor.USCodeSourceInventory"
+      },
+      {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 2.489965393906459,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.422427246929146,
+        "phase": "constructor.EmbeddingReceiptSet"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 1.854715010151267,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 67.28642542706802,
+        "phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 1.5768570691579953,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.636673038825393,
+        "phase": "owner_resolve.plan_job"
+      },
+      {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 1.49002764839679,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.322051613940857,
+        "phase": "job.verify_direct"
+      },
+      {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 0.6843891880707815,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.6905825019348413,
+        "phase": "projection.build"
+      },
+      {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.4776462409645319,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 9.58316564722918,
+        "phase": "root_load.load_uscode_source_inventory"
+      },
+      {
+        "calls": 59,
+        "exclusive_within_instrumented_stack_seconds": 0.46624246786814183,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.4667321847518906,
+        "phase": "cas.stage"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 0.39824304601643234,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 7.880584163009189,
+        "phase": "owner_resolve.template"
+      },
+      {
+        "calls": 411,
+        "exclusive_within_instrumented_stack_seconds": 0.31530926492996514,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.31530926492996514,
+        "phase": "artifact.verify"
+      },
+      {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.09941511997021735,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.346180312917568,
+        "phase": "root_load.load_source_partitions"
+      },
+      {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.08392605069093406,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.50635329762008,
+        "phase": "root_load.load_embedding_receipt_set"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 0.038492234074510634,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.684386080945842,
+        "phase": "plan.seal"
+      },
+      {
+        "calls": 68,
+        "exclusive_within_instrumented_stack_seconds": 0.026427824632264674,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.026427824632264674,
+        "phase": "source_closure.rehash"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 8.5439532995224e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 2.9308198449434713,
+        "phase": "generation_root_load.load_source_partitions"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 8.176080882549286e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 3.109491721028462,
+        "phase": "generation_root_load.load_embedding_receipt_set"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 5.695968866348267e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 1.1663276409963146,
+        "phase": "generation_root_load.load_uscode_source_inventory"
+      }
+    ],
+    "top_inclusive_wall": [
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 1.854715010151267,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 67.28642542706802,
+        "phase": "prepare_campaign_batches"
+      },
+      {
+        "calls": 16,
+        "exclusive_within_instrumented_stack_seconds": 30.519191246130504,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 48.17922704597004,
+        "phase": "constructor.SourcePartitions"
+      },
+      {
+        "calls": 24,
+        "exclusive_within_instrumented_stack_seconds": 26.76555520610418,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.76555520610418,
+        "phase": "constructor.USCodeSourceInventory"
+      },
+      {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.08392605069093406,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.50635329762008,
+        "phase": "root_load.load_embedding_receipt_set"
+      },
+      {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 2.489965393906459,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 26.422427246929146,
+        "phase": "constructor.EmbeddingReceiptSet"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 0.038492234074510634,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.684386080945842,
+        "phase": "plan.seal"
+      },
+      {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 1.5768570691579953,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.636673038825393,
+        "phase": "owner_resolve.plan_job"
+      },
+      {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.09941511997021735,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.346180312917568,
+        "phase": "root_load.load_source_partitions"
+      },
+      {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 1.49002764839679,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 24.322051613940857,
+        "phase": "job.verify_direct"
+      },
+      {
+        "calls": 8,
+        "exclusive_within_instrumented_stack_seconds": 0.4776462409645319,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 9.58316564722918,
+        "phase": "root_load.load_uscode_source_inventory"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 0.39824304601643234,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 7.880584163009189,
+        "phase": "owner_resolve.template"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 8.176080882549286e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 3.109491721028462,
+        "phase": "generation_root_load.load_embedding_receipt_set"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 8.5439532995224e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 2.9308198449434713,
+        "phase": "generation_root_load.load_source_partitions"
+      },
+      {
+        "calls": 1,
+        "exclusive_within_instrumented_stack_seconds": 5.695968866348267e-06,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 1.1663276409963146,
+        "phase": "generation_root_load.load_uscode_source_inventory"
+      },
+      {
+        "calls": 3,
+        "exclusive_within_instrumented_stack_seconds": 0.6843891880707815,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.6905825019348413,
+        "phase": "projection.build"
+      },
+      {
+        "calls": 59,
+        "exclusive_within_instrumented_stack_seconds": 0.46624246786814183,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.4667321847518906,
+        "phase": "cas.stage"
+      },
+      {
+        "calls": 411,
+        "exclusive_within_instrumented_stack_seconds": 0.31530926492996514,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.31530926492996514,
+        "phase": "artifact.verify"
+      },
+      {
+        "calls": 68,
+        "exclusive_within_instrumented_stack_seconds": 0.026427824632264674,
+        "failed_calls": 0,
+        "inclusive_wall_seconds": 0.026427824632264674,
+        "phase": "source_closure.rehash"
+      }
+    ]
+  },
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "publication_performed": false,
+  "pytest_execution_performed": false,
+  "resource_lease_id": "b3be8e458ade4cf9bd9864bbe233d517",
+  "resource_reservation_id": "3806df31ddca4ebcab0ef074ffaa7472",
+  "retained_claim_ids": [
+    "05a2312e42c545b492f4932490dc58b6",
+    "209e07d4d9f74ce1be5452ad93258aa1",
+    "297afa219ed346c6b0e77ac2dcb04783",
+    "2d4c9da5e53043b18f6552eb8e6990af",
+    "5f3497ae47224e3db174311ef6e3caa1",
+    "6bf81288533d4a4fba5d29372ff69529",
+    "7f774906c9e447059d7e1675288b5172",
+    "8827ac316aae4ecbbfddf9dedf0332d7",
+    "c396f8aa732a40569deb9d9f4c18e554",
+    "d86d41b441f54b4e8e4dc0f92b694f05",
+    "d93220e986a04c658630dffa0847fb01",
+    "e8b041892be947a7b1762eac60a8b7ec",
+    "ec90bcac1c394496b6dba037b4852254",
+    "ed98eab092564602b9c3920370deda94",
+    "f86ac5ac38e549bfba20dc03564ff41c"
+  ],
+  "schema": "campaign-batches-profile-closeout-v1",
+  "scope": "one instrumented offline preparation of three jobs using archived vectors and an isolated synthetic base",
+  "source_authority_authenticated": false,
+  "source_file_count": 7762,
+  "speed_claim": false,
+  "training_or_evaluation_performed": false
+}

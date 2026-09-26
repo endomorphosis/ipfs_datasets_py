@@ -1,0 +1,13 @@
+{
+  "sample_count": 8,
+  "seconds_per_span_before": 3.1213081502792193,
+  "seconds_per_span_after": 0.023217191628646106,
+  "span_speedup": 134.43952223868672,
+  "vocabulary_and_compiler_results_exact": true,
+  "span_results_exact": true,
+  "full_constitution_span_fields_exact": true,
+  "baseline_builder_git_revision": "ddf6b79467b68159650df81befc288c8553df664",
+  "timing_note": "Parser benchmark calls vocabulary/compiler first, then spans. All parser results computed; compiled regex patterns may be warm. Full compiler-only after run started in a fresh process. Disk metric cache disabled. Profiling numbers not used as wall baselines.",
+  "admitted": false,
+  "formalized": false
+}

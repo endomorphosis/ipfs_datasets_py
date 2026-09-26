@@ -134,6 +134,82 @@ def _bounded_metric(value: Any, *, minimum: float = -1.0, maximum: float = 1.0) 
     return max(minimum, min(maximum, number))
 
 
+def _nonempty_names(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value.strip()) and value.strip().lower() not in {"none", "off", "false"}
+    if isinstance(value, (list, tuple)):
+        return any(_nonempty_names(item) for item in value)
+    return False
+
+
+def _bridge_ran(payload: Mapping[str, Any], final: Mapping[str, Any], step: Mapping[str, Any]) -> bool:
+    """True when the legal-IR bridge was connected for this last-run file.
+
+    A reconstruction ``improved`` flag is not evidence. An empty loss map, a
+    zero bridge-loss signal, and no bridge-name list means the bridge was off.
+    """
+
+    losses = final.get("legal_ir_losses")
+    if isinstance(losses, Mapping) and losses:
+        return True
+    try:
+        if int(step.get("bridge_loss_signal_count") or 0) > 0:
+            return True
+    except (TypeError, ValueError):
+        pass
+    for source in (payload, final, step):
+        if not isinstance(source, Mapping):
+            continue
+        for key in ("bridge_names", "legal_ir_bridge_names"):
+            if _nonempty_names(source.get(key)):
+                return True
+    return False
+
+
+def lift_from_last_run(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Legal-IR lift from one persisted daemon last-run file.
+
+    ``bridge_off`` means the legal-IR bridge did not run. That is not a failed
+    conversion and not a warm start. ``measured_lift`` requires a nonzero
+    target count and an improving validation IR cross-entropy or IR cosine
+    delta. Reconstruction cosine is not enough. The result is not an admit.
+    """
+
+    final = payload.get("final_evaluation") if isinstance(payload.get("final_evaluation"), Mapping) else {}
+    steps = payload.get("steps") if isinstance(payload.get("steps"), list) else []
+    step = steps[-1] if steps and isinstance(steps[-1], Mapping) else {}
+    try:
+        target_count = int(final.get("legal_ir_target_count") or 0)
+    except (TypeError, ValueError):
+        target_count = 0
+    ce_delta = _finite_float(step.get("validation_cross_entropy_delta"))
+    cos_delta = _finite_float(step.get("validation_cosine_similarity_delta"))
+    ir_ce_delta = _finite_float(step.get("validation_ir_cross_entropy_delta"))
+    ir_cos_delta = _finite_float(step.get("validation_ir_cosine_delta"))
+    bridge_ran = _bridge_ran(payload, final, step) or target_count > 0
+    ir_improved = (math.isfinite(ir_ce_delta) and ir_ce_delta < 0.0) or (
+        math.isfinite(ir_cos_delta) and ir_cos_delta > 0.0
+    )
+    if not bridge_ran:
+        status = "bridge_off"
+    elif target_count > 0 and ir_improved:
+        status = "measured_lift"
+    else:
+        status = "measured_no_lift"
+    improved = status == "measured_lift"
+    return {
+        "legal_ir_target_count": target_count,
+        "validation_cross_entropy_delta": ce_delta if math.isfinite(ce_delta) else None,
+        "validation_cosine_similarity_delta": cos_delta if math.isfinite(cos_delta) else None,
+        "validation_ir_cross_entropy_delta": ir_ce_delta if math.isfinite(ir_ce_delta) else None,
+        "validation_ir_cosine_delta": ir_cos_delta if math.isfinite(ir_cos_delta) else None,
+        "status": status,
+        "improved": improved,
+        "usable_for_legal_ir": improved,
+        "stopped_reason": str(payload.get("stopped_reason") or ""),
+    }
+
+
 def _score_run(row: Mapping[str, Any]) -> float:
     cycles = _finite_float(row.get("cycles"))
     if not math.isfinite(cycles) or cycles <= 0:
@@ -696,6 +772,14 @@ def main() -> int:
         default=Path("workspace/todo-queues") / DEFAULT_CANONICAL_STATE_NAME,
     )
     args = parser.parse_args()
+
+    from ipfs_datasets_py.logic.autoformal.tree_pin import LogicTreePinError, require_workspace_logic_tree
+
+    try:
+        require_workspace_logic_tree()
+    except LogicTreePinError as exc:
+        print(str(exc))
+        return 2
 
     test_log_dir = args.workspace / "test-logs"
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

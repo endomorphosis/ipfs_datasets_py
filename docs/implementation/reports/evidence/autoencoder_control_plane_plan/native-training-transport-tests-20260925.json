@@ -1,0 +1,37 @@
+{
+  "schema": "ipfs_datasets_py/autoencoder-quack-prototype-verification@1",
+  "recorded_at": "2026-09-25T00:24:32.567979+00:00",
+  "scope": "isolated_native_training_transport_prototype",
+  "admitted": false,
+  "runtime_qualified": false,
+  "production_activation": false,
+  "verification": {
+    "command": "IPFS_DATASETS_RUN_NATIVE_STORAGE_PROBE=1 PYTHONPATH=/home/barberb/lift_coding/external/ipfs_datasets python3 -m pytest -q tests/unit/duckdb_control/test_autoencoder_quack.py",
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "pytest_elapsed_seconds": 2.33
+  },
+  "verified_behaviors": [
+    "native ClaimRun, RenewLease, ReadRun, ReadVersion and CompleteRun",
+    "durable same-payload replay and divergent payload rejection",
+    "per-worker run, version, lease and reply isolation",
+    "separate worker process knows only endpoint and scoped token",
+    "owner restart preserves completion idempotency and rejects a new operation using an old lease",
+    "unlisted SQL and wrong-token rejection",
+    "remote inbox enforces 65536-byte payload limit",
+    "worker cannot request arbitrary owner file paths as artifacts",
+    "listener closes after gateway shutdown"
+  ],
+  "limitations": [
+    "per-worker disposable loopback gateway; no shared-service deployment",
+    "bearer scope is issued by trusted owner; no production identity/federation qualification",
+    "artifact upload/staging is outside the command transport",
+    "read calls are observations, not durable mutation receipts",
+    "these are storage and transport checks, not training speed or semantic evaluation"
+  ],
+  "source_sha256": {
+    "ipfs_datasets_py/duckdb_control/autoencoder_quack.py": "98e9737d7ea0884c327e7e9e44d6a8f513b33cc5dbfa19741420587bef800911",
+    "tests/unit/duckdb_control/test_autoencoder_quack.py": "b153a2ec5a7497242229722a5891aa8fc2f9fb627241e8ad53297fc22d3a1cfa"
+  }
+}

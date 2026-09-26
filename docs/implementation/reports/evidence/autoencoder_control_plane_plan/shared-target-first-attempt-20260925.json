@@ -1,0 +1,12 @@
+{
+  "schema": "shared-target-qualification-failure-v1",
+  "admitted": false,
+  "passed": false,
+  "phase": "first shared-target worker after successful preparation and fresh baseline",
+  "error": "TargetSnapshotError: target configuration/provenance mismatch",
+  "finding": "Repeated sys.path entries caused duplicate installed-distribution discovery and a different dependency inventory hash across preparation and worker processes.",
+  "fix": "Deduplicate identical distribution name/version pairs while preserving different versions; add a regression test. Restart all comparison processes with a newly built target snapshot.",
+  "timing_comparison_qualified": false,
+  "scratch_artifacts_retained": false,
+  "checkpoint_modified": false
+}

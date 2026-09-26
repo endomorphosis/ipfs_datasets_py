@@ -1,0 +1,355 @@
+{
+  "admitted": false,
+  "artifact_rewrites_performed": false,
+  "checks": {
+    "all_four_full_bridge_report_telemetry_equal": true,
+    "all_four_native_receipts_passed": true,
+    "all_four_same_effective_training_config": true,
+    "all_four_same_environment_settings": true,
+    "all_four_same_ordered_training_samples": true,
+    "all_four_same_ordered_validation_samples": true,
+    "all_four_same_parent_job_spec_canonical_sha256": true,
+    "all_four_same_selection": true,
+    "all_four_source_manifests_stable": true,
+    "both_candidate_source_manifests_identical": true,
+    "both_complete_content_audits_passed": true,
+    "both_reference_source_manifests_identical": true,
+    "exactly_two_explicit_timestamp_differences_per_target_per_pair": true,
+    "first_corrected_audit_derived_from_preserved_original": true,
+    "initial_failed_classification_receipt_preserved": true,
+    "no_training_checkpoint_or_profiler": true,
+    "only_selector_differs_between_variants": true,
+    "pair_1_audit_binds_exact_native_receipts": true,
+    "pair_2_audit_binds_exact_native_receipts": true
+  },
+  "content_parity": {
+    "before_after_timestamp_values_retained_in_pair_audits": true,
+    "both_pairs_all_six_targets_compared": true,
+    "cross_pair_scope": "Both independent reference/candidate pairs have complete target walks; the four-run receipt separately verifies identical fixtures, environment, configuration, source variant manifests, and full bridge failure telemetry.",
+    "cross_pair_target_content_walk_performed": false,
+    "exact_document_hash_parity": false,
+    "exact_raw_compressed_byte_parity": false,
+    "exact_raw_expanded_byte_parity": false,
+    "full_bridge_failure_telemetry_equal_across_all_four": true,
+    "nodes_compared_per_pair": [
+      8877325,
+      8877325
+    ],
+    "ordered_typed_content_equal_except_exact_two_wall_timestamps_per_target": true,
+    "timestamp_exception_policy": {
+      "all_other_mapping_order_array_order_types_and_scalar_values_compared": true,
+      "before_after_values_retained": true,
+      "exact_json_pointer_to_logical_path": {
+        "/fields/items/1/1/fields/items/5/1/items/8/1/fields/items/1/1/items/0/1/items/0/1": "/fields/document/fields/views/deontic_norms.deontic_graph/fields/payload/metadata/created_at",
+        "/fields/items/1/1/fields/items/5/1/items/8/1/fields/items/1/1/items/0/1/items/1/1": "/fields/document/fields/views/deontic_norms.deontic_graph/fields/payload/metadata/last_updated"
+      },
+      "generic_timestamp_stripping": false
+    }
+  },
+  "effective_training_config": {
+    "epochs": 1,
+    "hard_example_fraction": 1.0,
+    "l2_regularization": 0.0,
+    "learning_rate": 0.35,
+    "legal_ir_bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "max_cosine_regression": 0.01,
+    "max_cross_entropy_regression": 0.0,
+    "max_legal_ir_loss_regression": 0.02,
+    "max_line_search_attempts": 1,
+    "max_reconstruction_regression": 0.02,
+    "max_seconds": 180.0,
+    "metric_disk_cache": 0,
+    "objective_cosine_gap_weight": 1.5,
+    "objective_cross_entropy_weight": 1.0,
+    "objective_legal_ir_weight": 1.0,
+    "objective_reconstruction_weight": 1.0,
+    "profile_projection": true,
+    "projection_max_update_families": 1,
+    "projection_update_backend": "python_sparse_batch",
+    "use_sample_memory": false
+  },
+  "environment_settings": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HF_HUB_OFFLINE": "1",
+    "IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS": "1",
+    "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+    "IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA": "0",
+    "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "execution_order": [
+    "reference_r2",
+    "candidate_r1",
+    "candidate_r2",
+    "reference_r3"
+  ],
+  "generalized_speed_claim": false,
+  "initial_failed_classification_receipt": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-target-parity-20260925.json",
+    "sha256": "fe863a474060134f7fd0ab7f8f0a50837a267cb0ca5fc17c59b1ffca3c254a6b"
+  },
+  "initial_failure_disposition": "The complete byte diff was valid, but the first logical-path allowlist omitted literal serializer fields segments. Original failed evidence is immutable; the separate corrected receipt preserves original differences and records the exact allowlist correction.",
+  "interpretation_limits": [
+    "Two samples per variant, with order reversed on the second pair; no confidence interval or statistical significance claim.",
+    "Raw target bytes, compressed shards, snapshot identities, and whole-document hashes differ because the two retained deontic graph wall timestamps differ; embedded bundle configurations also retain their different recorded source identities.",
+    "No timestamp removal, generic normalization, model loading, training, promotion, publication, or theorem/proof admission was performed by this comparison."
+  ],
+  "native_objects_hydrated_by_audit": false,
+  "observed_timings": {
+    "elapsed_seconds": {
+      "candidate_lower_in_both_order_reversed_pairs": true,
+      "candidate_median_seconds": 59.89681818545796,
+      "candidate_median_seconds_per_span": 9.98280303090966,
+      "candidate_minus_reference_median_percent": -2.0233334531313374,
+      "candidate_minus_reference_median_seconds": -1.2369397759903222,
+      "candidate_seconds": [
+        59.64154839294497,
+        60.15208797797095
+      ],
+      "pairs": [
+        {
+          "candidate_minus_reference_percent": -2.488418057769237,
+          "candidate_minus_reference_seconds": -1.5220049050403759,
+          "candidate_seconds": 59.64154839294497,
+          "reference_seconds": 61.163553297985345
+        },
+        {
+          "candidate_minus_reference_percent": -1.5577952820889585,
+          "candidate_minus_reference_seconds": -0.9518746469402686,
+          "candidate_seconds": 60.15208797797095,
+          "reference_seconds": 61.10396262491122
+        }
+      ],
+      "reference_median_seconds": 61.13375796144828,
+      "reference_median_seconds_per_span": 10.18895966024138,
+      "reference_seconds": [
+        61.163553297985345,
+        61.10396262491122
+      ]
+    },
+    "target_generation_and_artifact_seconds": {
+      "candidate_lower_in_both_order_reversed_pairs": true,
+      "candidate_median_seconds": 58.77575422747759,
+      "candidate_median_seconds_per_span": 9.795959037912931,
+      "candidate_minus_reference_median_percent": -2.2656677253788726,
+      "candidate_minus_reference_median_seconds": -1.3625337820267305,
+      "candidate_seconds": [
+        58.653390972991474,
+        58.89811748196371
+      ],
+      "pairs": [
+        {
+          "candidate_minus_reference_percent": -2.512634744922726,
+          "candidate_minus_reference_seconds": -1.5117297270335257,
+          "candidate_seconds": 58.653390972991474,
+          "reference_seconds": 60.165120700025
+        },
+        {
+          "candidate_minus_reference_percent": -2.0184802224156972,
+          "candidate_minus_reference_seconds": -1.2133378370199353,
+          "candidate_seconds": 58.89811748196371,
+          "reference_seconds": 60.111455318983644
+        }
+      ],
+      "reference_median_seconds": 60.13828800950432,
+      "reference_median_seconds_per_span": 10.023048001584053,
+      "reference_seconds": [
+        60.165120700025,
+        60.111455318983644
+      ]
+    },
+    "target_generation_seconds": {
+      "candidate_lower_in_both_order_reversed_pairs": true,
+      "candidate_median_seconds": 49.85138977505267,
+      "candidate_median_seconds_per_span": 8.308564962508777,
+      "candidate_minus_reference_median_percent": -2.7532774660478765,
+      "candidate_minus_reference_median_seconds": -1.411407032981515,
+      "candidate_seconds": [
+        49.78616170398891,
+        49.916617846116424
+      ],
+      "pairs": [
+        {
+          "candidate_minus_reference_percent": -3.0014795059023713,
+          "candidate_minus_reference_seconds": -1.5405610649613664,
+          "candidate_seconds": 49.78616170398891,
+          "reference_seconds": 51.326722768950276
+        },
+        {
+          "candidate_minus_reference_percent": -2.504455625262758,
+          "candidate_minus_reference_seconds": -1.2822530010016635,
+          "candidate_seconds": 49.916617846116424,
+          "reference_seconds": 51.19887084711809
+        }
+      ],
+      "reference_median_seconds": 51.26279680803418,
+      "reference_median_seconds_per_span": 8.543799468005696,
+      "reference_seconds": [
+        51.326722768950276,
+        51.19887084711809
+      ]
+    }
+  },
+  "ordered_input_sha256": {
+    "ordered_training_samples": "b78f800819e250e0c5ddba35fea32cfc62e8a3e506afdcf9ff7efe79f2d4b474",
+    "ordered_validation_samples": "137b638d231ea8155a79562d8296383c0243e2e70d479a613949ef14394f0142"
+  },
+  "pair_audits": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-target-parity-confirmed-20260925.json",
+      "sha256": "eb631aabb6a67d1716067492edb7dba47b994da8e425d5dbfab87801741a32fe"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-target-parity-pair2-20260925.json",
+      "sha256": "fe6ae45ff0ebcdd4f7869c57d3f0bfb1602a0e5e0a7026b69ad789bdc88ee3af"
+    }
+  ],
+  "passed": true,
+  "recorded_at": "2026-09-25T09:22:42.757024+00:00",
+  "runs": [
+    {
+      "artifact": {
+        "bytes": 12837862,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-reference-r2-20260925/targets.bundle",
+        "sha256": "45615996763a374ab758a5168d7468378591e01094d8ee7d6be4452ec3cd80c6"
+      },
+      "attempted_and_implemented_bridge_count_per_target": 5,
+      "execution_ordinal": 0,
+      "failed_bridge_count": 0,
+      "outer_timeout_count": 0,
+      "package_source_manifest_sha256": "a56a933c6328c19a9009b1624c1d10f747643dca91dd8863c2119db6995a7217",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-reference-r2-20260925.json",
+        "sha256": "5287eebb0b7721cf6a9cdec32c68f6912bbdc69f23fb2c2770ef99ea67c6a744"
+      },
+      "recorded_at": "2026-09-25T09:03:40.274451+00:00",
+      "target_count": 6,
+      "target_snapshot_id": "sha256:6182bb7a0e3aca710230aa82ac2cb7c431eb466652ea3bb96d4cd461fd99d0b7",
+      "timings": {
+        "elapsed_seconds": 61.163553297985345,
+        "target_generation_and_artifact_seconds": 60.165120700025,
+        "target_generation_seconds": 51.326722768950276
+      },
+      "variant": "reference"
+    },
+    {
+      "artifact": {
+        "bytes": 12837862,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-candidate-20260925/targets.bundle",
+        "sha256": "850b840f5aa8f63ff45eb40d4dff2ac0ba1d1bac563fec9e46e67f6f2ae03c45"
+      },
+      "attempted_and_implemented_bridge_count_per_target": 5,
+      "execution_ordinal": 1,
+      "failed_bridge_count": 0,
+      "outer_timeout_count": 0,
+      "package_source_manifest_sha256": "bf3ccc3fc631b39b9ac98ebb710bb153dfb2dfe69a32773135f08764e4011f41",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-candidate-20260925.json",
+        "sha256": "1efb5f79e36574d6afc75089ea3d66b0e22e98609b0e6fa0a33ed09ddcb33e4c"
+      },
+      "recorded_at": "2026-09-25T09:05:57.933165+00:00",
+      "target_count": 6,
+      "target_snapshot_id": "sha256:89ed28e57d38585b8c472e67eda14b2454c2a057bb53f487cbbb01c3f6426ab1",
+      "timings": {
+        "elapsed_seconds": 59.64154839294497,
+        "target_generation_and_artifact_seconds": 58.653390972991474,
+        "target_generation_seconds": 49.78616170398891
+      },
+      "variant": "candidate"
+    },
+    {
+      "artifact": {
+        "bytes": 12837853,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-candidate-r2-20260925/targets.bundle",
+        "sha256": "d310507551762bfbef132bcf4ff1311d4b85db5d934658b624f0bcb416fe2c33"
+      },
+      "attempted_and_implemented_bridge_count_per_target": 5,
+      "execution_ordinal": 2,
+      "failed_bridge_count": 0,
+      "outer_timeout_count": 0,
+      "package_source_manifest_sha256": "bf3ccc3fc631b39b9ac98ebb710bb153dfb2dfe69a32773135f08764e4011f41",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-candidate-r2-20260925.json",
+        "sha256": "df368ddffc8f8cc2c5f714d5c8870f5670ada3a0ef07758ca47ea29a197711eb"
+      },
+      "recorded_at": "2026-09-25T09:12:55.340825+00:00",
+      "target_count": 6,
+      "target_snapshot_id": "sha256:315f963e63d9d0616b13e6fccd3ef2a91d15d91724234a489f7ab5bb3a18f35e",
+      "timings": {
+        "elapsed_seconds": 60.15208797797095,
+        "target_generation_and_artifact_seconds": 58.89811748196371,
+        "target_generation_seconds": 49.916617846116424
+      },
+      "variant": "candidate"
+    },
+    {
+      "artifact": {
+        "bytes": 12837858,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-reference-r3-20260925/targets.bundle",
+        "sha256": "49a637c2261882c4eac66f07a2b0b65ad134f11419849e447eb0cf607599f00b"
+      },
+      "attempted_and_implemented_bridge_count_per_target": 5,
+      "execution_ordinal": 3,
+      "failed_bridge_count": 0,
+      "outer_timeout_count": 0,
+      "package_source_manifest_sha256": "a56a933c6328c19a9009b1624c1d10f747643dca91dd8863c2119db6995a7217",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-reference-r3-20260925.json",
+        "sha256": "c0614ef479a17913707d7c9f4d89247e44767ff34b688c009ebd0c9de334102b"
+      },
+      "recorded_at": "2026-09-25T09:15:12.097763+00:00",
+      "target_count": 6,
+      "target_snapshot_id": "sha256:5ae8b256226c9b3aaedbfa7b9d8ecef1c5d42ac381823ff35e70eea6f939bfa1",
+      "timings": {
+        "elapsed_seconds": 61.10396262491122,
+        "target_generation_and_artifact_seconds": 60.111455318983644,
+        "target_generation_seconds": 51.19887084711809
+      },
+      "variant": "reference"
+    }
+  ],
+  "schema": "native-cold-target-four-run-comparison-v1",
+  "scope": "Four uninstrumented cold preparation processes on the same frozen six inputs, reference/candidate then candidate/reference; bounded observed timings, not a training or general performance qualification.",
+  "selection": {
+    "parent_index_sha256": "f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+    "producer_receipt_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+    "rule": "first three frozen training IDs; all three frozen validation IDs; no reseeding or post-evaluation substitution",
+    "training_citations": [
+      "38 U.S.C. \u00a7 102",
+      "5 U.S.C. \u00a7 8410",
+      "43 U.S.C. \u00a7 391a"
+    ],
+    "training_record_ids": [
+      "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+      "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+      "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+    ],
+    "validation_citations": [
+      "22 U.S.C. \u00a7 4021a",
+      "7 U.S.C. \u00a7 4817",
+      "4 U.S.C. \u00a7 101"
+    ],
+    "validation_record_ids": [
+      "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+      "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+      "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+    ]
+  },
+  "selector_source_sha256": {
+    "candidate": "feb8d74a8a87783408025f1a341500b734a396b99c757f1e65026e4abb26b437",
+    "reference": "612d472efaf9cb5bb2f57914125d9fc87cde3a55f14dc5a105cc80f268df430a"
+  },
+  "training_performed": false,
+  "training_qualification": false
+}

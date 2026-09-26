@@ -1,0 +1,122 @@
+{
+  "admitted": false,
+  "canonical_reencoding_identical": true,
+  "current_training_configuration_validated": false,
+  "diagnostic_only": true,
+  "formalized": false,
+  "optimized": {
+    "admitted": false,
+    "archived_artifact": {
+      "bytes": 12843316,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/1c/1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948",
+      "sha256": "1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948"
+    },
+    "artifact_and_shard_digests_verified": true,
+    "canonical_reencoding_identical": true,
+    "current_training_configuration_validated": false,
+    "formalized": false,
+    "full_target_validation_preserved": true,
+    "gc_policy": "collect before each trial; ordinary garbage collection remains enabled",
+    "harness_sha256": "808ca1cdf53ef8f92f589676a07b5d4c964c460411a133e02df803cabadaea23",
+    "measured_iterations": 3,
+    "medians": {
+      "decode_seconds": 0.113271753070876,
+      "parse_decode_seconds": 0.26517750206403434,
+      "parse_seconds": 0.152473196038045
+    },
+    "mode": "optimized",
+    "reference_sha256": "65840ec47239765109534fece83cba1772dfffa7568d4fe5a3e636c35ec53654",
+    "schema": "archived-target-codec-microbenchmark-v1",
+    "scope": "parse/decode throughput only; not training or legal-IR evaluation speed",
+    "selection": "smallest archived target shard by exact uncompressed byte count",
+    "shard": {
+      "compressed_bytes": 803293,
+      "compressed_sha256": "05699da4d434b6a8ec937d453511250d024503c1498554ae62ebfcce05ce53a7",
+      "offset": 10943488,
+      "target_sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122",
+      "uncompressed_bytes": 14196065
+    },
+    "source_sha256": "369395d0d8cce1de0068bb52ebdf2a825435d6045542f168a54a12b3b13e6cf9",
+    "training_performed": false,
+    "trials": [
+      {
+        "decode_seconds": 0.113271753070876,
+        "parse_decode_seconds": 0.265744949108921,
+        "parse_seconds": 0.152473196038045
+      },
+      {
+        "decode_seconds": 0.11350450699683279,
+        "parse_decode_seconds": 0.2565254949731752,
+        "parse_seconds": 0.14302098797634244
+      },
+      {
+        "decode_seconds": 0.11095161200501025,
+        "parse_decode_seconds": 0.26517750206403434,
+        "parse_seconds": 0.1542258900590241
+      }
+    ],
+    "warmup_iterations": 1
+  },
+  "reference": {
+    "admitted": false,
+    "archived_artifact": {
+      "bytes": 12843316,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/1c/1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948",
+      "sha256": "1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948"
+    },
+    "artifact_and_shard_digests_verified": true,
+    "canonical_reencoding_identical": true,
+    "current_training_configuration_validated": false,
+    "formalized": false,
+    "full_target_validation_preserved": true,
+    "gc_policy": "collect before each trial; ordinary garbage collection remains enabled",
+    "harness_sha256": "808ca1cdf53ef8f92f589676a07b5d4c964c460411a133e02df803cabadaea23",
+    "measured_iterations": 3,
+    "medians": {
+      "decode_seconds": 0.10678012494463474,
+      "parse_decode_seconds": 0.23773138807155192,
+      "parse_seconds": 0.13054217002354562
+    },
+    "mode": "reference",
+    "reference_sha256": "65840ec47239765109534fece83cba1772dfffa7568d4fe5a3e636c35ec53654",
+    "schema": "archived-target-codec-microbenchmark-v1",
+    "scope": "parse/decode throughput only; not training or legal-IR evaluation speed",
+    "selection": "smallest archived target shard by exact uncompressed byte count",
+    "shard": {
+      "compressed_bytes": 803293,
+      "compressed_sha256": "05699da4d434b6a8ec937d453511250d024503c1498554ae62ebfcce05ce53a7",
+      "offset": 10943488,
+      "target_sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122",
+      "uncompressed_bytes": 14196065
+    },
+    "source_sha256": "369395d0d8cce1de0068bb52ebdf2a825435d6045542f168a54a12b3b13e6cf9",
+    "training_performed": false,
+    "trials": [
+      {
+        "decode_seconds": 0.10637618496548384,
+        "parse_decode_seconds": 0.23817900998983532,
+        "parse_seconds": 0.13180282502435148
+      },
+      {
+        "decode_seconds": 0.1071892180480063,
+        "parse_decode_seconds": 0.23773138807155192,
+        "parse_seconds": 0.13054217002354562
+      },
+      {
+        "decode_seconds": 0.10678012494463474,
+        "parse_decode_seconds": 0.23703280393965542,
+        "parse_seconds": 0.1302526789950207
+      }
+    ],
+    "warmup_iterations": 1
+  },
+  "same_shard_and_code_environment": true,
+  "schema": "archived-target-codec-throughput-comparison-v1",
+  "scope": "one digest-verified archived shard; parse/decode throughput only, not training or legal-IR evaluation speed",
+  "speedup_ratios": {
+    "decode_seconds": 0.9426897884931705,
+    "parse_decode_seconds": 0.8964990854093844,
+    "parse_seconds": 0.8561647123273578
+  },
+  "training_performed": false
+}

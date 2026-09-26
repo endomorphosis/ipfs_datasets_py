@@ -53,6 +53,8 @@ _SUBMODULE_EXPORTS = {
     "hammers",
     "integration",
     "integrations",
+    "autoformal",
+    "legal_document",
     "ml_confidence",
     "modal",
     "monitoring",

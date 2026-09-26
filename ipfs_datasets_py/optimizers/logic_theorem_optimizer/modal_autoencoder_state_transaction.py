@@ -249,7 +249,18 @@ class ModalAutoencoderStateTransaction:
         if isinstance(value, Mapping):
             # Replacing a table is supported for completeness, but callers on
             # hot paths should mutate individual rows to retain COW scaling.
-            self._components[component] = copy.deepcopy(value)
+            original = copy.deepcopy(value)
+            # A row may have changed before the whole table was replaced.
+            # Preserve the transaction's original table, not that intermediate
+            # value: full-component rollback supersedes the row journal.
+            for (row_component, key), (existed, before) in self._rows.items():
+                if row_component != component:
+                    continue
+                if existed:
+                    original[copy.deepcopy(key)] = copy.deepcopy(before)
+                else:
+                    original.pop(key, None)
+            self._components[component] = original
         else:
             self._components[component] = copy.deepcopy(value)
 
@@ -262,6 +273,9 @@ class ModalAutoencoderStateTransaction:
             self._rows.items(),
             key=lambda item: (item[0][0], repr(item[0][1])),
         ):
+            if component in self._components:
+                # The component postimage already includes every row change.
+                continue
             mapping = getattr(self.state, component)
             after_exists = key in mapping
             rows.append(

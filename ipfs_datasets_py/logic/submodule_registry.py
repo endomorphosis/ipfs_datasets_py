@@ -868,6 +868,36 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         ),
         notes="Pinned from origin/agent/ui-ux-ir @ 9d558ad70. Cold import is side-effect free.",
     ),
+    LogicSubmoduleSpec(
+        name="legal_document",
+        module="ipfs_datasets_py.logic.legal_document",
+        description=(
+            "Segment an arbitrary legal text into clauses, classify numeric patterns, "
+            "and record repeal edges. Does not emit Lean or admit a proof."
+        ),
+        roles=("legal_document", "segmentation", "deontic"),
+        optimizer_components=("legal_document.classify",),
+        target_files=("ipfs_datasets_py/logic/legal_document.py",),
+        ast_scope="legal_document",
+        required=False,
+        public_symbols=("DocumentStore", "classify_clause", "segment_paragraphs", "find_hits"),
+        notes="Cold import does not load a converter or a prover.",
+    ),
+    LogicSubmoduleSpec(
+        name="autoformal",
+        module="ipfs_datasets_py.logic.autoformal",
+        description=(
+            "Prompt and rule rows for legal autoformalization. "
+            "Compile and decompile stay with the measured legal IR owners. Not a Lean admit."
+        ),
+        roles=("autoformal", "legal_ir", "prompt"),
+        optimizer_components=("autoformal.rules",),
+        target_files=("ipfs_datasets_py/logic/autoformal/__init__.py",),
+        ast_scope="autoformal",
+        required=False,
+        public_symbols=("AutoformalSession", "messages", "dispatch"),
+        notes="Does not call a model or Lake.",
+    ),
 )
 
 

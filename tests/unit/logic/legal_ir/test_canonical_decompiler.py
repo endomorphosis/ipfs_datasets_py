@@ -103,6 +103,31 @@ def test_all_frozen_t1_outputs_match_selected_benchmark_adapter() -> None:
         assert result.text_cid == cid_for_bytes(expected.text.encode("utf-8")), case["id"]
 
 
+def test_temporal_phrase_already_in_the_object_is_not_repeated() -> None:
+    rendered = decompile_rule(
+        CanonicalRule(
+            modality="O",
+            actor="officer",
+            action="retain",
+            object="the file for at least 20 days",
+            temporal=("20 days",),
+        )
+    )
+    assert rendered == "Officer must retain the file for at least 20 days."
+    separate = decompile_rule(
+        CanonicalRule(
+            modality="O",
+            actor="company_a",
+            action="submit",
+            object="backup_report",
+            temporal=("within_10_days",),
+            exceptions=("emergency",),
+        )
+    )
+    assert "within 10 days" in separate
+    assert separate.endswith("unless emergency.")
+
+
 def test_frozen_grammar_preserves_polarity_roles_and_every_facet() -> None:
     request = _request(
         _rule(),

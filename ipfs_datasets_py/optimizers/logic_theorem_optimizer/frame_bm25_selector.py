@@ -127,6 +127,8 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
     "statutory_scope_",
     "status_keyword_",
 )
+# Keep custom prefix iterables on the original per-prefix dispatch path.
+_NATIVE_CONTEXTUAL_PREDICATE_PREFIXES = _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES
 _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES: tuple[str, ...] = (
     "belongs_to_document",
     "citation",
@@ -135,6 +137,7 @@ _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES: tuple[str, ...] = (
     "source_id_",
     "statutory_scope_",
 )
+_NATIVE_NUMERIC_PREDICATE_PREFIXES = _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES
 _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATES = frozenset(
     {
         "predicate_alnum_segment",
@@ -329,6 +332,7 @@ _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES: tuple[str, ...] = (
     "frame_candidate",
     "selected_frame",
 )
+_NATIVE_SLOT_FRAME_PREDICATE_PREFIXES = _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES
 _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES = {
     "candidate_frame": "frame-candidate:",
     "candidate_ontology_frame": "frame-candidate:",
@@ -1217,7 +1221,15 @@ def _is_contextual_frame_ontology_predicate(predicate: str) -> bool:
         "_",
         str(predicate or "").strip().lower(),
     ).strip("_")
-    return normalized in _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES or any(
+    if normalized in _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES:
+        return True
+    if (
+        type(normalized) is str
+        and _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES
+        is _NATIVE_CONTEXTUAL_PREDICATE_PREFIXES
+    ):
+        return normalized.startswith(_FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES)
+    return any(
         normalized.startswith(prefix)
         for prefix in _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES
     )
@@ -1754,6 +1766,11 @@ def _is_slot_frame_ontology_predicate(predicate: str) -> bool:
     ).strip("_")
     if not normalized:
         return False
+    if (
+        type(normalized) is str
+        and _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES is _NATIVE_SLOT_FRAME_PREDICATE_PREFIXES
+    ):
+        return normalized.startswith(_FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES)
     return any(
         normalized.startswith(prefix) for prefix in _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES
     )
@@ -1774,6 +1791,11 @@ def _predicate_allows_numeric_ontology_tokens(predicate: str) -> bool:
         )
     if canonical in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATES:
         return True
+    if (
+        type(canonical) is str
+        and _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES is _NATIVE_NUMERIC_PREDICATE_PREFIXES
+    ):
+        return canonical.startswith(_FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES)
     return any(
         canonical.startswith(prefix) for prefix in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES
     )
@@ -1793,6 +1815,13 @@ def _predicate_allows_single_character_alpha_tokens(predicate: str) -> bool:
         return True
     if canonical.endswith("_modal_operator"):
         return True
+    if (
+        type(canonical) is str
+        and _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES is _NATIVE_NUMERIC_PREDICATE_PREFIXES
+    ):
+        return canonical.startswith(_FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES) and (
+            "_suffix" in canonical
+        )
     if not any(
         canonical.startswith(prefix) for prefix in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES
     ):

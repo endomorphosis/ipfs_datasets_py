@@ -1,0 +1,39 @@
+{
+  "checks": [
+    {
+      "case_id": "exception_with_window",
+      "all_non_timing_fields_equal": true,
+      "l1_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+      "l2_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua"
+    },
+    {
+      "case_id": "legal_doc_1",
+      "all_non_timing_fields_equal": true,
+      "l1_cid": "baguqeerau4435xy2x4m42eg6sjdren7zbwtpe3dbukdw7whptridqgls53uq",
+      "l2_cid": "baguqeerau4435xy2x4m42eg6sjdren7zbwtpe3dbukdw7whptridqgls53uq"
+    },
+    {
+      "case_id": "exec_order_1",
+      "all_non_timing_fields_equal": true,
+      "l1_cid": "baguqeerax3dul4t2m35wsmxajfkirpymmoy2pkcukflr3prknlmyadstc5sa",
+      "l2_cid": "baguqeerax3dul4t2m35wsmxajfkirpymmoy2pkcukflr3prknlmyadstc5sa"
+    },
+    {
+      "case_id": "corp_policy_1",
+      "all_non_timing_fields_equal": true,
+      "l1_cid": "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q",
+      "l2_cid": "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q"
+    },
+    {
+      "case_id": "construction_contract",
+      "all_non_timing_fields_equal": true,
+      "l1_cid": "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va",
+      "l2_cid": "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va"
+    }
+  ],
+  "forward_before": 0.915,
+  "forward_after": 0.915,
+  "cycle_before": 1.0,
+  "cycle_after": 1.0,
+  "admitted": false
+}

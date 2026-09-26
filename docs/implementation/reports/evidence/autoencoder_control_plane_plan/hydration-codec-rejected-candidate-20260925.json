@@ -1,0 +1,148 @@
+{
+  "admitted": false,
+  "candidate_test_run": {
+    "passed": 183,
+    "seconds": 3.71
+  },
+  "decision": "rejected_and_restored_original",
+  "diagnostic_only": true,
+  "experimental_parity_tests": {
+    "collected_by_pytest": false,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/hydration-rejected-candidate-parity-checks-20260925.py",
+    "sha256": "c5867682e40596be38a70a33944699daf3860070e75894d1f8277d9cfd7bb35e"
+  },
+  "formalized": false,
+  "optimized": {
+    "admitted": false,
+    "archived_artifact": {
+      "bytes": 12843316,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/1c/1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948",
+      "sha256": "1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948"
+    },
+    "artifact_and_shard_digests_verified": true,
+    "canonical_reencoding_identical": true,
+    "current_training_configuration_validated": false,
+    "formalized": false,
+    "full_target_validation_preserved": true,
+    "gc_policy": "collect before each trial; ordinary garbage collection remains enabled",
+    "harness_sha256": "3aad2c0208943646432ae35f36cbcafa6c6748bc4ebbf98e335b6884a4d2f2cb",
+    "measured_iterations": 3,
+    "medians": {
+      "decode_seconds": 0.22367725998628885,
+      "parse_decode_seconds": 1.3741118119796738,
+      "parse_seconds": 1.150434551993385
+    },
+    "mode": "optimized",
+    "reference_sha256": "65840ec47239765109534fece83cba1772dfffa7568d4fe5a3e636c35ec53654",
+    "schema": "archived-target-codec-microbenchmark-v1",
+    "scope": "parse/decode throughput only; not training or legal-IR evaluation speed",
+    "selection": "largest archived target shard by exact uncompressed byte count",
+    "shard": {
+      "compressed_bytes": 3547936,
+      "compressed_sha256": "9baf8a0d44dd78c5e212c39c719bffdea8393465cf2c5937865e7b1f730bccfd",
+      "offset": 5319029,
+      "target_sha256": "300c814f804015f03173f7c7a6140d20624ab7eef8a8208be79a555a6ae18b43",
+      "uncompressed_bytes": 65169197
+    },
+    "source_sha256": "369395d0d8cce1de0068bb52ebdf2a825435d6045542f168a54a12b3b13e6cf9",
+    "training_performed": false,
+    "trials": [
+      {
+        "decode_seconds": 0.22367725998628885,
+        "parse_decode_seconds": 1.3741118119796738,
+        "parse_seconds": 1.150434551993385
+      },
+      {
+        "decode_seconds": 0.22165648394729942,
+        "parse_decode_seconds": 1.3539129459531978,
+        "parse_seconds": 1.1322564620058984
+      },
+      {
+        "decode_seconds": 0.2237953239819035,
+        "parse_decode_seconds": 1.3968156249029562,
+        "parse_seconds": 1.1730203009210527
+      }
+    ],
+    "warmup_iterations": 1
+  },
+  "reason": "No repeatable combined parse/decode benefit: candidate slower on both smallest and largest shard comparisons",
+  "reference": {
+    "admitted": false,
+    "archived_artifact": {
+      "bytes": 12843316,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/1c/1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948",
+      "sha256": "1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948"
+    },
+    "artifact_and_shard_digests_verified": true,
+    "canonical_reencoding_identical": true,
+    "current_training_configuration_validated": false,
+    "formalized": false,
+    "full_target_validation_preserved": true,
+    "gc_policy": "collect before each trial; ordinary garbage collection remains enabled",
+    "harness_sha256": "3aad2c0208943646432ae35f36cbcafa6c6748bc4ebbf98e335b6884a4d2f2cb",
+    "measured_iterations": 3,
+    "medians": {
+      "decode_seconds": 0.23496543697547168,
+      "parse_decode_seconds": 1.3505427310010418,
+      "parse_seconds": 1.114653851953335
+    },
+    "mode": "reference",
+    "reference_sha256": "65840ec47239765109534fece83cba1772dfffa7568d4fe5a3e636c35ec53654",
+    "schema": "archived-target-codec-microbenchmark-v1",
+    "scope": "parse/decode throughput only; not training or legal-IR evaluation speed",
+    "selection": "largest archived target shard by exact uncompressed byte count",
+    "shard": {
+      "compressed_bytes": 3547936,
+      "compressed_sha256": "9baf8a0d44dd78c5e212c39c719bffdea8393465cf2c5937865e7b1f730bccfd",
+      "offset": 5319029,
+      "target_sha256": "300c814f804015f03173f7c7a6140d20624ab7eef8a8208be79a555a6ae18b43",
+      "uncompressed_bytes": 65169197
+    },
+    "source_sha256": "369395d0d8cce1de0068bb52ebdf2a825435d6045542f168a54a12b3b13e6cf9",
+    "training_performed": false,
+    "trials": [
+      {
+        "decode_seconds": 0.23600701801478863,
+        "parse_decode_seconds": 1.3505427310010418,
+        "parse_seconds": 1.1145357129862532
+      },
+      {
+        "decode_seconds": 0.23368851002305746,
+        "parse_decode_seconds": 1.3515112031018361,
+        "parse_seconds": 1.1178226930787787
+      },
+      {
+        "decode_seconds": 0.23496543697547168,
+        "parse_decode_seconds": 1.3496192889288068,
+        "parse_seconds": 1.114653851953335
+      }
+    ],
+    "warmup_iterations": 1
+  },
+  "rejected_candidate": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/hydration-rejected-candidate-codec-20260925.py",
+    "sha256": "369395d0d8cce1de0068bb52ebdf2a825435d6045542f168a54a12b3b13e6cf9"
+  },
+  "restored_production_source_sha256": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+  "restored_test_run": {
+    "command": "python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py -q",
+    "passed": 59,
+    "seconds": 3.74
+  },
+  "run_order": [
+    "optimized",
+    "reference"
+  ],
+  "schema": "archived-target-codec-rejected-candidate-v1",
+  "scope": "Digest-verified archived-shard parse/decode throughput only; no training or legal-IR evaluation speed claim",
+  "smallest_shard_evidence": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/hydration-codec-microbenchmark-20260925.json",
+    "sha256": "77cf746df16447bfda1521283de38a5bfe05ab9d2cb6e1781ef380a881dc693a"
+  },
+  "speedup_ratios": {
+    "decode_seconds": 1.0504663593870687,
+    "parse_decode_seconds": 0.9828477706303418,
+    "parse_seconds": 0.9688981003064869
+  },
+  "training_performed": false
+}

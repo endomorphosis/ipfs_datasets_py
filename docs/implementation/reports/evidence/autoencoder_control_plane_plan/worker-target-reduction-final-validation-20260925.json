@@ -1,0 +1,550 @@
+{
+  "admitted": false,
+  "ast_files_checked": 6,
+  "constitution_formalized": false,
+  "current_package_matches_native_source_manifest": true,
+  "current_package_source_count": 7714,
+  "current_package_source_manifest_sha256": "e93669e3b81e097f4f4892ad6522f31c2a102e8d869be790fb0fb04fbe272d5e",
+  "default_policy": "off",
+  "distinct_pytest_checks_passed": 460,
+  "documents": [
+    {
+      "bytes": 10655,
+      "path": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "sha256": "d47387c64eb63dcb8b42dfc78d4abc165fb448db16df24a58fd5f5b376938bff"
+    },
+    {
+      "bytes": 6998,
+      "path": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "sha256": "b2e8c23b82e77068006d054ee3970d6345a11683cf9f892c2c196cb14ab5292d"
+    },
+    {
+      "bytes": 61395,
+      "path": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "92a7f0e57274ad9b93f1abee3b6b529d54c5bff2f48dc294e56cccefdf072ab7"
+    },
+    {
+      "bytes": 52333,
+      "path": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "f8ba089578de1c63aad5a8e1a5a4fda19dd66eca9b56f4b24cbb7c8fa943e9eb"
+    }
+  ],
+  "evidence": [
+    {
+      "bytes": 5366263,
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/worker-target-reduction-native-20260925.json",
+      "sha256": "2cdc8c78496409551ab4db2203d366f828c89393f4968a34b655bc41a8cd31d4"
+    },
+    {
+      "bytes": 997,
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/worker-target-reduction-harness-smoke-20260925.json",
+      "sha256": "73f750d232cd64a70ada43c885204a6d4a035bb3ff22242c41df79bdc745e46f"
+    },
+    {
+      "bytes": 78738,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/existing-tests.xml",
+      "sha256": "0c025fe918b1c6b6ca437184496e515d48606e561319631de3050edf5fcf0ac3"
+    },
+    {
+      "bytes": 391,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/pin-fixture-corrected.xml",
+      "sha256": "65ea5c47097a978f098ac9240638aa19943907d95c8303effdf51e760da66e75"
+    },
+    {
+      "bytes": 5987,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/existing-tests.json",
+      "sha256": "883d210691396c57379aa12f4c97f3bfc3c41c11858153c72370fb49afe7c7d5"
+    },
+    {
+      "bytes": 4095,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/existing-tests.log",
+      "sha256": "e73fc357350a61248bfab16ec7046f8536daa01ca4dfe60147de71384ec8e3b3"
+    },
+    {
+      "bytes": 1094,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/pin-fixture-corrected.json",
+      "sha256": "cf507587b17914203f887a4f856faeecf58b287191f5a1525f47364992944fc9"
+    },
+    {
+      "bytes": 1103,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/pin-fixture-corrected.log",
+      "sha256": "f6e5060a6f59fbc787f974a18b570ccc7b24de1ef900c025eb3b6d9a90f5d903"
+    },
+    {
+      "bytes": 1165,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/focused-reducer-validation.json",
+      "sha256": "e21dc6c745e3c64506c5ea499456b65e21c227568288c18d5458029e0cda2e94"
+    },
+    {
+      "bytes": 2593,
+      "path": "workspace/test-logs/federal-corpus-audits/target-reduction-integration-20260925/validation.json",
+      "sha256": "47c4ce07fd917bef1bdc3037b10bc5d3444651a258c8820080189be99016902c"
+    },
+    {
+      "bytes": 665,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/source-before.json",
+      "sha256": "dd0a3cedd5020c591f7a25c43c41aba3e6753092ba47c282e60373e766886b3a"
+    },
+    {
+      "bytes": 597,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/source-after.json",
+      "sha256": "43f5067d41035e1155d3ed858f200976170b98c51d8ef9b252f615a66af58c95"
+    },
+    {
+      "bytes": 20747,
+      "path": "workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925/candidate.patch",
+      "sha256": "9c2a4b1c99a92cd24027bd01f30386d75628333cb5d992a66220f581147ecd41"
+    }
+  ],
+  "existing_tests": {
+    "corrected_failed_test_passed": 1,
+    "first_failed": 1,
+    "first_passed": 396,
+    "reason": "Initial audit basetemp was beneath canonical root, so test fake outside parser was actually inside the allowed tree. Rerun only failed test with a new external tmp directory; no production or test edits.",
+    "resolved_distinct_passed": 397
+  },
+  "followups": [
+    "Verified full-target handoff on actual daemon path, compared with existing warm caches",
+    "Accepted corpus-training improvement and broader source/global split qualification",
+    "Memory-peak study before increasing parallelism",
+    "Production DuckLake materialization and reviewed Hugging Face release"
+  ],
+  "harness_smoke_checks": 15,
+  "implementation_and_tests": [
+    {
+      "bytes": 9097,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/_autoencoder_prepared_targets.py",
+      "sha256": "28311ee1733d7be01870f3a7f15a87e9ee2f91daccdecc77b639eee84c79e7f7"
+    },
+    {
+      "bytes": 74771,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "5ccdfef80e2a839f535f338558cadd3ff4e1589ea23ba1f39a887cfa580fd925"
+    },
+    {
+      "bytes": 48781,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "sha256": "b0d8a2a27c06332ac2b5454da8bebc795647c170ed2aedd72df179b2cd1d5657"
+    },
+    {
+      "bytes": 52098,
+      "path": "scripts/ops/legal_ir/benchmark_worker_target_reduction.py",
+      "sha256": "caf9982bae85b27e5a2abb4241701e0817e8f2ff071bc2e5199a7674618ae3e7"
+    },
+    {
+      "bytes": 9434,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py",
+      "sha256": "4ddd6062d7d222840373c77758c6a5c4e66908b6edfefbcbb6a6a8bfed57654f"
+    },
+    {
+      "bytes": 19659,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py",
+      "sha256": "8d6472fed2816fc78cfb292d3a30e406ea4e770cec32111d27dcbe288170430a"
+    }
+  ],
+  "local_document_links": [
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "evidence/autoencoder_control_plane_plan/worker-target-reduction-native-20260925.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "../../../scripts/ops/legal_ir/benchmark_worker_target_reduction.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/_autoencoder_prepared_targets.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "../../../workspace/test-logs/federal-corpus-audits/native-target-reduction-20260925"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "../../../workspace/test-logs/federal-corpus-audits/target-reduction-integration-20260925/validation.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "evidence/autoencoder_control_plane_plan/worker-target-reduction-harness-smoke-20260925.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": true,
+      "target": "evidence/autoencoder_control_plane_plan/worker-target-reduction-final-validation-20260925.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "autoencoder_daemon_shared_target_integration_audit.md"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_worker_target_reduction.md",
+      "is_this_inventory": false,
+      "target": "../plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "is_this_inventory": false,
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "is_this_inventory": false,
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "is_this_inventory": false,
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "is_this_inventory": false,
+      "target": "../../../tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "is_this_inventory": false,
+      "target": "../../../tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "is_this_inventory": false,
+      "target": "../../../tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "is_this_inventory": false,
+      "target": "evidence/autoencoder_control_plane_plan/produced-arrow-training-20260925.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "is_this_inventory": false,
+      "target": "evidence/autoencoder_control_plane_plan/target-hydration-gc-native-20260925.json"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "US_CODE_AUTOFORMALIZATION_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_control_plane_phase1.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_shared_targets_sparse_arrow.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_target_bundles.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_sparse_checkpoint_persistence.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_verified_corpus_batches.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_uscode_source_index.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_indexed_training_jobs.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_native_embedding_production.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_produced_corpus_arrow_training.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_shared_target_evaluation.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_target_failure_telemetry.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_ontology_capture_reuse_design.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_ontology_observation.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_target_hydration_gc.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_cold_target_profile.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_frame_prefix_dispatch.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_target_encoding_gc_diagnostic.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_worker_target_reduction.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925-r2.json"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/legal_autoformal_speed.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_daemon_shared_target_integration_audit.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "US_CODE_AUTOFORMALIZATION_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_control_plane_phase1.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_shared_targets_sparse_arrow.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_target_bundles.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_sparse_checkpoint_persistence.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_verified_corpus_batches.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_uscode_source_index.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_indexed_training_jobs.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_native_embedding_production.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_produced_corpus_arrow_training.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_shared_target_evaluation.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_target_failure_telemetry.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_ontology_capture_reuse_design.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_ontology_observation.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_target_hydration_gc.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_cold_target_profile.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_frame_prefix_dispatch.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_worker_target_reduction.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/evidence/autoencoder_control_plane_plan/planning-audit.json"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/legal_autoformal_speed.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "is_this_inventory": false,
+      "target": "../reports/autoencoder_daemon_shared_target_integration_audit.md"
+    }
+  ],
+  "native_accepted_epochs": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "native_patch_counts": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "native_receipt": {
+    "bytes": 5366263,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/worker-target-reduction-native-20260925.json",
+    "sha256": "2cdc8c78496409551ab4db2203d366f828c89393f4968a34b655bc41a8cd31d4"
+  },
+  "native_source_guards_passed": true,
+  "native_strict_scoped_parity_passed": true,
+  "new_integration_tests": 28,
+  "new_reducer_tests": 35,
+  "original_constitution_pid_present": false,
+  "owned_function_changes": {
+    "autoencoder_training_coordinator.py": {
+      "added": [],
+      "changed": [
+        "_result_summary",
+        "run_training_jobs"
+      ],
+      "removed": []
+    },
+    "autoencoder_training_worker.py": {
+      "added": [
+        "_execute_native_training_job_with_reduced_targets",
+        "_execute_native_training_job_with_deferred_gc_and_reduced_targets"
+      ],
+      "changed": [
+        "_execute",
+        "_execute_training_job"
+      ],
+      "removed": []
+    }
+  },
+  "package_observation_scope": "Current Python file contents only; native run independently checked its full runtime/dependency configuration. Future jobs must run all normal source/config/artifact checks again.",
+  "passed": true,
+  "pinned_checkpoint": {
+    "bytes": 25895338,
+    "hardlink_count": 2,
+    "inode": 57804548,
+    "path": "workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "qualification_scope": "Bounded native runtime target retention with unchanged complete validation; measured memory/evaluation benefit, modest noisy complete-job change. No production daemon, Quack/DuckLake deployment, corpus completion, promotion or publication qualification.",
+  "recorded_at": "2026-09-25T09:55:20.710979+00:00",
+  "schema": "worker-target-reduction-final-validation-v1",
+  "source_changes_since_native_run": {},
+  "storage_observation": {
+    "ceiling_bytes": 50000000000,
+    "roots": [
+      {
+        "apparent_bytes": 1038833340,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 130195516,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "apparent_bytes": 32159367756,
+        "path": "/tmp/pytest-of-barberb"
+      },
+      {
+        "apparent_bytes": 67759742,
+        "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small"
+      },
+      {
+        "apparent_bytes": 95,
+        "path": "/tmp/lift-coding-target-reduction-pin-20260925"
+      }
+    ],
+    "scope": "Named roots only, apparent bytes, not a global census; includes shared unrelated pytest scratch; no protected cleanup.",
+    "sum_apparent_bytes": 33396156449
+  }
+}

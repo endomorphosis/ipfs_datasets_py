@@ -1,0 +1,106 @@
+{
+  "admitted": false,
+  "agent_reported_test_runs": [
+    {
+      "elapsed_seconds": 30.26,
+      "evidence_origin": "completed pytest output reported by embedding_job_binding; final production module hashes independently verified",
+      "failed": 0,
+      "files": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py"
+      ],
+      "passed": 246
+    },
+    {
+      "elapsed_seconds": 6.49,
+      "evidence_origin": "22 codec and6 adapter passing tests reported by embedding_producer_codec after final IPC fix; production code frozen before native run",
+      "failed": 0,
+      "files": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_arrow_inputs.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_arrow_sample_adapter.py"
+      ],
+      "passed": 28
+    }
+  ],
+  "archived_jobs": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/arrow-input-archived-jobs-20260925.json",
+    "sha256": "f91f38346fdddf2cc6e247c960be497b89bb72d970e0a816720368e381cb6fe3",
+    "v1_to_v4_unchanged": 39,
+    "v5_v6_unchanged": 4
+  },
+  "formalized": false,
+  "heldout_canary_qualified": false,
+  "legacy_regression": {
+    "deselected": 204,
+    "elapsed_seconds": 3.6,
+    "evidence_origin": "root exec session55908 final pytest output",
+    "failed": 0,
+    "files": [
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_samples.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py"
+    ],
+    "passed": 9,
+    "selection": "test_legal_samples or embedding_loss_helpers or loss_helpers_reject_vector_length_mismatch or modal_autoencoder_baseline_reports_fixture_losses or modal_autoencoder_empty_dataset_returns_zero_metrics or adaptive_autoencoder_cold_projection_improves_zero_reconstruction"
+  },
+  "logical_candidate_equals_loaded_base": true,
+  "native_accepted_epochs": 0,
+  "native_audit": {
+    "passed": true,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/produced-arrow-training-20260925.json",
+    "sha256": "85795ae5ced30be0e47e31eb1fd211916f8afa226b85f3843647e48f29dad5e3",
+    "source_unchanged": true
+  },
+  "native_job_count": 8,
+  "native_sparse_patch_bytes": 0,
+  "observed_apparent_directory_bytes": {
+    "cached_gte_model_repository": 67759742,
+    "workspace/test-logs": 187667079,
+    "workspace/todo-queues": 130194297
+  },
+  "passed": true,
+  "pinned_checkpoint_bytes": 25895338,
+  "pinned_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "promotion_performed": false,
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T06:27:44.212181+00:00",
+  "schema": "produced-arrow-training-validation-v1",
+  "semantic_regression": {
+    "elapsed_seconds": 39.45,
+    "passed": 66,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/arrow-input-semantic-tests-20260925.json",
+    "sha256": "ef4a953d9796138e37ed80de72fa1cd078dd81939840289f5945f154e0bcafaa"
+  },
+  "source_and_test_sha256": {
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "57f4c5d90ab867da408daeadedc86981d16ed3824a322c5672e364159e8c5d97",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "5ec4ca7c38570b81a77bf2dab6b53c98201bb432bb41cb78ba507b10d0a3fac0",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "ea23d878c00337e8b1e42c6c06faa976a61c3ef6b446b63c5a04327a34678b12",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "c354a655ae7ab90a74282d8f329179819df0bb7222d212e2d5bd31e32e9a2fa8",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_arrow_inputs.py": "49c9bd491558a1cf3440063a0af38e8e69e897b6d3d2319c5e704542a5f5b08c",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py": "5acd34400e483e123d53a83bcd49fde84d619623e58dd8dcb269ae092333dd7b",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": "614f17a9db7300368ca175aac808855d16c6ce8c1ea01ffaddb8c89a52148e63",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "90dfe43fbec34a18d97047734f2f3ce7008b7c9ecfe3961acc97bc2128b3cfab",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "54b0824707bd22b49f8eaf975474aa05f1aeb791f25ae28aa4ddcf74996f1a17",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_arrow_weights.py": "77cbd67d099c32c20bfe0ae1364d980c32464e9de018da57bba22b3bf221174a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_patch_codec.py": "0a3f18c9ef8e7589cd0a880e4b89b6f4f53d37af7602a63f315595e692d1fb96",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_sparse_checkpoint.py": "9fe1c3db314ddc170c5cec7861da1541d48b98992ec289d0cc053ef5f25e58f3",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py": "d590112f9b6dcf3005c273a6291320b0fa0a218969326839f5c5be4ae332e89a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py": "bbd62e121201faf2012c247a4e19b7cedb221c2fe3aa90eb55589dc1f472f484",
+    "scripts/ops/legal_ir/benchmark_produced_corpus_arrow_training.py": "d6b91dafeff9584bb98052b05a05038ec5f520f1e7d1cc6c791a6e76ac5334e1",
+    "scripts/ops/legal_ir/benchmark_shared_autoencoder_training.py": "0fed89ccac13fd223f2a65b1f2071500d834445fb61e5ddce25cea87a8c60f0d",
+    "scripts/ops/legal_ir/benchmark_sparse_checkpoint_training.py": "88ca7da74bbfee722d5197f23567669f7b139ea61cbc936b4abf60fd7006f293",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_arrow_inputs.py": "7372311e18ae5a3cb6963fefffb7d62db337ff7439c240c45a40f00dd4595158",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_arrow_sample_adapter.py": "3c4e239a4f216f6cf4ef59e2a04c1c3f51cd5ba710ac910e7a4d15937fca9d72",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py": "965e12dfef2e0664f42b556d6faccde0981bd916a9a890e65a5c10787cbd2d68",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "3c9894286a77fae0c624200a7949d12063ae4920276d1f5ea73ec27c76a16ea5",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_samples.py": "97570b01841a928cc262cdd698e16687a98cedab1964f3989884dba34d98c1ec",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py": "adba3d3fbd2f44f27322fb9e1c2ca4f05b2ce4816cc12ffd8b27763859396262"
+  },
+  "storage_observation_scope": "du -sb named roots after benchmark; not physical device writes or global reservation enforcement",
+  "weights_downloaded": false
+}

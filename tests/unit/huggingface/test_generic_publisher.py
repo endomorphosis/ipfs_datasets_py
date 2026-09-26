@@ -1087,7 +1087,19 @@ def test_protected_transport_rejects_global_get_session_drift_before_contact(
 
 def test_protected_transport_discards_cached_session_hooks_and_config(
     monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
 ) -> None:
+    import socket
+    from huggingface_hub import constants
+
+    request.addfinalizer(publisher_module._CANONICAL_HF_RESET_SESSIONS)
+    # This positive configuration test intentionally exercises the standard
+    # backend. Suite-wide HF_HUB_OFFLINE=1 selects a different adapter at import;
+    # reset only its cached setting for this test and restore it automatically.
+    # No request is needed to verify a freshly constructed Session.
+    monkeypatch.setattr(constants, "HF_HUB_OFFLINE", False)
+    monkeypatch.setattr(socket.socket, "connect", lambda *a, **k: pytest.fail("unexpected network connection"))
+    monkeypatch.setattr(socket.socket, "connect_ex", lambda *a, **k: pytest.fail("unexpected network connection"))
     for name in publisher_module._PROTECTED_TRANSPORT_ENV_NAMES:
         monkeypatch.delenv(name, raising=False)
     publisher_module._CANONICAL_HF_RESET_SESSIONS()
@@ -1117,6 +1129,23 @@ def test_protected_transport_discards_cached_session_hooks_and_config(
         for adapter in fresh.adapters.values()
     )
     assert observed == []
+
+
+def test_protected_transport_rejects_offline_adapter_without_contact(
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
+) -> None:
+    import socket
+    from huggingface_hub import constants
+
+    request.addfinalizer(publisher_module._CANONICAL_HF_RESET_SESSIONS)
+    for name in publisher_module._PROTECTED_TRANSPORT_ENV_NAMES:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(constants, "HF_HUB_OFFLINE", True)
+    monkeypatch.setattr(socket.socket, "connect", lambda *a, **k: pytest.fail("unexpected network connection"))
+    monkeypatch.setattr(socket.socket, "connect_ex", lambda *a, **k: pytest.fail("unexpected network connection"))
+    with pytest.raises(HuggingFacePublicationError, match="custom adapters"):
+        publisher_module._fresh_canonical_hf_session()
 
 
 def test_protected_transport_rejects_session_factory_and_cache_drift(

@@ -1,0 +1,42 @@
+{
+  "schema": "ipfs_datasets_py/autoencoder-private-release-verification@1",
+  "recorded_at": "2026-09-25T00:33:49.959213+00:00",
+  "scope": "offline_private_exact_resume_packager_synthetic_checkpoint_tests",
+  "admitted": false,
+  "remote_write_contacted": false,
+  "weights_downloaded": false,
+  "actual_pinned_checkpoint_packaged": false,
+  "verification": {
+    "command": "PYTHONPATH=/home/barberb/lift_coding/external/ipfs_datasets python3 -m pytest -q tests/unit/huggingface/test_autoencoder_release.py",
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "pytest_elapsed_seconds": 0.41
+  },
+  "verified_behaviors": [
+    "complete original bytes preserved including source-like keys and sample memory",
+    "source and hardlinked archive inode and bytes unchanged",
+    "deterministic package and existing PublicationPlan across two local destinations",
+    "model repository type and private-only release intent",
+    "public and inference profile rejection",
+    "no overwrite of existing destination",
+    "artifact hash and immutable registry identity validation",
+    "frozen evaluation bytes with explicit missing or unvalidated status",
+    "caller-supplied logical state identity separate from artifact digest, registry version and Hub commit",
+    "manifest file closure, traversal and symlink rejection",
+    "no network, token retrieval or approval construction",
+    "canonical singular source_language support with contradictory declaration rejection",
+    "nonfinite and duplicate-key receipt rejection"
+  ],
+  "outstanding_publication_preconditions": [
+    "independent live verification that target model repository is private",
+    "remote parent and release-prefix inventory",
+    "human approval of the exact PublicationPlan digest",
+    "separate reviewed bootstrap or CAS for Hub-root README",
+    "independent remote publication verification"
+  ],
+  "source_sha256": {
+    "ipfs_datasets_py/huggingface/autoencoder_release.py": "80a45538c0fe22e08d58383c8633f59aabe95cfd1aad14ff249f09a3c374d4ae",
+    "tests/unit/huggingface/test_autoencoder_release.py": "48a2ebd0159f3e6bf9a1062fac6b45ea8b99b95fda14f85ae3087b4427560e32"
+  }
+}

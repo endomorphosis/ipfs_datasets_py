@@ -1,0 +1,186 @@
+{
+  "admitted": false,
+  "artifacts": [
+    {
+      "bytes": 29387,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/audit-receipt.json",
+      "sha256": "eca72a6b8284442825e6e47f578849f3f81dd62df0b985b46ca84ccebb909b00"
+    },
+    {
+      "bytes": 21981,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/receipt-set-report.json",
+      "sha256": "0aef89d48f2c96f476ba2ab6e5d341a762f02dea51fa6b760c4964df4e8c3ab4"
+    },
+    {
+      "bytes": 2561074,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/tests/embedding-receipt-set-tests-r1-receipt.json",
+      "sha256": "09a3a4bbcb12974a64964d085173af0caba4af386a216ac543c5dda4e003e0a5"
+    },
+    {
+      "bytes": 3906,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/resource-release.json",
+      "sha256": "c37315a2c275c6b8ccaf663db05e432243369c63a6955818b5525ce160d50659"
+    },
+    {
+      "bytes": 1260734,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/sources-before.json",
+      "sha256": "f84c6da971b9507fe8db3faac9b3560a06f72602a928a8108c1acb01b06929df"
+    },
+    {
+      "bytes": 1260734,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/sources-after.json",
+      "sha256": "f84c6da971b9507fe8db3faac9b3560a06f72602a928a8108c1acb01b06929df"
+    },
+    {
+      "bytes": 9557340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/embedding-receipt-set.json",
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7"
+    },
+    {
+      "bytes": 10348,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/inventory-selection.json",
+      "sha256": "f326aa6bf79d6a8593b64c559beb82ef70108d8710a6f7b2a7d650a858627586"
+    }
+  ],
+  "audit_wall_seconds": 34.632413041894324,
+  "bridge_names": [],
+  "changed_sources": [],
+  "checks": {
+    "audit_passed": true,
+    "harness_and_owned_code_current": true,
+    "package_sources_current": true,
+    "probe_passed": true,
+    "protected_artifacts_current": true,
+    "resource_released": true,
+    "root_current": true,
+    "source_artifacts_current": true,
+    "test_inputs_current": true,
+    "tests_passed": true
+  },
+  "closeout_code": {
+    "bytes": 4561,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/closeout_r2.py",
+    "sha256": "83d42dd5ff03af36b390c2b49744b1448643c958e48940ccc06561cdcb36fd01"
+  },
+  "constitution_formalized": false,
+  "documentation": [
+    {
+      "bytes": 17922,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_embedding_receipt_sets.md",
+      "sha256": "8a57acbe64c8328eab7a59ea1432b3ce62e7b4b7425ca2c9f2a4f389a4378dc8"
+    },
+    {
+      "bytes": 76454,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "ceae9c907a843e82a8e8b6961cd94748a8c108e1c812acbe6df1ea699b371480"
+    },
+    {
+      "bytes": 85258,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "2d81c7734c4eb149d01b5f6e3cba00ef0f959fc116298b1da67973f8a54023bf"
+    }
+  ],
+  "embedding_inference_performed": false,
+  "global_holdout_verified": false,
+  "historical_declared_native_receipt_reused": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 440
+  },
+  "legal_ir_evaluate_provers": false,
+  "metric_disk_cache_flag": "0",
+  "model_speed_claim": false,
+  "native_training_validation_deferred": true,
+  "new_native_runtime_qualification": false,
+  "os_page_cache_controlled": false,
+  "passed": true,
+  "phase_seconds": {
+    "all_leaf_closure": 0.07913023803848773,
+    "archived_receipt_load": 0.011414389940910041,
+    "archived_record_conversion_all_nonmissing_source_validation": 0.04632505401968956,
+    "fresh_source_materialization": 3.7015336470212787,
+    "inventory_load": 1.1447418029420078,
+    "partitions_load": 2.876603100914508,
+    "receipt_set_build": 6.20954058598727,
+    "receipt_set_reopen": 3.115489265997894,
+    "receipt_set_save": 0.027264959062449634,
+    "selected_train_record_setup": 0.03367109794635326,
+    "single_selected_record_verification": 0.046482624020427465
+  },
+  "probe_wall_seconds": 18.89524511003401,
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "publication_performed": false,
+  "receipt_set_summary": {
+    "admitted": false,
+    "all_inputs_attempted": false,
+    "all_inputs_embedded": false,
+    "current_leaf_bytes_verified": false,
+    "current_source_bytes_verified": false,
+    "declared_receipt_bytes": 434558,
+    "eligible_row_count": 62931,
+    "eligible_unique_input_count": 62839,
+    "excluded_row_count": 0,
+    "global_holdout_verified": false,
+    "leaf_count": 1,
+    "native_execution_profile": true,
+    "physical_row_count": 62931,
+    "physical_status_counts": {
+      "embedded": 51,
+      "missing_input": 0,
+      "token_limit_exceeded": 13,
+      "unattempted": 62867
+    },
+    "receipt_set_bytes": 9557340,
+    "receipt_set_sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7",
+    "runtime_cryptographically_attested": false,
+    "schema_version": "autoencoder-embedding-receipt-set-v1",
+    "source_authority_authenticated": false,
+    "source_partitions_sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+    "training_eligible": false,
+    "unique_status_counts": {
+      "embedded": 51,
+      "missing_input": 0,
+      "token_limit_exceeded": 13,
+      "unattempted": 62775
+    }
+  },
+  "registry_modified": false,
+  "resource_reservation_id": "afc78c7ed16a4f529efc317cb1ef0018",
+  "schema": "embedding-receipt-set-offline-closeout-v1",
+  "selected_record_count": 1,
+  "source_authority_authenticated": false,
+  "source_file_count": 7749,
+  "source_input_count": 64,
+  "tests_wall_seconds": 5.929941214970313,
+  "training_or_evaluation_performed": false,
+  "weights_downloaded": false,
+  "worker_count": 1
+}

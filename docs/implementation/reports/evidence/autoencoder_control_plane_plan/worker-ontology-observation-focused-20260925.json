@@ -1,0 +1,51 @@
+{
+  "admitted": false,
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+    "-k",
+    "worker_ontology_observation"
+  ],
+  "elapsed_seconds": 1.5787709519499913,
+  "execution_scope": "injected trainer fixtures; no native training or timing qualification",
+  "exit_code": 0,
+  "log": {
+    "bytes": 1053,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/worker-ontology-observation-focused-20260925.log",
+    "sha256": "d2f7f8b46a6e8abbe7d4cb2646b7506324395529119cac110bd5eec48a4d516f"
+  },
+  "native_training_performed": false,
+  "passed": true,
+  "promotion_performed": false,
+  "recorded_at": "2026-09-25T07:49:13.789801+00:00",
+  "schema": "worker-ontology-observation-integration-tests-v1",
+  "source_hashes_after": {
+    "ipfs_datasets_py/logic/autoformal/__init__.py": "0167c57c704ce4ac0fb00e28179d6137acf2825f471668a3660b282c8213e98e",
+    "ipfs_datasets_py/logic/autoformal/ontology_capture.py": "bcfa22ccd1dfaf2386beed35e117b75dd6fc0bebcad25ff530e616782ff38a63",
+    "ipfs_datasets_py/logic/autoformal/procedure_slot.py": "f7fe98853048b2301f9fbfe9a76fb810e0c323445ba8c9d57f0da731a092dc86",
+    "ipfs_datasets_py/logic/autoformal/recipient_reference.py": "d682ea86a12735d49969ce372f14428d66a883d0d2a6be1876c3174bfe3437e4",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "cb294f4bf17cd686382f78a577f82cc0e4c002a7fb70a1539b8a6030510758bb",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_ontology_observation.py": "cf8e2532c525299bc5fd7ec4d2ab2df07a0259429f13417fe449f5539e810c1a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "0ddc711f6d62210579166b3d9b1319d6114b6ee890a5920f8a508ee627931a09",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "e35aca48336e9a269856195064183798923a687a649c7bfbdcb651d3cd791a85"
+  },
+  "source_hashes_before": {
+    "ipfs_datasets_py/logic/autoformal/__init__.py": "0167c57c704ce4ac0fb00e28179d6137acf2825f471668a3660b282c8213e98e",
+    "ipfs_datasets_py/logic/autoformal/ontology_capture.py": "bcfa22ccd1dfaf2386beed35e117b75dd6fc0bebcad25ff530e616782ff38a63",
+    "ipfs_datasets_py/logic/autoformal/procedure_slot.py": "f7fe98853048b2301f9fbfe9a76fb810e0c323445ba8c9d57f0da731a092dc86",
+    "ipfs_datasets_py/logic/autoformal/recipient_reference.py": "d682ea86a12735d49969ce372f14428d66a883d0d2a6be1876c3174bfe3437e4",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "cb294f4bf17cd686382f78a577f82cc0e4c002a7fb70a1539b8a6030510758bb",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_ontology_observation.py": "cf8e2532c525299bc5fd7ec4d2ab2df07a0259429f13417fe449f5539e810c1a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "0ddc711f6d62210579166b3d9b1319d6114b6ee890a5920f8a508ee627931a09",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "e35aca48336e9a269856195064183798923a687a649c7bfbdcb651d3cd791a85"
+  },
+  "sources_unchanged": true,
+  "tests_passed": true
+}

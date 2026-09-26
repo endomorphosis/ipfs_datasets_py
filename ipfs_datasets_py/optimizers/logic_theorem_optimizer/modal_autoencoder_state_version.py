@@ -17,6 +17,8 @@ import threading
 from dataclasses import asdict, dataclass, is_dataclass
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence
 
+from .modal_autoencoder_arrow_weights import MappedFeatureEmbeddingWeights
+
 
 MODAL_AUTOENCODER_STATE_IDENTITY_SCHEMA_VERSION = "modal-autoencoder-incremental-state-identity-v1"
 
@@ -329,6 +331,11 @@ def _tracked_value(
     path: tuple[Any, ...] = (),
 ) -> Any:
     before = before_callback or (lambda _path, _operation: None)
+    # Only this reviewed legacy component can retain mapped storage. It binds
+    # the same before-mutation and dirty callbacks as ordinary containers;
+    # arbitrary Mapping implementations still receive recursive tracking.
+    if type(value) is MappedFeatureEmbeddingWeights:
+        return value._bind_tracking(callback, before, path)
     if isinstance(value, Mapping):
         return _TrackedDict(value, callback, before, path)
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):

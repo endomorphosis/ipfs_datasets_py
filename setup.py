@@ -341,6 +341,24 @@ setup(
     # none may cause an implicit sibling checkout, VCS fetch, or heavy install.
     install_requires=[],
     extras_require={
+        # Offline sealed-validator deployments; v1 remains reproducible.
+        'autoformal-validator-runtime-v1': [
+            'pytest>=9.0.3,<10.0.0',
+            'multiformats==0.3.1.post4',
+            'bases==0.3.0',
+            'multiformats-config==0.3.1',
+            'typing-validation==1.2.12',
+            'typing-extensions==4.16.0',
+        ],
+        'autoformal-validator-runtime-v2': [
+            'pytest>=9.0.3,<10.0.0',
+            'multiformats==0.3.1.post4',
+            'bases==0.3.0',
+            'multiformats-config==0.3.1',
+            'typing-validation==1.2.12',
+            'typing-extensions==4.16.0',
+            'spacy==3.8.14',
+        ],
         # Logic integration / legal reasoning
         # SymbolicAI is imported as `symai` but distributed on PyPI as `symbolicai`.
         'logic': [

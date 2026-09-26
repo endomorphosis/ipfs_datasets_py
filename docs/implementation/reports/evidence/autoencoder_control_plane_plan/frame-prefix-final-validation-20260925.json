@@ -1,0 +1,410 @@
+{
+  "admitted": false,
+  "checkpoint": {
+    "bytes": 25895338,
+    "hardlink_count": 2,
+    "inode": 57804548,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "unchanged": true
+  },
+  "current_package_source_file_count": 7712,
+  "current_source_manifest_sha256": "2a8eb1338385d81b57a4af7d152c5577471a72d33bc39efa2acb7bb60bb04816",
+  "current_target_compatibility_qualified": false,
+  "current_target_policy": "ordinary source/runtime guard remains mandatory; regenerate after recorded source drift",
+  "evidence": [
+    {
+      "bytes": 2736574,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/cold-target-phase-profile-20260925.json",
+      "sha256": "5fb12b7606efee9dccdf59c95b9b79f42e9b08e7f0cf0b01f5f0464864864e8a"
+    },
+    {
+      "bytes": 2857933,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/modal-target-phase-profile-20260925.json",
+      "sha256": "6e375d92d1d0b933e399e50d0e4bcf952b0981c7d7195f6faa1a851297a6af81"
+    },
+    {
+      "bytes": 3317469,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-ontology-target-profile-20260925.json",
+      "sha256": "91332b0290a7480621178ef9f315f3ce3b39f407674628d2f8ccac3f298fa204"
+    },
+    {
+      "bytes": 22372,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-codec-diagnostic-20260925.json",
+      "sha256": "34d912d496cdd997e80d0f359b8a97648bf78b5cb59bbe87e9e92bf6f642877e"
+    },
+    {
+      "bytes": 1804,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-codec-failed-start-20260925.json",
+      "sha256": "20491d7eb2773cc2665900bdc30cdb777308b415ece1d4c37d848c0b4f5c9f5e"
+    },
+    {
+      "bytes": 3713712,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-normal-pair1-20260925.json",
+      "sha256": "66b4cd82329c180a24ae1a3942900f71e24f07e82e61a5dba5a5d3148fa8fe24"
+    },
+    {
+      "bytes": 3713641,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-paused-pair1-20260925.json",
+      "sha256": "c7c41887cc47a5ef666d5fc81ae57cfdac062002750f26c6b3226d60f1a61dd4"
+    },
+    {
+      "bytes": 3713635,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-paused-pair2-20260925.json",
+      "sha256": "43912ea071803d2ec81a97f6e2faecb5d671cbea1a3656d324c66e80c58b0c6f"
+    },
+    {
+      "bytes": 3713704,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-normal-pair2-20260925.json",
+      "sha256": "53b128bd6028813ac11389e42c61f0542783d2bbe61664a27f9d9bc4c25da17b"
+    },
+    {
+      "bytes": 2631264,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-reference-20260925.json",
+      "sha256": "ff66bf9fdaf1d0c076568c3d7caadf58852a1a7fd1abd665a2bccb840adf2636"
+    },
+    {
+      "bytes": 2644816,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-reference-r2-20260925.json",
+      "sha256": "5287eebb0b7721cf6a9cdec32c68f6912bbdc69f23fb2c2770ef99ea67c6a744"
+    },
+    {
+      "bytes": 2644809,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-candidate-20260925.json",
+      "sha256": "1efb5f79e36574d6afc75089ea3d66b0e22e98609b0e6fa0a33ed09ddcb33e4c"
+    },
+    {
+      "bytes": 2644816,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-candidate-r2-20260925.json",
+      "sha256": "df368ddffc8f8cc2c5f714d5c8870f5670ada3a0ef07758ca47ea29a197711eb"
+    },
+    {
+      "bytes": 2644815,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-reference-r3-20260925.json",
+      "sha256": "c0614ef479a17913707d7c9f4d89247e44767ff34b688c009ebd0c9de334102b"
+    },
+    {
+      "bytes": 2378687,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-target-parity-20260925.json",
+      "sha256": "fe863a474060134f7fd0ab7f8f0a50837a267cb0ca5fc17c59b1ffca3c254a6b"
+    },
+    {
+      "bytes": 2379309,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-target-parity-confirmed-20260925.json",
+      "sha256": "eb631aabb6a67d1716067492edb7dba47b994da8e425d5dbfab87801741a32fe"
+    },
+    {
+      "bytes": 2378378,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-target-parity-pair2-20260925.json",
+      "sha256": "fe6ae45ff0ebcdd4f7869c57d3f0bfb1602a0e5e0a7026b69ad789bdc88ee3af"
+    },
+    {
+      "bytes": 16624,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-comparison-20260925.json",
+      "sha256": "cefb04c7136b70cb83c097c1bb3914064ee4489e976e853b5461e97ae2eddad7"
+    }
+  ],
+  "formalized": false,
+  "lake_build_performed": false,
+  "local_report_links": [
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/cold-target-phase-profile-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_cold_target_preparation.py"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/modal-target-phase-profile-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_modal_target_preparation.py"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_target_hydration_gc.md"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-ontology-target-profile-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_frame_ontology_target_preparation.py"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_frame_prefix_dispatch.md"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-codec-diagnostic-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/encoding_gc_codec_diagnostic_20260925.py"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-normal-pair1-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-paused-pair1-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-normal-pair2-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-paused-pair2-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-native-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-codec-failed-start-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_cold_target_profile.md"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-comparison-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/benchmark_cold_target_preparation.py"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_target_hydration_gc.md"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-target-parity-confirmed-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-native-target-parity-pair2-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_frame_ontology_prefix_dispatch.py"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-dispatch-20260925/focused-validation.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-dispatch-20260925/semantics.xml"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-reference-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-dispatch-20260925/source-transitions.jsonl"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": true,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/frame-prefix-final-validation-20260925.json"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_cold_target_profile.md"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md"
+    },
+    {
+      "from": "docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "self_inventory_pending_creation": false,
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md"
+    }
+  ],
+  "local_report_links_verified": 35,
+  "native_candidate_source_matches_current": false,
+  "pass_scope": "recorded native producer comparison and restored tested implementation; no current-target compatibility or training/formalization claim",
+  "passed": true,
+  "post_benchmark_source_changes": {
+    "ipfs_datasets_py/logic/autoformal/supervisor_queue.py": {
+      "current": "20b19f84e005a6256b5184034326fd9a532ac23df377384b8f7162b1f8948839",
+      "native": "c84c098bc932cd8adec538910b7ba4c7e6ebfe74d5e7df122d7e9ffaff9b427b"
+    }
+  },
+  "production_gc_policy_changed": false,
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T09:24:53.478155+00:00",
+  "reports_and_plans": [
+    {
+      "bytes": 10132,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_cold_target_profile.md",
+      "sha256": "12be60565e1f76ea41392733aa8e3823baf8e326f94d730c17519c9d0c5930a8"
+    },
+    {
+      "bytes": 8464,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_target_encoding_gc_diagnostic.md",
+      "sha256": "333126d1b22bb00754898e6746c859a3ad919ada07b90687f2aeeaf6648f845c"
+    },
+    {
+      "bytes": 8858,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_frame_prefix_dispatch.md",
+      "sha256": "a683f585d179bc545b1536fb493417175553e987c88e7270c3e3f222476daa5d"
+    },
+    {
+      "bytes": 59577,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "bbca5bd06d81fc1eb1efd2678be51cd22127abf88861e0d0618027c4cb65e8f0"
+    },
+    {
+      "bytes": 50996,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "d674ca7701614a1edfba164310955ca38ea37e94edf73cb4d231846b54abcad8"
+    }
+  ],
+  "schema": "frame-prefix-final-validation-v1",
+  "source_and_harnesses": [
+    {
+      "bytes": 20750,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_cold_target_preparation.py",
+      "sha256": "bc3e19730caa378d8c5ffe375a7170a04143c485d4d8bcaca983f9160fc50bc1"
+    },
+    {
+      "bytes": 9689,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_modal_target_preparation.py",
+      "sha256": "4645cefc6dc4c227cf8bd8de20b7faad4c5ffbc45501f86fb0f5d6e6cef9cf70"
+    },
+    {
+      "bytes": 11257,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_frame_ontology_target_preparation.py",
+      "sha256": "f17533cbd82e87d2353722c7262667d0df3a9222cb42382b360272c916880b69"
+    },
+    {
+      "bytes": 6750,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/benchmark_cold_target_preparation.py",
+      "sha256": "7e7cbd507314846d64acec5719c9267d27111a57c358f2372cf17c5383446a29"
+    },
+    {
+      "bytes": 22569,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/encoding_gc_codec_diagnostic_20260925.py",
+      "sha256": "c440e0c7b8239ceae03248403896adbe6204312ff3092b4afe65fc04b362a6c8"
+    },
+    {
+      "bytes": 79321,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
+      "sha256": "feb8d74a8a87783408025f1a341500b734a396b99c757f1e65026e4abb26b437"
+    },
+    {
+      "bytes": 12182,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_frame_ontology_prefix_dispatch.py",
+      "sha256": "e241a365839d48aece632333127484663fa87a6f16f2c9a5ddb34ce9f5afd927"
+    }
+  ],
+  "source_transitions": {
+    "bytes": 2037,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-dispatch-20260925/source-transitions.jsonl",
+    "sha256": "044e1be162c8ff35cae9760ec8029407909abb1377011829a8575d0c82423afa"
+  },
+  "storage_observation": {
+    "ceiling_bytes": 50000000000,
+    "roots": [
+      {
+        "apparent_bytes": 496267610,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 130195516,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "apparent_bytes": 32149819710,
+        "path": "/tmp/pytest-of-barberb"
+      },
+      {
+        "apparent_bytes": 67759742,
+        "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small"
+      }
+    ],
+    "scope": "named roots only, apparent bytes, not a global census; shared pytest scratch includes unrelated work; no protected cleanup",
+    "sum_apparent_bytes": 32844042578
+  },
+  "syntax_checks_passed": 7,
+  "tests": {
+    "distinct_passed": 210,
+    "focused_passed": 193,
+    "focused_receipt": {
+      "bytes": 2831,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-dispatch-20260925/focused-validation.json",
+      "sha256": "eaa7d1751b5cb53fd057da9d7fbe00ea052d0b1aedf05785f695d4d62a2c00fb"
+    },
+    "initial_test_failures_preserved_and_corrected": 2,
+    "semantic_passed": 17,
+    "semantic_xml": {
+      "bytes": 2920,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/frame-prefix-dispatch-20260925/semantics.xml",
+      "sha256": "8906309b00f6843b60591c54b90662244b87a84a403155388e633b2066c18f81"
+    }
+  },
+  "training_performed": false
+}

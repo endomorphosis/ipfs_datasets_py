@@ -726,6 +726,11 @@ class LegalIRTrainingTarget:
         }
 
 
+# Keep the native summary method identifiable without importing bridge modules
+# from callers that only inspect generic optimizer targets.
+_NATIVE_LEGAL_IR_TRAINING_TARGET_TO_DICT = LegalIRTrainingTarget.to_dict
+
+
 @dataclass(frozen=True)
 class MultiViewLegalIRReport:
     """Canonical legal IR document plus the bridge reports that produced it."""

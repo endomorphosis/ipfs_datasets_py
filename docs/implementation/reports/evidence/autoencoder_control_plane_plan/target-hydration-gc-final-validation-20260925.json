@@ -1,0 +1,400 @@
+{
+  "admitted": false,
+  "all_native_jobs_accepted_zero_epochs": true,
+  "codec_diagnostic": {
+    "bytes": 56777,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/hydration-gc-codec-diagnostic-20260925.json",
+    "sha256": "cb3b7af0c632fb7398b0d29fe522686ea68f96446150c658015fd69ffd4b9893"
+  },
+  "constitution_formalized": false,
+  "default_policy": "off",
+  "exact_scoped_native_parity": {
+    "base_materialized_checkpoint": true,
+    "base_state_identity": true,
+    "candidate_materialized_checkpoint": true,
+    "candidate_state_identity": true,
+    "manifest": true,
+    "ontology_observation_without_elapsed_seconds_and_run_label": true,
+    "optimizer_accepted_epochs": true,
+    "patches": true,
+    "projection_profile_counters": true,
+    "target_storage_without_timings": true,
+    "training_report_without_timing_and_projection_profile": true
+  },
+  "final_gates": {
+    "bytes": 1733,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-final-gates-20260925.json",
+    "sha256": "74a87337af0aaf20dde1857af7ec7441aa9bdbb56495a4369383e4d5544eb581"
+  },
+  "fresh_targets_required_for_later_sources": true,
+  "local_links_checked": [
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "evidence/autoencoder_control_plane_plan/target-hydration-gc-native-20260925.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "../../../scripts/ops/legal_ir/benchmark_target_hydration_gc.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "evidence/autoencoder_control_plane_plan/hydration-gc-codec-diagnostic-20260925.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "../../../scripts/ops/hydration_gc_codec_diagnostic_20260925.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "evidence/autoencoder_control_plane_plan/ontology-observation-native-20260925.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "../../../tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "../../../tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_hydration_gc_dispatch.py"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "evidence/autoencoder_control_plane_plan/target-hydration-gc-semantics-corrected-20260925.json"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "autoencoder_ontology_capture_reuse_design.md"
+    },
+    {
+      "document": "docs/implementation/reports/autoencoder_target_hydration_gc.md",
+      "target": "evidence/autoencoder_control_plane_plan/target-hydration-gc-final-gates-20260925.json"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "US_CODE_AUTOFORMALIZATION_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_control_plane_phase1.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_shared_targets_sparse_arrow.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_target_bundles.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_sparse_checkpoint_persistence.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_verified_corpus_batches.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_uscode_source_index.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_indexed_training_jobs.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_native_embedding_production.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_produced_corpus_arrow_training.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_shared_target_evaluation.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_target_failure_telemetry.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_ontology_capture_reuse_design.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_ontology_observation.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_target_hydration_gc.md"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925-r2.json"
+    },
+    {
+      "document": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "target": "../reports/legal_autoformal_speed.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "US_CODE_AUTOFORMALIZATION_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_control_plane_phase1.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_shared_targets_sparse_arrow.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_target_bundles.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_sparse_checkpoint_persistence.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_verified_corpus_batches.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_uscode_source_index.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_indexed_training_jobs.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_native_embedding_production.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_produced_corpus_arrow_training.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_shared_target_evaluation.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_target_failure_telemetry.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_ontology_capture_reuse_design.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_ontology_observation.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/autoencoder_target_hydration_gc.md"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/evidence/autoencoder_control_plane_plan/planning-audit.json"
+    },
+    {
+      "document": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "target": "../reports/legal_autoformal_speed.md"
+    }
+  ],
+  "native_package_source_unchanged_during_qualification": true,
+  "native_qualification": {
+    "bytes": 2488763,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-native-20260925.json",
+    "sha256": "9af775375c4a297b7f2ce75db77c86ab2f989c32113e27ede6766464b8fae2f5"
+  },
+  "native_target_bundle_matches_current_sources": false,
+  "owner_time_reduction_fraction": 0.16533933348885857,
+  "pinned_checkpoint": {
+    "bytes": 25895338,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "post_qualification_source_changes": {
+    "logic/autoformal/__init__.py": {
+      "current": "659e06d06433a29bc7e268e9c68cacf498c8f99d257d4dca278caf652fd7a5a9",
+      "native": "6f6f2d5e31d87585254c0369c74460364b3f7e7993296c2d28412187dfa50697"
+    },
+    "logic/deontic/utils/deontic_parser.py": {
+      "current": "75a9de44c450a4237057c08dd9a2525827b61a3351121411d5356fcf363b3ce9",
+      "native": "a13ca18b80c683adbc492cac96afb3c0a3be94c34d935dacf71c4e63d1476307"
+    }
+  },
+  "production_and_test_sources": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": {
+      "bytes": 47630,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "sha256": "e1dba9ae5851354a10087b92b1e0237ee2ed0d0ec938f75062874e8e85db9930"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 71004,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "c3fe0e3693c2906e05f874d27da60f3a036712a3ffc8eab8b82d5c5895a73d7d"
+    },
+    "scripts/ops/hydration_gc_codec_diagnostic_20260925.py": {
+      "bytes": 13013,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/hydration_gc_codec_diagnostic_20260925.py",
+      "sha256": "e1e7346c2455fcb37057bb51357042a0a5f5e553ccffb596bdb30a74e18825f3"
+    },
+    "scripts/ops/legal_ir/benchmark_target_hydration_gc.py": {
+      "bytes": 35273,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/benchmark_target_hydration_gc.py",
+      "sha256": "ab07176795725ae7dde17c36c0d28aa3a6b7ee3c28854e3f0c6cfe8b61b51d49"
+    },
+    "tests/unit/logic/test_autoformal_speed_semantics.py": {
+      "bytes": 9168,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py",
+      "sha256": "b73a3e09f3e189ed7f3e49c651e797a8668fe5192b7f7ef008c7b54363a281bb"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_hydration_gc_dispatch.py": {
+      "bytes": 4162,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_hydration_gc_dispatch.py",
+      "sha256": "9cdf4ccdd507d1c60ece084a153fae96f9245ee9ffa81348b860e6836891027e"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py": {
+      "bytes": 14050,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py",
+      "sha256": "9da9f67f263e8c7973c1eaf9bb9f631bc3633f5c44cddda42eec92bfd00ba9ab"
+    }
+  },
+  "promotion_performed": false,
+  "publication_performed": false,
+  "schema": "target-hydration-gc-final-validation-v1",
+  "scope": "qualified GC worker/coordinator change at explicitly recorded source revisions; later parser changes remain separate",
+  "storage_observation": {
+    "ceiling_bytes": 50000000000,
+    "new_native_artifact_bytes": 68844289,
+    "roots": [
+      {
+        "apparent_bytes": 413915270,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 130195436,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "apparent_bytes": 31967012318,
+        "path": "/tmp/pytest-of-barberb"
+      },
+      {
+        "apparent_bytes": 67759742,
+        "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small"
+      }
+    ],
+    "scope": "named roots, apparent bytes, not global census; shared pytest scratch includes unrelated work; no protected cleanup",
+    "sum_apparent_bytes": 32578882766
+  },
+  "tests": {
+    "dispatch_tests": {
+      "command": "python3 -m pytest -q tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_hydration_gc_dispatch.py",
+      "count": 12,
+      "evidence_kind": "subagent tool execution result; synthetic dispatch tests, no native training",
+      "exit_code": 0,
+      "source": {
+        "bytes": 4162,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_hydration_gc_dispatch.py",
+        "sha256": "9cdf4ccdd507d1c60ece084a153fae96f9245ee9ffa81348b860e6836891027e"
+      }
+    },
+    "distinct_passed": 371,
+    "passed_xml_union": 359,
+    "unrecovered_xml_failures": 0,
+    "xml_runs": [
+      {
+        "artifact": {
+          "bytes": 51444,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-existing-tests-20260925.xml",
+          "sha256": "fb0ba295b120b78243d2c976065929fb856e6aac84893b8961d268521dccbd27"
+        },
+        "failures": 0,
+        "tests": 248
+      },
+      {
+        "artifact": {
+          "bytes": 21145,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-semantics-tests-20260925.xml",
+          "sha256": "010920e044f1e3148c450c5aa06823faf0f828a117b5bc0dd4c8d378219a1ce1"
+        },
+        "failures": 1,
+        "tests": 110
+      },
+      {
+        "artifact": {
+          "bytes": 9754,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-semantics-corrected-20260925.xml",
+          "sha256": "deaabb5df0dfb25bfb6ae9147c3f0b7fc7d0fac670d809a1d9fd63153c86c395"
+        },
+        "failures": 0,
+        "tests": 52
+      },
+      {
+        "artifact": {
+          "bytes": 2920,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-final-gates-20260925.xml",
+          "sha256": "d2912f4aa1d6a1085fdcd2bc41bd21e3625b13d02c328e315f584fc50a875b6c"
+        },
+        "failures": 0,
+        "tests": 17
+      }
+    ]
+  },
+  "timing_medians": {
+    "deferred": {
+      "gc_explicit_collection_seconds": 0.10011257551377639,
+      "initial_holdout_evaluate_seconds": 4.1472964299609885,
+      "initial_holdout_evaluate_seconds_per_validation_sample": 1.3824321433203295,
+      "owner_wall_seconds": 19.733632328978274,
+      "owner_wall_seconds_per_training_span": 6.577877442992758,
+      "target_artifact_verification_seconds": 0.029076107952278107,
+      "target_hydration_seconds_including_collection": 2.9351103315711953,
+      "target_load_seconds": 3.7648292729863897,
+      "training_seconds": 8.691788929048926,
+      "training_seconds_per_training_span": 2.8972629763496416,
+      "worker_seconds": 15.758720344514586,
+      "worker_seconds_per_training_span": 5.252906781504862
+    },
+    "normal": {
+      "gc_explicit_collection_seconds": 0.0,
+      "initial_holdout_evaluate_seconds": 4.039488179027103,
+      "initial_holdout_evaluate_seconds_per_validation_sample": 1.346496059675701,
+      "owner_wall_seconds": 23.642700705502648,
+      "owner_wall_seconds_per_training_span": 7.88090023516755,
+      "target_artifact_verification_seconds": 0.028352075954899192,
+      "target_hydration_seconds_including_collection": 6.895439648476895,
+      "target_load_seconds": 7.728892406448722,
+      "training_seconds": 8.560621393553447,
+      "training_seconds_per_training_span": 2.8535404645178155,
+      "worker_seconds": 19.781428731046617,
+      "worker_seconds_per_training_span": 6.59380957701554
+    }
+  }
+}

@@ -24,6 +24,7 @@ from ipfs_datasets_py.logic.legal_ir.canonical_contracts import (
     SELECTED_CONSTRUCTOR_INTERFACE,
     CanonicalAtomVocabulary,
     CanonicalContractError,
+    CanonicalRoundTripIR,
     CanonicalStructuredTextCompiler,
     CompilerRequest,
     CompilerResult,
@@ -253,6 +254,8 @@ def test_compiler_success_has_cid_bound_ir_source_map_and_lineage() -> None:
         IMPLEMENTATION_REPRESENTATIVE_ARM_IDENTITY_CID
     )
     assert provenance["compiler_config_cid"] == (TYPED_DEONTIC_COMPILER_CONFIG_CID)
+    assert provenance["parser_semantics_revision"] == "structured_exceptions_numeric_hours_v1"
+    assert provenance["selection_lineage_is_historical"] is True
     assert provenance["fallback_used"] is False
     assert provenance["learned_stages"] == ()
     assert provenance["model_call_count"] == 0
@@ -311,18 +314,37 @@ def test_frozen_cases_reproduce_selected_adapter_l1_identity() -> None:
                 atom_vocabulary=vocabulary,
                 # Some frozen documents contain meaning outside the seven
                 # canonical fields or public case vocabulary.  The measured
-                # adapter omits it; v1 reproduces that exact L1 only through
-                # this explicit, visible partial disposition.
+                # adapter omits it; retain this explicit, visible partial
+                # disposition when comparing with the historical L1.
                 allow_explicit_partial=True,
             )
         )
 
         assert actual.status is OperationStatus.SUCCESS, case["id"]
         assert actual.canonical_ir is not None
-        # Preserve the exact L1 identities from the immutable SRT-018
-        # canonical selection report even as the benchmark research adapter
-        # continues to improve independently.
-        assert actual.canonical_ir.ir_cid == selected_l1_cids[case["id"]]
+        # Four cases retain their historical identities.  The authorized
+        # executive-order improvement adds only the gold-supported deadline;
+        # removing it must reproduce the unchanged historical identity.
+        if case["id"] == "exec_order_1":
+            historical_payload = actual.canonical_ir.to_dict()
+            reporting_rules = [
+                rule for rule in historical_payload["rules"]
+                if rule["actor"] == "government_contractors" and rule["action"] == "report"
+            ]
+            gold_reporting_rules = [
+                rule for rule in case["gold_ir"]["rules"]
+                if rule["actor"] == "government_contractors" and rule["action"] == "report"
+            ]
+            assert len(reporting_rules) == len(gold_reporting_rules) == 1
+            assert gold_reporting_rules[0]["temporal"] == ["within_24_hours"]
+            assert reporting_rules[0] == gold_reporting_rules[0]
+            reporting_rules[0]["temporal"].remove("within_24_hours")
+            assert CanonicalRoundTripIR.from_dict(historical_payload).ir_cid == (
+                selected_l1_cids[case["id"]]
+            )
+            assert actual.canonical_ir.ir_cid != selected_l1_cids[case["id"]]
+        else:
+            assert actual.canonical_ir.ir_cid == selected_l1_cids[case["id"]]
         assert actual.canonical_ir.ir_cid == cid_for_dag_json(actual.canonical_ir.to_dict())
 
 

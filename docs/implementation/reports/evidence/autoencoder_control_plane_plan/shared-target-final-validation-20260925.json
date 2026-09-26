@@ -1,0 +1,95 @@
+{
+  "admitted": false,
+  "complete_diagnostic_batch_passed": false,
+  "completed_diagnostic_pair_exact_parity": true,
+  "current_producer_source_differences": [
+    {
+      "bound_sha256": "5b8e82ff76949f84fc47288d903c6f819805271abf3b5a95fe45eb86c6007930",
+      "observed_sha256": "179e273df2dd0166b227bbf6ba574034f193bf1dc5fac5cf126271ddb304e0f7",
+      "path": "logic/autoformal/autoencoder_router.py"
+    }
+  ],
+  "existing_policy_skips": 13,
+  "focused_tests_passed": 182,
+  "formalized": false,
+  "native_all_runs_durable_after_restart": true,
+  "native_head_unchanged_after_restart": true,
+  "native_jobs_completed": 8,
+  "native_owner_benchmark_passed": true,
+  "optimization_source_hashes": {
+    "ipfs_datasets_py/logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+    "ipfs_datasets_py/logic/modal/decompiler.py": "ecc13e624136d3f9a2d56b7c699d1d9b309847d1c1c8050ba422203f1b10a119",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "d8f35525ccb1d2db2124fc8b5988e6dc6db0f198e94c73e553844e13cfa5a172"
+  },
+  "optimization_sources_unchanged_since_tests_and_native_benchmark": true,
+  "optimizer_accepted_epochs_all_completed_jobs": 0,
+  "pinned_checkpoint": {
+    "bytes": 25895338,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "unchanged": true
+  },
+  "promotion_performed": false,
+  "publication_performed": false,
+  "receipts": {
+    "shared-target-ablation-20260925.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-ablation-20260925.json",
+      "sha256": "db7d972c3fd33573d53187b5524fc037bd96aa9db25fb137f51ad0fd6ebf7fed"
+    },
+    "shared-target-completed-pair-20260925.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-completed-pair-20260925.json",
+      "sha256": "ba59693642ef1a54c0c72e8db72ff9d32a6d744e53e89c45b794116d6eaf0dbd"
+    },
+    "shared-target-growth-20260925.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-growth-20260925.json",
+      "sha256": "4235889222d7578e83b779230635a1088953c8e83ec62054706d93ed43bb988f"
+    },
+    "shared-target-native-20260925.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-native-20260925.json",
+      "sha256": "98c54695aaa4de0d5cc407edba213c3d5e8a275abc00b8c28b1e87fe09a39012"
+    },
+    "shared-target-semantic-checks-20260925.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-semantic-checks-20260925.json",
+      "sha256": "726ab47901a8334463e45e8feadc2937f730e670e3432050c6d27d5f3f573a56"
+    },
+    "shared-target-semantic-pilot-20260925.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-semantic-pilot-20260925.json",
+      "sha256": "25341701a11907ccf5a33af5a6fa40f4a7c771ca8c068e7c472d12c3c11bf8b7"
+    },
+    "warm-target-profile-20260925-r2.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-profile-20260925-r2.json",
+      "sha256": "5ce1f35c491c4e74fc27a503e7fdb5003b1e49d579c6411345d6eba5963fc7e2"
+    },
+    "warm-target-profile-20260925-r3.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-profile-20260925-r3.json",
+      "sha256": "5f8ca0a8d522386b5d9482b72ad09f1ef38a822058c45dbdbb7f0db7c8307114"
+    }
+  },
+  "recorded_at": "2026-09-25T07:08:14.786767+00:00",
+  "replication_failure": {
+    "message": "target producer code/runtime changed in resident process; start a fresh process",
+    "type": "ValueError"
+  },
+  "schema": "shared-target-evaluation-final-validation-v1",
+  "storage": {
+    "apparent_bytes": {
+      "cached_gte_model_repository": 67759742,
+      "shared_pytest_temporary_root": 31965550294,
+      "workspace/test-logs": 280258722,
+      "workspace/todo-queues": 130261194
+    },
+    "campaign_limit_bytes": 50000000000,
+    "files_deleted": false,
+    "named_roots_apparent_bytes_sum": 32443829952,
+    "not_global_filesystem_census": true,
+    "observed_sum_below_limit": true,
+    "shared_pytest_root_contains_unrelated_artifacts": true
+  },
+  "target_bundle_reusable_under_current_provenance": false,
+  "verification": {
+    "benchmark_scripts_py_compile": true,
+    "changed_tracked_files_diff_check": true,
+    "new_report_local_links_checked": 11
+  },
+  "weights_downloaded": false
+}

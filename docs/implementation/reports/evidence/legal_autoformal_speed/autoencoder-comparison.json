@@ -1,0 +1,127 @@
+{
+  "admitted": false,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "comparison_excluded_fields": [
+    "elapsed_seconds",
+    "legal_ir_target_hashes"
+  ],
+  "constitution_formalized": false,
+  "disk_cache": "0",
+  "evaluation": {
+    "after_receipt": "autoencoder-evaluate-after.json",
+    "after_seconds": 11.0742033040151,
+    "after_seconds_per_sample": 3.6914011013383665,
+    "before_receipt": "autoencoder-evaluate-before.json",
+    "before_seconds": 27.365107054938562,
+    "before_seconds_per_sample": 9.121702351646187,
+    "legal_ir_target_count": 3,
+    "outputs_equal_except_excluded_fields": true,
+    "speedup": 2.4710677873339186
+  },
+  "initial_cprofile_diagnostic": {
+    "elapsed_seconds": 94.704806506983,
+    "formula_builder_cumulative_seconds": 68.704,
+    "re_compile_cumulative_seconds": 81.223,
+    "target_payload_cumulative_seconds": 94.317
+  },
+  "lazy_install_ergoai_note": "Baseline and initial after measurements did not explicitly set IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI. The reusable benchmark now disables lazy ErgoAI installation before imports; the original wall receipts retain their actual settings.",
+  "lazy_install_ergoai_verification": {
+    "elapsed_seconds": 11.068450427032076,
+    "legal_ir_target_count": 3,
+    "outputs_equal_except_legal_ir_target_hashes": true,
+    "receipt": "autoencoder-evaluate-no-install-after.json"
+  },
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "process_cold": true,
+  "profile_note": "The cProfile run is a hotspot diagnostic, not a wall-time baseline or semantic-equivalence run: profiler overhead changed some bridge outcomes.",
+  "projection_profile_after": {
+    "by_stage": {
+      "before_holdout_evaluation": {
+        "count": 1.0,
+        "max_seconds": 11.129839848959818,
+        "p50_seconds": 11.129839848959818,
+        "p95_seconds": 11.129839848959818,
+        "seconds": 11.129839848959818
+      },
+      "hard_example_selection": {
+        "count": 1.0,
+        "max_seconds": 2.1439045667648315e-06,
+        "p50_seconds": 2.1439045667648315e-06,
+        "p95_seconds": 2.1439045667648315e-06,
+        "seconds": 2.1439045667648315e-06
+      },
+      "line_search_evaluation": {
+        "count": 1.0,
+        "max_seconds": 0.2769902270520106,
+        "p50_seconds": 0.2769902270520106,
+        "p95_seconds": 0.2769902270520106,
+        "seconds": 0.2769902270520106
+      },
+      "projection_update_batch": {
+        "count": 1.0,
+        "max_seconds": 0.06727561808656901,
+        "p50_seconds": 0.06727561808656901,
+        "p95_seconds": 0.06727561808656901,
+        "seconds": 0.06727561808656901
+      },
+      "projection_update_head": {
+        "count": 3.0,
+        "max_seconds": 0.0322928240057081,
+        "p50_seconds": 0.03212453401647508,
+        "p95_seconds": 0.0322759950067848,
+        "seconds": 0.06723504199180752
+      },
+      "training_cache_prime": {
+        "count": 1.0,
+        "max_seconds": 0.2502797639463097,
+        "p50_seconds": 0.2502797639463097,
+        "p95_seconds": 0.2502797639463097,
+        "seconds": 0.2502797639463097
+      }
+    },
+    "elapsed_seconds": 11.725424745003693,
+    "receipt": "autoencoder-train-phase-profile-after.json"
+  },
+  "replication_commands": [
+    "python3 scripts/ops/legal_ir/benchmark_autoencoder_speed.py --mode evaluate --output /tmp/fresh-evaluate.json",
+    "python3 scripts/ops/legal_ir/benchmark_autoencoder_speed.py --mode train --output /tmp/fresh-train.json",
+    "python3 scripts/ops/legal_ir/benchmark_autoencoder_speed.py --mode train --projection-profile --output /tmp/fresh-train-profile.json"
+  ],
+  "sample_count": 3,
+  "schema": "legal-autoformal-speed-comparison-v1",
+  "source_change_note": "Measured computation uses unchanged modal_autoencoder.py; speedup comes from bounded compiled-regex reuse in deontic/formula_builder.py. Parser/compiler/decompiler source hashes are recorded; these files were unchanged between the measurements. The bridge measurements do not call the typed canonical compiler path.",
+  "state_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "target_hash_note": "Two fresh identical backup target documents differ only at /views/deontic_norms.deontic_graph/payload/metadata/created_at and /views/deontic_norms.deontic_graph/payload/metadata/last_updated. LegalIRDocument.canonical_hash includes those wall-clock fields. Raw hashes remain in each receipt; see daemon-target-hash-nondeterminism.json. All numerical metrics, distributions, embeddings, counts, rejection reasons and training decisions compare exactly.",
+  "training": {
+    "accepted_epochs": 1,
+    "after_receipt": "autoencoder-train-after.json",
+    "after_seconds": 11.488449978991412,
+    "after_seconds_per_sample": 3.8294833263304704,
+    "before_receipt": "autoencoder-train-before.json",
+    "before_seconds": 27.92515906796325,
+    "before_seconds_per_sample": 9.30838635598775,
+    "in_sample_only": true,
+    "ir_cosine_delta": 0.0007497415614547975,
+    "legal_ir_target_count": 3,
+    "legal_ir_view_cross_entropy_delta": -0.004296349010092015,
+    "outputs_equal_except_excluded_fields": true,
+    "settings": {
+      "epochs": 1,
+      "max_line_search_attempts": 1,
+      "max_seconds": 180,
+      "projection_max_update_families": 1,
+      "projection_update_backend": "python_sparse_batch"
+    },
+    "speedup": 2.4307159903232516,
+    "stopped_reason": null,
+    "stopped_reason_note": "The core train_generalizable_projection report returns null on normal epoch completion. accepted_epochs is 1 and the sole epoch report accepted is true. The older convenience wrapper labeled this projection_epoch; this evidence preserves the core value."
+  },
+  "use_sample_memory": false
+}

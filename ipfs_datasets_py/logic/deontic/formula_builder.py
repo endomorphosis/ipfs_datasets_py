@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import replace
+from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
 from .ir import LegalNormIR, canonical_modality_operator
@@ -96,6 +97,17 @@ _LOCAL_SCOPE_REFERENCE_CONDITION_RE = re.compile(
 )
 _FORMULA_CONDITION_LIMIT = 3
 _FORMULA_EXCEPTION_LIMIT = 3
+
+
+@lru_cache(maxsize=2048)
+def _compiled_normalization_pattern(pattern: str) -> re.Pattern[str]:
+    """Keep normalizer regexes out of the process-wide regex cache churn.
+
+    One formula traverses more patterns than Python's shared regex cache can
+    retain. Cache only compiled patterns, never text, matches, or formula
+    results; each caller still applies every rule in its original order.
+    """
+    return re.compile(pattern, re.IGNORECASE)
 
 
 def _norm_modality(norm: LegalNormIR) -> str:
@@ -615,7 +627,7 @@ def _normalize_domain_canonical_action(action_text: str) -> str:
         ),
     )
     for pattern, replacement in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if not match:
             continue
         target = _domain_canonical_target(match.group(1) if match.lastindex else "")
@@ -702,7 +714,7 @@ def _normalize_rescission_withdrawal_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -739,7 +751,7 @@ def _normalize_abatement_remediation_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -781,7 +793,7 @@ def _normalize_notification_disclosure_light_verb_action(action_text: str) -> st
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -818,7 +830,7 @@ def _normalize_recommendation_referral_light_verb_action(action_text: str) -> st
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -895,7 +907,7 @@ def _normalize_procurement_award_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -916,7 +928,7 @@ def _normalize_measurement_light_verb_action(action_text: str) -> str:
         r"^(?:take|make|record)\s+measurements\s+(?:of|on)\s+(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, flags=re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             measured_object = match.group(1).strip()
             if measured_object:
@@ -941,7 +953,7 @@ def _normalize_investigation_light_verb_action(action_text: str) -> str:
         r"investigations\s+(?:of|into)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"investigate {match.group(1).strip()}"
 
@@ -978,7 +990,7 @@ def _normalize_evaluation_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -999,7 +1011,7 @@ def _normalize_determination_light_verb_action(action_text: str) -> str:
         r"determinations\s+(?:of|on|as\s+to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"determine {match.group(1).strip()}"
 
@@ -1036,7 +1048,7 @@ def _normalize_calculation_computation_light_verb_action(action_text: str) -> st
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1073,7 +1085,7 @@ def _normalize_collection_compilation_light_verb_action(action_text: str) -> str
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1110,7 +1122,7 @@ def _normalize_delivery_distribution_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1147,7 +1159,7 @@ def _normalize_adoption_promulgation_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1184,7 +1196,7 @@ def _normalize_designation_appointment_light_verb_action(action_text: str) -> st
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1209,7 +1221,7 @@ def _normalize_issuance_light_verb_action(action_text: str) -> str:
         r"issuances\s+of\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"issue {match.group(1).strip()}"
 
@@ -1251,7 +1263,7 @@ def _normalize_submission_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
     return text
@@ -1287,7 +1299,7 @@ def _normalize_docketing_calendaring_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1308,7 +1320,7 @@ def _normalize_certification_light_verb_action(action_text: str) -> str:
         r"certifications\s+of\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"certify {match.group(1).strip()}"
 
@@ -1329,7 +1341,7 @@ def _normalize_verification_light_verb_action(action_text: str) -> str:
         r"verifications\s+of\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"verify {match.group(1).strip()}"
 
@@ -1350,7 +1362,7 @@ def _normalize_approval_light_verb_action(action_text: str) -> str:
         r"approvals\s+of\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"approve {match.group(1).strip()}"
 
@@ -1387,7 +1399,7 @@ def _normalize_authorization_accreditation_light_verb_action(action_text: str) -
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1424,7 +1436,7 @@ def _normalize_classification_categorization_light_verb_action(action_text: str)
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1461,7 +1473,7 @@ def _normalize_correction_adjustment_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1503,7 +1515,7 @@ def _normalize_judicial_disposition_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if not match:
             continue
         target = _normalized_light_verb_target(match.group(1) if match.groups() else "")
@@ -1542,7 +1554,7 @@ def _normalize_transfer_conveyance_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1563,7 +1575,7 @@ def _normalize_denial_light_verb_action(action_text: str) -> str:
         r"denials\s+of\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"deny {match.group(1).strip()}"
 
@@ -1584,7 +1596,7 @@ def _normalize_notice_service_light_verb_action(action_text: str) -> str:
         r"(?:a\s+|an\s+|the\s+)?notice\s+(?:to|upon|on)\s+(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"notice {match.group(1).strip()}"
 
@@ -1605,7 +1617,7 @@ def _normalize_publication_light_verb_action(action_text: str) -> str:
         r"publications\s+of\s+(?:the\s+)?(.+)$",
     ]
     for pattern in nominalization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"publish {match.group(1).strip()}"
 
@@ -1635,7 +1647,7 @@ def _normalize_service_light_verb_action(action_text: str) -> str:
         r"service\s+(?:of|on|upon|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"serve {match.group(1).strip()}"
 
@@ -1810,7 +1822,7 @@ def _normalize_health_compliance_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"{verb} {target}" if target else text
@@ -1855,7 +1867,7 @@ def _normalize_remittance_light_verb_action(action_text: str) -> str:
         r"remittances\s+of\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"remit {match.group(1).strip()}"
 
@@ -1876,7 +1888,7 @@ def _normalize_renewal_light_verb_action(action_text: str) -> str:
         r"renewals\s+of\s+(?:the\s+)?(.+)$",
     ]
     for pattern in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"renew {match.group(1).strip()}"
 
@@ -1913,7 +1925,7 @@ def _normalize_registration_enrollment_light_verb_action(action_text: str) -> st
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -1960,7 +1972,7 @@ def _normalize_instrument_status_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
 
@@ -4728,7 +4740,7 @@ def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:
         r"^assessment\s+of\s+(.+)$",
     ]
     for pattern in assessment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"assess {target}" if target else text
@@ -4739,7 +4751,7 @@ def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:
         r"^imposition\s+of\s+(.+)$",
     ]
     for pattern in imposition_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"impose {target}" if target else text
@@ -4759,7 +4771,7 @@ def _normalize_deletion_erasure_light_verb_action(action_text: str) -> str:
         r"^deletion\s+of\s+(.+)$",
     ]
     for pattern in deletion_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"delete {target}" if target else text
@@ -4769,7 +4781,7 @@ def _normalize_deletion_erasure_light_verb_action(action_text: str) -> str:
         r"^erasure\s+of\s+(.+)$",
     ]
     for pattern in erasure_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"erase {target}" if target else text
@@ -4789,7 +4801,7 @@ def _normalize_preservation_restoration_light_verb_action(action_text: str) -> s
         r"^preservation\s+of\s+(.+)$",
     ]
     for pattern in preservation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"preserve {target}" if target else text
@@ -4799,7 +4811,7 @@ def _normalize_preservation_restoration_light_verb_action(action_text: str) -> s
         r"^restoration\s+of\s+(.+)$",
     ]
     for pattern in restoration_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"restore {target}" if target else text
@@ -4821,7 +4833,7 @@ def _normalize_archival_retention_light_verb_action(action_text: str) -> str:
         r"^(?:archival|archiving|archive)\s+of\s+(.+)$",
     ]
     for pattern in archival_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"archive {target}" if target else text
@@ -4831,7 +4843,7 @@ def _normalize_archival_retention_light_verb_action(action_text: str) -> str:
         r"^retention\s+of\s+(.+)$",
     ]
     for pattern in retention_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"retain {target}" if target else text
@@ -4851,7 +4863,7 @@ def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> st
         r"^redaction\s+of\s+(.+)$",
     ]
     for pattern in redaction_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"redact {target}" if target else text
@@ -4861,7 +4873,7 @@ def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> st
         r"^anonymi[sz]ation\s+of\s+(.+)$",
     ]
     for pattern in anonymization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"anonymize {target}" if target else text
@@ -4881,7 +4893,7 @@ def _normalize_masking_pseudonymization_light_verb_action(action_text: str) -> s
         r"^masking\s+of\s+(.+)$",
     ]
     for pattern in masking_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"mask {target}" if target else text
@@ -4891,7 +4903,7 @@ def _normalize_masking_pseudonymization_light_verb_action(action_text: str) -> s
         r"^pseudonymi[sz]ation\s+of\s+(.+)$",
     ]
     for pattern in pseudonymization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"pseudonymize {target}" if target else text
@@ -4911,7 +4923,7 @@ def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
         r"^encryption\s+of\s+(.+)$",
     ]
     for pattern in encryption_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"encrypt {target}" if target else text
@@ -4921,7 +4933,7 @@ def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
         r"^decryption\s+of\s+(.+)$",
     ]
     for pattern in decryption_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"decrypt {target}" if target else text
@@ -4931,7 +4943,7 @@ def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
         r"^hashing\s+of\s+(.+)$",
     ]
     for pattern in hashing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"hash {target}" if target else text
@@ -4941,7 +4953,7 @@ def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
         r"^tokeni[sz]ation\s+of\s+(.+)$",
     ]
     for pattern in tokenization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"tokenize {target}" if target else text
@@ -4951,7 +4963,7 @@ def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
         r"^detokeni[sz]ation\s+of\s+(.+)$",
     ]
     for pattern in detokenization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"detokenize {target}" if target else text
@@ -4971,7 +4983,7 @@ def _normalize_sealing_unsealing_light_verb_action(action_text: str) -> str:
         r"^sealing\s+of\s+(.+)$",
     ]
     for pattern in sealing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"seal {target}" if target else text
@@ -4981,7 +4993,7 @@ def _normalize_sealing_unsealing_light_verb_action(action_text: str) -> str:
         r"^unsealing\s+of\s+(.+)$",
     ]
     for pattern in unsealing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"unseal {target}" if target else text
@@ -5001,7 +5013,7 @@ def _normalize_expungement_destruction_light_verb_action(action_text: str) -> st
         r"^expungement\s+of\s+(.+)$",
     ]
     for pattern in expungement_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"expunge {target}" if target else text
@@ -5011,7 +5023,7 @@ def _normalize_expungement_destruction_light_verb_action(action_text: str) -> st
         r"^destruction\s+of\s+(.+)$",
     ]
     for pattern in destruction_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"destroy {target}" if target else text
@@ -5064,7 +5076,7 @@ def _normalize_enforcement_remedy_light_verb_action(action_text: str) -> str:
         (r"^impoundment\s+(?:of|for)\s+(?:the\s+)?(.+)$", "impound"),
     ]
     for pattern, verb in remedy_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"{verb} {target}" if target else text
@@ -5087,7 +5099,7 @@ def _normalize_recordation_memorialization_light_verb_action(action_text: str) -
         r"^recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in recordation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"record {target}" if target else text
@@ -5100,7 +5112,7 @@ def _normalize_recordation_memorialization_light_verb_action(action_text: str) -
         r"^memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in memorialization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"memorialize {target}" if target else text
@@ -5123,7 +5135,7 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         r"^ratification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in ratification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"ratify {target}" if target else text
@@ -5136,7 +5148,7 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         r"^confirmation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in confirmation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"confirm {target}" if target else text
@@ -5159,7 +5171,7 @@ def _normalize_attestation_notarization_light_verb_action(action_text: str) -> s
         r"^attestation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in attestation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"attest {target}" if target else text
@@ -5172,7 +5184,7 @@ def _normalize_attestation_notarization_light_verb_action(action_text: str) -> s
         r"^notarization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in notarization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"notarize {target}" if target else text
@@ -5195,7 +5207,7 @@ def _normalize_acknowledgment_authentication_light_verb_action(action_text: str)
         r"^acknowledg(?:e)?ment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in acknowledgment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"acknowledge {target}" if target else text
@@ -5208,7 +5220,7 @@ def _normalize_acknowledgment_authentication_light_verb_action(action_text: str)
         r"^authentication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in authentication_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"authenticate {target}" if target else text
@@ -5233,7 +5245,7 @@ def _normalize_summarization_indexing_light_verb_action(action_text: str) -> str
         r"^summar(?:y|ization)\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in summarization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"summarize {target}" if target else text
@@ -5248,7 +5260,7 @@ def _normalize_summarization_indexing_light_verb_action(action_text: str) -> str
         r"^index(?:es|ing)?\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in indexing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"index {target}" if target else text
@@ -5271,7 +5283,7 @@ def _normalize_transcription_translation_light_verb_action(action_text: str) -> 
         r"^transcription\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in transcription_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"transcribe {target}" if target else text
@@ -5284,7 +5296,7 @@ def _normalize_transcription_translation_light_verb_action(action_text: str) -> 
         r"^translation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in translation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"translate {target}" if target else text
@@ -5307,7 +5319,7 @@ def _normalize_codification_recodification_light_verb_action(action_text: str) -
         r"^codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in codification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"codify {target}" if target else text
@@ -5320,7 +5332,7 @@ def _normalize_codification_recodification_light_verb_action(action_text: str) -
         r"^recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in recodification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"recodify {target}" if target else text
@@ -5343,7 +5355,7 @@ def _normalize_consolidation_reconciliation_light_verb_action(action_text: str) 
         r"^consolidation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in consolidation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"consolidate {target}" if target else text
@@ -5356,7 +5368,7 @@ def _normalize_consolidation_reconciliation_light_verb_action(action_text: str) 
         r"^reconciliation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in reconciliation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reconcile {target}" if target else text
@@ -5379,7 +5391,7 @@ def _normalize_aggregation_tabulation_light_verb_action(action_text: str) -> str
         r"^aggregation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in aggregation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"aggregate {target}" if target else text
@@ -5392,7 +5404,7 @@ def _normalize_aggregation_tabulation_light_verb_action(action_text: str) -> str
         r"^tabulation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in tabulation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"tabulate {target}" if target else text
@@ -5415,7 +5427,7 @@ def _normalize_segregation_sequestration_light_verb_action(action_text: str) -> 
         r"^segregation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in segregation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"segregate {target}" if target else text
@@ -5428,7 +5440,7 @@ def _normalize_segregation_sequestration_light_verb_action(action_text: str) -> 
         r"^sequestration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in sequestration_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"sequester {target}" if target else text
@@ -5451,7 +5463,7 @@ def _normalize_assignment_allocation_light_verb_action(action_text: str) -> str:
         r"^assignment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in assignment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"assign {target}" if target else text
@@ -5464,7 +5476,7 @@ def _normalize_assignment_allocation_light_verb_action(action_text: str) -> str:
         r"^allocation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in allocation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"allocate {target}" if target else text
@@ -5487,7 +5499,7 @@ def _normalize_prioritization_scheduling_light_verb_action(action_text: str) -> 
         r"^prioriti[sz]ation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in prioritization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"prioritize {target}" if target else text
@@ -5500,7 +5512,7 @@ def _normalize_prioritization_scheduling_light_verb_action(action_text: str) -> 
         r"^scheduling\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in scheduling_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"schedule {target}" if target else text
@@ -5523,7 +5535,7 @@ def _normalize_delegation_reservation_light_verb_action(action_text: str) -> str
         r"^delegation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in delegation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"delegate {target}" if target else text
@@ -5536,7 +5548,7 @@ def _normalize_delegation_reservation_light_verb_action(action_text: str) -> str
         r"^reservation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in reservation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reserve {target}" if target else text
@@ -5559,7 +5571,7 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         r"^ratification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in ratification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"ratify {target}" if target else text
@@ -5572,7 +5584,7 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         r"^confirmation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in confirmation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"confirm {target}" if target else text
@@ -5595,7 +5607,7 @@ def _normalize_codification_consolidation_light_verb_action(action_text: str) ->
         r"^codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in codification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"codify {target}" if target else text
@@ -5608,7 +5620,7 @@ def _normalize_codification_consolidation_light_verb_action(action_text: str) ->
         r"^consolidation\s+(?:of|for|with)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in consolidation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"consolidate {target}" if target else text
@@ -5631,7 +5643,7 @@ def _normalize_revocation_suspension_light_verb_action(action_text: str) -> str:
         r"^revocation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in revocation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"revoke {target}" if target else text
@@ -5644,7 +5656,7 @@ def _normalize_revocation_suspension_light_verb_action(action_text: str) -> str:
         r"^suspension\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in suspension_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"suspend {target}" if target else text
@@ -5667,7 +5679,7 @@ def _normalize_expungement_sealing_light_verb_action(action_text: str) -> str:
         r"^expungement\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in expungement_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"expunge {target}" if target else text
@@ -5680,7 +5692,7 @@ def _normalize_expungement_sealing_light_verb_action(action_text: str) -> str:
         r"^sealing\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in sealing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"seal {target}" if target else text
@@ -5703,7 +5715,7 @@ def _normalize_reconciliation_restitution_light_verb_action(action_text: str) ->
         r"^reconciliation\s+(?:of|for|with)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in reconciliation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reconcile {target}" if target else text
@@ -5716,7 +5728,7 @@ def _normalize_reconciliation_restitution_light_verb_action(action_text: str) ->
         r"^restitution\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in restitution_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"restitute {target}" if target else text
@@ -5739,7 +5751,7 @@ def _normalize_forfeiture_disgorgement_light_verb_action(action_text: str) -> st
         r"^forfeiture\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in forfeiture_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"forfeit {target}" if target else text
@@ -5752,7 +5764,7 @@ def _normalize_forfeiture_disgorgement_light_verb_action(action_text: str) -> st
         r"^disgorgement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in disgorgement_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"disgorge {target}" if target else text
@@ -5775,7 +5787,7 @@ def _normalize_annulment_vacatur_light_verb_action(action_text: str) -> str:
         r"^annulment\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in annulment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"annul {target}" if target else text
@@ -5788,7 +5800,7 @@ def _normalize_annulment_vacatur_light_verb_action(action_text: str) -> str:
         r"^vacatur\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in vacatur_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"vacate {target}" if target else text
@@ -5811,7 +5823,7 @@ def _normalize_recodification_renumbering_light_verb_action(action_text: str) ->
         r"^recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in recodification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"recodify {target}" if target else text
@@ -5824,7 +5836,7 @@ def _normalize_recodification_renumbering_light_verb_action(action_text: str) ->
         r"^renumbering\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in renumbering_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"renumber {target}" if target else text
@@ -5847,7 +5859,7 @@ def _normalize_conversion_transmittal_light_verb_action(action_text: str) -> str
         r"^conversion\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in conversion_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"convert {target}" if target else text
@@ -5860,7 +5872,7 @@ def _normalize_conversion_transmittal_light_verb_action(action_text: str) -> str
         r"^transmittal\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in transmittal_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"transmit {target}" if target else text
@@ -5883,7 +5895,7 @@ def _normalize_acknowledgment_attestation_light_verb_action(action_text: str) ->
         r"^acknowledg(?:e)?ment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in acknowledgment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"acknowledge {target}" if target else text
@@ -5896,7 +5908,7 @@ def _normalize_acknowledgment_attestation_light_verb_action(action_text: str) ->
         r"^attestation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in attestation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"attest {target}" if target else text
@@ -5919,7 +5931,7 @@ def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:
         r"^assessment\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in assessment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"assess {target}" if target else text
@@ -5932,7 +5944,7 @@ def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:
         r"^imposition\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in imposition_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"impose {target}" if target else text
@@ -5955,7 +5967,7 @@ def _normalize_allocation_apportionment_light_verb_action(action_text: str) -> s
         r"^allocation\s+(?:of|for|to|among|between)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in allocation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"allocate {target}" if target else text
@@ -5968,7 +5980,7 @@ def _normalize_allocation_apportionment_light_verb_action(action_text: str) -> s
         r"^apportionment\s+(?:of|for|to|among|between)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in apportionment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"apportion {target}" if target else text
@@ -5991,7 +6003,7 @@ def _normalize_referral_remand_light_verb_action(action_text: str) -> str:
         r"^referral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in referral_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"refer {target}" if target else text
@@ -6004,7 +6016,7 @@ def _normalize_referral_remand_light_verb_action(action_text: str) -> str:
         r"^remand\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in remand_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"remand {target}" if target else text
@@ -6027,7 +6039,7 @@ def _normalize_waiver_extension_light_verb_action(action_text: str) -> str:
         r"^waiver\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in waiver_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"waive {target}" if target else text
@@ -6040,7 +6052,7 @@ def _normalize_waiver_extension_light_verb_action(action_text: str) -> str:
         r"^extension\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in extension_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"extend {target}" if target else text
@@ -6063,7 +6075,7 @@ def _normalize_registration_enrollment_light_verb_action(action_text: str) -> st
         r"^registration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in registration_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"register {target}" if target else text
@@ -6076,7 +6088,7 @@ def _normalize_registration_enrollment_light_verb_action(action_text: str) -> st
         r"^enrollment\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in enrollment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"enroll {target}" if target else text
@@ -6101,7 +6113,7 @@ def _normalize_indexing_cataloging_light_verb_action(action_text: str) -> str:
         r"(?:an?\s+|the\s+)?index\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in indexing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"index {target}" if target else text
@@ -6116,7 +6128,7 @@ def _normalize_indexing_cataloging_light_verb_action(action_text: str) -> str:
         r"(?:an?\s+|the\s+)?catalog\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in cataloging_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"catalog {target}" if target else text
@@ -6139,7 +6151,7 @@ def _normalize_classification_reclassification_light_verb_action(action_text: st
         r"^classification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in classification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"classify {target}" if target else text
@@ -6152,7 +6164,7 @@ def _normalize_classification_reclassification_light_verb_action(action_text: st
         r"^reclassification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in reclassification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reclassify {target}" if target else text
@@ -6175,7 +6187,7 @@ def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> st
         r"^redaction\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in redaction_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"redact {target}" if target else text
@@ -6188,7 +6200,7 @@ def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> st
         r"^anonymi[sz]ation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in anonymization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"anonymize {target}" if target else text
@@ -6201,7 +6213,7 @@ def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> st
         r"^de-?identification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in deidentification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"deidentify {target}" if target else text
@@ -6224,7 +6236,7 @@ def _normalize_translation_interpretation_light_verb_action(action_text: str) ->
         r"^translation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in translation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"translate {target}" if target else text
@@ -6237,7 +6249,7 @@ def _normalize_translation_interpretation_light_verb_action(action_text: str) ->
         r"^interpretation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in interpretation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"interpret {target}" if target else text
@@ -6260,7 +6272,7 @@ def _normalize_transcription_summarization_light_verb_action(action_text: str) -
         r"^transcription\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in transcription_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"transcribe {target}" if target else text
@@ -6276,7 +6288,7 @@ def _normalize_transcription_summarization_light_verb_action(action_text: str) -
         r"^summary\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in summarization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"summarize {target}" if target else text
@@ -6299,7 +6311,7 @@ def _normalize_audit_examination_light_verb_action(action_text: str) -> str:
         r"^audit\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in audit_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"audit {target}" if target else text
@@ -6312,7 +6324,7 @@ def _normalize_audit_examination_light_verb_action(action_text: str) -> str:
         r"^examination\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in examination_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"examine {target}" if target else text
@@ -6335,7 +6347,7 @@ def _normalize_mediation_arbitration_light_verb_action(action_text: str) -> str:
         r"^mediation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in mediation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"mediate {target}" if target else text
@@ -6348,7 +6360,7 @@ def _normalize_mediation_arbitration_light_verb_action(action_text: str) -> str:
         r"^arbitration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in arbitration_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"arbitrate {target}" if target else text
@@ -6371,7 +6383,7 @@ def _normalize_delegation_assignment_light_verb_action(action_text: str) -> str:
         r"^delegation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in delegation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"delegate {target}" if target else text
@@ -6384,7 +6396,7 @@ def _normalize_delegation_assignment_light_verb_action(action_text: str) -> str:
         r"^assignment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in assignment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"assign {target}" if target else text
@@ -6407,7 +6419,7 @@ def _normalize_recordation_memorialization_light_verb_action(action_text: str) -
         r"^recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in recordation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"record {target}" if target else text
@@ -6420,7 +6432,7 @@ def _normalize_recordation_memorialization_light_verb_action(action_text: str) -
         r"^memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in memorialization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"memorialize {target}" if target else text
@@ -6443,7 +6455,7 @@ def _normalize_aggregation_consolidation_light_verb_action(action_text: str) -> 
         r"^aggregation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in aggregation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"aggregate {target}" if target else text
@@ -6456,7 +6468,7 @@ def _normalize_aggregation_consolidation_light_verb_action(action_text: str) -> 
         r"^consolidation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in consolidation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"consolidate {target}" if target else text
@@ -6479,7 +6491,7 @@ def _normalize_segregation_separation_light_verb_action(action_text: str) -> str
         r"^segregation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in segregation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"segregate {target}" if target else text
@@ -6492,7 +6504,7 @@ def _normalize_segregation_separation_light_verb_action(action_text: str) -> str
         r"^separation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in separation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"separate {target}" if target else text
@@ -6515,7 +6527,7 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         r"^ratification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in ratification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"ratify {target}" if target else text
@@ -6528,7 +6540,7 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         r"^confirmation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in confirmation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"confirm {target}" if target else text
@@ -6551,7 +6563,7 @@ def _normalize_authentication_attestation_light_verb_action(action_text: str) ->
         r"^authentication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in authentication_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"authenticate {target}" if target else text
@@ -6564,7 +6576,7 @@ def _normalize_authentication_attestation_light_verb_action(action_text: str) ->
         r"^attestation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in attestation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"attest {target}" if target else text
@@ -6587,7 +6599,7 @@ def _normalize_approval_authorization_light_verb_action(action_text: str) -> str
         r"^approval\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in approval_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"approve {target}" if target else text
@@ -6600,7 +6612,7 @@ def _normalize_approval_authorization_light_verb_action(action_text: str) -> str
         r"^authorization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in authorization_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"authorize {target}" if target else text
@@ -6623,7 +6635,7 @@ def _normalize_revocation_suspension_light_verb_action(action_text: str) -> str:
         r"^revocation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in revocation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"revoke {target}" if target else text
@@ -6636,7 +6648,7 @@ def _normalize_revocation_suspension_light_verb_action(action_text: str) -> str:
         r"^suspension\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in suspension_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"suspend {target}" if target else text
@@ -6659,7 +6671,7 @@ def _normalize_cancellation_termination_light_verb_action(action_text: str) -> s
         r"^cancellation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in cancellation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"cancel {target}" if target else text
@@ -6672,7 +6684,7 @@ def _normalize_cancellation_termination_light_verb_action(action_text: str) -> s
         r"^termination\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in termination_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"terminate {target}" if target else text
@@ -6685,7 +6697,7 @@ def _normalize_cancellation_termination_light_verb_action(action_text: str) -> s
         r"^rescission\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in rescission_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"rescind {target}" if target else text
@@ -6708,7 +6720,7 @@ def _normalize_renewal_reissuance_light_verb_action(action_text: str) -> str:
         r"^renewal\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in renewal_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"renew {target}" if target else text
@@ -6721,7 +6733,7 @@ def _normalize_renewal_reissuance_light_verb_action(action_text: str) -> str:
         r"^reissuance\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in reissuance_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reissue {target}" if target else text
@@ -6734,7 +6746,7 @@ def _normalize_renewal_reissuance_light_verb_action(action_text: str) -> str:
         r"^republication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in republication_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"republish {target}" if target else text
@@ -6757,7 +6769,7 @@ def _normalize_codification_recodification_light_verb_action(action_text: str) -
         r"^codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in codification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"codify {target}" if target else text
@@ -6770,7 +6782,7 @@ def _normalize_codification_recodification_light_verb_action(action_text: str) -
         r"^recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in recodification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"recodify {target}" if target else text
@@ -6783,7 +6795,7 @@ def _normalize_codification_recodification_light_verb_action(action_text: str) -
         r"^republication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in republication_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"republish {target}" if target else text
@@ -6806,7 +6818,7 @@ def _normalize_licensing_permitting_light_verb_action(action_text: str) -> str:
         r"^licensing\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in licensing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"license {target}" if target else text
@@ -6819,7 +6831,7 @@ def _normalize_licensing_permitting_light_verb_action(action_text: str) -> str:
         r"^permitting\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in permitting_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"permit {target}" if target else text
@@ -6832,7 +6844,7 @@ def _normalize_licensing_permitting_light_verb_action(action_text: str) -> str:
         r"^accreditation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in accreditation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"accredit {target}" if target else text
@@ -6845,7 +6857,7 @@ def _normalize_licensing_permitting_light_verb_action(action_text: str) -> str:
         r"^credentialing\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in credentialing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"credential {target}" if target else text
@@ -6858,7 +6870,7 @@ def _normalize_licensing_permitting_light_verb_action(action_text: str) -> str:
         r"^endorsement\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in endorsement_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"endorse {target}" if target else text
@@ -6881,7 +6893,7 @@ def _normalize_adjudication_hearing_light_verb_action(action_text: str) -> str:
         r"^adjudication\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in adjudication_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"adjudicate {target}" if target else text
@@ -6894,7 +6906,7 @@ def _normalize_adjudication_hearing_light_verb_action(action_text: str) -> str:
         r"^hearing\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in hearing_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"hear {target}" if target else text
@@ -6917,7 +6929,7 @@ def _normalize_training_orientation_light_verb_action(action_text: str) -> str:
         r"^training\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in training_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"train {target}" if target else text
@@ -6930,7 +6942,7 @@ def _normalize_training_orientation_light_verb_action(action_text: str) -> str:
         r"^orientation\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in orientation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"orient {target}" if target else text
@@ -6943,7 +6955,7 @@ def _normalize_training_orientation_light_verb_action(action_text: str) -> str:
         r"^instruction\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in instruction_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"instruct {target}" if target else text
@@ -6966,7 +6978,7 @@ def _normalize_settlement_conciliation_light_verb_action(action_text: str) -> st
         r"^settlement\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in settlement_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"settle {target}" if target else text
@@ -6979,7 +6991,7 @@ def _normalize_settlement_conciliation_light_verb_action(action_text: str) -> st
         r"^conciliation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in conciliation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"conciliate {target}" if target else text
@@ -6992,7 +7004,7 @@ def _normalize_settlement_conciliation_light_verb_action(action_text: str) -> st
         r"^negotiation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in negotiation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"negotiate {target}" if target else text
@@ -7015,7 +7027,7 @@ def _normalize_remediation_abatement_light_verb_action(action_text: str) -> str:
         r"^remediation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in remediation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"remediate {target}" if target else text
@@ -7028,7 +7040,7 @@ def _normalize_remediation_abatement_light_verb_action(action_text: str) -> str:
         r"^abatement\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in abatement_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"abate {target}" if target else text
@@ -7041,7 +7053,7 @@ def _normalize_remediation_abatement_light_verb_action(action_text: str) -> str:
         r"^mitigation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in mitigation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"mitigate {target}" if target else text
@@ -7083,7 +7095,7 @@ def _normalize_regulatory_control_light_verb_action(action_text: str) -> str:
         (r"^condemnation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "condemn"),
     ]
     for pattern, verb in control_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"{verb} {target}" if target else text
@@ -7128,7 +7140,7 @@ def _normalize_evidence_custody_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb in evidence_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"{verb} {target}" if target else text
@@ -7151,7 +7163,7 @@ def _normalize_rulemaking_enactment_light_verb_action(action_text: str) -> str:
         r"^rulemaking\s+(?:for|on|concerning)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in rulemaking_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"make rule {target}" if target else text
@@ -7164,7 +7176,7 @@ def _normalize_rulemaking_enactment_light_verb_action(action_text: str) -> str:
         r"^enactment\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in enactment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"enact {target}" if target else text
@@ -7177,7 +7189,7 @@ def _normalize_rulemaking_enactment_light_verb_action(action_text: str) -> str:
         r"^amendment\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in amendment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"amend {target}" if target else text
@@ -7190,7 +7202,7 @@ def _normalize_rulemaking_enactment_light_verb_action(action_text: str) -> str:
         r"^repeal\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in repeal_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"repeal {target}" if target else text
@@ -7213,7 +7225,7 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
         r"^codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in codification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"codify {target}" if target else text
@@ -7226,7 +7238,7 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
         r"^recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in recodification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"recodify {target}" if target else text
@@ -7239,7 +7251,7 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
         r"^compilation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in compilation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"compile {target}" if target else text
@@ -7262,7 +7274,7 @@ def _normalize_public_notice_display_light_verb_action(action_text: str) -> str:
         r"^posting\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in posting_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"post {target}" if target else text
@@ -7275,7 +7287,7 @@ def _normalize_public_notice_display_light_verb_action(action_text: str) -> str:
         r"^display\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in display_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"display {target}" if target else text
@@ -7288,7 +7300,7 @@ def _normalize_public_notice_display_light_verb_action(action_text: str) -> str:
         r"^announcement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in announcement_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"announce {target}" if target else text
@@ -7311,7 +7323,7 @@ def _normalize_dissemination_distribution_light_verb_action(action_text: str) ->
         r"^dissemination\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in dissemination_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"disseminate {target}" if target else text
@@ -7324,7 +7336,7 @@ def _normalize_dissemination_distribution_light_verb_action(action_text: str) ->
         r"^distribution\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in distribution_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"distribute {target}" if target else text
@@ -7335,7 +7347,7 @@ def _normalize_dissemination_distribution_light_verb_action(action_text: str) ->
         r"^circulation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in circulation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"circulate {target}" if target else text
@@ -7346,7 +7358,7 @@ def _normalize_dissemination_distribution_light_verb_action(action_text: str) ->
         r"^transmission\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in transmission_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"transmit {target}" if target else text
@@ -7369,7 +7381,7 @@ def _normalize_objection_response_comment_light_verb_action(action_text: str) ->
         r"^objection\s+(?:to|against|of)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in objection_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"object {target}" if target else text
@@ -7382,7 +7394,7 @@ def _normalize_objection_response_comment_light_verb_action(action_text: str) ->
         r"^response\s+(?:to|for|on)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in response_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"respond {target}" if target else text
@@ -7396,7 +7408,7 @@ def _normalize_objection_response_comment_light_verb_action(action_text: str) ->
         r"^comments\s+(?:on|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
     ]
     for pattern in comment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
+        match = _compiled_normalization_pattern(pattern).match(text)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"comment {target}" if target else text

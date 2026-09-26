@@ -1,0 +1,163 @@
+{
+  "acquired_source_bytes_unchanged": true,
+  "admitted": false,
+  "captured_audit_passed": true,
+  "changed_sources_since_capture": [],
+  "code_artifacts": [
+    {
+      "bytes": 10226,
+      "path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/run_inventory_r2.py",
+      "sha256": "13d195d53e430e645f538bd046ed892f49de438d0e66ca441bcac47f1d1a804e"
+    },
+    {
+      "bytes": 7614,
+      "path": "scripts/ops/legal_ir/inventory_pinned_uscode_sources.py",
+      "sha256": "689d972154afb2c3ad4e9a55ccc452ef175799ab8d3e1737f89fdbc4d318ce50"
+    },
+    {
+      "bytes": 31233,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_import.py",
+      "sha256": "3ead6dbe0014be69a11c1a9f6c203d62c012a3dd5f5913aa9471eda91574bb70"
+    },
+    {
+      "bytes": 33754,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py",
+      "sha256": "6aa7330cd20a2eb256561382b78bc4465d3b7607827f53d0b644d9e89afb1f21"
+    },
+    {
+      "bytes": 34103,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_uscode_inventory.py",
+      "sha256": "f439b9be4ee5f54bc4017baed66b6cbacef03625e25328687edafa65b55bc904"
+    }
+  ],
+  "comparative_speedup_claim": false,
+  "constitution_formalized": false,
+  "corpus_summary": {
+    "admitted": false,
+    "closure_verification_scope": "recorded build-time shard bytes; reopening verifies metadata integrity only",
+    "complete": true,
+    "current_all_shard_bytes_reverified": false,
+    "declared_compressed_bytes": 52219760,
+    "declared_corpus_closure_verified": true,
+    "declared_corpus_shards": 16,
+    "declared_row_count": 62931,
+    "duplicate_entry_cid_count": 0,
+    "eligible_input_count": 62931,
+    "full_federal_corpus_complete": false,
+    "global_holdout_verified": false,
+    "grouping_metadata_complete": true,
+    "inventory_bytes": 47531987,
+    "inventory_sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+    "original_official_source_bytes_verified": false,
+    "original_status_counts": {
+      "ready_published_text": 62931
+    },
+    "release_id": "hf:justicedao/ipfs_uscode@5016b86a273ce5e4ffd066c5ae9f5fe494dd417e#manifest-sha256:0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+    "rows_scanned": 62931,
+    "schema_version": "autoencoder-uscode-source-inventory-v1",
+    "scope": "declared_corpus_family_only",
+    "shard_status_counts": {
+      "verified": 16
+    },
+    "source_authority_authenticated": false,
+    "source_text_storage": "unmaterialized_exact_published_text_utf8",
+    "status_counts": {
+      "ready_published_text": 62931
+    },
+    "training_eligible": false
+  },
+  "current_sources_equal_capture": true,
+  "embedding_inference_performed": false,
+  "evidence": [
+    {
+      "bytes": 20930,
+      "path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/acquisition-receipt.json",
+      "sha256": "75d1e0fe9118d0af349e51b2b64bb03aa498d385932a04079c0ee6061851da0e"
+    },
+    {
+      "bytes": 13153,
+      "path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/audit-receipt.json",
+      "sha256": "af12c5265580b92e8a0bfb2c7588523d36242ffd78033cb2b4b43c42e2d79192"
+    },
+    {
+      "bytes": 3516,
+      "path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/inventory/inventory-report.json",
+      "sha256": "03f76af4edb6d538fddec9c74090389532f8f84f93f417edf2154fa790d00d62"
+    },
+    {
+      "bytes": 47531987,
+      "path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/inventory/inventory.json",
+      "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef"
+    },
+    {
+      "bytes": 1319,
+      "path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/inventory/selected-inputs/inventory-selection.json",
+      "sha256": "89cbf45821a807861efb52880032b9440a10fa1d2df6c293b29f5f3d60ae278f"
+    },
+    {
+      "bytes": 2557589,
+      "path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/tests/inventory-tests-r1-receipt.json",
+      "sha256": "6c8d1d399825aa72b6cfcd6c8aee1b40307b93935c96b56059a52a205118ce08"
+    },
+    {
+      "bytes": 3904,
+      "path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/resource-release.json",
+      "sha256": "1e2d260ddf4f370eca7dafafb922395f35f56f6d13924b017db0047733224fb9"
+    }
+  ],
+  "inventory_same_bytes_as_prior_scan": true,
+  "lake_build_performed": false,
+  "native_training_or_evaluation_performed": false,
+  "native_training_validation_deferred_by_user": true,
+  "new_legal_ir_bridge_evaluation_performed": false,
+  "opportunity_bounds": {
+    "current_max_producer_inputs_per_receipt": 256,
+    "minimum_count_bounded_batches_to_attempt_all_rows": 246,
+    "note": "Token exclusions and aggregate byte limits can alter produced membership and require more batches.",
+    "source_input_rows": 62931
+  },
+  "owned_code_unchanged_since_capture": true,
+  "passed": true,
+  "protected_artifacts_unchanged": true,
+  "prover_execution_performed": false,
+  "publication_performed": false,
+  "recorded_at": "2026-09-26T10:23:55.701226+00:00",
+  "remaining": [
+    "freeze source-only connected partitions before embedding exclusions",
+    "bounded producer-receipt-set identity and owner/worker membership verification",
+    "authenticate original official source bytes and inventory Constitution with original selectors",
+    "source-aware Constitution training frontend",
+    "deferred current-source native performance and semantic qualification",
+    "production DuckLake activation and verified HF delivery",
+    "semantic coverage and actual Lake evidence for claimed admits"
+  ],
+  "review_correction": "Retain original wrapper failures separately before legacy local-duplicate disposition; all duplicate occurrences remain excluded. Public importer behavior unchanged.",
+  "schema": "uscode-source-inventory-closeout-v1",
+  "scope": "offline pinned published-corpus inventory and source-only producer-input materialization",
+  "source_files_at_capture": 7747,
+  "test_inputs_unchanged_since_capture": true,
+  "test_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 275
+  },
+  "timing_configuration": {
+    "bridge_names_executed": [],
+    "cpu_slots": 1,
+    "inventory_worker_processes": 1,
+    "legal_ir_metric_disk_cache_env": "0",
+    "selected_inputs": 3,
+    "source_os_page_cache": "uncontrolled; no cold-cache claim",
+    "source_read_batch_rows": 64,
+    "source_rows": 62931
+  },
+  "timing_scope": "source processing only; not per formalization span, bridge-on evaluate or model training",
+  "timings_seconds": {
+    "inventory_cli_with_three_materializations_and_final_source_guard": 21.98427512391936,
+    "offline_fixture_tests": 2.167669459944591,
+    "resource_wrapped_tests_and_inventory": 32.12750148004852,
+    "source_inventory_build_save_summary": 18.615990123944357
+  },
+  "weights_downloaded": false
+}

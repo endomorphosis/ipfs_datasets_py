@@ -28,11 +28,13 @@ from types import MappingProxyType
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .modal_autoencoder_checkpoint import (
+    CheckpointBaseline,
     MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION,
     MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
     append_delta_segment as append_compact_delta_segment,
-    serialize_checkpoint,
-    serialize_delta,
+    serialize_checkpoint_snapshot,
+    serialize_delta_from_baseline,
+    serialize_delta_snapshot,
 )
 
 
@@ -122,8 +124,11 @@ class ArtifactSnapshotHandle:
     identity: str = ""
     created_at: str = field(default_factory=_utc_now)
     serialization_seconds: float = 0.0
+    checkpoint_baseline: Optional[CheckpointBaseline] = None
 
     def __post_init__(self) -> None:
+        if self.checkpoint_baseline is not None and type(self.checkpoint_baseline) is not CheckpointBaseline:
+            raise TypeError("snapshot baseline must be a CheckpointBaseline")
         immutable = bytes(self.payload)
         object.__setattr__(self, "payload", immutable)
         if not self.identity:
@@ -147,12 +152,14 @@ class ArtifactSnapshotHandle:
         revision: int = 0,
         identity: str = "",
         serialization_seconds: float = 0.0,
+        checkpoint_baseline: Optional[CheckpointBaseline] = None,
     ) -> "ArtifactSnapshotHandle":
         return cls(
             bytes(payload),
             revision=revision,
             identity=identity,
             serialization_seconds=serialization_seconds,
+            checkpoint_baseline=checkpoint_baseline,
         )
 
 
@@ -424,12 +431,14 @@ class AsyncArtifactWriter:
         revision: int = 0,
         identity: str = "",
         serialization_seconds: float = 0.0,
+        checkpoint_baseline: Optional[CheckpointBaseline] = None,
     ) -> ArtifactSnapshotHandle:
         snapshot = ArtifactSnapshotHandle.from_bytes(
             payload,
             revision=revision,
             identity=identity,
             serialization_seconds=serialization_seconds,
+            checkpoint_baseline=checkpoint_baseline,
         )
         self._observe("serialization", snapshot.serialization_seconds)
         return snapshot
@@ -445,13 +454,23 @@ class AsyncArtifactWriter:
         metric_lineage: Any = None,
         base_state: Any = None,
         metadata: Optional[Mapping[str, Any]] = None,
+        base_baseline: Optional[CheckpointBaseline] = None,
     ) -> ArtifactSnapshotHandle:
         """Serialize one stable state revision into an immutable handle.
 
         A revision change during serialization fails closed instead of queuing
-        bytes that claim a lineage they may not represent.
+        bytes that claim a lineage they may not represent. Compact handles also
+        carry the serializer's immutable persisted identity baseline. It holds
+        no state graph and may replace ``base_state`` for a subsequent delta;
+        the caller advances its queued endpoint only after successful enqueue.
+        This token is not a durability or optimizer-acceptance receipt.
         """
 
+        if base_baseline is not None:
+            if base_state is not None:
+                raise ValueError("base_baseline and base_state are mutually exclusive")
+            if not compact or full:
+                raise ValueError("base_baseline requires a compact state delta")
         source_revision = int(getattr(state, "state_revision", 0))
         base_revision = (
             int(getattr(base_state, "state_revision", 0)) if base_state is not None else None
@@ -461,9 +480,19 @@ class AsyncArtifactWriter:
             str(state_identity(metric_lineage=metric_lineage)) if callable(state_identity) else ""
         )
         started = time.monotonic()
+        baseline = None
         if compact:
             if full:
-                payload = serialize_checkpoint(
+                serialized = serialize_checkpoint_snapshot(
+                    state,
+                    float_precision=float_precision,
+                    metric_lineage=metric_lineage,
+                    metadata={"cycle": int(cycle), **dict(metadata or {})},
+                    revision=source_revision,
+                )
+            elif base_baseline is not None:
+                serialized = serialize_delta_from_baseline(
+                    base_baseline,
                     state,
                     float_precision=float_precision,
                     metric_lineage=metric_lineage,
@@ -472,8 +501,8 @@ class AsyncArtifactWriter:
                 )
             else:
                 if base_state is None:
-                    raise ValueError("base_state is required for a compact state delta")
-                payload = serialize_delta(
+                    raise ValueError("base_state or base_baseline is required for a compact state delta")
+                serialized = serialize_delta_snapshot(
                     base_state,
                     state,
                     float_precision=float_precision,
@@ -482,6 +511,7 @@ class AsyncArtifactWriter:
                     base_revision=base_revision,
                     revision=source_revision,
                 )
+            payload, baseline = serialized.payload, serialized.baseline
         else:
             to_dict = getattr(state, "to_dict", None)
             if callable(to_dict):
@@ -507,6 +537,7 @@ class AsyncArtifactWriter:
             revision=source_revision,
             identity=source_identity or _sha256(payload),
             serialization_seconds=elapsed,
+            checkpoint_baseline=baseline,
         )
 
     def replay_crash_artifacts(self) -> List[ArtifactWriteReceipt]:
@@ -1059,6 +1090,11 @@ class AsyncArtifactWriter:
                     if job.required:
                         self._required_pending = max(0, self._required_pending - 1)
                     self._reserved_bytes = max(0, self._reserved_bytes - job.byte_size)
+                    # The worker frame stays alive while waiting for more work.
+                    # Release completed payloads, bound observers, and futures
+                    # before announcing idle; caller-held errors keep their
+                    # original tracebacks without the worker rooting them.
+                    job = futures = future = receipt = None
                     self._available.notify_all()
                     self._idle.notify_all()
 

@@ -1,0 +1,28 @@
+{
+  "admitted": false,
+  "changed_files": [],
+  "command": [
+    "python3",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/logic/test_autoformal_speed_semantics.py",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-final-gates-20260925.xml"
+  ],
+  "constitution_formalized": false,
+  "elapsed_seconds": 1.5473204150330275,
+  "exit_code": 0,
+  "gate_sources": {
+    "ipfs_datasets_py/logic/autoformal/__init__.py": "659e06d06433a29bc7e268e9c68cacf498c8f99d257d4dca278caf652fd7a5a9",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "cdeddd255dd7d4a5cb08f3dc7b4620e894e9c9cbf0a29d9863804a90eeb67e67",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "ea23d878c00337e8b1e42c6c06faa976a61c3ef6b446b63c5a04327a34678b12",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "c3fe0e3693c2906e05f874d27da60f3a036712a3ffc8eab8b82d5c5895a73d7d"
+  },
+  "log": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-final-gates-20260925.log",
+  "manifest_after_sha256": "08b05462d6d756d1d18a08ea5eabebb29588e6bfb7a3699809f72dc0be47367e",
+  "manifest_before_sha256": "08b05462d6d756d1d18a08ea5eabebb29588e6bfb7a3699809f72dc0be47367e",
+  "source_count": 7707,
+  "source_unchanged": true,
+  "xml": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-final-gates-20260925.xml"
+}

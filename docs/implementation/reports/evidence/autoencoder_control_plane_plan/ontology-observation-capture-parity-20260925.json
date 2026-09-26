@@ -1,0 +1,1836 @@
+{
+  "admitted": false,
+  "bridge_evaluate_performed": false,
+  "cache_policy": "fresh process each mode; no capture result reuse; OS cache uncontrolled",
+  "capture_count": 9,
+  "distinct_sample_count": 6,
+  "elapsed_seconds": 17.638337888056412,
+  "exact_capture_parity": true,
+  "formalized": false,
+  "metric_disk_cache": 0,
+  "owner_dispatch_performed": false,
+  "passed": true,
+  "provers_called": false,
+  "recorded_at": "2026-09-25T07:53:03.259888+00:00",
+  "references": {
+    "capture": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-observation-reference-capture-20260925.py",
+      "sha256": "31f923a5fc7e5f9cab9486a26838857d2a412364026eba801f8142a8ffd0b689"
+    },
+    "conversion": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-conversion-reference-20260925.py",
+      "sha256": "a1ec4f7432e726d155d40e5eba12dc867af289aa67c24b22d2d3f0f835e35226"
+    },
+    "wrapper": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-observation-reference-wrapper-20260925.py",
+      "sha256": "518105a77a9cc88261ee513e4b3e553304fea8489a3f611245e0371296bc15b2"
+    }
+  },
+  "runs": [
+    {
+      "capture_wall_seconds": 6.390055148978718,
+      "captures": [
+        [
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "by",
+              "surface": "training and instruction required by"
+            },
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 4021a. Matters relating to the Foreign Service Institute\n(a) Director line of reporting\nThe Director of the Foreign Service Institute shall report to the Assistant Secretary for Human Resources for all matters pertaining to the management, execution, and strategy of the training and instruction required by .\n\n(b) Schools of instruction\nThe Foreign Service Institute shall consist of at least four schools of instruction, which shall provide instruction consistent with the requirements set forth in this subchapter. The schools of instruction shall be as follows:\n(1) The School of Professional and Area Studies, which shall provide job-specific orientation, tradecraft, and area studies, as well as new-hire orientation programs.\n(2) The School of Leadership and Management Studies, which shall provide leadership and crisis management training.\n(3) The School of Applied Information Technology Studies, which shall provide instruction to ensure information technology professionals have the up-to-date knowledge and skills required to operate and maintain the complex computer and technology systems employed by the Department.\n(4) The School of Foreign Languages, which shall be responsible for providing language instruction as prescribed by law and at the direction of the Secretary.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-22-4021a-fce42ca5c6a35f9d"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [
+                "application"
+              ],
+              "procedure_id": "application",
+              "surface": "application"
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "chapter",
+              "surface": "or different from this chapter"
+            },
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 4817. Preemption\n(a) Promotion and consumer education; funds from pork producers\nThis chapter is intended to occupy the field of\u2014\n(1) promotion and consumer education involving pork and pork products; and\n(2) obtaining funds therefor from pork producers.\n\n(b) Additional or different State regulation prohibited\nThe regulation of such activity (other than a regulation or requirement relating to a matter of public health or the provision of State or local funds for such activity) that is in addition to or different from this chapter may not be imposed by a State.\n\n(c) Application of section\nThis section shall apply only during a period beginning on the date of the commencement of the collection of assessments under and ending on the date of the termination of the collection of assessments under section 4811(a)(3) or 4811(b)(1)(B) of this title.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-7-4817-c0a689415be61f9b"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "",
+              "surface": ""
+            },
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 101. Oath by members of legislatures and officers\nEvery member of a State legislature, and every executive and judicial officer of a State, shall, before he proceeds to execute the duties of his office, take an oath in the following form, to wit: \u201cI, A B, do solemnly swear that I will support the Constitution of the United States.\u201d",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-4-101-b2aadd69bb073b70"
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "intervention",
+              "surface": "these conditions through appropriate medical intervention"
+            },
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u201cSEC. 102. FINDINGS ON SUBSTANCE USE DISORDERS AND MENTAL HEALTH.\n\u201cCongress makes the following findings:\n\u201c(1) More than 1,500,000 members of the Armed Forces have been deployed in Operation Iraqi Freedom and Operation Enduring Freedom. The 2005 Department of Defense Survey of Health Related Behaviors Among Active Duty Personnel reports that 23 percent of members of the Armed Forces on active duty acknowledge a significant problem with alcohol use disorder, with similar rates of acknowledged problems with alcohol use disorder among members of the National Guard.\n\u201c(2) The effects of substance use disorder are wide ranging, including significantly increased risk of suicide, exacerbation of mental and physical health disorders, breakdown of family support, and increased risk of unemployment and homelessness.\n\u201c(3) While veterans suffering from mental health conditions, chronic physical illness, and polytrauma may be at increased risk for development of a substance use disorder, treatment for these veterans is complicated by the need to address adequately the physical and mental symptoms associated with these conditions through appropriate medical intervention.\n\u201c(4) While the Veterans Health Administration has dramatically increased health services for veterans from 1996 through 2006, the number of veterans receiving specialized substance use disorder treatment services decreased 18 percent during that time. No comparable decrease in the national rate of substance use disorder has been observed during that time.\n\u201c(5) While some facilities of the Veterans Health Administration provide exemplary substance use disorder treatment services, the availability of such treatment services throughout the health care system of the Veterans Health Administration is inconsistent.\n\u201c(6) According to a 2006 report by the Government Accountability Office, the Department of Veterans Affairs significantly reduced its substance use disorder treatment and rehabilitation services between 1996 and 2006, and the Fiscal Year 2007 National Mental Health Program Monitoring System report shows that little progress has been made in restoring these services to their pre-1996 levels.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-38-102-505a7bed1f409aa4"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [
+                "decision"
+              ],
+              "procedure_id": "decision",
+              "surface": "decision"
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "creditable",
+              "surface": "civilian service creditable"
+            },
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 8410. Eligibility for annuity\nNotwithstanding any other provision of this chapter, an employee or Member must complete at least 5 years of civilian service creditable under section 8411 in order to be eligible for an annuity under this subchapter.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-5-8410-545e1e69d31abb65"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [
+                "issuance"
+              ],
+              "procedure_id": "issuance",
+              "surface": "issuance"
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "authorized",
+              "surface": "construction and operation of reclamation projects authorized"
+            },
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 391a. Advances to reclamation fund\nThe Secretary of the Treasury is authorized, upon request of the Secretary of the Interior and upon approval of the President, to transfer from time to time to the credit of the reclamation fund created by , such sum or sums, not exceeding in the aggregate $5,000,000, as the Secretary of the Interior may deem necessary for the construction and operation of reclamation projects authorized under the Act of June 17, 1902 ( ), and under way on March 3, 1931 , and Acts amendatory thereof or supplementary thereto.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-43-391a-cbc16163ce5b351b"
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "by",
+              "surface": "training and instruction required by"
+            },
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 4021a. Matters relating to the Foreign Service Institute\n(a) Director line of reporting\nThe Director of the Foreign Service Institute shall report to the Assistant Secretary for Human Resources for all matters pertaining to the management, execution, and strategy of the training and instruction required by .\n\n(b) Schools of instruction\nThe Foreign Service Institute shall consist of at least four schools of instruction, which shall provide instruction consistent with the requirements set forth in this subchapter. The schools of instruction shall be as follows:\n(1) The School of Professional and Area Studies, which shall provide job-specific orientation, tradecraft, and area studies, as well as new-hire orientation programs.\n(2) The School of Leadership and Management Studies, which shall provide leadership and crisis management training.\n(3) The School of Applied Information Technology Studies, which shall provide instruction to ensure information technology professionals have the up-to-date knowledge and skills required to operate and maintain the complex computer and technology systems employed by the Department.\n(4) The School of Foreign Languages, which shall be responsible for providing language instruction as prescribed by law and at the direction of the Secretary.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-22-4021a-fce42ca5c6a35f9d"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [
+                "application"
+              ],
+              "procedure_id": "application",
+              "surface": "application"
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "chapter",
+              "surface": "or different from this chapter"
+            },
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 4817. Preemption\n(a) Promotion and consumer education; funds from pork producers\nThis chapter is intended to occupy the field of\u2014\n(1) promotion and consumer education involving pork and pork products; and\n(2) obtaining funds therefor from pork producers.\n\n(b) Additional or different State regulation prohibited\nThe regulation of such activity (other than a regulation or requirement relating to a matter of public health or the provision of State or local funds for such activity) that is in addition to or different from this chapter may not be imposed by a State.\n\n(c) Application of section\nThis section shall apply only during a period beginning on the date of the commencement of the collection of assessments under and ending on the date of the termination of the collection of assessments under section 4811(a)(3) or 4811(b)(1)(B) of this title.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-7-4817-c0a689415be61f9b"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "",
+              "surface": ""
+            },
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 101. Oath by members of legislatures and officers\nEvery member of a State legislature, and every executive and judicial officer of a State, shall, before he proceeds to execute the duties of his office, take an oath in the following form, to wit: \u201cI, A B, do solemnly swear that I will support the Constitution of the United States.\u201d",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-4-101-b2aadd69bb073b70"
+              }
+            ]
+          }
+        ]
+      ],
+      "captures_sha256": "30030f7c4fd0c28578a4eb894749f20fe9b4803a7c5d0d23e81edc8e55ca0e5f",
+      "diagnostic_helper_substitution": true,
+      "mode": "reference",
+      "ordered_sample_ids": [
+        [
+          "us-code-22-4021a-fce42ca5c6a35f9d",
+          "us-code-7-4817-c0a689415be61f9b",
+          "us-code-4-101-b2aadd69bb073b70"
+        ],
+        [
+          "us-code-38-102-505a7bed1f409aa4",
+          "us-code-5-8410-545e1e69d31abb65",
+          "us-code-43-391a-cbc16163ce5b351b"
+        ],
+        [
+          "us-code-22-4021a-fce42ca5c6a35f9d",
+          "us-code-7-4817-c0a689415be61f9b",
+          "us-code-4-101-b2aadd69bb073b70"
+        ]
+      ],
+      "seconds_per_capture": 0.7100061276643019,
+      "source_configuration_sha256": "4155ac8ffb6e63e0ea466c4ba58e7698972c92466fe452ce69716115857aff0b",
+      "source_unchanged_within_process": true,
+      "telemetry": null
+    },
+    {
+      "capture_wall_seconds": 6.160123727982864,
+      "captures": [
+        [
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "by",
+              "surface": "training and instruction required by"
+            },
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 4021a. Matters relating to the Foreign Service Institute\n(a) Director line of reporting\nThe Director of the Foreign Service Institute shall report to the Assistant Secretary for Human Resources for all matters pertaining to the management, execution, and strategy of the training and instruction required by .\n\n(b) Schools of instruction\nThe Foreign Service Institute shall consist of at least four schools of instruction, which shall provide instruction consistent with the requirements set forth in this subchapter. The schools of instruction shall be as follows:\n(1) The School of Professional and Area Studies, which shall provide job-specific orientation, tradecraft, and area studies, as well as new-hire orientation programs.\n(2) The School of Leadership and Management Studies, which shall provide leadership and crisis management training.\n(3) The School of Applied Information Technology Studies, which shall provide instruction to ensure information technology professionals have the up-to-date knowledge and skills required to operate and maintain the complex computer and technology systems employed by the Department.\n(4) The School of Foreign Languages, which shall be responsible for providing language instruction as prescribed by law and at the direction of the Secretary.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-22-4021a-fce42ca5c6a35f9d"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [
+                "application"
+              ],
+              "procedure_id": "application",
+              "surface": "application"
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "chapter",
+              "surface": "or different from this chapter"
+            },
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 4817. Preemption\n(a) Promotion and consumer education; funds from pork producers\nThis chapter is intended to occupy the field of\u2014\n(1) promotion and consumer education involving pork and pork products; and\n(2) obtaining funds therefor from pork producers.\n\n(b) Additional or different State regulation prohibited\nThe regulation of such activity (other than a regulation or requirement relating to a matter of public health or the provision of State or local funds for such activity) that is in addition to or different from this chapter may not be imposed by a State.\n\n(c) Application of section\nThis section shall apply only during a period beginning on the date of the commencement of the collection of assessments under and ending on the date of the termination of the collection of assessments under section 4811(a)(3) or 4811(b)(1)(B) of this title.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-7-4817-c0a689415be61f9b"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "",
+              "surface": ""
+            },
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 101. Oath by members of legislatures and officers\nEvery member of a State legislature, and every executive and judicial officer of a State, shall, before he proceeds to execute the duties of his office, take an oath in the following form, to wit: \u201cI, A B, do solemnly swear that I will support the Constitution of the United States.\u201d",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-4-101-b2aadd69bb073b70"
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "intervention",
+              "surface": "these conditions through appropriate medical intervention"
+            },
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u201cSEC. 102. FINDINGS ON SUBSTANCE USE DISORDERS AND MENTAL HEALTH.\n\u201cCongress makes the following findings:\n\u201c(1) More than 1,500,000 members of the Armed Forces have been deployed in Operation Iraqi Freedom and Operation Enduring Freedom. The 2005 Department of Defense Survey of Health Related Behaviors Among Active Duty Personnel reports that 23 percent of members of the Armed Forces on active duty acknowledge a significant problem with alcohol use disorder, with similar rates of acknowledged problems with alcohol use disorder among members of the National Guard.\n\u201c(2) The effects of substance use disorder are wide ranging, including significantly increased risk of suicide, exacerbation of mental and physical health disorders, breakdown of family support, and increased risk of unemployment and homelessness.\n\u201c(3) While veterans suffering from mental health conditions, chronic physical illness, and polytrauma may be at increased risk for development of a substance use disorder, treatment for these veterans is complicated by the need to address adequately the physical and mental symptoms associated with these conditions through appropriate medical intervention.\n\u201c(4) While the Veterans Health Administration has dramatically increased health services for veterans from 1996 through 2006, the number of veterans receiving specialized substance use disorder treatment services decreased 18 percent during that time. No comparable decrease in the national rate of substance use disorder has been observed during that time.\n\u201c(5) While some facilities of the Veterans Health Administration provide exemplary substance use disorder treatment services, the availability of such treatment services throughout the health care system of the Veterans Health Administration is inconsistent.\n\u201c(6) According to a 2006 report by the Government Accountability Office, the Department of Veterans Affairs significantly reduced its substance use disorder treatment and rehabilitation services between 1996 and 2006, and the Fiscal Year 2007 National Mental Health Program Monitoring System report shows that little progress has been made in restoring these services to their pre-1996 levels.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-38-102-505a7bed1f409aa4"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [
+                "decision"
+              ],
+              "procedure_id": "decision",
+              "surface": "decision"
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "creditable",
+              "surface": "civilian service creditable"
+            },
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 8410. Eligibility for annuity\nNotwithstanding any other provision of this chapter, an employee or Member must complete at least 5 years of civilian service creditable under section 8411 in order to be eligible for an annuity under this subchapter.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-5-8410-545e1e69d31abb65"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [
+                "issuance"
+              ],
+              "procedure_id": "issuance",
+              "surface": "issuance"
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "authorized",
+              "surface": "construction and operation of reclamation projects authorized"
+            },
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 391a. Advances to reclamation fund\nThe Secretary of the Treasury is authorized, upon request of the Secretary of the Interior and upon approval of the President, to transfer from time to time to the credit of the reclamation fund created by , such sum or sums, not exceeding in the aggregate $5,000,000, as the Secretary of the Interior may deem necessary for the construction and operation of reclamation projects authorized under the Act of June 17, 1902 ( ), and under way on March 3, 1931 , and Acts amendatory thereof or supplementary thereto.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-43-391a-cbc16163ce5b351b"
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "by",
+              "surface": "training and instruction required by"
+            },
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 4021a. Matters relating to the Foreign Service Institute\n(a) Director line of reporting\nThe Director of the Foreign Service Institute shall report to the Assistant Secretary for Human Resources for all matters pertaining to the management, execution, and strategy of the training and instruction required by .\n\n(b) Schools of instruction\nThe Foreign Service Institute shall consist of at least four schools of instruction, which shall provide instruction consistent with the requirements set forth in this subchapter. The schools of instruction shall be as follows:\n(1) The School of Professional and Area Studies, which shall provide job-specific orientation, tradecraft, and area studies, as well as new-hire orientation programs.\n(2) The School of Leadership and Management Studies, which shall provide leadership and crisis management training.\n(3) The School of Applied Information Technology Studies, which shall provide instruction to ensure information technology professionals have the up-to-date knowledge and skills required to operate and maintain the complex computer and technology systems employed by the Department.\n(4) The School of Foreign Languages, which shall be responsible for providing language instruction as prescribed by law and at the direction of the Secretary.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-22-4021a-fce42ca5c6a35f9d"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [
+                "application"
+              ],
+              "procedure_id": "application",
+              "surface": "application"
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "chapter",
+              "surface": "or different from this chapter"
+            },
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 4817. Preemption\n(a) Promotion and consumer education; funds from pork producers\nThis chapter is intended to occupy the field of\u2014\n(1) promotion and consumer education involving pork and pork products; and\n(2) obtaining funds therefor from pork producers.\n\n(b) Additional or different State regulation prohibited\nThe regulation of such activity (other than a regulation or requirement relating to a matter of public health or the provision of State or local funds for such activity) that is in addition to or different from this chapter may not be imposed by a State.\n\n(c) Application of section\nThis section shall apply only during a period beginning on the date of the commencement of the collection of assessments under and ending on the date of the termination of the collection of assessments under section 4811(a)(3) or 4811(b)(1)(B) of this title.",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-7-4817-c0a689415be61f9b"
+              }
+            ]
+          },
+          {
+            "admitted": false,
+            "procedure": {
+              "admitted": false,
+              "events": [],
+              "procedure_id": "",
+              "surface": ""
+            },
+            "recipient": {
+              "admitted": false,
+              "frame_cid": "",
+              "instance_id": "",
+              "sort_id": "",
+              "surface": ""
+            },
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "sorts": [
+              "legal_modal_document"
+            ],
+            "text": "\u00a7 101. Oath by members of legislatures and officers\nEvery member of a State legislature, and every executive and judicial officer of a State, shall, before he proceeds to execute the duties of his office, take an oath in the following form, to wit: \u201cI, A B, do solemnly swear that I will support the Constitution of the United States.\u201d",
+            "triples": [
+              {
+                "object": "legal_modal_document",
+                "predicate": "type",
+                "subject": "us-code-4-101-b2aadd69bb073b70"
+              }
+            ]
+          }
+        ]
+      ],
+      "captures_sha256": "30030f7c4fd0c28578a4eb894749f20fe9b4803a7c5d0d23e81edc8e55ca0e5f",
+      "diagnostic_helper_substitution": false,
+      "mode": "observed",
+      "ordered_sample_ids": [
+        [
+          "us-code-22-4021a-fce42ca5c6a35f9d",
+          "us-code-7-4817-c0a689415be61f9b",
+          "us-code-4-101-b2aadd69bb073b70"
+        ],
+        [
+          "us-code-38-102-505a7bed1f409aa4",
+          "us-code-5-8410-545e1e69d31abb65",
+          "us-code-43-391a-cbc16163ce5b351b"
+        ],
+        [
+          "us-code-22-4021a-fce42ca5c6a35f9d",
+          "us-code-7-4817-c0a689415be61f9b",
+          "us-code-4-101-b2aadd69bb073b70"
+        ]
+      ],
+      "seconds_per_capture": 0.684458191998096,
+      "source_configuration_sha256": "4155ac8ffb6e63e0ea466c4ba58e7698972c92466fe452ce69716115857aff0b",
+      "source_unchanged_within_process": true,
+      "telemetry": {
+        "captures": [
+          {
+            "capture_scope_id": null,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 3.7057143909623846,
+            "emitted_record_count": 3,
+            "name": "optimizer_wrapper",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": null,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 1,
+            "started_record_count": 3
+          },
+          {
+            "capture_scope_id": 1,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 3.705705063068308,
+            "emitted_record_count": 3,
+            "name": "capture_samples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 1,
+            "record_scope_id": null,
+            "returned_record_count": 3,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 2,
+            "started_record_count": 3
+          },
+          {
+            "capture_scope_id": null,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 1.0586877830792218,
+            "emitted_record_count": 3,
+            "name": "optimizer_wrapper",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": null,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 19,
+            "started_record_count": 3
+          },
+          {
+            "capture_scope_id": 19,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 1.0586821669712663,
+            "emitted_record_count": 3,
+            "name": "capture_samples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 19,
+            "record_scope_id": null,
+            "returned_record_count": 3,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 20,
+            "started_record_count": 3
+          },
+          {
+            "capture_scope_id": null,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 1.3927504690364003,
+            "emitted_record_count": 3,
+            "name": "optimizer_wrapper",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": null,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 37,
+            "started_record_count": 3
+          },
+          {
+            "capture_scope_id": 37,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 1.3927450770279393,
+            "emitted_record_count": 3,
+            "name": "capture_samples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 37,
+            "record_scope_id": null,
+            "returned_record_count": 3,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 38,
+            "started_record_count": 3
+          }
+        ],
+        "context_closed": true,
+        "conversions": [
+          {
+            "capture_scope_id": 2,
+            "error_count": 0,
+            "record_scope_id": 4,
+            "reuse_qualified": false,
+            "scope_id": 7,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "error_count": 0,
+            "record_scope_id": 4,
+            "reuse_qualified": false,
+            "scope_id": 8,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "error_count": 0,
+            "record_scope_id": 9,
+            "reuse_qualified": false,
+            "scope_id": 12,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "error_count": 0,
+            "record_scope_id": 9,
+            "reuse_qualified": false,
+            "scope_id": 13,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "error_count": 0,
+            "record_scope_id": 14,
+            "reuse_qualified": false,
+            "scope_id": 17,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "error_count": 0,
+            "record_scope_id": 14,
+            "reuse_qualified": false,
+            "scope_id": 18,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "error_count": 0,
+            "record_scope_id": 22,
+            "reuse_qualified": false,
+            "scope_id": 25,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "error_count": 0,
+            "record_scope_id": 22,
+            "reuse_qualified": false,
+            "scope_id": 26,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "error_count": 0,
+            "record_scope_id": 27,
+            "reuse_qualified": false,
+            "scope_id": 30,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "error_count": 0,
+            "record_scope_id": 27,
+            "reuse_qualified": false,
+            "scope_id": 31,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "error_count": 0,
+            "record_scope_id": 32,
+            "reuse_qualified": false,
+            "scope_id": 35,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "error_count": 0,
+            "record_scope_id": 32,
+            "reuse_qualified": false,
+            "scope_id": 36,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "error_count": 0,
+            "record_scope_id": 40,
+            "reuse_qualified": false,
+            "scope_id": 43,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "error_count": 0,
+            "record_scope_id": 40,
+            "reuse_qualified": false,
+            "scope_id": 44,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "error_count": 0,
+            "record_scope_id": 45,
+            "reuse_qualified": false,
+            "scope_id": 48,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "error_count": 0,
+            "record_scope_id": 45,
+            "reuse_qualified": false,
+            "scope_id": 49,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "error_count": 0,
+            "record_scope_id": 50,
+            "reuse_qualified": false,
+            "scope_id": 53,
+            "stage": "recipient_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "error_count": 0,
+            "record_scope_id": 50,
+            "reuse_qualified": false,
+            "scope_id": 54,
+            "stage": "procedure_conversion",
+            "status": "success",
+            "successful": true,
+            "supported": true,
+            "warning_count": 0
+          }
+        ],
+        "counters": {
+          "captures_observed": 6,
+          "conversions_observed": 18,
+          "records_emitted": 9,
+          "records_observed": 9,
+          "stages_observed": 39
+        },
+        "errors": [],
+        "limits": {
+          "captures": 128,
+          "conversions": 32768,
+          "errors": 4096,
+          "label_characters": 256,
+          "producer_identity_json_bytes": 65536,
+          "records": 4096,
+          "stages": 32768
+        },
+        "memory_bound_scope": "retained row counts and label lengths; Python overhead is not byte-attested",
+        "observations_complete": true,
+        "observations_scope": "Instrumented capture boundaries, direct suppressed exceptions, and explicitly observed conversion results only; transitive parser/repair failures may remain unobserved. Returned without observed error does not establish reuse eligibility.",
+        "producer_identity": {
+          "source_config_sha256": "4155ac8ffb6e63e0ea466c4ba58e7698972c92466fe452ce69716115857aff0b"
+        },
+        "producer_identity_verified": false,
+        "records": [
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 3.0102134870830923,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 0,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 2,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "scope_id": 4,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.5277120980899781,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 1,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 2,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "scope_id": 9,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.16775530006270856,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 2,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 2,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "scope_id": 14,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.5240536169148982,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 0,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 20,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "scope_id": 22,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.19342023297213018,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 1,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 20,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "scope_id": 27,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.34119084500707686,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 2,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 20,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "scope_id": 32,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.6879065450048074,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 0,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 38,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "scope_id": 40,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.5367584769846871,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 1,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 38,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "scope_id": 45,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.16806176700629294,
+            "emitted_record_count": 0,
+            "name": "record",
+            "observed_error_count": 0,
+            "ordinal": 2,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 38,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "scope_id": 50,
+            "started_record_count": 0
+          }
+        ],
+        "reuse_qualified": false,
+        "schema_version": "ontology-capture-observation-v1",
+        "stage_totals": {
+          "fallback_projection": {
+            "aborted_scopes": 0,
+            "calls": 9,
+            "elapsed_seconds": 5.616669237031601,
+            "scopes_with_observed_error": 0
+          },
+          "frame_triples": {
+            "aborted_scopes": 0,
+            "calls": 9,
+            "elapsed_seconds": 7.856055162847042e-06,
+            "scopes_with_observed_error": 0
+          },
+          "procedure": {
+            "aborted_scopes": 0,
+            "calls": 9,
+            "elapsed_seconds": 0.16389300709124655,
+            "scopes_with_observed_error": 0
+          },
+          "recipient": {
+            "aborted_scopes": 0,
+            "calls": 9,
+            "elapsed_seconds": 0.3326370830181986,
+            "scopes_with_observed_error": 0
+          },
+          "recipient_import": {
+            "aborted_scopes": 0,
+            "calls": 3,
+            "elapsed_seconds": 4.592002369463444e-06,
+            "scopes_with_observed_error": 0
+          }
+        },
+        "stage_totals_scope": "retained stage rows; incomplete when observation bounds truncate rows",
+        "stages": [
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 2.4479813873767853e-06,
+            "emitted_record_count": 0,
+            "name": "recipient_import",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 2,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 3,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 1.2959353625774384e-06,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 4,
+            "record_scope_id": 4,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 5,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 2.817093834048137,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 4,
+            "record_scope_id": 4,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 6,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.14628931798506528,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 4,
+            "record_scope_id": 4,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 7,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.038652113056741655,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 4,
+            "record_scope_id": 4,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 8,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 1.184060238301754e-06,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 9,
+            "record_scope_id": 9,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 10,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.47834242694079876,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 9,
+            "record_scope_id": 9,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 11,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.027552310959436,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 9,
+            "record_scope_id": 9,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 12,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.016827280982397497,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 9,
+            "record_scope_id": 9,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 13,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 9.759096428751945e-07,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 14,
+            "record_scope_id": 14,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 15,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.15868273295927793,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 14,
+            "record_scope_id": 14,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 16,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.0036557309795171022,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 14,
+            "record_scope_id": 14,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 17,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 2,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.0032689919462427497,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 14,
+            "record_scope_id": 14,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 18,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 6.079208105802536e-07,
+            "emitted_record_count": 0,
+            "name": "recipient_import",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 20,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 21,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 5.599576979875565e-07,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 22,
+            "record_scope_id": 22,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 23,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.4513458660803735,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 22,
+            "record_scope_id": 22,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 24,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.03825724497437477,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 22,
+            "record_scope_id": 22,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 25,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.029213494970463216,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 22,
+            "record_scope_id": 22,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 26,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 8.320203050971031e-07,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 27,
+            "record_scope_id": 27,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 28,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.16494551207870245,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 27,
+            "record_scope_id": 27,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 29,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.018129645031876862,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 27,
+            "record_scope_id": 27,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 30,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.00821614300366491,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 27,
+            "record_scope_id": 27,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 31,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 6.880145519971848e-07,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 32,
+            "record_scope_id": 32,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 33,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.3083612360060215,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 32,
+            "record_scope_id": 32,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 34,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.01859161804895848,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 32,
+            "record_scope_id": 32,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 35,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 20,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.009146855096332729,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 32,
+            "record_scope_id": 32,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 36,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 1.5361001715064049e-06,
+            "emitted_record_count": 0,
+            "name": "recipient_import",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 38,
+            "record_scope_id": null,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 39,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 6.560003384947777e-07,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 40,
+            "record_scope_id": 40,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 41,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.5914772069081664,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 40,
+            "record_scope_id": 40,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 42,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.048939684056676924,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 40,
+            "record_scope_id": 40,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 43,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.038667250075377524,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 40,
+            "record_scope_id": 40,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 44,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 8.480856195092201e-07,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 45,
+            "record_scope_id": 45,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 46,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.4872972359880805,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 45,
+            "record_scope_id": 45,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 47,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.027621448040008545,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 45,
+            "record_scope_id": 45,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 48,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.016722543979994953,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 45,
+            "record_scope_id": 45,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 49,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 8.16071406006813e-07,
+            "emitted_record_count": 0,
+            "name": "frame_triples",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 50,
+            "record_scope_id": 50,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 51,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.15912318602204323,
+            "emitted_record_count": 0,
+            "name": "fallback_projection",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 50,
+            "record_scope_id": 50,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 52,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.0036000829422846437,
+            "emitted_record_count": 0,
+            "name": "recipient",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 50,
+            "record_scope_id": 50,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 53,
+            "started_record_count": 0
+          },
+          {
+            "capture_scope_id": 38,
+            "discarded_record_count": 0,
+            "elapsed_seconds": 0.0031783339800313115,
+            "emitted_record_count": 0,
+            "name": "procedure",
+            "observed_error_count": 0,
+            "ordinal": null,
+            "outcome": "returned_without_observed_error",
+            "parent_scope_id": 50,
+            "record_scope_id": 50,
+            "returned_record_count": null,
+            "reuse_qualified": false,
+            "sample_id": null,
+            "scope_id": 54,
+            "started_record_count": 0
+          }
+        ]
+      }
+    }
+  ],
+  "same_schedule": true,
+  "same_source_configuration": true,
+  "sample_memory_used": false,
+  "schema": "ontology-observation-capture-diagnostic-v1",
+  "scope": "one paired nine-capture diagnostic; no bridge evaluation, model loading or training",
+  "script_sha256": "cac6f2e428b632ea8865b6b8e0861e3ccde3627ea766b39f2ba2b57bb100719e",
+  "source_selection": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-native-20260925.json",
+    "sha256": "98c54695aaa4de0d5cc407edba213c3d5e8a275abc00b8c28b1e87fe09a39012"
+  },
+  "weights_downloaded": false,
+  "weights_loaded": false
+}

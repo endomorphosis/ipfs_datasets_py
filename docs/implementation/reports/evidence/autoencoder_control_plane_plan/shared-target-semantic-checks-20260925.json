@@ -1,0 +1,69 @@
+{
+  "admitted": false,
+  "all_executed_tests_passed": true,
+  "focused_pass_count": 182,
+  "formalized": false,
+  "pilot": {
+    "case_count": 5,
+    "mean_cycle_semantic_score": 1.0,
+    "mean_forward_semantic_score": 0.915,
+    "receipt": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-semantic-pilot-20260925.json"
+  },
+  "pinned_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "recorded_at": "2026-09-25T06:54:36.676988+00:00",
+  "regex_ast_parity": {
+    "equivalent_after_search_dispatch_normalization": true,
+    "functions": [
+      "_legal_semantic_atoms_from_text",
+      "_bridge_cues_from_text"
+    ],
+    "reference": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-reference-modal-20260925.py"
+  },
+  "schema": "shared-target-evaluation-semantic-checks-v1",
+  "skipped_count": 13,
+  "source_hashes": {
+    "ipfs_datasets_py/logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+    "ipfs_datasets_py/logic/modal/decompiler.py": "ecc13e624136d3f9a2d56b7c699d1d9b309847d1c1c8050ba422203f1b10a119",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "d8f35525ccb1d2db2124fc8b5988e6dc6db0f198e94c73e553844e13cfa5a172",
+    "tests/unit/optimizers/logic_theorem_optimizer/conftest.py": "28c6a027bf1dab9365f1b70f9b90428a136cb5e6436994176f5b6a9ddc6efc11",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_target_grammar_fastpath.py": "5dd332f2f2e8b7507d1e91c34f3a8ceb55a55c1aa64ef23f3e6abf7d67a76b2a",
+    "tests/unit_tests/logic/modal/test_decompiler_pattern_cache.py": "b0a3d02245c961fda3a064cde9d1b27f93a660b1c7d9dbcfa0ba3a1cbee5f66e"
+  },
+  "test_runs": [
+    {
+      "command": "python -m pytest -q tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_target_grammar_fastpath.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py",
+      "origin": "agent reported; final grammar source hashes independently rechecked; ran before modal regex patch",
+      "passed": 71,
+      "seconds": 4.61
+    },
+    {
+      "command": "python -m pytest tests/unit_tests/logic/modal/test_decompiler_pattern_cache.py -q",
+      "origin": "agent reported; final decompiler source hash independently rechecked",
+      "passed": 35,
+      "seconds": 3.32
+    },
+    {
+      "command": "python3 -m pytest -q tests/unit/logic/test_ontology_capture.py tests/unit/logic/test_recipient_reference.py tests/unit/logic/test_procedure_slot.py tests/unit/logic/test_autoformal_speed_semantics.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_ir_decompiler_slots.py",
+      "origin": "root tool output; final production sources unchanged throughout",
+      "passed": 76,
+      "seconds": 228.05,
+      "skip_reason": "existing conftest labels these pre-existing compiler/registry drift outside PGIR-033 latent diagnostics",
+      "skipped": 13,
+      "skipped_tests": [
+        "test_modal_decompiler_adds_bounded_source_semantic_summary_for_long_uscode_spans",
+        "test_modal_decompiler_adds_compact_uscode_semantic_support_for_packet_004087_shapes",
+        "test_modal_decompiler_emits_family_pair_semantic_reconstruction_text",
+        "test_modal_decompiler_emits_frame_self_operator_transition_slots",
+        "test_modal_decompiler_projects_source_role_target_family_slots",
+        "test_modal_decompiler_refines_effective_date_temporal_typed_ir_slots",
+        "test_modal_decompiler_refines_frame_status_heading_typed_ir_slots",
+        "test_modal_decompiler_refines_frame_statutory_deontic_temporal_slots",
+        "test_modal_decompiler_refines_packet_003430_frame_target_pairs",
+        "test_modal_decompiler_refines_uscode_heading_fallback_typed_ir_slots",
+        "test_modal_decompiler_surfaces_epistemic_frame_pair_cues_for_statutory_scope",
+        "test_modal_ir_decompiler_emits_deontic_selected_frame_grounding_slots",
+        "test_modal_slots_compact_status_surface_text_when_us_abbreviation_truncates_span"
+      ]
+    }
+  ]
+}

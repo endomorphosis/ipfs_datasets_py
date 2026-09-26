@@ -1,0 +1,265 @@
+{
+  "admitted": false,
+  "constitution_formalized": false,
+  "current_differences_from_r3_producer": [
+    {
+      "current_sha256": "3ac839c86fc9789ad0f02a0dd1ea640e3b60f40befa25d7f51128ceea84b4ae2",
+      "path": "logic/autoformal/repair_intake.py",
+      "recorded_sha256": "6a349d581e5027b8cffede2fe73e25c167106fb8c343e8453e4ecc3a3e5f55ed"
+    }
+  ],
+  "current_package_file_count": 7720,
+  "documents": [
+    {
+      "bytes": 14259,
+      "path": "docs/implementation/reports/autoencoder_daemon_shared_reports.md",
+      "sha256": "0dbf2e2888f476014d08a5f0657d277073ba860d79b74500e730c26d8a6af7fb"
+    },
+    {
+      "bytes": 10419,
+      "path": "docs/implementation/reports/autoencoder_daemon_shared_targets.md",
+      "sha256": "a8e3c1e01b1fbcdec8b3ce2b510290bf67be3d3e39a4e20439904b64dff784b4"
+    },
+    {
+      "bytes": 62619,
+      "path": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "2e40852cad3f84b5dd597895b522aeed0ec06f1fb853ffe3283a0facb0d7a00c"
+    },
+    {
+      "bytes": 53589,
+      "path": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "6fb5c140e54ee406a9743472d92cbe58e601d12e5ab629c2613d3aebb1c07090"
+    }
+  ],
+  "guarded_daemon_comparison_qualified": false,
+  "implementation_validated": true,
+  "local_link_count": 68,
+  "local_links_passed": true,
+  "native_child_processes": [
+    {
+      "exists": false,
+      "pid": 1606691
+    },
+    {
+      "exists": false,
+      "pid": 1643822
+    }
+  ],
+  "native_evidence": [
+    {
+      "bytes": 3607446,
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-shared-report-native-20260925.json",
+      "recorded_passed": false,
+      "sha256": "cd4725132655dc9a6d1288c590c6273f5984262769dd300b951aedc27b41b744"
+    },
+    {
+      "bytes": 3609953,
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-shared-report-native-20260925-r2.json",
+      "recorded_passed": false,
+      "sha256": "2b9d66aaedb86bc93ebc76762f477d194860850283abb915e4bc94e5fa39d3d5"
+    },
+    {
+      "bytes": 2382816,
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/report-wire-profile-20260925.json",
+      "recorded_passed": true,
+      "sha256": "c839678498d3c26a5522dc210724727f1b151d20ff130a98aad00518562eec81"
+    },
+    {
+      "bytes": 6460925,
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-shared-report-native-20260925-r3.json",
+      "recorded_passed": false,
+      "sha256": "3114a63d34a9b949659ff7e70af19e93f92ece76d551a539c8e498770dcaf02b"
+    }
+  ],
+  "native_status": "invalidated_by_external_source_drift_before_shared_arm",
+  "original_constitution_pid_exists": false,
+  "original_receipts_unchanged": [
+    {
+      "bytes": 8889,
+      "path": "workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "pinned_checkpoint": {
+    "bytes": 25895338,
+    "inode": 57804548,
+    "links": 2,
+    "path": "workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "promotion_performed": false,
+  "publication_performed": false,
+  "r3_recorded_package_file_count": 7720,
+  "recorded_at": "2026-09-25T11:35:38.446858+00:00",
+  "recorded_source_snapshots": [
+    {
+      "bytes": 975796,
+      "bytes_still_match": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/source-code/uscode_modal_daemon_runner.py",
+      "sha256": "4e893a774ad1d8db9669fb1a7cda62eabffe051c6c815787def5afa527924065",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py"
+    },
+    {
+      "bytes": 12671,
+      "bytes_still_match": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/source-code/autoencoder_daemon_report_session.py",
+      "sha256": "216345f36bc817b63c4d53aabf39955dda0119c8cefc11b339f636055084a3fd",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_report_session.py"
+    },
+    {
+      "bytes": 9010,
+      "bytes_still_match": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/source-code/autoencoder_report_preparation.py",
+      "sha256": "80b06960e3548fe2ecde22f4f7d8e40f95cb7e18a20b51edd02aca6ae9bdc6a4",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_report_preparation.py"
+    },
+    {
+      "bytes": 43584,
+      "bytes_still_match": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/source-code/legal_ir_report_bundle.py",
+      "sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py"
+    },
+    {
+      "bytes": 1356978,
+      "bytes_still_match": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/source-code/modal_autoencoder.py",
+      "sha256": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+    },
+    {
+      "bytes": 81068,
+      "bytes_still_match": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/source-code/modal_autoencoder_checkpoint.py",
+      "sha256": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py"
+    }
+  ],
+  "required_next_validation": "Fresh preparation plus cold/shared daemon pair and graph audit under an approximately twelve-minute source-stable window; do not reuse r3 artifact with changed producer configuration.",
+  "schema": "daemon-full-report-implementation-validation-v1",
+  "speed_claim": false,
+  "storage_observation": {
+    "ceiling_bytes": 50000000000,
+    "roots": [
+      {
+        "apparent_bytes": 1145079483,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 130195604,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "apparent_bytes": 33106478470,
+        "path": "/tmp/pytest-of-barberb"
+      },
+      {
+        "apparent_bytes": 67759742,
+        "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small"
+      },
+      {
+        "apparent_bytes": 95,
+        "path": "/tmp/lift-coding-target-reduction-pin-20260925"
+      },
+      {
+        "apparent_bytes": 94636344,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan"
+      }
+    ],
+    "scope": "Named roots only, apparent bytes, not a global census. Includes unrelated shared pytest scratch. No cleanup performed.",
+    "sum_apparent_bytes": 34544149738
+  },
+  "syntax_checked_files": [
+    {
+      "bytes": 43584,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py",
+      "sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059"
+    },
+    {
+      "bytes": 12671,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_report_session.py",
+      "sha256": "216345f36bc817b63c4d53aabf39955dda0119c8cefc11b339f636055084a3fd"
+    },
+    {
+      "bytes": 9010,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_report_preparation.py",
+      "sha256": "80b06960e3548fe2ecde22f4f7d8e40f95cb7e18a20b51edd02aca6ae9bdc6a4"
+    },
+    {
+      "bytes": 975796,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+      "sha256": "4e893a774ad1d8db9669fb1a7cda62eabffe051c6c815787def5afa527924065"
+    },
+    {
+      "bytes": 46224,
+      "path": "scripts/ops/legal_ir/benchmark_daemon_shared_reports.py",
+      "sha256": "9a6643f10da541173c465ed502a724ffa58804d9a85aa15642d75735ce288c53"
+    },
+    {
+      "bytes": 21437,
+      "path": "scripts/ops/legal_ir/profile_report_wire.py",
+      "sha256": "16c086b9626c0d15ee25bab67de1394647fc80f29e6905d7cd541f4df4a8fb00"
+    },
+    {
+      "bytes": 33570,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_report_bundle.py",
+      "sha256": "a5082bc9477050a7a6dc4fa1e8df7c7f74d02e607182e2eceae5ad0872062802"
+    },
+    {
+      "bytes": 19017,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_report_session.py",
+      "sha256": "18352e7be302fada7b0b618e94e1a9a6723596e21cbb181fdf6184d4024d3ba8"
+    },
+    {
+      "bytes": 16289,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_report_preparation.py",
+      "sha256": "da8b092f68cfd2283e823c0948f8df8efdd83db79fa2aa2813dbffd21705c99b"
+    },
+    {
+      "bytes": 12316,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_shared_report_integration.py",
+      "sha256": "807329bb46bd52eef3c523ff8aac95f35ee0390321430290b0f8a084fae90b51"
+    },
+    {
+      "bytes": 9503,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_report_wire_profile.py",
+      "sha256": "4fe2c23a8ba8dbec6aac396772a974794ba7b247f25dd6a07f355fd14667fc66"
+    }
+  ],
+  "tests": {
+    "additional_daemon_passed": 240,
+    "combined_final_passed": 286,
+    "distinct_passed": 526,
+    "known_failure": "test_default_bridge_loss_adapters_cover_registered_logic_views expects six names; registry has seven including ui_ux_ir_formalization",
+    "known_preexisting_failures": 1,
+    "logs": [
+      {
+        "bytes": 2475,
+        "path": "workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/final-r3-focused-regression.log",
+        "sha256": "d760604b96a0eacf7badf3f1d42102f3bd9dfc21ed0e66dea8def8e2e2be5372"
+      },
+      {
+        "bytes": 2154,
+        "path": "workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/daemon-and-semantic-regression.log",
+        "sha256": "0f8bfb30e6b11e0eae6ebea9dd4d9c510bb86d34b39f884662d94104af1c1374"
+      }
+    ],
+    "semantic_gate_and_pilot_passed": true,
+    "semantic_gates_rechecked_after_external_drift": {
+      "bytes": 1011,
+      "path": "workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/semantic-after-external-drift.log",
+      "sha256": "25795ef7e7fb8ffbc564a45977cb73dfa56b5c4c2e66b2cf64697fac8876edad"
+    }
+  },
+  "weights_downloaded": false
+}

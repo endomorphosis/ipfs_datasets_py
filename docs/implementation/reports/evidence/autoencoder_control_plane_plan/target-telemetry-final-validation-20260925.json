@@ -1,0 +1,169 @@
+{
+  "admitted": false,
+  "all_focused_tests_passed": false,
+  "codec_restored_exactly": true,
+  "empty_vocabulary_abstention_passed": true,
+  "formalized": false,
+  "hydration_candidate_rejected": true,
+  "local_links": [
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "autoencoder_shared_target_evaluation.md"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "evidence/autoencoder_control_plane_plan/hydration-codec-rejected-candidate-20260925.json"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "evidence/autoencoder_control_plane_plan/hydration-codec-microbenchmark-20260925.json"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "evidence/autoencoder_control_plane_plan/target-telemetry-tests-20260925.xml"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "evidence/autoencoder_control_plane_plan/target-telemetry-current-gates-20260925.xml"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "evidence/autoencoder_control_plane_plan/target-telemetry-source-drift-20260925.json"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "evidence/autoencoder_control_plane_plan/target-telemetry-native-20260925.json"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "autoencoder_ontology_capture_reuse_design.md"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_target_failure_telemetry.md",
+      "target": "../plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_ontology_capture_reuse_design.md",
+      "target": "evidence/autoencoder_control_plane_plan/warm-target-profile-20260925-r3.json"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_ontology_capture_reuse_design.md",
+      "target": "evidence/autoencoder_control_plane_plan/shared-target-ablation-20260925.json"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_ontology_capture_reuse_design.md",
+      "target": "../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_ontology_capture_reuse_design.md",
+      "target": "../../../ipfs_datasets_py/logic/autoformal/ontology_capture.py"
+    },
+    {
+      "exists": true,
+      "source": "docs/implementation/reports/autoencoder_ontology_capture_reuse_design.md",
+      "target": "evidence/autoencoder_control_plane_plan/shared-target-growth-20260925.json"
+    }
+  ],
+  "native_attempt_error": {
+    "message": "target producer code/runtime changed in resident process; start a fresh process",
+    "type": "ValueError"
+  },
+  "native_attempt_source_drift": [
+    {
+      "current_sha256": "6d2bcae44bb366ee4c09b3b828cf902ae7d66361c57dc3ecf150117ed64f7fe6",
+      "path": "ipfs_datasets_py/logic/autoformal/__init__.py",
+      "recorded_sha256": "d11fa0b5318b98dec123b23eae5c950940918e57bb96a992660b7d06743925b5"
+    },
+    {
+      "current_sha256": "25ba8fbd6cadb9f04e712ef918a04f4afb5da4be2a0d74fcfc5e9d704978aa86",
+      "path": "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "recorded_sha256": "36cc9fd4851ac642a4998d2a87536ffa3dacf74fc6725a5328bd5efbd6a2cad9"
+    }
+  ],
+  "native_owner_dispatch_performed": false,
+  "native_qualification_passed": false,
+  "native_receipt": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-telemetry-native-20260925.json",
+    "sha256": "9f8dbbed44f16bd12557155c9a4f326453a1a218d94783391ce0eff94fd23e4e"
+  },
+  "new_bridge_evaluate_timing_available": false,
+  "pinned_checkpoint_unchanged": true,
+  "production_change": "receipt-only bridge telemetry",
+  "promotion_performed": false,
+  "publication_performed": false,
+  "required_three_semantic_gates_passed": true,
+  "restored_codec_tests": {
+    "evidence": "hydration-codec-rejected-candidate-20260925.json",
+    "passed": 59
+  },
+  "schema": "target-telemetry-final-validation-v1",
+  "source_hashes": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py": "a6b27ba6ee08048ddecb667228802a0f062ce315e5f41c801a6ec549b1bd2ef6",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+    "scripts/ops/legal_ir/qualify_target_preparation_telemetry.py": "281189523dfc4ff704df9918dddc68e47dc9c4f6053cf805e731d85020065f44",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py": "8eba60a9a4e7e598752f29e7ca7e587a5f40ae9a2a49cb10d3e238e239b21296"
+  },
+  "storage_observation": {
+    "below_ceiling_for_named_roots": true,
+    "ceiling_bytes": 50000000000,
+    "named_roots": [
+      {
+        "bytes": 280276947,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "bytes": 130206797,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "bytes": 31966770761,
+        "path": "/tmp/pytest-of-barberb"
+      },
+      {
+        "bytes": 67759742,
+        "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small"
+      }
+    ],
+    "scope": "named-root observation, not global filesystem census; shared pytest scratch includes unrelated work; no cleanup performed",
+    "sum_bytes": 32445014247
+  },
+  "test_suites": [
+    {
+      "elapsed_seconds": 0.874,
+      "errors": 0,
+      "failures": 1,
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-telemetry-tests-20260925.xml",
+      "sha256": "b9bbe926bab0960332b54032e97f228ba2b35bde190034a49c0513049edbf9b1",
+      "skipped": 0,
+      "tests": 39
+    },
+    {
+      "elapsed_seconds": 0.464,
+      "errors": 0,
+      "failures": 1,
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-telemetry-current-gates-20260925.xml",
+      "sha256": "6e0b0377e372eb2721b79bbca5c6056e38706151696c497ce903341b054f0d27",
+      "skipped": 0,
+      "tests": 17
+    }
+  ],
+  "unique_focused_test_result": {
+    "failed": 1,
+    "passed": 97,
+    "scope": "22 preparation +59 snapshot/bundle +17 semantic; repeat gate run not counted again"
+  },
+  "weights_downloaded": false
+}

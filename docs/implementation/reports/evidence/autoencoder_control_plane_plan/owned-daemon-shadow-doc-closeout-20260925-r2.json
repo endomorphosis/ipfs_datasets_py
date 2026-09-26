@@ -1,0 +1,68 @@
+{
+  "admitted": false,
+  "checks": {
+    "all_other_document_links_exist": true,
+    "combined_tests_unchanged": true,
+    "harness_tests_unchanged": true,
+    "independent_audit_unchanged": true,
+    "package_sources_unchanged": true,
+    "prior_closeout_passed": true,
+    "prior_closeout_unchanged": true,
+    "protected_artifacts_unchanged": true,
+    "qualification_unchanged": true,
+    "retained_failed_attempt_unchanged": true,
+    "retained_failure_audit_unchanged": true,
+    "tests_and_harness_unchanged": true
+  },
+  "correction": "Two historical plan paragraphs now distinguish implemented bounded v6 input/owner completion from broader production, mapped lifetimes and sparse authority. Main report links this follow-up.",
+  "documents": [
+    {
+      "bytes": 12547,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_owned_shadow.md",
+      "sha256": "eca8255dcd949bd3c1a74e08c81a80f4b69a541b6c9701176108c0a18c8ff145"
+    },
+    {
+      "bytes": 10265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_sparse_shadow.md",
+      "sha256": "a122497c7c66bcc38c4eb35a7b440ff029c7c64e6344f3f5014703834690bd5a"
+    },
+    {
+      "bytes": 19771,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_owned_invocation.md",
+      "sha256": "6748e0f6dc0f8f332cd9f155187cfe7e31216fbaa7cfa1bc69ff14398ba3e6fe"
+    },
+    {
+      "bytes": 30882,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DAEMON_OWNED_INVOCATION_PLAN.md",
+      "sha256": "ffd3c3c53f0c1d84840a6c2d85a8f4dd9a1fc097ee8d34eaf474e77b1a645935"
+    },
+    {
+      "bytes": 70655,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "e357cdffcb681dff149b6894c05b23e50755a430b60c06f01a96c56ee73eac45"
+    },
+    {
+      "bytes": 60892,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "42ed3b331e8e87dc1500f18d8b2352c04591d65af0af0560faa7c32a91c0ea0e"
+    }
+  ],
+  "full_checkpoints_authoritative": true,
+  "local_links_checked": 152,
+  "missing_links": [],
+  "new_tests_training_or_evaluation_performed": false,
+  "passed": true,
+  "prior_closeout": {
+    "bytes": 10696,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-shadow-closeout-20260925-r2.json",
+    "sha256": "73015f20422ed40b020d40a3037e08ad37346f7581883ff6efdb13695a4fbba1"
+  },
+  "promoted": false,
+  "prospective_self_links": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-shadow-doc-closeout-20260925-r2.json"
+  ],
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T15:19:07.579038+00:00",
+  "schema": "owned-daemon-shadow-documentation-closeout-v1",
+  "source_file_count": 7732
+}

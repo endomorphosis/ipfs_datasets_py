@@ -1,0 +1,29 @@
+{
+  "schema": "archived-target-encoding-gc-failed-start-v1",
+  "date": "2026-09-25",
+  "evidence_kind": "root-reported observed tool output; not a retained raw traceback log",
+  "observed_tool_chunk_id": "4cab41",
+  "observed_exit_code": 1,
+  "mode": "normal_gc",
+  "stage": "package_sources before package imports and timed measurement",
+  "exception_type": "IsADirectoryError",
+  "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type/test/test_external_interface/test_file_manager.py",
+  "failed_harness_sha256": "88c778277aa2bb8b346d3298b401bd5bcec22b095ee5c9f65f3d2ad5c32d22ba",
+  "package_imports_performed": false,
+  "timed_measurement_started": false,
+  "output_receipt_created": false,
+  "correction": "Match frozen cold profiler source-manifest scanning: reject source symlinks or resolved paths outside the canonical package; hash only is_file paths and skip directories ending in .py.",
+  "corrected_harness_sha256": "c440e0c7b8239ceae03248403896adbe6204312ff3092b4afe65fc04b362a6c8",
+  "verification_scope": "package_sources only through stdlib runpy; no package imports, hydration or timed benchmark",
+  "package_source_scan_passed": true,
+  "package_python_file_count": 7710,
+  "source_manifest_sha256": "c01be25eaf7e1e87e9a10b6866cb3334f11f489a70c918be21f3d60678011958",
+  "source_manifest_hash_encoding": "UTF-8 json.dumps(sort_keys=True,separators=(',',':'))",
+  "skipped_directory_paths": [
+    "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type/test/test_external_interface/test_file_manager.py",
+    "ipfs_datasets_py/processors/multimedia/convert_to_txt_based_on_mime_type/test/test_external_interface/test_file_manager.py"
+  ],
+  "training_performed": false,
+  "formalized": false,
+  "admitted": false
+}

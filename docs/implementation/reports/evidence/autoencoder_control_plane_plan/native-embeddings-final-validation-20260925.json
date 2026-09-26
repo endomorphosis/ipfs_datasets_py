@@ -1,0 +1,256 @@
+{
+  "admitted": false,
+  "archived_v1_to_v4_job_compatibility": {
+    "identities": {
+      "03146fd247e7922dd177e974a9b486aefcbe719f07bdc4391a646d5556838bfe": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-sparse-arrow-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "058d570d41b031e3ffaca25770d16468a1282aacaebce7b15de97f417bb362a6": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-sparse-arrow-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "13132c2d32d908f5be9a47852f68b0f162e893e2de7d085b8a79b0bd986411fe": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "162c495422722c492da1eab225c8e25cbb2e10b06009c43f978f98de395124f3": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925-r2.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "17acfcd530b1a3dbc47f0d0635511d19b19cc9991bf3470d83eaec5673411be0": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925-r2.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "1cf30477d07169b6ed77aeb70cdf76aa4bed61d92e94174dc5827ed6384bb16a": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-bundles-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "334626f434d8c57fb57c2734e9ff8162be2eb106bf5770800e9ea5b6fbe00798": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925-r2.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "473d4001935071f675d797a3683cac5b81707a79393867f66642a6460a90b86d": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "4ec1030a97fdf5aabe2d6017095b3cf0136e8e157637b97759744d6104e4342b": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/verified-corpus-training-20260925.json",
+        "schema": "autoencoder-training-job-v4"
+      },
+      "4ec3506e886c963e6bdb712ac44271852b24eb7483969b4666ada4e4a7ea116f": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-bundles-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "5185dffc78e923922ec580fbd9f04e33854b316f70e6a327a01f53927af7a154": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "534cadfcbb44fd79447a6e286cf4e61bd8dbc3c7acf95f31350b24c475f6a261": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925.json",
+        "schema": "autoencoder-training-job-v1"
+      },
+      "58f1c5500fda6ea456a2aaa6f98be37b81872f22bed61b3dfcdf0ea4f145a2cd": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/verified-corpus-training-20260925.json",
+        "schema": "autoencoder-training-job-v4"
+      },
+      "66cf7da3fed2d645788f3370ccc675d2d2860b975d529ff08be90dd708236e86": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925-r2.json",
+        "schema": "autoencoder-training-job-v1"
+      },
+      "6f1151cfaa54b4029e86ec99e094dd107323eaaf08b0596e83c379bee6d622bd": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-bundles-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "704ffc093f443be2b2d961129d52cb52c0694a73ab2adc0f4b2ad1158c2a0295": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-bundles-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "710507f159ccd4cb3245e0df1b09ead2187b95fc49dc6e1e8d94a35a7b4a0c24": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "794cb2582a0a2dd7de4312a17ac089955715bf8f1938a1f57a4a1e205d465595": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-sparse-arrow-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "79e31c15ad7df0d67702fb3786f5d7eb4bd081baadb37e8c807ba4c9f135e985": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-bundles-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "7fcafde776c9a040d9bdb3681b49231eeea72301580065a72963424ca98b814b": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/verified-corpus-training-20260925.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "9262a053f7c921b64a81ea0995e1886cf521e7b7981f5b30ba7decbd39832377": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925-r2.json",
+        "schema": "autoencoder-training-job-v1"
+      },
+      "9bb9d2fed6acb6281d689ab7af9c61db326da293b137e76a074ff4d4aa38422f": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925-r2.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "9c51c5311c53ae26c6f3cce19f93005fe09972995593ad97f2e2485d46d85a96": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925-r2.json",
+        "schema": "autoencoder-training-job-v1"
+      },
+      "9d5bb3bf3309414fee34bdf3930f897bb7886172dbaa122c99c3663a953a978a": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925-r2.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "a9c579ea1cb5cf0c2a600a9ac6b2c8306d5ca27f319f9722f3daf5ec17ed2c91": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "ad8119d06e93a1d879caca287e61e55c35f9436c31653d0164b394531b34d061": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/verified-corpus-training-20260925.json",
+        "schema": "autoencoder-training-job-v4"
+      },
+      "bbea6bbe9ebf2de8321ad838de4fe9f3f807ae20bfa63a614f71708d2998008c": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925-r2.json",
+        "schema": "autoencoder-training-job-v1"
+      },
+      "c818af33f975557a3bcd40acede5d14d6f1d3761f514b5d6d8af706f6c9afca1": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/verified-corpus-training-20260925.json",
+        "schema": "autoencoder-training-job-v4"
+      },
+      "cae705ce63846f9629ddfe21882b3e87a38252284a894b50ddb6035708e4d366": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-bundles-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "d07358a238dafca3af04467c485b6caedf1d0a57fb00017b46d26db7a247fc6c": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-sparse-arrow-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "d3cbdb24ca6e0f74c91810049c92f2b9ec69a081733e9e74f4eed862734a3f5d": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925.json",
+        "schema": "autoencoder-training-job-v1"
+      },
+      "d745af7d671812ea483e739f6e8ebd34c249018f5348714c8340b95292c1f384": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925-r2.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "d7a1d73bea1e381852704fbe5eb9ddf01a9d10aaa776de790221a5885b06fce6": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925.json",
+        "schema": "autoencoder-training-job-v1"
+      },
+      "e1e03750958ea5369750fc3ba35a25fd4406132c3d9042f988ea011d11a30800": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-bundles-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "ebc474c4afa82ae0d8c9a65c2da73f702583af27ee200a90aa5f054015683eb1": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/parallel-training-20260925.json",
+        "schema": "autoencoder-training-job-v1"
+      },
+      "efc7f07e2e09e1b84622f6bf867a69f86c658a76bdf2a0bb90cb578d74d6d723": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/verified-corpus-training-20260925.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "f3ad0154a1bd89ac4b01aec254a774468ef8325164c57ee9a8b7633fbcdac42c": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-sparse-arrow-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      },
+      "fee4963b8141b098990429c8b261bcc55455c05ca7aa9a0a04d18cbbc558dead": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/sparse-checkpoint-persistence-20260925.json",
+        "schema": "autoencoder-training-job-v3"
+      },
+      "ff1e00d6b035cc4b097edb0819928f3a709f45214612a6004008ead3e54c3026": {
+        "receipt": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-sparse-arrow-20260925.json",
+        "schema": "autoencoder-training-job-v2"
+      }
+    },
+    "schema_counts": {
+      "autoencoder-training-job-v1": 8,
+      "autoencoder-training-job-v2": 13,
+      "autoencoder-training-job-v3": 14,
+      "autoencoder-training-job-v4": 4
+    },
+    "unchanged": true,
+    "unique_count": 39
+  },
+  "files_changed_since_initial_regression": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+  ],
+  "followup_change": "Move new optional producer field after schema_version to preserve positional pre-v6 constructor API; add one regression test",
+  "followup_worker_tests": {
+    "command": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    ],
+    "elapsed_seconds": 6.3,
+    "evidence_origin": "completed worker pytest output reported by embedding_job_binding agent; module and test hashes independently verified by root",
+    "failed": 0,
+    "passed": 128
+  },
+  "formalized": false,
+  "heldout_canary_qualified": false,
+  "initial_regression": {
+    "control_tests_passed": 426,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/native-embeddings-tests-20260925.json",
+    "semantic_tests_passed": 66,
+    "sha256": "17776fa30364400e463fe41b41ec59e828dd3acec1684deed3355ba3ca424443"
+  },
+  "native_audit": {
+    "attested_code_unchanged": true,
+    "passed": true,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/native-embeddings-20260925-r2.json",
+    "sha256": "dfa40aea79deda7ab3c1789dd31da293598b775f63550754706607b5e7283d95"
+  },
+  "new_native_projection_training_performed": false,
+  "observed_apparent_directory_bytes": {
+    "cached_gte_model_repository": 67759742,
+    "workspace/test-logs": 125419116,
+    "workspace/todo-queues": 130194297
+  },
+  "passed": true,
+  "pinned_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "producer_receipt_byte_identity_across_native_runs": true,
+  "producer_receipt_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T06:02:58.419007+00:00",
+  "schema": "native-embedding-final-validation-v1",
+  "source_and_test_sha256": {
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "57f4c5d90ab867da408daeadedc86981d16ed3824a322c5672e364159e8c5d97",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "5ec4ca7c38570b81a77bf2dab6b53c98201bb432bb41cb78ba507b10d0a3fac0",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "ea23d878c00337e8b1e42c6c06faa976a61c3ef6b446b63c5a04327a34678b12",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "c354a655ae7ab90a74282d8f329179819df0bb7222d212e2d5bd31e32e9a2fa8",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": "ff6271821ec312bbcea1e8a6694c8bde8c3e8714755213288a746805d12658bc",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "bbe16ddae1a4de2ffdcb98b3e4f067d8b50ebb3607962b52afd57bf88358b897",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_import.py": "aecc05fadb89ebb8143a968d64a4ea7508bfc8f3edee5d5ac52da3820d1cb42b",
+    "scripts/ops/legal_ir/audit_native_uscode_embedding_production.py": "381f0bbb08229fcc15add4faf259be07d895d4502f44cc573265ef4f72cb8fb6",
+    "tests/unit/duckdb_control/test_autoencoder_registry.py": "a7a0aecbddf9c681377e8bdf182d8bd1ece11f26d5e2b3d1790852c5bfe28110",
+    "tests/unit/logic/test_autoencoder_router.py": "b4547cda5b5fa14fa32dbf4cc817ba8ae0837346e204cfdc290f827669edaf06",
+    "tests/unit/logic/test_autoformal.py": "d9376ff535c1863c5cb09995a017787460b001d86f63c7dda0d0f06ff46d657f",
+    "tests/unit/logic/test_autoformal_speed_semantics.py": "dd39db2ac11f1870fb18da15e6cd7255a2b57506676842f3fdc789a08e36a174",
+    "tests/unit/logic/test_constitution_inventory.py": "70ab1d90fe0be8503b23817196cc6500edc6f0b5033eed7d28adaa536703eb57",
+    "tests/unit/logic/test_constitution_on_state.py": "c9c7c101af4a6b513188125c8320aff0ed3aac7c65aa1a866916a7b789ba2b07",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_index.py": "0c93b36f037497145fd71ab1a5044fb1f2432a22d391d92f81ae2e408e516d47",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_manifest.py": "2ad997edc8402666995f3f6b68b349099ffac0279b15b6b6e750af12ab764720",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_production.py": "331cc63cefe5f56159336201ab7a4956d0fb960f897d8cfe6e5c1e1ea33ac3bd",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py": "88825805f91311917b6e21743108fc782eb22b22c07eac7f8b200d8aa4cc0598",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py": "1f9b54a8cf9d8fd900051c3a279934f7d4d5d79b779b21faf81c61a611f6738b",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "4bcc2b9be7cb2dccf56f5d1bb7a3452c56c135da6e200b09bb2070030816c6b4",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py": "c69f8089f8c7e4592add7877a92bd5b361b03b87e1da6e96cff25a97933fe4dd"
+  },
+  "storage_observation_scope": "du -sb after native r2; named roots include inputs, audit databases/artifacts and cached model blobs; not a global filesystem census or reservation enforcement",
+  "v5_job_roundtrips": [
+    {
+      "artifact_sha256": "8030aed71bf8c5488a0d6ea8fd05fa2cf26c9fc20a6556c5663fac5ad64d4dd2",
+      "canonical_sha256": "f65bdc71ba7bff4e22ef4246b352f7070ef7e0cad8908b0a800bb6057c17e861",
+      "path": "workspace/test-logs/federal-corpus-audits/indexed-jobs-20260925/batch-0.job.json"
+    },
+    {
+      "artifact_sha256": "875cc53e8924dbcc3742c8767baf207013b11927e5a5b9edb3576954a391c05f",
+      "canonical_sha256": "03547d163aee69c821c590eede67ae990d36831ea2f92a8ef5086b952c546dfa",
+      "path": "workspace/test-logs/federal-corpus-audits/indexed-jobs-20260925/batch-1.job.json"
+    }
+  ]
+}

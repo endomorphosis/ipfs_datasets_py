@@ -4,6 +4,9 @@ This directory contains detailed implementation plans and completion reports for
 
 ## Contents
 
+- [FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md](FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md) - Next implementation sequence: complete shared targets, accepted sparse updates, Arrow-backed weights, source coverage, reviewed semantics, Lake evidence and DuckDB/DuckLake/Hugging Face releases
+- [US_CODE_AUTOFORMALIZATION_PLAN.md](US_CODE_AUTOFORMALIZATION_PLAN.md) - U.S. Code formalization, JusticeDAO source lineage, DuckDB/IPFS proof versioning, ontology reuse and training; owned by this submodule
+- [AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md](AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md) - Versioned multilingual autoencoders, parallel workers, DuckDB/Quack control, DuckLake history, Arrow snapshots and incremental updates, and Hugging Face releases
 - `NOTIMPLEMENTEDERROR_IMPLEMENTATION_PLAN.md` - Plan for eliminating NotImplementedError placeholders
 - `DEONTIC_LOGIC_IMPLEMENTATION_PLAN.md` - Deontic logic system implementation
 - `GRAPHRAG_INTEGRATION_PLAN_COMPLETE.md` - GraphRAG integration completion report

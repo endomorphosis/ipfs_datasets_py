@@ -1,0 +1,390 @@
+{
+  "artifact_descriptor_verification": "All five referenced artifacts were independently read and hashed during audit/persistence. Initial state comparison uses the protected checkpoint, not the overwritten active state alias in initial_checkpoint.path.",
+  "artifacts": {
+    "final_checkpoint": {
+      "bytes": 1664462,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-corpus-inputs-20260925/native-cycle-r1/daemon-workspace/workspace/todo-queues/owner-local-input-qualification.state.json",
+      "sha256": "073b48475589472bdeb67c16b460917e299bde118a469b0905085edeac681469"
+    },
+    "native_log": {
+      "bytes": 1070204,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-corpus-inputs-20260925/native-cycle-r1/daemon-workspace/workspace/test-logs/owner-local-input-qualification.jsonl",
+      "sha256": "a7925f8108227b57dc30be51be83d94839017acc0f738af15e242ec4f14ab42a"
+    },
+    "native_receipt": {
+      "bytes": 8978803,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-corpus-input-native-cycle-20260925-r1.json",
+      "sha256": "75d68fbf782bd09c656a6bfb8a679ee92da73e0a78bde3b2ad9a1598cd59e940"
+    },
+    "native_summary": {
+      "bytes": 986147,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-corpus-inputs-20260925/native-cycle-r1/daemon-workspace/workspace/test-logs/owner-local-input-qualification.summary",
+      "sha256": "931e830bb863a4e93a0fb277efd37e2a5f4b5380b5e1a7415f0675f975612274"
+    },
+    "protected_initial_checkpoint": {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    }
+  },
+  "authority": {
+    "admitted": false,
+    "checkpoint_authority_granted_by_input_snapshot": false,
+    "formalized": false,
+    "heldout_canary_qualified": false,
+    "owner_head_promotion_performed": false,
+    "publication_performed": false,
+    "scope": "Input-owner provenance and one native lifecycle only; no admission, theorem proof, owner-head promotion or publication authority.",
+    "snapshot_internal_promotion_is_owner_authority": false,
+    "speed_claim": false
+  },
+  "bridge_diagnostics": {
+    "train": {
+      "adapters": {
+        "cec_dcec": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        },
+        "deontic_norms": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        },
+        "external_prover_router": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        },
+        "fol_tdfol": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        },
+        "modal_frame_logic": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        }
+      },
+      "cache_hits": 0,
+      "cache_misses": 3,
+      "cache_size": 3,
+      "evaluated_count": 15,
+      "evaluation_seconds_max": 0.259987831,
+      "max_sample_text_chars": 0,
+      "metric_failures": 0,
+      "persistent_cache_enabled": false,
+      "sample_count": 3,
+      "worker_count": 1
+    },
+    "validation": {
+      "adapters": {
+        "cec_dcec": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        },
+        "deontic_norms": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        },
+        "external_prover_router": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        },
+        "fol_tdfol": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        },
+        "modal_frame_logic": {
+          "accepted_count": 3,
+          "evaluated_count": 3,
+          "sample_count": 3,
+          "status_counts": {
+            "ok": 3
+          }
+        }
+      },
+      "cache_hits": 0,
+      "cache_misses": 3,
+      "cache_size": 6,
+      "evaluated_count": 15,
+      "evaluation_seconds_max": 0.465544701,
+      "max_sample_text_chars": 0,
+      "metric_failures": 0,
+      "persistent_cache_enabled": false,
+      "sample_count": 3,
+      "worker_count": 1
+    }
+  },
+  "cache_and_cold_scope": {
+    "compiler_cache_counter_scope": "legal_ir_evaluation_cache and result-cache summaries were captured at cycle summary update before asynchronous snapshot shutdown completion; not final all-work counters.",
+    "controlled_cold_filesystem": false,
+    "controlled_cold_vs_warm_speed_comparison": false,
+    "fresh_daemon_process_and_private_cwd": true,
+    "independent_compiler_diagnostic_text_cap": 400,
+    "metric_disk_cache_enabled": false,
+    "optimizer_and_bridge_text_cap": 0,
+    "optimizer_before_result_reused": false,
+    "precomputed_target_or_report_bundle_supplied": false,
+    "projection_precomputed_results_reused": true,
+    "raw_capture_or_full_graph_parity_measured": false,
+    "report_cache_miss_caveat": "Runner _BRIDGE_IR_REPORT_CACHE misses do not mean bridge adapters re-executed: evaluate_legal_ir_multiview defaults cache=True and earlier before evaluations populate its separate in-process report cache.",
+    "target_and_multiview_memory_caches_preserved": true,
+    "train_sample_memory": true,
+    "validation_sample_memory": false
+  },
+  "memory": {
+    "after_daemon_before_audit": {
+      "max_rss_kib": 1834616,
+      "pss_kib": 1634617,
+      "rss_kib": 1678428
+    },
+    "before_daemon": {
+      "max_rss_kib": 998564,
+      "pss_kib": 923561,
+      "rss_kib": 966780
+    },
+    "external_load_caveat": "Native telemetry observed an unrelated Leanstral GPU process. The daemon reported no own GPU memory and no child processes; timings are not an isolated-system speed benchmark.",
+    "matched_end_scope": "After actual daemon shutdown, before independent audit.",
+    "units": "KiB"
+  },
+  "native_outcome": {
+    "callable_replacements": [],
+    "complete_bridge_diagnostics": true,
+    "daemon_exit_code": 0,
+    "input_session_checks": {
+      "boundary_checks": true,
+      "closed": true,
+      "exact_descriptor": true,
+      "exact_identity": true,
+      "integrity_verified": true,
+      "no_failure": true,
+      "not_poisoned": true,
+      "partition_counts": true,
+      "rows_consumed": true,
+      "selection_checks": true
+    },
+    "native_cycle_qualified": true,
+    "network_guard": {
+      "denied_syscalls": [
+        "socket",
+        "connect",
+        "sendto",
+        "sendmsg",
+        "sendmmsg"
+      ],
+      "mechanism": "linux_seccomp",
+      "socket_denial_verified": true
+    },
+    "receipt_passed": true,
+    "selected_roles_exact": true,
+    "target_counts_positive": true,
+    "tree_pin": {
+      "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    }
+  },
+  "optimizer": {
+    "accepted_epochs": 0,
+    "all_four_optimizer_target_counts": {
+      "autoencoder_after_train": 3,
+      "autoencoder_after_validation": 3,
+      "autoencoder_before_train": 3,
+      "autoencoder_before_validation": 3
+    },
+    "attempted_candidates": 1,
+    "before_after_train_evaluation_dict_equal": true,
+    "before_after_validation_evaluation_dict_equal": true,
+    "learning_improvement_demonstrated": false,
+    "precomputed_training_and_holdout_evaluations_reused": true,
+    "projection_update_backend": "native",
+    "rejected_candidates": 1,
+    "snapshot_validation_dict_equals_cycle_after_validation": true
+  },
+  "passed": true,
+  "recorded_at": "2026-09-25T13:10:04.114788+00:00",
+  "schema": "daemon-corpus-input-native-cycle-independent-audit-v1",
+  "scope": "Read-only independent audit of the completed single native cycle; evidence persistence only. No native cycle, bridge generation, training, or proof evaluation was repeated.",
+  "snapshot": {
+    "checks": {
+      "closed": true,
+      "complete": true,
+      "default_enabled": true,
+      "no_failures": true,
+      "no_rejections": true,
+      "one_completed": true,
+      "one_published": true,
+      "shutdown_drained": true,
+      "version_match": true,
+      "worker_stopped": true
+    },
+    "completed": 1,
+    "exact_backend_and_theorem_success_counts_available": false,
+    "failed": 0,
+    "internally_promoted": 1,
+    "lean_lake_mathlib_execution_on_reviewed_snapshot_route": false,
+    "no_external_proof_or_admission_claim": true,
+    "proof_metric_scope": "_snapshot_proof_metric sums evaluate_modal_prover_compilation across three validation samples. Compact summary omits the three detailed signals; per-family work also occurs, so 32 is not a global count of all routing calls.",
+    "proof_routing": "ProverIntegrationAdapter(use_provers=[], enable_cache=True) skips named external prover initialization. Modal statements take a separate branch and call ModalProverRouter, which can invoke local TDFOL tableaux, a weaker-system tableaux fallback, or a compile-only route.",
+    "published": 1,
+    "rejected": 0,
+    "shutdown": {
+      "drained": true,
+      "result_count": 1,
+      "timeout_seconds": 600.0,
+      "unmatched_result_ids": []
+    },
+    "top_level_validation_proof_metric": {
+      "attempted_count": 32,
+      "error_count": 0,
+      "failed_count": 0,
+      "failure_ratio": 0.0,
+      "sample_count": 3,
+      "unavailable_count": 0,
+      "valid_count": 32
+    },
+    "valid_signal_meaning": "An AVAILABLE modal route is marked valid regardless of modal_theorem_valid. These are successful compilation/routing signals, not a count of proved theorems.",
+    "versions": {
+      "compiler_version": "ddf6b79467b68159650df81befc288c8553df664",
+      "holdout_version": "4d6efd532f4ab313f9cd37bdc9ea0c60ab6c955a79d333485568309f74a64e8f",
+      "schema_version": "legal-ir-daemon-metrics-v2",
+      "state_version": "509e2a47ba91b5e00bc370c97455f5a83e1abcad20750e1b15b522cd2b44f60f"
+    }
+  },
+  "source_and_integrity_guards": {
+    "full_source_manifest_repeated_by_this_audit": false,
+    "recorded_native_child_producer_config_unchanged": true,
+    "recorded_native_child_source_unchanged": true,
+    "recorded_native_parent_checks": {
+      "harness_unchanged": true,
+      "historical_inputs_unchanged": true,
+      "private_owner_database_unchanged_after_export": true,
+      "producer_config_unchanged": true,
+      "protected_checkpoint_unchanged": true,
+      "source_unchanged": true
+    },
+    "source_and_runtime_modified_by_this_audit": false
+  },
+  "source_references": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py:1864 (_snapshot_proof_metric)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py:4889 (bridge report acquisition/cache scope)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py:7229 (before-train isolated timer)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py:20251 (phase timer)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py:21993 (cycle cache summary)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py:22754 (snapshot drain)",
+    "ipfs_datasets_py/logic/bridge/multiview.py:1087 (default-on memory report cache)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py:27573 (modal compilation metric)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:254 (modal branch)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py:403 (route availability versus theorem validity)",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_prover_router.py:32 (local routes)"
+  ],
+  "state_comparison": {
+    "canonical_bytes": 25895654,
+    "canonical_sha256": "a6acee34cdfcbd222eb615cbb9c866a79d2e9e27cf7cfeeec0bee4032ab66bfc",
+    "canonicalization": "json.dumps(state.to_dict(), sort_keys=True, separators=(\",\", \":\"), ensure_ascii=True, allow_nan=False).encode()",
+    "checkpoint_transport_bytes_equal": false,
+    "complete_native_state_canonical_bytes_equal": true,
+    "component_count": 38,
+    "component_digests_equal": true,
+    "decoded_type": "ModalAutoencoderTrainingState",
+    "default_digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+    "default_identity_equal": true,
+    "diagnostic_note": "Successful equality comparisons preceded an optional CheckpointManifest.precision metadata lookup that raised AttributeError; no state comparison failed. Artifact hashes were independently verified afterward.",
+    "final_reference": "artifacts.final_checkpoint",
+    "final_revision": 0,
+    "identity_apis": [
+      "state.state_identity_record(metric_lineage=...) .to_dict()",
+      "state.state_identity()",
+      "state.component_digests",
+      "state.state_revision",
+      "state.to_dict()"
+    ],
+    "initial_reference": "artifacts.protected_initial_checkpoint",
+    "initial_revision": 0,
+    "loader": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_checkpoint.load_checkpoint(path, recover=False)",
+    "metric_lineage": "legal-ir-daemon-metrics-v2",
+    "performed_during_completed_independent_audit": true,
+    "protected_and_final_artifacts_unchanged_after_load": true,
+    "same_lineage_digest": "509e2a47ba91b5e00bc370c97455f5a83e1abcad20750e1b15b522cd2b44f60f",
+    "same_lineage_identity_records_equal": true,
+    "same_lineage_matches_published_snapshot": true
+  },
+  "timing": {
+    "actual_main_seconds_including_shutdown": 133.9401735420106,
+    "before_train_evaluator_scope": "Separate monotonic timer around full_family_evaluator only; excludes phase heartbeat and initial result-cache lookup.",
+    "before_train_evaluator_seconds": 28.788953,
+    "child_seconds_including_audits": 141.6149814160308,
+    "cycle_seconds": 102.398,
+    "durations_additive": false,
+    "evaluation_seconds_max_scope": "Maximum whole per-sample multiview report acquisition plus training-target extraction within bridge_ir_metric_block; not a per-adapter wall time.",
+    "individual_bridge_adapter_wall_times_measured": false,
+    "no_second_resolution_timestamp_inference": true,
+    "parent_seconds_including_setup_audits": 146.95813675096724,
+    "phase_scope_details": {
+      "after_train_eval": "Own heartbeat and evaluator.",
+      "after_validation_eval": "Own heartbeat and evaluator, state identity/lineage construction, both after-result cache writes and probe-cadence preparation.",
+      "before_train_eval": "Evaluator plus own phase heartbeat and subsequent validation-lineage construction.",
+      "before_validation_eval": "Own heartbeat, result-cache lookup, evaluator, control metadata and compiler kwargs/cadence preparation."
+    },
+    "phase_timer_scope": "mark_cycle_phase captures time.time before telemetry transition, summary persistence and phase event append. Each duration includes its own heartbeat/log overhead and all work until the next mark.",
+    "recorded_cycle_phase_seconds": {
+      "after_train_eval": 2.013,
+      "after_validation_eval": 2.464,
+      "before_train_eval": 28.79,
+      "before_validation_eval": 27.561,
+      "bridge_ir_train": 1.108,
+      "bridge_ir_validation": 1.461,
+      "compiler_ir_guided_train": 0.001,
+      "compiler_ir_guided_validation": 7.885,
+      "compiler_ir_train": 0.067,
+      "compiler_ir_validation": 7.068,
+      "hammer_guidance_cycle": 0.001,
+      "introspection_disagreement_export": 0.001,
+      "leanstral_direct_guidance_projection": 0.507,
+      "leanstral_rule_gap_projection": 0.001,
+      "pre_todo_introspection_disagreement_export": 0.001,
+      "projection_training": 2.637,
+      "queue_merge": 0.001,
+      "sample_memory_probe": 0.067,
+      "sampling": 0.353,
+      "state_persistence_enqueue": 12.006,
+      "todo_supervisor_optimize": 0.07,
+      "todo_supervisor_queue_flush": 0.004
+    },
+    "snapshot_evaluation_seconds": 45.204943863,
+    "snapshot_overlaps_cycle_and_shutdown": true
+  }
+}

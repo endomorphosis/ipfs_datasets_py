@@ -58,15 +58,19 @@ from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
 # (:data:`SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID`) remains the historical
 # evidence-bound raw CID from the frozen selection report.  The on-disk
 # research adapter later evolved under EVAL-005 and the PLAT/PLAT2
-# deterministic edit waves.  Production remains bound to the selected
-# historical behavior, while drift in the evolving research adapter stays
-# visible.  Production integrity therefore pins *both*:
+# deterministic edit waves.  Production retains that historical selection
+# lineage. The explicitly authorized numeric-hour deadline extension is
+# disclosed separately in CID-bound provenance. Its pilot output must match
+# the unchanged historical IR after removing only the gold-supported addition;
+# every other pilot case retains exact identity and per-case non-regression.
+# Production integrity therefore pins *both*:
 #
 # * selection lineage → ``SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID``
 # * current measured adapter bytes → ``MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID``
 #
 # Any intentional adapter edit requires a deliberate update of this constant
-# and revalidation of the frozen L1 suite.  Do not weaken the exact-CID check.
+# and revalidation against the unchanged frozen L1 suite. Do not replace the
+# historical CIDs or permit undeclared differences to pass the exact-CID check.
 MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID: Final = (
     "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny"
 )
@@ -574,6 +578,8 @@ def _base_provenance(
         # Deliberate residual hygiene pin of current on-disk adapter bytes
         # (distinct from the historical selection identity above).
         "measured_adapter_raw_cid": MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID,
+        "parser_semantics_revision": "structured_exceptions_numeric_hours_v1",
+        "selection_lineage_is_historical": True,
         "implementation_representative_arm_id": (IMPLEMENTATION_REPRESENTATIVE_ARM_ID),
         "implementation_representative_arm_identity_cid": (
             IMPLEMENTATION_REPRESENTATIVE_ARM_IDENTITY_CID

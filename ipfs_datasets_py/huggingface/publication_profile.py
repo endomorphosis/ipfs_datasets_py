@@ -61,6 +61,20 @@ PATENT_LEGAL_COMMIT_MESSAGE: Final = (
     "patent-legal: append-only immutable public release"
 )
 
+# Autoformal discrepancy todos for the accelerate supervisor loop.
+AUTOFORMAL_TODO_PROFILE_ID: Final = "autoformal-todo"
+AUTOFORMAL_TODO_PROGRAM_ID: Final = "uscode-autoformal-todo"
+AUTOFORMAL_TODO_GOAL_ID: Final = "AFTD-G010"
+AUTOFORMAL_TODO_PLAN_SCHEMA: Final = "autoformal-todo-hf-publication-plan/v1"
+AUTOFORMAL_TODO_RECEIPT_SCHEMA: Final = "autoformal-todo-hf-publication-receipt/v1"
+AUTOFORMAL_TODO_CANONICAL_RELEASE_SCHEMA: Final = "autoformal-todo-huggingface-release/v1"
+AUTOFORMAL_TODO_DEFAULT_REPOSITORY_ID: Final = "justicedao/uscode-autoformal-todos"
+AUTOFORMAL_TODO_RELEASE_PREFIX_TEMPLATE: Final = "data/autoformal_todo/{release_id}"
+AUTOFORMAL_TODO_POINTER_PATH: Final = "runtime/autoformal-todo-release-pointer.json"
+AUTOFORMAL_TODO_COMMIT_MESSAGE: Final = (
+    "autoformal-todo: append-only supervisor discrepancy todos"
+)
+
 DEFAULT_TARGET_REVISION: Final = "main"
 DEFAULT_REPOSITORY_TYPE: Final = "dataset"
 
@@ -76,12 +90,14 @@ _KNOWN_PLAN_SCHEMAS: Final[frozenset[str]] = frozenset(
     {
         ABBY_VOICE_PLAN_SCHEMA,
         PATENT_LEGAL_PLAN_SCHEMA,
+        AUTOFORMAL_TODO_PLAN_SCHEMA,
     }
 )
 _KNOWN_RECEIPT_SCHEMAS: Final[frozenset[str]] = frozenset(
     {
         ABBY_VOICE_RECEIPT_SCHEMA,
         PATENT_LEGAL_RECEIPT_SCHEMA,
+        AUTOFORMAL_TODO_RECEIPT_SCHEMA,
     }
 )
 
@@ -373,6 +389,38 @@ def patent_legal_publication_profile(
     )
 
 
+def autoformal_todo_publication_profile(
+    *,
+    repository_id: str = AUTOFORMAL_TODO_DEFAULT_REPOSITORY_ID,
+    goal_id: str = AUTOFORMAL_TODO_GOAL_ID,
+) -> HuggingFacePublicationProfile:
+    """Supervisor-todo Hugging Face profile for U.S. Code autoformal gaps."""
+
+    return HuggingFacePublicationProfile(
+        profile_id=AUTOFORMAL_TODO_PROFILE_ID,
+        program_id=AUTOFORMAL_TODO_PROGRAM_ID,
+        goal_id=goal_id,
+        plan_schema_version=AUTOFORMAL_TODO_PLAN_SCHEMA,
+        receipt_schema_version=AUTOFORMAL_TODO_RECEIPT_SCHEMA,
+        canonical_release_schema=AUTOFORMAL_TODO_CANONICAL_RELEASE_SCHEMA,
+        repository_id=repository_id,
+        repository_type=DEFAULT_REPOSITORY_TYPE,
+        release_prefix_template=AUTOFORMAL_TODO_RELEASE_PREFIX_TEMPLATE,
+        pointer_path=AUTOFORMAL_TODO_POINTER_PATH,
+        target_revision=DEFAULT_TARGET_REVISION,
+        commit_message=AUTOFORMAL_TODO_COMMIT_MESSAGE,
+        prohibited_operations=BASE_PROHIBITED_OPERATIONS,
+        require_pinned_verification_before_promotion=True,
+        allow_remote_write_on_dry_run=False,
+        metadata={
+            "legacy_profile": False,
+            "program": "uscode-autoformal-todo",
+            "track": "supervisor-todo",
+            "jsonl_written": False,
+        },
+    )
+
+
 def get_publication_profile(
     profile_id: str,
     *,
@@ -397,6 +445,17 @@ def get_publication_profile(
         if repository_id is None:
             return patent_legal_publication_profile()
         return patent_legal_publication_profile(repository_id=repository_id)
+    if key in {
+        AUTOFORMAL_TODO_PROFILE_ID,
+        "autoformal",
+        "autoformal_todo",
+        "uscode-autoformal-todo",
+        "aftd",
+        "aftd-g010",
+    }:
+        if repository_id is None:
+            return autoformal_todo_publication_profile()
+        return autoformal_todo_publication_profile(repository_id=repository_id)
     raise PublicationProfileError(f"unknown publication profile_id: {profile_id!r}")
 
 

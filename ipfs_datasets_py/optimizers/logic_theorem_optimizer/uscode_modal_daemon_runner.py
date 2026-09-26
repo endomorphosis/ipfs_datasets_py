@@ -100,6 +100,29 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import 
     build_modal_supervisor_health_report,
     state_to_compiler_patch_lag,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_autoencoder as _daemon_target_model
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_target_session import (
+    DaemonTargetDescriptor,
+    VerifiedDaemonTargetSession,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_report_session import (
+    DaemonReportDescriptor,
+    VerifiedDaemonReportSession,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_corpus_inputs import (
+    DaemonCorpusInputDescriptor,
+    VerifiedDaemonCorpusInputs,
+    corpus_input_checkpoint_provenance,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_observation import current_observer
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_weight_session import current_weight_session
+
+# Explicit shared graphs are private to these native consumers. Plugins keep
+# their existing live evaluation path, including any custom side effects.
+_DAEMON_TARGET_NATIVE_AUTOENCODER = AdaptiveModalAutoencoder
+_DAEMON_TARGET_NATIVE_EVALUATE = AdaptiveModalAutoencoder.evaluate
+_DAEMON_TARGET_NATIVE_PROJECTION = AdaptiveModalAutoencoder.train_generalizable_projection
+_DAEMON_TARGET_NATIVE_ALIAS = AdaptiveModalAutoencoder.alias_cached_legal_ir_targets
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cache import (
     EvaluationResultLineage,
     LegalIREvaluationArtifact,
@@ -172,7 +195,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.async_artifact_writer i
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_checkpoint import (
     MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
+    checkpoint_baseline,
     load_checkpoint as load_autoencoder_checkpoint,
+    read_checkpoint_input_metadata,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     LeanstralTodoProjectionConfig,
@@ -1241,17 +1266,27 @@ def _sample_one_row(
     blocked_sample_ids: AbstractSet[str] = frozenset(),
     max_sample_text_chars: int = 0,
     max_attempts: int = 5000,
+    corpus_inputs: Optional[VerifiedDaemonCorpusInputs] = None,
+    corpus_role: Optional[str] = None,
 ) -> tuple[int, Any, int]:
     attempts = 0
+    eligible = None if corpus_inputs is None else frozenset(corpus_inputs.indices_for(corpus_role))
     while attempts < max_attempts:
         attempts += 1
-        index = rng.randrange(laws_table.num_rows)
+        index = rng.randrange(laws_table.num_rows if corpus_inputs is None else corpus_inputs.row_count)
         if index in selected_indices:
             continue
-        row = laws_table.take([index]).to_pylist()[0]
-        if not _row_text_within_limit(row, max_sample_text_chars):
-            continue
-        sample = row_to_sample(row)
+        if corpus_inputs is None:
+            row = laws_table.take([index]).to_pylist()[0]
+            if not _row_text_within_limit(row, max_sample_text_chars):
+                continue
+            sample = row_to_sample(row)
+        else:
+            if index not in eligible:
+                continue
+            if max_sample_text_chars > 0 and corpus_inputs.text_length(index) > max_sample_text_chars:
+                continue
+            sample = corpus_inputs.build_sample(index)
         if sample.sample_id in blocked_sample_ids:
             continue
         selected_indices.add(index)
@@ -1268,7 +1303,18 @@ def sample_train_validation_rows(
     blocked_train_sample_ids: AbstractSet[str] = frozenset(),
     blocked_validation_sample_ids: AbstractSet[str] = frozenset(),
     max_sample_text_chars: int = 0,
+    corpus_inputs: Optional[VerifiedDaemonCorpusInputs] = None,
 ):
+    corpus_kwargs = {}
+    if corpus_inputs is not None:
+        for role, count in (("train", train_count), ("validation", validation_count)):
+            available = sum(
+                max_sample_text_chars <= 0 or corpus_inputs.text_length(index) <= max_sample_text_chars
+                for index in corpus_inputs.indices_for(role)
+            )
+            if available < count:
+                raise ValueError(f"verified corpus has insufficient {role} inventory after text cap")
+        corpus_kwargs = {"corpus_inputs": corpus_inputs, "corpus_role": "train"}
     selected_indices: set[int] = set()
     train_indices = []
     train_samples = []
@@ -1282,6 +1328,7 @@ def sample_train_validation_rows(
             blocked_sample_ids=blocked_train_sample_ids,
             max_sample_text_chars=max_sample_text_chars,
             max_attempts=max_train_attempts,
+            **corpus_kwargs,
         )
         train_indices.append(index)
         train_samples.append(sample)
@@ -1290,6 +1337,8 @@ def sample_train_validation_rows(
     validation_samples = []
     attempts = 0
     max_attempts = max(5000, validation_count * 1000)
+    if corpus_inputs is not None:
+        corpus_kwargs = {"corpus_inputs": corpus_inputs, "corpus_role": "validation"}
     while len(validation_samples) < validation_count and attempts < max_attempts:
         index, sample, sample_attempts = _sample_one_row(
             laws_table,
@@ -1298,6 +1347,7 @@ def sample_train_validation_rows(
             blocked_sample_ids=blocked_validation_sample_ids,
             max_sample_text_chars=max_sample_text_chars,
             max_attempts=max_attempts - attempts,
+            **corpus_kwargs,
         )
         attempts += sample_attempts
         validation_indices.append(index)
@@ -4702,11 +4752,19 @@ def bridge_ir_metric_block(
     parallel_workers: Optional[int] = None,
     progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     max_sample_text_chars: int = 0,
+    legal_ir_reports: Optional[Mapping[str, Any]] = None,
+    legal_ir_report_identity: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Aggregate bridge-level compiler/prover/KG diagnostics by adapter."""
+    """Aggregate bridge-level compiler/prover/KG diagnostics by adapter.
 
+    Explicit complete reports bypass ordinary caches. The caller must verify
+    artifact provenance; this boundary checks full sample and adapter coverage.
+    Aggregation and its failure accounting are identical for both sources.
+    """
+
+    original_samples = list(samples)
     sample_list = autoencoder_metric_bridge_samples_for_evaluation(
-        list(samples),
+        original_samples,
         max_sample_text_chars=max_sample_text_chars,
     )
     adapter_names = [
@@ -4714,6 +4772,25 @@ def bridge_ir_metric_block(
         for name in dict.fromkeys(str(name).strip() for name in bridge_names)
         if name and name.lower() not in {"none", "off", "false"}
     ]
+    explicit_reports = legal_ir_reports is not None and bool(sample_list and adapter_names)
+    if explicit_reports:
+        from ipfs_datasets_py.logic.bridge.multiview import MultiViewLegalIRReport
+        if len(original_samples) != len(sample_list) or any(
+            a is not b for a, b in zip(original_samples, sample_list)
+        ):
+            raise ValueError("shared reports require unchanged full diagnostic samples")
+        for sample in sample_list:
+            report = legal_ir_reports.get(str(sample.sample_id))
+            if type(report) is not MultiViewLegalIRReport:
+                raise ValueError("shared reports must cover every sample with a native full report")
+            if (
+                tuple(report.bridge_names) != tuple(adapter_names)
+                or report.document.document_id != sample.sample_id
+                or report.document.source_text != sample.text
+                or report.document.source != sample.source
+                or report.document.citation != sample.citation
+            ):
+                raise ValueError("shared report sample or ordered bridge identity differs")
     started_at = time.time()
 
     def emit_progress(stage: str, **payload: Any) -> None:
@@ -4740,7 +4817,10 @@ def bridge_ir_metric_block(
         "bridge_ir_metric_block",
         block_payload,
     )
-    cached_block = _read_metric_disk_cache("bridge_ir_metric_block", persistent_cache_key)
+    cached_block = (
+        None if explicit_reports
+        else _read_metric_disk_cache("bridge_ir_metric_block", persistent_cache_key)
+    )
     cached_block_complete = bool(
         cached_block is not None
         and _bridge_ir_cached_block_has_adapter_metrics(
@@ -4779,6 +4859,12 @@ def bridge_ir_metric_block(
     }
     if not sample_list or not adapter_names:
         return block
+    if explicit_reports:
+        block["supplied_report_count"] = len(sample_list)
+        block["report_source"] = "explicit_reports"
+        block["persistent_cache_policy"] = "bypassed_for_explicit_reports"
+        if legal_ir_report_identity is not None:
+            block["verified_report_identity"] = dict(legal_ir_report_identity)
 
     aggregate_values: Dict[str, List[float]] = {
         "acceptance": [],
@@ -4809,6 +4895,8 @@ def bridge_ir_metric_block(
 
     def evaluate_sample(sample: Any) -> Any:
         sample_started = time.time()
+        if explicit_reports:
+            return legal_ir_reports[str(sample.sample_id)], "explicit_report", time.time() - sample_started
         cache_key = _bridge_ir_report_cache_key(
             sample,
             bridge_names=adapter_names,
@@ -4872,7 +4960,7 @@ def bridge_ir_metric_block(
             emit_progress(
                 (
                     "sample_done"
-                    if result[1] in {"miss", "persistent_target_refresh"}
+                    if result[1] in {"miss", "persistent_target_refresh", "explicit_report"}
                     else "sample_cache_hit"
                 ),
                 cache_source=result[1],
@@ -4902,7 +4990,7 @@ def bridge_ir_metric_block(
             emit_progress(
                 (
                     "sample_done"
-                    if result[1] in {"miss", "persistent_target_refresh"}
+                    if result[1] in {"miss", "persistent_target_refresh", "explicit_report"}
                     else "sample_cache_hit"
                 ),
                 cache_source=result[1],
@@ -5002,7 +5090,7 @@ def bridge_ir_metric_block(
         sample_count=len(sample_list),
     )
     block["legal_ir_target_cache_exports"] = block["cache_misses"]
-    if block["persistent_cache_enabled"] and block["adapter_metrics_complete"]:
+    if not explicit_reports and block["persistent_cache_enabled"] and block["adapter_metrics_complete"]:
         _write_metric_disk_cache("bridge_ir_metric_block", persistent_cache_key, block)
     emit_progress("done", evaluated_count=block["evaluated_count"])
     return block
@@ -5115,6 +5203,10 @@ def _adapter_metrics_from_reports(
             for metadata in [view_metadata_values.get(view_name, {})]
         }
     return adapter_block
+
+
+_DAEMON_REPORT_NATIVE_DIAGNOSTICS = bridge_ir_metric_block
+_DAEMON_REPORT_NATIVE_ADAPTER_METRICS = _adapter_metrics_from_reports
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -7110,24 +7202,31 @@ def autoencoder_evaluation_lineage(
     legal_ir_parallel_workers: int,
     max_bridge_sample_text_chars: int,
     use_sample_memory: bool,
+    target_bundle_identity: Optional[Mapping[str, Any]] = None,
+    corpus_input_identity: Optional[Mapping[str, Any]] = None,
 ) -> EvaluationResultLineage:
     """Bind an aggregate evaluation to every input that can affect its result."""
 
+    evaluator_configuration = {
+        "compiler_commit": str(compiler_commit or "unknown"),
+        "evaluation_kind": "full_family_autoencoder",
+        "legal_ir_bridge_names": sorted(
+            str(name) for name in legal_ir_bridge_names if str(name)
+        ),
+        "legal_ir_evaluate_provers": bool(legal_ir_evaluate_provers),
+        "legal_ir_parallel_workers": max(1, int(legal_ir_parallel_workers or 1)),
+        "max_bridge_sample_text_chars": max(0, int(max_bridge_sample_text_chars or 0)),
+        "use_sample_memory": bool(use_sample_memory),
+    }
+    if target_bundle_identity is not None:
+        evaluator_configuration["target_bundle_identity"] = dict(target_bundle_identity)
+    if corpus_input_identity is not None:
+        evaluator_configuration["corpus_input_identity"] = dict(corpus_input_identity)
     return EvaluationResultLineage.for_samples(
         samples,
         state_hash=state_hash,
         metric_schema=AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
-        evaluator_configuration={
-            "compiler_commit": str(compiler_commit or "unknown"),
-            "evaluation_kind": "full_family_autoencoder",
-            "legal_ir_bridge_names": sorted(
-                str(name) for name in legal_ir_bridge_names if str(name)
-            ),
-            "legal_ir_evaluate_provers": bool(legal_ir_evaluate_provers),
-            "legal_ir_parallel_workers": max(1, int(legal_ir_parallel_workers or 1)),
-            "max_bridge_sample_text_chars": max(0, int(max_bridge_sample_text_chars or 0)),
-            "use_sample_memory": bool(use_sample_memory),
-        },
+        evaluator_configuration=evaluator_configuration,
     )
 
 
@@ -10398,6 +10497,121 @@ def autoencoder_metric_bridge_samples_for_evaluation(
     return bounded_samples
 
 
+def _daemon_shared_target_descriptor(args: argparse.Namespace) -> Optional[DaemonTargetDescriptor]:
+    return DaemonTargetDescriptor.from_options(
+        getattr(args, "autoencoder_target_bundle", None),
+        getattr(args, "autoencoder_target_bundle_sha256", None),
+        getattr(args, "autoencoder_target_bundle_bytes", None),
+        getattr(args, "autoencoder_target_snapshot_id", None),
+    )
+
+
+def _daemon_corpus_input_descriptor(args: argparse.Namespace) -> Optional[DaemonCorpusInputDescriptor]:
+    descriptor = DaemonCorpusInputDescriptor.from_options(
+        path=getattr(args, "autoencoder_corpus_input", None),
+        sha256=getattr(args, "autoencoder_corpus_input_sha256", None),
+        bytes=getattr(args, "autoencoder_corpus_input_bytes", None),
+    )
+    if descriptor is not None and (
+        int(getattr(args, "validation_canary_count", 0) or 0) != 0
+        or str(getattr(args, "validation_canary_indices", "") or "").strip()
+    ):
+        raise ValueError("verified corpus inputs require zero validation canaries and no canary indices")
+    return descriptor
+
+
+def _daemon_corpus_resume_identity(summary: Mapping[str, Any], identity: Mapping[str, Any]) -> None:
+    previous = summary.get("corpus_input_identity")
+    if previous is not None and previous != identity:
+        raise ValueError("resumed daemon corpus input identity differs from its immutable input snapshot")
+    if int(summary.get("cycles", 0) or 0) > 0 and previous is None:
+        raise ValueError("cannot attach verified corpus inputs to an existing unbound daemon run")
+
+
+def _daemon_corpus_resume_preflight(args: argparse.Namespace, descriptor) -> None:
+    root = Path.cwd() / "workspace"
+    summary_path = root / "test-logs" / f"{args.run_id}.summary"
+    summary = json.loads(summary_path.read_text(encoding="utf-8")) if summary_path.exists() else {}
+    identity = None if descriptor is None else {"sha256": descriptor.sha256, "bytes": descriptor.bytes}
+    if identity is None and (summary.get("corpus_input_identity") is not None
+                             or summary.get("corpus_input_descriptor") is not None):
+        raise ValueError("resumed verified corpus run requires its original input descriptor")
+    if identity is not None:
+        _daemon_corpus_resume_identity(summary, identity)
+    state_path = root / "todo-queues" / f"{args.run_id}.state.json"
+    if state_path.exists():
+        # Metadata-only preflight never reconstructs state or truncates a torn
+        # delta tail. Normal recovery still runs after crash-artifact replay.
+        metadata = read_checkpoint_input_metadata(
+            state_path, delta_path=state_path.with_name(f"{args.run_id}.state-deltas.bin"),
+        )
+        for item in metadata:
+            previous = item.get("corpus_input_identity")
+            if previous is not None and previous != identity:
+                raise ValueError("checkpoint corpus input identity requires its original descriptor")
+
+
+def _daemon_shared_report_descriptor(args: argparse.Namespace) -> Optional[DaemonReportDescriptor]:
+    return DaemonReportDescriptor.from_options(
+        getattr(args, "autoencoder_report_bundle", None),
+        getattr(args, "autoencoder_report_bundle_sha256", None),
+        getattr(args, "autoencoder_report_bundle_bytes", None),
+        getattr(args, "autoencoder_report_snapshot_id", None),
+    )
+
+
+def _daemon_shared_target_skip_reason(
+    autoencoder: AdaptiveModalAutoencoder,
+    samples: Sequence[Any],
+    *,
+    max_bridge_sample_text_chars: int,
+) -> Optional[str]:
+    if (
+        type(autoencoder) is not _DAEMON_TARGET_NATIVE_AUTOENCODER
+        or getattr(autoencoder.evaluate, "__func__", None) is not _DAEMON_TARGET_NATIVE_EVALUATE
+        or getattr(autoencoder.train_generalizable_projection, "__func__", None)
+        is not _DAEMON_TARGET_NATIVE_PROJECTION
+        or getattr(autoencoder.alias_cached_legal_ir_targets, "__func__", None)
+        is not _DAEMON_TARGET_NATIVE_ALIAS
+    ):
+        return "non_native_consumer"
+    rows = list(samples)
+    for bounded in (
+        autoencoder_metric_bridge_samples_for_evaluation(
+            rows, max_sample_text_chars=max_bridge_sample_text_chars,
+        ),
+        _daemon_target_model._bounded_legal_ir_metric_samples(
+            rows, max_sample_text_chars=max_bridge_sample_text_chars,
+        ),
+    ):
+        if len(rows) != len(bounded) or any(a is not b for a, b in zip(rows, bounded)):
+            return "bounded_clones"
+    return None
+
+
+def _daemon_shared_report_skip_reason(
+    autoencoder: AdaptiveModalAutoencoder,
+    samples: Sequence[Any],
+    *,
+    max_bridge_sample_text_chars: int,
+    metric_bridge_names: Sequence[str],
+    diagnostic_bridge_names: Sequence[str],
+) -> Optional[str]:
+    reason = _daemon_shared_target_skip_reason(
+        autoencoder, samples, max_bridge_sample_text_chars=max_bridge_sample_text_chars,
+    )
+    if reason is not None:
+        return reason
+    if tuple(metric_bridge_names) != tuple(diagnostic_bridge_names):
+        return "diagnostic_bridge_names_differ"
+    if (
+        bridge_ir_metric_block is not _DAEMON_REPORT_NATIVE_DIAGNOSTICS
+        or _adapter_metrics_from_reports is not _DAEMON_REPORT_NATIVE_ADAPTER_METRICS
+    ):
+        return "non_native_diagnostic_consumer"
+    return None
+
+
 def evaluate_autoencoder_with_bounded_metric_bridges(
     autoencoder: AdaptiveModalAutoencoder,
     samples: Sequence[Any],
@@ -10407,6 +10621,7 @@ def evaluate_autoencoder_with_bounded_metric_bridges(
     legal_ir_parallel_workers: Optional[int],
     max_bridge_sample_text_chars: int,
     use_sample_memory: bool,
+    legal_ir_targets: Optional[Mapping[str, Any]] = None,
 ) -> AutoencoderEvaluation:
     """Evaluate full text embeddings while bounding expensive bridge targets."""
 
@@ -10424,16 +10639,37 @@ def evaluate_autoencoder_with_bounded_metric_bridges(
         sample_list,
         max_sample_text_chars=max_bridge_sample_text_chars,
     )
+    shared_target_kwargs = {}
+    if legal_ir_targets is not None:
+        if any(a is not b for a, b in zip(sample_list, bridge_samples)):
+            raise ValueError("shared targets require unchanged full bridge samples")
+        if any(str(sample.sample_id) not in legal_ir_targets for sample in bridge_samples):
+            raise ValueError("shared targets do not cover every bridge sample")
+        shared_target_kwargs["legal_ir_targets"] = legal_ir_targets
     bridge = autoencoder.evaluate(
         bridge_samples,
         legal_ir_bridge_names=bridge_names,
         legal_ir_evaluate_provers=legal_ir_evaluate_provers,
         legal_ir_parallel_workers=legal_ir_parallel_workers,
         use_sample_memory=use_sample_memory,
+        **shared_target_kwargs,
     )
     alias_targets = getattr(autoencoder, "alias_cached_legal_ir_targets", None)
     if callable(alias_targets):
         alias_targets(sample_list, bridge_samples)
+    if (
+        type(autoencoder) is _DAEMON_TARGET_NATIVE_AUTOENCODER
+        and getattr(autoencoder.evaluate, "__func__", None)
+        is _DAEMON_TARGET_NATIVE_EVALUATE
+        and getattr(alias_targets, "__func__", None)
+        is _DAEMON_TARGET_NATIVE_ALIAS
+        and len(sample_list) == len(bridge_samples)
+        and all(sample is bounded for sample, bounded in zip(sample_list, bridge_samples))
+    ):
+        # The bridge pass already evaluated every full sample after priming its
+        # targets. Repeating the native reconstruction pass produces the same
+        # metrics. Bounded clones and evaluator adapters still need both passes.
+        return bridge
     base = autoencoder.evaluate(
         sample_list,
         legal_ir_bridge_names=(),
@@ -11664,6 +11900,11 @@ def build_paired_daemon_commands(
     module_name: str,
 ) -> Dict[str, Any]:
     """Build child process commands for paired autoencoder/codex execution."""
+    target_descriptor = _daemon_shared_target_descriptor(args)
+    report_descriptor = _daemon_shared_report_descriptor(args)
+    corpus_descriptor = _daemon_corpus_input_descriptor(args)
+    if target_descriptor is not None and report_descriptor is not None:
+        raise ValueError("choose either a target bundle or a full report bundle")
     autoencoder_run_id = getattr(args, "autoencoder_run_id", None) or f"{args.run_id}-autoencoder"
     codex_run_id = getattr(args, "codex_run_id", None) or f"{args.run_id}-codex"
     queue_run_id = autoencoder_run_id
@@ -12299,6 +12540,26 @@ def build_paired_daemon_commands(
             max(1, int(counts.get("legal_ir_family_workers", 1) or 1)),
         )
         codex_scope_schedule["adaptive_pipeline_parallelism"] = adaptive_pipeline_plan
+    if target_descriptor is not None:
+        autoencoder_command.extend([
+            "--autoencoder-target-bundle", target_descriptor.path,
+            "--autoencoder-target-bundle-sha256", target_descriptor.sha256,
+            "--autoencoder-target-bundle-bytes", str(target_descriptor.size_bytes),
+            "--autoencoder-target-snapshot-id", target_descriptor.snapshot_id,
+        ])
+    if report_descriptor is not None:
+        autoencoder_command.extend([
+            "--autoencoder-report-bundle", report_descriptor.path,
+            "--autoencoder-report-bundle-sha256", report_descriptor.sha256,
+            "--autoencoder-report-bundle-bytes", str(report_descriptor.size_bytes),
+            "--autoencoder-report-snapshot-id", report_descriptor.snapshot_id,
+        ])
+    if corpus_descriptor is not None:
+        autoencoder_command.extend([
+            "--autoencoder-corpus-input", corpus_descriptor.path,
+            "--autoencoder-corpus-input-sha256", corpus_descriptor.sha256,
+            "--autoencoder-corpus-input-bytes", str(corpus_descriptor.bytes),
+        ])
     codex_command = list(codex_children[0]["command"])
 
     return {
@@ -16548,6 +16809,10 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-items", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=0.35)
     parser.add_argument("--sampling-seed", default=None)
+    parser.add_argument("--autoencoder-corpus-input", default=None,
+                        help="Owner-issued immutable local corpus input snapshot; requires hash and bytes.")
+    parser.add_argument("--autoencoder-corpus-input-sha256", default=None)
+    parser.add_argument("--autoencoder-corpus-input-bytes", type=int, default=None)
     parser.add_argument("--autoencoder-bootstrap-mode", default="fast")
     parser.add_argument(
         "--learning-rate-floor-ratio",
@@ -16671,6 +16936,16 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         "--autoencoder-metric-bridge-adapters",
         default="default",
     )
+    parser.add_argument("--autoencoder-target-bundle", default=None,
+                        help="Optional verified target bundle; requires hash, bytes and snapshot ID.")
+    parser.add_argument("--autoencoder-target-bundle-sha256", default=None)
+    parser.add_argument("--autoencoder-target-bundle-bytes", type=int, default=None)
+    parser.add_argument("--autoencoder-target-snapshot-id", default=None)
+    parser.add_argument("--autoencoder-report-bundle", default=None,
+                        help="Optional verified full reports for both targets and diagnostics; exclusive with target bundles.")
+    parser.add_argument("--autoencoder-report-bundle-sha256", default=None)
+    parser.add_argument("--autoencoder-report-bundle-bytes", type=int, default=None)
+    parser.add_argument("--autoencoder-report-snapshot-id", default=None)
     parser.add_argument(
         "--autoencoder-diagnostic-bridge-adapters",
         default="none",
@@ -18760,9 +19035,137 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     return 0 if paired_success else 1
 
 
+def _daemon_corpus_failure(context: Dict[str, Any], phase: str, error: BaseException) -> None:
+    context["failed"] = True
+    context.setdefault("error", error)
+    summary = context.get("summary")
+    if summary is not None:
+        summary["corpus_input_failure"] = {
+            "phase": phase, "error_type": type(error).__name__, "error": str(error),
+            "validation_authority": False,
+        }
+        summary["final_state_persistence"] = {
+            "checkpoint_enqueued": False, "durable": False,
+            "reason": "corpus_input_session_failed",
+        }
+        summary["latest_stop_reason"] = "corpus_input_session_failed"
+
+
+def _daemon_verify_corpus(context: Optional[Dict[str, Any]], phase: str, *, defer_error: bool = False) -> bool:
+    if context is None:
+        return True
+    if context["failed"]:
+        return False
+    context["phase"] = phase
+    try:
+        context["session"].verify_boundary(phase)
+        weights = context.get("weight_session")
+        if weights is not None:
+            state_getter = context.get("weight_state")
+            weights.verify_boundary(phase, state=None if state_getter is None else state_getter())
+        if context.get("summary") is not None:
+            context["summary"]["corpus_inputs"] = context["session"].summary()
+            if weights is not None:
+                context["summary"]["arrow_feature_weights"] = weights.summary()
+        return True
+    except BaseException as exc:
+        if context.get("weight_session") is not None and context.get("summary") is not None:
+            context["summary"]["arrow_feature_weights"] = context["weight_session"].summary()
+        _daemon_corpus_failure(context, phase, exc)
+        if not defer_error:
+            raise
+        return False
+
+
+def _daemon_checkpoint_rejection(error: BaseException, writer: AsyncArtifactWriter, *,
+                                 previous_async_writer=None, signal_handlers=None) -> None:
+    """Close startup resources when a new input-binding guard rejects legacy mode."""
+    try:
+        writer.close(wait=True, cancel_pending=True)
+    except BaseException as cleanup_error:
+        raise error from cleanup_error
+    finally:
+        if signal_handlers is not None:
+            _ASYNC_SUMMARY_WRITER.writer = previous_async_writer
+            for signum, handler in signal_handlers.items():
+                signal.signal(signum, handler)
+    raise error
+
+
 def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
+    """Verify optional local inputs before any daemon writer or worker starts."""
+    descriptor = _daemon_corpus_input_descriptor(args)
+    if current_weight_session() is not None and descriptor is None:
+        raise ValueError("bound Arrow weights require explicit verified daemon corpus inputs")
+    _daemon_corpus_resume_preflight(args, descriptor)
+    if descriptor is None:
+        return _run_guarded_uscode_modal_daemon(args)
+    identity = {"sha256": descriptor.sha256, "bytes": descriptor.bytes}
+    summary_path = Path.cwd() / "workspace" / "test-logs" / f"{args.run_id}.summary"
+    if summary_path.exists():
+        _daemon_corpus_resume_identity(json.loads(summary_path.read_text(encoding="utf-8")), identity)
+    corpus_inputs = VerifiedDaemonCorpusInputs(descriptor)
+    startup_cleanup = ExitStack()
+    context = {"session": corpus_inputs, "descriptor": descriptor, "identity": identity,
+               "startup_cleanup": startup_cleanup, "entered": False, "failed": False,
+               "phase": "initialization", "summary": None,
+               "weight_session": current_weight_session()}
+    try:
+        return _run_guarded_uscode_modal_daemon(args, corpus_context=context)
+    except BaseException as exc:
+        if not context["entered"]:
+            _daemon_corpus_failure(context, context["phase"], exc)
+        raise
+    finally:
+        try:
+            startup_cleanup.close()
+        except BaseException as cleanup_error:
+            if context.get("error") is not None:
+                raise context["error"] from cleanup_error
+            raise
+        finally:
+            corpus_inputs.close()
+            if not context["entered"] and context["summary"] is not None:
+                # Startup is outside the ordinary loop cleanup. Its resources
+                # are drained/restored above; this write is diagnostic only.
+                context["summary"]["corpus_inputs"] = corpus_inputs.summary()
+                try:
+                    summary_path.write_text(json.dumps(context["summary"], indent=2, sort_keys=True) + "\n",
+                                            encoding="utf-8")
+                except BaseException as diagnostic_error:
+                    if context.get("error") is not None:
+                        raise context["error"] from diagnostic_error
+                    raise
+
+
+def _run_guarded_uscode_modal_daemon(args: argparse.Namespace, *, corpus_context=None) -> int:
     """Run the guarded modal TODO daemon using parsed CLI-style arguments."""
 
+    # Reject partial descriptors before opening writers or installing handlers.
+    target_descriptor = _daemon_shared_target_descriptor(args)
+    report_descriptor = _daemon_shared_report_descriptor(args)
+    if target_descriptor is not None and report_descriptor is not None:
+        raise ValueError("choose either a target bundle or a full report bundle")
+    shared_descriptor = report_descriptor or target_descriptor
+    shared_target_session = None
+    shared_target_failed = False
+    shared_target_shutdown_error = None
+    cycle_target_kwargs = {}
+    cycle_target_lineage_kwargs = {}
+    cycle_report_kwargs = {}
+    daemon_observation = current_observer()
+    daemon_weights = current_weight_session()
+    if daemon_weights is not None and corpus_context is None:
+        raise ValueError("bound Arrow weights require explicit verified daemon corpus inputs")
+    corpus_inputs = None if corpus_context is None else corpus_context["session"]
+    corpus_metadata = {} if corpus_context is None else {"corpus_input_identity": corpus_context["identity"]}
+    if daemon_observation is not None:
+        corpus_metadata.update(daemon_observation.checkpoint_metadata())
+    if corpus_inputs is not None:
+        input_summary = corpus_inputs.summary()
+        corpus_metadata["corpus_input_provenance"] = corpus_input_checkpoint_provenance(
+            corpus_context["descriptor"].to_dict(), input_summary)
+    corpus_sampling_kwargs = {} if corpus_inputs is None else {"corpus_inputs": corpus_inputs}
     root = Path.cwd()
     log_dir = root / "workspace" / "test-logs"
     queue_dir = root / "workspace" / "todo-queues"
@@ -18829,9 +19232,23 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ),
         name=f"{args.run_id}-artifact-writer",
     )
+    if corpus_context is not None:
+        corpus_context["startup_cleanup"].callback(artifact_writer.close, wait=True, cancel_pending=True)
+    _daemon_verify_corpus(corpus_context, "startup_replay")
     replayed_artifact_receipts = artifact_writer.replay_crash_artifacts()
+    if replayed_artifact_receipts:
+        try:
+            _daemon_corpus_resume_preflight(
+                args, None if corpus_context is None else corpus_context["descriptor"],
+            )
+        except BaseException as exc:
+            if corpus_context is None:
+                _daemon_checkpoint_rejection(exc, artifact_writer)
+            raise
     previous_async_summary_writer = getattr(_ASYNC_SUMMARY_WRITER, "writer", None)
     _ASYNC_SUMMARY_WRITER.writer = artifact_writer
+    if corpus_context is not None:
+        corpus_context["startup_cleanup"].callback(setattr, _ASYNC_SUMMARY_WRITER, "writer", previous_async_summary_writer)
 
     stop_requested = False
     stop_signal: int | None = None
@@ -18845,6 +19262,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     for signum in (signal.SIGINT, signal.SIGTERM):
         previous_signal_handlers[signum] = signal.getsignal(signum)
         signal.signal(signum, request_stop)
+        if corpus_context is not None:
+            corpus_context["startup_cleanup"].callback(signal.signal, signum, previous_signal_handlers[signum])
 
     if summary_path.exists():
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
@@ -18856,6 +19275,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             state_path=state_path,
         )
         save_summary(summary_path, summary)
+    if corpus_context is not None:
+        corpus_context["summary"] = summary
+        _daemon_corpus_resume_identity(summary, corpus_context["identity"])
+        summary.update(corpus_metadata)
+        summary["corpus_input_descriptor"] = corpus_context["descriptor"].to_dict()
+        summary["corpus_inputs"] = corpus_inputs.summary()
     runtime_telemetry = RuntimeTelemetry(args.run_id)
     attach_runtime_telemetry(summary, runtime_telemetry)
     summary["async_artifact_writer_schema_version"] = ASYNC_ARTIFACT_WRITER_SCHEMA_VERSION
@@ -18965,14 +19390,36 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
     if state_path.exists():
-        state = load_autoencoder_checkpoint(
+        loaded_checkpoint = load_autoencoder_checkpoint(
             state_path,
             delta_path=state_delta_path,
             expected_state_schema_version=MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
             recover=True,
-        ).state
+        )
+        expected_input_identity = None if corpus_context is None else corpus_context["identity"]
+        for manifest in (loaded_checkpoint.manifest, *loaded_checkpoint.delta_manifests):
+            previous_input_identity = manifest.metadata.get("corpus_input_identity")
+            if previous_input_identity is not None and previous_input_identity != expected_input_identity:
+                error = ValueError("replayed checkpoint corpus input identity differs from the active descriptor")
+                if corpus_context is None:
+                    _daemon_checkpoint_rejection(error, artifact_writer,
+                                                 previous_async_writer=previous_async_summary_writer,
+                                                 signal_handlers=previous_signal_handlers)
+                raise error
+        state = loaded_checkpoint.state
     else:
         state = ModalAutoencoderTrainingState()
+    if daemon_weights is not None:
+        daemon_weights.attach(state)
+        corpus_context["weight_state"] = lambda: state
+        corpus_metadata["arrow_feature_weights_provenance"] = daemon_weights.provenance()
+        summary["arrow_feature_weights_provenance"] = daemon_weights.provenance()
+        summary["arrow_feature_weights"] = daemon_weights.summary()
+    if daemon_observation is not None:
+        daemon_observation.record_state(
+            "registered_base", state, cycle=0, metric_lineage=AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+            metadata={"checkpoint_loaded": state_path.exists()},
+        )
     startup_capacity_report = state.compact_generalizable_capacity(generalizable_capacity_limit)
     startup_capacity_report["reason"] = "loaded_run_state"
     startup_capacity_report["cycle"] = int(summary.get("cycles", 0) or 0)
@@ -19021,9 +19468,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 args.run_id,
                 {"event": "warm_start_loaded", "warm_start": warm_start},
             )
+    if daemon_observation is not None:
+        daemon_observation.record_state(
+            "startup_complete", state, cycle=0, metric_lineage=AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+        )
+    persisted_baseline = None
     if checkpoint_required:
-        artifact_writer.write_state_checkpoint(
-            state_path,
+        _daemon_verify_corpus(corpus_context, "startup_checkpoint")
+        startup_checkpoint_snapshot = artifact_writer.snapshot_state_checkpoint(
             state,
             cycle=int(summary.get("cycles", 0) or 0),
             full=True,
@@ -19032,9 +19484,25 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "reason": "bounded_startup_state",
                 "run_id": args.run_id,
                 "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                **corpus_metadata,
+            },
+        )
+        artifact_writer.write_state_checkpoint(
+            state_path,
+            startup_checkpoint_snapshot,
+            cycle=int(summary.get("cycles", 0) or 0),
+            full=True,
+            compact=True,
+            metadata={
+                "reason": "bounded_startup_state",
+                "run_id": args.run_id,
+                "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                **corpus_metadata,
             },
             wait=True,
         )
+        persisted_baseline = startup_checkpoint_snapshot.checkpoint_baseline
+        del startup_checkpoint_snapshot
         append_event(
             log_path,
             args.run_id,
@@ -19044,8 +19512,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             },
         )
     save_summary(summary_path, summary)
-    persisted_state = state.copy()
-    persisted_state._state_identity_tracker.restore_revision(state.state_revision)
+    # A fresh invocation begins with a full cycle checkpoint. Resumed cycles
+    # may begin with a delta; retain only its normalized persisted identity,
+    # never another complete mutable state graph.
+    if persisted_baseline is None and int(summary.get("cycles", 0) or 0) > 0:
+        persisted_baseline = checkpoint_baseline(state)
     with queue_file_lock(queue_path):
         queue = ModalTodoQueue.load_jsonl(queue_path)
     feature_codec = DeterministicModalLogicCodec(
@@ -19263,6 +19734,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         feature_activity_reference=int(getattr(args, "autoencoder_feature_activity_reference", 64)),
         feature_logit_clip=float(getattr(args, "autoencoder_feature_logit_clip", 24.0)),
     )
+    if daemon_weights is not None:
+        corpus_context["weight_state"] = lambda: autoencoder.state
+        _daemon_verify_corpus(corpus_context, "weight_model_ready")
     snapshot_evaluation_enabled = bool(getattr(args, "snapshot_evaluation_enabled", True))
     snapshot_evaluation_jobs: Dict[str, Mapping[str, Any]] = {}
     snapshot_evaluation_jobs_lock = threading.Lock()
@@ -19365,6 +19839,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             ),
             name=f"{args.run_id}-snapshot-evaluator",
         )
+        if corpus_context is not None:
+            corpus_context["startup_cleanup"].callback(snapshot_evaluator.close, wait=False, cancel_pending=True)
     summary["snapshot_evaluation_enabled"] = snapshot_evaluation_enabled
     summary["snapshot_evaluation_schema_version"] = SNAPSHOT_EVALUATION_SCHEMA_VERSION
     summary["snapshot_evaluator"] = (
@@ -19649,11 +20125,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             "event": "detached_runner_started",
         },
     )
-    laws_table = load_laws_table()
+    laws_table = load_laws_table() if corpus_inputs is None else None
     append_event(
         log_path,
         args.run_id,
-        {"event": "detached_dataset_loaded", "row_count": laws_table.num_rows},
+        {"event": "detached_dataset_loaded",
+         "row_count": laws_table.num_rows if corpus_inputs is None else corpus_inputs.row_count,
+         **corpus_metadata},
     )
     validation_canary_count = max(
         0,
@@ -19745,7 +20223,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["validation_canary_count"] = 0
         summary["validation_canary_indices"] = []
 
+    if corpus_context is not None:
+        corpus_context["entered"] = True
+        # Keep idempotent resource cleanup registered for failures within the
+        # ordinary shutdown sequence as well as failures before loop entry.
     try:
+        if shared_descriptor is not None:
+            descriptor_key = "shared_report_descriptor" if report_descriptor is not None else "shared_target_descriptor"
+            summary[descriptor_key] = shared_descriptor.to_dict()
+            session_type = VerifiedDaemonReportSession if report_descriptor is not None else VerifiedDaemonTargetSession
+            shared_target_session = session_type(
+                shared_descriptor,
+                bridge_names=metric_bridge_adapters,
+                evaluate_provers=bridge_evaluate_provers,
+                parallel_workers=bridge_parallel_workers,
+            )
+            summary["shared_target_session"] = shared_target_session.summary()
         while not stop_requested and time.time() + 8.0 < end_at:
             max_cycles = max(0, int(getattr(args, "max_cycles", 0) or 0))
             if max_cycles > 0 and int(summary.get("cycles", 0) or 0) >= max_cycles:
@@ -19959,6 +20452,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
 
             cycle_learning_rate, cycle_lr_policy = _cycle_learning_rate(args, summary)
             mark_cycle_phase("sampling")
+            _daemon_verify_corpus(corpus_context, "before_sampling")
             (
                 train_indices,
                 train_samples,
@@ -19973,6 +20467,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 blocked_train_sample_ids=validation_canary_sample_ids,
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
                 max_sample_text_chars=int(getattr(args, "max_sample_text_chars", 0) or 0),
+                **corpus_sampling_kwargs,
             )
             for dataset, sampled_rows in (
                 ("train", train_samples),
@@ -19990,6 +20485,59 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             acceptance_validation_samples = validation_canary_samples or validation_samples
             acceptance_validation_indices = validation_canary_indices or validation_indices
             validation_mode = "fixed_canary" if validation_canary_samples else "rotating_holdout"
+            if corpus_inputs is not None:
+                corpus_context["phase"] = "selected_inputs"
+                corpus_inputs.verify_selected(train_indices, train_samples, role="train")
+                corpus_inputs.verify_selected(validation_indices, validation_samples, role="validation")
+                _daemon_verify_corpus(corpus_context, "before_consume")
+            if daemon_observation is not None:
+                daemon_observation.record_selection(
+                    cycle=cycle, train_indices=train_indices, train_samples=train_samples,
+                    validation_indices=acceptance_validation_indices,
+                    validation_samples=acceptance_validation_samples, corpus_inputs=corpus_inputs,
+                )
+            # Validate the actual sampled inventory before any result reuse or
+            # snapshot promotion. Never resample to fit an artifact inventory.
+            cycle_target_kwargs = {}
+            cycle_target_lineage_kwargs = ({} if corpus_context is None else
+                                          {"corpus_input_identity": corpus_context["identity"]})
+            cycle_report_kwargs = {}
+            cycle_targets = None
+            metric_bridge_text_cap = int(getattr(
+                args, "autoencoder_metric_bridge_max_sample_text_chars",
+                DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+            ) or 0)
+            if shared_target_session is not None:
+                skip_reason = None
+                if metric_bridge_adapters:
+                    if report_descriptor is not None:
+                        skip_reason = _daemon_shared_report_skip_reason(
+                            autoencoder, [*train_samples, *acceptance_validation_samples],
+                            max_bridge_sample_text_chars=metric_bridge_text_cap,
+                            metric_bridge_names=metric_bridge_adapters,
+                            diagnostic_bridge_names=bridge_metric_adapters,
+                        )
+                    else:
+                        skip_reason = _daemon_shared_target_skip_reason(
+                            autoencoder, [*train_samples, *acceptance_validation_samples],
+                            max_bridge_sample_text_chars=metric_bridge_text_cap,
+                        )
+                cycle_targets = shared_target_session.begin_cycle(
+                    train_samples,
+                    acceptance_validation_samples,
+                    skip_reason=skip_reason,
+                )
+                if cycle_targets is not None:
+                    cycle_target_kwargs = {"legal_ir_targets": cycle_targets}
+                    cycle_target_lineage_kwargs.update({
+                        "target_bundle_identity": shared_target_session.lineage_identity,
+                    })
+                    if report_descriptor is not None:
+                        cycle_report_kwargs = {
+                            "legal_ir_reports": shared_target_session.reports_for_cycle,
+                            "legal_ir_report_identity": shared_target_session.lineage_identity,
+                        }
+                summary["shared_target_session"] = shared_target_session.summary()
             if snapshot_evaluator is not None:
                 snapshot_boundary = _matching_published_snapshot_boundary(
                     autoencoder.state,
@@ -20102,20 +20650,30 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "effective_max_items": effective_max_items,
             }
             summary["active_cycle_todo_supervisor"] = todo_supervisor_control
-            metric_bridge_text_cap = int(
-                getattr(
-                    args,
-                    "autoencoder_metric_bridge_max_sample_text_chars",
-                    DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
-                )
-                or 0
-            )
+            def observe_cycle_state(phase, *, use_sample_memory=None):
+                if daemon_observation is not None:
+                    daemon_observation.record_state(
+                        phase, autoencoder.state, cycle=cycle,
+                        metric_lineage=AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+                        metadata={
+                            "compiler_version": evaluation_compiler_commit,
+                            "holdout_version": canonical_holdout_version(
+                                [sample.sample_id for sample in acceptance_validation_samples],
+                                validation_mode=validation_mode,
+                            ),
+                            "validation_mode": validation_mode,
+                            **({} if use_sample_memory is None else {"use_sample_memory": use_sample_memory}),
+                        },
+                    )
 
             def evaluate_cycle_samples(
                 rows: Sequence[Any],
                 *,
                 use_sample_memory: bool,
+                observation_phase=None,
             ) -> AutoencoderEvaluation:
+                if observation_phase is not None:
+                    observe_cycle_state(observation_phase, use_sample_memory=use_sample_memory)
                 return evaluate_autoencoder_with_bounded_metric_bridges(
                     autoencoder,
                     rows,
@@ -20124,6 +20682,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     legal_ir_parallel_workers=bridge_parallel_workers,
                     max_bridge_sample_text_chars=metric_bridge_text_cap,
                     use_sample_memory=use_sample_memory,
+                    **cycle_target_kwargs,
+                )
+
+            def evaluate_core_before_train():
+                observe_cycle_state("before_train_evaluation", use_sample_memory=True)
+                return autoencoder.evaluate(
+                    train_samples, legal_ir_bridge_names=(), use_sample_memory=True,
                 )
 
             baseline_evaluation_state_hash = autoencoder_canonical_state_hash(state)
@@ -20147,6 +20712,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 max_bridge_sample_text_chars=metric_bridge_text_cap,
                 use_sample_memory=True,
+                **cycle_target_lineage_kwargs,
             )
             mark_cycle_phase(
                 "before_train_eval",
@@ -20164,12 +20730,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     full_family_evaluator=lambda: evaluate_cycle_samples(
                         train_samples,
                         use_sample_memory=True,
+                        observation_phase="before_train_evaluation",
                     ),
-                    core_evaluator=lambda: autoencoder.evaluate(
-                        train_samples,
-                        legal_ir_bridge_names=(),
-                        use_sample_memory=True,
-                    ),
+                    core_evaluator=evaluate_core_before_train,
                 )
             )
             before_validation_lineage = autoencoder_evaluation_lineage(
@@ -20181,6 +20744,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 max_bridge_sample_text_chars=metric_bridge_text_cap,
                 use_sample_memory=False,
+                **cycle_target_lineage_kwargs,
             )
             mark_cycle_phase(
                 "before_validation_eval",
@@ -20198,6 +20762,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 before_validation = evaluate_cycle_samples(
                     acceptance_validation_samples,
                     use_sample_memory=False,
+                    observation_phase="before_validation_evaluation",
                 )
             before_validation_evaluation_control = {
                 "cycle": cycle,
@@ -20402,6 +20967,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 parallel_workers=bridge_parallel_workers,
                 progress_callback=metric_progress_callback("bridge_ir_train"),
                 max_sample_text_chars=metric_bridge_text_cap,
+                **cycle_report_kwargs,
             )
             bridge_ir_train["bridge_loss_adapters"] = list(bridge_adapters)
             bridge_ir_train["diagnostic_bridge_adapters"] = list(diagnostic_bridge_adapters)
@@ -20417,6 +20983,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 parallel_workers=bridge_parallel_workers,
                 progress_callback=metric_progress_callback("bridge_ir_validation"),
                 max_sample_text_chars=metric_bridge_text_cap,
+                **cycle_report_kwargs,
             )
             bridge_ir_validation["bridge_loss_adapters"] = list(bridge_adapters)
             bridge_ir_validation["diagnostic_bridge_adapters"] = list(diagnostic_bridge_adapters)
@@ -20442,6 +21009,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         queue_depth=_runtime_queue_depth(supervisor.queue),
                         attributes={"epoch_count": generalizable_projection_epochs},
                     )
+                observe_cycle_state("before_projection")
                 feature_projection_report = autoencoder.train_generalizable_projection(
                     train_samples,
                     validation_samples=acceptance_validation_samples,
@@ -20578,6 +21146,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         before_train if before_train_evaluation_control["full_family"] else None
                     ),
                     progress_callback=projection_progress_callback,
+                    **cycle_target_kwargs,
                 )
             mark_cycle_phase(
                 "todo_supervisor_optimize",
@@ -20675,6 +21244,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             after_train = evaluate_cycle_samples(
                 train_samples,
                 use_sample_memory=True,
+                observation_phase="before_after_train_evaluation",
             )
             mark_cycle_phase(
                 "after_validation_eval",
@@ -20684,6 +21254,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             after_validation = evaluate_cycle_samples(
                 acceptance_validation_samples,
                 use_sample_memory=False,
+                observation_phase="before_after_validation_evaluation",
             )
             after_evaluation_state_hash = autoencoder_canonical_state_hash(state)
             after_train_lineage = autoencoder_evaluation_lineage(
@@ -20695,6 +21266,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 max_bridge_sample_text_chars=metric_bridge_text_cap,
                 use_sample_memory=True,
+                **cycle_target_lineage_kwargs,
             )
             after_validation_lineage = autoencoder_evaluation_lineage(
                 acceptance_validation_samples,
@@ -20705,6 +21277,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 legal_ir_parallel_workers=bridge_parallel_workers,
                 max_bridge_sample_text_chars=metric_bridge_text_cap,
                 use_sample_memory=False,
+                **cycle_target_lineage_kwargs,
             )
             evaluation_result_cache.put_after(
                 after_train_lineage,
@@ -20751,10 +21324,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 after_train_generalized_probe = evaluate_cycle_samples(
                     train_samples,
                     use_sample_memory=False,
+                    observation_phase="train_generalized_probe_evaluation",
                 )
                 after_validation_sample_memory_probe = evaluate_cycle_samples(
                     acceptance_validation_samples,
                     use_sample_memory=True,
+                    observation_phase="validation_sample_memory_probe_evaluation",
                 )
             guided_evaluation_state_hash = autoencoder_canonical_state_hash(state)
             compiler_ir_guided_train_mode = str(
@@ -21101,6 +21676,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "reason": "post_guidance_pre_persistence",
                     "schema_version": (MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION),
                 }
+            if shared_target_session is not None:
+                shared_target_session.finish_cycle()
+                summary["shared_target_session"] = shared_target_session.summary()
+                cycle_targets = None
+                cycle_target_kwargs = {}
+                cycle_report_kwargs = {}
+            if corpus_inputs is not None:
+                corpus_context["phase"] = "selected_inputs_after_use"
+                corpus_inputs.verify_selected(train_indices, train_samples, role="train")
+                corpus_inputs.verify_selected(validation_indices, validation_samples, role="validation")
+                _daemon_verify_corpus(corpus_context, "before_persistence")
+            observe_cycle_state("completed_cycle")
             if snapshot_evaluator is not None:
                 evaluation_snapshot = build_autoencoder_evaluation_snapshot(
                     autoencoder.state,
@@ -21114,6 +21701,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     metadata={
                         "cycle": cycle,
                         "validation_mode": validation_mode,
+                        **corpus_metadata,
                     },
                 )
                 with snapshot_evaluation_jobs_lock:
@@ -21159,6 +21747,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             state_checkpoint_future = None
             state_delta_future = None
             state_persistence_snapshot = None
+            _daemon_verify_corpus(corpus_context, "checkpoint_enqueue")
             if cycle == 1 or cycle % full_checkpoint_every == 0:
                 state_persistence_snapshot = artifact_writer.snapshot_state_checkpoint(
                     autoencoder.state,
@@ -21168,6 +21757,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     metadata={
                         "run_id": args.run_id,
                         "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                        **corpus_metadata,
                     },
                 )
                 state_checkpoint_future = artifact_writer.write_state_checkpoint(
@@ -21179,6 +21769,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     metadata={
                         "run_id": args.run_id,
                         "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                        **corpus_metadata,
                     },
                 )
             else:
@@ -21187,10 +21778,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     cycle=cycle,
                     full=False,
                     compact=True,
-                    base_state=persisted_state,
+                    base_baseline=persisted_baseline,
                     metadata={
                         "run_id": args.run_id,
                         "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                        **corpus_metadata,
                     },
                 )
                 state_delta_future = artifact_writer.append_state_delta(
@@ -21200,12 +21792,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     metadata={
                         "run_id": args.run_id,
                         "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                        **corpus_metadata,
                     },
                 )
-            persisted_state = autoencoder.state.copy()
-            persisted_state._state_identity_tracker.restore_revision(
-                autoencoder.state.state_revision
-            )
+            # This is the last successfully enqueued endpoint, not a durability
+            # receipt. Existing writer drain/recovery checks still govern disk
+            # persistence and full-checkpoint candidate verification.
+            persisted_baseline = state_persistence_snapshot.checkpoint_baseline
             run.save_json(run_json_path)
             summary["latest_async_state_persistence"] = {
                 "checkpoint_enqueued": state_checkpoint_future is not None,
@@ -22132,285 +22725,369 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 )
                 append_event(log_path, args.run_id, test_result)
                 save_summary(summary_path, summary)
+    except BaseException as exc:
+        if corpus_context is not None and not corpus_context["failed"]:
+            _daemon_corpus_failure(corpus_context, "cycle", exc)
+        if shared_descriptor is not None:
+            shared_target_failed = True
+            summary["shared_target_failure"] = {
+                "phase": "initialization" if shared_target_session is None else "cycle",
+                "error_type": type(exc).__name__, "error": str(exc),
+                "validation_authority": False,
+            }
+            if shared_target_session is not None:
+                shared_target_session.abort_cycle(exc)
+        raise
     finally:
-        if snapshot_evaluator is not None:
-            # A rollout receipt cannot promote an unevaluated final state.  Give
-            # the already bounded worker its normal backpressure timeout to
-            # finish, then accept/promote only the result whose complete version
-            # tuple matches the latest published snapshot.  A timeout still
-            # cancels pending work and remains visible as incomplete telemetry.
-            shutdown_timeout = max(
+        # A provisional cycle must never become a clean-shutdown checkpoint.
+        # Close this handle before other shutdown work, which can itself fail.
+        if shared_target_session is not None:
+            try:
+                if not shared_target_failed:
+                    shared_target_session.verify_shutdown()
+            except BaseException as exc:
+                shared_target_failed = True
+                shared_target_shutdown_error = exc
+                shared_target_session.abort_cycle(exc)
+                summary["shared_target_failure"] = {
+                    "phase": "shutdown", "error_type": type(exc).__name__, "error": str(exc),
+                    "validation_authority": False,
+                }
+            finally:
+                shared_target_session.close()
+                summary["shared_target_session"] = shared_target_session.summary()
+                cycle_target_kwargs = {}
+                cycle_targets = None
+                cycle_report_kwargs = {}
+        _daemon_verify_corpus(corpus_context, "shutdown", defer_error=True)
+        if shared_target_failed and not (corpus_context is not None and corpus_context["failed"]):
+            summary["final_state_persistence"] = {
+                "checkpoint_enqueued": False,
+                "durable": False,
+                "reason": "shared_target_session_failed",
+                "state_path": str(state_path),
+            }
+            summary["latest_stop_reason"] = "shared_target_session_failed"
+        try:
+            if snapshot_evaluator is not None:
+                # A rollout receipt cannot promote an unevaluated final state.  Give
+                # the already bounded worker its normal backpressure timeout to
+                # finish, then accept/promote only the result whose complete version
+                # tuple matches the latest published snapshot.  A timeout still
+                # cancels pending work and remains visible as incomplete telemetry.
+                shutdown_timeout = max(
+                    0.0,
+                    float(
+                        getattr(
+                            args,
+                            "snapshot_evaluation_backpressure_timeout_seconds",
+                            DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS,
+                        )
+                        or 0.0
+                    ),
+                )
+                snapshot_drained = snapshot_evaluator.wait_until_idle(timeout=shutdown_timeout)
+                snapshot_evaluator.close(
+                    wait=snapshot_drained,
+                    cancel_pending=not snapshot_drained,
+                )
+                _daemon_verify_corpus(corpus_context, "post_snapshot_drain", defer_error=True)
+                shutdown_results = snapshot_evaluator.poll_results()
+                latest_published = summary.get("latest_published_snapshot")
+                shutdown_boundary = _matching_published_snapshot_boundary(
+                    autoencoder.state,
+                    latest_published,
+                    compiler_version=evaluation_compiler_commit,
+                )
+                unmatched_result_ids: List[str] = []
+                for snapshot_result in shutdown_results:
+                    accepted = bool(
+                        not shared_target_failed
+                        and not (corpus_context is not None and corpus_context["failed"])
+                        and shutdown_boundary is not None
+                        and snapshot_evaluator.accept_result(
+                            snapshot_result,
+                            shutdown_boundary.versions,
+                            expected_sequence=shutdown_boundary.sequence,
+                        )
+                    )
+                    if not accepted:
+                        unmatched_result_ids.append(snapshot_result.snapshot_id)
+                    promotion = (
+                        snapshot_evaluator.promote_at_boundary(shutdown_boundary)
+                        if accepted and shutdown_boundary is not None
+                        else None
+                    )
+                    if promotion is not None and promotion.promoted:
+                        summary["latest_promoted_snapshot_evaluation"] = (
+                            compact_snapshot_evaluation_summary(snapshot_result.to_dict())
+                        )
+                        summary["latest_promoted_snapshot_complete"] = bool(
+                            (
+                                snapshot_result.metrics.get("aggregate", {})
+                                if isinstance(snapshot_result.metrics, Mapping)
+                                else {}
+                            ).get("complete", False)
+                        )
+                        summary["latest_promoted_snapshot_boundary_cycle"] = int(
+                            snapshot_result.sequence
+                        )
+                summary["snapshot_shutdown"] = {
+                    "drained": snapshot_drained,
+                    "result_count": len(shutdown_results),
+                    "timeout_seconds": shutdown_timeout,
+                    "unmatched_result_ids": unmatched_result_ids,
+                }
+                summary["snapshot_evaluator"] = snapshot_evaluator.summary()
+                with snapshot_evaluation_jobs_lock:
+                    snapshot_evaluation_jobs.clear()
+            runtime_telemetry.close_open_spans(
+                status="cancelled" if stop_requested else "finished",
+                queue_depth=_runtime_queue_depth(supervisor.queue),
+            )
+            attach_runtime_telemetry(summary, runtime_telemetry)
+            if stop_requested:
+                summary["latest_stop_reason"] = f"signal_{stop_signal}"
+                summary["stopped_by_signal"] = stop_signal
+            summary.update(autoencoder.compute_backend_metadata())
+            summary["applied_todo_ids"] = len(autoencoder.state.applied_todo_ids)
+            summary["compiler_quality_embedding_weight_entries"] = len(
+                autoencoder.state.compiler_quality_embedding_weights
+            )
+            summary["compiler_quality_family_logit_entries"] = len(
+                autoencoder.state.compiler_quality_family_logits
+            )
+            summary["logic_signature_embedding_weight_entries"] = len(
+                autoencoder.state.logic_signature_embedding_weights
+            )
+            summary["logic_signature_family_logit_entries"] = len(
+                autoencoder.state.logic_signature_family_logits
+            )
+            summary["logic_signature_legal_ir_view_logit_entries"] = len(
+                autoencoder.state.logic_signature_legal_ir_view_logits
+            )
+            summary["round_trip_signal_embedding_weight_entries"] = len(
+                autoencoder.state.round_trip_signal_embedding_weights
+            )
+            summary["round_trip_signal_family_logit_entries"] = len(
+                autoencoder.state.round_trip_signal_family_logits
+            )
+            summary["round_trip_signal_legal_ir_view_logit_entries"] = len(
+                autoencoder.state.round_trip_signal_legal_ir_view_logits
+            )
+            summary["decompiler_plan_embedding_weight_entries"] = len(
+                autoencoder.state.decompiler_plan_embedding_weights
+            )
+            summary["decompiler_plan_family_logit_entries"] = len(
+                autoencoder.state.decompiler_plan_family_logits
+            )
+            summary["decompiler_plan_legal_ir_view_logit_entries"] = len(
+                autoencoder.state.decompiler_plan_legal_ir_view_logits
+            )
+            summary["predicate_argument_embedding_weight_entries"] = len(
+                autoencoder.state.predicate_argument_embedding_weights
+            )
+            summary["predicate_argument_family_logit_entries"] = len(
+                autoencoder.state.predicate_argument_family_logits
+            )
+            summary["predicate_argument_legal_ir_view_logit_entries"] = len(
+                autoencoder.state.predicate_argument_legal_ir_view_logits
+            )
+            summary["decoded_embedding_entries"] = len(autoencoder.state.decoded_embeddings)
+            summary["elapsed_seconds"] = round(time.time() - started_at, 3)
+            summary["family_embedding_weight_entries"] = len(autoencoder.state.family_embedding_weights)
+            summary["family_semantic_slot_embedding_weight_entries"] = len(
+                autoencoder.state.family_semantic_slot_embedding_weights
+            )
+            summary["family_semantic_slot_legal_ir_view_embedding_weight_entries"] = len(
+                autoencoder.state.family_semantic_slot_legal_ir_view_embedding_weights
+            )
+            summary["family_legal_ir_view_embedding_weight_entries"] = len(
+                autoencoder.state.family_legal_ir_view_embedding_weights
+            )
+            summary["family_logit_entries"] = len(autoencoder.state.family_logits)
+            summary["feature_embedding_weight_entries"] = len(
+                autoencoder.state.feature_embedding_weights
+            )
+            summary["feature_family_logit_entries"] = len(autoencoder.state.feature_family_logits)
+            summary["feature_legal_ir_view_logit_entries"] = len(
+                autoencoder.state.feature_legal_ir_view_logits
+            )
+            summary["legal_ir_view_embedding_weight_entries"] = len(
+                autoencoder.state.legal_ir_view_embedding_weights
+            )
+            summary["legal_ir_view_family_logit_entries"] = len(
+                autoencoder.state.legal_ir_view_family_logits
+            )
+            summary["semantic_slot_embedding_weight_entries"] = len(
+                autoencoder.state.semantic_slot_embedding_weights
+            )
+            summary["semantic_slot_family_logit_entries"] = len(
+                autoencoder.state.semantic_slot_family_logits
+            )
+            summary["family_semantic_slot_legal_ir_view_logit_entries"] = len(
+                autoencoder.state.family_semantic_slot_legal_ir_view_logits
+            )
+            summary["semantic_slot_legal_ir_view_embedding_weight_entries"] = len(
+                autoencoder.state.semantic_slot_legal_ir_view_embedding_weights
+            )
+            summary["semantic_slot_legal_ir_view_family_logit_entries"] = len(
+                autoencoder.state.semantic_slot_legal_ir_view_family_logits
+            )
+            summary["semantic_slot_legal_ir_view_logit_entries"] = len(
+                autoencoder.state.semantic_slot_legal_ir_view_logits
+            )
+            summary["finished_at"] = utc_now()
+            summary["legal_ir_view_logit_entries"] = len(autoencoder.state.legal_ir_view_logits)
+            summary["latest_queue_counts"] = supervisor.queue.status_counts()
+            summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
+            update_program_synthesis_summary(
+                summary,
+                supervisor.queue,
+                supervisor.policy,
+            )
+            summary["program_synthesis_transient_failure"] = supervisor.queue.transient_failure_counts(
+                optimizer_role=supervisor.policy.program_synthesis_role
+            )
+            summary["program_synthesis_transient_failure_rate"] = (
+                supervisor.queue.transient_failure_rate(
+                    optimizer_role=supervisor.policy.program_synthesis_role
+                )
+            )
+            summary["program_synthesis_queue_pressure"] = _program_synthesis_queue_pressure(
+                summary,
+                pending_cap=int(supervisor.policy.max_program_synthesis_pending),
+            )
+            summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(summary)
+            summary["supervisor_health"] = build_modal_supervisor_health_report(summary).to_dict()
+            if (not shared_target_failed and not (corpus_context is not None and corpus_context["failed"])
+                    and autoencoder.state.generalizable_capacity_exceeded(generalizable_capacity_limit)):
+                shutdown_capacity_report = autoencoder.state.compact_generalizable_capacity(
+                    generalizable_capacity_limit
+                )
+                shutdown_capacity_report["cycle"] = int(summary.get("cycles", 0) or 0)
+                shutdown_capacity_report["reason"] = "clean_shutdown"
+                summary["latest_autoencoder_generalizable_capacity"] = shutdown_capacity_report
+                summary["autoencoder_generalizable_capacity_compactions_total"] = (
+                    int(summary["autoencoder_generalizable_capacity_compactions_total"]) + 1
+                )
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "capacity": shutdown_capacity_report,
+                        "event": "autoencoder_generalizable_capacity_compacted",
+                    },
+                )
+            final_checkpoint_future = None
+            final_cycle = int(summary.get("cycles", 0) or 0)
+            if final_cycle > 0 and not shared_target_failed:
+                _daemon_verify_corpus(corpus_context, "final_checkpoint", defer_error=True)
+            if (final_cycle > 0 and not shared_target_failed
+                    and not (corpus_context is not None and corpus_context["failed"])):
+                final_checkpoint_snapshot = artifact_writer.snapshot_state_checkpoint(
+                    autoencoder.state,
+                    cycle=final_cycle,
+                    full=True,
+                    compact=True,
+                    metadata={
+                        "reason": "clean_shutdown",
+                        "run_id": args.run_id,
+                        "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                        **corpus_metadata,
+                    },
+                )
+                final_checkpoint_future = artifact_writer.write_state_checkpoint(
+                    state_path,
+                    final_checkpoint_snapshot,
+                    cycle=final_cycle,
+                    full=True,
+                    compact=True,
+                    metadata={
+                        "reason": "clean_shutdown",
+                        "run_id": args.run_id,
+                        "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                        **corpus_metadata,
+                    },
+                )
+                summary["final_state_persistence"] = {
+                    "checkpoint_bytes": int(final_checkpoint_snapshot.byte_size),
+                    "checkpoint_enqueued": True,
+                    "checkpoint_future_id": final_checkpoint_future.job_id,
+                    "checkpoint_identity": final_checkpoint_snapshot.identity,
+                    "checkpoint_revision": final_checkpoint_snapshot.revision,
+                    "durable": False,
+                    "state_path": str(state_path),
+                }
+            artifact_drain_timeout = max(
                 0.0,
                 float(
                     getattr(
                         args,
-                        "snapshot_evaluation_backpressure_timeout_seconds",
-                        DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS,
+                        "async_artifact_writer_backpressure_timeout_seconds",
+                        DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS,
                     )
                     or 0.0
                 ),
             )
-            snapshot_drained = snapshot_evaluator.wait_until_idle(timeout=shutdown_timeout)
-            snapshot_evaluator.close(
-                wait=snapshot_drained,
-                cancel_pending=not snapshot_drained,
-            )
-            shutdown_results = snapshot_evaluator.poll_results()
-            latest_published = summary.get("latest_published_snapshot")
-            shutdown_boundary = _matching_published_snapshot_boundary(
-                autoencoder.state,
-                latest_published,
-                compiler_version=evaluation_compiler_commit,
-            )
-            unmatched_result_ids: List[str] = []
-            for snapshot_result in shutdown_results:
-                accepted = bool(
-                    shutdown_boundary is not None
-                    and snapshot_evaluator.accept_result(
-                        snapshot_result,
-                        shutdown_boundary.versions,
-                        expected_sequence=shutdown_boundary.sequence,
-                    )
+            artifact_writer_drained = artifact_writer.wait_until_idle(timeout=artifact_drain_timeout)
+            if daemon_weights is not None:
+                _daemon_verify_corpus(corpus_context, "post_artifact_drain", defer_error=True)
+            if (artifact_writer_drained and final_checkpoint_future is not None
+                    and not (corpus_context is not None and corpus_context["failed"])):
+                final_checkpoint_receipt = final_checkpoint_future.result(timeout=0.0)
+                summary["final_state_persistence"].update(
+                    {
+                        "checksum": final_checkpoint_receipt.checksum,
+                        "completed_at": final_checkpoint_receipt.completed_at,
+                        "durable": True,
+                        "written_bytes": final_checkpoint_receipt.bytes_written,
+                    }
                 )
-                if not accepted:
-                    unmatched_result_ids.append(snapshot_result.snapshot_id)
-                promotion = (
-                    snapshot_evaluator.promote_at_boundary(shutdown_boundary)
-                    if accepted and shutdown_boundary is not None
-                    else None
-                )
-                if promotion is not None and promotion.promoted:
-                    summary["latest_promoted_snapshot_evaluation"] = (
-                        compact_snapshot_evaluation_summary(snapshot_result.to_dict())
+                if daemon_observation is not None:
+                    daemon_observation.record_state(
+                        "final_shutdown", autoencoder.state, cycle=final_cycle,
+                        metric_lineage=AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+                        metadata={
+                            "final_state_persistence": summary["final_state_persistence"],
+                            "latest_published_snapshot": summary.get("latest_published_snapshot"),
+                            "compiler_version": evaluation_compiler_commit,
+                            "holdout_version": canonical_holdout_version(
+                                [sample.sample_id for sample in acceptance_validation_samples],
+                                validation_mode=validation_mode,
+                            ),
+                            "validation_mode": validation_mode,
+                        },
                     )
-                    summary["latest_promoted_snapshot_complete"] = bool(
-                        (
-                            snapshot_result.metrics.get("aggregate", {})
-                            if isinstance(snapshot_result.metrics, Mapping)
-                            else {}
-                        ).get("complete", False)
-                    )
-                    summary["latest_promoted_snapshot_boundary_cycle"] = int(
-                        snapshot_result.sequence
-                    )
-            summary["snapshot_shutdown"] = {
-                "drained": snapshot_drained,
-                "result_count": len(shutdown_results),
-                "timeout_seconds": shutdown_timeout,
-                "unmatched_result_ids": unmatched_result_ids,
+            summary["async_artifact_writer_shutdown"] = {
+                "drained": bool(artifact_writer_drained),
+                "timeout_seconds": artifact_drain_timeout,
             }
-            summary["snapshot_evaluator"] = snapshot_evaluator.summary()
-            with snapshot_evaluation_jobs_lock:
-                snapshot_evaluation_jobs.clear()
-        runtime_telemetry.close_open_spans(
-            status="cancelled" if stop_requested else "finished",
-            queue_depth=_runtime_queue_depth(supervisor.queue),
-        )
-        attach_runtime_telemetry(summary, runtime_telemetry)
-        if stop_requested:
-            summary["latest_stop_reason"] = f"signal_{stop_signal}"
-            summary["stopped_by_signal"] = stop_signal
-        summary.update(autoencoder.compute_backend_metadata())
-        summary["applied_todo_ids"] = len(autoencoder.state.applied_todo_ids)
-        summary["compiler_quality_embedding_weight_entries"] = len(
-            autoencoder.state.compiler_quality_embedding_weights
-        )
-        summary["compiler_quality_family_logit_entries"] = len(
-            autoencoder.state.compiler_quality_family_logits
-        )
-        summary["logic_signature_embedding_weight_entries"] = len(
-            autoencoder.state.logic_signature_embedding_weights
-        )
-        summary["logic_signature_family_logit_entries"] = len(
-            autoencoder.state.logic_signature_family_logits
-        )
-        summary["logic_signature_legal_ir_view_logit_entries"] = len(
-            autoencoder.state.logic_signature_legal_ir_view_logits
-        )
-        summary["round_trip_signal_embedding_weight_entries"] = len(
-            autoencoder.state.round_trip_signal_embedding_weights
-        )
-        summary["round_trip_signal_family_logit_entries"] = len(
-            autoencoder.state.round_trip_signal_family_logits
-        )
-        summary["round_trip_signal_legal_ir_view_logit_entries"] = len(
-            autoencoder.state.round_trip_signal_legal_ir_view_logits
-        )
-        summary["decompiler_plan_embedding_weight_entries"] = len(
-            autoencoder.state.decompiler_plan_embedding_weights
-        )
-        summary["decompiler_plan_family_logit_entries"] = len(
-            autoencoder.state.decompiler_plan_family_logits
-        )
-        summary["decompiler_plan_legal_ir_view_logit_entries"] = len(
-            autoencoder.state.decompiler_plan_legal_ir_view_logits
-        )
-        summary["predicate_argument_embedding_weight_entries"] = len(
-            autoencoder.state.predicate_argument_embedding_weights
-        )
-        summary["predicate_argument_family_logit_entries"] = len(
-            autoencoder.state.predicate_argument_family_logits
-        )
-        summary["predicate_argument_legal_ir_view_logit_entries"] = len(
-            autoencoder.state.predicate_argument_legal_ir_view_logits
-        )
-        summary["decoded_embedding_entries"] = len(autoencoder.state.decoded_embeddings)
-        summary["elapsed_seconds"] = round(time.time() - started_at, 3)
-        summary["family_embedding_weight_entries"] = len(autoencoder.state.family_embedding_weights)
-        summary["family_semantic_slot_embedding_weight_entries"] = len(
-            autoencoder.state.family_semantic_slot_embedding_weights
-        )
-        summary["family_semantic_slot_legal_ir_view_embedding_weight_entries"] = len(
-            autoencoder.state.family_semantic_slot_legal_ir_view_embedding_weights
-        )
-        summary["family_legal_ir_view_embedding_weight_entries"] = len(
-            autoencoder.state.family_legal_ir_view_embedding_weights
-        )
-        summary["family_logit_entries"] = len(autoencoder.state.family_logits)
-        summary["feature_embedding_weight_entries"] = len(
-            autoencoder.state.feature_embedding_weights
-        )
-        summary["feature_family_logit_entries"] = len(autoencoder.state.feature_family_logits)
-        summary["feature_legal_ir_view_logit_entries"] = len(
-            autoencoder.state.feature_legal_ir_view_logits
-        )
-        summary["legal_ir_view_embedding_weight_entries"] = len(
-            autoencoder.state.legal_ir_view_embedding_weights
-        )
-        summary["legal_ir_view_family_logit_entries"] = len(
-            autoencoder.state.legal_ir_view_family_logits
-        )
-        summary["semantic_slot_embedding_weight_entries"] = len(
-            autoencoder.state.semantic_slot_embedding_weights
-        )
-        summary["semantic_slot_family_logit_entries"] = len(
-            autoencoder.state.semantic_slot_family_logits
-        )
-        summary["family_semantic_slot_legal_ir_view_logit_entries"] = len(
-            autoencoder.state.family_semantic_slot_legal_ir_view_logits
-        )
-        summary["semantic_slot_legal_ir_view_embedding_weight_entries"] = len(
-            autoencoder.state.semantic_slot_legal_ir_view_embedding_weights
-        )
-        summary["semantic_slot_legal_ir_view_family_logit_entries"] = len(
-            autoencoder.state.semantic_slot_legal_ir_view_family_logits
-        )
-        summary["semantic_slot_legal_ir_view_logit_entries"] = len(
-            autoencoder.state.semantic_slot_legal_ir_view_logits
-        )
-        summary["finished_at"] = utc_now()
-        summary["legal_ir_view_logit_entries"] = len(autoencoder.state.legal_ir_view_logits)
-        summary["latest_queue_counts"] = supervisor.queue.status_counts()
-        summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
-        update_program_synthesis_summary(
-            summary,
-            supervisor.queue,
-            supervisor.policy,
-        )
-        summary["program_synthesis_transient_failure"] = supervisor.queue.transient_failure_counts(
-            optimizer_role=supervisor.policy.program_synthesis_role
-        )
-        summary["program_synthesis_transient_failure_rate"] = (
-            supervisor.queue.transient_failure_rate(
-                optimizer_role=supervisor.policy.program_synthesis_role
+            summary["async_artifact_writer"] = artifact_writer.summary()
+            if corpus_inputs is not None:
+                corpus_inputs.close()
+                summary["corpus_inputs"] = corpus_inputs.summary()
+            save_summary(summary_path, summary, final=True)
+            append_event(log_path, args.run_id, {"event": "run_finished", **summary})
+            artifact_writer.close(
+                wait=artifact_writer_drained,
+                timeout=artifact_drain_timeout,
+                cancel_pending=not artifact_writer_drained,
             )
-        )
-        summary["program_synthesis_queue_pressure"] = _program_synthesis_queue_pressure(
-            summary,
-            pending_cap=int(supervisor.policy.max_program_synthesis_pending),
-        )
-        summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(summary)
-        summary["supervisor_health"] = build_modal_supervisor_health_report(summary).to_dict()
-        if autoencoder.state.generalizable_capacity_exceeded(generalizable_capacity_limit):
-            shutdown_capacity_report = autoencoder.state.compact_generalizable_capacity(
-                generalizable_capacity_limit
-            )
-            shutdown_capacity_report["cycle"] = int(summary.get("cycles", 0) or 0)
-            shutdown_capacity_report["reason"] = "clean_shutdown"
-            summary["latest_autoencoder_generalizable_capacity"] = shutdown_capacity_report
-            summary["autoencoder_generalizable_capacity_compactions_total"] = (
-                int(summary["autoencoder_generalizable_capacity_compactions_total"]) + 1
-            )
-            append_event(
-                log_path,
-                args.run_id,
-                {
-                    "capacity": shutdown_capacity_report,
-                    "event": "autoencoder_generalizable_capacity_compacted",
-                },
-            )
-        final_checkpoint_future = None
-        final_cycle = int(summary.get("cycles", 0) or 0)
-        if final_cycle > 0:
-            final_checkpoint_snapshot = artifact_writer.snapshot_state_checkpoint(
-                autoencoder.state,
-                cycle=final_cycle,
-                full=True,
-                compact=True,
-                metadata={
-                    "reason": "clean_shutdown",
-                    "run_id": args.run_id,
-                    "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
-                },
-            )
-            final_checkpoint_future = artifact_writer.write_state_checkpoint(
-                state_path,
-                final_checkpoint_snapshot,
-                cycle=final_cycle,
-                full=True,
-                compact=True,
-                metadata={
-                    "reason": "clean_shutdown",
-                    "run_id": args.run_id,
-                    "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
-                },
-            )
-            summary["final_state_persistence"] = {
-                "checkpoint_bytes": int(final_checkpoint_snapshot.byte_size),
-                "checkpoint_enqueued": True,
-                "checkpoint_future_id": final_checkpoint_future.job_id,
-                "checkpoint_identity": final_checkpoint_snapshot.identity,
-                "checkpoint_revision": final_checkpoint_snapshot.revision,
-                "durable": False,
-                "state_path": str(state_path),
-            }
-        artifact_drain_timeout = max(
-            0.0,
-            float(
-                getattr(
-                    args,
-                    "async_artifact_writer_backpressure_timeout_seconds",
-                    DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS,
-                )
-                or 0.0
-            ),
-        )
-        artifact_writer_drained = artifact_writer.wait_until_idle(timeout=artifact_drain_timeout)
-        if artifact_writer_drained and final_checkpoint_future is not None:
-            final_checkpoint_receipt = final_checkpoint_future.result(timeout=0.0)
-            summary["final_state_persistence"].update(
-                {
-                    "checksum": final_checkpoint_receipt.checksum,
-                    "completed_at": final_checkpoint_receipt.completed_at,
-                    "durable": True,
-                    "written_bytes": final_checkpoint_receipt.bytes_written,
-                }
-            )
-        summary["async_artifact_writer_shutdown"] = {
-            "drained": bool(artifact_writer_drained),
-            "timeout_seconds": artifact_drain_timeout,
-        }
-        summary["async_artifact_writer"] = artifact_writer.summary()
-        save_summary(summary_path, summary, final=True)
-        append_event(log_path, args.run_id, {"event": "run_finished", **summary})
-        artifact_writer.close(
-            wait=artifact_writer_drained,
-            timeout=artifact_drain_timeout,
-            cancel_pending=not artifact_writer_drained,
-        )
-        _ASYNC_SUMMARY_WRITER.writer = previous_async_summary_writer
-        for signum, handler in previous_signal_handlers.items():
-            signal.signal(signum, handler)
+        except BaseException as cleanup_error:
+            if shared_target_shutdown_error is not None:
+                raise shared_target_shutdown_error from cleanup_error
+            if corpus_context is not None and corpus_context.get("error") is not None:
+                raise corpus_context["error"] from cleanup_error
+            raise
+        finally:
+            _ASYNC_SUMMARY_WRITER.writer = previous_async_summary_writer
+            for signum, handler in previous_signal_handlers.items():
+                signal.signal(signum, handler)
+        if shared_target_shutdown_error is not None:
+            raise shared_target_shutdown_error
+        if corpus_context is not None and corpus_context.get("error") is not None:
+            raise corpus_context["error"]
     return 0
 
 
@@ -23002,7 +23679,11 @@ def main(argv: list[str] | None = None) -> int:
         return run_paired_uscode_modal_daemons(args)
     if args.loop_role == "codex":
         return run_codex_program_synthesis_daemon(args)
-    return run_guarded_uscode_modal_daemon(args)
+    result = run_guarded_uscode_modal_daemon(args)
+    observer = current_observer()
+    if observer is not None:
+        observer.record_return(result)
+    return result
 
 
 if __name__ == "__main__":

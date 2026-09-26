@@ -10,6 +10,8 @@ from ipfs_datasets_py.huggingface.publication_profile import (
     ABBY_VOICE_GOAL_ID,
     ABBY_VOICE_PLAN_SCHEMA,
     ABBY_VOICE_RECEIPT_SCHEMA,
+    AUTOFORMAL_TODO_GOAL_ID,
+    AUTOFORMAL_TODO_PLAN_SCHEMA,
     BASE_PROHIBITED_OPERATIONS,
     PATENT_LEGAL_GOAL_ID,
     PATENT_LEGAL_PLAN_SCHEMA,
@@ -17,6 +19,7 @@ from ipfs_datasets_py.huggingface.publication_profile import (
     HuggingFacePublicationProfile,
     PublicationProfileError,
     abby_voice_publication_profile,
+    autoformal_todo_publication_profile,
     get_publication_profile,
     patent_legal_publication_profile,
 )
@@ -155,8 +158,21 @@ def test_get_publication_profile_aliases() -> None:
     assert get_publication_profile("abby-voice").goal_id == ABBY_VOICE_GOAL_ID
     assert get_publication_profile("patent-legal").goal_id == PATENT_LEGAL_GOAL_ID
     assert get_publication_profile("justicedao").profile_id == "patent-legal"
+    assert get_publication_profile("autoformal-todo").goal_id == AUTOFORMAL_TODO_GOAL_ID
     with pytest.raises(PublicationProfileError, match="unknown"):
         get_publication_profile("unknown-program")
+
+
+def test_autoformal_todo_profile_has_no_unrelated_program_schema_strings() -> None:
+    profile = autoformal_todo_publication_profile()
+    assert profile.profile_id == "autoformal-todo"
+    assert profile.plan_schema_version == AUTOFORMAL_TODO_PLAN_SCHEMA
+    assert profile.plan_schema_version != ABBY_VOICE_PLAN_SCHEMA
+    payload = json.dumps(profile.to_dict(), sort_keys=True)
+    for marker in _ABBY_MARKERS:
+        assert marker.casefold() not in payload.casefold(), marker
+    assert profile.repository_id == "justicedao/uscode-autoformal-todos"
+    assert "jsonl" not in profile.release_prefix_template
 
 
 def test_release_prefix_for_formats_release_id() -> None:

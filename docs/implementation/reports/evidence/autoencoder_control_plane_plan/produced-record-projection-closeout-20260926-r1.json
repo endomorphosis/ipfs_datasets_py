@@ -1,0 +1,206 @@
+{
+  "admitted": false,
+  "artifacts": [
+    {
+      "bytes": 55806,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/probe-r1/audit-receipt.json",
+      "sha256": "ca9f709516553cc538891e8beeeca2855f304d52119d7d57792c272a07b45678"
+    },
+    {
+      "bytes": 39613,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/probe-r1/probe/projection-report.json",
+      "sha256": "57efeb47c90229433870935061a7a6ccdd2746dfe2065d8893aaf6611c338588"
+    },
+    {
+      "bytes": 2564468,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/probe-r1/tests/produced-record-projection-tests-r1-receipt.json",
+      "sha256": "5396c16daa994718fa270c2b98199e4afef27608a3d9a7d0ca42f4af6f5b4126"
+    },
+    {
+      "bytes": 3909,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/probe-r1/resource-release.json",
+      "sha256": "403f1707dc8683f5f9028d42d5e2e8855fc75446eaf3c64b8d143f33b0ff7238"
+    },
+    {
+      "bytes": 1261962,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/probe-r1/sources-before.json",
+      "sha256": "f10419f85c740180ea6f3e2374ca478f1dbf2b4540f7b16d73ad7113aa30231a"
+    },
+    {
+      "bytes": 1261962,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/probe-r1/sources-after.json",
+      "sha256": "f10419f85c740180ea6f3e2374ca478f1dbf2b4540f7b16d73ad7113aa30231a"
+    },
+    {
+      "bytes": 9566,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/probe-r1/probe/produced-record-projection.json",
+      "sha256": "c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4"
+    },
+    {
+      "bytes": 111812,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/probe-r1/probe/corpus-manifest.json",
+      "sha256": "a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3"
+    }
+  ],
+  "audit_wall_seconds": 46.87593952007592,
+  "bridge_names": [],
+  "campaign_summary": {
+    "admitted": false,
+    "all_inputs_attempted": false,
+    "all_inputs_embedded": false,
+    "current_leaf_bytes_verified": false,
+    "current_source_bytes_verified": false,
+    "declared_receipt_bytes": 434558,
+    "eligible_row_count": 62931,
+    "eligible_unique_input_count": 62839,
+    "excluded_row_count": 0,
+    "global_holdout_verified": false,
+    "leaf_count": 1,
+    "native_execution_profile": true,
+    "physical_row_count": 62931,
+    "physical_status_counts": {
+      "embedded": 51,
+      "missing_input": 0,
+      "token_limit_exceeded": 13,
+      "unattempted": 62867
+    },
+    "receipt_set_bytes": 9557340,
+    "receipt_set_sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7",
+    "runtime_cryptographically_attested": false,
+    "schema_version": "autoencoder-embedding-receipt-set-v1",
+    "source_authority_authenticated": false,
+    "source_partitions_sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+    "training_eligible": false,
+    "unique_status_counts": {
+      "embedded": 51,
+      "missing_input": 0,
+      "token_limit_exceeded": 13,
+      "unattempted": 62775
+    }
+  },
+  "changed_sources": [],
+  "checks": {
+    "audit_passed": true,
+    "harness_and_owned_code_current": true,
+    "new_artifacts_current": true,
+    "package_sources_current": true,
+    "probe_passed": true,
+    "protected_artifacts_current": true,
+    "resource_released": true,
+    "source_artifacts_current": true,
+    "test_inputs_current": true,
+    "tests_passed": true
+  },
+  "closeout_code": {
+    "bytes": 4243,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-record-projection-20260926/closeout.py",
+    "sha256": "0c75611eefef6588fbbe977bb5050e655d2945dd43ffe41445b1e4c98998a838"
+  },
+  "constitution_formalized": false,
+  "embedding_inference_performed": false,
+  "global_holdout_verified": false,
+  "historical_declared_native_receipt_reused": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 590
+  },
+  "legal_ir_evaluate_provers": false,
+  "metric_disk_cache_flag": "0",
+  "model_speed_claim": false,
+  "native_training_validation_deferred": true,
+  "new_native_runtime_qualification": false,
+  "os_page_cache_controlled": false,
+  "passed": true,
+  "phase_seconds": {
+    "archived_receipt_load": 0.011405171011574566,
+    "archived_record_conversion_all_64_nonmissing_source_checks": 0.04554892098531127,
+    "bounded_manifest_build": 0.009614941896870732,
+    "bounded_manifest_fresh_source_verification": 8.828903082758188e-05,
+    "bounded_manifest_reopen": 0.006714300950989127,
+    "bounded_manifest_save_with_source_validation": 0.004628821043297648,
+    "bounded_manifest_verify_job_records_no_execution": 0.0020504710264503956,
+    "bounded_projection_reopen_metadata_only": 0.00045616505667567253,
+    "bounded_projection_save": 0.00604450108949095,
+    "bounded_projection_verify_batch_with_fresh_selected_closure": 0.11416698701214045,
+    "inventory_load": 1.1743628419935703,
+    "partitions_load_full_inventory_revalidation": 2.8869170480174944,
+    "projection_build_with_fresh_selected_closure": 0.12877571408171207,
+    "receipt_set_load_full_partition_revalidation": 3.1461023669689894
+  },
+  "probe_wall_seconds": 9.154506831080653,
+  "projection_summary": {
+    "admitted": false,
+    "corpus_complete": false,
+    "corpus_manifest": {
+      "bytes": 111812,
+      "sha256": "a7091d80cc84d45adf530b7c21d4d85a45b8a3aa3a97a119a373d80e150f7fa3"
+    },
+    "current_selected_leaf_bytes_verified": false,
+    "current_selected_source_bytes_verified": false,
+    "dataset_snapshot_id": "sha256:fda5b9a5ef6c820a87f7151c96339f8164ceee415fd460827af6c78790008f44",
+    "global_holdout_verified": false,
+    "native_execution_profile": true,
+    "projection_bytes": 9566,
+    "projection_sha256": "c1475c512577888be5ab3309204dd8a10a36272b4fe65d990b80695026432bb4",
+    "receipt_set": {
+      "bytes": 9557340,
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7"
+    },
+    "record_count": 6,
+    "runtime_cryptographically_attested": false,
+    "schema_version": "autoencoder-produced-record-projection-v1",
+    "selected_leaf_count": 1,
+    "source_authority_authenticated": false,
+    "source_count": 6,
+    "source_partitions": {
+      "bytes": 12187351,
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+    },
+    "split_snapshot_id": "sha256:a9108efffa7c761bba3cedbd0cfe6e20b424177191e0e793d5a908d5e9122bf5",
+    "supplied_manifest_verified": false,
+    "training_eligible": false,
+    "training_record_count": 3,
+    "validation_record_count": 3
+  },
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "publication_performed": false,
+  "registry_modified": false,
+  "resource_reservation_id": "ddfff683979345f0b681d6f8a173d722",
+  "schema": "produced-record-projection-offline-closeout-v1",
+  "source_authority_authenticated": false,
+  "source_file_count": 7757,
+  "tests_wall_seconds": 27.519948317087255,
+  "training_or_evaluation_performed": false,
+  "training_record_count": 3,
+  "validation_record_count": 3,
+  "weights_downloaded": false,
+  "worker_count": 1
+}

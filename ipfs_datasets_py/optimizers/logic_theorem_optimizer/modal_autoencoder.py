@@ -8,6 +8,7 @@ import math
 import os
 import re
 import signal
+import sys
 import threading
 import time
 from contextlib import nullcontext
@@ -32,7 +33,7 @@ from .legal_ir_grammar_decoder import (
     LegalIRGrammarRejection,
     LegalIRGrammarValidation,
 )
-from .legal_samples import LegalSample, build_us_code_sample, stable_mock_embedding
+from .legal_samples import LegalSample, _runtime_embedding_vector, build_us_code_sample, stable_mock_embedding
 from .modal_registry import ModalLogicFamily
 from .modal_autoencoder_state_version import (
     IncrementalStateIdentity,
@@ -221,6 +222,13 @@ MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS = (
     "applied_leanstral_guidance_ids",
     "applied_todo_ids",
     "architecture_version",
+)
+
+# Top-level legacy checkpoint fields are independent of table contents. Input
+# validation must not serialize all weights just to obtain this fixed key set.
+MODAL_AUTOENCODER_STATE_SERIALIZED_FIELDS = frozenset(
+    (*MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS,
+     "schema_version", "proof_auxiliary_head_schema_version")
 )
 
 # Fields in each group share the same semantic key. Capacity selection must be
@@ -3081,7 +3089,18 @@ class ModalAutoencoderTrainingState:
                 pass
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "ModalAutoencoderTrainingState":
+    def from_dict(
+        cls, data: Mapping[str, Any], *, feature_embedding_weights_override: Any = None,
+    ) -> "ModalAutoencoderTrainingState":
+        mapped_feature_weights = None
+        if feature_embedding_weights_override is not None:
+            from .modal_autoencoder_arrow_weights import MappedFeatureEmbeddingWeights
+            if type(feature_embedding_weights_override) is not MappedFeatureEmbeddingWeights:
+                raise TypeError("feature_embedding_weights_override requires verified mapped legacy weights")
+            if str(data.get("schema_version") or "").startswith("modal-autoencoder-tensor-state-"):
+                raise ValueError("mapped legacy feature weights cannot override typed tensor checkpoints")
+            feature_embedding_weights_override.verify_source_rows(data.get("feature_embedding_weights", {}))
+            mapped_feature_weights = feature_embedding_weights_override
         if str(data.get("schema_version") or "").startswith("modal-autoencoder-tensor-state-"):
             from .modal_autoencoder_state_migration import (
                 unpack_modal_autoencoder_state,
@@ -3180,7 +3199,7 @@ class ModalAutoencoderTrainingState:
                     data.get("predicate_argument_legal_ir_view_logits", {})
                 ).items()
             },
-            feature_embedding_weights={
+            feature_embedding_weights=mapped_feature_weights if mapped_feature_weights is not None else {
                 str(feature): [float(value) for value in vector]
                 for feature, vector in dict(data.get("feature_embedding_weights", {})).items()
             },
@@ -3360,6 +3379,28 @@ class TrustedHammerLeanstralFeatureBus:
         }
 
 
+def _capture_ontology(samples: Sequence[Any]) -> list[dict[str, Any]]:
+    """Frame-logic triples already on each sample. Capture never admits a fragment."""
+
+    from .autoencoder_ontology_observation import capture_scope, note_suppressed
+
+    with capture_scope("optimizer_wrapper") as observation:
+        try:
+            from ipfs_datasets_py.logic.autoformal.ontology_capture import capture_samples
+        except (ImportError, OSError) as exc:
+            note_suppressed("capture_import", exc)
+            observation.returned(0)
+            return []
+        try:
+            result = capture_samples(samples)
+        except (TypeError, ValueError) as exc:
+            note_suppressed("capture_call", exc)
+            observation.returned(0)
+            return []
+        observation.returned()
+        return result
+
+
 class ModalAutoencoderBaseline:
     """Dependency-free baseline for the future encoder/decoder pair."""
 
@@ -3463,7 +3504,7 @@ class ModalAutoencoderBaseline:
                     (1.0, max(0.0, _float_or_zero(copy_penalty)))
                 )
 
-        return AutoencoderEvaluation(
+        evaluation = AutoencoderEvaluation(
             sample_count=len(sample_list),
             embedding_cosine_similarity=_mean(cosine_scores),
             cosine_loss=_mean(cosine_losses),
@@ -3490,6 +3531,8 @@ class ModalAutoencoderBaseline:
                 family_metric_observations
             ),
         )
+        self.last_ontology_captures = _capture_ontology(sample_list)
+        return evaluation
 
     def encode(self, sample: LegalSample) -> Dict[str, object]:
         """Encode sample into a deterministic intermediate representation."""
@@ -4032,13 +4075,13 @@ class AdaptiveModalAutoencoder:
         frame_losses: List[float] = []
         symbolic_penalties: List[float] = []
         decoded_embeddings: Dict[str, List[float]] = {}
-        target_vectors: List[List[float]] = []
+        target_vectors: List[Sequence[float]] = []
         decoded_vectors: List[List[float]] = []
 
         for sample in sample_list:
             decoded = self.decode(self.encode(sample, use_sample_memory=use_sample_memory))
             decoded_embeddings[sample.sample_id] = decoded
-            target_vectors.append(list(sample.embedding_vector))
+            target_vectors.append(_runtime_embedding_vector(sample.embedding_vector))
             decoded_vectors.append(decoded)
             probability_maps.append(
                 self._family_distribution(
@@ -4160,7 +4203,7 @@ class AdaptiveModalAutoencoder:
             if values:
                 legal_ir_losses[name] = _mean(values)
 
-        return AutoencoderEvaluation(
+        evaluation = AutoencoderEvaluation(
             sample_count=len(sample_list),
             embedding_cosine_similarity=_mean(cosine_scores),
             cosine_loss=_mean(cosine_losses),
@@ -4188,6 +4231,8 @@ class AdaptiveModalAutoencoder:
                 family_metric_observations
             ),
         )
+        self.last_ontology_captures = _capture_ontology(sample_list)
+        return evaluation
 
     def _cache_legal_ir_targets(
         self,
@@ -6497,11 +6542,20 @@ class AdaptiveModalAutoencoder:
         progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
         projection_profiler: Optional[ProjectionProfiler] = None,
         projection_update_backend: str = "auto",
+        accepted_patch_sink: Optional[
+            Callable[[ModalAutoencoderStatePatch, Mapping[str, Any]], None]
+        ] = None,
     ) -> Dict[str, Any]:
         """Train feature-level weights with rollback on holdout regression.
 
         This guarded path keeps sample-memory disabled for updates, so any
         accepted improvement must come from reusable feature embeddings/logits.
+
+        ``accepted_patch_sink`` receives only committed, selected patches. Sink
+        failure propagates after the state commit so callers cannot register an
+        incomplete durable chain. Opting in computes existing logical state
+        identities, which can scan changed components; it does not copy/diff
+        the full state, and the no-sink path performs no additional hashing.
         """
         started_at = time.time()
         self._cuda_residency_reports = []
@@ -6703,15 +6757,37 @@ class AdaptiveModalAutoencoder:
             *,
             label: str,
         ) -> None:
+            identity_started = time.perf_counter() if accepted_patch_sink is not None else 0.0
+            identity_stats_before = self.state.identity_stats if accepted_patch_sink is not None else None
+            base_identity = self.state.state_identity() if accepted_patch_sink is not None else None
+            base_identity_seconds = (
+                time.perf_counter() - identity_started if accepted_patch_sink is not None else 0.0
+            )
             transaction = self.state.transaction(label=label).begin()
             try:
                 patch.apply(transaction)
-                transaction.commit()
+                committed_patch = transaction.commit()
             except BaseException:
                 if transaction.active:
                     rollback_projection_transaction(transaction)
                 raise
             self._invalidate_state_dependent_evaluator_caches()
+            if accepted_patch_sink is not None:
+                identity_started = time.perf_counter()
+                result_identity = self.state.state_identity()
+                result_identity_seconds = time.perf_counter() - identity_started
+                accepted_patch_sink(committed_patch, {
+                    "base_state_identity": base_identity,
+                    "result_state_identity": result_identity,
+                    "base_revision": committed_patch.base_revision,
+                    "result_revision": committed_patch.result_revision,
+                    "label": label,
+                    "identity_profile": "existing-normalized-component-state-identity",
+                    "identity_hashing_seconds": base_identity_seconds + result_identity_seconds,
+                    "identity_hashing_scope": "dirty_components_not_touched_rows",
+                    "identity_stats_before": identity_stats_before,
+                    "identity_stats_after": self.state.identity_stats,
+                })
 
         emit_progress(
             "before_holdout_evaluation",
@@ -26642,6 +26718,17 @@ def _legal_ir_grammar_validation_from_target(
     explicit = _existing_legal_ir_grammar_validation(target)
     if explicit is not None:
         return explicit
+    bridge = sys.modules.get("ipfs_datasets_py.logic.bridge.multiview")
+    native_type = getattr(bridge, "LegalIRTrainingTarget", None)
+    native_summary = getattr(bridge, "_NATIVE_LEGAL_IR_TRAINING_TARGET_TO_DICT", None)
+    if (native_type is not None and type(target) is native_type
+            and native_summary is not None
+            and native_type.__dict__.get("to_dict") is native_summary
+            and "to_dict" not in target.__dict__):
+        # The native summary contains no grammar candidates. Serializing it
+        # would hash the entire document twice; the payload still computes its
+        # current hash below. Overrides and rich targets retain their full path.
+        return None
     source = _target_mapping(target)
     for key in (
         "scored_productions",
@@ -31049,6 +31136,7 @@ __all__ = [
     "MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK",
     "MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_STATE_SCHEMA_VERSION",
+    "MODAL_AUTOENCODER_STATE_SERIALIZED_FIELDS",
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
     "PROOF_AUXILIARY_HEAD_NAMES",

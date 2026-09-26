@@ -36,7 +36,7 @@ class LegalSample:
     text: str
     normalized_text: str
     embedding_model: str
-    embedding_vector: List[float]
+    embedding_vector: Sequence[float]
     modal_ir: ModalIRDocument
     frame_candidates: List[Dict[str, Any]] = field(default_factory=list)
     selected_frame: Optional[str] = None
@@ -128,7 +128,7 @@ def build_us_code_sample(
         text=text,
         normalized_text=normalized_text,
         embedding_model=embedding_model,
-        embedding_vector=list(embedding_vector)
+        embedding_vector=_runtime_embedding_vector(embedding_vector)
         if embedding_vector is not None
         else stable_mock_embedding(normalized_text),
         modal_ir=modal_ir,
@@ -142,6 +142,15 @@ def build_us_code_sample(
     )
     sample.validate()
     return sample
+
+
+def _runtime_embedding_vector(values: Sequence[float]) -> Sequence[float]:
+    """Preserve the exact validated mapped type; retain ordinary input copying."""
+    if type(values) in (list, tuple):
+        return list(values)
+    from .autoencoder_arrow_inputs import MappedEmbeddingVector
+
+    return values if type(values) is MappedEmbeddingVector else list(values)
 
 
 def _sample_id(title: str, section: str, normalized_text: str) -> str:

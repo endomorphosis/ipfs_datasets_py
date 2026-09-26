@@ -1,0 +1,1528 @@
+{
+  "admitted": false,
+  "candidate_implemented_in_package": false,
+  "decision": "GC scan overhead is real in this diagnostic and is not merely shifted into the first post-load collection.",
+  "formalized": false,
+  "interpretation": [
+    "Normal mode performed 8,372 generation-0, 761 generation-1 and 36 generation-2 collections in each hydration loop; all collected/uncollectable counters were zero.",
+    "Generation-2 scans alone took 4.3422s and 4.3939s; paused loops had no automatic collections during parse/decode/validate.",
+    "Paused mode performed one generation-0 collection immediately after re-enabling GC and before the explicit full collection; its 25\u201329ms cost is included in measured total.",
+    "The explicit first post-load full collection cost 42\u201347ms in both modes while all six targets remained retained.",
+    "gc.get_stats loop snapshots precede some restore-time metadata allocations; callback hydrate_validate aggregates include the immediate post-restore generation-0 collection, while the next statistics delta also records it.",
+    "This supports investigating a tightly scoped GC policy with exception-safe restoration, but supplies no end-to-end training performance guarantee."
+  ],
+  "limitations": [
+    "Two counterbalanced pairs only, four fresh python3 processes; no statistical significance claim.",
+    "Verified raw byte strings for all six shards are preloaded outside timing, unlike worker sequential raw-shard handling.",
+    "All six complete targets are retained through explicit cleanup and re-encoding; callback instrumentation overhead and OS cache remain uncontrolled.",
+    "Current parser source differs from archived producer; original embedded configuration is retained without relabeling."
+  ],
+  "median_total_reduction_fraction": 0.6414650123538119,
+  "median_total_speed_ratio": 2.7891280752405305,
+  "ordered_runs": [
+    {
+      "artifact": {
+        "bytes": 10830,
+        "path": "workspace/test-logs/federal-corpus-audits/hydration-gc-codec-diagnostic-20260925/pair1-normal.json",
+        "sha256": "45b76914b4a6f73879bd7de8e7daa08a628444fcde432f838c1b9c5ecd8f6699"
+      },
+      "result": {
+        "admitted": false,
+        "artifact": {
+          "bytes": 12843560,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/ontology-observation-native-20260925/artifacts/ee/ee87ec939d4b9fe2bf2bae162366769961ac8eec178f328b1dc92b0c54982613",
+          "sha256": "ee87ec939d4b9fe2bf2bae162366769961ac8eec178f328b1dc92b0c54982613"
+        },
+        "caveats": [
+          "Fresh process per mode; OS cache uncontrolled.",
+          "All six verified raw byte strings are retained before timing, unlike sequential bundle hydration.",
+          "GC callback accounting adds instrumentation overhead in both modes.",
+          "No source/configuration identities are rewritten; the artifact is archived-format diagnostic input."
+        ],
+        "current_source_sha256": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "logic/deontic/utils/deontic_parser.py": "3ae3b8e27f80d43355fa09e3cf0a8c4da18f024ba3bf3cc845ea9ad135ab3f28",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+          "optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+        },
+        "current_training_configuration_validated": false,
+        "embedded_config_sha256": "4155ac8ffb6e63e0ea466c4ba58e7698972c92466fe452ce69716115857aff0b",
+        "embedded_configuration_unchanged": true,
+        "embedded_producer_source_sha256": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "logic/deontic/utils/deontic_parser.py": "cb294f4bf17cd686382f78a577f82cc0e4c002a7fb70a1539b8a6030510758bb",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+          "optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+        },
+        "expanded_bytes": 212314592,
+        "formalized": false,
+        "full_canonical_reencoding": [
+          {
+            "bytes": 37861542,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "sha256": "de010117faf4348dcd111a6b220660f237eeed3419ac14bbde68ff22b93cf954"
+          },
+          {
+            "bytes": 17496831,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "sha256": "98eb88f2986437996b8fa027c215362816ae408a6f728d43a485e07d39e77992"
+          },
+          {
+            "bytes": 40073555,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "sha256": "62bb1336d5a79ebacf8a330685d47838db150a98fb469ad45cf0aed3d2668c08"
+          },
+          {
+            "bytes": 65169197,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "sha256": "eca1d8a18544da2182105d722810d7666dd7734ff26ca9298dfabb335fa625c7"
+          },
+          {
+            "bytes": 37517402,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "sha256": "bf1916b6b73026d406ea60eafeece72ace022c9b85da644eb08923f9cfe67b8d"
+          },
+          {
+            "bytes": 14196065,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122"
+          }
+        ],
+        "gc": {
+          "callback_aggregates": {
+            "hydrate_validate": [
+              {
+                "collected": 0,
+                "collections": 8372,
+                "elapsed_seconds": 0.1048335968516767,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 761,
+                "elapsed_seconds": 0.16575449134688824,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 36,
+                "elapsed_seconds": 4.342206310131587,
+                "uncollectable": 0
+              }
+            ],
+            "parity": [
+              {
+                "collected": 0,
+                "collections": 7209,
+                "elapsed_seconds": 0.10738647042308003,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 655,
+                "elapsed_seconds": 0.21291365462820977,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 34,
+                "elapsed_seconds": 5.698542958009057,
+                "uncollectable": 0
+              }
+            ],
+            "post_load_collection": [
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.04629432805813849,
+                "uncollectable": 0
+              }
+            ],
+            "preload_collection": [
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.008810653002001345,
+                "uncollectable": 0
+              }
+            ]
+          },
+          "callbacks_restored": true,
+          "count_after_collection": [
+            4,
+            0,
+            0
+          ],
+          "count_after_loop": [
+            0,
+            1,
+            11
+          ],
+          "count_before_loop": [
+            4,
+            0,
+            0
+          ],
+          "first_post_load_collected": 0,
+          "loop_generation_deltas": [
+            {
+              "collected": 0,
+              "collections": 8372,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 761,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 36,
+              "uncollectable": 0
+            }
+          ],
+          "original_enabled": true,
+          "original_threshold": [
+            700,
+            10,
+            10
+          ],
+          "post_load_collection_generation_deltas": [
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 1,
+              "uncollectable": 0
+            }
+          ],
+          "reset_collected": 0,
+          "restored_enabled": true,
+          "restored_threshold": [
+            700,
+            10,
+            10
+          ],
+          "stats_after_collection": [
+            {
+              "collected": 8853,
+              "collections": 8501,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 772,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 39,
+              "uncollectable": 0
+            }
+          ],
+          "stats_after_loop": [
+            {
+              "collected": 8853,
+              "collections": 8501,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 772,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 38,
+              "uncollectable": 0
+            }
+          ],
+          "stats_before_loop": [
+            {
+              "collected": 8853,
+              "collections": 129,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 11,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ]
+        },
+        "harness_sha256": "e1e7346c2455fcb37057bb51357042a0a5f5e553ccffb596bdb30a74e18825f3",
+        "manifest_order_preserved": true,
+        "measured_total_including_gc_restore_and_collection_seconds": 7.200598748982884,
+        "memory": {
+          "after_loop": {
+            "current_rss_bytes": 1123397632,
+            "max_rss_kib": 1119232
+          },
+          "after_parity": {
+            "current_rss_bytes": 1133551616,
+            "max_rss_kib": 1318092
+          },
+          "after_post_load_collection": {
+            "current_rss_bytes": 1123397632,
+            "max_rss_kib": 1119232
+          },
+          "before_loop": {
+            "current_rss_bytes": 281485312,
+            "max_rss_kib": 311952
+          }
+        },
+        "mode": "normal_gc",
+        "pair": 1,
+        "parity_check_seconds_outside_measurement": 9.45991870900616,
+        "parse_decode_validate_loop_seconds": 7.154202244011685,
+        "per_record": [
+          {
+            "decode_seconds": 0.2901839839760214,
+            "parse_seconds": 0.5439774270635098,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "validate_seconds": 0.13767204305622727
+          },
+          {
+            "decode_seconds": 0.06547609798144549,
+            "parse_seconds": 0.17765913507901132,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "validate_seconds": 0.0535331720020622
+          },
+          {
+            "decode_seconds": 0.15334259194787592,
+            "parse_seconds": 1.0156020909780636,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "validate_seconds": 0.14360164001118392
+          },
+          {
+            "decode_seconds": 0.24800138093996793,
+            "parse_seconds": 1.786062531056814,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "validate_seconds": 0.24835333705414087
+          },
+          {
+            "decode_seconds": 0.15764111699536443,
+            "parse_seconds": 1.224324262002483,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "validate_seconds": 0.13941871700808406
+          },
+          {
+            "decode_seconds": 0.07935648399870843,
+            "parse_seconds": 0.49043374496977776,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "validate_seconds": 0.04941231303382665
+          }
+        ],
+        "post_load_collection_seconds": 0.046300136018544436,
+        "python": {
+          "executable": "/usr/bin/python3",
+          "implementation": "CPython",
+          "version": "3.12.3"
+        },
+        "raw_shards_preloaded": true,
+        "receipt": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-observation-native-20260925.json",
+          "sha256": "1e9d5c52cd80974a89d335fd429c2d04bdf454b51f250c4c64d6163b04b6625b"
+        },
+        "schema": "archived-target-hydration-gc-diagnostic-v1",
+        "scope": "archived-format strict codec hydration only; no current producer/config qualification or training claim",
+        "setup_seconds": 0.4173738519893959,
+        "snapshot_id": "sha256:7bd199c7ec1946d7ff9f39d8cabe156e9dba51363717a8c0c3bd68b5d5d9d16d",
+        "strict_parse_decode_validate_used": true,
+        "target_count_retained": 6,
+        "training_performed": false,
+        "whole_bundle_compressed_and_expanded_digests_verified": true
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 10790,
+        "path": "workspace/test-logs/federal-corpus-audits/hydration-gc-codec-diagnostic-20260925/pair1-paused.json",
+        "sha256": "05cc46308e64b402982af435e1bce4b6688fcbbb332b167db269b9413e8885e3"
+      },
+      "result": {
+        "admitted": false,
+        "artifact": {
+          "bytes": 12843560,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/ontology-observation-native-20260925/artifacts/ee/ee87ec939d4b9fe2bf2bae162366769961ac8eec178f328b1dc92b0c54982613",
+          "sha256": "ee87ec939d4b9fe2bf2bae162366769961ac8eec178f328b1dc92b0c54982613"
+        },
+        "caveats": [
+          "Fresh process per mode; OS cache uncontrolled.",
+          "All six verified raw byte strings are retained before timing, unlike sequential bundle hydration.",
+          "GC callback accounting adds instrumentation overhead in both modes.",
+          "No source/configuration identities are rewritten; the artifact is archived-format diagnostic input."
+        ],
+        "current_source_sha256": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "logic/deontic/utils/deontic_parser.py": "3ae3b8e27f80d43355fa09e3cf0a8c4da18f024ba3bf3cc845ea9ad135ab3f28",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+          "optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+        },
+        "current_training_configuration_validated": false,
+        "embedded_config_sha256": "4155ac8ffb6e63e0ea466c4ba58e7698972c92466fe452ce69716115857aff0b",
+        "embedded_configuration_unchanged": true,
+        "embedded_producer_source_sha256": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "logic/deontic/utils/deontic_parser.py": "cb294f4bf17cd686382f78a577f82cc0e4c002a7fb70a1539b8a6030510758bb",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+          "optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+        },
+        "expanded_bytes": 212314592,
+        "formalized": false,
+        "full_canonical_reencoding": [
+          {
+            "bytes": 37861542,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "sha256": "de010117faf4348dcd111a6b220660f237eeed3419ac14bbde68ff22b93cf954"
+          },
+          {
+            "bytes": 17496831,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "sha256": "98eb88f2986437996b8fa027c215362816ae408a6f728d43a485e07d39e77992"
+          },
+          {
+            "bytes": 40073555,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "sha256": "62bb1336d5a79ebacf8a330685d47838db150a98fb469ad45cf0aed3d2668c08"
+          },
+          {
+            "bytes": 65169197,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "sha256": "eca1d8a18544da2182105d722810d7666dd7734ff26ca9298dfabb335fa625c7"
+          },
+          {
+            "bytes": 37517402,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "sha256": "bf1916b6b73026d406ea60eafeece72ace022c9b85da644eb08923f9cfe67b8d"
+          },
+          {
+            "bytes": 14196065,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122"
+          }
+        ],
+        "gc": {
+          "callback_aggregates": {
+            "hydrate_validate": [
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.02544713206589222,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              }
+            ],
+            "parity": [
+              {
+                "collected": 0,
+                "collections": 7209,
+                "elapsed_seconds": 0.10933680587913841,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 655,
+                "elapsed_seconds": 0.20329766953364015,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 34,
+                "elapsed_seconds": 5.62040472147055,
+                "uncollectable": 0
+              }
+            ],
+            "post_load_collection": [
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.04248497600201517,
+                "uncollectable": 0
+              }
+            ],
+            "preload_collection": [
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.006809336016885936,
+                "uncollectable": 0
+              }
+            ]
+          },
+          "callbacks_restored": true,
+          "count_after_collection": [
+            4,
+            0,
+            0
+          ],
+          "count_after_loop": [
+            907977,
+            0,
+            0
+          ],
+          "count_before_loop": [
+            4,
+            0,
+            0
+          ],
+          "first_post_load_collected": 0,
+          "loop_generation_deltas": [
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            }
+          ],
+          "original_enabled": true,
+          "original_threshold": [
+            700,
+            10,
+            10
+          ],
+          "post_load_collection_generation_deltas": [
+            {
+              "collected": 0,
+              "collections": 1,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 1,
+              "uncollectable": 0
+            }
+          ],
+          "reset_collected": 0,
+          "restored_enabled": true,
+          "restored_threshold": [
+            700,
+            10,
+            10
+          ],
+          "stats_after_collection": [
+            {
+              "collected": 8853,
+              "collections": 130,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 11,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 3,
+              "uncollectable": 0
+            }
+          ],
+          "stats_after_loop": [
+            {
+              "collected": 8853,
+              "collections": 129,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 11,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ],
+          "stats_before_loop": [
+            {
+              "collected": 8853,
+              "collections": 129,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 11,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ]
+        },
+        "harness_sha256": "e1e7346c2455fcb37057bb51357042a0a5f5e553ccffb596bdb30a74e18825f3",
+        "manifest_order_preserved": true,
+        "measured_total_including_gc_restore_and_collection_seconds": 2.577477406943217,
+        "memory": {
+          "after_loop": {
+            "current_rss_bytes": 1123127296,
+            "max_rss_kib": 1118832
+          },
+          "after_parity": {
+            "current_rss_bytes": 1130995712,
+            "max_rss_kib": 1313572
+          },
+          "after_post_load_collection": {
+            "current_rss_bytes": 1123127296,
+            "max_rss_kib": 1118832
+          },
+          "before_loop": {
+            "current_rss_bytes": 281595904,
+            "max_rss_kib": 312816
+          }
+        },
+        "mode": "paused_gc",
+        "pair": 1,
+        "parity_check_seconds_outside_measurement": 9.35850729397498,
+        "parse_decode_validate_loop_seconds": 2.509430625010282,
+        "per_record": [
+          {
+            "decode_seconds": 0.13536433991976082,
+            "parse_seconds": 0.1598746150266379,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "validate_seconds": 0.14452171698212624
+          },
+          {
+            "decode_seconds": 0.06339843000750989,
+            "parse_seconds": 0.04135389206930995,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "validate_seconds": 0.05182187398895621
+          },
+          {
+            "decode_seconds": 0.14799007400870323,
+            "parse_seconds": 0.16027372295502573,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "validate_seconds": 0.1481024749809876
+          },
+          {
+            "decode_seconds": 0.24294350808486342,
+            "parse_seconds": 0.25232661399059,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "validate_seconds": 0.23943731095641851
+          },
+          {
+            "decode_seconds": 0.15198963601142168,
+            "parse_seconds": 0.10689343197736889,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "validate_seconds": 0.13625438197050244
+          },
+          {
+            "decode_seconds": 0.07465310697443783,
+            "parse_seconds": 0.05042083701118827,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "validate_seconds": 0.047354804002679884
+          }
+        ],
+        "post_load_collection_seconds": 0.042489520041272044,
+        "python": {
+          "executable": "/usr/bin/python3",
+          "implementation": "CPython",
+          "version": "3.12.3"
+        },
+        "raw_shards_preloaded": true,
+        "receipt": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-observation-native-20260925.json",
+          "sha256": "1e9d5c52cd80974a89d335fd429c2d04bdf454b51f250c4c64d6163b04b6625b"
+        },
+        "schema": "archived-target-hydration-gc-diagnostic-v1",
+        "scope": "archived-format strict codec hydration only; no current producer/config qualification or training claim",
+        "setup_seconds": 0.4137382530607283,
+        "snapshot_id": "sha256:7bd199c7ec1946d7ff9f39d8cabe156e9dba51363717a8c0c3bd68b5d5d9d16d",
+        "strict_parse_decode_validate_used": true,
+        "target_count_retained": 6,
+        "training_performed": false,
+        "whole_bundle_compressed_and_expanded_digests_verified": true
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 10794,
+        "path": "workspace/test-logs/federal-corpus-audits/hydration-gc-codec-diagnostic-20260925/pair2-paused.json",
+        "sha256": "a4e46ee64a73a4e816b941b4d96098fcc393704cfe0930626f6af0ac0d69684d"
+      },
+      "result": {
+        "admitted": false,
+        "artifact": {
+          "bytes": 12843560,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/ontology-observation-native-20260925/artifacts/ee/ee87ec939d4b9fe2bf2bae162366769961ac8eec178f328b1dc92b0c54982613",
+          "sha256": "ee87ec939d4b9fe2bf2bae162366769961ac8eec178f328b1dc92b0c54982613"
+        },
+        "caveats": [
+          "Fresh process per mode; OS cache uncontrolled.",
+          "All six verified raw byte strings are retained before timing, unlike sequential bundle hydration.",
+          "GC callback accounting adds instrumentation overhead in both modes.",
+          "No source/configuration identities are rewritten; the artifact is archived-format diagnostic input."
+        ],
+        "current_source_sha256": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "logic/deontic/utils/deontic_parser.py": "3ae3b8e27f80d43355fa09e3cf0a8c4da18f024ba3bf3cc845ea9ad135ab3f28",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+          "optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+        },
+        "current_training_configuration_validated": false,
+        "embedded_config_sha256": "4155ac8ffb6e63e0ea466c4ba58e7698972c92466fe452ce69716115857aff0b",
+        "embedded_configuration_unchanged": true,
+        "embedded_producer_source_sha256": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "logic/deontic/utils/deontic_parser.py": "cb294f4bf17cd686382f78a577f82cc0e4c002a7fb70a1539b8a6030510758bb",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+          "optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+        },
+        "expanded_bytes": 212314592,
+        "formalized": false,
+        "full_canonical_reencoding": [
+          {
+            "bytes": 37861542,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "sha256": "de010117faf4348dcd111a6b220660f237eeed3419ac14bbde68ff22b93cf954"
+          },
+          {
+            "bytes": 17496831,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "sha256": "98eb88f2986437996b8fa027c215362816ae408a6f728d43a485e07d39e77992"
+          },
+          {
+            "bytes": 40073555,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "sha256": "62bb1336d5a79ebacf8a330685d47838db150a98fb469ad45cf0aed3d2668c08"
+          },
+          {
+            "bytes": 65169197,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "sha256": "eca1d8a18544da2182105d722810d7666dd7734ff26ca9298dfabb335fa625c7"
+          },
+          {
+            "bytes": 37517402,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "sha256": "bf1916b6b73026d406ea60eafeece72ace022c9b85da644eb08923f9cfe67b8d"
+          },
+          {
+            "bytes": 14196065,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122"
+          }
+        ],
+        "gc": {
+          "callback_aggregates": {
+            "hydrate_validate": [
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.02900281792972237,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              }
+            ],
+            "parity": [
+              {
+                "collected": 0,
+                "collections": 7209,
+                "elapsed_seconds": 0.11218736541923136,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 655,
+                "elapsed_seconds": 0.20691522059496492,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 34,
+                "elapsed_seconds": 5.542530843871646,
+                "uncollectable": 0
+              }
+            ],
+            "post_load_collection": [
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.04654329200275242,
+                "uncollectable": 0
+              }
+            ],
+            "preload_collection": [
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.00846853805705905,
+                "uncollectable": 0
+              }
+            ]
+          },
+          "callbacks_restored": true,
+          "count_after_collection": [
+            4,
+            0,
+            0
+          ],
+          "count_after_loop": [
+            907977,
+            0,
+            0
+          ],
+          "count_before_loop": [
+            4,
+            0,
+            0
+          ],
+          "first_post_load_collected": 0,
+          "loop_generation_deltas": [
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            }
+          ],
+          "original_enabled": true,
+          "original_threshold": [
+            700,
+            10,
+            10
+          ],
+          "post_load_collection_generation_deltas": [
+            {
+              "collected": 0,
+              "collections": 1,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 1,
+              "uncollectable": 0
+            }
+          ],
+          "reset_collected": 0,
+          "restored_enabled": true,
+          "restored_threshold": [
+            700,
+            10,
+            10
+          ],
+          "stats_after_collection": [
+            {
+              "collected": 8853,
+              "collections": 130,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 11,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 3,
+              "uncollectable": 0
+            }
+          ],
+          "stats_after_loop": [
+            {
+              "collected": 8853,
+              "collections": 129,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 11,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ],
+          "stats_before_loop": [
+            {
+              "collected": 8853,
+              "collections": 129,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 11,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ]
+        },
+        "harness_sha256": "e1e7346c2455fcb37057bb51357042a0a5f5e553ccffb596bdb30a74e18825f3",
+        "manifest_order_preserved": true,
+        "measured_total_including_gc_restore_and_collection_seconds": 2.6111009740270674,
+        "memory": {
+          "after_loop": {
+            "current_rss_bytes": 1123127296,
+            "max_rss_kib": 1118920
+          },
+          "after_parity": {
+            "current_rss_bytes": 1130999808,
+            "max_rss_kib": 1313680
+          },
+          "after_post_load_collection": {
+            "current_rss_bytes": 1123127296,
+            "max_rss_kib": 1118920
+          },
+          "before_loop": {
+            "current_rss_bytes": 281600000,
+            "max_rss_kib": 313648
+          }
+        },
+        "mode": "paused_gc",
+        "pair": 2,
+        "parity_check_seconds_outside_measurement": 9.281720377970487,
+        "parse_decode_validate_loop_seconds": 2.535425181966275,
+        "per_record": [
+          {
+            "decode_seconds": 0.13761403097305447,
+            "parse_seconds": 0.1766619629925117,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "validate_seconds": 0.14319799304939806
+          },
+          {
+            "decode_seconds": 0.06321089202538133,
+            "parse_seconds": 0.041184292058460414,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "validate_seconds": 0.052180790924467146
+          },
+          {
+            "decode_seconds": 0.15065892098937184,
+            "parse_seconds": 0.15720623696688563,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "validate_seconds": 0.1477723449934274
+          },
+          {
+            "decode_seconds": 0.24372291192412376,
+            "parse_seconds": 0.24934220407158136,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "validate_seconds": 0.2398620230378583
+          },
+          {
+            "decode_seconds": 0.1526290369220078,
+            "parse_seconds": 0.10712743608746678,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "validate_seconds": 0.13609995099250227
+          },
+          {
+            "decode_seconds": 0.0775360680418089,
+            "parse_seconds": 0.054276845999993384,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "validate_seconds": 0.04924747999757528
+          }
+        ],
+        "post_load_collection_seconds": 0.04654895607382059,
+        "python": {
+          "executable": "/usr/bin/python3",
+          "implementation": "CPython",
+          "version": "3.12.3"
+        },
+        "raw_shards_preloaded": true,
+        "receipt": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-observation-native-20260925.json",
+          "sha256": "1e9d5c52cd80974a89d335fd429c2d04bdf454b51f250c4c64d6163b04b6625b"
+        },
+        "schema": "archived-target-hydration-gc-diagnostic-v1",
+        "scope": "archived-format strict codec hydration only; no current producer/config qualification or training claim",
+        "setup_seconds": 0.42126736498903483,
+        "snapshot_id": "sha256:7bd199c7ec1946d7ff9f39d8cabe156e9dba51363717a8c0c3bd68b5d5d9d16d",
+        "strict_parse_decode_validate_used": true,
+        "target_count_retained": 6,
+        "training_performed": false,
+        "whole_bundle_compressed_and_expanded_digests_verified": true
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 10832,
+        "path": "workspace/test-logs/federal-corpus-audits/hydration-gc-codec-diagnostic-20260925/pair2-normal.json",
+        "sha256": "9e2cf2e890f29fc6aa1840e1ccee556b4065575b10ba2606fd4c2247f7fb7681"
+      },
+      "result": {
+        "admitted": false,
+        "artifact": {
+          "bytes": 12843560,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/ontology-observation-native-20260925/artifacts/ee/ee87ec939d4b9fe2bf2bae162366769961ac8eec178f328b1dc92b0c54982613",
+          "sha256": "ee87ec939d4b9fe2bf2bae162366769961ac8eec178f328b1dc92b0c54982613"
+        },
+        "caveats": [
+          "Fresh process per mode; OS cache uncontrolled.",
+          "All six verified raw byte strings are retained before timing, unlike sequential bundle hydration.",
+          "GC callback accounting adds instrumentation overhead in both modes.",
+          "No source/configuration identities are rewritten; the artifact is archived-format diagnostic input."
+        ],
+        "current_source_sha256": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "logic/deontic/utils/deontic_parser.py": "3ae3b8e27f80d43355fa09e3cf0a8c4da18f024ba3bf3cc845ea9ad135ab3f28",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+          "optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+        },
+        "current_training_configuration_validated": false,
+        "embedded_config_sha256": "4155ac8ffb6e63e0ea466c4ba58e7698972c92466fe452ce69716115857aff0b",
+        "embedded_configuration_unchanged": true,
+        "embedded_producer_source_sha256": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "logic/deontic/utils/deontic_parser.py": "cb294f4bf17cd686382f78a577f82cc0e4c002a7fb70a1539b8a6030510758bb",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+          "optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1"
+        },
+        "expanded_bytes": 212314592,
+        "formalized": false,
+        "full_canonical_reencoding": [
+          {
+            "bytes": 37861542,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "sha256": "de010117faf4348dcd111a6b220660f237eeed3419ac14bbde68ff22b93cf954"
+          },
+          {
+            "bytes": 17496831,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "sha256": "98eb88f2986437996b8fa027c215362816ae408a6f728d43a485e07d39e77992"
+          },
+          {
+            "bytes": 40073555,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "sha256": "62bb1336d5a79ebacf8a330685d47838db150a98fb469ad45cf0aed3d2668c08"
+          },
+          {
+            "bytes": 65169197,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "sha256": "eca1d8a18544da2182105d722810d7666dd7734ff26ca9298dfabb335fa625c7"
+          },
+          {
+            "bytes": 37517402,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "sha256": "bf1916b6b73026d406ea60eafeece72ace022c9b85da644eb08923f9cfe67b8d"
+          },
+          {
+            "bytes": 14196065,
+            "exact_bytes_equal": true,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122"
+          }
+        ],
+        "gc": {
+          "callback_aggregates": {
+            "hydrate_validate": [
+              {
+                "collected": 0,
+                "collections": 8372,
+                "elapsed_seconds": 0.10773915948811918,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 761,
+                "elapsed_seconds": 0.17489899543579668,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 36,
+                "elapsed_seconds": 4.393916244036518,
+                "uncollectable": 0
+              }
+            ],
+            "parity": [
+              {
+                "collected": 0,
+                "collections": 7209,
+                "elapsed_seconds": 0.11177757289260626,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 655,
+                "elapsed_seconds": 0.2071270130109042,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 34,
+                "elapsed_seconds": 5.424999857787043,
+                "uncollectable": 0
+              }
+            ],
+            "post_load_collection": [
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.04525089496746659,
+                "uncollectable": 0
+              }
+            ],
+            "preload_collection": [
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 0,
+                "elapsed_seconds": 0.0,
+                "uncollectable": 0
+              },
+              {
+                "collected": 0,
+                "collections": 1,
+                "elapsed_seconds": 0.006915193051099777,
+                "uncollectable": 0
+              }
+            ]
+          },
+          "callbacks_restored": true,
+          "count_after_collection": [
+            4,
+            0,
+            0
+          ],
+          "count_after_loop": [
+            0,
+            1,
+            11
+          ],
+          "count_before_loop": [
+            4,
+            0,
+            0
+          ],
+          "first_post_load_collected": 0,
+          "loop_generation_deltas": [
+            {
+              "collected": 0,
+              "collections": 8372,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 761,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 36,
+              "uncollectable": 0
+            }
+          ],
+          "original_enabled": true,
+          "original_threshold": [
+            700,
+            10,
+            10
+          ],
+          "post_load_collection_generation_deltas": [
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 0,
+              "uncollectable": 0
+            },
+            {
+              "collected": 0,
+              "collections": 1,
+              "uncollectable": 0
+            }
+          ],
+          "reset_collected": 0,
+          "restored_enabled": true,
+          "restored_threshold": [
+            700,
+            10,
+            10
+          ],
+          "stats_after_collection": [
+            {
+              "collected": 8853,
+              "collections": 8501,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 772,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 39,
+              "uncollectable": 0
+            }
+          ],
+          "stats_after_loop": [
+            {
+              "collected": 8853,
+              "collections": 8501,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 772,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 38,
+              "uncollectable": 0
+            }
+          ],
+          "stats_before_loop": [
+            {
+              "collected": 8853,
+              "collections": 129,
+              "uncollectable": 0
+            },
+            {
+              "collected": 1013,
+              "collections": 11,
+              "uncollectable": 0
+            },
+            {
+              "collected": 5,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ]
+        },
+        "harness_sha256": "e1e7346c2455fcb37057bb51357042a0a5f5e553ccffb596bdb30a74e18825f3",
+        "manifest_order_preserved": true,
+        "measured_total_including_gc_restore_and_collection_seconds": 7.271010883967392,
+        "memory": {
+          "after_loop": {
+            "current_rss_bytes": 1123131392,
+            "max_rss_kib": 1118972
+          },
+          "after_parity": {
+            "current_rss_bytes": 1130995712,
+            "max_rss_kib": 1313768
+          },
+          "after_post_load_collection": {
+            "current_rss_bytes": 1123131392,
+            "max_rss_kib": 1118972
+          },
+          "before_loop": {
+            "current_rss_bytes": 281591808,
+            "max_rss_kib": 305148
+          }
+        },
+        "mode": "normal_gc",
+        "pair": 2,
+        "parity_check_seconds_outside_measurement": 9.183267539017834,
+        "parse_decode_validate_loop_seconds": 7.225650468026288,
+        "per_record": [
+          {
+            "decode_seconds": 0.27921933797188103,
+            "parse_seconds": 0.5188643699511886,
+            "sample_id": "us-code-38-102-505a7bed1f409aa4",
+            "validate_seconds": 0.14263470901641995
+          },
+          {
+            "decode_seconds": 0.0649438879918307,
+            "parse_seconds": 0.18495885306037962,
+            "sample_id": "us-code-5-8410-545e1e69d31abb65",
+            "validate_seconds": 0.05191314092371613
+          },
+          {
+            "decode_seconds": 0.15460800495930016,
+            "parse_seconds": 1.0105781010352075,
+            "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+            "validate_seconds": 0.14802430209238082
+          },
+          {
+            "decode_seconds": 0.24584385007619858,
+            "parse_seconds": 1.8470279949251562,
+            "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+            "validate_seconds": 0.23938720498699695
+          },
+          {
+            "decode_seconds": 0.15673361101653427,
+            "parse_seconds": 1.2648683799197897,
+            "sample_id": "us-code-7-4817-c0a689415be61f9b",
+            "validate_seconds": 0.13770574505906552
+          },
+          {
+            "decode_seconds": 0.07845134299714118,
+            "parse_seconds": 0.5006084510823712,
+            "sample_id": "us-code-4-101-b2aadd69bb073b70",
+            "validate_seconds": 0.04964484495576471
+          }
+        ],
+        "post_load_collection_seconds": 0.04525702307000756,
+        "python": {
+          "executable": "/usr/bin/python3",
+          "implementation": "CPython",
+          "version": "3.12.3"
+        },
+        "raw_shards_preloaded": true,
+        "receipt": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-observation-native-20260925.json",
+          "sha256": "1e9d5c52cd80974a89d335fd429c2d04bdf454b51f250c4c64d6163b04b6625b"
+        },
+        "schema": "archived-target-hydration-gc-diagnostic-v1",
+        "scope": "archived-format strict codec hydration only; no current producer/config qualification or training claim",
+        "setup_seconds": 0.4064690370578319,
+        "snapshot_id": "sha256:7bd199c7ec1946d7ff9f39d8cabe156e9dba51363717a8c0c3bd68b5d5d9d16d",
+        "strict_parse_decode_validate_used": true,
+        "target_count_retained": 6,
+        "training_performed": false,
+        "whole_bundle_compressed_and_expanded_digests_verified": true
+      }
+    }
+  ],
+  "pair_comparisons": [
+    {
+      "normal_seconds": 7.200598748982884,
+      "pair": 1,
+      "paused_seconds": 2.577477406943217,
+      "speed_ratio": 2.7936612478487253
+    },
+    {
+      "normal_seconds": 7.271010883967392,
+      "pair": 2,
+      "paused_seconds": 2.6111009740270674,
+      "speed_ratio": 2.784653277024904
+    }
+  ],
+  "parity_and_identity": {
+    "archive_current_parser_differ": true,
+    "canonical_tree_only": true,
+    "current_training_configuration_validated": false,
+    "embedded_config_unchanged": true,
+    "gc_enabled_threshold_callbacks_restored": true,
+    "same_full_canonical_bytes": true,
+    "same_ordered_six_targets": true,
+    "source_guard_passed_each_process": true,
+    "whole_bundle_compressed_expanded_sha256_verified": true
+  },
+  "qualification": "archived-format codec-only diagnostic, not worker/training qualification",
+  "schema": "archived-target-hydration-gc-comparison-v1",
+  "summary": {
+    "normal_gc": {
+      "entire_process_max_rss_kib_including_parity": 1318092,
+      "generation_collections_per_loop": [
+        8372,
+        761,
+        36
+      ],
+      "median_hydration_generation2_gc_seconds": 4.368061277084053,
+      "medians": {
+        "measured_total_including_gc_restore_and_collection_seconds": 7.235804816475138,
+        "parse_decode_validate_loop_seconds": 7.1899263560189866,
+        "post_load_collection_seconds": 0.045778579544276
+      },
+      "timed_phase_max_rss_kib": 1119232
+    },
+    "paused_gc": {
+      "entire_process_max_rss_kib_including_parity": 1313680,
+      "generation_collections_per_loop": [
+        0,
+        0,
+        0
+      ],
+      "median_hydration_generation2_gc_seconds": 0.0,
+      "medians": {
+        "measured_total_including_gc_restore_and_collection_seconds": 2.594289190485142,
+        "parse_decode_validate_loop_seconds": 2.5224279034882784,
+        "post_load_collection_seconds": 0.04451923805754632
+      },
+      "timed_phase_max_rss_kib": 1118920
+    }
+  },
+  "training_performed": false
+}

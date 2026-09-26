@@ -1,0 +1,58 @@
+{
+  "admitted": false,
+  "archived_bundle_artifact": {
+    "bytes": 12843316,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/targets.bundle",
+    "sha256": "1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948"
+  },
+  "archived_bundle_digest_verified": true,
+  "changed_package_files": [
+    {
+      "current_sha256": "d11fa0b5318b98dec123b23eae5c950940918e57bb96a992660b7d06743925b5",
+      "path": "logic/autoformal/__init__.py",
+      "prior_sha256": "8f64d68b7b71e8aea53412a664519c4b422ac49e7d61b02a36ae1a6664866af5"
+    },
+    {
+      "current_sha256": "eac729e21f330692e41be74a60ffbd06cd36a56cb4d81529b1cae559c20f34f7",
+      "path": "logic/autoformal/autoencoder_router.py",
+      "prior_sha256": "5b8e82ff76949f84fc47288d903c6f819805271abf3b5a95fe45eb86c6007930"
+    },
+    {
+      "current_sha256": "5a4b7a68abf2fa10c7e4f88cc0d03db78875cc87bd2b94b5fbec4a3355eae27e",
+      "path": "logic/autoformal/constitution_inventory.py",
+      "prior_sha256": "1c81aa2debdc266e157acdb801023b0f34b290ebaf77644fffff4b739afc66c2"
+    },
+    {
+      "current_sha256": "730deb53ac0e2c63d97c1b9fef0d971de917c7feea3953d2054995fdcf54d773",
+      "path": "logic/autoformal/ontology_capture.py",
+      "prior_sha256": "54f6aa38553ed84154f6f701e53571126a12cbd43beb38b6d9142ee50e975106"
+    },
+    {
+      "current_sha256": "63397096b1e85dc17b225f216358712d66b443b8e5d6f61608d56b645babbd70",
+      "path": "logic/autoformal/repeal_fixture.py",
+      "prior_sha256": null
+    },
+    {
+      "current_sha256": "36cc9fd4851ac642a4998d2a87536ffa3dacf74fc6725a5328bd5efbd6a2cad9",
+      "path": "logic/deontic/utils/deontic_parser.py",
+      "prior_sha256": "5ec4ca7c38570b81a77bf2dab6b53c98201bb432bb41cb78ba507b10d0a3fac0"
+    },
+    {
+      "current_sha256": "a6b27ba6ee08048ddecb667228802a0f062ce315e5f41c801a6ec549b1bd2ef6",
+      "path": "optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py",
+      "prior_sha256": "5acd34400e483e123d53a83bcd49fde84d619623e58dd8dcb269ae092333dd7b"
+    }
+  ],
+  "current_training_qualification": false,
+  "formalized": false,
+  "our_production_change": "optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py",
+  "schema": "target-telemetry-prequalification-source-drift-v1",
+  "test_evidence": "target-telemetry-tests-20260925.xml",
+  "test_result": {
+    "failed": 1,
+    "failure": "test_compile_span_uses_selected_clause_vocabulary_after_segmentation",
+    "observation": "Current compile_span compiles both clauses. Last row is officer; assertion expects first agency row. Existing test left unchanged. Three required single-clause gates and empty-vocabulary abstention pass.",
+    "passed": 38
+  },
+  "unchanged_snapshot_codec": true
+}

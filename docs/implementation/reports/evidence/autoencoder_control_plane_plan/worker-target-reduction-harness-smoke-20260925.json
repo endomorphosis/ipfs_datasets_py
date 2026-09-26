@@ -1,0 +1,26 @@
+{
+  "archive_sha256": "9af775375c4a297b7f2ce75db77c86ab2f989c32113e27ede6766464b8fae2f5",
+  "archived_exemption_count": 181,
+  "checks": {
+    "accepted_count_not_exempt": true,
+    "archived_deferred_workers_equal": true,
+    "capture_status_not_exempt": true,
+    "complete_six_by_five_accepted": true,
+    "failure_keeps_two_prior_outcomes": true,
+    "grammar_not_exempt": true,
+    "loss_not_exempt": true,
+    "negative_zero_distinguished": true,
+    "original_baseexception_identity_preserved": true,
+    "preparation_status_mismatch_rejected": true,
+    "ready_with_missing_bridge_rejected": true,
+    "rejection_not_exempt": true,
+    "target_hash_not_exempt": true,
+    "unknown_clock_named_field_not_exempt": true,
+    "wrapper_and_generator_restored": true
+  },
+  "harness_sha256": "caf9982bae85b27e5a2abb4241701e0817e8f2ff071bc2e5199a7674618ae3e7",
+  "native_preparation_run": false,
+  "passed": true,
+  "schema": "worker-target-reduction-harness-smoke-v1",
+  "training_run": false
+}

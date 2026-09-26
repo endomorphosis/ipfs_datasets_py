@@ -1,0 +1,91 @@
+{
+  "admitted": false,
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HF_HUB_OFFLINE": "1",
+    "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "PYTHONPATH": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "formalized": false,
+  "heldout_canary_qualified": false,
+  "native_attested_code_unchanged": true,
+  "native_audit": {
+    "passed": true,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/native-embeddings-20260925.json",
+    "sha256": "0f7587727bd4359dae48002a208780d0a4d64e713f2b1319c3b819968ad8d79f"
+  },
+  "new_native_projection_training_performed": false,
+  "passed": true,
+  "pinned_checkpoint_bytes": 25895338,
+  "pinned_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T05:58:32.779610+00:00",
+  "runs": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_index.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_manifest.py",
+        "tests/unit/duckdb_control/test_autoencoder_registry.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_production.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py"
+      ],
+      "elapsed_seconds": 28.672845622058958,
+      "output": "============================= test session starts ==============================\nplatform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0\nrootdir: /home/barberb/lift_coding/external/ipfs_datasets\nconfigfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function\ncollected 426 items\n\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py . [  0%]\n........................................................................ [ 17%]\n......................................................                   [ 29%]\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py . [ 30%]\n........................................................................ [ 46%]\n................                                                         [ 50%]\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_index.py . [ 50%]\n.........................................                                [ 60%]\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_manifest.py . [ 60%]\n...........................................................              [ 74%]\ntests/unit/duckdb_control/test_autoencoder_registry.py ................. [ 78%]\n..................                                                       [ 82%]\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_production.py . [ 83%]\n.......................................................                  [ 96%]\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py . [ 96%]\n................                                                         [100%]\n\n============================= 426 passed in 27.10s =============================\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/unit/logic/test_autoformal_speed_semantics.py",
+        "tests/unit/logic/test_autoformal.py",
+        "tests/unit/logic/test_constitution_inventory.py",
+        "tests/unit/logic/test_constitution_on_state.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py",
+        "tests/unit/logic/test_autoencoder_router.py"
+      ],
+      "elapsed_seconds": 31.53394680900965,
+      "output": "============================= test session starts ==============================\nplatform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0\nrootdir: /home/barberb/lift_coding/external/ipfs_datasets\nconfigfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function\ncollected 66 items\n\ntests/unit/logic/test_autoformal_speed_semantics.py .................    [ 25%]\ntests/unit/logic/test_autoformal.py .....................                [ 57%]\ntests/unit/logic/test_constitution_inventory.py ......                   [ 66%]\ntests/unit/logic/test_constitution_on_state.py ......                    [ 75%]\ntests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py . [ 77%]\n.........                                                                [ 90%]\ntests/unit/logic/test_autoencoder_router.py ......                       [100%]\n\n============================= 66 passed in 30.06s ==============================\n",
+      "returncode": 0
+    }
+  ],
+  "schema": "native-embedding-regression-results-v1",
+  "source_and_test_sha256": {
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "57f4c5d90ab867da408daeadedc86981d16ed3824a322c5672e364159e8c5d97",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "5ec4ca7c38570b81a77bf2dab6b53c98201bb432bb41cb78ba507b10d0a3fac0",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "ea23d878c00337e8b1e42c6c06faa976a61c3ef6b446b63c5a04327a34678b12",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "c354a655ae7ab90a74282d8f329179819df0bb7222d212e2d5bd31e32e9a2fa8",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": "ff6271821ec312bbcea1e8a6694c8bde8c3e8714755213288a746805d12658bc",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "0941f3bb672377fa47d88974786141074b6049960afd403bf9176b6d08ad6bab",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_import.py": "aecc05fadb89ebb8143a968d64a4ea7508bfc8f3edee5d5ac52da3820d1cb42b",
+    "scripts/ops/legal_ir/audit_native_uscode_embedding_production.py": "381f0bbb08229fcc15add4faf259be07d895d4502f44cc573265ef4f72cb8fb6",
+    "tests/unit/duckdb_control/test_autoencoder_registry.py": "a7a0aecbddf9c681377e8bdf182d8bd1ece11f26d5e2b3d1790852c5bfe28110",
+    "tests/unit/logic/test_autoencoder_router.py": "b4547cda5b5fa14fa32dbf4cc817ba8ae0837346e204cfdc290f827669edaf06",
+    "tests/unit/logic/test_autoformal.py": "d9376ff535c1863c5cb09995a017787460b001d86f63c7dda0d0f06ff46d657f",
+    "tests/unit/logic/test_autoformal_speed_semantics.py": "dd39db2ac11f1870fb18da15e6cd7255a2b57506676842f3fdc789a08e36a174",
+    "tests/unit/logic/test_constitution_inventory.py": "70ab1d90fe0be8503b23817196cc6500edc6f0b5033eed7d28adaa536703eb57",
+    "tests/unit/logic/test_constitution_on_state.py": "c9c7c101af4a6b513188125c8320aff0ed3aac7c65aa1a866916a7b789ba2b07",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_index.py": "0c93b36f037497145fd71ab1a5044fb1f2432a22d391d92f81ae2e408e516d47",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_manifest.py": "2ad997edc8402666995f3f6b68b349099ffac0279b15b6b6e750af12ab764720",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_production.py": "331cc63cefe5f56159336201ab7a4956d0fb960f897d8cfe6e5c1e1ea33ac3bd",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py": "88825805f91311917b6e21743108fc782eb22b22c07eac7f8b200d8aa4cc0598",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py": "1f9b54a8cf9d8fd900051c3a279934f7d4d5d79b779b21faf81c61a611f6738b",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "fe418576a1e590ddb06e3811cc537b86810be03db96eb4209bb481e8d2e2cb84",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py": "c69f8089f8c7e4592add7877a92bd5b361b03b87e1da6e96cff25a97933fe4dd"
+  },
+  "source_unchanged": true
+}

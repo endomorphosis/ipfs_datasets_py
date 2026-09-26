@@ -1,0 +1,475 @@
+{
+  "admitted": false,
+  "all_six_sample_ids_digests_statuses_equal": true,
+  "bundles": {
+    "produced-arrow-training-20260925": {
+      "artifact_bytes": 5043216,
+      "expanded_target_bytes": 70139177,
+      "manifest_bytes": 1096504,
+      "manifest_sha256": "b49c31cae9aa071e69df8b5f7debbf916bae2873fedbbd00717507bb1ac64e25",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/produced-arrow-training-20260925/targets.bundle",
+      "records": [
+        {
+          "compressed_bytes": 15228,
+          "has_target": true,
+          "sample_id": "us-code-38-102-505a7bed1f409aa4",
+          "sample_sha256": "4809b7f8c76a009b21bacfb1d5107da34265c60a2bf364ee4e459e8ffc0e95da",
+          "status": "ready",
+          "target_sha256": "db1ec5d41f305cea8babb7d4f7412bd78aec7b3a15dd40a737a2bf827b31ef8c",
+          "uncompressed_bytes": 164416
+        },
+        {
+          "compressed_bytes": 998099,
+          "has_target": true,
+          "sample_id": "us-code-5-8410-545e1e69d31abb65",
+          "sample_sha256": "7fee3875e448825c76c8fa0de03dbe70bea056eca619b7e753b4504d79ab22e4",
+          "status": "ready",
+          "target_sha256": "56f2c0e2df3789838f87088bb76222896e047c1c58ab6a149fd69cd2b826acf7",
+          "uncompressed_bytes": 17496831
+        },
+        {
+          "compressed_bytes": 14791,
+          "has_target": true,
+          "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+          "sample_sha256": "9023f731eab203d127ab6bfde9307adbbf9b381e0166d5670d16ae0b24226c5b",
+          "status": "ready",
+          "target_sha256": "df16d56a7be9de5f611b5124053b9cb4b4d6ebc06959d29bf23bfd4e4794958a",
+          "uncompressed_bytes": 155841
+        },
+        {
+          "compressed_bytes": 38762,
+          "has_target": true,
+          "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+          "sample_sha256": "6a4d143292a70c69ab989ea4f66419f6b0c0517ce092ad9be295f2671f63a999",
+          "status": "ready",
+          "target_sha256": "a81da080f9012499638541a5b71d37c43068ddab83f0471731f97529c5f95467",
+          "uncompressed_bytes": 608622
+        },
+        {
+          "compressed_bytes": 2076523,
+          "has_target": true,
+          "sample_id": "us-code-7-4817-c0a689415be61f9b",
+          "sample_sha256": "023b550e0d8bb769bf7845e360c4be4c78d7989d2f3c619e2248d2da63e314b8",
+          "status": "ready",
+          "target_sha256": "0b155fb7cfb731f68534c4a0c15fee27b6ab84e404c14f000267d8554cf2c6bb",
+          "uncompressed_bytes": 37517402
+        },
+        {
+          "compressed_bytes": 803293,
+          "has_target": true,
+          "sample_id": "us-code-4-101-b2aadd69bb073b70",
+          "sample_sha256": "19d3ceb5199485b0319b845f45eb57cf28f9031af8ad1122835ddc24a7d075da",
+          "status": "ready",
+          "target_sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122",
+          "uncompressed_bytes": 14196065
+        }
+      ],
+      "snapshot_id": "sha256:7554900a87388b4fbd3fc20c9aabad602283f10659741a54cebacb739e0eda3c"
+    },
+    "shared-target-native-20260925": {
+      "artifact_bytes": 12843316,
+      "expanded_target_bytes": 212314592,
+      "manifest_bytes": 1096519,
+      "manifest_sha256": "dc8fd4fe59ae0caf96186f76b1f6ceb031cf4fb97e054f9c97b1e8dafbc0e1e8",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/targets.bundle",
+      "records": [
+        {
+          "compressed_bytes": 2138036,
+          "has_target": true,
+          "sample_id": "us-code-38-102-505a7bed1f409aa4",
+          "sample_sha256": "4809b7f8c76a009b21bacfb1d5107da34265c60a2bf364ee4e459e8ffc0e95da",
+          "status": "ready",
+          "target_sha256": "087370cc8a15a08d4b513794620ca195522ebc1c530545185470e00410d60eb1",
+          "uncompressed_bytes": 37861542
+        },
+        {
+          "compressed_bytes": 998099,
+          "has_target": true,
+          "sample_id": "us-code-5-8410-545e1e69d31abb65",
+          "sample_sha256": "7fee3875e448825c76c8fa0de03dbe70bea056eca619b7e753b4504d79ab22e4",
+          "status": "ready",
+          "target_sha256": "a8c283bda15f0f584e3d10c7aeb3d1fefde2feca308ab58406f6cc0d149f483b",
+          "uncompressed_bytes": 17496831
+        },
+        {
+          "compressed_bytes": 2182894,
+          "has_target": true,
+          "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+          "sample_sha256": "9023f731eab203d127ab6bfde9307adbbf9b381e0166d5670d16ae0b24226c5b",
+          "status": "ready",
+          "target_sha256": "77603aabbb47d1ba0ca2af3d99772f3cd75dedc776ac2f0a82b9718517be0d1a",
+          "uncompressed_bytes": 40073555
+        },
+        {
+          "compressed_bytes": 3547936,
+          "has_target": true,
+          "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+          "sample_sha256": "6a4d143292a70c69ab989ea4f66419f6b0c0517ce092ad9be295f2671f63a999",
+          "status": "ready",
+          "target_sha256": "300c814f804015f03173f7c7a6140d20624ab7eef8a8208be79a555a6ae18b43",
+          "uncompressed_bytes": 65169197
+        },
+        {
+          "compressed_bytes": 2076523,
+          "has_target": true,
+          "sample_id": "us-code-7-4817-c0a689415be61f9b",
+          "sample_sha256": "023b550e0d8bb769bf7845e360c4be4c78d7989d2f3c619e2248d2da63e314b8",
+          "status": "ready",
+          "target_sha256": "7d80d20448842ea6e34c594b87db400993c4f4ae5365a7a5cba8c46d76d22e3c",
+          "uncompressed_bytes": 37517402
+        },
+        {
+          "compressed_bytes": 803293,
+          "has_target": true,
+          "sample_id": "us-code-4-101-b2aadd69bb073b70",
+          "sample_sha256": "19d3ceb5199485b0319b845f45eb57cf28f9031af8ad1122835ddc24a7d075da",
+          "status": "ready",
+          "target_sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122",
+          "uncompressed_bytes": 14196065
+        }
+      ],
+      "snapshot_id": "sha256:3c9531879071110b752e841398f8c25b1b5472f1d75183d890409592da9b0bfb"
+    },
+    "warm-target-profile-20260925-r2": {
+      "artifact_bytes": 5043217,
+      "expanded_target_bytes": 70139177,
+      "manifest_bytes": 1096504,
+      "manifest_sha256": "0a8810e8649f964d650cd5329a7cddc7c1dbf086d52bbc2c6315d84cade0e19a",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/warm-target-profile-20260925-r2/targets.bundle",
+      "records": [
+        {
+          "compressed_bytes": 15226,
+          "has_target": true,
+          "sample_id": "us-code-38-102-505a7bed1f409aa4",
+          "sample_sha256": "4809b7f8c76a009b21bacfb1d5107da34265c60a2bf364ee4e459e8ffc0e95da",
+          "status": "ready",
+          "target_sha256": "1e0555fe621d938fe4af11ac96c565683492bfec435bffa4441d859b3ec9c211",
+          "uncompressed_bytes": 164416
+        },
+        {
+          "compressed_bytes": 998100,
+          "has_target": true,
+          "sample_id": "us-code-5-8410-545e1e69d31abb65",
+          "sample_sha256": "7fee3875e448825c76c8fa0de03dbe70bea056eca619b7e753b4504d79ab22e4",
+          "status": "ready",
+          "target_sha256": "764c2633121407a73726eee5a2d3b9841a11ae777907d3c4f7f2d546c76134c5",
+          "uncompressed_bytes": 17496831
+        },
+        {
+          "compressed_bytes": 14791,
+          "has_target": true,
+          "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+          "sample_sha256": "9023f731eab203d127ab6bfde9307adbbf9b381e0166d5670d16ae0b24226c5b",
+          "status": "ready",
+          "target_sha256": "9363aa0d0aa125530e6ee131a24f7304de0ef0350a587ebd0ad3652a415a99bd",
+          "uncompressed_bytes": 155841
+        },
+        {
+          "compressed_bytes": 38763,
+          "has_target": true,
+          "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+          "sample_sha256": "6a4d143292a70c69ab989ea4f66419f6b0c0517ce092ad9be295f2671f63a999",
+          "status": "ready",
+          "target_sha256": "4cf67e6f7086226b10d24ccafe165355e19aa90ec7c9474e36ba9f2eddcd9d25",
+          "uncompressed_bytes": 608622
+        },
+        {
+          "compressed_bytes": 2076524,
+          "has_target": true,
+          "sample_id": "us-code-7-4817-c0a689415be61f9b",
+          "sample_sha256": "023b550e0d8bb769bf7845e360c4be4c78d7989d2f3c619e2248d2da63e314b8",
+          "status": "ready",
+          "target_sha256": "ed409b5d5191c8b4c1deec321cc375d0c8247d09f314d5b467ab5f885ffa8932",
+          "uncompressed_bytes": 37517402
+        },
+        {
+          "compressed_bytes": 803293,
+          "has_target": true,
+          "sample_id": "us-code-4-101-b2aadd69bb073b70",
+          "sample_sha256": "19d3ceb5199485b0319b845f45eb57cf28f9031af8ad1122835ddc24a7d075da",
+          "status": "ready",
+          "target_sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122",
+          "uncompressed_bytes": 14196065
+        }
+      ],
+      "snapshot_id": "sha256:e489a56f201323b4afe3bfb107e5fb632510017b27f81416f04eab0238c2f30d"
+    }
+  },
+  "findings": [
+    "Profile-r2 reproduces the historical exact expanded total 70,139,177 bytes; the new total is 212,314,592 bytes.",
+    "Growth is restricted to three shards; other three expanded lengths are unchanged.",
+    "The selected old target has no modal_frame_logic views, modal adapter bridge_evaluation_failure_loss=1, failed_bridge_count=1, accepted=false; new target includes all three modal views, failed_bridge_count=0, accepted=true.",
+    "The new selected target has 12 modal formulas, 26,312 frame triples, 1,408 graph nodes and 26,312 relationships.",
+    "Twelve canonical target loss values and the view distribution differ for the selected target. Historical full-target and metric parity is therefore false.",
+    "Broad Exception handling can swallow the 15-second target timeout inside an adapter and still yield snapshot status ready. Faster regex work allowing the modal adapter to finish is consistent with the evidence."
+  ],
+  "formalized": false,
+  "limitations": [
+    "The original exception string is discarded by training_target and is absent from these serialized target artifacts; the precise historical exception is not directly proven by this forensic receipt.",
+    "Only the selected old/new shard was decoded; manifests identify the other changed shards without diagnosing their payloads.",
+    "Fixed-artifact paired ablation may establish parity using the same new target bundle; it cannot establish parity with historical targets.",
+    "accepted is a bridge-report property, not theorem admission or proof validation; prover evaluation was disabled."
+  ],
+  "profile_r2_to_new_configuration_differences": {
+    "code_sha256": {
+      "logic/autoformal/autoencoder_router.py": {
+        "new": "5b8e82ff76949f84fc47288d903c6f819805271abf3b5a95fe45eb86c6007930",
+        "old": "7cc13a3d4951cfc8011a3c5aed86c66aeb024a876617d02cf682b24de8d3f767"
+      },
+      "logic/bridge/multiview.py": {
+        "new": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+        "old": "e7c629f6d4fa2b91e5e1e13825cbb7f8bfdeb398c8436d0fa5da05ee27414629"
+      },
+      "logic/modal/decompiler.py": {
+        "new": "ecc13e624136d3f9a2d56b7c699d1d9b309847d1c1c8050ba422203f1b10a119",
+        "old": "2aa99133971449edbb66d1f9b4023b7a97d9d2a2df3cb4f4ca7de0c481b15213"
+      },
+      "optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+        "new": "d8f35525ccb1d2db2124fc8b5988e6dc6db0f198e94c73e553844e13cfa5a172",
+        "old": "54b0824707bd22b49f8eaf975474aa05f1aeb791f25ae28aa4ddcf74996f1a17"
+      }
+    }
+  },
+  "proof_claimed": false,
+  "schema_version": "shared-target-growth-forensic-v1",
+  "scope": "Read-only bundle manifest comparison and exact digest-verified tagged JSON decode of one old/new target shard; no target generation or training run.",
+  "selected_target_comparison": {
+    "shared-target-native-20260925": {
+      "accepted": true,
+      "compressed_sha256_verified": true,
+      "document_metadata": {
+        "accepted_bridge_count": 5,
+        "attempted_bridge_count": 5,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "implemented_bridge_count": 5,
+        "multiview_version": "legal-ir-multiview-v1",
+        "view_count": 30
+      },
+      "expanded_sha256_verified": true,
+      "losses": {
+        "legal_ir_multiview_acceptance_loss": 0.0,
+        "legal_ir_multiview_cosine_loss": 0.05995585596103674,
+        "legal_ir_multiview_cross_entropy_loss": 0.36296047527122377,
+        "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+        "legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir_multiview_reconstruction_loss": 0.00031227013922291663,
+        "legal_ir_multiview_text_reconstruction_loss": 0.0,
+        "legal_ir_multiview_total_loss": 0.7007942054204661,
+        "legal_ir_multiview_view_coverage_loss": 0.0,
+        "legal_ir_view_cross_entropy_loss": 0.36296047527122377,
+        "source_decompiled_text_embedding_cosine_loss": 0.05995585596103674,
+        "source_decompiled_text_token_loss": 0.098471
+      },
+      "modal_adapter_losses": {
+        "cosine_loss": 0.2997792798051837,
+        "cross_entropy_entropy_loss": 1.0282047154033576,
+        "cross_entropy_excess_loss": 0.7865976609527612,
+        "cross_entropy_loss": 1.8148023763561187,
+        "graph_failure_penalty": 0.0,
+        "modal_span_coverage_loss": 0.0036610000000000253,
+        "ontology_violation_count": 0.0,
+        "proof_failure_ratio": 0.0,
+        "raw_proof_failure_ratio": 0.0,
+        "raw_source_embedding_cosine_loss": 0.924238371860289,
+        "reconstruction_loss": 0.0015613506961145833,
+        "source_copy_loss": 0.021865889,
+        "source_copy_reward_hack_penalty": 0.010765779778594999,
+        "source_decompiled_text_embedding_cosine_loss": 0.2997792798051837,
+        "source_decompiled_text_embedding_cosine_similarity": 0.7002207201948163,
+        "source_decompiled_text_raw_embedding_cosine_loss": 0.924238371860289,
+        "source_decompiled_text_raw_embedding_cosine_similarity": 0.07576162813971098,
+        "source_decompiled_text_token_loss": 0.492355,
+        "source_decompiled_text_token_similarity": 0.507645,
+        "structural_text_reconstruction_loss": 0.492355,
+        "text_reconstruction_loss": 0.0,
+        "total_loss": 3.5039710271023305
+      },
+      "modal_views": {
+        "modal_frame_logic.frame_logic": {
+          "counts": {
+            "triple_count": 26312
+          },
+          "encoded_bytes": 4471071
+        },
+        "modal_frame_logic.modal_ir": {
+          "counts": {
+            "formula_count": 12
+          },
+          "encoded_bytes": 11167453
+        },
+        "modal_frame_logic.neo4j_graph_data": {
+          "counts": {
+            "node_count": 1408,
+            "relationship_count": 26312
+          },
+          "encoded_bytes": 17693664
+        }
+      },
+      "sample_id": "us-code-38-102-505a7bed1f409aa4",
+      "status": "ready",
+      "view_distribution": {
+        "CEC.native": 0.19183170818875483,
+        "TDFOL.prover": 0.1761888565814821,
+        "deontic.ir": 0.19673292890726493,
+        "external_provers.router": 0.12207946956190728,
+        "knowledge_graphs.neo4j_compat": 0.13619321316693334,
+        "modal.frame_logic": 0.17697382359365754
+      },
+      "view_names": [
+        "cec_dcec.cec_events",
+        "cec_dcec.dcec_formula",
+        "cec_dcec.event_calculus",
+        "cec_dcec.frame_logic",
+        "cec_dcec.neo4j_graph_data",
+        "cec_dcec.proof_trace",
+        "deontic_norms.deontic_decoder_reconstructions",
+        "deontic_norms.deontic_formula_records",
+        "deontic_norms.deontic_graph",
+        "deontic_norms.deontic_ir",
+        "deontic_norms.deontic_ir_slot_provenance",
+        "deontic_norms.deontic_parser_capability",
+        "deontic_norms.deontic_parser_metrics",
+        "deontic_norms.deontic_phase8_quality",
+        "deontic_norms.deontic_proof_obligations",
+        "deontic_norms.deontic_prover_syntax",
+        "deontic_norms.deontic_reconstruction_slot_loss",
+        "deontic_norms.deontic_repair_queue",
+        "deontic_norms.frame_logic",
+        "deontic_norms.neo4j_graph_data",
+        "external_prover_router.frame_logic",
+        "external_prover_router.neo4j_graph_data",
+        "external_prover_router.prover_formulas",
+        "fol_tdfol.frame_logic",
+        "fol_tdfol.neo4j_graph_data",
+        "fol_tdfol.proof_obligations",
+        "fol_tdfol.tdfol_formula",
+        "modal_frame_logic.frame_logic",
+        "modal_frame_logic.modal_ir",
+        "modal_frame_logic.neo4j_graph_data"
+      ]
+    },
+    "warm-target-profile-20260925-r2": {
+      "accepted": false,
+      "compressed_sha256_verified": true,
+      "document_metadata": {
+        "accepted_bridge_count": 4,
+        "attempted_bridge_count": 5,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 1,
+        "implemented_bridge_count": 4,
+        "multiview_version": "legal-ir-multiview-v1",
+        "view_count": 27
+      },
+      "expanded_sha256_verified": true,
+      "losses": {
+        "legal_ir_multiview_acceptance_loss": 0.19999999999999996,
+        "legal_ir_multiview_cosine_loss": 0.2,
+        "legal_ir_multiview_cross_entropy_loss": 0.2,
+        "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+        "legal_ir_multiview_graph_failure_penalty": 0.2,
+        "legal_ir_multiview_proof_failure_ratio": 0.2,
+        "legal_ir_multiview_reconstruction_loss": 0.2,
+        "legal_ir_multiview_text_reconstruction_loss": 0.2,
+        "legal_ir_multiview_total_loss": 0.2,
+        "legal_ir_multiview_view_coverage_loss": 0.09999999999999998,
+        "legal_ir_view_cross_entropy_loss": 0.2,
+        "source_decompiled_text_embedding_cosine_loss": 0.2,
+        "source_decompiled_text_token_loss": 0.2
+      },
+      "modal_adapter_losses": {
+        "bridge_evaluation_failure_loss": 1.0
+      },
+      "modal_views": {},
+      "sample_id": "us-code-38-102-505a7bed1f409aa4",
+      "status": "ready",
+      "view_distribution": {
+        "CEC.native": 0.24537154769033015,
+        "TDFOL.prover": 0.2243610250363225,
+        "deontic.ir": 0.25210359259828596,
+        "external_provers.router": 0.12507430953806603,
+        "knowledge_graphs.neo4j_compat": 0.15308952513699534
+      },
+      "view_names": [
+        "cec_dcec.cec_events",
+        "cec_dcec.dcec_formula",
+        "cec_dcec.event_calculus",
+        "cec_dcec.frame_logic",
+        "cec_dcec.neo4j_graph_data",
+        "cec_dcec.proof_trace",
+        "deontic_norms.deontic_decoder_reconstructions",
+        "deontic_norms.deontic_formula_records",
+        "deontic_norms.deontic_graph",
+        "deontic_norms.deontic_ir",
+        "deontic_norms.deontic_ir_slot_provenance",
+        "deontic_norms.deontic_parser_capability",
+        "deontic_norms.deontic_parser_metrics",
+        "deontic_norms.deontic_phase8_quality",
+        "deontic_norms.deontic_proof_obligations",
+        "deontic_norms.deontic_prover_syntax",
+        "deontic_norms.deontic_reconstruction_slot_loss",
+        "deontic_norms.deontic_repair_queue",
+        "deontic_norms.frame_logic",
+        "deontic_norms.neo4j_graph_data",
+        "external_prover_router.frame_logic",
+        "external_prover_router.neo4j_graph_data",
+        "external_prover_router.prover_formulas",
+        "fol_tdfol.frame_logic",
+        "fol_tdfol.neo4j_graph_data",
+        "fol_tdfol.proof_obligations",
+        "fol_tdfol.tdfol_formula"
+      ]
+    }
+  },
+  "source_evidence": [
+    {
+      "finding": "Timeout exception subclasses RuntimeError.",
+      "line": 345,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "d8f35525ccb1d2db2124fc8b5988e6dc6db0f198e94c73e553844e13cfa5a172"
+    },
+    {
+      "finding": "One-shot SIGALRM raises _LegalIRTargetTimeout while adapter evaluation runs.",
+      "line": 26917,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "d8f35525ccb1d2db2124fc8b5988e6dc6db0f198e94c73e553844e13cfa5a172"
+    },
+    {
+      "finding": "evaluate_name catches Exception, converting raised timeout or other exception into an adapter failure.",
+      "line": 1121,
+      "path": "ipfs_datasets_py/logic/bridge/multiview.py",
+      "sha256": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa"
+    },
+    {
+      "finding": "training_target stores canonical losses and adapter loss summaries, but omits original failures exception strings.",
+      "line": 857,
+      "path": "ipfs_datasets_py/logic/bridge/multiview.py",
+      "sha256": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa"
+    },
+    {
+      "finding": "Merged document records failed/implemented/accepted bridge counts.",
+      "line": 2200,
+      "path": "ipfs_datasets_py/logic/bridge/multiview.py",
+      "sha256": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa"
+    },
+    {
+      "finding": "Returned multiview report is classified ready; only an escaping _LegalIRTargetTimeout takes explicit timeout path.",
+      "line": 163,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py",
+      "sha256": "5acd34400e483e123d53a83bcd49fde84d619623e58dd8dcb269ae092333dd7b"
+    }
+  ]
+}

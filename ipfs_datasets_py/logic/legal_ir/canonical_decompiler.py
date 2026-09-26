@@ -112,6 +112,33 @@ def _join_atoms(atoms: tuple[str, ...], conjunction: str) -> str:
     return f" {conjunction} ".join(_readable_atom(atom) for atom in atoms)
 
 
+def _phrase_in_text(text: str, phrase: str) -> bool:
+    """True when ``phrase`` is already a whole-token span of ``text``.
+
+    Case does not count as a different phrase. This does not add a numeral.
+    """
+
+    if not text or not phrase:
+        return False
+    return f" {phrase.casefold()} " in f" {text.casefold()} "
+
+
+def _temporal_not_already_in_object(rule: CanonicalRule) -> tuple[str, ...]:
+    """Drop a temporal atom whose surface is already in the object.
+
+    This does not add a numeral. An atom that is not already in the object
+    is still rendered.
+    """
+
+    rendered_object = _readable_atom(rule.object)
+    pending: list[str] = []
+    for atom in rule.temporal:
+        if _phrase_in_text(rendered_object, _readable_atom(atom)):
+            continue
+        pending.append(atom)
+    return tuple(pending)
+
+
 def decompile_rule(rule: CanonicalRule) -> str:
     """Render every v1 rule facet using the frozen polarity-safe grammar."""
 
@@ -127,8 +154,9 @@ def decompile_rule(rule: CanonicalRule) -> str:
         parts.append(_readable_atom(rule.object))
 
     sentence = " ".join(parts)
-    if rule.temporal:
-        sentence += " " + _join_atoms(rule.temporal, "and")
+    temporal = _temporal_not_already_in_object(rule)
+    if temporal:
+        sentence += " " + _join_atoms(temporal, "and")
     if rule.conditions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} " + _join_atoms(
             rule.conditions, "and"

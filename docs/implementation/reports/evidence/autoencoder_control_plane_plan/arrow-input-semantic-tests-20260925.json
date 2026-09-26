@@ -1,0 +1,36 @@
+{
+  "admitted": false,
+  "formalized": false,
+  "passed": true,
+  "runs": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/unit/logic/test_autoformal_speed_semantics.py",
+        "tests/unit/logic/test_autoformal.py",
+        "tests/unit/logic/test_constitution_inventory.py",
+        "tests/unit/logic/test_constitution_on_state.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py",
+        "tests/unit/logic/test_autoencoder_router.py"
+      ],
+      "elapsed_seconds": 40.913647779030725,
+      "output": "============================= test session starts ==============================\nplatform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0\nrootdir: /home/barberb/lift_coding/external/ipfs_datasets\nconfigfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function\ncollected 66 items\n\ntests/unit/logic/test_autoformal_speed_semantics.py .................    [ 25%]\ntests/unit/logic/test_autoformal.py .....................                [ 57%]\ntests/unit/logic/test_constitution_inventory.py ......                   [ 66%]\ntests/unit/logic/test_constitution_on_state.py ......                    [ 75%]\ntests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py . [ 77%]\n.........                                                                [ 90%]\ntests/unit/logic/test_autoencoder_router.py ......                       [100%]\n\n============================= 66 passed in 39.45s ==============================\n",
+      "returncode": 0
+    }
+  ],
+  "schema": "arrow-input-semantic-regression-v1",
+  "source_and_test_sha256": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "54b0824707bd22b49f8eaf975474aa05f1aeb791f25ae28aa4ddcf74996f1a17",
+    "tests/unit/logic/test_autoencoder_router.py": "b4547cda5b5fa14fa32dbf4cc817ba8ae0837346e204cfdc290f827669edaf06",
+    "tests/unit/logic/test_autoformal.py": "d9376ff535c1863c5cb09995a017787460b001d86f63c7dda0d0f06ff46d657f",
+    "tests/unit/logic/test_autoformal_speed_semantics.py": "dd39db2ac11f1870fb18da15e6cd7255a2b57506676842f3fdc789a08e36a174",
+    "tests/unit/logic/test_constitution_inventory.py": "70ab1d90fe0be8503b23817196cc6500edc6f0b5033eed7d28adaa536703eb57",
+    "tests/unit/logic/test_constitution_on_state.py": "c9c7c101af4a6b513188125c8320aff0ed3aac7c65aa1a866916a7b789ba2b07",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py": "c69f8089f8c7e4592add7877a92bd5b361b03b87e1da6e96cff25a97933fe4dd"
+  },
+  "source_unchanged": true
+}

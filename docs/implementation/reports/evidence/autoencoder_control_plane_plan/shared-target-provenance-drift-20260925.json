@@ -1,0 +1,112 @@
+{
+  "all_selected_prior_source_hashes_unchanged": true,
+  "alternate_environment_explanation": "The earlier .venv reproduction also differed in installed-distribution metadata. Script-equivalent native Python matches the archived distribution fingerprint exactly; that alternate-venv difference is not the cause of the recorded native profile failure.",
+  "alternate_test_venv": {
+    "distribution_count": 165,
+    "distributions_sha256": "3e9b19711677db29b388300cc4cbee6fa4f034c7b146bb2a4f035e65773521b9",
+    "executable": "/home/barberb/lift_coding/.venv/bin/python",
+    "sys_path": [
+      "",
+      "/usr/lib/python312.zip",
+      "/usr/lib/python3.12",
+      "/usr/lib/python3.12/lib-dynload",
+      "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages"
+    ]
+  },
+  "cause": "The package-wide target configuration changed at logic/autoformal/autoencoder_router.py after target creation; this file is outside the selected source list in the prior benchmark receipt.",
+  "caveats": [
+    "Distribution fingerprint covers installed package names and versions, not dependency file bytes.",
+    "File mtime establishes observed ordering, not who changed the file.",
+    "Source hashes do not attest preloaded bytecode.",
+    "The existing target bundle remains unchanged and must not be relabeled; regenerate targets using the stable current complete configuration."
+  ],
+  "changed_source_current_artifact": {
+    "bytes": 12478,
+    "mtime_utc": "2026-09-25T06:25:05.727511+00:00",
+    "path": "ipfs_datasets_py/logic/autoformal/autoencoder_router.py",
+    "sha256": "7cc13a3d4951cfc8011a3c5aed86c66aeb024a876617d02cf682b24de8d3f767"
+  },
+  "complete_current_configuration_stable_across_two_scans": true,
+  "created_at_utc": "2026-09-25T06:39:30.791820+00:00",
+  "current_source_count": 7704,
+  "dependency_provenance_matches_native_baseline": true,
+  "diagnostic_only": true,
+  "differences": [
+    {
+      "current": "7cc13a3d4951cfc8011a3c5aed86c66aeb024a876617d02cf682b24de8d3f767",
+      "path": "config.code_sha256.logic/autoformal/autoencoder_router.py",
+      "previous": "9ddc37952c2d1a5364caa405c75557c0a45f6bc050eb31129bcc96f38fd4c033"
+    }
+  ],
+  "embedded_source_count": 7704,
+  "failed_profile_receipt": {
+    "bytes": 24228,
+    "mtime_utc": "2026-09-25T06:31:47.490693+00:00",
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-profile-20260925.json",
+    "sha256": "1e2899c8734799b2a605e58e8bd709b83baa3a5d93f43d1ce5637a20eaa2cb33"
+  },
+  "job_spec_artifact": {
+    "bytes": 81877,
+    "mtime_utc": "2026-09-25T06:20:46.583054+00:00",
+    "path": "workspace/test-logs/federal-corpus-audits/produced-arrow-training-20260925/pair-0-json.job.json",
+    "sha256": "f722791ed111d561ea38d350d0e0fbfa192b24e07735f05e36955f5fa156d7e3"
+  },
+  "native_interpreter": {
+    "distribution_count": 572,
+    "distributions_sha256": "b49543efb4d6ba3fb9f2ec044a9fd3f310c54207ce11e003982782b2dcc59d5a",
+    "executable": "/home/barberb/.local/bin/python",
+    "sys_path": [
+      "/home/barberb/lift_coding/external/ipfs_datasets",
+      "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir",
+      "/usr/lib/python312.zip",
+      "/usr/lib/python3.12",
+      "/usr/lib/python3.12/lib-dynload",
+      "/home/barberb/.local/lib/python3.12/site-packages",
+      "__editable__.ipfs_datasets_py-0.2.0.finder.__path_hook__",
+      "__editable__.ipfs_kit_py-0.3.0.finder.__path_hook__",
+      "/usr/local/lib/python3.12/dist-packages",
+      "/usr/lib/python3/dist-packages"
+    ]
+  },
+  "passed": true,
+  "prior_receipt": {
+    "bytes": 2731710,
+    "mtime_utc": "2026-09-25T06:23:09.615245+00:00",
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/produced-arrow-training-20260925.json",
+    "sha256": "85795ae5ced30be0e47e31eb1fd211916f8afa226b85f3843647e48f29dad5e3"
+  },
+  "production_edits_performed": false,
+  "profile_error": {
+    "message": "target configuration/provenance mismatch",
+    "type": "TargetSnapshotError"
+  },
+  "profile_script": {
+    "bytes": 6449,
+    "mtime_utc": "2026-09-25T06:38:16.825270+00:00",
+    "path": "scripts/ops/legal_ir/profile_shared_corpus_training.py",
+    "sha256": "c2e2ac53bff8ff990e35762effda6b2f0aa632b4d448c5f0ca2517e7c426af27"
+  },
+  "reproduction": "Use native python with sys.path=[canonical repo root, scripts/ops/legal_ir, normal interpreter paths], the profile-script environment plus _worker_environment(), TrainingJobSpec.from_dict(pair-0-json.job.json), and target_snapshot_config(spec.training_config); compare to targets.bundle header manifest config.",
+  "schema": "shared-target-provenance-drift-diagnostic-v1",
+  "script_environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HF_HUB_OFFLINE": "1",
+    "IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS": null,
+    "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+    "IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA": "0",
+    "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "selected_prior_source_changes": [],
+  "target_bundle": {
+    "bytes": 5043216,
+    "mtime_utc": "2026-09-25T06:19:17.558719+00:00",
+    "path": "workspace/test-logs/federal-corpus-audits/produced-arrow-training-20260925/targets.bundle",
+    "sha256": "bc570a3fe5339ee38ecdc2636ef3a986c6791776b9fa2cc030e8791065cd6b5d"
+  },
+  "target_snapshot_id": "sha256:7554900a87388b4fbd3fc20c9aabad602283f10659741a54cebacb739e0eda3c",
+  "training_performed": false,
+  "verification_bypassed": false
+}

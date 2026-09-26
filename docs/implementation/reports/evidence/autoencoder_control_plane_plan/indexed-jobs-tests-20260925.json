@@ -1,0 +1,95 @@
+{
+  "admitted": false,
+  "archived_job_compatibility": {
+    "schema_counts": {
+      "autoencoder-training-job-v1": 8,
+      "autoencoder-training-job-v2": 13,
+      "autoencoder-training-job-v3": 14,
+      "autoencoder-training-job-v4": 4
+    },
+    "unchanged": true,
+    "unique_count": 39
+  },
+  "environment": {
+    "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "PYTHONPATH": "/home/barberb/lift_coding/external/ipfs_datasets"
+  },
+  "evidence_origin": "completed pytest command outputs captured in this session",
+  "formalized": false,
+  "heldout_canary_qualified": false,
+  "initial_semantic_run": {
+    "elapsed_seconds": 39.15,
+    "failed": 4,
+    "failures_resolved": [
+      "repair_clause nested class shadowed local modal_ir and raised NameError (two tests)",
+      "no-parser result test omitted the existing empty fields list",
+      "Constitution census test double omitted the existing allow_partial parameter; now asserts False"
+    ],
+    "passed": 56
+  },
+  "model_weights_downloaded": false,
+  "native_audit": {
+    "attested_code_files_unchanged": true,
+    "passed": true,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/indexed-jobs-20260925.json",
+    "sha256": "8aa0127a0c10a60c19fd35f678a523e6e1b5c7421ed9dc9e9a8e66969b07c8e9"
+  },
+  "new_native_projection_training_performed": false,
+  "pinned_checkpoint_bytes": 25895338,
+  "pinned_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T05:41:27.903698+00:00",
+  "runs": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_index.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_manifest.py",
+        "tests/unit/duckdb_control/test_autoencoder_registry.py"
+      ],
+      "elapsed_seconds": 19.9,
+      "failed": 0,
+      "passed": 311
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/unit/logic/test_autoformal_speed_semantics.py",
+        "tests/unit/logic/test_autoformal.py",
+        "tests/unit/logic/test_constitution_inventory.py",
+        "tests/unit/logic/test_constitution_on_state.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py",
+        "tests/unit/logic/test_autoencoder_router.py"
+      ],
+      "elapsed_seconds": 29.45,
+      "failed": 0,
+      "passed": 66
+    }
+  ],
+  "schema": "indexed-training-regression-results-v1",
+  "source_and_test_sha256": {
+    "ipfs_datasets_py/logic/autoformal/__init__.py": "8f64d68b7b71e8aea53412a664519c4b422ac49e7d61b02a36ae1a6664866af5",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": "5ee14d85c471d2a4c628ee4a96140d2cf9a6830d48d319333e1614db1d7379ce",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "8c60aae7c215048daaf230c0227c8f7ce588d039637a8cf470c19d124e8cb86c",
+    "tests/unit/duckdb_control/test_autoencoder_registry.py": "a7a0aecbddf9c681377e8bdf182d8bd1ece11f26d5e2b3d1790852c5bfe28110",
+    "tests/unit/logic/test_autoencoder_router.py": "e09680f01473838807da00d8fa7635226494ec1a8fc19b79be73a76dcfa811ca",
+    "tests/unit/logic/test_autoformal.py": "d9376ff535c1863c5cb09995a017787460b001d86f63c7dda0d0f06ff46d657f",
+    "tests/unit/logic/test_autoformal_speed_semantics.py": "dd39db2ac11f1870fb18da15e6cd7255a2b57506676842f3fdc789a08e36a174",
+    "tests/unit/logic/test_constitution_inventory.py": "70ab1d90fe0be8503b23817196cc6500edc6f0b5033eed7d28adaa536703eb57",
+    "tests/unit/logic/test_constitution_on_state.py": "c9c7c101af4a6b513188125c8320aff0ed3aac7c65aa1a866916a7b789ba2b07",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_index.py": "0c93b36f037497145fd71ab1a5044fb1f2432a22d391d92f81ae2e408e516d47",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_corpus_manifest.py": "2ad997edc8402666995f3f6b68b349099ffac0279b15b6b6e750af12ab764720",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py": "5bf7c9e1b47a5b17aa5bded5d9c0844630aa98cd9f4335e3b74b4ea39697ff1c",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "c0b3c1db30647c1a2e79236ff545fe70e76604cf1cc754e4fb2d59f84aea6cd5",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py": "c69f8089f8c7e4592add7877a92bd5b361b03b87e1da6e96cff25a97933fe4dd"
+  }
+}

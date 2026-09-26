@@ -10,6 +10,8 @@ This directory contains documentation about specific implementations, including 
 
 Implementation documentation covering various components and integrations throughout the project's development.
 
+- [U.S. Code autoformalization plan](plans/US_CODE_AUTOFORMALIZATION_PLAN.md) - Proposed legal-data, proof-corpus and training work owned by this repository.
+
 ## Purpose
 
 Implementation docs provide:

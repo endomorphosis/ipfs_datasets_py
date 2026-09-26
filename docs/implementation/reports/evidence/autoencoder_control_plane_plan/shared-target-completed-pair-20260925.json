@@ -1,0 +1,180 @@
+{
+  "admitted": false,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "cache_policy": "new process each job; same sealed shared targets; metric disk cache 0; OS cache uncontrolled; target generation excluded",
+  "compiled_pattern_cache": {
+    "native": {
+      "currsize": 746,
+      "hits": 220955,
+      "maxsize": 2048,
+      "misses": 746
+    },
+    "reference": {
+      "currsize": 0,
+      "hits": 0,
+      "maxsize": 2048,
+      "misses": 0
+    }
+  },
+  "complete_benchmark_passed": false,
+  "complete_pair_exact_parity": true,
+  "completed_pair_count": 1,
+  "current_producer_source_differences": [
+    {
+      "bound_sha256": "5b8e82ff76949f84fc47288d903c6f819805271abf3b5a95fe45eb86c6007930",
+      "observed_sha256": "179e273df2dd0166b227bbf6ba574034f193bf1dc5fac5cf126271ddb304e0f7",
+      "path": "logic/autoformal/autoencoder_router.py"
+    }
+  ],
+  "diagnostic_helper_substitution_in_reference": true,
+  "failed_benchmark": {
+    "error": {
+      "message": "target producer code/runtime changed in resident process; start a fresh process",
+      "type": "ValueError"
+    },
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/shared-target-ablation-20260925.json",
+    "sha256": "db7d972c3fd33573d53187b5524fc037bd96aa9db25fb137f51ad0fd6ebf7fed"
+  },
+  "formalized": false,
+  "full_ordered_triples": [
+    {
+      "count": 23377,
+      "json_bytes": 3118701,
+      "sample_id": "us-code-38-102-505a7bed1f409aa4",
+      "sha256": "77a50670f0a2d9e1be1e8f649846ab0cc060f27f192c594d917caf7c57d693a5"
+    },
+    {
+      "count": 9377,
+      "json_bytes": 1251430,
+      "sample_id": "us-code-5-8410-545e1e69d31abb65",
+      "sha256": "fa686f3e9d35fd71521a8dbef1b7944c9d0d135a723649025f10bb0585fca8c2"
+    },
+    {
+      "count": 21521,
+      "json_bytes": 2861274,
+      "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+      "sha256": "0f31ee235bace31c6d4bbcdd85adfab6399a6e9623ff6f90930dbf6a413dbdd8"
+    },
+    {
+      "count": 37249,
+      "json_bytes": 5020124,
+      "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+      "sha256": "93da915b2370507292b16bc8be4dd8db84136401b45b8157fe68e1385ec673be"
+    },
+    {
+      "count": 22345,
+      "json_bytes": 2954000,
+      "sample_id": "us-code-7-4817-c0a689415be61f9b",
+      "sha256": "852659cecb9443d60a838cb13cef265d6f6f56aa5cfe012f85609f469367cbdc"
+    },
+    {
+      "count": 9508,
+      "json_bytes": 1248300,
+      "sample_id": "us-code-4-101-b2aadd69bb073b70",
+      "sha256": "39524c119cfb02d75ad8fec44e143663f98e9be1c5beb1fbf53892eefa369306"
+    }
+  ],
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "legal_ir_target_count_before_and_after": 3,
+  "measurement_scope": "fresh processes with identical modal pre-imports and capture observers; timer includes execute_training_job but excludes owner, module imports and later full-triple comparison",
+  "measurements": {
+    "native": {
+      "initial_bridge_evaluate_seconds": 2.5591472330270335,
+      "initial_bridge_evaluate_seconds_per_validation_span": 0.8530490776756778,
+      "worker_wall_seconds": 18.59400749206543,
+      "worker_wall_seconds_per_training_span": 6.1980024973551435
+    },
+    "reductions_percent": {
+      "initial_bridge_evaluate_seconds": 51.20270491250047,
+      "worker_wall_seconds": 28.789271421557128
+    },
+    "reference": {
+      "initial_bridge_evaluate_seconds": 5.2444448579335585,
+      "initial_bridge_evaluate_seconds_per_validation_span": 1.7481482859778528,
+      "worker_wall_seconds": 26.111244559986517,
+      "worker_wall_seconds_per_training_span": 8.703748186662173
+    }
+  },
+  "metric_disk_cache": 0,
+  "native_bindings": {
+    "codec._legal_semantic_atoms_from_text": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/decompiler.py",
+    "decompiler._bridge_cues_from_text": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/decompiler.py",
+    "decompiler._legal_semantic_atoms_from_text": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/decompiler.py",
+    "modal._legal_ir_grammar_validation_from_target": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+  },
+  "optimizer_accepted_epochs": 0,
+  "owner_dispatch_performed": false,
+  "parity": {
+    "accepted_epochs_identical": true,
+    "all_ontology_captures_identical": true,
+    "all_ordered_full_triples_identical": true,
+    "candidate_state_identity_identical": true,
+    "complete_after_evaluation_identical": true,
+    "complete_before_evaluation_identical": true,
+    "materialized_checkpoint_identical": true,
+    "sparse_segment_count_identical": true,
+    "training_report_except_profile_and_elapsed_identical": true
+  },
+  "recorded_at": "2026-09-25T07:05:34.170833+00:00",
+  "reference_bindings": {
+    "codec._legal_semantic_atoms_from_text": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-reference-modal-20260925.py",
+    "decompiler._bridge_cues_from_text": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-reference-modal-20260925.py",
+    "decompiler._legal_semantic_atoms_from_text": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-reference-modal-20260925.py",
+    "modal._legal_ir_grammar_validation_from_target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-reference-grammar-20260925.py"
+  },
+  "sample_count": 3,
+  "schema": "shared-target-completed-pair-analysis-v1",
+  "scope": "one completed exact-parity pair extracted from a four-job diagnostic that later failed source provenance; not a passing full benchmark",
+  "source_hashes_at_benchmark_start": {
+    "docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-reference-grammar-20260925.py": "afb0598ed8cdc89954cacfb88106cbb1769d8183f84f6d816441dc419858fd0d",
+    "docs/implementation/reports/evidence/autoencoder_control_plane_plan/warm-target-reference-modal-20260925.py": "aff91b35c7dd7845b8ffa897a637c203d33f5f4ac8833aa9cf53c1c6ed145761",
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "57f4c5d90ab867da408daeadedc86981d16ed3824a322c5672e364159e8c5d97",
+    "ipfs_datasets_py/logic/autoformal/autoencoder_router.py": "5b8e82ff76949f84fc47288d903c6f819805271abf3b5a95fe45eb86c6007930",
+    "ipfs_datasets_py/logic/autoformal/ontology_capture.py": "54f6aa38553ed84154f6f701e53571126a12cbd43beb38b6d9142ee50e975106",
+    "ipfs_datasets_py/logic/autoformal/procedure_slot.py": "f0de735845451825858ae5b6cabc1fe5f76acf435d211f985aec6ec73ea7238b",
+    "ipfs_datasets_py/logic/autoformal/recipient_reference.py": "4f180765d49b173772eaa17e7582e0de9185a700e52bb7c235f966c24d517217",
+    "ipfs_datasets_py/logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "5ec4ca7c38570b81a77bf2dab6b53c98201bb432bb41cb78ba507b10d0a3fac0",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "ea23d878c00337e8b1e42c6c06faa976a61c3ef6b446b63c5a04327a34678b12",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "c354a655ae7ab90a74282d8f329179819df0bb7222d212e2d5bd31e32e9a2fa8",
+    "ipfs_datasets_py/logic/modal/codec.py": "ecd57906b6ca534caf29598c4c983d019b5021f3bc71a38257900e5b9361b5f3",
+    "ipfs_datasets_py/logic/modal/decompiler.py": "ecc13e624136d3f9a2d56b7c699d1d9b309847d1c1c8050ba422203f1b10a119",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_arrow_inputs.py": "49c9bd491558a1cf3440063a0af38e8e69e897b6d3d2319c5e704542a5f5b08c",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py": "5acd34400e483e123d53a83bcd49fde84d619623e58dd8dcb269ae092333dd7b",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": "614f17a9db7300368ca175aac808855d16c6ce8c1ea01ffaddb8c89a52148e63",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "90dfe43fbec34a18d97047734f2f3ce7008b7c9ecfe3961acc97bc2128b3cfab",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "d8f35525ccb1d2db2124fc8b5988e6dc6db0f198e94c73e553844e13cfa5a172",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_arrow_weights.py": "77cbd67d099c32c20bfe0ae1364d980c32464e9de018da57bba22b3bf221174a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_patch_codec.py": "0a3f18c9ef8e7589cd0a880e4b89b6f4f53d37af7602a63f315595e692d1fb96",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_sparse_checkpoint.py": "9fe1c3db314ddc170c5cec7861da1541d48b98992ec289d0cc053ef5f25e58f3",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py": "d590112f9b6dcf3005c273a6291320b0fa0a218969326839f5c5be4ae332e89a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py": "bbd62e121201faf2012c247a4e19b7cedb221c2fe3aa90eb55589dc1f472f484",
+    "scripts/ops/legal_ir/benchmark_produced_corpus_arrow_training.py": "33f72eb63c47998632df25f493b92b933a4b01df088aa186b0cf94270ed5eea2",
+    "scripts/ops/legal_ir/benchmark_shared_autoencoder_training.py": "0fed89ccac13fd223f2a65b1f2071500d834445fb61e5ddce25cea87a8c60f0d",
+    "scripts/ops/legal_ir/benchmark_shared_target_grammar.py": "301b3c07cb76471f718037c7afe9079a926656529079d5aaf665de52350d9b28",
+    "scripts/ops/legal_ir/benchmark_sparse_checkpoint_training.py": "88ca7da74bbfee722d5197f23567669f7b139ea61cbc936b4abf60fd7006f293"
+  },
+  "target_bundle_reusable_under_current_provenance": false,
+  "target_snapshot_artifact": {
+    "bytes": 12843316,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/targets.bundle",
+    "sha256": "1c7d0a2682a15440d0c06e6b12699f2c1ed1d53c0801493cc54e870359919948"
+  },
+  "temperature": 0,
+  "use_sample_memory": false,
+  "validation_sample_count": 3,
+  "weight_improvement_claim": false
+}

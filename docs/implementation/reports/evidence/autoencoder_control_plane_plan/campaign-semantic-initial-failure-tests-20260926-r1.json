@@ -1,0 +1,2013 @@
+{
+  "admitted": false,
+  "checks": {
+    "dependencies_unchanged": true,
+    "exact_collected_executed_membership": false,
+    "expected_collected_source_counts": true,
+    "expected_executed_source_counts": false,
+    "expected_focused_count": true,
+    "fixtures_within_external_charge": true,
+    "harness_unchanged": true,
+    "input_artifacts_unchanged": true,
+    "package_source_unchanged": true,
+    "protected_unchanged": true,
+    "pytest_argument_expansion_exact": true,
+    "pytest_exit_zero": false,
+    "zero_failures_errors_skips": false
+  },
+  "collected_counts_by_source": {
+    "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py": 4,
+    "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py": 3,
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py": 53,
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py": 23,
+    "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py": 96,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 2,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py": 13,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py": 9,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 17
+  },
+  "collected_test_membership": [
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[20]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[20.0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[21]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_no_parser_elements_skip_document_and_compiler",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_preserves_stored_vocabulary[stored0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_preserves_stored_vocabulary[stored1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_extracts_vocabulary_once_for_exact_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_uses_each_selected_clause_vocabulary_after_segmentation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_projection_matches_reviewed_typed_deontic_semantics",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_projection_rejects_unrepresented_semantic_facets",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_projection_rejects_unmapped_qualifier_values",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_compiler_success_has_cid_bound_ir_source_map_and_lineage",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmapped_semantics_abstain_or_are_explicitly_partial",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_empty_parser_output_is_typed_and_does_not_fabricate_ir",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmeasured_or_learned_config_is_rejected_without_fallback[config0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmeasured_or_learned_config_is_rejected_without_fallback[config1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmeasured_or_learned_config_is_rejected_without_fallback[config2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmeasured_or_learned_config_is_rejected_without_fallback[config3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unavailable_component_is_a_retryable_typed_failure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_configuration_and_protocol_identity_are_stable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_all_frozen_t1_outputs_match_selected_benchmark_adapter",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_temporal_phrase_already_in_the_object_is_not_repeated",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_frozen_grammar_preserves_polarity_roles_and_every_facet",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_success_has_raw_text_cid_and_deterministic_component_trace",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_attribution_receipt_binds_only_public_canonical_inputs_and_t1",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_only_exact_frozen_config_and_policy_are_accepted",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_invalid_requests_and_component_errors_are_typed_failures",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_decompiler_is_stateless_source_withheld_and_model_free",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_production_module_has_no_benchmark_dependency",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "::test_every_renderer_package_is_preserved_exactly[pattern0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_every_renderer_package_is_preserved_exactly[pattern1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_every_renderer_package_is_preserved_exactly[pattern2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[exact rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[unfold meets bound\\ndecide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[constructor <;> decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[constructor\\n\\xb7 decide\\n\\xb7 rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[unfold meets bound; constructor <;> decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[simp only [meets, bound]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[simpa [meets, bound]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[constructor\\nall_goals decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[simp only []]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_helper_substitution_that_preserves_boundary_examples_is_rejected",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>5]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[sorry]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[(sorry)]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[exact sorryAx]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[admit]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[exact (by sorry)]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[native_decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[decide +native]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[run_tac pure ()]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[set_option maxRecDepth 0 in decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[exact (unsafeCast True.intro)]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[simp [unknown]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[unfold unknown]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\n#eval IO.println 1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\naxiom falseProof : False]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\ndef replacement : Nat := 0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\nnamespace Evil]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\nend]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\nrun_tac logInfo \"x\"]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl -- ignored]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl /- comment -/]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\n/- unfinished]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\nattribute [simp] bound]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl;]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[;rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[all_goals all_goals decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[simp [bound,]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[simp [bound,,meets]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\r#eval 1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\x00]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\u2028#eval 1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\t]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\xa0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_imports_keep_the_legacy_error_before_execution[import Mathlib\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_imports_keep_the_legacy_error_before_execution[import\\tMathlib\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_imports_keep_the_legacy_error_before_execution[import\\nMathlib\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[#eval 1\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[def changed : Nat := 1\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[end\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[set_option autoImplicit true\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[namespace Extra\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[@[simp] theorem x : True := by trivial\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_multiple_theorems_keep_individual_slots_and_order[pattern0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_multiple_theorems_keep_individual_slots_and_order[pattern1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_inline_and_missing_final_newline_and_theorem_only_compatibility",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_content_identities_separate_proof_changes_from_protected_context",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[None]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[False]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[7]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[bad4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[bad5]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[\\ud800]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounds_apply_to_input_and_assembled_source",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_byte_limit_not_character_count_and_normalized_newline_is_charged",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_exact_proof_line_and_step_boundaries_are_not_defaults",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[19]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[20]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[31]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[100]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[365]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[10000]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[def bound : Nat := 20\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[namespace N\\ndef bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[def bound : Nat := by decide\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  native_decide\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\ntheorem boundary : True := by trivial\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_failed_proof_edit_cannot_mutate_a_later_lock",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_manifest_roundtrip_is_order_and_location_independent",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[../outside]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[/absolute]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a/../b]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[./a]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a//b]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a/]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a\\\\b]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[.]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a\\x00]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change5]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change6]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change7]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_duplicate_and_excess_records",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_byte_limits_include_zero_and_exact_boundary",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_symlink_leaf_parent_and_root_refused",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_wrong_pin_or_document_binding_never_enters_backend",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_expected_pin_must_be_a_literal_digest_string",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_two_interleaved_adapters_do_not_share_rows_documents_or_receipts",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments5]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_is_terminal_and_never_falls_back[change]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_is_terminal_and_never_falls_back[delete]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_is_terminal_and_never_falls_back[symlink]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_is_terminal_and_never_falls_back[binding]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_post_verifier_drift_blocks_storage_and_admission_mark",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[result0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[result1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[result2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[result3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[None]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_source_command_injection_never_reaches_injected_verifier[roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_source_command_injection_never_reaches_injected_verifier[locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_source_command_injection_never_reaches_injected_verifier[tool]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_absence_rejection_and_transient_failure_are_distinct",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_missing_writer_or_prompt_does_not_fall_back",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_invalid_writer_result_is_not_reported_as_stored[result0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_invalid_writer_result_is_not_reported_as_stored[result1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_invalid_writer_result_is_not_reported_as_stored[None]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_during_compilation_does_not_claim_to_rollback_backend_state",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_writer_false_preserves_non_storage_result",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_single_owner_reentrancy_and_close",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_fixture_model_tool_and_final_turn_use_only_injected_dependencies",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (n = bound)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (n = bound)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem weaker : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem weaker : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 21 = true)) := by\\n  unfold meets bound\\n  decide\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 21 = true)) := by\\n  unfold meets bound\\n  decide\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n#eval 1\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n#eval 1\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[decide\\n#eval 1-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[decide\\n#eval 1-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[decide +native-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[decide +native-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[import\\tMathlib\\ndef bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[import\\tMathlib\\ndef bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\ndef changed : Nat := 0\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\ndef changed : Nat := 0\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_source_lock_does_not_override_failed_verification[roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_source_lock_does_not_override_failed_verification[locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_mock_success_stores_the_exact_locked_bytes",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_a_norm_batch_keeps_each_lock_and_skips_thresholds",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_a_prohibition_cannot_supply_an_admission_target_from_its_fingerprint",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_a_minimum_is_ready_for_lake_and_a_deadline_is_not",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_deadlines_and_non_roundtrip_rows_still_abstain",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_the_twenty_day_gate_is_ready_and_not_admitted",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py"
+    },
+    {
+      "nodeid": "::test_a_within_deadline_is_not_a_minimum",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py"
+    },
+    {
+      "nodeid": "::test_constitution_census_never_promotes_compiler_observations_to_admission",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py"
+    },
+    {
+      "nodeid": "::test_lake_check_refuses_an_import_before_lake",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py"
+    },
+    {
+      "nodeid": "::test_extract_lean_on_english_names_lake_check_without_echoing_it",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py"
+    },
+    {
+      "nodeid": "::test_unknown_tool_is_not_dispatched",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py"
+    },
+    {
+      "nodeid": "::test_text_tool_turn_parses_and_an_empty_list_is_no_call",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py"
+    }
+  ],
+  "compiler_semantics_and_fixture_admission_plumbing_only": true,
+  "configured_pytest_addopts": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin"
+  ],
+  "constitution_formalized": false,
+  "downloads_performed": false,
+  "executed_counts_by_source": {
+    "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py": 4,
+    "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py": 3,
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py": 53,
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py": 23,
+    "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py": 96,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 1,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py": 12,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py": 9,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 16
+  },
+  "executed_test_membership": [
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[20]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[20.0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_requires_matching_integer_quantity[21]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_no_parser_elements_skip_document_and_compiler",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_preserves_stored_vocabulary[stored0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_preserves_stored_vocabulary[stored1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_extracts_vocabulary_once_for_exact_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_compile_span_uses_each_selected_clause_vocabulary_after_segmentation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_projection_matches_reviewed_typed_deontic_semantics",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_projection_rejects_unrepresented_semantic_facets",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_projection_rejects_unmapped_qualifier_values",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_compiler_success_has_cid_bound_ir_source_map_and_lineage",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmapped_semantics_abstain_or_are_explicitly_partial",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_empty_parser_output_is_typed_and_does_not_fabricate_ir",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmeasured_or_learned_config_is_rejected_without_fallback[config0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmeasured_or_learned_config_is_rejected_without_fallback[config1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmeasured_or_learned_config_is_rejected_without_fallback[config2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unmeasured_or_learned_config_is_rejected_without_fallback[config3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_unavailable_component_is_a_retryable_typed_failure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_configuration_and_protocol_identity_are_stable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_all_frozen_t1_outputs_match_selected_benchmark_adapter",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_temporal_phrase_already_in_the_object_is_not_repeated",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_frozen_grammar_preserves_polarity_roles_and_every_facet",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_success_has_raw_text_cid_and_deterministic_component_trace",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_attribution_receipt_binds_only_public_canonical_inputs_and_t1",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_only_exact_frozen_config_and_policy_are_accepted",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_invalid_requests_and_component_errors_are_typed_failures",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_decompiler_is_stateless_source_withheld_and_model_free",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_production_module_has_no_benchmark_dependency",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "::test_every_renderer_package_is_preserved_exactly[pattern0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_every_renderer_package_is_preserved_exactly[pattern1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_every_renderer_package_is_preserved_exactly[pattern2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[exact rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[unfold meets bound\\ndecide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[constructor <;> decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[constructor\\n\\xb7 decide\\n\\xb7 rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[unfold meets bound; constructor <;> decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[simp only [meets, bound]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[simpa [meets, bound]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[constructor\\nall_goals decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounded_proof_edits_only_change_the_body[simp only []]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_helper_substitution_that_preserves_boundary_examples_is_rejected",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_any_definition_edit_or_added_helper_is_rejected[<lambda>5]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_changed_names_types_binders_and_theorem_count_fail[<lambda>4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[sorry]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[(sorry)]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[exact sorryAx]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[admit]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[exact (by sorry)]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[native_decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[decide +native]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[run_tac pure ()]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[set_option maxRecDepth 0 in decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[exact (unsafeCast True.intro)]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[simp [unknown]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[unfold unknown]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\n#eval IO.println 1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\naxiom falseProof : False]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\ndef replacement : Nat := 0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\nnamespace Evil]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\nend]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\nrun_tac logInfo \"x\"]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl -- ignored]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl /- comment -/]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\n/- unfinished]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\nattribute [simp] bound]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl;]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[;rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[all_goals all_goals decide]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[simp [bound,]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[simp [bound,,meets]]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\r#eval 1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\x00]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\u2028#eval 1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\t]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_or_escaping_proofs_fail_in_both_reply_forms[rfl\\xa0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_imports_keep_the_legacy_error_before_execution[import Mathlib\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_imports_keep_the_legacy_error_before_execution[import\\tMathlib\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_imports_keep_the_legacy_error_before_execution[import\\nMathlib\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[#eval 1\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[def changed : Nat := 1\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[end\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[set_option autoImplicit true\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[namespace Extra\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_trailing_commands_are_not_swallowed_as_proof[@[simp] theorem x : True := by trivial\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_multiple_theorems_keep_individual_slots_and_order[pattern0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_multiple_theorems_keep_individual_slots_and_order[pattern1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_inline_and_missing_final_newline_and_theorem_only_compatibility",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_content_identities_separate_proof_changes_from_protected_context",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[None]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[False]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[7]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[rfl]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[bad4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[bad5]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_invalid_input_types_and_unicode_fail_closed[\\ud800]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_bounds_apply_to_input_and_assembled_source",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_byte_limit_not_character_count_and_normalized_newline_is_charged",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_exact_proof_line_and_step_boundaries_are_not_defaults",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[19]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[20]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[31]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[100]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[365]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_generated_numeric_contexts_keep_proof_edits_and_reject_helper_drift[10000]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[def bound : Nat := 20\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[namespace N\\ndef bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[def bound : Nat := by decide\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  native_decide\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_unsupported_expected_packages_are_not_guessed[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\ntheorem boundary : True := by trivial\\n]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_failed_proof_edit_cannot_mutate_a_later_lock",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py"
+    },
+    {
+      "nodeid": "::test_manifest_roundtrip_is_order_and_location_independent",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[../outside]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[/absolute]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a/../b]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[./a]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a//b]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a/]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a\\\\b]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[.]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_unsafe_paths[a\\x00]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change5]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change6]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_malformed_records[change7]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_manifest_rejects_duplicate_and_excess_records",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_byte_limits_include_zero_and_exact_boundary",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_symlink_leaf_parent_and_root_refused",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_wrong_pin_or_document_binding_never_enters_backend",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_expected_pin_must_be_a_literal_digest_string",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_two_interleaved_adapters_do_not_share_rows_documents_or_receipts",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments4]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_tool_payload_cannot_invoke_backend[arguments5]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_is_terminal_and_never_falls_back[change]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_is_terminal_and_never_falls_back[delete]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_is_terminal_and_never_falls_back[symlink]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_is_terminal_and_never_falls_back[binding]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_post_verifier_drift_blocks_storage_and_admission_mark",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[result0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[result1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[result2]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[result3]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_malformed_verifier_result_cannot_establish_success[None]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_source_command_injection_never_reaches_injected_verifier[roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_source_command_injection_never_reaches_injected_verifier[locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_source_command_injection_never_reaches_injected_verifier[tool]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_absence_rejection_and_transient_failure_are_distinct",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_missing_writer_or_prompt_does_not_fall_back",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_invalid_writer_result_is_not_reported_as_stored[result0]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_invalid_writer_result_is_not_reported_as_stored[result1]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_invalid_writer_result_is_not_reported_as_stored[None]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_drift_during_compilation_does_not_claim_to_rollback_backend_state",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_writer_false_preserves_non_storage_result",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_single_owner_reentrancy_and_close",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_fixture_model_tool_and_final_turn_use_only_injected_dependencies",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (n = bound)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (n = bound)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem weaker : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem weaker : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 21 = true)) := by\\n  unfold meets bound\\n  decide\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 21 = true)) := by\\n  unfold meets bound\\n  decide\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n#eval 1\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n#eval 1\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[decide\\n#eval 1-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[decide\\n#eval 1-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[decide +native-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[decide +native-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[import\\tMathlib\\ndef bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[import\\tMathlib\\ndef bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\ndef changed : Nat := 0\\n-roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_invalid_sources_reach_neither_checker_nor_attestation_store[def bound : Nat := 20\\ndef meets (n : Nat) : Bool := decide (bound <= n)\\ntheorem boundary : ((meets 19 = false) /\\\\ (meets 20 = true)) := by\\n  unfold meets bound\\n  decide\\ndef changed : Nat := 0\\n-locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_source_lock_does_not_override_failed_verification[roundtrip]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_source_lock_does_not_override_failed_verification[locked]",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_mock_success_stores_the_exact_locked_bytes",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_a_norm_batch_keeps_each_lock_and_skips_thresholds",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_a_prohibition_cannot_supply_an_admission_target_from_its_fingerprint",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_a_minimum_is_ready_for_lake_and_a_deadline_is_not",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_deadlines_and_non_roundtrip_rows_still_abstain",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py"
+    },
+    {
+      "nodeid": "::test_the_twenty_day_gate_is_ready_and_not_admitted",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py"
+    },
+    {
+      "nodeid": "::test_a_within_deadline_is_not_a_minimum",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py"
+    },
+    {
+      "nodeid": "::test_constitution_census_never_promotes_compiler_observations_to_admission",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py"
+    },
+    {
+      "nodeid": "::test_lake_check_refuses_an_import_before_lake",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py"
+    },
+    {
+      "nodeid": "::test_extract_lean_on_english_names_lake_check_without_echoing_it",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py"
+    },
+    {
+      "nodeid": "::test_unknown_tool_is_not_dispatched",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py"
+    },
+    {
+      "nodeid": "::test_text_tool_turn_parses_and_an_empty_list_is_no_call",
+      "path": "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py"
+    }
+  ],
+  "exit_code": 1,
+  "expanded_pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_autoformal_speed_semantics.py",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py",
+    "tests/unit/logic/legal_ir/test_canonical_decompiler.py",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-merge-semantics-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1/tests/tests.xml"
+  ],
+  "five_case_pilot_included": true,
+  "fixture_directory": "/tmp/pytest-of-barberb/campaign-merge-semantics-20260926-r1",
+  "fixture_inventory": {
+    "apparent_bytes": 0,
+    "entry_count": 0,
+    "special_file_count": 0,
+    "symlink_count": 0
+  },
+  "fixture_inventory_scope": "current retained bytes, not cumulative generated bytes or continuous peak",
+  "fixtures_outside_strict_attempt": true,
+  "global_holdout_verified": false,
+  "jevops_fixture_only_regressions_included": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 3,
+    "skipped": 0,
+    "tests": 220
+  },
+  "lake_execution_performed": false,
+  "live_hub_calls": false,
+  "model_construction_performed": false,
+  "native_cycle_performed": false,
+  "native_training_validation_deferred": true,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "original_pytest_args": [
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_autoformal_speed_semantics.py",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py",
+    "tests/unit/logic/legal_ir/test_canonical_decompiler.py",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-merge-semantics-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1/tests/tests.xml"
+  ],
+  "passed": false,
+  "prior_failed_fixture_cleanup_performed": false,
+  "produced_artifacts": [
+    {
+      "bytes": 31235,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1/tests/tests.xml",
+      "sha256": "0197cc1c2afb00e71eea476126bf9a2c453e9bc9dc46f120e03155ce18ffee0e"
+    }
+  ],
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "prover_execution_performed": false,
+  "publication_performed": false,
+  "pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_autoformal_speed_semantics.py",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py",
+    "tests/unit/logic/legal_ir/test_canonical_decompiler.py",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "/home/barberb/lift_coding/JevOps/tests/test_statement_lock.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_adapter.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_legal_source_admission.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_constitution_admission_ready.py",
+    "/home/barberb/lift_coding/JevOps/tests/test_autoformal_tools.py",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-merge-semantics-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1/tests/tests.xml"
+  ],
+  "pytest_ini_artifact": {
+    "bytes": 1536,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+  },
+  "pytest_tmp_path_retention_policy": "failed",
+  "pytest_tmpdir_policy_module": {
+    "bytes": 13271,
+    "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/tmpdir.py",
+    "sha256": "5099f71d89413191c9e7515c9d4fe9fc7083bb73306f2cf1f73a9f89c862ed90"
+  },
+  "resolved_logic_paths": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "schema": "offline-campaign-merge-semantics-regression-v1",
+  "source_authority_authenticated": false,
+  "speed_claim": false,
+  "successful_tmp_path_fixtures_ephemeral": true,
+  "test_counts_by_module": {
+    "": 179,
+    "tests.integration.logic.test_canonical_semantic_roundtrip": 2,
+    "tests.unit.logic.legal_ir.test_canonical_compiler": 13,
+    "tests.unit.logic.legal_ir.test_canonical_decompiler": 9,
+    "tests.unit.logic.test_autoformal_speed_semantics": 17
+  },
+  "test_seal_reuse_disabled": true,
+  "wall_seconds": 3.2421311090001836
+}

@@ -1,0 +1,218 @@
+{
+  "schema": "autoencoder-daemon-corpus-input-validation-v1",
+  "recorded_at": "2026-09-25T12:50:16.369453+00:00",
+  "scope": "Opt-in English U.S. Code v6 immutable inputs, owner binding, native startup and failure/restart contracts; no native training cycle or speed comparison.",
+  "files": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "sha256": "b0d60afa744f94c3e967ef64f39670cb8ce409063e9a18936a6e6ef1eae963ce",
+      "bytes": 41375
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_corpus_inputs.py",
+      "sha256": "50ff974ac172f21519bc0bd030fb728bb1333b1fb257582d717ce56cd80ebd01",
+      "bytes": 20406
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "sha256": "db12aaf0faf6ef7c0deace1ff17fe0f3fd7dcbd424b5c06a510cc81ec611e93a",
+      "bytes": 50447
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py",
+      "sha256": "054f48d51309d6489c237bb18604ae9a6490c1597d00117dc5439cfd744bbba5",
+      "bytes": 84693
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+      "sha256": "5f83cba970b9075c5685e8444b1c8325617aa457d9480bd710738aed524e81c8",
+      "bytes": 991505
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/qualify_daemon_corpus_inputs.py",
+      "sha256": "cc8b6ed99be0790b58cbf2e5585d9b20d3b48f68c5541edae50b1269a991e16f",
+      "bytes": 37622
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_input_snapshot_registry.py",
+      "sha256": "ebe7b3dfefd8e2e4d0bedb78c4c3ac1e963ba911541e194c4a176bec5e473a46",
+      "bytes": 9430
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_corpus_inputs.py",
+      "sha256": "2912e733e4e098d8d141907db499633bf3162a78214f494dbc82c35649a8b076",
+      "bytes": 13677
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_daemon_corpus_input_integration.py",
+      "sha256": "2c03d7dbf935d11e1e1082d8efb0f9f852f5513b83c1f90ace1042df4b9c0603",
+      "bytes": 23149
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_checkpoint_input_metadata.py",
+      "sha256": "67ce20a37c2b7a2d2aa87bb3524c11b098df03ce69ec180f71ca8913cedb4cd3",
+      "bytes": 7901
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_qualify_daemon_corpus_inputs.py",
+      "sha256": "22cc1aa9720d42fecbc91f52f8326d317fdb1bb3b7d5218407f41a22548e9e89",
+      "bytes": 12631
+    }
+  ],
+  "tests": {
+    "counts": {
+      "tests": 384,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "receipt": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-corpus-inputs-20260925/combined-r2-receipt.json",
+      "sha256": "61c1de7689f01aaf816ea61368c517c32ee621d98a9287dc27f9f13f1643715c",
+      "bytes": 1570
+    },
+    "log": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-corpus-inputs-20260925/combined-r2.log",
+      "sha256": "02fd12ac848e6b1b4507f0ed0b67a4aa50e35fb260983dd35d2417da4419bf12",
+      "bytes": 2965
+    },
+    "xml": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-corpus-inputs-20260925/combined-r2.xml",
+      "sha256": "63abc545992968a7a1392e54f2b558859cf948d2c6d501505c8fbd0938ab02ab",
+      "bytes": 1121950
+    },
+    "package_source_manifest": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-corpus-inputs-20260925/combined-source-final-before.json",
+      "sha256": "6f959295d4dcedf5e4918975f1227a4f4322e5a1382c2bb13ff57e861957bf1d",
+      "bytes": 1241520
+    },
+    "source_unchanged_during_tests": true
+  },
+  "native_startup": {
+    "receipt": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-corpus-input-startup-20260925-r2.json",
+      "sha256": "3ecc446684e3ae06736e96dac8851e73f9120aec32d6e9176ae9db6dd779cab4",
+      "bytes": 7494318
+    },
+    "passed": true,
+    "native_cycle_qualified": false,
+    "cycles": 0,
+    "source_unchanged": true,
+    "producer_config_unchanged": true,
+    "historical_inputs_unchanged": true,
+    "input_checks": {
+      "boundary_checks": true,
+      "closed": true,
+      "exact_descriptor": true,
+      "exact_identity": true,
+      "integrity_verified": true,
+      "no_failure": true,
+      "not_poisoned": true,
+      "partition_counts": true,
+      "rows_consumed": true,
+      "selection_checks": true
+    },
+    "startup_persistence_checks": {
+      "checkpoint_not_enqueued": true,
+      "initial_private_checkpoint_preserved": true
+    }
+  },
+  "current_source_drift_since_final_validation": {
+    "ipfs_datasets_py/logic/autoformal/learned_feedback.py": {
+      "validated": "58c4eaa3dfd6a4119cd8e2c56c3a62d45d5ba38fe9bd2173634be78c8a8783dc",
+      "current": "06614f0fff96d55caba7b5c57d38c77a7378a48b6bab3db9a7bafa6f8fc0191c"
+    },
+    "ipfs_datasets_py/logic/autoformal/supervisor_queue.py": {
+      "validated": "dabddcb0b73268b94dd6ed194c556353a4233584d49935602557b1448b42ae0a",
+      "current": "08639c681c171e456d1addf6f375253b7037d906d68d3417b60352eca6d813ae"
+    },
+    "ipfs_datasets_py/logic/autoformal/repair_context.py": {
+      "validated": "c58345d86ca8c1e78aef96ec41053612755da4eb824cbd3b1558cd5dae330062",
+      "current": "07b203131530012e194bf8cc13f1dedbb6befcdde46f7501dfe54ec282c6e91d"
+    }
+  },
+  "protected_artifacts": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "bytes": 25895338,
+      "expected_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "unchanged": true,
+      "inode": 57804548,
+      "hardlinks": 2
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1",
+      "bytes": 8889,
+      "expected_sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1",
+      "unchanged": true,
+      "inode": 58092488,
+      "hardlinks": 1
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535",
+      "bytes": 1148,
+      "expected_sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535",
+      "unchanged": true,
+      "inode": 58092490,
+      "hardlinks": 1
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3",
+      "bytes": 55254,
+      "expected_sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3",
+      "unchanged": true,
+      "inode": 58092497,
+      "hardlinks": 1
+    }
+  ],
+  "storage": {
+    "scope": "Named roots only, apparent bytes, not a global census. Includes unrelated shared pytest scratch. No cleanup performed.",
+    "roots": [
+      {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+        "apparent_bytes": 1304301048
+      },
+      {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+        "apparent_bytes": 130195604
+      },
+      {
+        "path": "/tmp/pytest-of-barberb",
+        "apparent_bytes": 33040329502
+      },
+      {
+        "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small",
+        "apparent_bytes": 67759742
+      },
+      {
+        "path": "/tmp/lift-coding-target-reduction-pin-20260925",
+        "apparent_bytes": 95
+      },
+      {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan",
+        "apparent_bytes": 113477274
+      }
+    ],
+    "sum_apparent_bytes": 34656063265,
+    "ceiling_bytes": 50000000000,
+    "manual_cleanup_performed": false
+  },
+  "admitted": false,
+  "constitution_formalized": false,
+  "speed_claim": false,
+  "native_training_qualified": false,
+  "ducklake_activated": false,
+  "huggingface_publication_performed": false,
+  "new_model_weights_downloaded": false,
+  "remaining": [
+    "Full native training cycle with actual role sampling and default asynchronous snapshot evaluation plus durable final checkpoint",
+    "Complete cycle candidate ownership and sparse replay of every daemon mutation",
+    "Mapped daemon inputs/weights after lifetime and performance qualification",
+    "Production DuckLake/HF destination consumers and full corpus/semantic coverage"
+  ],
+  "qualified_implementation_and_startup": false
+}

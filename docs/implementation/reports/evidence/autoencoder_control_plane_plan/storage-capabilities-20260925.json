@@ -1,0 +1,103 @@
+{
+  "admitted": false,
+  "autoload": false,
+  "elapsed_seconds": 1.3487319779815152,
+  "inventory": {
+    "duckdb_matches_lock": true,
+    "duckdb_version": "1.5.5",
+    "expected_duckdb_version": "1.5.5",
+    "extensions": {
+      "ducklake": {
+        "expected_sha256": "d0b57c8e261b89a1ae367c7224f0857cfde72ab6cf2609f188e0de9b897b1088",
+        "extension_version": "d8a1881e",
+        "installed": true,
+        "loaded_during_inventory": false,
+        "matches_lock": true,
+        "path": "/home/barberb/.duckdb/extensions/v1.5.5/linux_arm64/ducklake.duckdb_extension",
+        "sha256": "d0b57c8e261b89a1ae367c7224f0857cfde72ab6cf2609f188e0de9b897b1088"
+      },
+      "httpfs": {
+        "expected_sha256": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9",
+        "extension_version": "827222f",
+        "installed": true,
+        "loaded_during_inventory": false,
+        "matches_lock": true,
+        "path": "/home/barberb/.duckdb/extensions/v1.5.5/linux_arm64/httpfs.duckdb_extension",
+        "sha256": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9"
+      },
+      "quack": {
+        "expected_sha256": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08",
+        "extension_version": "c154811",
+        "installed": true,
+        "loaded_during_inventory": false,
+        "matches_lock": true,
+        "path": "/home/barberb/.duckdb/extensions/v1.5.5/linux_arm64/quack.duckdb_extension",
+        "sha256": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08"
+      }
+    },
+    "platform": "linux_arm64",
+    "python_version": "3.12.3",
+    "source_metadata": {
+      "ipfs_datasets_py/duckdb_control/capabilities.py": "8e6f557d7fe3fc1feadf3ab36c3a03fce35cb6c59fc00d00a93b5ddf1be88b0d",
+      "ipfs_datasets_py/ducklake/capabilities.py": "049f1597d3002407bcaa741ac2bbf64fd51255013d2c6613fa526a66878da728",
+      "ipfs_datasets_py/ducklake/quack_catalog.py": "ab3fadf171ab099f67beddf31a07b3c0001426a86cf6bd5f3a6134770d6bf6d3",
+      "requirements/duckdb-quack.lock": "c13d55fda5236686a02fdcfe782639c09395300d51ac5acf9effa0a4297d7a48",
+      "scripts/ops/legal_ir/probe_autoencoder_storage.py": "ae1a3aa1f315156b1031d6b87fe00e2bd15eebe95897e34c13f43d7bbc7ba1d2"
+    },
+    "source_root": "/home/barberb/lift_coding/external/ipfs_datasets"
+  },
+  "logic_modules_imported": false,
+  "network_install": false,
+  "probes": {
+    "duckdb_close_reopen": {
+      "committed_rows_after_reopen": 1,
+      "elapsed_seconds": 0.10371337295509875,
+      "status": "passed"
+    },
+    "duckdb_process_kill": {
+      "committed_rows_recovered": 1,
+      "elapsed_seconds": 0.11993001902010292,
+      "status": "passed",
+      "uncommitted_rows_recovered": 0,
+      "wal_bytes_before_kill": 278,
+      "writer_exit_signal": "SIGKILL"
+    },
+    "ducklake": {
+      "automatic_migration": false,
+      "bootstrap_confined_to_disposable_directory": true,
+      "catalog_file_bytes": 3682304,
+      "catalog_version": "1.0",
+      "elapsed_seconds": 0.4383840539958328,
+      "global_ducklake_auto_migration_setting_available": false,
+      "metadata_backend": "local_duckdb",
+      "migration_control": "ATTACH AUTOMATIC_MIGRATION false",
+      "parquet_file_count": 1,
+      "remote_catalog_tested": false,
+      "rows_after_reopen": 1,
+      "status": "passed"
+    },
+    "quack": {
+      "authorization": "one_exact_read_query",
+      "denials": {
+        "unlisted_query": true,
+        "wrong_token": true
+      },
+      "elapsed_seconds": 0.591448848019354,
+      "listener_stopped": true,
+      "loopback_only": true,
+      "remote_rows": 1,
+      "status": "passed",
+      "training_commands_tested": false,
+      "transport": "native_quack_query"
+    }
+  },
+  "production_activation": false,
+  "recorded_at": "2026-09-25T00:11:54.698983+00:00",
+  "runtime_qualified": false,
+  "schema": "ipfs_datasets_py/autoencoder-storage-probe@1",
+  "scope": "isolated_disposable_capabilities",
+  "scratch_removed": true,
+  "status": "passed",
+  "training_integration_qualified": false,
+  "weights_accessed": false
+}

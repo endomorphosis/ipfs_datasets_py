@@ -1,0 +1,185 @@
+{
+  "admitted": false,
+  "checks": {
+    "all_other_document_links_exist": true,
+    "audit_receipt_exact": true,
+    "combined_tests_passed": true,
+    "failed_attempt_receipt_preserved": true,
+    "failure_audit_preserved": true,
+    "harness_tests_and_helpers_unchanged": true,
+    "harness_tests_passed": true,
+    "historical_input_artifacts_unchanged": true,
+    "independent_audit_passed": true,
+    "new_reservations_still_released": true,
+    "only_prior_failed_reservations_retained": true,
+    "protected:workspace/todo-queues/constitution-on-restart12.json": true,
+    "protected:workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json": true,
+    "protected:workspace/todo-queues/restart12-bridge-on-measurement.json": true,
+    "protected:workspace/todo-queues/restart12-bridge-on-one-step.json": true,
+    "protected:workspace/todo-queues/restart12-bridge-on-one-step.state.json": true,
+    "protected_inode_and_links_unchanged": true,
+    "qualification_artifacts_unchanged": true,
+    "qualification_passed": true,
+    "qualification_receipt_exact": true,
+    "recorded_child_processes_absent": true,
+    "selected_tests_unchanged": true,
+    "shared_storage_cap_unchanged": true,
+    "sources_match_combined_tests": true,
+    "sources_match_qualification": true,
+    "sources_unchanged_during_closeout": true
+  },
+  "combined_tests": {
+    "bytes": 2554368,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-owned-shadow-20260925/combined-r1-receipt.json",
+    "sha256": "f8effc6101afe7141defdd5d6156795418907482699bc4b6264b1defed743b7c"
+  },
+  "current_source_manifest_sha256": "084b70224c45d2e6a7e6eaf25233ea3a47c48b39c25d8e1523018e5c456af218",
+  "distinct_tests": {
+    "combined": 515,
+    "harness": 25
+  },
+  "documents": [
+    {
+      "bytes": 12276,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_owned_shadow.md",
+      "sha256": "30bf88e922b3048196678a24249f6061cfa53f87d4bb8def09eb2e67c4f59ee4"
+    },
+    {
+      "bytes": 10265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_sparse_shadow.md",
+      "sha256": "a122497c7c66bcc38c4eb35a7b440ff029c7c64e6344f3f5014703834690bd5a"
+    },
+    {
+      "bytes": 19771,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_owned_invocation.md",
+      "sha256": "6748e0f6dc0f8f332cd9f155187cfe7e31216fbaa7cfa1bc69ff14398ba3e6fe"
+    },
+    {
+      "bytes": 30882,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DAEMON_OWNED_INVOCATION_PLAN.md",
+      "sha256": "ffd3c3c53f0c1d84840a6c2d85a8f4dd9a1fc097ee8d34eaf474e77b1a645935"
+    },
+    {
+      "bytes": 70480,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "96ed3e153ed9673f3c9ba99fc73a8bcc22a04183a58fa1694607f721c6ce30d5"
+    },
+    {
+      "bytes": 60648,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "dcb3888efbc9266f0f28f457e0094b4eef0e3e278d45041d7f2a924bbdd3c354"
+    }
+  ],
+  "elapsed_seconds": 1.3264170739566907,
+  "full_checkpoints_authoritative": true,
+  "harness_hashes": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/qualify_owned_daemon_shadow.py": "5e64fffd3105a75fe2e327902a8fd74947ba18377d827f317fa3e28af860cca2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_qualify_owned_daemon_shadow.py": "85a5ac0770117fd4189fd34ed725206778e2b992b8d792383def6abf3d7cfd49"
+  },
+  "harness_tests": {
+    "bytes": 1366,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-owned-shadow-20260925/harness-r2-receipt.json",
+    "sha256": "5a57188700bebeb273ae61a3234287b83b9dcacf9c041984434746a37300dd45"
+  },
+  "historical_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "independent_audit": {
+    "bytes": 98555,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-shadow-20260925-r2-independent-audit.json",
+    "sha256": "e1f326b1729ea559a4f0474083a72bf290cb602570e0437bd6c7fc05bdbda509"
+  },
+  "local_links_checked": 149,
+  "missing_links": [],
+  "native_training_qualified": false,
+  "new_bridge_evaluation_performed": false,
+  "new_released_reservation_ids": [
+    "332609234a99429b95ed505b1f9442ef",
+    "a5598e3b75e14e14b4678f95f233b8b7",
+    "c3dffdca99b64a86b7ae45e24fef8bbd"
+  ],
+  "new_training_performed": false,
+  "passed": true,
+  "promoted": false,
+  "prospective_self_links": [
+    {
+      "document": "docs/implementation/reports/autoencoder_daemon_owned_shadow.md",
+      "target": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-shadow-closeout-20260925-r2.json"
+    }
+  ],
+  "protected_inode": 57804548,
+  "protected_links": 2,
+  "publication_performed": false,
+  "qualification": {
+    "bytes": 2817432,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-shadow-20260925-r2.json",
+    "sha256": "cf5147a6300bed53b1e58e13de765ba1aa98592b423b0fada51e821803509b7c"
+  },
+  "recorded_at": "2026-09-25T15:18:03.946582+00:00",
+  "resource_ledger": {
+    "bytes": 25623,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "fa9f6cf1e201a7b440ab38f16721b91d191dc5ac7393f79b5cf17c4482892a68"
+  },
+  "retained_failed_attempt": {
+    "bytes": 2599979,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-shadow-20260925-r1.json",
+    "sha256": "2e2ebe0269a5e52a3f7ffc8a67ce9b89ae1ae63578eb58981ec036371a30f955"
+  },
+  "retained_failed_reservation_bytes": {
+    "297afa219ed346c6b0e77ac2dcb04783": 1000000000,
+    "8827ac316aae4ecbbfddf9dedf0332d7": 1000000000
+  },
+  "retained_failure_audit": {
+    "bytes": 37368,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-shadow-failure-independent-audit-20260925-r1.json",
+    "sha256": "65e7a9cb2366b0c7b3e40dec982768f129da68d236bd0d7c7c70f84c2cb6d5e3"
+  },
+  "schema": "owned-daemon-shadow-closeout-v1",
+  "scope": "Read-only source, artifact and documentation closeout; no training, replay or evaluation.",
+  "selected_test_hashes": {
+    "tests/unit/benchmarks/test_semantic_logic_roundtrip.py": "0c86977f19906daf5c797668c463a3f54c13b49702255e770cda1ccf10ca310d",
+    "tests/unit/logic/test_autoformal_speed_semantics.py": "b73a3e09f3e189ed7f3e49c651e797a8668fe5192b7f7ef008c7b54363a281bb",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation.py": "a78ce7f657c8c6decbbb5e56b05e533009e30265d7ba704732ff5426f0782a93",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_contracts.py": "86bae199b3948916dc797f0aa97e88c02324b6cd2729f847abb574b232480358",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py": "a027fba1be32814d9ec450ed9473a1818892db17ca9b5bbc2b2fbd0dbc51b7ab",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_operation_journal.py": "8310e85ef7a2f8e4fcf17c69f089922a4939c68c795422fe42c07229e5a35aea",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_owned_shadow.py": "e3b5a5b919e917a53836c33e7410bdc974222132d4431d647b57ce67c3f4a893",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py": "5f4bb1bb78335d7d23579c936e0de64c2558deb79c84917a35366a4c6e3bec3c",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_sparse_shadow.py": "8c84658a79f06963edcb5d4798de068dd9a985abc0a3c044182542b2b9c9ca0c",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_sparse_shadow_integration.py": "b7121a86c3852da82f82ff023d31326533473d362fc95686855271d0f89c9449",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_checkpoint.py": "05c99d7612827e2ed1fdbd59efa579a66774bfbdd71d815b686af09b497e4dd8",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_patch_codec.py": "5d310e7ec8db29f5bdd31cf00001d012af291c936542573ea7655eaae44eb8d1",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_checkpoint.py": "a129e29f121d1127baa6dea77be3c7c3999af2950440a48535fcfe3568157edb",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_diff.py": "6ab176f4a025da2e8c79d4bf8f1a9e0a6de4136fb496db28e57650a4ee2b8bb7",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_transaction.py": "8ec37504a31c6d70c562afb58002251b00b4929ac75800c9f9b35a1241442b59"
+  },
+  "self_link_policy": "This receipt is created exclusively, then existence and bytes are checked after durable write.",
+  "source_file_count": 7732,
+  "speed_claim": false,
+  "synthetic_integration_qualified": true
+}

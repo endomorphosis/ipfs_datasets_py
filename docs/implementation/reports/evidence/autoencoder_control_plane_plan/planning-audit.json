@@ -1,0 +1,72 @@
+{
+  "schema": "autoencoder-control-plane-planning-audit-v1",
+  "audit_date_utc": "2026-09-25",
+  "scope": "Read-only package, source-hash, extension-metadata and checkpoint inventory. No transport, durable backend, parallel training or remote publication qualified.",
+  "source_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "source_commit": "ddf6b79467b68159650df81befc288c8553df664",
+  "working_tree_may_be_dirty": true,
+  "package_versions": {
+    "duckdb": "1.5.5",
+    "pyarrow": "23.0.1",
+    "numpy": "1.26.4",
+    "huggingface_hub": "0.36.2",
+    "safetensors": "0.7.0"
+  },
+  "extension_inventory": [
+    {
+      "extension_name": "ducklake",
+      "loaded": false,
+      "installed": true,
+      "extension_version": "d8a1881e",
+      "install_mode": "REPOSITORY"
+    },
+    {
+      "extension_name": "httpfs",
+      "loaded": false,
+      "installed": true,
+      "extension_version": "827222f",
+      "install_mode": "REPOSITORY"
+    },
+    {
+      "extension_name": "quack",
+      "loaded": false,
+      "installed": true,
+      "extension_version": "c154811",
+      "install_mode": "REPOSITORY"
+    }
+  ],
+  "extension_inventory_method": "Isolated in-memory DuckDB connection with autoload and autoinstall disabled; metadata only.",
+  "checkpoint": {
+    "path": "workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "size_bytes": 25895338,
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "inode": 57804548,
+    "hardlink_count": 2,
+    "read_only": true
+  },
+  "source_sha256": {
+    "ipfs_datasets_py/duckdb_control/connections.py": "8d3cc05a89f2b337e584708e7c6dbc8d7d4deccef442265ccbd5ca848821a872",
+    "ipfs_datasets_py/duckdb_control/authority_transition.py": "e09d135ceb78a56a455ae150b909d37c47a791959ea258a94a12c59ff2d98744",
+    "ipfs_datasets_py/ducklake/catalog_service.py": "26d95a5b6ccda3089282895708f758a4ff0fb89ad64d1c13069d340bc6a95658",
+    "ipfs_datasets_py/ducklake/quack_catalog.py": "ab3fadf171ab099f67beddf31a07b3c0001426a86cf6bd5f3a6134770d6bf6d3",
+    "ipfs_datasets_py/ducklake/registry.py": "7e2eaeadf80b9ae79015a6364a5c1680aeaba2b4e413f06b159204e7c484c3c4",
+    "ipfs_datasets_py/ducklake/snapshots.py": "12cde24864f543f77c82b6bf05a83665ded6db2d705ec40c6a6dde353201562c",
+    "ipfs_datasets_py/ducklake/ingest.py": "92dadcb1bde042f8a4a5bc9f0a9a5a69daac1eefc404a1db31a5d147a19a99bd",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py": "d86a5721643bab9a51d1587aef117f925c53ebcdd8fd767964cacbd7859b810b",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_tensor_state.py": "ee81537f1af3c3ca939f371cc9e4384adb317d6c7803dac22271d5dce0948d3f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_migration.py": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2",
+    "ipfs_datasets_py/huggingface/publication_profile.py": "b11e14ff5c439e773c940f42ecbbafaf53eb1dddd71f211fddfba0e9b7df84d0",
+    "ipfs_datasets_py/huggingface/publisher.py": "557b8efc5e54e32201ace3e64dd569276b2166e380f0e4dcb8fcfa1a7b209b83",
+    "ipfs_datasets_py/huggingface/ir_publisher.py": "e0616323678928a3bda32a1f535689b7c9226cb8dd11e37e4c4891bfe1d759e5"
+  },
+  "qualification": {
+    "native_quack_training_commands": false,
+    "durable_training_owner_restart": false,
+    "ducklake_training_materialization": false,
+    "arrow_weight_compatibility": false,
+    "parallel_training": false,
+    "huggingface_upload": false
+  },
+  "admission": "No Lean admit or Constitution formalization follows from this planning audit."
+}

@@ -1,0 +1,557 @@
+{
+  "admission_rule": "Only lake build <Lib> constitutes a Lean admit.",
+  "admitted": false,
+  "artifact": {
+    "bytes": 12846582,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/target-hydration-gc-native-20260925/targets.bundle",
+    "sha256": "40b16465f121169d607a315876a0a395a545d6482f1b29e79fe5c2dca150f0b7"
+  },
+  "audit": {
+    "all_compressed_and_expanded_digests_independently_verified": true,
+    "all_runs_report_exact_full_reencoded_raw_and_compressed_bytes": true,
+    "canonical_reencoding_reexecuted_during_audit": false,
+    "every_receipt_file_sha256_and_size_recorded": true,
+    "frozen_harness_sha256_verified": true,
+    "gc_original_state_threshold_debug_and_callbacks_restored_all_runs": true,
+    "input_native_receipt_sha256_and_size_verified": true,
+    "manifest_identity_embedded_config_and_order_independently_verified": true,
+    "original_whole_bundle_sha256_and_size_independently_verified": true,
+    "per_record_totals_and_gc_deltas_recomputed": true,
+    "receipt_json_duplicate_and_nonfinite_rejection": true,
+    "reconstructed_bundle_sha256_independently_verified": true,
+    "strict_decode_and_validate_reexecuted_during_audit": false,
+    "zlib6_full_recompressed_bytes_independently_verified": true
+  },
+  "date": "2026-09-25",
+  "embedded_config_sha256": "6c1e3490a3fa5c6398f45bda8ad5d5d76400d517678c17471558de5ced07f3ee",
+  "end_to_end_speed_claim": false,
+  "environment_settings": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HF_HUB_OFFLINE": "1",
+    "IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS": "1",
+    "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+    "IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA": "0",
+    "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "execution_order": [
+    "normal_gc_pair1",
+    "paused_gc_pair1",
+    "paused_gc_pair2",
+    "normal_gc_pair2"
+  ],
+  "expanded_bytes": 212381851,
+  "failed_start": {
+    "bytes": 1804,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-codec-failed-start-20260925.json",
+    "sha256": "20491d7eb2773cc2665900bdc30cdb777308b415ece1d4c37d848c0b4f5c9f5e"
+  },
+  "formalized": false,
+  "harness": {
+    "bytes": 22569,
+    "path": "scripts/ops/encoding_gc_codec_diagnostic_20260925.py",
+    "sha256": "c440e0c7b8239ceae03248403896adbe6204312ff3092b4afe65fc04b362a6c8"
+  },
+  "hugging_face_publication": false,
+  "independent_process_count": 4,
+  "limitations": [
+    "The six archived targets retain their original embedded producer configuration; diagnostic source equality does not requalify that configuration.",
+    "Hydration and a forced full starting collection age each target graph before encoding, unlike native generation.",
+    "Both modes force six terminal full collections; this is diagnostic cleanup and not ordinary writer policy.",
+    "Two pairs on one six-target bundle do not establish corpus-wide performance or concurrency behavior.",
+    "Callback and phase timing instrumentation adds overhead; OS caches and host contention are uncontrolled.",
+    "Original manifest bytes are reused, so sample-payload recomputation and writer publication are not exercised.",
+    "The cold profile used a different target bundle and post-generation GC state; its GC time is not directly interchangeable.",
+    "A production pause needs bounded exact-native input eligibility, exception/restoration guards, and fresh native qualification."
+  ],
+  "maximum_complete_targets_retained": 1,
+  "median_comparisons": {
+    "candidate_cleanup_inclusive_vs_normal_cleanup_inclusive": {
+      "baseline_over_candidate_ratio": 2.2017752961510393,
+      "baseline_seconds": 4.180256790947169,
+      "candidate_seconds": 1.8985846549621783,
+      "fraction_reduction": 0.5458210464309792,
+      "seconds_reduction": 2.2816721359849907
+    },
+    "candidate_cleanup_inclusive_vs_normal_interval": {
+      "baseline_over_candidate_ratio": 2.1645281511657846,
+      "baseline_seconds": 4.109539933037013,
+      "candidate_seconds": 1.8985846549621783,
+      "fraction_reduction": 0.5380055466308378,
+      "seconds_reduction": 2.2109552780748345
+    }
+  },
+  "median_totals_seconds": {
+    "normal_gc": {
+      "compression_seconds_normal_gc": 1.0464896780904382,
+      "encode_seconds": 3.0963431795244105,
+      "encoding_including_gc_restore_and_collection_seconds": 4.180256790947169,
+      "encoding_interval_seconds": 4.109539933037013,
+      "explicit_terminal_collection_seconds": 0.07066732837120071,
+      "gc_restore_seconds": 2.522394061088562e-05,
+      "hydration_setup_seconds_outside_measurement": 4.483423272438813,
+      "json_seconds": 0.8986138635664247,
+      "parity_seconds_outside_measurement": 0.10810483928071335,
+      "pre_encoding_collection_seconds_outside_measurement": 0.07204092206666246,
+      "strict_validation_seconds_normal_gc": 0.6723745418712497,
+      "tagged_graph_release_seconds": 0.11457904195412993,
+      "validation_encoding_compression_including_gc_cleanup_seconds": 5.899121010908857
+    },
+    "paused_gc": {
+      "compression_seconds_normal_gc": 1.048021757917013,
+      "encode_seconds": 0.8154166400199756,
+      "encoding_including_gc_restore_and_collection_seconds": 1.8985846549621783,
+      "encoding_interval_seconds": 1.8259417259250768,
+      "explicit_terminal_collection_seconds": 0.07259300001896918,
+      "gc_restore_seconds": 2.454454079270363e-05,
+      "hydration_setup_seconds_outside_measurement": 4.511332531517837,
+      "json_seconds": 0.8964156409492716,
+      "parity_seconds_outside_measurement": 0.10824026400223374,
+      "pre_encoding_collection_seconds_outside_measurement": 0.07290373148862273,
+      "strict_validation_seconds_normal_gc": 0.6709802400437184,
+      "tagged_graph_release_seconds": 0.11410485301166773,
+      "validation_encoding_compression_including_gc_cleanup_seconds": 3.6175866529229097
+    }
+  },
+  "memory": {
+    "normal_max_rss_kib": 711036,
+    "normal_median_max_rss_kib": 710924.0,
+    "paused_max_rss_kib": 710960,
+    "paused_median_max_rss_kib": 710950.0,
+    "rss_bound_established": false,
+    "scope": "process high-water includes hydration, encoding, imports and earlier records; not isolated encoding RSS"
+  },
+  "native_input_receipt": {
+    "bytes": 2488763,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/target-hydration-gc-native-20260925.json",
+    "sha256": "9af775375c4a297b7f2ce75db77c86ab2f989c32113e27ede6766464b8fae2f5"
+  },
+  "native_producer_qualified": false,
+  "ordered_targets": [
+    {
+      "compressed_bytes": 2138036,
+      "compressed_sha256": "578a3a4a4b8f901eaf20bb5eab6e51bcb147cb5c7a7c5092a0c6c92fd334bdc0",
+      "raw_bytes": 37861542,
+      "sample_id": "us-code-38-102-505a7bed1f409aa4",
+      "sample_sha256": "4809b7f8c76a009b21bacfb1d5107da34265c60a2bf364ee4e459e8ffc0e95da",
+      "status": "ready",
+      "target_sha256": "4ab1846a8d7b6ae2044423c11adfed01c16f21134c9f1e6b872f8ca7c4c45551"
+    },
+    {
+      "compressed_bytes": 998100,
+      "compressed_sha256": "9d98515841941578089862be7968c90fd763298023208abbad590ff199fd9b3d",
+      "raw_bytes": 17496831,
+      "sample_id": "us-code-5-8410-545e1e69d31abb65",
+      "sample_sha256": "7fee3875e448825c76c8fa0de03dbe70bea056eca619b7e753b4504d79ab22e4",
+      "status": "ready",
+      "target_sha256": "e81ea73e08285e1e174b0f5aa683849ef1d789c32c007533206aff65f6045ae9"
+    },
+    {
+      "compressed_bytes": 2182959,
+      "compressed_sha256": "4144fed1938f5d0168d07c83c94ae1ba1c83ca400ccf4ba3540b0d44b8dec8ff",
+      "raw_bytes": 40074522,
+      "sample_id": "us-code-43-391a-cbc16163ce5b351b",
+      "sample_sha256": "9023f731eab203d127ab6bfde9307adbbf9b381e0166d5670d16ae0b24226c5b",
+      "status": "ready",
+      "target_sha256": "89462ecd2ac1fb0c96bad55142d2c94dcf2a23b015efa7b0dc9c4fa3688db98c"
+    },
+    {
+      "compressed_bytes": 3550788,
+      "compressed_sha256": "79cb671bc211407e6b5605fac6c2a3c41ed6bea33aa0b00adbb28a8d91378445",
+      "raw_bytes": 65235489,
+      "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+      "sample_sha256": "6a4d143292a70c69ab989ea4f66419f6b0c0517ce092ad9be295f2671f63a999",
+      "status": "ready",
+      "target_sha256": "2847bafa924679d0f4a093618a594cf8986d50e7236a94f262d838ce3ddca696"
+    },
+    {
+      "compressed_bytes": 2076523,
+      "compressed_sha256": "f56a3fd76785c75504291c1b3e255b71fe68f21cf417d2b7b9bb9f2cefddb4e2",
+      "raw_bytes": 37517402,
+      "sample_id": "us-code-7-4817-c0a689415be61f9b",
+      "sample_sha256": "023b550e0d8bb769bf7845e360c4be4c78d7989d2f3c619e2248d2da63e314b8",
+      "status": "ready",
+      "target_sha256": "8e2a6868c2098da03011453f174bb2075f4d6edf48a347dd178bc7d0ffe4326e"
+    },
+    {
+      "compressed_bytes": 803293,
+      "compressed_sha256": "05699da4d434b6a8ec937d453511250d024503c1498554ae62ebfcce05ce53a7",
+      "raw_bytes": 14196065,
+      "sample_id": "us-code-4-101-b2aadd69bb073b70",
+      "sample_sha256": "19d3ceb5199485b0319b845f45eb57cf28f9031af8ad1122835ddc24a7d075da",
+      "status": "ready",
+      "target_sha256": "6176a76a5883793a75350ed1488d86c44de888e4e5b0ced449f0a3b61e812122"
+    }
+  ],
+  "passed": true,
+  "production_changes": false,
+  "python": {
+    "executable": "/usr/bin/python3",
+    "implementation": "CPython",
+    "version": "3.12.3"
+  },
+  "quack_transport_claim": false,
+  "runs": [
+    {
+      "encoding_gc_by_generation": [
+        {
+          "collected": 0,
+          "collections": 7026,
+          "elapsed_seconds": 0.09206945111509413,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 635,
+          "elapsed_seconds": 0.12419317103922367,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 37,
+          "elapsed_seconds": 2.0310339024290442,
+          "uncollectable": 0
+        }
+      ],
+      "final_memory": {
+        "current_rss_bytes": 154648576,
+        "max_rss_kib": 710812
+      },
+      "largest_target_memory_after_terminal_collection": {
+        "current_rss_bytes": 662851584,
+        "max_rss_kib": 710812
+      },
+      "largest_target_memory_before_encoding": {
+        "current_rss_bytes": 597614592,
+        "max_rss_kib": 637732
+      },
+      "mode": "normal_gc",
+      "pair": 1,
+      "pid": 3542859,
+      "receipt": {
+        "bytes": 3713712,
+        "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-normal-pair1-20260925.json",
+        "sha256": "66b4cd82329c180a24ae1a3942900f71e24f07e82e61a5dba5a5d3148fa8fe24"
+      },
+      "recorded_at": "2026-09-25T08:50:59.599207+00:00",
+      "terminal_collection_gc_by_generation": [
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 6,
+          "elapsed_seconds": 0.07086327811703086,
+          "uncollectable": 0
+        }
+      ],
+      "totals": {
+        "compression_seconds_normal_gc": 1.0479665310122073,
+        "encode_seconds": 3.082285463111475,
+        "encoding_including_gc_restore_and_collection_seconds": 4.164948768913746,
+        "encoding_interval_seconds": 4.0940032011130825,
+        "explicit_terminal_collection_seconds": 0.07089598185848445,
+        "gc_restore_seconds": 2.473592758178711e-05,
+        "hydration_setup_seconds_outside_measurement": 4.482017645030282,
+        "json_seconds": 0.8983077690936625,
+        "parity_seconds_outside_measurement": 0.1079668338643387,
+        "pre_encoding_collection_seconds_outside_measurement": 0.07339612394571304,
+        "strict_validation_seconds_normal_gc": 0.669952995958738,
+        "tagged_graph_release_seconds": 0.1134044969221577,
+        "validation_encoding_compression_including_gc_cleanup_seconds": 5.882868295884691
+      }
+    },
+    {
+      "encoding_gc_by_generation": [
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        }
+      ],
+      "final_memory": {
+        "current_rss_bytes": 146407424,
+        "max_rss_kib": 710940
+      },
+      "largest_target_memory_after_terminal_collection": {
+        "current_rss_bytes": 662847488,
+        "max_rss_kib": 710940
+      },
+      "largest_target_memory_before_encoding": {
+        "current_rss_bytes": 597610496,
+        "max_rss_kib": 637856
+      },
+      "mode": "paused_gc",
+      "pair": 1,
+      "pid": 3549221,
+      "receipt": {
+        "bytes": 3713641,
+        "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-paused-pair1-20260925.json",
+        "sha256": "c7c41887cc47a5ef666d5fc81ae57cfdac062002750f26c6b3226d60f1a61dd4"
+      },
+      "recorded_at": "2026-09-25T08:51:19.886205+00:00",
+      "terminal_collection_gc_by_generation": [
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 6,
+          "elapsed_seconds": 0.07272893097251654,
+          "uncollectable": 0
+        }
+      ],
+      "totals": {
+        "compression_seconds_normal_gc": 1.0488848289242014,
+        "encode_seconds": 0.8190347300842404,
+        "encoding_including_gc_restore_and_collection_seconds": 1.8989430249202996,
+        "encoding_interval_seconds": 1.8261378838215023,
+        "explicit_terminal_collection_seconds": 0.07275699602905661,
+        "gc_restore_seconds": 2.4304143153131008e-05,
+        "hydration_setup_seconds_outside_measurement": 4.559208123013377,
+        "json_seconds": 0.8928968569962308,
+        "parity_seconds_outside_measurement": 0.10840158793143928,
+        "pre_encoding_collection_seconds_outside_measurement": 0.07518204813823104,
+        "strict_validation_seconds_normal_gc": 0.6723484030226246,
+        "tagged_graph_release_seconds": 0.11420154490042478,
+        "validation_encoding_compression_including_gc_cleanup_seconds": 3.6201762568671256
+      }
+    },
+    {
+      "encoding_gc_by_generation": [
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        }
+      ],
+      "final_memory": {
+        "current_rss_bytes": 145354752,
+        "max_rss_kib": 710960
+      },
+      "largest_target_memory_after_terminal_collection": {
+        "current_rss_bytes": 662847488,
+        "max_rss_kib": 710960
+      },
+      "largest_target_memory_before_encoding": {
+        "current_rss_bytes": 597610496,
+        "max_rss_kib": 637872
+      },
+      "mode": "paused_gc",
+      "pair": 2,
+      "pid": 3568579,
+      "receipt": {
+        "bytes": 3713635,
+        "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-paused-pair2-20260925.json",
+        "sha256": "43912ea071803d2ec81a97f6e2faecb5d671cbea1a3656d324c66e80c58b0c6f"
+      },
+      "recorded_at": "2026-09-25T08:52:40.808706+00:00",
+      "terminal_collection_gc_by_generation": [
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 6,
+          "elapsed_seconds": 0.07239741994999349,
+          "uncollectable": 0
+        }
+      ],
+      "totals": {
+        "compression_seconds_normal_gc": 1.0471586869098246,
+        "encode_seconds": 0.8117985499557108,
+        "encoding_including_gc_restore_and_collection_seconds": 1.898226285004057,
+        "encoding_interval_seconds": 1.8257455680286512,
+        "explicit_terminal_collection_seconds": 0.07242900400888175,
+        "gc_restore_seconds": 2.478493843227625e-05,
+        "hydration_setup_seconds_outside_measurement": 4.463456940022297,
+        "json_seconds": 0.8999344249023125,
+        "parity_seconds_outside_measurement": 0.1080789400730282,
+        "pre_encoding_collection_seconds_outside_measurement": 0.07062541483901441,
+        "strict_validation_seconds_normal_gc": 0.6696120770648122,
+        "tagged_graph_release_seconds": 0.11400816112291068,
+        "validation_encoding_compression_including_gc_cleanup_seconds": 3.614997048978694
+      }
+    },
+    {
+      "encoding_gc_by_generation": [
+        {
+          "collected": 0,
+          "collections": 7026,
+          "elapsed_seconds": 0.09145584073849022,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 635,
+          "elapsed_seconds": 0.1247643125243485,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 37,
+          "elapsed_seconds": 2.058363827993162,
+          "uncollectable": 0
+        }
+      ],
+      "final_memory": {
+        "current_rss_bytes": 155627520,
+        "max_rss_kib": 711036
+      },
+      "largest_target_memory_after_terminal_collection": {
+        "current_rss_bytes": 662847488,
+        "max_rss_kib": 711036
+      },
+      "largest_target_memory_before_encoding": {
+        "current_rss_bytes": 597610496,
+        "max_rss_kib": 637956
+      },
+      "mode": "normal_gc",
+      "pair": 2,
+      "pid": 3577001,
+      "receipt": {
+        "bytes": 3713704,
+        "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/encoding-gc-normal-pair2-20260925.json",
+        "sha256": "53b128bd6028813ac11389e42c61f0542783d2bbe61664a27f9d9bc4c25da17b"
+      },
+      "recorded_at": "2026-09-25T08:53:23.180582+00:00",
+      "terminal_collection_gc_by_generation": [
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 0,
+          "elapsed_seconds": 0.0,
+          "uncollectable": 0
+        },
+        {
+          "collected": 0,
+          "collections": 6,
+          "elapsed_seconds": 0.07041195302736014,
+          "uncollectable": 0
+        }
+      ],
+      "totals": {
+        "compression_seconds_normal_gc": 1.0450128251686692,
+        "encode_seconds": 3.110400895937346,
+        "encoding_including_gc_restore_and_collection_seconds": 4.195564812980592,
+        "encoding_interval_seconds": 4.125076664960943,
+        "explicit_terminal_collection_seconds": 0.07043867488391697,
+        "gc_restore_seconds": 2.571195363998413e-05,
+        "hydration_setup_seconds_outside_measurement": 4.484828899847344,
+        "json_seconds": 0.8989199580391869,
+        "parity_seconds_outside_measurement": 0.108242844697088,
+        "pre_encoding_collection_seconds_outside_measurement": 0.07068572018761188,
+        "strict_validation_seconds_normal_gc": 0.6747960877837613,
+        "tagged_graph_release_seconds": 0.11575358698610216,
+        "validation_encoding_compression_including_gc_cleanup_seconds": 5.915373725933023
+      }
+    }
+  ],
+  "schema": "archived-target-encoding-gc-summary-v1",
+  "scope": "two counterbalanced pairs of archived single-target-at-a-time strict codec reencoding; no production or end-to-end qualification",
+  "snapshot_id": "sha256:392738bdcfda4abd74aed977a102e33f0477225659a33e2f1d4b86ddd5a43e6e",
+  "source_verification": {
+    "current_training_config_qualified": false,
+    "embedded_vs_diagnostic_difference_count": 7,
+    "embedded_vs_diagnostic_differing_paths": [
+      "ipfs_datasets_py/huggingface/autoformal_todo.py",
+      "ipfs_datasets_py/huggingface/publication_profile.py",
+      "ipfs_datasets_py/logic/autoformal/__init__.py",
+      "ipfs_datasets_py/logic/autoformal/autoencoder_router.py",
+      "ipfs_datasets_py/logic/autoformal/supervisor_todo.py",
+      "ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    ],
+    "file_count": 7710,
+    "identical_across_all_four_runs": true,
+    "manifest_hash_encoding": "UTF-8 json.dumps(ensure_ascii=True,sort_keys=True,separators=(comma,colon),allow_nan=False)",
+    "same_before_after_each_run": true,
+    "source_manifest_sha256": "c01be25eaf7e1e87e9a10b6866cb3334f11f489a70c918be21f3d60678011958"
+  },
+  "target_generation_performed": false,
+  "timing_boundaries": {
+    "candidate_total_includes": "GC disable, encoding, JSON, tagged-intermediate release, GC policy restoration, bookkeeping and one explicit generation-2 collection per target",
+    "normal_cleanup_inclusive_includes": "same post-encoding restoration and explicit collection as candidate",
+    "normal_interval_excludes": "post-encoding restoration and explicit collection",
+    "outside_encoding_measurement": [
+      "canonical imports and source guards",
+      "bundle/manifest verification",
+      "per-target read, bounded expansion, strict parse/decode",
+      "strict target validation (reported separately)",
+      "full pre-encoding collection (reported separately)",
+      "raw/compressed parity hashing",
+      "zlib-6 compression (reported separately)"
+    ],
+    "paused_scope": "_encode plus _json plus tagged-intermediate reference release only",
+    "starting_collection_is_native_writer_policy": false
+  },
+  "training_performed": false,
+  "weights_downloaded": false,
+  "weights_loaded": false,
+  "zlib": {
+    "compile_version": "1.3",
+    "compression_level": 6,
+    "runtime_version": "1.3"
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "admitted": false,
+  "capture_observation": {
+    "counters": {
+      "captures_observed": 6,
+      "conversions_observed": 18,
+      "records_emitted": 9,
+      "records_observed": 9,
+      "stages_observed": 39
+    },
+    "last_repeated_validation_capture_seconds": 1.4878350109793246,
+    "optimistic_fraction_of_owner_job_before_cache_costs": 0.06261182729447355,
+    "outer_capture_seconds": 4.210132546024397,
+    "reuse_qualified": false,
+    "stage_totals": {
+      "fallback_projection": {
+        "aborted_scopes": 0,
+        "calls": 9,
+        "elapsed_seconds": 3.630605357931927,
+        "scopes_with_observed_error": 0
+      },
+      "frame_triples": {
+        "aborted_scopes": 0,
+        "calls": 9,
+        "elapsed_seconds": 9.648152627050877e-06,
+        "scopes_with_observed_error": 0
+      },
+      "procedure": {
+        "aborted_scopes": 0,
+        "calls": 9,
+        "elapsed_seconds": 0.17102812801022083,
+        "scopes_with_observed_error": 0
+      },
+      "recipient": {
+        "aborted_scopes": 0,
+        "calls": 9,
+        "elapsed_seconds": 0.3409848209703341,
+        "scopes_with_observed_error": 0
+      },
+      "recipient_import": {
+        "aborted_scopes": 0,
+        "calls": 3,
+        "elapsed_seconds": 7.153023034334183e-06,
+        "scopes_with_observed_error": 0
+      }
+    }
+  },
+  "capture_parity_passed": true,
+  "capture_parity_receipt": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-observation-capture-parity-20260925.json",
+    "sha256": "8e9b2010995224ae48431614054d1322a31d3d8a1901fe2a751621510cc5e932"
+  },
+  "formalized": false,
+  "head_unchanged_after_restart": true,
+  "local_links_checked": 23,
+  "logical_state_unchanged": true,
+  "native_owner_qualification_passed": true,
+  "native_receipt": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/ontology-observation-native-20260925.json",
+    "sha256": "1e9d5c52cd80974a89d335fd429c2d04bdf454b51f250c4c64d6163b04b6625b"
+  },
+  "optimizer_accepted_epochs": 0,
+  "pinned_checkpoint_unchanged": true,
+  "preparation_receipt_durable_after_restart": true,
+  "production_scope": "bounded diagnostics; capture reuse disabled",
+  "promotion_performed": false,
+  "publication_performed": false,
+  "schema": "ontology-observation-final-validation-v1",
+  "source_drift_after_native_run": [],
+  "source_hashes": {
+    "ipfs_datasets_py/logic/autoformal/ontology_capture.py": "bcfa22ccd1dfaf2386beed35e117b75dd6fc0bebcad25ff530e616782ff38a63",
+    "ipfs_datasets_py/logic/autoformal/procedure_slot.py": "f7fe98853048b2301f9fbfe9a76fb810e0c323445ba8c9d57f0da731a092dc86",
+    "ipfs_datasets_py/logic/autoformal/recipient_reference.py": "d682ea86a12735d49969ce372f14428d66a883d0d2a6be1876c3174bfe3437e4",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_ontology_observation.py": "cf8e2532c525299bc5fd7ec4d2ab2df07a0259429f13417fe449f5539e810c1a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "0ddc711f6d62210579166b3d9b1319d6114b6ee890a5920f8a508ee627931a09",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b8cbb0c13cb6a3621f6807ebb9cc5ac28348c71caa992a8dff1fc5f9827a04d1",
+    "scripts/ops/legal_ir/benchmark_ontology_observation.py": "cac6f2e428b632ea8865b6b8e0861e3ccde3627ea766b39f2ba2b57bb100719e",
+    "tests/unit/logic/test_autoformal_speed_semantics.py": "a91e69d9f6e91c97fd1dfd08c99ab7dc8e43aa41fe79e7ecb0c031ba5c502b69",
+    "tests/unit/logic/test_ontology_capture_observation.py": "29d37f84ce4d8e2cf2d8cab909e69f9f01e56067f1d2cc5092e7bc512ab05643",
+    "tests/unit/logic/test_ontology_conversion_observation.py": "09a104601998f66a9a08cdd3f8a09353b26cd649b11b9a03990bac4b384c4a1e",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "e35aca48336e9a269856195064183798923a687a649c7bfbdcb651d3cd791a85"
+  },
+  "source_manifest_currently_matches_bundle": true,
+  "sparse_patch_bytes": 0,
+  "storage_observation": {
+    "below_named_root_ceiling": true,
+    "ceiling_bytes": 50000000000,
+    "named_roots": [
+      {
+        "bytes": 345011756,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "bytes": 130195162,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "bytes": 31971251309,
+        "path": "/tmp/pytest-of-barberb"
+      },
+      {
+        "bytes": 67759742,
+        "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small"
+      }
+    ],
+    "scope": "named roots; not global census; shared pytest scratch includes unrelated work; no cleanup performed",
+    "sum_bytes": 32514217969
+  },
+  "tests": {
+    "failed": 0,
+    "junit_sha256": "18f066be7e1124474e8f056a14419a0f66c64912869c1592a2f948c0693fcf8c",
+    "passed": 262,
+    "seconds": 9.494,
+    "skipped": 0
+  },
+  "weights_downloaded": false,
+  "worker_receipt_durable_after_restart": true
+}

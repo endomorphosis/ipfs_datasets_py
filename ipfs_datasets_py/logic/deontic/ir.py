@@ -1383,7 +1383,13 @@ def _is_heading_polluted_actor(flat_value: str, modal_clause_actor: str) -> bool
         return False
     if not actor.startswith("the "):
         return False
-    return flat.endswith(actor) and len(flat.split()) > len(actor.split())
+    if not (flat.endswith(actor) and len(flat.split()) > len(actor.split())):
+        return False
+    # "Judicial power of the United States" is one noun phrase. A catchline is not.
+    prefix = flat[: -len(actor)].strip()
+    if re.search(r"\b(?:of|for|and|or)\b", prefix):
+        return False
+    return True
 
 
 def _is_clipped_passive_actor(flat_value: str, recovered_actor: str) -> bool:
@@ -1531,6 +1537,13 @@ def _condition_records_from_source_text(
         connector = re.sub(r"\s+", " ", match.group("connector").lower()).strip()
         body = _clean_source_label(match.group("body"))
         if not body:
+            continue
+        # "territory subject to the jurisdiction" is not a proviso.
+        if connector == "subject to" and re.match(
+            r"(?:the|their|its|his|her)\s+jurisdiction\b",
+            body,
+            flags=re.IGNORECASE,
+        ):
             continue
         records.append(
             {
@@ -2666,37 +2679,50 @@ class LegalNormIR:
         derived_index = _enumeration_index(enumeration_index) or _enumeration_index(
             enumeration_label
         )
-        conditions = _support_scoped_slot_records(
-            _slot_detail_records(element, "condition_details", "conditions"),
-            slot_scope_span,
-        )
-        exceptions = _support_scoped_slot_records(
-            _slot_detail_records(element, "exception_details", "exceptions"),
-            slot_scope_span,
-        )
+        parser_scoped = bool(element.get("slot_details_scoped"))
+        if parser_scoped:
+            conditions = _slot_detail_records(element, "condition_details", "conditions")
+            exceptions = _slot_detail_records(element, "exception_details", "exceptions")
+        else:
+            conditions = _support_scoped_slot_records(
+                _slot_detail_records(element, "condition_details", "conditions"),
+                slot_scope_span,
+            )
+            exceptions = _support_scoped_slot_records(
+                _slot_detail_records(element, "exception_details", "exceptions"),
+                slot_scope_span,
+            )
         overrides = _support_scoped_slot_records(
             _slot_detail_records(element, "override_clause_details", "override_clauses"),
             slot_scope_span,
         )
-        temporal_constraints = _support_scoped_slot_records(
-            _slot_detail_records(
+        if parser_scoped:
+            temporal_constraints = _slot_detail_records(
                 element,
                 "temporal_constraint_details",
                 "temporal_constraints",
                 default_type="deadline",
-            ),
-            slot_scope_span,
-        )
+            )
+        else:
+            temporal_constraints = _support_scoped_slot_records(
+                _slot_detail_records(
+                    element,
+                    "temporal_constraint_details",
+                    "temporal_constraints",
+                    default_type="deadline",
+                ),
+                slot_scope_span,
+            )
         cross_references = _support_scoped_slot_records(
             _slot_detail_records(element, "cross_reference_details", "cross_references"),
             slot_scope_span,
         )
-        if not conditions:
+        if not conditions and not parser_scoped:
             conditions = _support_scoped_slot_records(
                 _condition_records_from_source_text(element, support_span),
                 slot_scope_span,
             )
-        if not exceptions:
+        if not exceptions and not parser_scoped:
             exceptions = _support_scoped_slot_records(
                 _exception_records_from_source_text(element, support_span),
                 slot_scope_span,

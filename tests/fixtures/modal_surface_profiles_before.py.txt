@@ -1,0 +1,594 @@
+from __future__ import annotations
+
+def _typed_decompiler_target_surface_profiles(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[str]:
+    text = _clean_text(document.normalized_text)
+    profiles: List[str] = []
+
+    def add(profile: str) -> None:
+        if profile and profile not in profiles:
+            profiles.append(profile)
+
+    if _fallback_section_heading_tail_text(document=document, formula=formula):
+        add("uscode_section_heading_surface")
+    if re.search(
+        rf"\b(?:Secs?\.?|§{{1,2}})\s*{_USCODE_SECTION_LIST_PATTERN}\b\s*[-.]\s*"
+        r"[A-Z][A-Za-z0-9 ,;:'()/-]+",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        add("uscode_section_heading_surface")
+    if _uscode_status_clause_keywords(document=document, formula=formula):
+        add("uscode_editorial_status_surface")
+    lowered = text.lower()
+    if re.search(
+        r"\b(?:policy\s+disclosures?|conditions?\s+and\s+exclusions?|national\s+flood\s+insurance)\b",
+        lowered,
+    ):
+        add("uscode_policy_disclosure_surface")
+    if re.search(
+        r"\b(?:nontaxation|tax\s+treatment|taxable\s+income|internal\s+revenue\s+code)\b", lowered
+    ):
+        add("uscode_tax_treatment_surface")
+    if re.search(
+        r"\b(?:consolidated\s+returns?|graduated\s+corporate\s+rates?|"
+        r"accumulated\s+earnings\s+credit|taxable\s+years?\s+beginning)\b",
+        lowered,
+    ):
+        add("uscode_consolidated_return_tax_surface")
+    if re.search(
+        r"\b(?:audit(?:s)?\s+by\s+comptroller\s+general|government\s+accountability\s+office)\b",
+        lowered,
+    ):
+        add("uscode_audit_oversight_surface")
+    if re.search(
+        r"\b(?:reports?\s+to\s+congress|submit\s+reports?|transmit\s+.+\breport|report\s+on\s+use)\b",
+        lowered,
+    ):
+        add("uscode_report_to_congress_surface")
+    if re.search(
+        r"\b(?:relationship\s+to\s+other\s+law|shall\s+not\s+affect|not\s+affect\s+any\s+other\s+provision)\b",
+        lowered,
+    ):
+        add("uscode_law_relationship_surface")
+    if re.search(
+        r"\b(?:relationship\s+of\s+statutory\s+provisions|petroleum\s+marketing\s+practices|"
+        r"franchise\s+protection|franchise\s+relationship)\b",
+        lowered,
+    ):
+        add("uscode_petroleum_franchise_relationship_surface")
+    if re.search(
+        r"\b(?:payment\s+or\s+fee|payments?\s+or\s+fees?|franchise\s+fee)\b",
+        lowered,
+    ) and re.search(r"\b(?:franchise|petroleum\s+marketing)\b", lowered):
+        add("uscode_franchise_payment_fee_surface")
+    if re.search(
+        r"\b(?:general\s+eligibility|eligibility\s+requirements?|may\s+be\s+issued\s+under\s+this\s+chapter\s+only\s+if)\b",
+        lowered,
+    ):
+        add("uscode_eligibility_condition_surface")
+    if re.search(
+        r"\b(?:eligibility\s+for\s+services|congregate\s+services|professional\s+assessment\s+committee)\b",
+        lowered,
+    ):
+        add("uscode_service_eligibility_surface")
+    if re.search(
+        r"\b(?:recreational\s+equipment|sport\s+fishing\s+equipment|manufacturers?\s+excise\s+tax(?:es)?|miscellaneous\s+excise\s+tax(?:es)?)\b",
+        lowered,
+    ):
+        add("uscode_excise_tax_surface")
+    if re.search(
+        r"\b(?:grievances?\s+concerning\s+former|former\s+(?:members?|employees?)\s+of\s+the\s+(?:service|department)|foreign\s+service\s+grievance)\b",
+        lowered,
+    ):
+        add("uscode_grievance_review_surface")
+    if re.search(
+        r"\b(?:seal\s+of\s+department|seal\s+of\s+office|judicial\s+notice\s+shall\s+be\s+taken|judicial\s+notice)\b",
+        lowered,
+    ):
+        add("uscode_official_seal_surface")
+    if re.search(r"\bseverability\b", lowered):
+        add("uscode_severability_surface")
+    if re.search(
+        r"\b(?:management\s+and\s+disposition\s+of\s+vessels|disposition\s+of\s+vessels\s+and\s+other\s+property|arising\s+out\s+of\s+fishery\s+loans?)\b",
+        lowered,
+    ):
+        add("uscode_property_disposition_surface")
+    if re.search(
+        r"\b(?:radiotelephone\s+(?:equipped\s+ships?|station|installation)|"
+        r"radiotelegraph\s+station|distress\s+and\s+safety\s+of\s+navigation|"
+        r"minimum\s+normal\s+range|source\s+of\s+electrical\s+energy)\b",
+        lowered,
+    ):
+        add("uscode_radiotelephone_ship_equipment_surface")
+    if re.search(
+        r"\b(?:penalt(?:y|ies)|civil\s+penalt(?:y|ies)|liable)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:vessels?|operated\s+in\s+violation|regulation\s+prescribed|"
+        r"violation\s+of\s+this\s+chapter)\b",
+        lowered,
+    ):
+        add("uscode_vessel_violation_penalty_surface")
+    if re.search(
+        r"\b(?:expand(?:ed|s|ing)?|expansion)\b.{0,100}"
+        r"\b(?:naval\s+facilit(?:y|ies)|model\s+basin|carderock)\b|"
+        r"\b(?:naval\s+facilit(?:y|ies)|model\s+basin|carderock)\b.{0,100}"
+        r"\b(?:expand(?:ed|s|ing)?|expansion|construction|installation)\b",
+        lowered,
+    ):
+        add("uscode_naval_facility_expansion_surface")
+    if re.search(
+        r"\b(?:higher\s+education\s+resources|student\s+assistance|"
+        r"developing\s+institutions?|minority\s+science\s+and\s+engineering)\b",
+        lowered,
+    ):
+        add("uscode_higher_education_program_surface")
+    if re.search(
+        r"\b(?:health\s+professionals?\s+educational\s+assistance|"
+        r"educational\s+assistance\s+program|scholarship\s+program|"
+        r"repayment\s+(?:of\s+amounts?|amounts?)|"
+        r"amounts?\s+paid\s+under\s+this\s+subchapter|"
+        r"pay\s+to\s+the\s+united\s+states)\b",
+        lowered,
+    ):
+        add("uscode_education_assistance_repayment_surface")
+    if re.search(
+        r"\b(?:education\s+sciences\s+reform|education\s+research|"
+        r"education\s+statistics|research,\s+statistics,\s+evaluation,\s+"
+        r"information,\s+and\s+dissemination|information\s+and\s+dissemination)\b",
+        lowered,
+    ):
+        add("uscode_education_research_statistics_surface")
+    if re.search(
+        r"\b(?:amendments?|struck\s+out|inserted|substituted|redesignated|reclassified)\b", lowered
+    ):
+        add("uscode_amendment_operation_surface")
+    if re.search(
+        r"\b(?:receiving\s+loan\s+from\s+court\s+officer|court\s+officer|receiver|receivership)\b",
+        lowered,
+    ):
+        add("uscode_court_officer_receivership_surface")
+    if re.search(
+        r"\b(?:independent\s+living|vocational\s+rehabilitation|rehabilitation\s+services)\b",
+        lowered,
+    ):
+        add("uscode_rehabilitation_service_surface")
+    if re.search(r"\b(?:patents?\s+for\s+designs?|ornamental\s+design)\b", lowered):
+        add("uscode_design_patent_surface")
+    if re.search(
+        r"\b(?:suspended\s+tariff|service\s+contract\s+that\s+has\s+been\s+suspended|"
+        r"operating\s+under\s+suspended\s+tariff|cargo\s+for\s+carriage)\b",
+        lowered,
+    ):
+        add("uscode_suspended_tariff_service_contract_surface")
+    if re.search(
+        r"\b(?:registry|helen\s+keller\s+national\s+center|deaf[-\s]+blind)\b",
+        lowered,
+    ):
+        add("uscode_registry_record_surface")
+    if re.search(
+        r"\b(?:definitions?|defined|means|includes?)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:child\s+abduction|remed(?:y|ies)|convention|central\s+authority)\b",
+        lowered,
+    ):
+        add("uscode_child_abduction_definition_surface")
+    if re.search(
+        r"\b(?:construction\s+contracts?|architect\s+of\s+the\s+capitol)\b",
+        lowered,
+    ):
+        add("uscode_construction_contract_surface")
+    if re.search(
+        r"\b(?:measurement|assign(?:s|ed)?\s+(?:a\s+)?length|"
+        r"length\s+means\s+the\s+horizontal\s+distance|"
+        r"horizontal\s+distance\s+of\s+the\s+hull|foremost\s+part\s+of\s+the\s+stem|"
+        r"aftermost\s+part\s+of\s+the\s+stern)\b",
+        lowered,
+    ):
+        add("uscode_measurement_assignment_surface")
+    if re.search(
+        r"\b(?:transferred|editorial\s+notes|codification|reclassified)\b",
+        lowered,
+    ):
+        add("uscode_transfer_status_surface")
+    if re.search(
+        r"\b(?:members?\s+of\s+congress|the\s+congress)\b.{0,120}"
+        r"\b(?:compensation|allowances?)\b|"
+        r"\b(?:compensation|allowances?)\b.{0,120}"
+        r"\b(?:members?\s+of\s+congress|the\s+congress)\b",
+        lowered,
+    ) and re.search(r"\brepealed\b", lowered):
+        add("uscode_congress_member_compensation_repealed_surface")
+    if re.search(
+        r"\b(?:authorization\s+of\s+appropriations|authorized\s+to\s+be\s+appropriated|"
+        r"appropriations\s+are\s+authorized)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:national\s+military\s+parks?|national\s+parks?|fiscal\s+years?|"
+        r"such\s+sums\s+as\s+may\s+be\s+necessary)\b",
+        lowered,
+    ):
+        add("uscode_national_park_appropriation_authorization_surface")
+    if re.search(r"\bnational\s+security\s+act\s+of\s+1947\b", lowered) and re.search(
+        r"\b(?:reclassified|transferred|codification)\b",
+        lowered,
+    ):
+        add("uscode_national_security_reclassification_surface")
+    if re.search(r"\bcapitol\s+visitor\s+center\b", lowered):
+        add("uscode_capitol_visitor_center_surface")
+    if re.search(r"\b(?:job\s+corps|workforce\s+investment\s+systems?)\b", lowered):
+        add("uscode_job_corps_program_status_surface")
+    if re.search(
+        r"\b(?:north\s+american\s+wetlands\s+conservation|wetlands\s+conservation\s+projects?|"
+        r"migratory\s+birds?|waterfowl|report\s+to\s+congress|biennial\s+assessment|"
+        r"annual\s+assessment)\b",
+        lowered,
+    ):
+        add("uscode_wetlands_conservation_report_surface")
+    if re.search(
+        r"\b(?:nutrition\s+monitoring|food\s+intakes?|food\s+consumption\s+survey|"
+        r"nutrient\s+data\s+base|nutritional\s+and\s+dietary\s+status)\b",
+        lowered,
+    ):
+        add("uscode_nutrition_monitoring_surface")
+    if re.search(
+        r"\b(?:endangered\s+species|fish\s+and\s+wildlife|"
+        r"protection\s+and\s+conservation\s+of\s+wildlife)\b",
+        lowered,
+    ) and re.search(r"\b(?:omitted|secs?\.?|sections?)\b", lowered):
+        add("uscode_wildlife_omitted_status_surface")
+    if re.search(
+        r"\b(?:obligations?\s+of\s+public\s+housing\s+agenc(?:y|ies)|"
+        r"public\s+housing\s+agenc(?:y|ies)|low[-\s]+income\s+housing\s+projects?)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:obligations?|full\s+faith\s+and\s+credit|pledged\s+as\s+security|"
+        r"contestability|tax\s+exemption|exempt\s+from\s+taxation)\b",
+        lowered,
+    ):
+        add("uscode_public_housing_obligation_security_surface")
+    if re.search(
+        r"\b(?:everglades\s+national\s+park|national\s+parks?|"
+        r"monuments?\s+and\s+seashores?)\b",
+        lowered,
+    ) and re.search(r"\b(?:limitation\s+(?:of|on)\s+fees?|fees?)\b", lowered):
+        add("uscode_national_park_fee_limitation_surface")
+    if re.search(
+        r"\b(?:national\s+and\s+international\s+monuments?\s+and\s+memorials?|"
+        r"international\s+monuments?\s+and\s+memorials?|"
+        r"national\s+monuments?\s+and\s+memorials?)\b",
+        lowered,
+    ):
+        add("uscode_monument_memorial_administration_surface")
+    if re.search(
+        r"\b(?:special\s+agents?\s+and\s+commissioners?|"
+        r"officers?\s+of\s+indian\s+affairs|indian\s+affairs)\b",
+        lowered,
+    ) and re.search(r"\b(?:agents?|commissioners?|appoint|appointed)\b", lowered):
+        add("uscode_indian_affairs_special_agent_surface")
+    if re.search(
+        r"\b(?:preservation\s+of\s+friendly\s+foreign\s+relations|"
+        r"friendly\s+foreign\s+relations)\b",
+        lowered,
+    ):
+        add("uscode_friendly_foreign_relations_status_surface")
+    if re.search(
+        r"\b(?:nonmailable\s+matter|deposits?\s+in\s+(?:the\s+)?mail\s+any\s+matter|"
+        r"postal\s+matter)\b",
+        lowered,
+    ) and re.search(r"\b(?:penalt(?:y|ies)|shall\s+be\s+subject)\b", lowered):
+        add("uscode_postal_nonmailable_penalty_surface")
+    if re.search(
+        r"\b(?:exceptions?\s+from\s+operation|excepted\s+from\s+the\s+operation|"
+        r"tracts?\s+or\s+parcels?\s+of\s+land|accretions\s+thereto|"
+        r"resources\s+therein|improvements\s+thereon)\b",
+        lowered,
+    ):
+        add("uscode_land_operation_exception_surface")
+    if re.search(
+        r"\b(?:additional\s+distribution|additional\s+copies\s+of\s+supplements|"
+        r"code\s+of\s+laws\s+of\s+the\s+united\s+states|"
+        r"district\s+of\s+columbia\s+code)\b",
+        lowered,
+    ):
+        add("uscode_code_supplement_distribution_surface")
+    if re.search(
+        r"\b(?:transfer\s+of\s+(?:weapons\s+activities\s+)?funds|"
+        r"transfer\s+funds(?:\s+made\s+available)?|"
+        r"funds\s+made\s+available\s+for\s+weapons\s+activities|"
+        r"manager\s+of\s+each\s+field\s+office)\b",
+        lowered,
+    ):
+        add("uscode_fund_transfer_authority_surface")
+    if re.search(
+        r"\b(?:expenditures?\s+(?:of|upon)\s+(?:the\s+)?department|"
+        r"business\s+assigned\s+by\s+law\s+to\s+(?:his|her|the)\s+department|"
+        r"requisitions?\s+for\s+(?:the\s+)?advance\s+or\s+payment\s+of\s+money|"
+        r"estimates?\s+or\s+accounts?\s+for\s+expenditures?|"
+        r"out\s+of\s+the\s+treasury)\b",
+        lowered,
+    ):
+        add("uscode_department_expenditure_authorization_surface")
+    if re.search(
+        r"\b(?:enforcement\s+by\s+the\s+board|board\s+may\s+bring\s+a\s+civil\s+action|"
+        r"enjoin\s+a\s+rail\s+carrier|rail\s+carrier\s+from\s+violating|"
+        r"regulation\s+prescribed\s+or\s+order\s+or\s+certificate\s+issued)\b",
+        lowered,
+    ):
+        add("uscode_board_enforcement_surface")
+    if re.search(
+        r"\b(?:juvenile\s+justice|delinquency\s+prevention|"
+        r"justice\s+system\s+improvement)\b",
+        lowered,
+    ):
+        add("uscode_juvenile_justice_program_surface")
+    if re.search(
+        r"\b(?:allotments?\s+to\s+(?:eligible\s+)?states?|"
+        r"states?\s+to\s+establish\s+programs?|"
+        r"health\s+and\s+safety\s+of\s+children|child\s+care\s+services?)\b",
+        lowered,
+    ) and re.search(r"\b(?:secretary|states?|children|child\s+care)\b", lowered):
+        add("uscode_child_care_state_allotment_surface")
+    if re.search(
+        r"\b(?:funding\s+for\s+state\s+allotments?|state\s+allotments?|"
+        r"authorized\s+to\s+be\s+appropriated|authorization\s+of\s+appropriations)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:developmental\s+disabilit(?:y|ies)|fiscal\s+year|state\s+allotments?)\b",
+        lowered,
+    ):
+        add("uscode_developmental_disability_state_allotment_surface")
+    if re.search(
+        r"\b(?:coast\s+guard\s+child\s+care|"
+        r"coast\s+guard\s+family\s+support,\s+child\s+care,\s+and\s+housing|"
+        r"family\s+support,\s+child\s+care,\s+and\s+housing)\b",
+        lowered,
+    ):
+        add("uscode_coast_guard_child_care_surface")
+    if re.search(
+        r"\b(?:block\s+grant\s+program|make\s+grants\s+to\s+states?|"
+        r"(?:may\s+|authorized\s+to\s+|is\s+authorized\s+to\s+)?make\s+grants?\s+(?:to|under)|"
+        r"secretary\s+is\s+authorized\s+to\s+make\s+grants?)\b",
+        lowered,
+    ):
+        add("uscode_block_grant_program_surface")
+    if re.search(
+        r"\b(?:university[-\s]+based\s+defense\s+nuclear\s+policy\s+collaboration|"
+        r"policy\s+research\s+consortium|institutions?\s+of\s+higher\s+education|"
+        r"research\s+consortium)\b",
+        lowered,
+    ):
+        add("uscode_university_policy_research_consortium_surface")
+    if re.search(
+        r"\b(?:state\s+water\s+pollution\s+control\s+revolving\s+funds?|"
+        r"water\s+pollution\s+control\s+revolving\s+fund|"
+        r"construction\s+of\s+treatment\s+works|"
+        r"implementation\s+of\s+management\s+programs)\b",
+        lowered,
+    ):
+        add("uscode_water_pollution_revolving_fund_surface")
+    if re.search(
+        r"\b(?:salmon\s+and\s+steelhead|steelhead\s+and\s+salmon|"
+        r"coordinated\s+management\s+of\s+salmon\s+and\s+steelhead)\b",
+        lowered,
+    ):
+        add("uscode_salmon_steelhead_management_surface")
+    if re.search(
+        r"\b(?:adverse\s+actions?|suspension|removal)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:employees?|advance\s+written\s+notice|reasonable\s+time\s+to\s+answer|"
+        r"represented\s+by\s+an\s+attorney)\b",
+        lowered,
+    ):
+        add("uscode_employee_adverse_action_surface")
+    if re.search(
+        r"\b(?:machinery|material|equipment|supplies)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:printing|binding|blank[-\s]+book|lithograph|photolithograph|"
+        r"government\s+agenc(?:y|ies))\b",
+        lowered,
+    ):
+        add("uscode_government_printing_equipment_surface")
+    if re.search(
+        r"\b(?:payments?|payment\s+adjustment|make\s+payments?|"
+        r"adjust(?:ment|ed|s)?\s+payments?)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:secretary|rural\s+development|grants?|program)\b",
+        lowered,
+    ):
+        add("uscode_program_payment_adjustment_surface")
+    if re.search(
+        r"\b(?:project\s+safe\s+neighborhoods?|crime\s+control\s+and\s+law\s+enforcement|"
+        r"law\s+enforcement\s+matters?)\b",
+        lowered,
+    ):
+        add("uscode_project_safe_neighborhoods_surface")
+    if re.search(
+        r"\b(?:service[-\s]+connected\s+disabilit(?:y|ies)|veterans?'?\s+benefits?|"
+        r"compensation\s+for\s+service[-\s]+connected\s+disabilit(?:y|ies))\b",
+        lowered,
+    ):
+        add("uscode_veterans_disability_compensation_surface")
+    if re.search(
+        r"\b(?:sub[-\s]+saharan\s+africa|trade\s+benefits?|"
+        r"economic\s+development\s+related\s+issues?)\b",
+        lowered,
+    ):
+        add("uscode_sub_saharan_trade_benefit_surface")
+    if re.search(
+        r"\b(?:advisory\s+board\s+on\s+missing\s+children|missing\s+children)\b",
+        lowered,
+    ) and re.search(r"\b(?:repealed|pub\.|public\s+law)\b", lowered):
+        add("uscode_missing_children_repealed_advisory_surface")
+    if re.search(
+        r"\b(?:advances?\s+by\s+government|complete\s+government\s+reclamation\s+projects?|"
+        r"reclamation\s+projects?\s+begun|secretary\s+of\s+the\s+treasury)\b",
+        lowered,
+    ):
+        add("uscode_reclamation_project_advance_surface")
+    if re.search(
+        r"\b(?:public\s+buildings?\s+and\s+works?|public\s+buildings?,\s+grounds,\s+and\s+parks|"
+        r"laborers?\s+and\s+mechanics?|rate\s+of\s+wages?)\b",
+        lowered,
+    ):
+        add("uscode_public_building_wage_standard_surface")
+    if re.search(
+        r"\b(?:coordination\s+of\s+administration|special(?:ly)?\s+adapted\s+housing)\b",
+        lowered,
+    ):
+        add("uscode_special_housing_coordination_surface")
+    if re.search(
+        r"\b(?:crisis\s+counseling\s+assistance|crisis\s+counseling\s+training|"
+        r"professional\s+counseling\s+services|mental\s+health\s+organizations?)\b",
+        lowered,
+    ):
+        add("uscode_crisis_counseling_assistance_surface")
+    if re.search(
+        r"\b(?:ready\s+reserve|muster\s+duty|reserve\s+muster)\b",
+        lowered,
+    ):
+        add("uscode_ready_reserve_muster_duty_surface")
+    if re.search(
+        r"\b(?:racial\s+discrimination|agricultural\s+and\s+mechanical\s+colleges?|"
+        r"college[-\s]+aid\s+annual\s+appropriation)\b",
+        lowered,
+    ):
+        add("uscode_college_racial_discrimination_surface")
+    if re.search(
+        r"\b(?:drug[-\s]+free\s+communities|drug[-\s]+free\s+communities\s+support\s+program|"
+        r"national\s+drug\s+control\s+program)\b",
+        lowered,
+    ):
+        add("uscode_drug_free_communities_support_surface")
+    if re.search(
+        r"\b(?:supplemental\s+grants?|additional\s+preventive\s+health\s+services?|"
+        r"preventive\s+health\s+services?|demonstration\s+projects?)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:secretary|director|centers?\s+for\s+disease|states?|grants?)\b", lowered
+    ):
+        add("uscode_preventive_health_grant_surface")
+    if re.search(
+        r"\b(?:medical\s+officer\s+of\s+the\s+marine\s+corps|"
+        r"headquarters,\s+marine\s+corps|marine\s+corps\b.{0,80}\bmedical\s+officer)\b",
+        lowered,
+    ):
+        add("uscode_marine_corps_medical_officer_surface")
+    if re.search(
+        r"\b(?:vacant\s+military\s+posts?|military\s+posts?\s+or\s+barracks|"
+        r"barracks\s+for\s+schools?|detail\s+of\s+army\s+officers?)\b",
+        lowered,
+    ):
+        add("uscode_military_post_school_use_surface")
+    if re.search(
+        r"\b(?:wildlife|migratory\s+birds?|fish\s+and\s+wildlife|"
+        r"conservation\s+order|hunting\s+regulations?)\b",
+        lowered,
+    ) and re.search(r"\b(?:shall|may|order|secretary|regulations?)\b", lowered):
+        add("uscode_wildlife_conservation_order_surface")
+    if re.search(
+        r"\b(?:public\s+housing\s+agenc(?:y|ies)|low[-\s]+income\s+housing|"
+        r"housing\s+assistance|assistance\s+payments?)\b",
+        lowered,
+    ):
+        add("uscode_public_housing_assistance_surface")
+    if re.search(
+        r"\b(?:public\s+charter\s+schools?|charter\s+school\s+program|"
+        r"programs?\s+of\s+national\s+significance)\b",
+        lowered,
+    ):
+        add("uscode_public_charter_school_program_surface")
+    if re.search(
+        r"\b(?:agreement\s+with\s+murray\s+county|national\s+military\s+park)\b",
+        lowered,
+    ) and re.search(r"\bagreements?\b", lowered):
+        add("uscode_military_park_agreement_surface")
+    if re.search(
+        r"\bagreements?\b.{0,120}\bpublic\s+corporation\b|"
+        r"\bpublic\s+corporation\b.{0,120}\bagreements?\b",
+        lowered,
+    ):
+        add("uscode_public_corporation_agreement_surface")
+    if re.search(
+        r"\b(?:loan\s+guaranty|loan\s+guarantee|loan\s+guaranty\s+and\s+insurance|"
+        r"powers?\s+of\s+secretary)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:indians?|indian\s+organizations?|secretary|loan)\b",
+        lowered,
+    ):
+        add("uscode_indian_loan_guaranty_power_surface")
+    if re.search(
+        r"\bremed(?:y|ies)\s+as\s+cumulative\b|"
+        r"\bremed(?:y|ies)\s+provided\s+under\s+this\s+part\b|"
+        r"\bin\s+addition\s+to\s+remed(?:y|ies)\b|"
+        r"\bremed(?:y|ies)\s+existing\s+under\s+another\s+law\b|"
+        r"\b(?:payments?\s+or\s+fees?|fees?\s+or\s+payments?)\b",
+        lowered,
+    ):
+        add("uscode_cumulative_remedies_surface")
+    if re.search(
+        r"\b(?:university[-\s]+based\s+defense\s+nuclear\s+policy\s+collaboration|"
+        r"policy\s+research\s+consortium|institutions?\s+of\s+higher\s+education)\b",
+        lowered,
+    ):
+        add("uscode_defense_policy_research_consortium_surface")
+    if re.search(
+        r"\b(?:statement\s+of\s+purpose|decent\s+affordable\s+shelter|"
+        r"basic\s+necessity|health\s+and\s+living\s+standards|"
+        r"affordable\s+housing|long[-\s]+term\s+supply)\b",
+        lowered,
+    ):
+        add("uscode_affordable_housing_purpose_surface")
+    if re.search(
+        r"\b(?:relationship\s+to\s+(?:other\s+law|middle\s+class\s+tax\s+relief)|"
+        r"shall\s+be\s+construed\s+to\s+limit|"
+        r"limit,\s+restrict,\s+or\s+circumvent|"
+        r"public\s+safety\s+broadband\s+network|"
+        r"supplementary\s+to\s+(?:those\s+set\s+forth\s+in\s+)?existing\s+authorizations)\b",
+        lowered,
+    ):
+        add("uscode_statutory_relationship_noninterference_surface")
+    if re.search(
+        r"\bcuyahoga\s+valley\s+national\s+park\b",
+        lowered,
+    ) and re.search(r"\b(?:repealed|editorial\s+notes|codification)\b", lowered):
+        add("uscode_cuyahoga_valley_national_park_repealed_surface")
+    if re.search(
+        r"\b(?:title\s+52,\s+voting\s+and\s+elections|"
+        r"editorially\s+reclassified\s+as\s+section\s+20504)\b",
+        lowered,
+    ):
+        add("uscode_voting_elections_reclassification_surface")
+    if re.search(
+        r"\b(?:flood\s+insurance\s+rate\s+maps?|flood\s+mapping\s+program|"
+        r"technical\s+mapping\s+advisory\s+council)\b",
+        lowered,
+    ):
+        add("uscode_flood_map_certification_surface")
+    if re.search(
+        r"\b(?:national\s+strategic\s+uranium\s+reserve|natural\s+uranium|"
+        r"uranium\s+equivalents?|uranium\s+reserve)\b",
+        lowered,
+    ):
+        add("uscode_uranium_reserve_surface")
+    if re.search(
+        r"\b(?:injunctions?\s+during\s+national\s+emergenc(?:y|ies)|"
+        r"conciliation\s+of\s+labor\s+disputes?|labor\s+disputes?)\b",
+        lowered,
+    ):
+        add("uscode_labor_dispute_injunction_surface")
+    if re.search(r"\bomitted\b", lowered) and re.search(
+        r"\b(?:editorial\s+notes|codification)\b",
+        lowered,
+    ):
+        add("uscode_omitted_codification_surface")
+    return profiles

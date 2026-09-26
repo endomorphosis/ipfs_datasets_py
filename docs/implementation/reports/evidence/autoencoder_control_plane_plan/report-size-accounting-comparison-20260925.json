@@ -1,0 +1,2283 @@
+{
+  "admitted": false,
+  "arm": null,
+  "arm_order": [
+    "original",
+    "optimized",
+    "optimized",
+    "original"
+  ],
+  "automatic_retry": false,
+  "bridge_on_evaluation_ran": false,
+  "cache_scope": "fresh process per arm; no memo carryover across operations; OS caches uncontrolled and artifact read by guards before timing",
+  "checkpoint_source_unchanged": true,
+  "code_archives": {
+    "optimized": {
+      "bytes": 45344,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/optimized-legal_ir_report_bundle.py",
+      "sha256": "16ae5547afff84d6fc98447b73d33e66c30affff603bf733651fd7c995979b18"
+    },
+    "original": {
+      "bytes": 43584,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/original-legal_ir_report_bundle.py",
+      "sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059"
+    }
+  },
+  "code_archives_unchanged": true,
+  "common_artifact": {
+    "bytes": 1058,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/common.json",
+    "sha256": "451754eb6ea90d2dd7e49ac7ca4d4c7150844e42873a49bc003f85b4bb4fa24b"
+  },
+  "common_artifact_unchanged": true,
+  "elapsed_seconds": 62.29137739294674,
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HF_HUB_OFFLINE": "1",
+    "IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS": "1",
+    "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+    "IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS": "1",
+    "IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA": "0",
+    "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "frozen_dependency": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_report_hydration.py",
+    "sha256": "180ba84c1bf509e098281bd5ff867dd3240a0f871dc2819b584dbc99b6b4b719"
+  },
+  "gc_policy_changed": false,
+  "generation_or_training_performed": false,
+  "harness_sha256": "60a0defd84029be39e82599e7b8f1386fd8878ca22ef980736ab3e71931b2347",
+  "harness_unchanged": true,
+  "historical_artifact": {
+    "bytes": 16237649,
+    "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+  },
+  "historical_bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "historical_evaluate_provers": false,
+  "historical_metric_disk_cache": 0,
+  "historical_parallel_workers": 1,
+  "median_operation_seconds": {
+    "optimized": {
+      "encode_seconds": 3.497807923005894,
+      "load_seconds": 0.04346567951142788,
+      "selection_seconds": 4.678961737488862
+    },
+    "original": {
+      "encode_seconds": 4.62323948496487,
+      "load_seconds": 0.04868028749478981,
+      "selection_seconds": 5.828338302962948
+    }
+  },
+  "model_or_checkpoint_loaded": false,
+  "native_daemon_qualified": false,
+  "original_alias_scope": "original arm imports an additional archived codec module; its allocations are reflected in GC and memory observations",
+  "outer_child_timeout_seconds": 180,
+  "paired_comparison": [
+    {
+      "optimized_ordinal": 1,
+      "original_ordinal": 0,
+      "timings": {
+        "encode_seconds": {
+          "optimized": 3.5270458459854126,
+          "original": 4.655671622953378,
+          "original_minus_optimized_seconds": 1.128625776967965
+        },
+        "load_seconds": {
+          "optimized": 0.043514864053577185,
+          "original": 0.05012955307029188,
+          "original_minus_optimized_seconds": 0.006614689016714692
+        },
+        "selection_seconds": {
+          "optimized": 4.703974480973557,
+          "original": 5.889408084913157,
+          "original_minus_optimized_seconds": 1.1854336039396003
+        }
+      }
+    },
+    {
+      "optimized_ordinal": 2,
+      "original_ordinal": 3,
+      "timings": {
+        "encode_seconds": {
+          "optimized": 3.468570000026375,
+          "original": 4.590807346976362,
+          "original_minus_optimized_seconds": 1.1222373469499871
+        },
+        "load_seconds": {
+          "optimized": 0.043416494969278574,
+          "original": 0.04723102191928774,
+          "original_minus_optimized_seconds": 0.003814526950009167
+        },
+        "selection_seconds": {
+          "optimized": 4.653948994004168,
+          "original": 5.767268521012738,
+          "original_minus_optimized_seconds": 1.1133195270085707
+        }
+      }
+    }
+  ],
+  "passed": true,
+  "production_guard_bypassed_or_modified": false,
+  "qualification_scope": "forensic same-artifact codec comparison; stale current session must reject; no end-to-end daemon speed inference",
+  "recorded_at": "2026-09-25T12:04:34.285334+00:00",
+  "runs": [
+    {
+      "arm": "original",
+      "exit_code": 0,
+      "outer_timeout": false,
+      "process_log": {
+        "bytes": 1062,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/0-original/process.log",
+        "sha256": "ccee007ee3e544e1d3ab8d5104658a1248cfb773fed262e169d675783634a427"
+      },
+      "process_seconds_including_audit_guards_shutdown": 16.55733683798462,
+      "receipt": {
+        "bytes": 18456,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/0-original/receipt.json",
+        "sha256": "08ea59efb93af238885830b1c7c4d87a779ab0cbfb99548d4f80f14be404efa2"
+      },
+      "result": {
+        "actual_native_fields": {
+          "bounds": {
+            "depth": 100,
+            "diagnostic_token_bytes": 268435456,
+            "distinct_compounds": 1000000,
+            "visited_values": 268435456
+          },
+          "charge_scope": "unique UTF-8 bytes plus emitted diagnostic token payloads; not exact codec expanded bytes or RSS",
+          "charged_bytes": 134344573,
+          "distinct_native_objects": 318053,
+          "schema": "native-fields-order-alias-fingerprint-v2",
+          "sha256": "9b61802e163b82a11b0c24df742d0d9608f0776ff8dea7213848d50ab7f390cd",
+          "unique_string_values": 97781,
+          "visited_values": 2716845
+        },
+        "actual_target": {
+          "bytes": 64868307,
+          "sha256": "0d4f683fb6dff3493fbf2df63e7928c0a1267f822c66cbc71dd46519960579b6"
+        },
+        "actual_wire": {
+          "bytes": 63159922,
+          "sha256": "59e7e22982e2dfd6747faa6c0f795ab55d896cb0d0caf916c690ab147503193f"
+        },
+        "admitted": false,
+        "after_encode_before_audit": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            5,
+            2,
+            37
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 8681,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 789,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 20,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 935312,
+            "pss_kib": 739676,
+            "rss_kib": 779096
+          }
+        },
+        "after_selection": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            7,
+            8,
+            4
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 4067,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 369,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 12,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 751500,
+            "pss_kib": 476350,
+            "rss_kib": 515768
+          }
+        },
+        "archives_unchanged": true,
+        "arm": "original",
+        "arm_order": [
+          "original",
+          "optimized",
+          "optimized",
+          "original"
+        ],
+        "artifact": {
+          "bytes": 16237649,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/prepared-reports.bundle",
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+        },
+        "artifact_verification_after": {
+          "bytes": 16237649,
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c",
+          "snapshot_id": "sha256:6d8ccae47cc29d37ffa342410654b2ee981faee42550901f4542d3d37d50df66"
+        },
+        "audit_seconds_outside_operation_timers": 3.3008633860154077,
+        "automatic_retry": false,
+        "before_load": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            485,
+            10,
+            10
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 362,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 32,
+              "uncollectable": 0
+            },
+            {
+              "collected": 115,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 152328,
+            "pss_kib": 113091,
+            "rss_kib": 152540
+          }
+        },
+        "before_selection": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            10,
+            1,
+            0
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 364,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 33,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 3,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 152328,
+            "pss_kib": 113086,
+            "rss_kib": 152540
+          }
+        },
+        "bridge_on_evaluation_ran": false,
+        "bundle_statistics": {
+          "artifact_bytes": 16237649,
+          "artifact_format": "report_bundle",
+          "closed": false,
+          "codec": "zlib:legal-ir-native-report-dag-v3",
+          "compressed_report_bytes": 15138748,
+          "decompressed_bytes": 63159922,
+          "decompressed_shards": 1,
+          "hydrate_validate_seconds": 5.751003172015771,
+          "manifest_bytes": 1098885,
+          "manifest_parse_validate_seconds": 0.0424011389259249,
+          "open_hash_seconds": 0.007659293012693524,
+          "read_decompress_seconds": 0.12456450494937599,
+          "referenced_uncompressed_report_bytes": 205507402,
+          "report_count": 6,
+          "sample_count": 6,
+          "schema_version": "legal-ir-report-bundle-v1",
+          "shard_count": 6,
+          "unique_decompressed_shards": 1,
+          "unique_uncompressed_report_bytes": 205507402
+        },
+        "cache_scope": "fresh process per arm; no memo carryover across operations; OS caches uncontrolled and artifact read by guards before timing",
+        "checkpoint_source_unchanged": true,
+        "checks": {
+          "all_native_fields_types_order_aliases_exact": true,
+          "canonical_module_unchanged": true,
+          "document_shared": true,
+          "one_shard_only": true,
+          "target_exact": true,
+          "wire_exact": true
+        },
+        "current_native_codec_file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py",
+        "current_native_session_rejection": {
+          "message": "report configuration/provenance mismatch",
+          "type": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_report_bundle.ReportBundleError"
+        },
+        "elapsed_seconds": 16.347869940917008,
+        "environment": {
+          "CUDA_VISIBLE_DEVICES": "",
+          "HF_HUB_OFFLINE": "1",
+          "IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS": "1",
+          "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+          "IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS": "1",
+          "IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA": "0",
+          "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+          "MKL_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "executed_codec": {
+          "canonical_production_module_replaced": false,
+          "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer._diagnostic_original_report_codec",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/original-legal_ir_report_bundle.py",
+          "sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059"
+        },
+        "expected_identities": {
+          "derived_target": {
+            "bytes": 64868307,
+            "sha256": "0d4f683fb6dff3493fbf2df63e7928c0a1267f822c66cbc71dd46519960579b6"
+          },
+          "document_hash": "d5f27a87ae6879c89ed687f3724f4e22ccc524995dba697dd8a54b7c4f94bca7",
+          "independent_native_fingerprint": {
+            "bounds": {
+              "depth": 100,
+              "diagnostic_token_bytes": 268435456,
+              "distinct_compounds": 1000000,
+              "visited_values": 268435456
+            },
+            "charge_scope": "unique UTF-8 bytes plus emitted diagnostic token payloads; not exact codec expanded bytes or RSS",
+            "charged_bytes": 134344573,
+            "distinct_native_objects": 318053,
+            "schema": "native-fields-order-alias-fingerprint-v2",
+            "sha256": "9b61802e163b82a11b0c24df742d0d9608f0776ff8dea7213848d50ab7f390cd",
+            "unique_string_values": 97781,
+            "visited_values": 2716845
+          },
+          "report_dag_bytes": 63159922,
+          "report_dag_sha256": "59e7e22982e2dfd6747faa6c0f795ab55d896cb0d0caf916c690ab147503193f",
+          "target_shares_report_document": true
+        },
+        "frozen_dependency": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_report_hydration.py",
+          "sha256": "180ba84c1bf509e098281bd5ff867dd3240a0f871dc2819b584dbc99b6b4b719"
+        },
+        "gc_policy_changed": false,
+        "generation_or_training_performed": false,
+        "harness_sha256": "60a0defd84029be39e82599e7b8f1386fd8878ca22ef980736ab3e71931b2347",
+        "harness_unchanged": true,
+        "historical_artifact": {
+          "bytes": 16237649,
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+        },
+        "historical_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "historical_evaluate_provers": false,
+        "historical_metric_disk_cache": 0,
+        "historical_parallel_workers": 1,
+        "historical_producer_stale": true,
+        "historical_source_differences": [
+          {
+            "current_sha256": "de063914e0eb5b24b04f48e6746dac50ae0db9ee4e5407f8219fad48372fd59e",
+            "historical_sha256": "6a349d581e5027b8cffede2fe73e25c167106fb8c343e8453e4ecc3a3e5f55ed",
+            "path": "logic/autoformal/repair_intake.py"
+          },
+          {
+            "current_sha256": "16ae5547afff84d6fc98447b73d33e66c30affff603bf733651fd7c995979b18",
+            "historical_sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059",
+            "path": "optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py"
+          }
+        ],
+        "input_verification": {
+          "arrow_embedding_inputs_initial_statistics": {
+            "array_exports": 0,
+            "artifact_bytes": 11082,
+            "artifact_sha256": "3fd254bcba252a5c0396251fa66273e713f1c74340f32d857a22cb4a82423f04",
+            "closed": false,
+            "dimension": 384,
+            "mapped_numeric_bytes": 9216,
+            "ordered_record_ids_sha256": "292c104cdeb426b8c763759a8d86f6a714079c63feb7457f52164be9dc83c496",
+            "production_bytes": 434558,
+            "production_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "read_only": true,
+            "row_accesses": 0,
+            "row_count": 6,
+            "scalar_accesses": 0,
+            "schema_version": "autoencoder-embedding-inputs-arrow-v1",
+            "whole_training_zero_copy": false,
+            "zero_copy_numeric_buffers_verified": true
+          },
+          "arrow_embedding_inputs_verification": {
+            "artifact_bytes": 11082,
+            "artifact_sha256": "3fd254bcba252a5c0396251fa66273e713f1c74340f32d857a22cb4a82423f04",
+            "dimension": 384,
+            "mapped_numeric_bytes": 9216,
+            "ordered_record_ids_sha256": "292c104cdeb426b8c763759a8d86f6a714079c63feb7457f52164be9dc83c496",
+            "production_bytes": 434558,
+            "production_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "read_only": true,
+            "row_count": 6,
+            "schema_version": "autoencoder-embedding-inputs-arrow-v1",
+            "whole_training_zero_copy": false,
+            "zero_copy_numeric_buffers_verified": true
+          },
+          "arrow_embedding_inputs_verified": true,
+          "batch_split_disjoint": true,
+          "corpus_index_membership_verified": true,
+          "corpus_index_verification": {
+            "admitted": false,
+            "batch_index_membership_verified": true,
+            "batch_mode": "corpus",
+            "corpus_complete": false,
+            "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+            "embedding_producer_authenticated": false,
+            "global_holdout_verified": false,
+            "group_count": 51,
+            "index_id": "sha256:f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+            "index_sha256": "f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+            "indexed_partition_disjoint_verified": true,
+            "partition_counts": {
+              "canary": 0,
+              "holdout": 5,
+              "train": 43,
+              "validation": 3
+            },
+            "record_count": 51,
+            "scope": {
+              "completeness": "selected_subset",
+              "release_manifest_sha256s": [
+                "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6"
+              ],
+              "selection_sha256": "1267d3fd0d5f5c65662b525eacc8584ce72481dee6c3d9b0060b440de3f19192"
+            },
+            "semantic_duplicate_isolation_verified": false,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": false,
+            "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+            "training_record_ids": [
+              "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+              "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+              "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+            ],
+            "unseen_checkpoint_lineage_verified": false,
+            "validation_record_ids": [
+              "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+              "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+              "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+            ]
+          },
+          "dataset_and_split_identity_verified": true,
+          "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+          "embedding_producer_authenticated": false,
+          "embedding_production_verification": {
+            "bytes": 434558,
+            "execution_kind": "native",
+            "formal_proof_verified": false,
+            "input_count": 64,
+            "model_revision_authenticated": false,
+            "native_execution_profile": true,
+            "record_integrity": true,
+            "runtime_computation_proven": false,
+            "runtime_cryptographically_attested": false,
+            "schema": "autoencoder-embedding-production-v1",
+            "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "source_artifacts_verified": 6,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": 5493,
+            "source_inputs_verified": 6,
+            "source_selectors_verified": true,
+            "status_counts": {
+              "embedded": 51,
+              "missing_input": 0,
+              "token_limit_exceeded": 13
+            },
+            "supplied_records_verified": 6
+          },
+          "embedding_production_verified": true,
+          "frontend": "legacy_us_code",
+          "global_holdout_verified": false,
+          "job_records_verified": true,
+          "language_counts": {
+            "en": 6
+          },
+          "mode": "corpus",
+          "record_count": 6,
+          "source_authority_authenticated": false,
+          "source_count": 6,
+          "source_kind_counts": {
+            "us_code": 6
+          },
+          "source_validation": {
+            "batch_split_disjoint": true,
+            "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+            "embedding_producer_authenticated": false,
+            "frontend": "legacy_us_code",
+            "global_holdout_verified": false,
+            "language_counts": {
+              "en": 6
+            },
+            "mode": "corpus",
+            "record_count": 6,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": 5493,
+            "source_count": 6,
+            "source_kind_counts": {
+              "us_code": 6
+            },
+            "source_selectors_verified": true,
+            "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+            "training_record_count": 3,
+            "validation_record_count": 3
+          },
+          "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+          "training_record_count": 3,
+          "training_record_ids": [
+            "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+            "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+            "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+          ],
+          "validation_record_count": 3,
+          "validation_record_ids": [
+            "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+            "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+            "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+          ],
+          "verification_mode": "manifest_source_bytes_frozen_index_and_embedding_production"
+        },
+        "model_or_checkpoint_loaded": false,
+        "native_class_dependency_hashes": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b"
+        },
+        "native_daemon_qualified": false,
+        "network_guard": {
+          "denied_syscalls": [
+            "socket",
+            "connect",
+            "sendto",
+            "sendmsg",
+            "sendmmsg"
+          ],
+          "mechanism": "linux_seccomp",
+          "socket_denial_verified": true
+        },
+        "original_alias_scope": "original arm imports an additional archived codec module; its allocations are reflected in GC and memory observations",
+        "outer_child_timeout_seconds": 180,
+        "passed": true,
+        "production_guard_bypassed_or_modified": false,
+        "qualification_scope": "forensic same-artifact codec comparison; stale current session must reject; no end-to-end daemon speed inference",
+        "recorded_at": "2026-09-25T12:04:34.722379+00:00",
+        "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+        "schema": "same-artifact-report-codec-comparison-v1",
+        "source_changes_during_arm": [],
+        "source_manifest_after": {
+          "bytes": 1125316,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/0-original/source-after.json",
+          "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+        },
+        "source_manifest_before": {
+          "bytes": 1125316,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/0-original/source-before.json",
+          "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+        },
+        "source_unchanged_during_arm": true,
+        "timing_scope": "unprofiled native low-level load/selection/encoding only; imports, guards, memory observations and integrity audit excluded",
+        "timings": {
+          "encode_seconds": 4.655671622953378,
+          "load_seconds": 0.05012955307029188,
+          "selection_seconds": 5.889408084913157
+        },
+        "tree_pin": {
+          "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+          "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+          "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+        }
+      }
+    },
+    {
+      "arm": "optimized",
+      "exit_code": 0,
+      "outer_timeout": false,
+      "process_log": {
+        "bytes": 1062,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/1-optimized/process.log",
+        "sha256": "ccee007ee3e544e1d3ab8d5104658a1248cfb773fed262e169d675783634a427"
+      },
+      "process_seconds_including_audit_guards_shutdown": 14.250190358026884,
+      "receipt": {
+        "bytes": 18407,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/1-optimized/receipt.json",
+        "sha256": "bbcea8a6b57f196222e8ad7cf02447515a87f457c48a27502b56f83a61dcb03d"
+      },
+      "result": {
+        "actual_native_fields": {
+          "bounds": {
+            "depth": 100,
+            "diagnostic_token_bytes": 268435456,
+            "distinct_compounds": 1000000,
+            "visited_values": 268435456
+          },
+          "charge_scope": "unique UTF-8 bytes plus emitted diagnostic token payloads; not exact codec expanded bytes or RSS",
+          "charged_bytes": 134344573,
+          "distinct_native_objects": 318053,
+          "schema": "native-fields-order-alias-fingerprint-v2",
+          "sha256": "9b61802e163b82a11b0c24df742d0d9608f0776ff8dea7213848d50ab7f390cd",
+          "unique_string_values": 97781,
+          "visited_values": 2716845
+        },
+        "actual_target": {
+          "bytes": 64868307,
+          "sha256": "0d4f683fb6dff3493fbf2df63e7928c0a1267f822c66cbc71dd46519960579b6"
+        },
+        "actual_wire": {
+          "bytes": 63159922,
+          "sha256": "59e7e22982e2dfd6747faa6c0f795ab55d896cb0d0caf916c690ab147503193f"
+        },
+        "admitted": false,
+        "after_encode_before_audit": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            5,
+            2,
+            37
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 8681,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 789,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 20,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 929400,
+            "pss_kib": 732815,
+            "rss_kib": 772224
+          }
+        },
+        "after_selection": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            7,
+            8,
+            4
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 4067,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 369,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 12,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 759520,
+            "pss_kib": 482498,
+            "rss_kib": 521904
+          }
+        },
+        "archives_unchanged": true,
+        "arm": "optimized",
+        "arm_order": [
+          "original",
+          "optimized",
+          "optimized",
+          "original"
+        ],
+        "artifact": {
+          "bytes": 16237649,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/prepared-reports.bundle",
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+        },
+        "artifact_verification_after": {
+          "bytes": 16237649,
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c",
+          "snapshot_id": "sha256:6d8ccae47cc29d37ffa342410654b2ee981faee42550901f4542d3d37d50df66"
+        },
+        "audit_seconds_outside_operation_timers": 3.339248636038974,
+        "automatic_retry": false,
+        "before_load": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            37,
+            10,
+            10
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 362,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 32,
+              "uncollectable": 0
+            },
+            {
+              "collected": 115,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 152016,
+            "pss_kib": 112840,
+            "rss_kib": 152264
+          }
+        },
+        "before_selection": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            10,
+            1,
+            0
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 364,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 33,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 3,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 152016,
+            "pss_kib": 112840,
+            "rss_kib": 152264
+          }
+        },
+        "bridge_on_evaluation_ran": false,
+        "bundle_statistics": {
+          "artifact_bytes": 16237649,
+          "artifact_format": "report_bundle",
+          "closed": false,
+          "codec": "zlib:legal-ir-native-report-dag-v3",
+          "compressed_report_bytes": 15138748,
+          "decompressed_bytes": 63159922,
+          "decompressed_shards": 1,
+          "hydrate_validate_seconds": 4.566834799014032,
+          "manifest_bytes": 1098885,
+          "manifest_parse_validate_seconds": 0.03591648500878364,
+          "open_hash_seconds": 0.007539579062722623,
+          "read_decompress_seconds": 0.12363443104550242,
+          "referenced_uncompressed_report_bytes": 205507402,
+          "report_count": 6,
+          "sample_count": 6,
+          "schema_version": "legal-ir-report-bundle-v1",
+          "shard_count": 6,
+          "unique_decompressed_shards": 1,
+          "unique_uncompressed_report_bytes": 205507402
+        },
+        "cache_scope": "fresh process per arm; no memo carryover across operations; OS caches uncontrolled and artifact read by guards before timing",
+        "checkpoint_source_unchanged": true,
+        "checks": {
+          "all_native_fields_types_order_aliases_exact": true,
+          "canonical_module_unchanged": true,
+          "document_shared": true,
+          "one_shard_only": true,
+          "target_exact": true,
+          "wire_exact": true
+        },
+        "current_native_codec_file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py",
+        "current_native_session_rejection": {
+          "message": "report configuration/provenance mismatch",
+          "type": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_report_bundle.ReportBundleError"
+        },
+        "elapsed_seconds": 14.036230783094652,
+        "environment": {
+          "CUDA_VISIBLE_DEVICES": "",
+          "HF_HUB_OFFLINE": "1",
+          "IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS": "1",
+          "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+          "IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS": "1",
+          "IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA": "0",
+          "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+          "MKL_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "executed_codec": {
+          "canonical_production_module_replaced": false,
+          "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_report_bundle",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py",
+          "sha256": "16ae5547afff84d6fc98447b73d33e66c30affff603bf733651fd7c995979b18"
+        },
+        "expected_identities": {
+          "derived_target": {
+            "bytes": 64868307,
+            "sha256": "0d4f683fb6dff3493fbf2df63e7928c0a1267f822c66cbc71dd46519960579b6"
+          },
+          "document_hash": "d5f27a87ae6879c89ed687f3724f4e22ccc524995dba697dd8a54b7c4f94bca7",
+          "independent_native_fingerprint": {
+            "bounds": {
+              "depth": 100,
+              "diagnostic_token_bytes": 268435456,
+              "distinct_compounds": 1000000,
+              "visited_values": 268435456
+            },
+            "charge_scope": "unique UTF-8 bytes plus emitted diagnostic token payloads; not exact codec expanded bytes or RSS",
+            "charged_bytes": 134344573,
+            "distinct_native_objects": 318053,
+            "schema": "native-fields-order-alias-fingerprint-v2",
+            "sha256": "9b61802e163b82a11b0c24df742d0d9608f0776ff8dea7213848d50ab7f390cd",
+            "unique_string_values": 97781,
+            "visited_values": 2716845
+          },
+          "report_dag_bytes": 63159922,
+          "report_dag_sha256": "59e7e22982e2dfd6747faa6c0f795ab55d896cb0d0caf916c690ab147503193f",
+          "target_shares_report_document": true
+        },
+        "frozen_dependency": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_report_hydration.py",
+          "sha256": "180ba84c1bf509e098281bd5ff867dd3240a0f871dc2819b584dbc99b6b4b719"
+        },
+        "gc_policy_changed": false,
+        "generation_or_training_performed": false,
+        "harness_sha256": "60a0defd84029be39e82599e7b8f1386fd8878ca22ef980736ab3e71931b2347",
+        "harness_unchanged": true,
+        "historical_artifact": {
+          "bytes": 16237649,
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+        },
+        "historical_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "historical_evaluate_provers": false,
+        "historical_metric_disk_cache": 0,
+        "historical_parallel_workers": 1,
+        "historical_producer_stale": true,
+        "historical_source_differences": [
+          {
+            "current_sha256": "de063914e0eb5b24b04f48e6746dac50ae0db9ee4e5407f8219fad48372fd59e",
+            "historical_sha256": "6a349d581e5027b8cffede2fe73e25c167106fb8c343e8453e4ecc3a3e5f55ed",
+            "path": "logic/autoformal/repair_intake.py"
+          },
+          {
+            "current_sha256": "16ae5547afff84d6fc98447b73d33e66c30affff603bf733651fd7c995979b18",
+            "historical_sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059",
+            "path": "optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py"
+          }
+        ],
+        "input_verification": {
+          "arrow_embedding_inputs_initial_statistics": {
+            "array_exports": 0,
+            "artifact_bytes": 11082,
+            "artifact_sha256": "3fd254bcba252a5c0396251fa66273e713f1c74340f32d857a22cb4a82423f04",
+            "closed": false,
+            "dimension": 384,
+            "mapped_numeric_bytes": 9216,
+            "ordered_record_ids_sha256": "292c104cdeb426b8c763759a8d86f6a714079c63feb7457f52164be9dc83c496",
+            "production_bytes": 434558,
+            "production_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "read_only": true,
+            "row_accesses": 0,
+            "row_count": 6,
+            "scalar_accesses": 0,
+            "schema_version": "autoencoder-embedding-inputs-arrow-v1",
+            "whole_training_zero_copy": false,
+            "zero_copy_numeric_buffers_verified": true
+          },
+          "arrow_embedding_inputs_verification": {
+            "artifact_bytes": 11082,
+            "artifact_sha256": "3fd254bcba252a5c0396251fa66273e713f1c74340f32d857a22cb4a82423f04",
+            "dimension": 384,
+            "mapped_numeric_bytes": 9216,
+            "ordered_record_ids_sha256": "292c104cdeb426b8c763759a8d86f6a714079c63feb7457f52164be9dc83c496",
+            "production_bytes": 434558,
+            "production_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "read_only": true,
+            "row_count": 6,
+            "schema_version": "autoencoder-embedding-inputs-arrow-v1",
+            "whole_training_zero_copy": false,
+            "zero_copy_numeric_buffers_verified": true
+          },
+          "arrow_embedding_inputs_verified": true,
+          "batch_split_disjoint": true,
+          "corpus_index_membership_verified": true,
+          "corpus_index_verification": {
+            "admitted": false,
+            "batch_index_membership_verified": true,
+            "batch_mode": "corpus",
+            "corpus_complete": false,
+            "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+            "embedding_producer_authenticated": false,
+            "global_holdout_verified": false,
+            "group_count": 51,
+            "index_id": "sha256:f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+            "index_sha256": "f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+            "indexed_partition_disjoint_verified": true,
+            "partition_counts": {
+              "canary": 0,
+              "holdout": 5,
+              "train": 43,
+              "validation": 3
+            },
+            "record_count": 51,
+            "scope": {
+              "completeness": "selected_subset",
+              "release_manifest_sha256s": [
+                "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6"
+              ],
+              "selection_sha256": "1267d3fd0d5f5c65662b525eacc8584ce72481dee6c3d9b0060b440de3f19192"
+            },
+            "semantic_duplicate_isolation_verified": false,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": false,
+            "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+            "training_record_ids": [
+              "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+              "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+              "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+            ],
+            "unseen_checkpoint_lineage_verified": false,
+            "validation_record_ids": [
+              "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+              "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+              "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+            ]
+          },
+          "dataset_and_split_identity_verified": true,
+          "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+          "embedding_producer_authenticated": false,
+          "embedding_production_verification": {
+            "bytes": 434558,
+            "execution_kind": "native",
+            "formal_proof_verified": false,
+            "input_count": 64,
+            "model_revision_authenticated": false,
+            "native_execution_profile": true,
+            "record_integrity": true,
+            "runtime_computation_proven": false,
+            "runtime_cryptographically_attested": false,
+            "schema": "autoencoder-embedding-production-v1",
+            "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "source_artifacts_verified": 6,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": 5493,
+            "source_inputs_verified": 6,
+            "source_selectors_verified": true,
+            "status_counts": {
+              "embedded": 51,
+              "missing_input": 0,
+              "token_limit_exceeded": 13
+            },
+            "supplied_records_verified": 6
+          },
+          "embedding_production_verified": true,
+          "frontend": "legacy_us_code",
+          "global_holdout_verified": false,
+          "job_records_verified": true,
+          "language_counts": {
+            "en": 6
+          },
+          "mode": "corpus",
+          "record_count": 6,
+          "source_authority_authenticated": false,
+          "source_count": 6,
+          "source_kind_counts": {
+            "us_code": 6
+          },
+          "source_validation": {
+            "batch_split_disjoint": true,
+            "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+            "embedding_producer_authenticated": false,
+            "frontend": "legacy_us_code",
+            "global_holdout_verified": false,
+            "language_counts": {
+              "en": 6
+            },
+            "mode": "corpus",
+            "record_count": 6,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": 5493,
+            "source_count": 6,
+            "source_kind_counts": {
+              "us_code": 6
+            },
+            "source_selectors_verified": true,
+            "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+            "training_record_count": 3,
+            "validation_record_count": 3
+          },
+          "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+          "training_record_count": 3,
+          "training_record_ids": [
+            "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+            "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+            "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+          ],
+          "validation_record_count": 3,
+          "validation_record_ids": [
+            "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+            "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+            "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+          ],
+          "verification_mode": "manifest_source_bytes_frozen_index_and_embedding_production"
+        },
+        "model_or_checkpoint_loaded": false,
+        "native_class_dependency_hashes": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b"
+        },
+        "native_daemon_qualified": false,
+        "network_guard": {
+          "denied_syscalls": [
+            "socket",
+            "connect",
+            "sendto",
+            "sendmsg",
+            "sendmmsg"
+          ],
+          "mechanism": "linux_seccomp",
+          "socket_denial_verified": true
+        },
+        "original_alias_scope": "original arm imports an additional archived codec module; its allocations are reflected in GC and memory observations",
+        "outer_child_timeout_seconds": 180,
+        "passed": true,
+        "production_guard_bypassed_or_modified": false,
+        "qualification_scope": "forensic same-artifact codec comparison; stale current session must reject; no end-to-end daemon speed inference",
+        "recorded_at": "2026-09-25T12:04:51.293958+00:00",
+        "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+        "schema": "same-artifact-report-codec-comparison-v1",
+        "source_changes_during_arm": [],
+        "source_manifest_after": {
+          "bytes": 1125316,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/1-optimized/source-after.json",
+          "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+        },
+        "source_manifest_before": {
+          "bytes": 1125316,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/1-optimized/source-before.json",
+          "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+        },
+        "source_unchanged_during_arm": true,
+        "timing_scope": "unprofiled native low-level load/selection/encoding only; imports, guards, memory observations and integrity audit excluded",
+        "timings": {
+          "encode_seconds": 3.5270458459854126,
+          "load_seconds": 0.043514864053577185,
+          "selection_seconds": 4.703974480973557
+        },
+        "tree_pin": {
+          "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+          "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+          "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+        }
+      }
+    },
+    {
+      "arm": "optimized",
+      "exit_code": 0,
+      "outer_timeout": false,
+      "process_log": {
+        "bytes": 1062,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/2-optimized/process.log",
+        "sha256": "ccee007ee3e544e1d3ab8d5104658a1248cfb773fed262e169d675783634a427"
+      },
+      "process_seconds_including_audit_guards_shutdown": 14.101525398902595,
+      "receipt": {
+        "bytes": 18406,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/2-optimized/receipt.json",
+        "sha256": "2d9ff002b7c264e4fe57a9aea0c86fe10b800d9ae7ff04fda03c30d6254b9ab7"
+      },
+      "result": {
+        "actual_native_fields": {
+          "bounds": {
+            "depth": 100,
+            "diagnostic_token_bytes": 268435456,
+            "distinct_compounds": 1000000,
+            "visited_values": 268435456
+          },
+          "charge_scope": "unique UTF-8 bytes plus emitted diagnostic token payloads; not exact codec expanded bytes or RSS",
+          "charged_bytes": 134344573,
+          "distinct_native_objects": 318053,
+          "schema": "native-fields-order-alias-fingerprint-v2",
+          "sha256": "9b61802e163b82a11b0c24df742d0d9608f0776ff8dea7213848d50ab7f390cd",
+          "unique_string_values": 97781,
+          "visited_values": 2716845
+        },
+        "actual_target": {
+          "bytes": 64868307,
+          "sha256": "0d4f683fb6dff3493fbf2df63e7928c0a1267f822c66cbc71dd46519960579b6"
+        },
+        "actual_wire": {
+          "bytes": 63159922,
+          "sha256": "59e7e22982e2dfd6747faa6c0f795ab55d896cb0d0caf916c690ab147503193f"
+        },
+        "admitted": false,
+        "after_encode_before_audit": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            5,
+            2,
+            37
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 8681,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 789,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 20,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 929332,
+            "pss_kib": 732801,
+            "rss_kib": 772232
+          }
+        },
+        "after_selection": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            7,
+            8,
+            4
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 4067,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 369,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 12,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 759452,
+            "pss_kib": 482498,
+            "rss_kib": 521916
+          }
+        },
+        "archives_unchanged": true,
+        "arm": "optimized",
+        "arm_order": [
+          "original",
+          "optimized",
+          "optimized",
+          "original"
+        ],
+        "artifact": {
+          "bytes": 16237649,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/prepared-reports.bundle",
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+        },
+        "artifact_verification_after": {
+          "bytes": 16237649,
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c",
+          "snapshot_id": "sha256:6d8ccae47cc29d37ffa342410654b2ee981faee42550901f4542d3d37d50df66"
+        },
+        "audit_seconds_outside_operation_timers": 3.345779691939242,
+        "automatic_retry": false,
+        "before_load": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            37,
+            10,
+            10
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 362,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 32,
+              "uncollectable": 0
+            },
+            {
+              "collected": 115,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 151856,
+            "pss_kib": 112819,
+            "rss_kib": 152240
+          }
+        },
+        "before_selection": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            10,
+            1,
+            0
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 364,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 33,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 3,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 151856,
+            "pss_kib": 112820,
+            "rss_kib": 152240
+          }
+        },
+        "bridge_on_evaluation_ran": false,
+        "bundle_statistics": {
+          "artifact_bytes": 16237649,
+          "artifact_format": "report_bundle",
+          "closed": false,
+          "codec": "zlib:legal-ir-native-report-dag-v3",
+          "compressed_report_bytes": 15138748,
+          "decompressed_bytes": 63159922,
+          "decompressed_shards": 1,
+          "hydrate_validate_seconds": 4.522636885987595,
+          "manifest_bytes": 1098885,
+          "manifest_parse_validate_seconds": 0.0358702118974179,
+          "open_hash_seconds": 0.0074915309669449925,
+          "read_decompress_seconds": 0.11793327296618372,
+          "referenced_uncompressed_report_bytes": 205507402,
+          "report_count": 6,
+          "sample_count": 6,
+          "schema_version": "legal-ir-report-bundle-v1",
+          "shard_count": 6,
+          "unique_decompressed_shards": 1,
+          "unique_uncompressed_report_bytes": 205507402
+        },
+        "cache_scope": "fresh process per arm; no memo carryover across operations; OS caches uncontrolled and artifact read by guards before timing",
+        "checkpoint_source_unchanged": true,
+        "checks": {
+          "all_native_fields_types_order_aliases_exact": true,
+          "canonical_module_unchanged": true,
+          "document_shared": true,
+          "one_shard_only": true,
+          "target_exact": true,
+          "wire_exact": true
+        },
+        "current_native_codec_file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py",
+        "current_native_session_rejection": {
+          "message": "report configuration/provenance mismatch",
+          "type": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_report_bundle.ReportBundleError"
+        },
+        "elapsed_seconds": 13.911509891040623,
+        "environment": {
+          "CUDA_VISIBLE_DEVICES": "",
+          "HF_HUB_OFFLINE": "1",
+          "IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS": "1",
+          "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+          "IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS": "1",
+          "IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA": "0",
+          "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+          "MKL_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "executed_codec": {
+          "canonical_production_module_replaced": false,
+          "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_report_bundle",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py",
+          "sha256": "16ae5547afff84d6fc98447b73d33e66c30affff603bf733651fd7c995979b18"
+        },
+        "expected_identities": {
+          "derived_target": {
+            "bytes": 64868307,
+            "sha256": "0d4f683fb6dff3493fbf2df63e7928c0a1267f822c66cbc71dd46519960579b6"
+          },
+          "document_hash": "d5f27a87ae6879c89ed687f3724f4e22ccc524995dba697dd8a54b7c4f94bca7",
+          "independent_native_fingerprint": {
+            "bounds": {
+              "depth": 100,
+              "diagnostic_token_bytes": 268435456,
+              "distinct_compounds": 1000000,
+              "visited_values": 268435456
+            },
+            "charge_scope": "unique UTF-8 bytes plus emitted diagnostic token payloads; not exact codec expanded bytes or RSS",
+            "charged_bytes": 134344573,
+            "distinct_native_objects": 318053,
+            "schema": "native-fields-order-alias-fingerprint-v2",
+            "sha256": "9b61802e163b82a11b0c24df742d0d9608f0776ff8dea7213848d50ab7f390cd",
+            "unique_string_values": 97781,
+            "visited_values": 2716845
+          },
+          "report_dag_bytes": 63159922,
+          "report_dag_sha256": "59e7e22982e2dfd6747faa6c0f795ab55d896cb0d0caf916c690ab147503193f",
+          "target_shares_report_document": true
+        },
+        "frozen_dependency": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_report_hydration.py",
+          "sha256": "180ba84c1bf509e098281bd5ff867dd3240a0f871dc2819b584dbc99b6b4b719"
+        },
+        "gc_policy_changed": false,
+        "generation_or_training_performed": false,
+        "harness_sha256": "60a0defd84029be39e82599e7b8f1386fd8878ca22ef980736ab3e71931b2347",
+        "harness_unchanged": true,
+        "historical_artifact": {
+          "bytes": 16237649,
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+        },
+        "historical_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "historical_evaluate_provers": false,
+        "historical_metric_disk_cache": 0,
+        "historical_parallel_workers": 1,
+        "historical_producer_stale": true,
+        "historical_source_differences": [
+          {
+            "current_sha256": "de063914e0eb5b24b04f48e6746dac50ae0db9ee4e5407f8219fad48372fd59e",
+            "historical_sha256": "6a349d581e5027b8cffede2fe73e25c167106fb8c343e8453e4ecc3a3e5f55ed",
+            "path": "logic/autoformal/repair_intake.py"
+          },
+          {
+            "current_sha256": "16ae5547afff84d6fc98447b73d33e66c30affff603bf733651fd7c995979b18",
+            "historical_sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059",
+            "path": "optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py"
+          }
+        ],
+        "input_verification": {
+          "arrow_embedding_inputs_initial_statistics": {
+            "array_exports": 0,
+            "artifact_bytes": 11082,
+            "artifact_sha256": "3fd254bcba252a5c0396251fa66273e713f1c74340f32d857a22cb4a82423f04",
+            "closed": false,
+            "dimension": 384,
+            "mapped_numeric_bytes": 9216,
+            "ordered_record_ids_sha256": "292c104cdeb426b8c763759a8d86f6a714079c63feb7457f52164be9dc83c496",
+            "production_bytes": 434558,
+            "production_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "read_only": true,
+            "row_accesses": 0,
+            "row_count": 6,
+            "scalar_accesses": 0,
+            "schema_version": "autoencoder-embedding-inputs-arrow-v1",
+            "whole_training_zero_copy": false,
+            "zero_copy_numeric_buffers_verified": true
+          },
+          "arrow_embedding_inputs_verification": {
+            "artifact_bytes": 11082,
+            "artifact_sha256": "3fd254bcba252a5c0396251fa66273e713f1c74340f32d857a22cb4a82423f04",
+            "dimension": 384,
+            "mapped_numeric_bytes": 9216,
+            "ordered_record_ids_sha256": "292c104cdeb426b8c763759a8d86f6a714079c63feb7457f52164be9dc83c496",
+            "production_bytes": 434558,
+            "production_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "read_only": true,
+            "row_count": 6,
+            "schema_version": "autoencoder-embedding-inputs-arrow-v1",
+            "whole_training_zero_copy": false,
+            "zero_copy_numeric_buffers_verified": true
+          },
+          "arrow_embedding_inputs_verified": true,
+          "batch_split_disjoint": true,
+          "corpus_index_membership_verified": true,
+          "corpus_index_verification": {
+            "admitted": false,
+            "batch_index_membership_verified": true,
+            "batch_mode": "corpus",
+            "corpus_complete": false,
+            "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+            "embedding_producer_authenticated": false,
+            "global_holdout_verified": false,
+            "group_count": 51,
+            "index_id": "sha256:f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+            "index_sha256": "f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+            "indexed_partition_disjoint_verified": true,
+            "partition_counts": {
+              "canary": 0,
+              "holdout": 5,
+              "train": 43,
+              "validation": 3
+            },
+            "record_count": 51,
+            "scope": {
+              "completeness": "selected_subset",
+              "release_manifest_sha256s": [
+                "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6"
+              ],
+              "selection_sha256": "1267d3fd0d5f5c65662b525eacc8584ce72481dee6c3d9b0060b440de3f19192"
+            },
+            "semantic_duplicate_isolation_verified": false,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": false,
+            "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+            "training_record_ids": [
+              "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+              "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+              "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+            ],
+            "unseen_checkpoint_lineage_verified": false,
+            "validation_record_ids": [
+              "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+              "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+              "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+            ]
+          },
+          "dataset_and_split_identity_verified": true,
+          "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+          "embedding_producer_authenticated": false,
+          "embedding_production_verification": {
+            "bytes": 434558,
+            "execution_kind": "native",
+            "formal_proof_verified": false,
+            "input_count": 64,
+            "model_revision_authenticated": false,
+            "native_execution_profile": true,
+            "record_integrity": true,
+            "runtime_computation_proven": false,
+            "runtime_cryptographically_attested": false,
+            "schema": "autoencoder-embedding-production-v1",
+            "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "source_artifacts_verified": 6,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": 5493,
+            "source_inputs_verified": 6,
+            "source_selectors_verified": true,
+            "status_counts": {
+              "embedded": 51,
+              "missing_input": 0,
+              "token_limit_exceeded": 13
+            },
+            "supplied_records_verified": 6
+          },
+          "embedding_production_verified": true,
+          "frontend": "legacy_us_code",
+          "global_holdout_verified": false,
+          "job_records_verified": true,
+          "language_counts": {
+            "en": 6
+          },
+          "mode": "corpus",
+          "record_count": 6,
+          "source_authority_authenticated": false,
+          "source_count": 6,
+          "source_kind_counts": {
+            "us_code": 6
+          },
+          "source_validation": {
+            "batch_split_disjoint": true,
+            "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+            "embedding_producer_authenticated": false,
+            "frontend": "legacy_us_code",
+            "global_holdout_verified": false,
+            "language_counts": {
+              "en": 6
+            },
+            "mode": "corpus",
+            "record_count": 6,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": 5493,
+            "source_count": 6,
+            "source_kind_counts": {
+              "us_code": 6
+            },
+            "source_selectors_verified": true,
+            "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+            "training_record_count": 3,
+            "validation_record_count": 3
+          },
+          "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+          "training_record_count": 3,
+          "training_record_ids": [
+            "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+            "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+            "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+          ],
+          "validation_record_count": 3,
+          "validation_record_ids": [
+            "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+            "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+            "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+          ],
+          "verification_mode": "manifest_source_bytes_frozen_index_and_embedding_production"
+        },
+        "model_or_checkpoint_loaded": false,
+        "native_class_dependency_hashes": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b"
+        },
+        "native_daemon_qualified": false,
+        "network_guard": {
+          "denied_syscalls": [
+            "socket",
+            "connect",
+            "sendto",
+            "sendmsg",
+            "sendmmsg"
+          ],
+          "mechanism": "linux_seccomp",
+          "socket_denial_verified": true
+        },
+        "original_alias_scope": "original arm imports an additional archived codec module; its allocations are reflected in GC and memory observations",
+        "outer_child_timeout_seconds": 180,
+        "passed": true,
+        "production_guard_bypassed_or_modified": false,
+        "qualification_scope": "forensic same-artifact codec comparison; stale current session must reject; no end-to-end daemon speed inference",
+        "recorded_at": "2026-09-25T12:05:05.530177+00:00",
+        "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+        "schema": "same-artifact-report-codec-comparison-v1",
+        "source_changes_during_arm": [],
+        "source_manifest_after": {
+          "bytes": 1125316,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/2-optimized/source-after.json",
+          "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+        },
+        "source_manifest_before": {
+          "bytes": 1125316,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/2-optimized/source-before.json",
+          "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+        },
+        "source_unchanged_during_arm": true,
+        "timing_scope": "unprofiled native low-level load/selection/encoding only; imports, guards, memory observations and integrity audit excluded",
+        "timings": {
+          "encode_seconds": 3.468570000026375,
+          "load_seconds": 0.043416494969278574,
+          "selection_seconds": 4.653948994004168
+        },
+        "tree_pin": {
+          "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+          "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+          "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+        }
+      }
+    },
+    {
+      "arm": "original",
+      "exit_code": 0,
+      "outer_timeout": false,
+      "process_log": {
+        "bytes": 1062,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/3-original/process.log",
+        "sha256": "ccee007ee3e544e1d3ab8d5104658a1248cfb773fed262e169d675783634a427"
+      },
+      "process_seconds_including_audit_guards_shutdown": 16.50659142108634,
+      "receipt": {
+        "bytes": 18457,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/3-original/receipt.json",
+        "sha256": "5d73318495bf8e32f1197d99aed44cb24ac65efaff49e57ad08be248d71ab3df"
+      },
+      "result": {
+        "actual_native_fields": {
+          "bounds": {
+            "depth": 100,
+            "diagnostic_token_bytes": 268435456,
+            "distinct_compounds": 1000000,
+            "visited_values": 268435456
+          },
+          "charge_scope": "unique UTF-8 bytes plus emitted diagnostic token payloads; not exact codec expanded bytes or RSS",
+          "charged_bytes": 134344573,
+          "distinct_native_objects": 318053,
+          "schema": "native-fields-order-alias-fingerprint-v2",
+          "sha256": "9b61802e163b82a11b0c24df742d0d9608f0776ff8dea7213848d50ab7f390cd",
+          "unique_string_values": 97781,
+          "visited_values": 2716845
+        },
+        "actual_target": {
+          "bytes": 64868307,
+          "sha256": "0d4f683fb6dff3493fbf2df63e7928c0a1267f822c66cbc71dd46519960579b6"
+        },
+        "actual_wire": {
+          "bytes": 63159922,
+          "sha256": "59e7e22982e2dfd6747faa6c0f795ab55d896cb0d0caf916c690ab147503193f"
+        },
+        "admitted": false,
+        "after_encode_before_audit": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            5,
+            2,
+            37
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 8681,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 789,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 20,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 934380,
+            "pss_kib": 738220,
+            "rss_kib": 778076
+          }
+        },
+        "after_selection": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            7,
+            8,
+            4
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 4067,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 369,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 12,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 755576,
+            "pss_kib": 479375,
+            "rss_kib": 518824
+          }
+        },
+        "archives_unchanged": true,
+        "arm": "original",
+        "arm_order": [
+          "original",
+          "optimized",
+          "optimized",
+          "original"
+        ],
+        "artifact": {
+          "bytes": 16237649,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-report-handoff-20260925/native-r3/prepared-reports.bundle",
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+        },
+        "artifact_verification_after": {
+          "bytes": 16237649,
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c",
+          "snapshot_id": "sha256:6d8ccae47cc29d37ffa342410654b2ee981faee42550901f4542d3d37d50df66"
+        },
+        "audit_seconds_outside_operation_timers": 3.464692145003937,
+        "automatic_retry": false,
+        "before_load": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            265,
+            10,
+            10
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 362,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 32,
+              "uncollectable": 0
+            },
+            {
+              "collected": 115,
+              "collections": 2,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 152476,
+            "pss_kib": 113115,
+            "rss_kib": 152580
+          }
+        },
+        "before_selection": {
+          "gc_callbacks": 0,
+          "gc_count": [
+            10,
+            1,
+            0
+          ],
+          "gc_debug": 0,
+          "gc_enabled": true,
+          "gc_stats": [
+            {
+              "collected": 8967,
+              "collections": 364,
+              "uncollectable": 0
+            },
+            {
+              "collected": 969,
+              "collections": 33,
+              "uncollectable": 0
+            },
+            {
+              "collected": 125,
+              "collections": 3,
+              "uncollectable": 0
+            }
+          ],
+          "gc_threshold": [
+            700,
+            10,
+            10
+          ],
+          "memory": {
+            "max_rss_kib": 152476,
+            "pss_kib": 113112,
+            "rss_kib": 152580
+          }
+        },
+        "bridge_on_evaluation_ran": false,
+        "bundle_statistics": {
+          "artifact_bytes": 16237649,
+          "artifact_format": "report_bundle",
+          "closed": false,
+          "codec": "zlib:legal-ir-native-report-dag-v3",
+          "compressed_report_bytes": 15138748,
+          "decompressed_bytes": 63159922,
+          "decompressed_shards": 1,
+          "hydrate_validate_seconds": 5.6332771650049835,
+          "manifest_bytes": 1098885,
+          "manifest_parse_validate_seconds": 0.03959198505617678,
+          "open_hash_seconds": 0.007573340088129044,
+          "read_decompress_seconds": 0.12052322493400425,
+          "referenced_uncompressed_report_bytes": 205507402,
+          "report_count": 6,
+          "sample_count": 6,
+          "schema_version": "legal-ir-report-bundle-v1",
+          "shard_count": 6,
+          "unique_decompressed_shards": 1,
+          "unique_uncompressed_report_bytes": 205507402
+        },
+        "cache_scope": "fresh process per arm; no memo carryover across operations; OS caches uncontrolled and artifact read by guards before timing",
+        "checkpoint_source_unchanged": true,
+        "checks": {
+          "all_native_fields_types_order_aliases_exact": true,
+          "canonical_module_unchanged": true,
+          "document_shared": true,
+          "one_shard_only": true,
+          "target_exact": true,
+          "wire_exact": true
+        },
+        "current_native_codec_file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py",
+        "current_native_session_rejection": {
+          "message": "report configuration/provenance mismatch",
+          "type": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_report_bundle.ReportBundleError"
+        },
+        "elapsed_seconds": 16.287251460016705,
+        "environment": {
+          "CUDA_VISIBLE_DEVICES": "",
+          "HF_HUB_OFFLINE": "1",
+          "IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS": "1",
+          "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+          "IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS": "1",
+          "IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA": "0",
+          "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+          "MKL_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "executed_codec": {
+          "canonical_production_module_replaced": false,
+          "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer._diagnostic_original_report_codec",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/original-legal_ir_report_bundle.py",
+          "sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059"
+        },
+        "expected_identities": {
+          "derived_target": {
+            "bytes": 64868307,
+            "sha256": "0d4f683fb6dff3493fbf2df63e7928c0a1267f822c66cbc71dd46519960579b6"
+          },
+          "document_hash": "d5f27a87ae6879c89ed687f3724f4e22ccc524995dba697dd8a54b7c4f94bca7",
+          "independent_native_fingerprint": {
+            "bounds": {
+              "depth": 100,
+              "diagnostic_token_bytes": 268435456,
+              "distinct_compounds": 1000000,
+              "visited_values": 268435456
+            },
+            "charge_scope": "unique UTF-8 bytes plus emitted diagnostic token payloads; not exact codec expanded bytes or RSS",
+            "charged_bytes": 134344573,
+            "distinct_native_objects": 318053,
+            "schema": "native-fields-order-alias-fingerprint-v2",
+            "sha256": "9b61802e163b82a11b0c24df742d0d9608f0776ff8dea7213848d50ab7f390cd",
+            "unique_string_values": 97781,
+            "visited_values": 2716845
+          },
+          "report_dag_bytes": 63159922,
+          "report_dag_sha256": "59e7e22982e2dfd6747faa6c0f795ab55d896cb0d0caf916c690ab147503193f",
+          "target_shares_report_document": true
+        },
+        "frozen_dependency": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/profile_report_hydration.py",
+          "sha256": "180ba84c1bf509e098281bd5ff867dd3240a0f871dc2819b584dbc99b6b4b719"
+        },
+        "gc_policy_changed": false,
+        "generation_or_training_performed": false,
+        "harness_sha256": "60a0defd84029be39e82599e7b8f1386fd8878ca22ef980736ab3e71931b2347",
+        "harness_unchanged": true,
+        "historical_artifact": {
+          "bytes": 16237649,
+          "sha256": "ade32159e43d4c9c7ba0af54f22920e3c1981f97fe47851911755a7e4da2c52c"
+        },
+        "historical_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "historical_evaluate_provers": false,
+        "historical_metric_disk_cache": 0,
+        "historical_parallel_workers": 1,
+        "historical_producer_stale": true,
+        "historical_source_differences": [
+          {
+            "current_sha256": "de063914e0eb5b24b04f48e6746dac50ae0db9ee4e5407f8219fad48372fd59e",
+            "historical_sha256": "6a349d581e5027b8cffede2fe73e25c167106fb8c343e8453e4ecc3a3e5f55ed",
+            "path": "logic/autoformal/repair_intake.py"
+          },
+          {
+            "current_sha256": "16ae5547afff84d6fc98447b73d33e66c30affff603bf733651fd7c995979b18",
+            "historical_sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059",
+            "path": "optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py"
+          }
+        ],
+        "input_verification": {
+          "arrow_embedding_inputs_initial_statistics": {
+            "array_exports": 0,
+            "artifact_bytes": 11082,
+            "artifact_sha256": "3fd254bcba252a5c0396251fa66273e713f1c74340f32d857a22cb4a82423f04",
+            "closed": false,
+            "dimension": 384,
+            "mapped_numeric_bytes": 9216,
+            "ordered_record_ids_sha256": "292c104cdeb426b8c763759a8d86f6a714079c63feb7457f52164be9dc83c496",
+            "production_bytes": 434558,
+            "production_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "read_only": true,
+            "row_accesses": 0,
+            "row_count": 6,
+            "scalar_accesses": 0,
+            "schema_version": "autoencoder-embedding-inputs-arrow-v1",
+            "whole_training_zero_copy": false,
+            "zero_copy_numeric_buffers_verified": true
+          },
+          "arrow_embedding_inputs_verification": {
+            "artifact_bytes": 11082,
+            "artifact_sha256": "3fd254bcba252a5c0396251fa66273e713f1c74340f32d857a22cb4a82423f04",
+            "dimension": 384,
+            "mapped_numeric_bytes": 9216,
+            "ordered_record_ids_sha256": "292c104cdeb426b8c763759a8d86f6a714079c63feb7457f52164be9dc83c496",
+            "production_bytes": 434558,
+            "production_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "read_only": true,
+            "row_count": 6,
+            "schema_version": "autoencoder-embedding-inputs-arrow-v1",
+            "whole_training_zero_copy": false,
+            "zero_copy_numeric_buffers_verified": true
+          },
+          "arrow_embedding_inputs_verified": true,
+          "batch_split_disjoint": true,
+          "corpus_index_membership_verified": true,
+          "corpus_index_verification": {
+            "admitted": false,
+            "batch_index_membership_verified": true,
+            "batch_mode": "corpus",
+            "corpus_complete": false,
+            "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+            "embedding_producer_authenticated": false,
+            "global_holdout_verified": false,
+            "group_count": 51,
+            "index_id": "sha256:f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+            "index_sha256": "f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+            "indexed_partition_disjoint_verified": true,
+            "partition_counts": {
+              "canary": 0,
+              "holdout": 5,
+              "train": 43,
+              "validation": 3
+            },
+            "record_count": 51,
+            "scope": {
+              "completeness": "selected_subset",
+              "release_manifest_sha256s": [
+                "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6"
+              ],
+              "selection_sha256": "1267d3fd0d5f5c65662b525eacc8584ce72481dee6c3d9b0060b440de3f19192"
+            },
+            "semantic_duplicate_isolation_verified": false,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": false,
+            "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+            "training_record_ids": [
+              "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+              "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+              "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+            ],
+            "unseen_checkpoint_lineage_verified": false,
+            "validation_record_ids": [
+              "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+              "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+              "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+            ]
+          },
+          "dataset_and_split_identity_verified": true,
+          "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+          "embedding_producer_authenticated": false,
+          "embedding_production_verification": {
+            "bytes": 434558,
+            "execution_kind": "native",
+            "formal_proof_verified": false,
+            "input_count": 64,
+            "model_revision_authenticated": false,
+            "native_execution_profile": true,
+            "record_integrity": true,
+            "runtime_computation_proven": false,
+            "runtime_cryptographically_attested": false,
+            "schema": "autoencoder-embedding-production-v1",
+            "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+            "source_artifacts_verified": 6,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": 5493,
+            "source_inputs_verified": 6,
+            "source_selectors_verified": true,
+            "status_counts": {
+              "embedded": 51,
+              "missing_input": 0,
+              "token_limit_exceeded": 13
+            },
+            "supplied_records_verified": 6
+          },
+          "embedding_production_verified": true,
+          "frontend": "legacy_us_code",
+          "global_holdout_verified": false,
+          "job_records_verified": true,
+          "language_counts": {
+            "en": 6
+          },
+          "mode": "corpus",
+          "record_count": 6,
+          "source_authority_authenticated": false,
+          "source_count": 6,
+          "source_kind_counts": {
+            "us_code": 6
+          },
+          "source_validation": {
+            "batch_split_disjoint": true,
+            "dataset_snapshot_id": "sha256:405a083d49c1a7b1b66deb90b7a2aa1ce1b669ba86bb6d51ab67a11908643b11",
+            "embedding_producer_authenticated": false,
+            "frontend": "legacy_us_code",
+            "global_holdout_verified": false,
+            "language_counts": {
+              "en": 6
+            },
+            "mode": "corpus",
+            "record_count": 6,
+            "source_authority_authenticated": false,
+            "source_bytes_verified": 5493,
+            "source_count": 6,
+            "source_kind_counts": {
+              "us_code": 6
+            },
+            "source_selectors_verified": true,
+            "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+            "training_record_count": 3,
+            "validation_record_count": 3
+          },
+          "split_snapshot_id": "sha256:53e8a477d80699d68615ea8e0176088149c1e53d8c8b3258ed9a2102ed3bb2e2",
+          "training_record_count": 3,
+          "training_record_ids": [
+            "sha256:001dcf2cd940903cd489b221d710cb4cdd3ca0dfc6e0b687ef2313ed5e1f289e",
+            "sha256:0b45a9952a3c244c2c40d10acd9f7fcfd431f3a682b274045a7f7680fdd3dd89",
+            "sha256:10573243fddcb691d97872a8f46cfc88cd5ec30884bc97cb8a0682e1ce3d08f1"
+          ],
+          "validation_record_count": 3,
+          "validation_record_ids": [
+            "sha256:49762671f71540848ccaff31558d2f3d2408a742b6567d023bf1f875e1b212f3",
+            "sha256:5a7fffb82bf76f5dd87c4a9852e96e78472857e1698a8ef3ed2311fb8ce10ba0",
+            "sha256:88365706737bbf6e9a1b85741364dc3198859ce130e2ccb72beadce879f96567"
+          ],
+          "verification_mode": "manifest_source_bytes_frozen_index_and_embedding_production"
+        },
+        "model_or_checkpoint_loaded": false,
+        "native_class_dependency_hashes": {
+          "logic/bridge/multiview.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+          "logic/bridge/types.py": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+          "optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b"
+        },
+        "native_daemon_qualified": false,
+        "network_guard": {
+          "denied_syscalls": [
+            "socket",
+            "connect",
+            "sendto",
+            "sendmsg",
+            "sendmmsg"
+          ],
+          "mechanism": "linux_seccomp",
+          "socket_denial_verified": true
+        },
+        "original_alias_scope": "original arm imports an additional archived codec module; its allocations are reflected in GC and memory observations",
+        "outer_child_timeout_seconds": 180,
+        "passed": true,
+        "production_guard_bypassed_or_modified": false,
+        "qualification_scope": "forensic same-artifact codec comparison; stale current session must reject; no end-to-end daemon speed inference",
+        "recorded_at": "2026-09-25T12:05:19.632089+00:00",
+        "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+        "schema": "same-artifact-report-codec-comparison-v1",
+        "source_changes_during_arm": [],
+        "source_manifest_after": {
+          "bytes": 1125316,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/3-original/source-after.json",
+          "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+        },
+        "source_manifest_before": {
+          "bytes": 1125316,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/3-original/source-before.json",
+          "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+        },
+        "source_unchanged_during_arm": true,
+        "timing_scope": "unprofiled native low-level load/selection/encoding only; imports, guards, memory observations and integrity audit excluded",
+        "timings": {
+          "encode_seconds": 4.590807346976362,
+          "load_seconds": 0.04723102191928774,
+          "selection_seconds": 5.767268521012738
+        },
+        "tree_pin": {
+          "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+          "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+          "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+        }
+      }
+    }
+  ],
+  "sample_id": "us-code-22-4021a-fce42ca5c6a35f9d",
+  "schema": "same-artifact-report-codec-comparison-v1",
+  "source_changes_during_comparison": [],
+  "source_manifest_after": {
+    "bytes": 1125316,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/source-after.json",
+    "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+  },
+  "source_manifest_before": {
+    "bytes": 1125316,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/comparison/source-before.json",
+    "sha256": "37b205e52977bed22575efccda771554352d8e141fbe392160c1252d6d506739"
+  },
+  "source_unchanged_during_comparison": true,
+  "timing_scope": "unprofiled native low-level load/selection/encoding only; imports, guards, memory observations and integrity audit excluded",
+  "timings": {}
+}

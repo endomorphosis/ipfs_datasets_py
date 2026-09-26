@@ -1,0 +1,401 @@
+{
+  "admitted": false,
+  "artifact_count": 14,
+  "artifacts": [
+    {
+      "bytes": 5228436,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-sparse-shadow-20260925-r1.json",
+      "sha256": "76cb352d2c8ad6f5258c23e044d41a1ac2ba546b7b0d25eb0737bf05c2c0e0e2"
+    },
+    {
+      "bytes": 20100,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/qualify_daemon_sparse_shadow.py",
+      "sha256": "741012580af08fd50bb4b4dc7eb0e02e45ded22bea847df1bfe155722ef59617"
+    },
+    {
+      "bytes": 1278195,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/query.json",
+      "sha256": "ed556c6d20180970ef0488a8bdcc96f946c027faabb063eded2377a3d2dee943"
+    },
+    {
+      "bytes": 2632652,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/child-result.json",
+      "sha256": "d02c619ab8971bdddcf11b4a56aa0bb18d88c01ae23b17236e7b8ee569c382ab"
+    },
+    {
+      "bytes": 4371004,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-invocation-native-20260925-r2.json",
+      "sha256": "0c7b84a8cd11dc9f181c68d2124786b020edaff990a5565dfa3e54c8fdc7863f"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 1664643,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-invocation-20260925/native-r2/private-owner/artifacts/dc/dc133884a94e6a10cbbab41a9b9293428f970f668b392ffaa144dfa8932a45f6",
+      "sha256": "dc133884a94e6a10cbbab41a9b9293428f970f668b392ffaa144dfa8932a45f6"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 2916,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/archived_accepted_six_scalar/patch.json",
+      "sha256": "be59550765990a7ea60516ed675d78ca4e534f3574f98779d5c31d098e7613b6"
+    },
+    {
+      "bytes": 30241,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/archived_accepted_six_scalar/receipt.json",
+      "sha256": "a16d57fdbbcfe257f86879cdb3983bf13562446e95d871c568e1f884e5397f26"
+    },
+    {
+      "bytes": 1741,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/child.log",
+      "sha256": "8cacf68343f46dc190dfd04efb426f0815953a32475912070dae2f42606ecf36"
+    },
+    {
+      "bytes": 1459,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/owner_zero_update/patch.json",
+      "sha256": "d21b39b87ea73ed24139a72161e23258e4f24a826bb30e77edce6c02de05412c"
+    },
+    {
+      "bytes": 30409,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/owner_zero_update/receipt.json",
+      "sha256": "a58fb0be74bab5ca290f611b6e869eaba4432375a625ce0c2ec7afde2b7ff7b3"
+    }
+  ],
+  "audit_passed": true,
+  "bridge_evaluation_performed": false,
+  "cases": [
+    {
+      "base_identity": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+      "base_revision": 0,
+      "capture_timings": {
+        "diff_seconds": 1.260894350707531e-05,
+        "encode_seconds": 7.216003723442554e-05,
+        "hash_seconds": 0.029421305283904076,
+        "hash_seconds_are_subset_of_scan_seconds": true,
+        "scan_seconds": 1.5533644140232354,
+        "total_seconds": 1.5535810409346595
+      },
+      "changes": [],
+      "compact_reproduced": {
+        "bytes": 1664643,
+        "sha256": "dc133884a94e6a10cbbab41a9b9293428f970f668b392ffaa144dfa8932a45f6"
+      },
+      "counts": {
+        "changed_component_count": 0,
+        "deleted_rows": 0,
+        "inserted_rows": 0,
+        "revision_witness_count": 0,
+        "touched_component_count": 0,
+        "touched_row_count": 0
+      },
+      "full_comparison_report_checked": true,
+      "memory_after": {
+        "max_rss_kib": 511048,
+        "pss_kib": 392677,
+        "rss_kib": 402672
+      },
+      "memory_before": {
+        "max_rss_kib": 61648,
+        "pss_kib": 45197,
+        "rss_kib": 55072
+      },
+      "name": "owner_zero_update",
+      "native_canonical_checkpoint": {
+        "bytes": 25895655,
+        "sha256": "94c902ceea26a926f2279866b988d09d6ffffe5d0a91f5b573783dd67f79b5fa"
+      },
+      "native_state_replay_repeated_by_audit": false,
+      "patch": {
+        "bytes": 1459,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/owner_zero_update/patch.json",
+        "sha256": "d21b39b87ea73ed24139a72161e23258e4f24a826bb30e77edce6c02de05412c"
+      },
+      "patch_and_receipt_closure_exact": true,
+      "patch_bytes": 1459,
+      "raw_legacy_scalar_bits_verified": false,
+      "receipt": {
+        "bytes": 30409,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/owner_zero_update/receipt.json",
+        "sha256": "a58fb0be74bab5ca290f611b6e869eaba4432375a625ce0c2ec7afde2b7ff7b3"
+      },
+      "result_identity": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+      "result_revision": 0,
+      "scope": "historical actual owner candidate with zero accepted updates; unchanged-state control",
+      "timings": {
+        "capture_seconds": 1.5535888009471819,
+        "elapsed_seconds_before_receipt_write": 12.327449518023059,
+        "load_endpoints_seconds": 2.964926255051978,
+        "reload_base_seconds": 2.3597722380654886,
+        "replay_seconds": 0.00014086603187024593,
+        "verify_compact_bytes_seconds": 3.1528126320336014,
+        "verify_complete_state_seconds": 2.2303698919713497,
+        "write_patch_seconds": 0.012109667994081974
+      },
+      "wall_seconds": 12.338548548985273
+    },
+    {
+      "base_identity": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+      "base_revision": 0,
+      "capture_timings": {
+        "diff_seconds": 5.355302710086107e-05,
+        "encode_seconds": 0.00010064092930406332,
+        "hash_seconds": 0.029432580922730267,
+        "hash_seconds_are_subset_of_scan_seconds": true,
+        "scan_seconds": 1.5572314159944654,
+        "total_seconds": 1.5574954990297556
+      },
+      "changes": [
+        {
+          "float64_big_endian_hex": "3f708bc3cbdaafd4",
+          "key": "CEC.native",
+          "value": 0.004039540128058367
+        },
+        {
+          "float64_big_endian_hex": "3f798ce0ea8413fe",
+          "key": "TDFOL.prover",
+          "value": 0.006237867906979664
+        },
+        {
+          "float64_big_endian_hex": "3fa167cfb08c88c1",
+          "key": "deontic.ir",
+          "value": 0.0339951422704572
+        },
+        {
+          "float64_big_endian_hex": "bf9715c0f5cb6197",
+          "key": "external_provers.router",
+          "value": -0.0225439214726478
+        },
+        {
+          "float64_big_endian_hex": "bf985d7779226407",
+          "key": "knowledge_graphs.neo4j_compat",
+          "value": -0.02379404713483171
+        },
+        {
+          "float64_big_endian_hex": "3f60eb7f01e81974",
+          "key": "modal.frame_logic",
+          "value": 0.0020654183019843068
+        }
+      ],
+      "compact_reproduced": null,
+      "counts": {
+        "changed_component_count": 1,
+        "deleted_rows": 0,
+        "inserted_rows": 6,
+        "revision_witness_count": 0,
+        "touched_component_count": 0,
+        "touched_row_count": 6
+      },
+      "full_comparison_report_checked": true,
+      "memory_after": {
+        "max_rss_kib": 511048,
+        "pss_kib": 299089,
+        "rss_kib": 309088
+      },
+      "memory_before": {
+        "max_rss_kib": 511048,
+        "pss_kib": 392685,
+        "rss_kib": 402680
+      },
+      "name": "archived_accepted_six_scalar",
+      "native_canonical_checkpoint": {
+        "bytes": 25895897,
+        "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+      },
+      "native_state_replay_repeated_by_audit": false,
+      "patch": {
+        "bytes": 2916,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/archived_accepted_six_scalar/patch.json",
+        "sha256": "be59550765990a7ea60516ed675d78ca4e534f3574f98779d5c31d098e7613b6"
+      },
+      "patch_and_receipt_closure_exact": true,
+      "patch_bytes": 2916,
+      "raw_legacy_scalar_bits_verified": true,
+      "receipt": {
+        "bytes": 30241,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-sparse-shadow-20260925/replay-r1/archived_accepted_six_scalar/receipt.json",
+        "sha256": "a16d57fdbbcfe257f86879cdb3983bf13562446e95d871c568e1f884e5397f26"
+      },
+      "result_identity": "5d7a268ca992fd1613254db94b59a5a969f2eb322b12d52d44e0f7121c9d529e",
+      "result_revision": 0,
+      "scope": "archived three-gate in-sample accepted update; no owner-observed changed transition",
+      "timings": {
+        "capture_seconds": 1.5575034669600427,
+        "elapsed_seconds_before_receipt_write": 9.445248840027489,
+        "load_endpoints_seconds": 3.232755395001732,
+        "reload_base_seconds": 2.3011789079755545,
+        "replay_seconds": 0.0002704838989302516,
+        "verify_compact_bytes_seconds": 4.4796615839004517e-07,
+        "verify_complete_state_seconds": 2.247691247961484,
+        "write_patch_seconds": 0.006429327069781721
+      },
+      "wall_seconds": 9.456303758081049
+    }
+  ],
+  "checks": {
+    "all_recorded_source_maps_identical": true,
+    "artifact_closure_unchanged_after_audit": true,
+    "audited_helper_hashes_match": true,
+    "child_environment_unchanged": true,
+    "child_harness_unchanged": true,
+    "child_inputs_unchanged": true,
+    "child_passed": true,
+    "child_query_unchanged": true,
+    "child_source_unchanged": true,
+    "closure_verified": true,
+    "cpu_lease_released": true,
+    "current_charge_below_50GB": true,
+    "current_source_matches_replay": true,
+    "network_denial_reported": true,
+    "no_admission_or_publication": true,
+    "no_owned_native_or_constitution_processes": true,
+    "parent_environment_unchanged": true,
+    "parent_harness_unchanged": true,
+    "parent_helpers_unchanged": true,
+    "parent_inputs_unchanged": true,
+    "parent_source_unchanged": true,
+    "persisted_child_exact": true,
+    "prior_failure_retained": true,
+    "raw_base_logits_empty": true,
+    "raw_common_component_diff_is_exactly_logits": true,
+    "raw_target_exactly_six_scalars": true,
+    "receipt_passed": true,
+    "released_ledger_record_exact": true,
+    "replay_child_and_group_gone": true,
+    "scheduler_has_no_leases_or_waiters": true,
+    "shared_scheduler_configuration_unchanged": true,
+    "source_unchanged_after_audit": true,
+    "two_exact_patch_cases": true
+  },
+  "constitution_formalized": false,
+  "helper_artifacts": [
+    {
+      "bytes": 22552,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/qualify_owned_daemon_invocation.py",
+      "sha256": "c54b99391e7dfdf9515ebd9ced4fa917f6a49efc1f86dbe254a632ef30c0e350"
+    },
+    {
+      "bytes": 37622,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/qualify_daemon_corpus_inputs.py",
+      "sha256": "cc8b6ed99be0790b58cbf2e5585d9b20d3b48f68c5541edae50b1269a991e16f"
+    },
+    {
+      "bytes": 16756,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/audit_native_uscode_embedding_production.py",
+      "sha256": "381f0bbb08229fcc15add4faf259be07d895d4502f44cc573265ef4f72cb8fb6"
+    }
+  ],
+  "limitations": [
+    "One fixed zero-update control and one archived in-sample accepted endpoint pair; no native changed-update owner adoption.",
+    "Endpoint patches do not reproduce intermediate optimizer mutations; both legacy reload revisions are zero.",
+    "Six scalar replay time is a small subphase; loading, full scans, independent reload and serialization dominate total cost. No end-to-end training or legal-IR speed claim.",
+    "The changed archived target canonical SHA happens to equal raw legacy SHA here; API comparison does not generally promise raw legacy formatting reproduction.",
+    "No independent native replay repeated in this audit; qualified child performed all38-field/state/metric/compact checks, whose exact sealed outputs were verified.",
+    "Current storage inventory precedes this new small audit receipt and may coexist with unrelated files changing in the named roots."
+  ],
+  "memory": {
+    "budget_mib": 3072,
+    "child_max_rss_kib": 511048,
+    "child_max_rss_mib": 499.0703125,
+    "scope": "Cumulative child high-water RSS, not per-case exclusive peaks or kernel enforcement."
+  },
+  "owner_operations_performed": false,
+  "promoted": false,
+  "publication_performed": false,
+  "raw_archived_pair": {
+    "accepted_component_count": 40,
+    "added_legacy_default_fields": [
+      "applied_leanstral_guidance_ids",
+      "applied_proof_feedback_ids",
+      "architecture_version",
+      "proof_auxiliary_head_logits",
+      "proof_auxiliary_head_schema_version",
+      "proof_feedback_version_fingerprint",
+      "schema_version"
+    ],
+    "base_component_count": 33,
+    "common_changed_components": [
+      "legal_ir_view_logits"
+    ],
+    "common_unchanged_count": 32,
+    "native_states_loaded_by_audit": false,
+    "scope": "Sequential stdlib raw-JSON field hashes plus exact IEEE754 scalar comparison; native complete-state replay evidence belongs to qualified child."
+  },
+  "receipt": {
+    "bytes": 5228436,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-sparse-shadow-20260925-r1.json",
+    "sha256": "76cb352d2c8ad6f5258c23e044d41a1ac2ba546b7b0d25eb0737bf05c2c0e0e2"
+  },
+  "recorded_at": "2026-09-25T14:35:17.118264+00:00",
+  "replay_qualification_repeated": false,
+  "resources": {
+    "active_named_processes": [],
+    "actual_attempt_bytes": 3977613,
+    "at_release": {
+      "additional_requested_bytes": 0,
+      "charged_bytes": 34646572125,
+      "inventory": {
+        "apparent_bytes": 33646572125,
+        "entry_count": 57896,
+        "special_file_count": 11,
+        "symlink_count": 2912
+      },
+      "limit_bytes": 50000000000,
+      "minimum_filesystem_free_bytes": 324772265984,
+      "observed_apparent_bytes": 33646572125,
+      "outstanding_full_reservations_bytes": 1000000000,
+      "scope": "named_roots_only_apparent_bytes"
+    },
+    "conservative_external_charge_bytes": 33554432,
+    "current_named_root_inventory_before_audit_receipt_write": {
+      "apparent_bytes": 33651801127,
+      "entry_count": 57897,
+      "special_file_count": 11,
+      "symlink_count": 2912
+    },
+    "current_total_charge_bytes": 34651801127,
+    "ledger_sha256_at_audit": "2986f97b87475e872a6778c7b77b39a35fa20cd4a48bf61e50f01d79b44757e9",
+    "limit_bytes": 50000000000,
+    "live_group_pids": [],
+    "outstanding_full_reservations": {
+      "8827ac316aae4ecbbfddf9dedf0332d7": 1000000000
+    },
+    "remaining_to_named_root_charge_limit_bytes": 15348198873,
+    "replay_child": {
+      "birth": "91496935",
+      "pid": 206677
+    },
+    "reservation_bytes": 1000000000,
+    "reservation_id": "8ef8d993d7754bf6a2f8e174f86b1553",
+    "reservation_released": true,
+    "scheduler_active_lease_count": 0,
+    "scheduler_lane": "hammer_lean",
+    "scheduler_waiter_count": 0,
+    "scope": "Independent lstat inventory of the same four named roots; hardlinks count per pathname, symlinks/special entries without following. Not a global census or atomic snapshot.",
+    "total_attempt_charged_bytes": 37532045,
+    "workload": "canonical_trainer"
+  },
+  "schema": "daemon-sparse-shadow-independent-audit-v1",
+  "source": {
+    "file_count": 7731,
+    "manifest_sha256": "5445c988c2b5e2c431af0089c5b4d302e97ddd0594ab052966d6a456a9c0b040"
+  },
+  "timings": {
+    "audit_elapsed_seconds_before_write": 2.5539290059823543,
+    "case_sum_seconds": 21.79485230706632,
+    "child_including_guards_seconds": 23.315804165089503,
+    "parent_including_guards_seconds": 29.60585207398981
+  },
+  "training_performed": false
+}

@@ -19,6 +19,7 @@ import hashlib
 import json
 import math
 import os
+import stat
 import struct
 import threading
 import zlib
@@ -63,6 +64,7 @@ _MAX_MANIFEST_BYTES = 4 * 1024 * 1024
 _MAX_PAYLOAD_BYTES = 8 * 1024 * 1024 * 1024
 _MAX_INDEX_BYTES = 512 * 1024 * 1024
 _MAX_TABLE_VALUES = 1_000_000_000
+_NUMERIC_PACK_BATCH_VALUES = 4096
 
 
 class ModalAutoencoderCheckpointError(RuntimeError):
@@ -257,9 +259,23 @@ def _encode_state_payload(
             values = [number for _path, number in leaves]
 
         packed = bytearray()
-        for number in values:
-            quantized = quantize_float(number, precision)
-            packed.extend(struct.pack(fmt, quantized))
+        for offset in range(0, len(values), _NUMERIC_PACK_BATCH_VALUES):
+            chunk = values[offset : offset + _NUMERIC_PACK_BATCH_VALUES]
+            try:
+                if not all(map(math.isfinite, chunk)):
+                    raise ValueError("nonfinite numeric batch")
+                # Packing directly produces the same IEEE-754 bytes as the
+                # previous pack/unpack/repack for each value. Bound the argument
+                # tuple independently of the size of a numeric table.
+                encoded = struct.pack("<" + str(len(chunk)) + fmt[-1], *chunk)
+            except (ValueError, OverflowError, struct.error):
+                # Keep scalar validation order and the original error messages,
+                # including an overflow before a later nonfinite value.
+                encoded = b"".join(
+                    struct.pack(fmt, quantize_float(number, precision))
+                    for number in chunk
+                )
+            packed.extend(encoded)
         descriptor["value_count"] = len(values)
         descriptor["byte_length"] = len(packed)
         numeric.extend(packed)
@@ -640,14 +656,98 @@ class CheckpointLoadResult:
     delta_manifests: Tuple[CheckpointManifest, ...] = ()
 
 
-def serialize_checkpoint(
+_BASELINE_PROFILE = "modal-autoencoder-checkpoint-baseline-v1"
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointBaseline:
+    """Immutable persisted identity only; no state, rows or checkpoint bytes.
+
+    This process-local optimization is not an artifact verifier or authority
+    receipt. A caller must obtain it from the normalized serializer/startup
+    helper and advance it only after enqueueing the corresponding snapshot.
+    """
+
+    profile: str
+    state_schema_version: str
+    state_digest: str
+    revision: int
+    metric_lineage_digest: str
+    metric_lineage_json: bytes
+    float_precision: str
+    component_digests: tuple[tuple[str, str], ...]
+
+    def __post_init__(self) -> None:
+        def digest(value: Any) -> bool:
+            return type(value) is str and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
+
+        if (type(self.profile) is not str or self.profile != _BASELINE_PROFILE
+                or type(self.state_schema_version) is not str
+                or not 0 < len(self.state_schema_version) <= 1024
+                or type(self.revision) is not int or self.revision < 0
+                or type(self.float_precision) is not str or self.float_precision not in _FLOAT_FORMATS
+                or not digest(self.state_digest) or not digest(self.metric_lineage_digest)):
+            raise CheckpointLineageError("invalid checkpoint baseline identity")
+        if type(self.metric_lineage_json) is not bytes or not 0 < len(self.metric_lineage_json) <= _MAX_MANIFEST_BYTES:
+            raise CheckpointLineageError("invalid checkpoint baseline requested lineage")
+        try:
+            lineage = json.loads(self.metric_lineage_json)
+            if _json_bytes(_canonical_copy(lineage)) != self.metric_lineage_json:
+                raise ValueError("noncanonical lineage")
+        except (TypeError, ValueError, RecursionError, OverflowError) as exc:
+            raise CheckpointLineageError("invalid checkpoint baseline requested lineage") from exc
+        if type(self.component_digests) is not tuple or not 0 < len(self.component_digests) <= 1024:
+            raise CheckpointLineageError("invalid checkpoint baseline components")
+        previous = None
+        for pair in self.component_digests:
+            if (type(pair) is not tuple or len(pair) != 2 or type(pair[0]) is not str
+                    or not 0 < len(pair[0]) <= 1024 or not digest(pair[1])
+                    or (previous is not None and pair[0] <= previous)):
+                raise CheckpointLineageError("invalid checkpoint baseline components")
+            previous = pair[0]
+
+
+@dataclass(frozen=True, slots=True)
+class SerializedCheckpoint:
+    payload: bytes
+    baseline: CheckpointBaseline
+
+    def __post_init__(self) -> None:
+        if type(self.payload) is not bytes or type(self.baseline) is not CheckpointBaseline:
+            raise CheckpointLineageError("serialized checkpoint requires immutable bytes and baseline")
+
+
+def _checkpoint_baseline_record(record: tuple[str, int, str, Dict[str, str], str],
+                                *, float_precision: str, metric_lineage: Any) -> CheckpointBaseline:
+    digest, revision, lineage_digest, components, state_schema = record
+    return CheckpointBaseline(_BASELINE_PROFILE, state_schema, digest, revision,
+                              lineage_digest, _json_bytes(_canonical_copy(metric_lineage)),
+                              next(name for name in _FLOAT_FORMATS if name == float_precision),
+                              tuple(sorted(components.items())))
+
+
+def checkpoint_baseline(state: Any, *, float_precision: str = "float64",
+                        metric_lineage: Any = None,
+                        revision: Optional[int] = None) -> CheckpointBaseline:
+    """Normalize an initial persisted identity without encoding a checkpoint."""
+    source_data = _state_data(state)
+    source_revision = _identity_record(state, metric_lineage)[1]
+    effective_revision = source_revision if revision is None else int(revision)
+    data = _quantized_copy(source_data, float_precision)
+    persisted_state = _state_from_data(data)
+    _restore_revision(persisted_state, effective_revision)
+    return _checkpoint_baseline_record(_identity_record(persisted_state, metric_lineage),
+                                       float_precision=float_precision, metric_lineage=metric_lineage)
+
+
+def serialize_checkpoint_snapshot(
     state: Any,
     *,
     float_precision: str = "float64",
     metric_lineage: Any = None,
     metadata: Optional[Mapping[str, Any]] = None,
     revision: Optional[int] = None,
-) -> bytes:
+) -> SerializedCheckpoint:
     """Serialize a full state into the safe compact binary format."""
 
     source_data = _state_data(state)
@@ -694,10 +794,13 @@ def serialize_checkpoint(
         numeric_value_count=sum(int(table["value_count"]) for table in tables),
         metadata=_canonical_copy(metadata or {}),
     )
-    return _container_bytes(CHECKPOINT_MAGIC, manifest.to_dict(), payload)
+    baseline = _checkpoint_baseline_record(
+        (digest, effective_revision, lineage_digest, component_digests, state_schema),
+        float_precision=float_precision, metric_lineage=metric_lineage)
+    return SerializedCheckpoint(_container_bytes(CHECKPOINT_MAGIC, manifest.to_dict(), payload), baseline)
 
 
-def serialize_delta(
+def serialize_delta_snapshot(
     base_state: Any,
     state: Any,
     *,
@@ -706,7 +809,7 @@ def serialize_delta(
     metadata: Optional[Mapping[str, Any]] = None,
     base_revision: Optional[int] = None,
     revision: Optional[int] = None,
-) -> bytes:
+) -> SerializedCheckpoint:
     """Serialize whole replacements for only the components that changed."""
 
     (
@@ -733,6 +836,19 @@ def serialize_delta(
     digest, _revision, lineage_digest, components, state_schema = _identity_record(
         persisted_state, metric_lineage
     )
+    return _serialize_persisted_delta(
+        data, base_record=(base_digest, effective_base_revision, base_lineage, base_components, base_schema),
+        record=(digest, effective_revision, lineage_digest, components, state_schema),
+        float_precision=float_precision, metric_lineage=metric_lineage, metadata=metadata)
+
+
+def _serialize_persisted_delta(data: Mapping[str, Any], *,
+                              base_record: tuple[str, int, str, Dict[str, str], str],
+                              record: tuple[str, int, str, Dict[str, str], str],
+                              float_precision: str, metric_lineage: Any,
+                              metadata: Optional[Mapping[str, Any]]) -> SerializedCheckpoint:
+    base_digest, effective_base_revision, base_lineage, base_components, base_schema = base_record
+    digest, effective_revision, lineage_digest, components, state_schema = record
     if state_schema != base_schema or lineage_digest != base_lineage:
         raise CheckpointLineageError("delta endpoints have different schema or metric lineage")
     if effective_revision < effective_base_revision:
@@ -786,7 +902,71 @@ def serialize_delta(
         numeric_value_count=sum(int(table["value_count"]) for table in tables),
         metadata=_canonical_copy(metadata or {}),
     )
-    return _container_bytes(DELTA_MAGIC, manifest.to_dict(), payload)
+    baseline = _checkpoint_baseline_record(record, float_precision=float_precision, metric_lineage=metric_lineage)
+    return SerializedCheckpoint(_container_bytes(DELTA_MAGIC, manifest.to_dict(), payload), baseline)
+
+
+def serialize_delta_from_baseline(
+    baseline: CheckpointBaseline,
+    state: Any,
+    *,
+    float_precision: str = "float64",
+    metric_lineage: Any = None,
+    metadata: Optional[Mapping[str, Any]] = None,
+    revision: Optional[int] = None,
+) -> SerializedCheckpoint:
+    """Emit the existing component delta without reconstructing its old state.
+
+    The current endpoint still undergoes the ordinary complete normalization.
+    This removes previous-state work; it is not row-sparse or zero-copy output.
+    The caller retains the existing revision/mutation and durable-write guards.
+    """
+    if type(baseline) is not CheckpointBaseline:
+        raise CheckpointLineageError("base must be an exact CheckpointBaseline")
+    baseline.__post_init__()
+    if (type(float_precision) is not str or float_precision != baseline.float_precision
+            or _json_bytes(_canonical_copy(metric_lineage)) != baseline.metric_lineage_json):
+        raise CheckpointLineageError("checkpoint baseline precision or requested lineage mismatch")
+    source_revision = _identity_record(state, metric_lineage)[1]
+    data = _quantized_copy(_state_data(state), float_precision)
+    persisted_state = _state_from_data(data)
+    effective_revision = source_revision if revision is None else int(revision)
+    _restore_revision(persisted_state, effective_revision)
+    return _serialize_persisted_delta(
+        data,
+        base_record=(baseline.state_digest, baseline.revision, baseline.metric_lineage_digest,
+                     dict(baseline.component_digests), baseline.state_schema_version),
+        record=_identity_record(persisted_state, metric_lineage),
+        float_precision=float_precision, metric_lineage=metric_lineage, metadata=metadata)
+
+
+def serialize_checkpoint(
+    state: Any,
+    *,
+    float_precision: str = "float64",
+    metric_lineage: Any = None,
+    metadata: Optional[Mapping[str, Any]] = None,
+    revision: Optional[int] = None,
+) -> bytes:
+    """Serialize a full state into the unchanged compact binary format."""
+    return serialize_checkpoint_snapshot(state, float_precision=float_precision,
+        metric_lineage=metric_lineage, metadata=metadata, revision=revision).payload
+
+
+def serialize_delta(
+    base_state: Any,
+    state: Any,
+    *,
+    float_precision: str = "float64",
+    metric_lineage: Any = None,
+    metadata: Optional[Mapping[str, Any]] = None,
+    base_revision: Optional[int] = None,
+    revision: Optional[int] = None,
+) -> bytes:
+    """Serialize whole replacements for only the components that changed."""
+    return serialize_delta_snapshot(base_state, state, float_precision=float_precision,
+        metric_lineage=metric_lineage, metadata=metadata, base_revision=base_revision,
+        revision=revision).payload
 
 
 def _validate_manifest_payload(manifest: CheckpointManifest, payload: bytes, *, kind: str) -> None:
@@ -946,6 +1126,80 @@ def iter_delta_segments(
         segments.append((manifest, payload))
         offset = end
     return segments, offset, 0
+
+
+def read_checkpoint_input_metadata(
+    path: str | Path, *, delta_path: str | Path | None = None,
+) -> tuple[Mapping[str, Any], ...]:
+    """Read input-lineage metadata without reconstructing or modifying state.
+
+    Return base metadata followed by every complete delta's metadata, including
+    metadata-only and superseded segments. Framing, manifest and payload checks
+    use the ordinary codec. State/component semantics and replay lineage remain
+    the full loader's responsibility. Legacy JSON has no checkpoint-manifest
+    input binding and contributes an empty mapping; its state is not decoded.
+
+    A torn final delta is ignored here and left byte-for-byte intact for the
+    normal recovering loader. Complete malformed frames still fail. Each frame
+    obeys the existing codec bounds; there is no new aggregate delta-log cap.
+    """
+    maximum = _HEADER.size + _MAX_MANIFEST_BYTES + _MAX_PAYLOAD_BYTES
+
+    def open_regular(source):
+        descriptor = os.open(source, os.O_RDONLY | os.O_NONBLOCK)
+        stream = os.fdopen(descriptor, "rb")
+        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+            stream.close()
+            raise CheckpointCorruptionError("checkpoint metadata source must be a regular file")
+        return stream
+
+    def metadata(manifest):
+        if not isinstance(manifest.metadata, Mapping):
+            raise CheckpointCorruptionError("checkpoint metadata must be an object")
+        return _canonical_copy(manifest.metadata)
+
+    with open_regular(path) as stream:
+        prefix = stream.read(4096)
+        while prefix and not prefix.strip():
+            prefix = stream.read(4096)
+        legacy_json = prefix.lstrip().startswith(b"{")
+        if not legacy_json:
+            size = os.fstat(stream.fileno()).st_size
+            if size > maximum:
+                raise CheckpointCorruptionError("checkpoint container exceeds safety limit")
+            stream.seek(0)
+            raw = stream.read(size + 1)
+    if legacy_json:
+        result = [{}]
+    elif len(raw) > maximum:
+        raise CheckpointCorruptionError("checkpoint container exceeds safety limit")
+    elif raw.startswith(CHECKPOINT_MAGIC):
+        manifest_data, payload, end = _parse_container(raw, expected_magic=CHECKPOINT_MAGIC)
+        if end != len(raw):
+            raise CheckpointCorruptionError("full checkpoint has trailing bytes")
+        manifest = CheckpointManifest.from_dict(manifest_data)
+        _validate_manifest_payload(manifest, payload, kind="full")
+        result = [metadata(manifest)]
+        del payload, manifest_data
+    else:
+        raise UnsupportedCheckpointError(f"unsupported state file: {Path(path)}")
+    if not legacy_json:
+        del raw
+    if delta_path is not None and Path(delta_path).exists():
+        with open_regular(delta_path) as stream:
+            while header := stream.read(_HEADER.size):
+                # Reuse ordinary validation before trusting any length field.
+                iter_delta_segments(header, recover_truncated_tail=True)
+                if len(header) < _HEADER.size:
+                    break
+                fields = _HEADER.unpack(header)
+                available = max(0, os.fstat(stream.fileno()).st_size - stream.tell())
+                body = stream.read(min(fields[3] + fields[4], available + 1))
+                segments, _, recovered = iter_delta_segments(header + body, recover_truncated_tail=True)
+                if recovered:
+                    break
+                result.extend(metadata(item) for item, _ in segments)
+    return tuple(result)
 
 
 def _apply_delta(
@@ -1935,6 +2189,12 @@ __all__ = [
     "MODAL_AUTOENCODER_TABLE_SCHEMA_VERSION",
     "PROMOTION_KEY",
     "AmbiguousCurrentPointerError",
+    "CheckpointBaseline",
+    "SerializedCheckpoint",
+    "checkpoint_baseline",
+    "serialize_checkpoint_snapshot",
+    "serialize_delta_snapshot",
+    "serialize_delta_from_baseline",
     "CheckpointCorruptionError",
     "CheckpointLifecycleResult",
     "CheckpointLifecycleStore",
@@ -1954,6 +2214,7 @@ __all__ = [
     "load_checkpoint",
     "load_state_checkpoint",
     "quantize_float",
+    "read_checkpoint_input_metadata",
     "reject_incompatible_manifest_alias",
     "save_checkpoint",
     "serialize_checkpoint",

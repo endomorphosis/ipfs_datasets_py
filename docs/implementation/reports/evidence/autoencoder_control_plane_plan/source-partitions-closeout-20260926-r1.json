@@ -1,0 +1,171 @@
+{
+  "admitted": false,
+  "all_source_occurrences_retained": true,
+  "captured_audit_passed": true,
+  "changed_sources_since_capture": [],
+  "code_artifacts": [
+    {
+      "bytes": 9289,
+      "path": "workspace/test-logs/federal-corpus-audits/source-partitions-20260926/run_partitions_r2.py",
+      "sha256": "51c06734c557c1ed2889de6b3cd6c36aeff98211897beeea8fdfa52b4b4aeaae"
+    },
+    {
+      "bytes": 7806,
+      "path": "scripts/ops/legal_ir/freeze_uscode_source_partitions.py",
+      "sha256": "6408ca794a8cc8974c233d1ddb40c1d54be107ab37581c93b6ce8cf4e91d36cb"
+    },
+    {
+      "bytes": 7614,
+      "path": "scripts/ops/legal_ir/inventory_pinned_uscode_sources.py",
+      "sha256": "689d972154afb2c3ad4e9a55ccc452ef175799ab8d3e1737f89fdbc4d318ce50"
+    },
+    {
+      "bytes": 17973,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py",
+      "sha256": "d696c3af565d09be1825a00bdbf979ff97c12bb1a6ab1054564a9946b824875a"
+    },
+    {
+      "bytes": 33754,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py",
+      "sha256": "6aa7330cd20a2eb256561382b78bc4465d3b7607827f53d0b644d9e89afb1f21"
+    },
+    {
+      "bytes": 21099,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py",
+      "sha256": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9"
+    },
+    {
+      "bytes": 28661,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_partitions.py",
+      "sha256": "b9c333de6f0e9e6a2e653c04d401e20ed8a0e34b00ac2643b8996ba9ff4430cd"
+    }
+  ],
+  "comparative_speedup_claim": false,
+  "constitution_formalized": false,
+  "current_sources_equal_capture": true,
+  "embedding_inference_performed": false,
+  "evidence": [
+    {
+      "bytes": 13613,
+      "path": "workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/audit-receipt.json",
+      "sha256": "4aa5bcd0ab1d27870e25f76706509b22e1a33b453055064e352d521d19da2267"
+    },
+    {
+      "bytes": 3344,
+      "path": "workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/partitions/source-partitions-report.json",
+      "sha256": "a315122b949acf10dd7c13108a3003b2f19c36c9ed5bf748ffe2e4fde0887c75"
+    },
+    {
+      "bytes": 12187351,
+      "path": "workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/partitions/source-partitions.json",
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+    },
+    {
+      "bytes": 1499,
+      "path": "workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/partitions/selected-inputs/source-partition-selection.json",
+      "sha256": "c03932213dad67d3ed92bc573bf3c4db974e7a862bbe08840cfea7c15e2dc7fd"
+    },
+    {
+      "bytes": 2558574,
+      "path": "workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/tests/source-partitions-tests-r1-receipt.json",
+      "sha256": "4f5b072dbcfd2013c9f75b620590c1b3340e2e2d099379a5de588ab3e429acd0"
+    },
+    {
+      "bytes": 3900,
+      "path": "workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/resource-release.json",
+      "sha256": "3dc76ca6e1d00ef3a1509a45392393d87f0494de56fe4e35094606c79168775e"
+    }
+  ],
+  "lake_build_performed": false,
+  "native_training_or_evaluation_performed": false,
+  "native_training_validation_deferred_by_user": true,
+  "new_legal_ir_bridge_evaluation_performed": false,
+  "owned_code_unchanged_since_capture": true,
+  "partition_bytes_equal_initial_capture": true,
+  "passed": true,
+  "policy": {
+    "canary": 500,
+    "holdout": 500,
+    "seed": "uscode-source-partitions-5016b86a-v1",
+    "train": 8000,
+    "validation": 1000
+  },
+  "protected_artifacts_unchanged": true,
+  "prover_execution_performed": false,
+  "publication_performed": false,
+  "recorded_at": "2026-09-26T11:15:12.776675+00:00",
+  "registry_modified": false,
+  "remaining": [
+    "immutable produced-record projection codec with exact producer receipt verification",
+    "bounded producer-receipt-set root and alias/exclusion accounting",
+    "explicit v8 owner/worker and daemon staging/binding; existing v1-v7 unchanged",
+    "deferred current-source native performance and semantic qualification",
+    "official source authentication and source-aware Constitution pipeline",
+    "production DuckLake/HF delivery and actual Lake admission evidence"
+  ],
+  "review_fixes": [
+    "preflight all record text and vector bounds before serialization",
+    "restore frozen import limits when CLI reloads source release"
+  ],
+  "same_input_aliases_preserved": true,
+  "schema": "source-partitions-closeout-v1",
+  "scope": "frozen source-only membership over the exact declared U.S. Code inventory",
+  "source_files_at_capture": 7748,
+  "summary": {
+    "admitted": false,
+    "complete_declared_inventory_bound": true,
+    "current_source_bytes_verified": false,
+    "eligible_partition_counts": {
+      "canary": 3147,
+      "holdout": 3144,
+      "train": 50282,
+      "validation": 6358
+    },
+    "eligible_row_count": 62931,
+    "eligible_unique_input_count": 62839,
+    "embedding_producer_authenticated": false,
+    "global_holdout_verified": false,
+    "group_count": 59511,
+    "inventory_sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+    "partition_counts": {
+      "canary": 3147,
+      "holdout": 3144,
+      "train": 50282,
+      "validation": 6358
+    },
+    "physical_row_count": 62931,
+    "schema_version": "autoencoder-source-partitions-v1",
+    "scope": "declared_corpus_family_only",
+    "semantic_duplicate_isolation_verified": false,
+    "source_authority_authenticated": false,
+    "source_group_partition_disjoint_verified": true,
+    "source_partitions_bytes": 12187351,
+    "source_partitions_sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+    "training_eligible": false,
+    "unseen_checkpoint_lineage_verified": false
+  },
+  "test_inputs_unchanged_since_capture": true,
+  "test_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 362
+  },
+  "timing_configuration": {
+    "bridge_names_executed": [],
+    "cpu_slots": 1,
+    "legal_ir_metric_disk_cache_env": "0",
+    "materialized_inputs": 3,
+    "source_os_page_cache": "uncontrolled; no cold-cache claim",
+    "source_rows": 62931,
+    "source_worker_processes": 1
+  },
+  "timing_scope": "source preparation only; not parser spans, bridge-on evaluation or training",
+  "timings_seconds": {
+    "cli_with_reopen_three_materializations_and_source_guard": 14.491483130026609,
+    "load_inventory_freeze_save": 6.888521908083931,
+    "offline_fixture_tests": 4.324428499094211,
+    "resource_wrapped_capture": 26.1653408940183
+  },
+  "training_job_schema_changed": false
+}
