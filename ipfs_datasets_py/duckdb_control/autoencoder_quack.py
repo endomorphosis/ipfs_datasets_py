@@ -40,7 +40,10 @@ MAX_REPLY_BYTES = 131_072
 MAX_PENDING = 64
 WORKER_COMMANDS = frozenset({"ClaimRun", "RenewLease", "ReadRun", "ReadVersion", "CompleteRun"})
 OWNED_COMMANDS = frozenset({"SubmitOwnedInvocation", "ReadOwnedInvocation", "ResolveOwnedInvocation"})
-COMMANDS = WORKER_COMMANDS | OWNED_COMMANDS
+CAMPAIGN_COMMANDS = frozenset({"SubmitCampaignTraining", "ReadCampaignTraining", "ResolveCampaignTraining"})
+COMMANDS = WORKER_COMMANDS | OWNED_COMMANDS | CAMPAIGN_COMMANDS
+MAX_CAMPAIGN_REQUEST_BYTES = 4 * 1024 * 1024
+_CAMPAIGN_DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/@+-]{0,255}$")
 _CONFIG = {
     "autoinstall_known_extensions": "false",
@@ -166,18 +169,26 @@ class RegistryQuackGateway:
     """
 
     def __init__(self, registry: AutoencoderRegistry, scope: WorkerScope, *, enable_prototype: bool = False,
-                 owned_control: Any = None) -> None:
+                 owned_control: Any = None, campaign_control: Any = None) -> None:
         if enable_prototype is not True:
             raise RegistryTransportError("native training transport requires explicit prototype opt-in")
         if not isinstance(registry, AutoencoderRegistry) or not isinstance(scope, WorkerScope):
             raise RegistryTransportError("gateway requires an owner registry and immutable scope")
+        if owned_control is not None and campaign_control is not None:
+            raise RegistryTransportError("owned invocation and campaign profiles are mutually exclusive")
         if owned_control is not None:
             from .autoencoder_owned_control import OwnedInvocationControl
             if (type(owned_control) is not OwnedInvocationControl or owned_control.registry is not registry
                     or owned_control.worker_id != scope.worker_id or owned_control.run_ids != scope.run_ids):
                 raise RegistryTransportError("owned invocation control differs from gateway owner or scope")
+        if campaign_control is not None:
+            from .autoencoder_campaign_control import OwnedCampaignControl
+            if (type(campaign_control) is not OwnedCampaignControl or campaign_control.registry is not registry
+                    or campaign_control.worker_id != scope.worker_id or campaign_control.run_ids != scope.run_ids):
+                raise RegistryTransportError("campaign control differs from gateway owner or scope")
         self.registry, self.scope = registry, scope
         self._owned_control = owned_control
+        self._campaign_control = campaign_control
         self._server = None
         self._thread = None
         self._stop = threading.Event()
@@ -227,6 +238,20 @@ class RegistryQuackGateway:
             raise RegistryTransportError("invalid worker command")
         if len(canonical_json_bytes(envelope)) > MAX_COMMAND_BYTES:
             raise RegistryTransportError("command exceeds 65536 bytes")
+        if self._campaign_control is not None:
+            if command not in CAMPAIGN_COMMANDS:
+                raise RegistryTransportError("command is outside the campaign training control profile")
+            self._fields(payload, {"request_artifact"})
+            ref = payload["request_artifact"]
+            if (type(ref) is not dict or set(ref) != {"sha256", "bytes"}
+                    or type(ref["sha256"]) is not str or not _CAMPAIGN_DIGEST.fullmatch(ref["sha256"])
+                    or type(ref["bytes"]) is not int or not 0 < ref["bytes"] <= MAX_CAMPAIGN_REQUEST_BYTES):
+                raise RegistryTransportError("campaign request requires a bounded immutable descriptor")
+            if command == "SubmitCampaignTraining":
+                return self._campaign_control.submit(operation_id, ref)
+            if command == "ReadCampaignTraining":
+                return self._campaign_control.read(ref)
+            return self._campaign_control.resolve(operation_id, ref)
         if self._owned_control is not None:
             if command not in OWNED_COMMANDS:
                 raise RegistryTransportError("command is outside the owned invocation control profile")
@@ -238,7 +263,7 @@ class RegistryQuackGateway:
                 return self._owned_control.read(run_id, payload["request_artifact"])
             return self._owned_control.resolve(operation_id, run_id, payload["request_artifact"])
         if command not in WORKER_COMMANDS:
-            raise RegistryTransportError("command requires the owned invocation control profile")
+            raise RegistryTransportError("command requires an explicit owner control profile")
         # Worker-selected IDs cannot collide with another worker's or an
         # administrative operation. The same ID with a different command or
         # payload still conflicts in the durable registry.
@@ -374,7 +399,8 @@ class RegistryQuackGateway:
                 "admitted": False, "started": self._server is not None,
                 "authorization": "owner_issued_worker_scope_bearer",
                 "production_activation": False,
-                "command_profile": "owned_invocation" if self._owned_control is not None else "generic_worker",
+                "command_profile": ("campaign_training" if self._campaign_control is not None else
+                                    "owned_invocation" if self._owned_control is not None else "generic_worker"),
                 "execution_in_gateway_pump": False,
                 "worker_id": self.scope.worker_id, "run_ids": sorted(self.scope.run_ids),
                 "private_registry_served": False, "transient_gateway_database": True,

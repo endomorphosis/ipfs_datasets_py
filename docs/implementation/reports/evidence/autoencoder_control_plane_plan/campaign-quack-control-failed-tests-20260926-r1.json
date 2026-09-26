@@ -1,0 +1,2115 @@
+{
+  "additional_nonexecuted_context": [
+    {
+      "bytes": 6813,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/ingest_ipfs_uscode_entities.py",
+      "sha256": "3f6fafc5a5c1359a7a28e52c0f2336b1e1ce76d9d349a8fc395b9e634a9a8cbc"
+    },
+    {
+      "bytes": 28958,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_loop.py",
+      "sha256": "2742a2a488c1dce948368a3db63eeb847c57178d3e2ddf6f1263d33c0c0157b1"
+    }
+  ],
+  "admitted": false,
+  "b2_unchanged_artifacts": [
+    {
+      "bytes": 30562,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_execution.py",
+      "sha256": "d6817357e7733aea795759361cfc18602c82d8765eba0b14eb68ab7e57ca0b9c"
+    },
+    {
+      "bytes": 27628,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_training.py",
+      "sha256": "e9535396232db9cf7b0b39d8386863a089a81505fb4b292fc1cf0732e0d9550e"
+    },
+    {
+      "bytes": 77024,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "sha256": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447"
+    },
+    {
+      "bytes": 23673,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_operation_journal.py",
+      "sha256": "8008b2cf10e7dab119ee703a84a84b0bd2c72931615969170002230e224036e3"
+    },
+    {
+      "bytes": 16847,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_process.py",
+      "sha256": "92011e155ec44ddc95d2ae7effa3c808273cd95692bac3738beb8266e8f17fdf"
+    },
+    {
+      "bytes": 8301,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_process_worker.py",
+      "sha256": "b01b4b08bd9d76c82c9cce06aaa7641944abfa6f1a70f313dd0d4937dcb378e1"
+    },
+    {
+      "bytes": 31151,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py",
+      "sha256": "b3365ba96ebd45de83663b7d61f199bf13695ebf46d51431bf07390b382658cf"
+    },
+    {
+      "bytes": 23324,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_owned_training_coordinator.py",
+      "sha256": "18536aea2bed36736b05167cb0ed63fd0deeb25035affabedd5f4bdf5b84e528"
+    },
+    {
+      "bytes": 21159,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_process.py",
+      "sha256": "0e2bb14ad675479a3070f022162ee3c36ae8212a4b4392481b5d06ebeb80deb6"
+    }
+  ],
+  "b3_source_artifacts": [
+    {
+      "bytes": 36006,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/autoencoder_campaign_control.py",
+      "sha256": "571f90f6ce8dddd4fd7daaf77fd1ad724946bbfc87e8dfe6d3dc32190311f86a"
+    },
+    {
+      "bytes": 24742,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/autoencoder_quack.py",
+      "sha256": "ae679d9d23c8376893a4cb2220617baeef23914cfeb4634ae4480a8c14ceb2bd"
+    }
+  ],
+  "b3_test_artifacts": [
+    {
+      "bytes": 9907,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py",
+      "sha256": "41c68b856c47125da5c0427149fd950bb2a9fd03c6f376abce3fddfd1a31ab01"
+    },
+    {
+      "bytes": 14395,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py",
+      "sha256": "8493c9e2a5545f4d2880b9ea91edb64a311f8d9e45ca65901fc56db77356b767"
+    },
+    {
+      "bytes": 22064,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py",
+      "sha256": "aee184219835fbf453cea6ee905f305d5756db1986820d33632b3409b4fcefe2"
+    }
+  ],
+  "checks": {
+    "dependencies_unchanged": true,
+    "entity_context_not_imported": true,
+    "exact_collected_executed_membership": false,
+    "expected_collected_source_counts": true,
+    "expected_executed_source_counts": false,
+    "expected_focused_count": true,
+    "fixtures_within_external_charge": true,
+    "harness_unchanged": true,
+    "input_artifacts_unchanged": true,
+    "package_source_unchanged": true,
+    "protected_unchanged": true,
+    "pytest_argument_expansion_exact": true,
+    "pytest_exit_zero": false,
+    "zero_failures_errors_skips": false
+  },
+  "collected_counts_by_source": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 3,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py": 35,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py": 51,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py": 29,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack.py": 2,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py": 61,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 7,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py": 10,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py": 9
+  },
+  "collected_test_membership": [
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_submission_is_exact_durable_intent_without_execution",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[extra_path]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[boolean_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[zero_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_constructor_rejects_changed_prebinding[worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_constructor_rejects_changed_prebinding[journal]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_constructor_rejects_changed_prebinding[registration]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_constructor_rejects_changed_prebinding[key]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_lost_committed_responses_resolve_same_operation_without_second_call[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_lost_committed_responses_resolve_same_operation_without_second_call[StartCampaignTrainingDrain]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_lost_committed_responses_resolve_same_operation_without_second_call[FinishCampaignTrainingDrain]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_uncertain_phase_after_restart_never_reexecutes[StartCampaignTrainingDrain]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_uncertain_phase_after_restart_never_reexecutes[FinishCampaignTrainingDrain]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_partial_progress_needs_a_new_explicit_owner_drain",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_start_without_call_remains_recovery_even_if_no_original_attempt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_distinct_submission_cannot_replace_the_request_binding",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_two_controllers_contend_on_durable_start_and_reads_do_not_lock_journal",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_request_union_and_total_budget_across_independent_selections",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_corrupted_durable_phase_or_candidate_is_not_completed_authority[phase_digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_corrupted_durable_phase_or_candidate_is_not_completed_authority[finish_candidate]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_corrupted_durable_phase_or_candidate_is_not_completed_authority[finish_mode]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_history_checks_each_completed_candidate_once_per_read_without_persistent_cache",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_missing_journal_after_submission_does_not_get_recreated_by_read",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_actual_injected_b2_targets_sparse_arrow_path_preserves_original_jobs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_finish_command_fits_all_64_maximum_length_run_ids_before_training",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_close_between_initial_check_and_drain_lock_cannot_start_work",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_restart_preserves_finished_prefix_and_executes_only_remaining_job",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_gateway_submits_reads_resolves_without_execution_or_qualification",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ClaimRun-payload0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[RenewLease-payload1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[CompleteRun-payload2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ReadRun-payload3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ReadVersion-payload4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[SubmitOwnedInvocation-payload5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ReadOwnedInvocation-payload6]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ResolveOwnedInvocation-payload7]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[run_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[path]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[argv]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[prepared]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[training_config]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[resource_policy]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[execution_policy]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[max_workers]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[max_new_batches]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[worker_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[lease]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[result]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference6]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference7]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference8]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference9]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference10]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_gateway_rejects_unassigned_request[ReadCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_gateway_rejects_unassigned_request[ResolveCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_gateway_rejects_unassigned_request[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[run_union]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[owner]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[duck_type]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[subclass]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[daemon_slot]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[both]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_profile_cannot_dispatch_campaign_commands[ReadCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_profile_cannot_dispatch_campaign_commands[ResolveCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_profile_cannot_dispatch_campaign_commands[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_existing_daemon_profile_rejects_campaign_commands_before_controller_access[ReadCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_existing_daemon_profile_rejects_campaign_commands_before_controller_access[ResolveCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_existing_daemon_profile_rejects_campaign_commands_before_controller_access[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_gateway_cannot_mutate_original_v8_campaign_runs[ClaimRun]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_gateway_cannot_mutate_original_v8_campaign_runs[RenewLease]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_gateway_cannot_mutate_original_v8_campaign_runs[CompleteRun]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_is_durable_idempotent_and_execution_requires_explicit_owner_drain",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submit_reply_loss_and_owner_restart_recover_same_submission_before_execution",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_cannot_change_exact_request_or_allocate_another_operation_for_same_run[sha256]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_cannot_change_exact_request_or_allocate_another_operation_for_same_run[bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_cannot_change_exact_request_or_allocate_another_operation_for_same_run[extra-path]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_cannot_change_exact_request_or_allocate_another_operation_for_same_run[different-operation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_failed_attempt_is_quarantined_and_duplicate_drain_does_not_rerun[execute]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_failed_attempt_is_quarantined_and_duplicate_drain_does_not_rerun[verify]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_concurrent_duplicate_submission_and_read_during_execution_do_not_duplicate_attempt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_completed_history_survives_missing_request_and_candidate_after_owner_restart",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_ambiguous_committed_completion_recovers_without_reexecuting_or_opening_missing_artifacts",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_durable_start_without_coordinator_outcome_is_not_an_implicit_retry",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_same_wire_operation_cannot_be_rebound_to_another_assigned_run",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_two_workers_have_distinct_operation_namespaces_and_cannot_read_other_scope",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owner_can_drain_two_independent_same_base_invocations_without_head_changes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_one_invocation_failure_does_not_cancel_the_other_submitted_run",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[1.5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owned_gateway_is_closed_to_raw_mutations_and_caller_execution_controls",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owned_gateway_rejects_unassigned_run_and_wrong_request_before_execution[SubmitOwnedInvocation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owned_gateway_rejects_unassigned_run_and_wrong_request_before_execution[ReadOwnedInvocation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owned_gateway_rejects_unassigned_run_and_wrong_request_before_execution[ResolveOwnedInvocation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_generic_gateway_cannot_mutate_registered_coordinator_owned_runs[v1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_generic_gateway_cannot_mutate_registered_coordinator_owned_runs[v2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_generic_gateway_cannot_mutate_registered_coordinator_owned_runs[v3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_generic_gateway_cannot_mutate_registered_coordinator_owned_runs[registered-training-job]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_reply_exact_roundtrip_detaches_and_preserves_numeric_types[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_reply_exact_roundtrip_detaches_and_preserves_numeric_types[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[[]]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[null]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{} trailing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[\\xff]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"duplicate\":1,\"duplicate\":2}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"payload\":{\"x\":0,\"x\":1}}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"number\":NaN}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"number\":Infinity}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"number\":-Infinity}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"number\":1e9999}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"surrogate\":\"\\ud800\"}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"x\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[0]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[schema-other]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[schema-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[request_id-]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[request_id-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[operation_id-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[command-value5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[payload-value6]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[extra-None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_wire_leaves_command_vocabulary_to_gateway",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_exact_byte_and_depth_limits_and_unicode_bytes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[request_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[operation_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[command]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[payload]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[integer_to_float]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[signed_zero]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[schema-other]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[ok-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[ok-true]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[admitted-0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[admitted-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[runtime_qualified-0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[runtime_qualified-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[request_digest-None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[request_digest-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[result-value9]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[extra-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[error-contradiction]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_bound_error_preserves_diagnostic_without_claiming_no_commit_and_unbound_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_direct_objects_are_bounded_without_running_custom_serializers",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_exact_byte_limit_depth_duplicate_and_nonfinite_rejection",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_client_request_uses_strict_decoder_with_fake_connection[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_client_request_uses_strict_decoder_with_fake_connection[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[success]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[error]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[oversized_error]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[oversized_result]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[malformed]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_campaign_commands_use_existing_bound_wire_without_native_transport[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_campaign_commands_use_existing_bound_wire_without_native_transport[ReadCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_campaign_commands_use_existing_bound_wire_without_native_transport[ResolveCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_is_owner_issued_and_commands_are_closed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_rejects_forged_lease_and_unassigned_versions",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_request_and_read_only_inspection_preserve_original_jobs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_reopen_resolves_identical_handle_without_recreating_original_runs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_optional_target_arrow_and_sparse_policy_transport_is_unqualified",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_overlapping_subset_is_not_a_second_assignment_for_the_same_run",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy[worker_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy[output_root]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy[resource_policy]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy[execution_policy]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_pending_execution_intent_requires_recovery_without_claiming_a_pristine_run",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[False-json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[True-bundle]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_between_batches_owner_restart_dispatches_only_remaining_original_job",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_committed_response_loss_resolves_exact_operation_without_second_update[claim_run]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_committed_response_loss_resolves_exact_operation_without_second_update[complete_run]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_unresolved_committed_completion_reconciles_without_retrying_or_releasing_old_claim",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_forged_worker_result_cannot_gain_owner_acceptance_or_cancel_sibling[native_label]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_capacity_denial_precedes_claim_worker_and_target_hydration",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_single_worker_page_releases_verified_capacity_before_claiming_next_job",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_resource_injection_alone_cannot_enable_native_target_policy",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    }
+  ],
+  "configured_pytest_addopts": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin"
+  ],
+  "constitution_formalized": false,
+  "downloads_performed": false,
+  "entity_feature_executed": false,
+  "entity_feature_qualified": false,
+  "exact_assigned_test_dependencies": [
+    {
+      "bytes": 21251,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py",
+      "sha256": "e403bad20b3ffdcdd8f91f6985f15a4134b024bb76652158fb9c7c899850f597"
+    },
+    {
+      "bytes": 3241,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_ready_task_cids.py",
+      "sha256": "6b43d8d840683f0ffbdcd211b754cbd10bb32e86a2ea1075c5042486fd26cfd5"
+    }
+  ],
+  "exact_b2_source_delta": [
+    "ipfs_datasets_py/duckdb_control/autoencoder_campaign_control.py",
+    "ipfs_datasets_py/duckdb_control/autoencoder_quack.py",
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py",
+    "ipfs_datasets_py/logic/autoformal/span_cache.py",
+    "ipfs_datasets_py/logic/autoformal/supervisor_loop.py"
+  ],
+  "executed_counts_by_source": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 3,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py": 34,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py": 48,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py": 29,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack.py": 2,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py": 61,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 7,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py": 10,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py": 9
+  },
+  "executed_test_membership": [
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_submission_is_exact_durable_intent_without_execution",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[extra_path]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[boolean_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_remote_descriptor_cannot_retarget_or_supply_paths[zero_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_constructor_rejects_changed_prebinding[worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_constructor_rejects_changed_prebinding[journal]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_constructor_rejects_changed_prebinding[registration]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_constructor_rejects_changed_prebinding[key]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_lost_committed_responses_resolve_same_operation_without_second_call[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_lost_committed_responses_resolve_same_operation_without_second_call[StartCampaignTrainingDrain]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_lost_committed_responses_resolve_same_operation_without_second_call[FinishCampaignTrainingDrain]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_uncertain_phase_after_restart_never_reexecutes[StartCampaignTrainingDrain]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_uncertain_phase_after_restart_never_reexecutes[FinishCampaignTrainingDrain]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_partial_progress_needs_a_new_explicit_owner_drain",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_start_without_call_remains_recovery_even_if_no_original_attempt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_distinct_submission_cannot_replace_the_request_binding",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_drain_bounds_reject_before_start[bounds5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_two_controllers_contend_on_durable_start_and_reads_do_not_lock_journal",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_request_union_and_total_budget_across_independent_selections",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_corrupted_durable_phase_or_candidate_is_not_completed_authority[phase_digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_corrupted_durable_phase_or_candidate_is_not_completed_authority[finish_candidate]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_corrupted_durable_phase_or_candidate_is_not_completed_authority[finish_mode]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_history_checks_each_completed_candidate_once_per_read_without_persistent_cache",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_missing_journal_after_submission_does_not_get_recreated_by_read",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_finish_command_fits_all_64_maximum_length_run_ids_before_training",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_close_between_initial_check_and_drain_lock_cannot_start_work",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_control.py::test_owner_restart_preserves_finished_prefix_and_executes_only_remaining_job",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_gateway_submits_reads_resolves_without_execution_or_qualification",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ClaimRun-payload0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[RenewLease-payload1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[CompleteRun-payload2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ReadRun-payload3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ReadVersion-payload4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[SubmitOwnedInvocation-payload5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ReadOwnedInvocation-payload6]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_profile_cannot_use_other_command_profiles[ResolveOwnedInvocation-payload7]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[run_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[path]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[argv]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[prepared]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[training_config]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[resource_policy]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[execution_policy]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[max_workers]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[max_new_batches]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[worker_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[lease]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_payload_rejects_remote_execution_fields[result]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference6]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference7]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference8]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference9]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_reference_is_closed_and_strictly_bounded[reference10]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_gateway_rejects_unassigned_request[ReadCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_gateway_rejects_unassigned_request[ResolveCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_gateway_rejects_unassigned_request[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[run_union]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[owner]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[duck_type]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[subclass]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[daemon_slot]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_campaign_constructor_requires_exact_controller_owner_and_scope[both]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_profile_cannot_dispatch_campaign_commands[ReadCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_profile_cannot_dispatch_campaign_commands[ResolveCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_profile_cannot_dispatch_campaign_commands[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_gateway_cannot_mutate_original_v8_campaign_runs[ClaimRun]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_gateway_cannot_mutate_original_v8_campaign_runs[RenewLease]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py::test_generic_gateway_cannot_mutate_original_v8_campaign_runs[CompleteRun]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_campaign_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_is_durable_idempotent_and_execution_requires_explicit_owner_drain",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submit_reply_loss_and_owner_restart_recover_same_submission_before_execution",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_cannot_change_exact_request_or_allocate_another_operation_for_same_run[sha256]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_cannot_change_exact_request_or_allocate_another_operation_for_same_run[bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_cannot_change_exact_request_or_allocate_another_operation_for_same_run[extra-path]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_submission_cannot_change_exact_request_or_allocate_another_operation_for_same_run[different-operation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_failed_attempt_is_quarantined_and_duplicate_drain_does_not_rerun[execute]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_failed_attempt_is_quarantined_and_duplicate_drain_does_not_rerun[verify]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_concurrent_duplicate_submission_and_read_during_execution_do_not_duplicate_attempt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_completed_history_survives_missing_request_and_candidate_after_owner_restart",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_ambiguous_committed_completion_recovers_without_reexecuting_or_opening_missing_artifacts",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_durable_start_without_coordinator_outcome_is_not_an_implicit_retry",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_same_wire_operation_cannot_be_rebound_to_another_assigned_run",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_two_workers_have_distinct_operation_namespaces_and_cannot_read_other_scope",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owner_can_drain_two_independent_same_base_invocations_without_head_changes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_one_invocation_failure_does_not_cancel_the_other_submitted_run",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_worker_count_is_owner_bounded_and_invalid_values_do_not_execute[1.5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owned_gateway_is_closed_to_raw_mutations_and_caller_execution_controls",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owned_gateway_rejects_unassigned_run_and_wrong_request_before_execution[SubmitOwnedInvocation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owned_gateway_rejects_unassigned_run_and_wrong_request_before_execution[ReadOwnedInvocation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_owned_gateway_rejects_unassigned_run_and_wrong_request_before_execution[ResolveOwnedInvocation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_generic_gateway_cannot_mutate_registered_coordinator_owned_runs[v1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_generic_gateway_cannot_mutate_registered_coordinator_owned_runs[v2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_generic_gateway_cannot_mutate_registered_coordinator_owned_runs[v3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_owned_control.py::test_generic_gateway_cannot_mutate_registered_coordinator_owned_runs[registered-training-job]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_owned_control.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_reply_exact_roundtrip_detaches_and_preserves_numeric_types[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_reply_exact_roundtrip_detaches_and_preserves_numeric_types[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[[]]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[null]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{} trailing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[\\xff]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"duplicate\":1,\"duplicate\":2}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"payload\":{\"x\":0,\"x\":1}}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"number\":NaN}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"number\":Infinity}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"number\":-Infinity}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"number\":1e9999}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"surrogate\":\"\\ud800\"}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_invalid_json_is_rejected_without_echoing_wire_contents[{\"x\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[0]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[schema-other]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[schema-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[request_id-]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[request_id-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[operation_id-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[command-value5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[payload-value6]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_envelope_fields_are_closed_and_typed[extra-None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_wire_leaves_command_vocabulary_to_gateway",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_request_exact_byte_and_depth_limits_and_unicode_bytes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[request_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[operation_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[command]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[payload]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[integer_to_float]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_digest_binds_every_request_field_and_numeric_representation[signed_zero]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[schema-other]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[ok-1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[ok-true]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[admitted-0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[admitted-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[runtime_qualified-0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[runtime_qualified-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[request_digest-None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[request_digest-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[result-value9]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[extra-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_schema_flags_and_result_are_strict[error-contradiction]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_bound_error_preserves_diagnostic_without_claiming_no_commit_and_unbound_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_make_reply_requires_exactly_one_typed_outcome[kwargs4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_direct_objects_are_bounded_without_running_custom_serializers",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_reply_exact_byte_limit_depth_duplicate_and_nonfinite_rejection",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_client_request_uses_strict_decoder_with_fake_connection[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_client_request_uses_strict_decoder_with_fake_connection[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[success]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[error]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[oversized_error]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[oversized_result]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_actual_pump_binding_and_error_fallback_with_fake_database[malformed]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_campaign_commands_use_existing_bound_wire_without_native_transport[SubmitCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_campaign_commands_use_existing_bound_wire_without_native_transport[ReadCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack_wire.py::test_campaign_commands_use_existing_bound_wire_without_native_transport[ResolveCampaignTraining]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack_wire.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_is_owner_issued_and_commands_are_closed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_rejects_forged_lease_and_unassigned_versions",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_autoencoder_quack.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_request_and_read_only_inspection_preserve_original_jobs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_reopen_resolves_identical_handle_without_recreating_original_runs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_optional_target_arrow_and_sparse_policy_transport_is_unqualified",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_overlapping_subset_is_not_a_second_assignment_for_the_same_run",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy[worker_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy[output_root]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy[resource_policy]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy[execution_policy]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_pending_execution_intent_requires_recovery_without_claiming_a_pristine_run",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[False-json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[True-bundle]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_between_batches_owner_restart_dispatches_only_remaining_original_job",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_committed_response_loss_resolves_exact_operation_without_second_update[claim_run]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_committed_response_loss_resolves_exact_operation_without_second_update[complete_run]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_unresolved_committed_completion_reconciles_without_retrying_or_releasing_old_claim",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_forged_worker_result_cannot_gain_owner_acceptance_or_cancel_sibling[native_label]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_capacity_denial_precedes_claim_worker_and_target_hydration",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_single_worker_page_releases_verified_capacity_before_claiming_next_job",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_resource_injection_alone_cannot_enable_native_target_policy",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    }
+  ],
+  "existing_injected_spawn_pool_fixture_included": false,
+  "exit_code": 1,
+  "expanded_pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/duckdb_control/test_autoencoder_campaign_control.py",
+    "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py",
+    "tests/unit/duckdb_control/test_autoencoder_owned_control.py",
+    "tests/unit/duckdb_control/test_autoencoder_quack_wire.py",
+    "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_is_owner_issued_and_commands_are_closed",
+    "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_rejects_forged_lease_and_unassigned_versions",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_request_and_read_only_inspection_preserve_original_jobs",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_reopen_resolves_identical_handle_without_recreating_original_runs",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_optional_target_arrow_and_sparse_policy_transport_is_unqualified",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_overlapping_subset_is_not_a_second_assignment_for_the_same_run",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_pending_execution_intent_requires_recovery_without_claiming_a_pristine_run",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[False-json]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[True-bundle]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_between_batches_owner_restart_dispatches_only_remaining_original_job",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_committed_response_loss_resolves_exact_operation_without_second_update",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_unresolved_committed_completion_reconciles_without_retrying_or_releasing_old_claim",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_forged_worker_result_cannot_gain_owner_acceptance_or_cancel_sibling[native_label]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_capacity_denial_precedes_claim_worker_and_target_hydration",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_single_worker_page_releases_verified_capacity_before_claiming_next_job",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_resource_injection_alone_cannot_enable_native_target_policy",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-quack-control-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1/tests/tests.xml"
+  ],
+  "five_case_pilot_included": true,
+  "fixture_directory": "/tmp/pytest-of-barberb/campaign-quack-control-20260926-r1",
+  "fixture_inventory": {
+    "apparent_bytes": 17290254,
+    "entry_count": 565,
+    "special_file_count": 0,
+    "symlink_count": 2
+  },
+  "fixture_inventory_scope": "current retained bytes, not cumulative generated bytes or continuous peak",
+  "fixtures_outside_strict_attempt": true,
+  "global_holdout_verified": false,
+  "injected_campaign_controller_and_fake_wire_scope_only": true,
+  "jevops_regressions_included": false,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 4,
+    "skipped": 0,
+    "tests": 207
+  },
+  "lake_execution_performed": false,
+  "live_accelerate_service_contacted": false,
+  "live_hub_calls": false,
+  "native_cycle_performed": false,
+  "native_listener_tests_selected": false,
+  "native_model_training_performed": false,
+  "native_training_validation_deferred": true,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "nonexecuted_entity_context": [
+    {
+      "bytes": 21433,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/entity_cache.py",
+      "sha256": "d66330b3e9998543c3e808959ea4f9bdfd52b7279ca352c6fd61b60d7cf50d09"
+    },
+    {
+      "bytes": 3911,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py",
+      "sha256": "ee7cb3b9a0e87c3807c1b18305630c337a920eb67b4040a788e089c3937f2537"
+    }
+  ],
+  "original_pytest_args": [
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/duckdb_control/test_autoencoder_campaign_control.py",
+    "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py",
+    "tests/unit/duckdb_control/test_autoencoder_owned_control.py",
+    "tests/unit/duckdb_control/test_autoencoder_quack_wire.py",
+    "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_is_owner_issued_and_commands_are_closed",
+    "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_rejects_forged_lease_and_unassigned_versions",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_request_and_read_only_inspection_preserve_original_jobs",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_reopen_resolves_identical_handle_without_recreating_original_runs",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_optional_target_arrow_and_sparse_policy_transport_is_unqualified",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_overlapping_subset_is_not_a_second_assignment_for_the_same_run",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_pending_execution_intent_requires_recovery_without_claiming_a_pristine_run",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[False-json]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[True-bundle]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_between_batches_owner_restart_dispatches_only_remaining_original_job",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_committed_response_loss_resolves_exact_operation_without_second_update",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_unresolved_committed_completion_reconciles_without_retrying_or_releasing_old_claim",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_forged_worker_result_cannot_gain_owner_acceptance_or_cancel_sibling[native_label]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_capacity_denial_precedes_claim_worker_and_target_hydration",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_single_worker_page_releases_verified_capacity_before_claiming_next_job",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_resource_injection_alone_cannot_enable_native_target_policy",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-quack-control-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1/tests/tests.xml"
+  ],
+  "passed": false,
+  "passed_b2_capture_artifact": {
+    "bytes": 84420,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-owned-execution-repair-20260926/capture-r1/audit-receipt.json",
+    "sha256": "078a0a8592f06a4f76ccec6634649d1bc492945e65f7e936d04863f236b3c8f1"
+  },
+  "passed_resume_capture_artifact": {
+    "bytes": 105115,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-snapshot-20260926/capture-r1/audit-receipt.json",
+    "sha256": "6040e533b2b52ebd4232624e844f3e23eee04e049ea5d2443e0d9d82ba4728b5"
+  },
+  "pinned_semantic_test_dependency": {
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py": "8f6e80fd5230c59d378ee0e26ae274c05911be70a48d0e9d71808c0e5b7de011"
+  },
+  "prior_failed_fixture_cleanup_performed": false,
+  "produced_artifacts": [
+    {
+      "bytes": 43154,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1/tests/tests.xml",
+      "sha256": "af02c66bd71fb96766b3af9cc677e8d51fcba68f731d05b25119fa1955a3555f"
+    }
+  ],
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "prover_execution_performed": false,
+  "publication_performed": false,
+  "publication_supervisor_test_scope": "historical archived snapshot; neither latest live test nor archived test selected in this capture",
+  "publication_supervisor_test_snapshot": {
+    "bytes": 27521,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-repair-20260926/pre-fix/tests/unit/logic/test_supervisor_loop.py",
+    "sha256": "34ae120d780f5bfb730df324b5a0d1ee62a5f42a92402636338c8f24ecbf53e9"
+  },
+  "pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/duckdb_control/test_autoencoder_campaign_control.py",
+    "tests/unit/duckdb_control/test_autoencoder_campaign_quack.py",
+    "tests/unit/duckdb_control/test_autoencoder_owned_control.py",
+    "tests/unit/duckdb_control/test_autoencoder_quack_wire.py",
+    "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_is_owner_issued_and_commands_are_closed",
+    "tests/unit/duckdb_control/test_autoencoder_quack.py::test_scope_rejects_forged_lease_and_unassigned_versions",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_request_and_read_only_inspection_preserve_original_jobs",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_reopen_resolves_identical_handle_without_recreating_original_runs",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_exact_optional_target_arrow_and_sparse_policy_transport_is_unqualified",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_overlapping_subset_is_not_a_second_assignment_for_the_same_run",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_existing_run_binding_cannot_change_owner_request_policy",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_training.py::test_pending_execution_intent_requires_recovery_without_claiming_a_pristine_run",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[False-json]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_owned_complete_targets_sparse_branches_arrow_and_repeat[True-bundle]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_between_batches_owner_restart_dispatches_only_remaining_original_job",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_committed_response_loss_resolves_exact_operation_without_second_update",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_unresolved_committed_completion_reconciles_without_retrying_or_releasing_old_claim",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_forged_worker_result_cannot_gain_owner_acceptance_or_cancel_sibling[native_label]",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_capacity_denial_precedes_claim_worker_and_target_hydration",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_single_worker_page_releases_verified_capacity_before_claiming_next_job",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py::test_resource_injection_alone_cannot_enable_native_target_policy",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-quack-control-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1/tests/tests.xml"
+  ],
+  "pytest_ini_artifact": {
+    "bytes": 1536,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+  },
+  "pytest_tmp_path_retention_policy": "failed",
+  "pytest_tmpdir_policy_module": {
+    "bytes": 13271,
+    "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/tmpdir.py",
+    "sha256": "5099f71d89413191c9e7515c9d4fe9fc7083bb73306f2cf1f73a9f89c862ed90"
+  },
+  "qualified_source_delta": [
+    "ipfs_datasets_py/logic/autoformal/span_cache.py",
+    "ipfs_datasets_py/logic/autoformal/supervisor_loop.py"
+  ],
+  "resolved_logic_paths": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "schema": "offline-campaign-quack-control-regression-v1",
+  "source_authority_authenticated": false,
+  "speed_claim": false,
+  "successful_tmp_path_fixtures_ephemeral": true,
+  "test_counts_by_module": {
+    "tests.integration.logic.test_canonical_semantic_roundtrip": 3,
+    "tests.unit.duckdb_control.test_autoencoder_campaign_control": 35,
+    "tests.unit.duckdb_control.test_autoencoder_campaign_quack": 51,
+    "tests.unit.duckdb_control.test_autoencoder_owned_control": 29,
+    "tests.unit.duckdb_control.test_autoencoder_quack": 2,
+    "tests.unit.duckdb_control.test_autoencoder_quack_wire": 61,
+    "tests.unit.logic.test_autoformal_speed_semantics": 7,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_campaign_owned_execution": 10,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_campaign_owned_training": 9
+  },
+  "test_seal_reuse_disabled": true,
+  "tiny_synthetic_state_construction_allowed": true,
+  "wall_seconds": 288.6575600570068
+}

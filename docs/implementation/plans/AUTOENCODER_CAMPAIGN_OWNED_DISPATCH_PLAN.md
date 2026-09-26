@@ -9,8 +9,10 @@ record; the fresh 50 MB test reservation and host lease were released. The
 [audit receipt](../reports/evidence/autoencoder_control_plane_plan/campaign-owned-preparation-audit-20260926-r1.json)
 records unchanged package/dependency and protected-input guards.
 [B2 worker execution](../reports/autoencoder_campaign_owned_execution.md) is now
-implemented and passed 486 guarded offline regression cases. B3 transport remains
-proposed. No native qualification, full-corpus
+implemented and passed 486 guarded offline regression cases.
+[B3 campaign Quack control](../reports/autoencoder_campaign_quack_control.md) is
+implemented and passed 208 guarded offline cases, including the exact authorized
+24-hour deadline identity check. No native qualification, full-corpus
 run, legal-IR speedup, live Quack listener, DuckLake write or Hugging Face upload
 is claimed. Native validation remains deferred.
 
@@ -40,8 +42,9 @@ changes that status.
 Prioritize owner-controlled execution of the existing v8 worker jobs. It keeps
 the user's shared targets, accepted sparse updates and optional Arrow weights
 on the already implemented worker/coordinator path. The offline immutable request contract, durable operation recovery and resource
-supervision are implemented and regression-tested. Exposing this execution
-through Quack is the next stage.
+supervision are implemented and regression-tested. The separate campaign Quack
+profile now exposes bounded submissions and status; owner drains execute outside
+the gateway pump. Its native listener and throughput qualification remain deferred.
 
 An input-to-prepared-daemon map is smaller, but solves a different problem. A
 daemon consumes the original job's corpus snapshot while using its own parsed
@@ -54,7 +57,7 @@ experiment; it is not the default campaign execution adapter.
 | Route | Reuses | Status | Result |
 |---|---|---|---|
 | Restricted daemon input map | Existing prepared handles, daemon journals, owned Quack control | Proposed: exact batch-to-input-to-request mapping and separate progress | A separately configured daemon run consumes campaign inputs |
-| Owned v8 worker dispatch, recommended | Exact registered jobs, target bundles, worker patches, owner replay/compaction, Arrow weights | Implemented B1/B2; native validation deferred and Quack transport pending | The original registered campaign jobs complete through their existing acceptance path |
+| Owned v8 worker dispatch, recommended | Exact registered jobs, target bundles, worker patches, owner replay/compaction, Arrow weights | Implemented and offline-qualified B1/B2/B3; native validation deferred | The original registered campaign jobs complete through their existing acceptance path |
 
 Neither route puts parameter access in DuckDB or Quack. Numeric reads remain
 local; the control plane carries bounded immutable descriptors and status.
@@ -85,7 +88,9 @@ local; the control plane carries bounded immutable descriptors and status.
 - The [owned Quack profile](../reports/autoencoder_owned_quack_control.md)
   accepts only submit/read/resolve with `run_id` and a request descriptor.
   Generic mutation commands reject registered worker jobs and daemon runs.
-  Its current controller constructor accepts only the actual daemon controller.
+  Its daemon profile accepts only the actual daemon controller. The separate B3
+  campaign profile accepts only the actual campaign controller and immutable
+  assigned request descriptors; the two profiles cannot be combined.
 
 The [package report](../reports/autoencoder_campaign_packages.md) records passing
 historical test/restore captures and a failed current-tree closeout after
@@ -191,7 +196,7 @@ before worker execution. Importing HACC first cannot be repaired by subsequently
 changing the path. Do not copy a second
 receipt/replay implementation into the adapter.
 
-Stage B3 adds a typed sibling owner controller and explicit gateway profile for
+Stage B3 now adds a typed sibling owner controller and explicit gateway profile for
 v8 training requests. Preserve the three bounded submit/read/resolve operations;
 remote callers still provide no paths, arguments, policies, leases or results.
 Keep the existing daemon profile and strict controller type checks intact.
@@ -298,9 +303,10 @@ parser trees, context limits, temperature, training objectives or legal success.
 1. Extend sealed source receipts and shared-target coverage in bounded revisions.
    Deliver exact per-input embedded/gap/protected dispositions and target
    membership, not a claim that all federal provisions have usable vectors.
-2. Build on the offline-qualified B1 with journaled, resource-supervised B2/B3 for exact original v8
-   jobs. Deliver immutable requests, restart evidence and isolated candidate
-   versions; native and parallel-throughput qualification remain deferred.
+2. Use the offline-qualified B1/B2/B3 path over exact original v8 jobs as the
+   integration boundary for the next native qualification. Retain immutable
+   requests, restart evidence and isolated candidate versions; native and
+   parallel-throughput qualification remain deferred.
 3. Once native validation resumes and capacity admits it, measure paired cold
    and warm complete jobs on one worker, then bounded parallel workers. Deliver
    separate time/memory/bytes and held-out learning reports with unchanged

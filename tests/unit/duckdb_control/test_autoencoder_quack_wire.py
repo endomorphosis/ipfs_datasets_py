@@ -259,3 +259,35 @@ def test_actual_pump_binding_and_error_fallback_with_fake_database(mode):
             assert request_id == request["request_id"] and json.loads(raw)["request_digest"] == hashlib.sha256(encode(request)).hexdigest()
             if mode == "oversized_error":
                 assert "resolve the original operation" in json.loads(raw)["error"]
+
+
+@pytest.mark.parametrize("command", ["SubmitCampaignTraining", "ReadCampaignTraining", "ResolveCampaignTraining"])
+def test_campaign_commands_use_existing_bound_wire_without_native_transport(command):
+    from ipfs_datasets_py.duckdb_control.autoencoder_quack import RegistryTransportClient, RegistryTransportError
+    reference = {"sha256": "a" * 64, "bytes": 4096}
+    result = {"fixture_only": True, "admitted": False, "native_execution_verified": False,
+              "request_artifact": reference}
+    class Connection:
+        wrong_binding = False
+        def execute(self, sql, parameters):
+            if sql.startswith("INSERT"):
+                self.request = wire.parse_request(parameters[1])
+                assert self.request["command"] == command
+                assert self.request["payload"] == {"request_artifact": reference}
+                self.rows = []
+            else:
+                bound = copy.deepcopy(self.request)
+                if self.wrong_binding:
+                    bound["payload"]["request_artifact"]["sha256"] = "b" * 64
+                self.rows = [(self.request["request_id"], encode(wire.make_reply(bound, result=result)))]
+            return self
+        def fetchall(self):
+            return self.rows
+    client = RegistryTransportClient.__new__(RegistryTransportClient)
+    client._connection = Connection()
+    client._lock, client._closed = threading.Lock(), False
+    client._endpoint, client._token = "fixture-no-listener", "fixture-no-credentials"
+    assert client.request(command, {"request_artifact": reference}, "same-operation", timeout=0.1) == result
+    client._connection.wrong_binding = True
+    with pytest.raises(RegistryTransportError, match="binding"):
+        client.request(command, {"request_artifact": reference}, "same-operation", timeout=0.1)

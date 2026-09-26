@@ -6,28 +6,33 @@ implemented slices from remaining deployment and qualification. Owner:
 `external/ipfs_datasets` in the lift_coding
 workspace. This extends the [U.S. Code plan](US_CODE_AUTOFORMALIZATION_PLAN.md).
 
-Current next step (2026-09-26): the
+Current implementation status (2026-09-26): the
 [campaign owned-dispatch design](AUTOENCODER_CAMPAIGN_OWNED_DISPATCH_PLAN.md)
 prioritizes owner-supervised execution of the existing v8 jobs. Those jobs
 already bind shared targets, accepted sparse updates and optional Arrow weights.
 Mapping their inputs to a separately configured daemon invocation does not
 preserve the training contract or complete the original jobs. The design
 specifies durable operation identities, bounded process supervision and recovery
-before adding a Quack submission profile. The
+and a separate Quack submission profile. The
 [B1 request codec and owner preparation](../reports/autoencoder_campaign_owned_preparation.md)
 passed 338 bounded offline tests on the captured source revision, with zero
 failures, errors or skips. The user-authorized increase to a 60 GB campaign cap
 preserved all historical ledger records and enabled the fresh 50 MB test attempt,
-which released its reservation and lease. Worker execution and the new Quack
-profile remain proposed. Preparation adds no execution authority or changed
-training behavior; no full-corpus, native or legal-IR speed qualification follows.
+which released its reservation and lease. [B2 owned worker execution](../reports/autoencoder_campaign_owned_execution.md)
+subsequently passed 486 guarded offline cases. [B3 campaign Quack control](../reports/autoencoder_campaign_quack_control.md)
+passed 208 guarded offline cases, including the exact authorized 24-hour deadline
+identity check. It submits
+immutable request descriptors and leaves actual execution to an explicit owner
+drain, retaining the existing shared-target, sparse-update and optional Arrow
+path. No full-corpus, native or legal-IR speed qualification follows.
 
 The later [combined integration validation](../reports/autoencoder_campaign_integration_validation.md)
 passed all 580 selected offline tests with stable source/dependency guards and
 released its fresh reservation. It includes B1, semantic repairs, Constitution
 observation boundaries and bounded ingest scheduling. The authorized deadline
 extension is assessed per case against unchanged historical evidence; these
-results do not complete B2/B3 execution or qualify full-corpus training.
+results predate B2/B3 and do not qualify full-corpus training. The later B2/B3
+reports above describe their separate implementation and validation scope.
 
 Historical capacity blocker: a read-only census at
 2026-09-26 16:36:44 UTC found 40,003,977,864 observed bytes plus

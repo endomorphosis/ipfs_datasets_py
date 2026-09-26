@@ -15,7 +15,7 @@ to preserve exact v8 job settings through owner-supervised parallel execution.
 Keep shared targets and Arrow buffers local, submit immutable artifact
 descriptors through Quack, and retain independent sparse replay before version
 registration. A daemon input handoff alone does not execute the sealed training
-job. The design separates that optional provenance mapping from the missing
+job. The design separates that optional provenance mapping from the
 behavior-preserving worker path and gives implementation order, costs and
 acceptance cases.
 
@@ -24,8 +24,14 @@ now seals exact selected v8 jobs and atomically binds them without claiming or
 executing runs. All 338 bounded offline regression tests passed on the captured
 source revision, with no failures, errors or skips. These synthetic control tests
 qualify preparation, journal and resource contracts, not full-corpus or native
-training. Owned worker supervision and the Quack worker profile remain the next
-implementation stages.
+training. [B2 owned worker supervision](../reports/autoencoder_campaign_owned_execution.md)
+subsequently passed 486 guarded offline cases. [B3 campaign Quack control](../reports/autoencoder_campaign_quack_control.md)
+passed 208 guarded offline cases, including the exact authorized 24-hour deadline
+identity check. The profile accepts
+only immutable request descriptors; an explicit owner drain performs the original
+jobs through shared targets, accepted sparse updates and optional local Arrow
+weights. Native training, listener qualification, production DuckLake delivery
+and Hugging Face publication remain separate work.
 
 The [final combined integration capture](../reports/autoencoder_campaign_integration_validation.md)
 passed 580 selected offline tests, including those 338 B1 cases, with stable
@@ -34,7 +40,7 @@ per-case semantic baselines, restores prohibition exceptions and explicitly
 qualifies the gold-supported 24-hour deadline addition. The typed codec observes
 0.920 forward/end-to-end and 1.000 cycle; the separate canonical cycle limitation
 and typed copy-risk flag remain disclosed. This is no full-corpus, native or
-legal-admission result, and B2/B3 remain the next implementation stages.
+legal-admission result. It predates the B2/B3 implementation reports above.
 
 The earlier runtime prerequisite was storage headroom: at 2026-09-26
 16:36:44 UTC, observed named-root bytes plus retained reservations totaled
