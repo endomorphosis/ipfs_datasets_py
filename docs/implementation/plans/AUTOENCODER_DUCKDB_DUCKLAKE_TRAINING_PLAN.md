@@ -37,10 +37,21 @@ offline correctness alone does not justify more parallel workers.
 The [complete declared U.S. Code source export](../reports/autoencoder_uscode_corpus_export.md)
 now delivers 62,931 physical rows, aliases, partitions and embedding dispositions
 as portable Parquet. All 392 selected tests and independent full-row readback
-passed. The next delivery integration binds that exact release to an owner-managed
-DuckDB relation, then qualifies a durable DuckLake corpus-table adapter and sealed
-Hugging Face publication. This source catalog does not establish complete federal
-coverage or legal admission; numeric weights remain local to training workers.
+passed.
+
+The [persistent source catalog](../reports/source_corpus_catalog.md) now owns the
+complete source package and materializes all 62,931 rows in a separate DuckDB
+catalog, with immutable dataset/language/version bindings, exact resume and
+bounded reads. All 432 selected tests and full independent reopened readback
+passed. Adding an upper ordinal bound reduced observed whole catalog work from
+593.306 to 264.436 seconds; caches were uncontrolled,
+so this is a source I/O observation. The database costs
+986,460,160 bytes plus a
+263,671,066-byte package per physical
+release. Numeric weights and shared targets remain local to training workers.
+The next delivery work is a dataset-specific Quack profile, durable DuckLake
+source-table adapter and sealed Hugging Face publication. Official source coverage,
+Constitution integration and actual Lake formalization remain separate gates.
 
 The later [combined integration validation](../reports/autoencoder_campaign_integration_validation.md)
 passed all 580 selected offline tests with stable source/dependency guards and

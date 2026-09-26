@@ -1,0 +1,122 @@
+{
+  "alias_row_count": 92,
+  "bounded_query_call_seconds": 74.08467509620823,
+  "catalog_declared_row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+  "catalog_digest_algorithm": "sha256 of canonical sorted compact UTF-8 JSON {ordinal,33 fields} plus newline per row",
+  "catalog_ordered_row_sha256": "5958e1fee6de0524a94630c092c0c1ce2dbda0cd09ccb13da9ab7ceed1e8954e",
+  "checks": {
+    "all_physical_rows_exact_and_ordered": true,
+    "all_rows_explicitly_unformalized_unadmitted": true,
+    "all_source_rows_eligible": true,
+    "declared_catalog_digest_matches_original_rows": true,
+    "eligible_alias_counts_exact": true,
+    "eligible_unique_inputs_exact": true,
+    "independent_ordered_row_digests_equal": true,
+    "physical_embedding_dispositions_exact": true,
+    "physical_source_ids_unique": true,
+    "producer_links_match_dispositions": true,
+    "published_retrieval_claims_preserved": true,
+    "query_thread_count_one": true,
+    "record_and_text_byte_bindings_exact": true,
+    "source_groups_exact": true,
+    "source_split_counts_exact": true,
+    "source_status_counts_exact": true,
+    "unique_embedding_dispositions_exact": true
+  },
+  "constitution_formalized": false,
+  "duckdb_threads_observed": 1,
+  "eligible_unique_input_count": 62839,
+  "extra_exhaustion_queries": 1,
+  "file_cache_state": "uncontrolled",
+  "full_federal_corpus_complete": false,
+  "independent_row_digest_algorithm": "sha256 of ordinal uint64 big-endian, canonical JSON byte length uint64 big-endian, then UTF-8 canonical sorted compact JSON per 33-field row",
+  "independently_recomputed_catalog_row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+  "legal_ir_speed_claim": false,
+  "native_training_validation_deferred": true,
+  "page_limit": 64,
+  "page_max_bytes": 8388608,
+  "passed": true,
+  "physical_embedding_counts": {
+    "embedded": 51,
+    "token_limit_exceeded": 13,
+    "unattempted": 62867
+  },
+  "published_retrieval_claim_counts": {
+    "admitted": 62931
+  },
+  "qualification": {
+    "admitted": false,
+    "formalized": false,
+    "language_verified": false,
+    "publication_performed": false,
+    "source_authority_authenticated": false
+  },
+  "resolved_operation": {
+    "admitted": false,
+    "current_availability_verified": false,
+    "dataset_id": "sha256:a025ad694036805bb0ddad541cd02a87d26c4b9039534ab1c6032d7398c090d9",
+    "formalized": false,
+    "language_verified": false,
+    "operation_id": "actual-uscode-catalog-import",
+    "package_manifest_artifact": {
+      "bytes": 31640,
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "publication_performed": false,
+    "release_id": "sha256:02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "row_count": 62931,
+    "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "schema_version": "source-corpus-registration-v1",
+    "source_authority_authenticated": false,
+    "verification_scope": "registration_time_owned_package_and_materialized_rows",
+    "version_id": "sha256:87e740ca0794cd6fea6dd997a308e6ace4ed5880a308d1b33a9f05fdb51e061e"
+  },
+  "row_count": 62931,
+  "row_digest_algorithm_independently_compared_to_catalog_declared": true,
+  "row_pages": 984,
+  "schema": "offline-uscode-source-catalog-readback-v1",
+  "source_group_count": 59511,
+  "source_ordered_row_sha256": "5958e1fee6de0524a94630c092c0c1ce2dbda0cd09ccb13da9ab7ceed1e8954e",
+  "source_split_counts": {
+    "canary": 3147,
+    "holdout": 3144,
+    "train": 50282,
+    "validation": 6358
+  },
+  "source_status_counts": {
+    "ready_published_text": 62931
+  },
+  "timing_scope": "wall includes bounded catalog queries, original Parquet read, exact comparison, and census; summed query calls overlap this wall",
+  "unique_embedding_counts": {
+    "embedded": 51,
+    "token_limit_exceeded": 13,
+    "unattempted": 62775
+  },
+  "version": {
+    "dataset": {
+      "jurisdiction": "us",
+      "namespace": "uscode",
+      "profile": "uscode-source-export-v1",
+      "source_language": "en"
+    },
+    "dataset_id": "sha256:a025ad694036805bb0ddad541cd02a87d26c4b9039534ab1c6032d7398c090d9",
+    "package_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r2/capture-r2/catalog/packages/02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "package_manifest_artifact": {
+      "bytes": 31640,
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "qualification": {
+      "admitted": false,
+      "formalized": false,
+      "language_verified": false,
+      "publication_performed": false,
+      "source_authority_authenticated": false
+    },
+    "release_id": "sha256:02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "row_count": 62931,
+    "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "schema_version": "source-corpus-version-v1",
+    "version_id": "sha256:87e740ca0794cd6fea6dd997a308e6ace4ed5880a308d1b33a9f05fdb51e061e"
+  },
+  "wall_seconds": 83.79115438694134
+}

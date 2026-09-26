@@ -1,0 +1,152 @@
+{
+  "admitted": false,
+  "arrow_cpu_threads": 1,
+  "arrow_io_threads": 1,
+  "bridge_evaluation_performed": false,
+  "changed_sources": [],
+  "constitution_formalized": false,
+  "database_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r3/capture-r3/catalog/catalog.duckdb",
+  "dataset": {
+    "jurisdiction": "us",
+    "namespace": "uscode",
+    "profile": "uscode-source-export-v1",
+    "source_language": "en"
+  },
+  "downloads_performed": false,
+  "embedding_inference_performed": false,
+  "entity_context_not_imported": true,
+  "file_cache_state": "uncontrolled",
+  "formalized": false,
+  "full_federal_corpus_complete": false,
+  "input_package": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package",
+  "manifest_artifact": {
+    "bytes": 31640,
+    "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+  },
+  "native_training_validation_deferred": true,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "nonexecuted_context_not_executed": true,
+  "nonexecuted_context_not_imported": true,
+  "operation_id": "actual-uscode-catalog-import",
+  "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r3/capture-r3/catalog/packages",
+  "passed": true,
+  "production_ducklake_modified": false,
+  "production_registry_modified": false,
+  "publication_performed": false,
+  "registration": {
+    "admitted": false,
+    "current_availability_verified": false,
+    "dataset_id": "sha256:a025ad694036805bb0ddad541cd02a87d26c4b9039534ab1c6032d7398c090d9",
+    "formalized": false,
+    "language_verified": false,
+    "operation_id": "actual-uscode-catalog-import",
+    "package_manifest_artifact": {
+      "bytes": 31640,
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "publication_performed": false,
+    "release_id": "sha256:02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "row_count": 62931,
+    "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "schema_version": "source-corpus-registration-v1",
+    "source_authority_authenticated": false,
+    "verification_scope": "registration_time_owned_package_and_materialized_rows",
+    "version_id": "sha256:87e740ca0794cd6fea6dd997a308e6ace4ed5880a308d1b33a9f05fdb51e061e"
+  },
+  "registration_and_close_seconds": 155.48602019203827,
+  "reopen_and_verification_seconds": 80.53944252897054,
+  "resolved_operation_after_reopen": {
+    "admitted": false,
+    "current_availability_verified": false,
+    "dataset_id": "sha256:a025ad694036805bb0ddad541cd02a87d26c4b9039534ab1c6032d7398c090d9",
+    "formalized": false,
+    "language_verified": false,
+    "operation_id": "actual-uscode-catalog-import",
+    "package_manifest_artifact": {
+      "bytes": 31640,
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "publication_performed": false,
+    "release_id": "sha256:02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "row_count": 62931,
+    "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "schema_version": "source-corpus-registration-v1",
+    "source_authority_authenticated": false,
+    "verification_scope": "registration_time_owned_package_and_materialized_rows",
+    "version_id": "sha256:87e740ca0794cd6fea6dd997a308e6ace4ed5880a308d1b33a9f05fdb51e061e"
+  },
+  "schema": "pinned-source-corpus-catalog-run-v1",
+  "source_authority_authenticated": false,
+  "source_unchanged": true,
+  "sources_after_artifact": {
+    "bytes": 1265618,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r3/capture-r3/catalog/cli-report-sources-after.json",
+    "sha256": "d715d86c2b3f22a2193161eb48ae9ac0d7ddce574d36ff6e650882cbb6358677"
+  },
+  "sources_before_artifact": {
+    "bytes": 1265618,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r3/capture-r3/catalog/cli-report-sources-before.json",
+    "sha256": "d715d86c2b3f22a2193161eb48ae9ac0d7ddce574d36ff6e650882cbb6358677"
+  },
+  "training_performed": false,
+  "tree_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "unqualified_context_execution_attempts": [],
+  "unqualified_context_imports": [],
+  "verification_after_reopen": {
+    "current_package_verified": true,
+    "materialized_rows_verified": true,
+    "qualification": {
+      "admitted": false,
+      "formalized": false,
+      "language_verified": false,
+      "publication_performed": false,
+      "source_authority_authenticated": false
+    },
+    "release_id": "sha256:02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "row_count": 62931,
+    "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "schema_version": "source-corpus-verification-v1",
+    "version_id": "sha256:87e740ca0794cd6fea6dd997a308e6ace4ed5880a308d1b33a9f05fdb51e061e"
+  },
+  "version_after_reopen": {
+    "dataset": {
+      "jurisdiction": "us",
+      "namespace": "uscode",
+      "profile": "uscode-source-export-v1",
+      "source_language": "en"
+    },
+    "dataset_id": "sha256:a025ad694036805bb0ddad541cd02a87d26c4b9039534ab1c6032d7398c090d9",
+    "package_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r3/capture-r3/catalog/packages/02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "package_manifest_artifact": {
+      "bytes": 31640,
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "qualification": {
+      "admitted": false,
+      "formalized": false,
+      "language_verified": false,
+      "publication_performed": false,
+      "source_authority_authenticated": false
+    },
+    "release_id": "sha256:02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "row_count": 62931,
+    "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "schema_version": "source-corpus-version-v1",
+    "version_id": "sha256:87e740ca0794cd6fea6dd997a308e6ace4ed5880a308d1b33a9f05fdb51e061e"
+  },
+  "wall_seconds": 237.70238357095513
+}

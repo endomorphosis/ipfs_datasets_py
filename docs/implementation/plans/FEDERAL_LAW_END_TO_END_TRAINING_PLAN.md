@@ -34,11 +34,21 @@ now preserves all 62,931 physical rows, aliases, frozen splits and embedding
 dispositions in portable, DuckDB-queryable Parquet. Its fresh guarded capture
 passed 392 tests and independently regenerated every exported row. Source export
 took 35.194 seconds and readback 41.694 seconds; these are source I/O observations,
-not training or legal-IR speed claims. The next delivery integration is a durable
-owner-managed dataset relation, then a qualified DuckLake source-table adapter
-and sealed Hugging Face dataset publication. Source-aware Constitution inventory,
-authenticated official-source coverage, semantic observations and Lake evidence
-remain separate acceptance steps. No source row is a legal admit.
+not training or legal-IR speed claims.
+
+The [persistent source catalog](../reports/source_corpus_catalog.md) now owns the
+complete source package and materializes all 62,931 rows in a separate DuckDB
+catalog, with immutable dataset/language/version bindings, exact resume and
+bounded reads. All 432 selected tests and full independent reopened readback
+passed. Adding an upper ordinal bound reduced observed whole catalog work from
+593.306 to 264.436 seconds; caches were uncontrolled,
+so this is a source I/O observation. The database costs
+986,460,160 bytes plus a
+263,671,066-byte package per physical
+release. Numeric weights and shared targets remain local to training workers.
+The next delivery work is a dataset-specific Quack profile, durable DuckLake
+source-table adapter and sealed Hugging Face publication. Official source coverage,
+Constitution integration and actual Lake formalization remain separate gates.
 
 The [B1 preparation code](../reports/autoencoder_campaign_owned_preparation.md)
 now seals exact selected v8 jobs and atomically binds them without claiming or
