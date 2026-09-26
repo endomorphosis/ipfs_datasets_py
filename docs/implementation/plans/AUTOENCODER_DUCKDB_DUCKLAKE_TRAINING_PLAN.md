@@ -34,9 +34,13 @@ avoid retaining the whole rich-target batch but add decoding, validation hashes
 and collections. All 222 selected offline cases passed with stable provenance
 guards. Native memory and complete-job throughput qualification remain deferred;
 offline correctness alone does not justify more parallel workers.
-The next delivery integration must stream the complete declared source inventory,
-partitions and embedding dispositions into queryable rows. Current model-history
-events and selected packages do not constitute a full federal-law dataset.
+The [complete declared U.S. Code source export](../reports/autoencoder_uscode_corpus_export.md)
+now delivers 62,931 physical rows, aliases, partitions and embedding dispositions
+as portable Parquet. All 392 selected tests and independent full-row readback
+passed. The next delivery integration binds that exact release to an owner-managed
+DuckDB relation, then qualifies a durable DuckLake corpus-table adapter and sealed
+Hugging Face publication. This source catalog does not establish complete federal
+coverage or legal admission; numeric weights remain local to training workers.
 
 The later [combined integration validation](../reports/autoencoder_campaign_integration_validation.md)
 passed all 580 selected offline tests with stable source/dependency guards and
@@ -1279,9 +1283,11 @@ edits following capture. Current-tree qualification therefore remains pending.
 The package preserves original bytes and restores files without registering
 runs or granting execution authority. The report retains every failed attempt
 separately from the passing historical captures.
-Profile remaining complete-call cost before further cache or backend changes;
-full-source closure remains a subsequent package scope.
-The plan-to-owned-Quack adapter
-is a separate integration with existing prepared invocation handles; native
+Profile remaining complete-call cost before further cache or backend changes.
+The later [source-catalog package](../reports/autoencoder_uscode_corpus_export.md)
+qualifies the declared U.S. Code physical-row closure; it does not retroactively
+qualify the selected-page package's failed current-source closeout above.
+The [B3 owned-Quack adapter](../reports/autoencoder_campaign_quack_control.md)
+has separate offline qualification for immutable campaign requests. Native
 preparation and new checkpoint qualification remain deferred. Arrow stays
 optional until complete-job measurements justify changing that choice.

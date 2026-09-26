@@ -29,13 +29,16 @@ job. The design separates that optional provenance mapping from the
 behavior-preserving worker path and gives implementation order, costs and
 acceptance cases.
 
-The next corpus-delivery gap is a complete source-first export through the
-existing frozen inventory, source partitions and embedding receipt sets. It must
-retain every declared physical row, aliases, exclusions and unattempted inputs
-in bounded DuckDB-queryable Parquet batches. Selected training packages and IR
-summary counts do not provide that dataset. Source-aware Constitution inventory,
-semantic observations, Lake evidence, production DuckLake materialization and
-Hugging Face delivery remain separate acceptance steps.
+The [complete declared U.S. Code source export](../reports/autoencoder_uscode_corpus_export.md)
+now preserves all 62,931 physical rows, aliases, frozen splits and embedding
+dispositions in portable, DuckDB-queryable Parquet. Its fresh guarded capture
+passed 392 tests and independently regenerated every exported row. Source export
+took 35.194 seconds and readback 41.694 seconds; these are source I/O observations,
+not training or legal-IR speed claims. The next delivery integration is a durable
+owner-managed dataset relation, then a qualified DuckLake source-table adapter
+and sealed Hugging Face dataset publication. Source-aware Constitution inventory,
+authenticated official-source coverage, semantic observations and Lake evidence
+remain separate acceptance steps. No source row is a legal admit.
 
 The [B1 preparation code](../reports/autoencoder_campaign_owned_preparation.md)
 now seals exact selected v8 jobs and atomically binds them without claiming or

@@ -1,0 +1,178 @@
+{
+  "admitted": false,
+  "alias_row_count": 92,
+  "checks": {
+    "all_inventory_rows_source_eligible": true,
+    "all_physical_rows_present": true,
+    "eligible_alias_counts_exact": true,
+    "eligible_unique_inputs_exact": true,
+    "every_row_explicitly_unformalized_unadmitted": true,
+    "physical_embedding_dispositions_exact": true,
+    "physical_groups_keep_one_split": true,
+    "physical_ids_unique": true,
+    "producer_links_match_dispositions": true,
+    "published_retrieval_claims_preserved": true,
+    "source_groups_exact": true,
+    "source_split_counts_exact": true,
+    "source_status_counts_exact": true,
+    "unique_embedding_dispositions_exact": true,
+    "verified_text_and_record_digests_exact": true
+  },
+  "connection": "memory",
+  "constitution_formalized": false,
+  "duckdb_version": "1.5.5",
+  "explicit_parquet_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000000.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000001.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000002.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000003.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000004.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000005.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000006.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000007.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000008.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000009.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000010.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000011.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000012.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000013.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000014.parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/data/source_rows/part-000015.parquet"
+  ],
+  "formalized": false,
+  "global_holdout_verified": false,
+  "memory_limit": "512MB",
+  "native_training_validation_deferred": true,
+  "package_manifest_artifact": {
+    "bytes": 31640,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/source-export.json",
+    "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+  },
+  "passed": true,
+  "publication_performed": false,
+  "queries": {
+    "eligible_alias_accounting": {
+      "rows": [
+        [
+          0
+        ]
+      ],
+      "sql": "WITH counts AS\n            (SELECT input_id, count(*) AS n FROM source_rows WHERE source_eligible GROUP BY input_id)\n            SELECT count(*) FROM source_rows AS r JOIN counts AS c USING (input_id)\n            WHERE r.eligible_alias_count <> c.n"
+    },
+    "embedding_physical": {
+      "rows": [
+        [
+          "embedded",
+          51
+        ],
+        [
+          "token_limit_exceeded",
+          13
+        ],
+        [
+          "unattempted",
+          62867
+        ]
+      ],
+      "sql": "SELECT embedding_status, count(*)\n            FROM source_rows GROUP BY embedding_status ORDER BY embedding_status"
+    },
+    "embedding_unique": {
+      "rows": [
+        [
+          "embedded",
+          51
+        ],
+        [
+          "token_limit_exceeded",
+          13
+        ],
+        [
+          "unattempted",
+          62775
+        ]
+      ],
+      "sql": "SELECT embedding_status, count(DISTINCT input_id)\n            FROM source_rows WHERE source_eligible GROUP BY embedding_status ORDER BY embedding_status"
+    },
+    "invalid_row_bindings": {
+      "rows": [
+        [
+          0
+        ]
+      ],
+      "sql": "SELECT count(*) FROM source_rows\n            WHERE record_json IS NULL OR text IS NULL OR NOT wrapper_verified\n               OR record_sha256 IS DISTINCT FROM sha256(record_json)\n               OR text_sha256 IS DISTINCT FROM sha256(text)\n               OR text_bytes IS DISTINCT FROM octet_length(encode(text))\n               OR inventory_sha256 <> '38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef'\n               OR split IS NULL OR group_id IS NULL OR input_id IS NULL\n               OR duplicate_entry_cid OR admitted OR formalized\n               OR formalization_status <> 'not_observed' "
+    },
+    "physical_census": {
+      "rows": [
+        [
+          62931,
+          62931,
+          62839,
+          59511,
+          62931,
+          62931
+        ]
+      ],
+      "sql": "SELECT count(*), count(DISTINCT source_row_id),\n            count(DISTINCT input_id), count(DISTINCT group_id),\n            count(*) FILTER (WHERE source_eligible),\n            count(*) FILTER (WHERE NOT admitted AND NOT formalized\n                            AND formalization_status = 'not_observed') FROM source_rows"
+    },
+    "producer_disposition_links": {
+      "rows": [
+        [
+          0
+        ]
+      ],
+      "sql": "SELECT count(*) FROM source_rows\n            WHERE (embedding_status = 'unattempted' AND\n                   (embedding_receipt_sha256 IS NOT NULL OR embedding_result_index IS NOT NULL))\n               OR (embedding_status IN ('embedded', 'token_limit_exceeded') AND\n                   (embedding_receipt_sha256 IS NULL OR embedding_result_index IS NULL))"
+    },
+    "published_retrieval_claims": {
+      "rows": [
+        [
+          "admitted",
+          62931
+        ]
+      ],
+      "sql": "SELECT\n            json_extract_string(record_json, '$.admission_status'), count(*)\n            FROM source_rows GROUP BY 1 ORDER BY 1"
+    },
+    "source_splits": {
+      "rows": [
+        [
+          "canary",
+          3147
+        ],
+        [
+          "holdout",
+          3144
+        ],
+        [
+          "train",
+          50282
+        ],
+        [
+          "validation",
+          6358
+        ]
+      ],
+      "sql": "SELECT split, count(*) FROM source_rows\n            GROUP BY split ORDER BY split"
+    },
+    "source_statuses": {
+      "rows": [
+        [
+          "ready_published_text",
+          62931
+        ]
+      ],
+      "sql": "SELECT source_status, count(*)\n            FROM source_rows GROUP BY source_status ORDER BY source_status"
+    },
+    "split_group_isolation": {
+      "rows": [
+        [
+          0
+        ]
+      ],
+      "sql": "SELECT count(*) FROM\n            (SELECT group_id FROM source_rows GROUP BY group_id HAVING count(DISTINCT split) <> 1)"
+    }
+  },
+  "row_count": 62931,
+  "schema": "offline-uscode-source-row-duckdb-query-v1",
+  "source_authority_authenticated": false,
+  "threads": 1,
+  "wall_seconds": 1.8780926389154047
+}

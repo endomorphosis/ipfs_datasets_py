@@ -1,0 +1,352 @@
+{
+  "admitted": false,
+  "arrow_cpu_threads": 1,
+  "arrow_io_threads": 1,
+  "artifact_map": {
+    "bytes": 23983,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/artifact-map.json",
+    "sha256": "f798fdacb966d956d5b5287512cd4bd60a06d00540b939e7a0424202d676a648"
+  },
+  "bridge_evaluation_performed": false,
+  "changed_sources": [],
+  "constitution_formalized": false,
+  "downloads_performed": false,
+  "embedding_inference_performed": false,
+  "export": {
+    "coverage": {
+      "complete_physical_coverage_verified": true,
+      "current_all_shard_bytes_reverified": true,
+      "current_receipt_closure_bytes_reverified": true,
+      "eligible_row_count": 62931,
+      "eligible_unique_input_count": 62839,
+      "embedding_status_counts": {
+        "embedded": 51,
+        "token_limit_exceeded": 13,
+        "unattempted": 62867
+      },
+      "original_status_counts": {
+        "ready_published_text": 62931
+      },
+      "physical_row_count": 62931,
+      "qualification": {
+        "admitted": false,
+        "formalized": false,
+        "full_federal_corpus_complete": false,
+        "global_holdout_verified": false,
+        "original_official_source_bytes_verified": false,
+        "source_authority_authenticated": false,
+        "training_eligible": false
+      },
+      "schema_version": "autoencoder-uscode-corpus-rows-v1",
+      "scope": "declared_corpus_family_only",
+      "source_status_counts": {
+        "ready_published_text": 62931
+      },
+      "split_counts": {
+        "canary": 3147,
+        "holdout": 3144,
+        "train": 50282,
+        "validation": 6358
+      }
+    },
+    "manifest_artifact": {
+      "bytes": 31640,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/source-export.json",
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "output_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package",
+    "qualification": {
+      "admitted": false,
+      "formalized": false,
+      "full_federal_corpus_complete": false,
+      "global_holdout_verified": false,
+      "original_official_source_bytes_verified": false,
+      "publication_performed": false,
+      "source_authority_authenticated": false,
+      "training_dispatched": false,
+      "training_eligible": false
+    },
+    "row_count": 62931,
+    "row_shards": [
+      {
+        "bytes": 9093999,
+        "relative_path": "data/source_rows/part-000000.parquet",
+        "row_count": 4096,
+        "sha256": "90221137a4337dce0412e09c8a07b463e3116b1646ddc6d4dc01c27f6b535082"
+      },
+      {
+        "bytes": 8863531,
+        "relative_path": "data/source_rows/part-000001.parquet",
+        "row_count": 4096,
+        "sha256": "07e360484216322fdb3dd0f54bf56631cff700aad13bc125baaedd1366b61b85"
+      },
+      {
+        "bytes": 8935843,
+        "relative_path": "data/source_rows/part-000002.parquet",
+        "row_count": 4096,
+        "sha256": "cfbd2468c43121ae19845c0981979afe4fbcb69ad25147de8149dcc85ae895b7"
+      },
+      {
+        "bytes": 8948502,
+        "relative_path": "data/source_rows/part-000003.parquet",
+        "row_count": 4096,
+        "sha256": "ad443bd92bb13b28fce550df9ea343252d1391127afc8e8feb0eda915603caec"
+      },
+      {
+        "bytes": 9527175,
+        "relative_path": "data/source_rows/part-000004.parquet",
+        "row_count": 4096,
+        "sha256": "5bdf95dc8e3297e2a0fac14cd1fb34ffedab252d8fcf969511ca257b6a055390"
+      },
+      {
+        "bytes": 9345412,
+        "relative_path": "data/source_rows/part-000005.parquet",
+        "row_count": 4096,
+        "sha256": "439c1330f210cc259ce055f87348983be51a6e730d27825b89b89b0ea3191aad"
+      },
+      {
+        "bytes": 8858554,
+        "relative_path": "data/source_rows/part-000006.parquet",
+        "row_count": 4096,
+        "sha256": "0a11a59dc48e3654a7b46f124488b3529ddde5d83b56a014cc349204200a4fa9"
+      },
+      {
+        "bytes": 9635652,
+        "relative_path": "data/source_rows/part-000007.parquet",
+        "row_count": 4096,
+        "sha256": "30363831a18303e0bf3568ef946571bcdd12379347a4db68eb650c64338437b5"
+      },
+      {
+        "bytes": 8801319,
+        "relative_path": "data/source_rows/part-000008.parquet",
+        "row_count": 4096,
+        "sha256": "219a8f35e0a123be3a2401f84268e8c9a7c138f05301057e721ee86cdd53870b"
+      },
+      {
+        "bytes": 9376141,
+        "relative_path": "data/source_rows/part-000009.parquet",
+        "row_count": 4096,
+        "sha256": "a973c4a2624d2bc64549915b9918b8d8c8625d983217319fa7228ea8032961dd"
+      },
+      {
+        "bytes": 9011183,
+        "relative_path": "data/source_rows/part-000010.parquet",
+        "row_count": 4096,
+        "sha256": "a1aafe175c53b8d7b8ac41f81c6c8d4f56210968b6e993661bdb403f03f3b7ee"
+      },
+      {
+        "bytes": 9181758,
+        "relative_path": "data/source_rows/part-000011.parquet",
+        "row_count": 4096,
+        "sha256": "1d4bc2de78f5b6e7fb02b082189583244782b4378a9ac062b3af2e6d748f7276"
+      },
+      {
+        "bytes": 9213468,
+        "relative_path": "data/source_rows/part-000012.parquet",
+        "row_count": 4096,
+        "sha256": "ed37ba482f6efbf5713bf915c9982640279ec8995a0fabf53bab14d200e34b0e"
+      },
+      {
+        "bytes": 9099061,
+        "relative_path": "data/source_rows/part-000013.parquet",
+        "row_count": 4096,
+        "sha256": "e237404afb315940043e2e0bb177c19ff5374c74c7694468c4fe5e5d93ceae1f"
+      },
+      {
+        "bytes": 9394947,
+        "relative_path": "data/source_rows/part-000014.parquet",
+        "row_count": 4096,
+        "sha256": "e10a24ce8118d5d1789bdeb739a316cacd36e7977a67e9dcefbc8ffea0311682"
+      },
+      {
+        "bytes": 3426610,
+        "relative_path": "data/source_rows/part-000015.parquet",
+        "row_count": 1491,
+        "sha256": "bcfd8e091c9a5a01dcfadd0dcc97df7ecbfa0abf56ed038153737cbd7aa047af"
+      }
+    ],
+    "schema_version": "autoencoder-uscode-source-export-report-v1"
+  },
+  "export_seconds": 35.19399838009849,
+  "full_federal_corpus_complete": false,
+  "native_training_validation_deferred": true,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "passed": true,
+  "publication_performed": false,
+  "schema": "pinned-uscode-corpus-export-run-v1",
+  "source_files": 7780,
+  "source_unchanged": true,
+  "training_performed": false,
+  "tree_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "verification": {
+    "coverage": {
+      "complete_physical_coverage_verified": true,
+      "current_all_shard_bytes_reverified": true,
+      "current_receipt_closure_bytes_reverified": true,
+      "eligible_row_count": 62931,
+      "eligible_unique_input_count": 62839,
+      "embedding_status_counts": {
+        "embedded": 51,
+        "token_limit_exceeded": 13,
+        "unattempted": 62867
+      },
+      "original_status_counts": {
+        "ready_published_text": 62931
+      },
+      "physical_row_count": 62931,
+      "qualification": {
+        "admitted": false,
+        "formalized": false,
+        "full_federal_corpus_complete": false,
+        "global_holdout_verified": false,
+        "original_official_source_bytes_verified": false,
+        "source_authority_authenticated": false,
+        "training_eligible": false
+      },
+      "schema_version": "autoencoder-uscode-corpus-rows-v1",
+      "scope": "declared_corpus_family_only",
+      "source_status_counts": {
+        "ready_published_text": 62931
+      },
+      "split_counts": {
+        "canary": 3147,
+        "holdout": 3144,
+        "train": 50282,
+        "validation": 6358
+      }
+    },
+    "manifest_artifact": {
+      "bytes": 31640,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/source-export.json",
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "output_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package",
+    "qualification": {
+      "admitted": false,
+      "formalized": false,
+      "full_federal_corpus_complete": false,
+      "global_holdout_verified": false,
+      "original_official_source_bytes_verified": false,
+      "publication_performed": false,
+      "source_authority_authenticated": false,
+      "training_dispatched": false,
+      "training_eligible": false
+    },
+    "row_count": 62931,
+    "row_shards": [
+      {
+        "bytes": 9093999,
+        "relative_path": "data/source_rows/part-000000.parquet",
+        "row_count": 4096,
+        "sha256": "90221137a4337dce0412e09c8a07b463e3116b1646ddc6d4dc01c27f6b535082"
+      },
+      {
+        "bytes": 8863531,
+        "relative_path": "data/source_rows/part-000001.parquet",
+        "row_count": 4096,
+        "sha256": "07e360484216322fdb3dd0f54bf56631cff700aad13bc125baaedd1366b61b85"
+      },
+      {
+        "bytes": 8935843,
+        "relative_path": "data/source_rows/part-000002.parquet",
+        "row_count": 4096,
+        "sha256": "cfbd2468c43121ae19845c0981979afe4fbcb69ad25147de8149dcc85ae895b7"
+      },
+      {
+        "bytes": 8948502,
+        "relative_path": "data/source_rows/part-000003.parquet",
+        "row_count": 4096,
+        "sha256": "ad443bd92bb13b28fce550df9ea343252d1391127afc8e8feb0eda915603caec"
+      },
+      {
+        "bytes": 9527175,
+        "relative_path": "data/source_rows/part-000004.parquet",
+        "row_count": 4096,
+        "sha256": "5bdf95dc8e3297e2a0fac14cd1fb34ffedab252d8fcf969511ca257b6a055390"
+      },
+      {
+        "bytes": 9345412,
+        "relative_path": "data/source_rows/part-000005.parquet",
+        "row_count": 4096,
+        "sha256": "439c1330f210cc259ce055f87348983be51a6e730d27825b89b89b0ea3191aad"
+      },
+      {
+        "bytes": 8858554,
+        "relative_path": "data/source_rows/part-000006.parquet",
+        "row_count": 4096,
+        "sha256": "0a11a59dc48e3654a7b46f124488b3529ddde5d83b56a014cc349204200a4fa9"
+      },
+      {
+        "bytes": 9635652,
+        "relative_path": "data/source_rows/part-000007.parquet",
+        "row_count": 4096,
+        "sha256": "30363831a18303e0bf3568ef946571bcdd12379347a4db68eb650c64338437b5"
+      },
+      {
+        "bytes": 8801319,
+        "relative_path": "data/source_rows/part-000008.parquet",
+        "row_count": 4096,
+        "sha256": "219a8f35e0a123be3a2401f84268e8c9a7c138f05301057e721ee86cdd53870b"
+      },
+      {
+        "bytes": 9376141,
+        "relative_path": "data/source_rows/part-000009.parquet",
+        "row_count": 4096,
+        "sha256": "a973c4a2624d2bc64549915b9918b8d8c8625d983217319fa7228ea8032961dd"
+      },
+      {
+        "bytes": 9011183,
+        "relative_path": "data/source_rows/part-000010.parquet",
+        "row_count": 4096,
+        "sha256": "a1aafe175c53b8d7b8ac41f81c6c8d4f56210968b6e993661bdb403f03f3b7ee"
+      },
+      {
+        "bytes": 9181758,
+        "relative_path": "data/source_rows/part-000011.parquet",
+        "row_count": 4096,
+        "sha256": "1d4bc2de78f5b6e7fb02b082189583244782b4378a9ac062b3af2e6d748f7276"
+      },
+      {
+        "bytes": 9213468,
+        "relative_path": "data/source_rows/part-000012.parquet",
+        "row_count": 4096,
+        "sha256": "ed37ba482f6efbf5713bf915c9982640279ec8995a0fabf53bab14d200e34b0e"
+      },
+      {
+        "bytes": 9099061,
+        "relative_path": "data/source_rows/part-000013.parquet",
+        "row_count": 4096,
+        "sha256": "e237404afb315940043e2e0bb177c19ff5374c74c7694468c4fe5e5d93ceae1f"
+      },
+      {
+        "bytes": 9394947,
+        "relative_path": "data/source_rows/part-000014.parquet",
+        "row_count": 4096,
+        "sha256": "e10a24ce8118d5d1789bdeb739a316cacd36e7977a67e9dcefbc8ffea0311682"
+      },
+      {
+        "bytes": 3426610,
+        "relative_path": "data/source_rows/part-000015.parquet",
+        "row_count": 1491,
+        "sha256": "bcfd8e091c9a5a01dcfadd0dcc97df7ecbfa0abf56ed038153737cbd7aa047af"
+      }
+    ],
+    "schema_version": "autoencoder-uscode-source-export-report-v1"
+  },
+  "verification_seconds": 41.694211340975016,
+  "wall_seconds": 85.9383059060201
+}
