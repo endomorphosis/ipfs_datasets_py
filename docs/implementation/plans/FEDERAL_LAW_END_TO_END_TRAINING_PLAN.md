@@ -9,15 +9,33 @@ It incorporates the [implemented first control-plane milestone](../reports/autoe
 The reports below identify implemented and measured slices; the complete plan
 is not yet delivered. Historical measurements retain their original scope.
 
-Current delivery priority (2026-09-26): follow the
+Current training priority (2026-09-26): qualify
+[incremental target hydration](../reports/autoencoder_streamed_target_reduction.md)
+behind the existing default-off reduction option. Historical reduction lowered
+retained memory but still hydrated the entire rich-target batch first. The new
+two-pass path preserves complete validation and all-or-none fallback while
+retaining one rich target at a time. Extra decoding and GC work are explicit
+costs. All 222 selected offline cases passed with stable provenance guards;
+object-lifetime checks cannot authorize higher concurrency or a native speed
+claim. Native comparison remains deferred.
+
+The
 [campaign owned-dispatch design](AUTOENCODER_CAMPAIGN_OWNED_DISPATCH_PLAN.md)
-to preserve exact v8 job settings through owner-supervised parallel execution.
+preserves exact v8 job settings through owner-supervised parallel execution.
 Keep shared targets and Arrow buffers local, submit immutable artifact
 descriptors through Quack, and retain independent sparse replay before version
 registration. A daemon input handoff alone does not execute the sealed training
 job. The design separates that optional provenance mapping from the
 behavior-preserving worker path and gives implementation order, costs and
 acceptance cases.
+
+The next corpus-delivery gap is a complete source-first export through the
+existing frozen inventory, source partitions and embedding receipt sets. It must
+retain every declared physical row, aliases, exclusions and unattempted inputs
+in bounded DuckDB-queryable Parquet batches. Selected training packages and IR
+summary counts do not provide that dataset. Source-aware Constitution inventory,
+semantic observations, Lake evidence, production DuckLake materialization and
+Hugging Face delivery remain separate acceptance steps.
 
 The [B1 preparation code](../reports/autoencoder_campaign_owned_preparation.md)
 now seals exact selected v8 jobs and atomically binds them without claiming or

@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import weakref
 import zlib
 
 import pytest
@@ -422,3 +423,218 @@ def test_unified_loader_retains_legacy_json_and_bundle_semantics(sample, config,
     assert loaded.to_bytes() == legacy.to_bytes()
     with codec.load_target_artifact(bundle_descriptor["path"], expected_sha256=bundle_descriptor["sha256"], samples=[sample], config=config) as bundle:
         assert _json(_encode(bundle.targets_for([sample], config=config)[sample.sample_id])) == _json(_encode(target))
+
+
+def test_iterator_is_lazy_ordered_and_independently_repeatable(sample, config, tmp_path):
+    other = replace(sample, sample_id=sample.sample_id + "-other")
+    expected = {s.sample_id: _json(_encode(target_for(s))) for s in (sample, other)}
+    descriptor = codec.write_target_bundle(tmp_path / "ordered.bundle",
+        [(s, target_for(s), None) for s in (sample, other)], config=config)
+    original_bytes = Path(descriptor["path"]).read_bytes()
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        stream = bundle.iter_targets_for([other, sample], config=config)
+        assert bundle.statistics["decompressed_shards"] == 0
+        first_id, first = next(stream)
+        assert first_id == other.sample_id and _json(_encode(first)) == expected[first_id]
+        assert bundle.statistics["decompressed_shards"] == 1
+        second_id, second = next(stream)
+        assert second_id == sample.sample_id and _json(_encode(second)) == expected[second_id]
+        with pytest.raises(StopIteration):
+            next(stream)
+        assert bundle.statistics["decompressed_shards"] == 2
+        again = dict(bundle.iter_targets_for([other, sample], config=config))
+        assert list(again) == [other.sample_id, sample.sample_id]
+        assert again[other.sample_id] is not first and again[sample.sample_id] is not second
+        assert {key: _json(_encode(value)) for key, value in again.items()} == expected
+        assert bundle.statistics["decompressed_shards"] == 4
+        assert bundle.statistics["unique_decompressed_shards"] == 2
+    assert Path(descriptor["path"]).read_bytes() == original_bytes
+
+
+@pytest.mark.parametrize("problem", ["duplicate", "changed", "missing", "unavailable", "configuration"])
+def test_iterator_preflights_every_request_before_any_shard_read(sample, config, tmp_path, monkeypatch, problem):
+    other = replace(sample, sample_id=sample.sample_id + "-other")
+    records = [(sample, target_for(sample), None),
+               (other, None, "unavailable") if problem == "unavailable" else (other, target_for(other), None)]
+    descriptor = codec.write_target_bundle(tmp_path / "preflight.bundle", records, config=config)
+    requested = [sample, other]
+    selected_config = config
+    if problem == "duplicate":
+        requested.append(sample)
+    elif problem == "changed":
+        requested[-1] = replace(other, citation="changed citation")
+    elif problem == "missing":
+        requested[-1] = replace(other, sample_id=other.sample_id + "-missing")
+    elif problem == "configuration":
+        selected_config = replace(config, parallel_workers=2)
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        monkeypatch.setattr(codec, "_read_at", lambda *_: pytest.fail("preflight must finish before shard I/O"))
+        with pytest.raises(TargetSnapshotError):
+            bundle.iter_targets_for(requested, config=selected_config)
+        assert bundle.statistics["decompressed_shards"] == 0
+
+
+def test_iterator_validates_a_late_corrupt_shard_without_reusing_prior_targets(sample, config, tmp_path):
+    other = replace(sample, sample_id=sample.sample_id + "-other")
+    descriptor = codec.write_target_bundle(tmp_path / "late.bundle",
+        [(s, target_for(s), None) for s in (sample, other)], config=config)
+    manifest, payload = unpack(descriptor["path"])
+    digest = next(row["target_sha256"] for row in manifest["records"] if row["sample_id"] == other.sample_id)
+    next(row for row in manifest["shards"] if row["target_sha256"] == digest)["compressed_sha256"] = "0" * 64
+    path, digest = reseal(tmp_path, manifest, payload)
+    with codec.load_target_bundle(path, expected_sha256=digest) as bundle:
+        stream = bundle.iter_targets_for([sample, other], config=config)
+        key, target = next(stream)
+        assert key == sample.sample_id and _json(_encode(target)) == _json(_encode(target_for(sample)))
+        del target
+        with pytest.raises(TargetSnapshotError, match="compressed target shard digest"):
+            next(stream)
+        assert bundle.statistics["decompressed_shards"] == 1
+        # A failed pass never makes the bad shard available through the eager API.
+        with pytest.raises(TargetSnapshotError, match="compressed target shard digest"):
+            bundle.targets_for([sample, other], config=config)
+
+
+@pytest.mark.parametrize("point", ["before_first", "between_targets", "before_exhaustion", "empty"])
+def test_iterator_rechecks_file_at_resumption_and_exhaustion(sample, config, tmp_path, point):
+    other = replace(sample, sample_id=sample.sample_id + "-other")
+    descriptor = codec.write_target_bundle(tmp_path / "changed.bundle",
+        [(s, target_for(s), None) for s in (sample, other)], config=config)
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        requested = [] if point == "empty" else [sample, other]
+        stream = bundle.iter_targets_for(requested, config=config)
+        consumed = 0
+        if point in {"between_targets", "before_exhaustion"}:
+            next(stream)
+            consumed += 1
+        if point == "before_exhaustion":
+            next(stream)
+            consumed += 1
+        with Path(descriptor["path"]).open("r+b") as handle:
+            handle.seek(-1, os.SEEK_END)
+            value = handle.read(1)
+            handle.seek(-1, os.SEEK_END)
+            handle.write(bytes([value[0] ^ 1]))
+        with pytest.raises(TargetSnapshotError, match="changed after verification"):
+            next(stream)
+        assert bundle.statistics["decompressed_shards"] == consumed
+
+
+def test_iterator_rejects_closed_bundle_and_changed_configuration_between_targets(sample, config, tmp_path):
+    descriptor = write(tmp_path, sample, config)
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        stream = bundle.iter_targets_for([sample], config=config)
+        next(stream)
+        config.dependency_provenance["python"] = "changed after yield"
+        with pytest.raises(TargetSnapshotError, match="configuration"):
+            next(stream)
+    config.dependency_provenance["python"] = "fixture"
+    bundle = codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"])
+    stream = bundle.iter_targets_for([sample], config=config)
+    bundle.close()
+    with pytest.raises(TargetSnapshotError, match="closed"):
+        next(stream)
+
+
+def test_iterator_does_not_yield_after_file_changes_during_decode(sample, config, tmp_path, monkeypatch):
+    descriptor = write(tmp_path, sample, config)
+    decode = codec._decode
+
+    def changing_decode(encoded):
+        value = decode(encoded)
+        with Path(descriptor["path"]).open("r+b") as handle:
+            handle.seek(-1, os.SEEK_END)
+            byte = handle.read(1)
+            handle.seek(-1, os.SEEK_END)
+            handle.write(bytes([byte[0] ^ 1]))
+        return value
+
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        monkeypatch.setattr(codec, "_decode", changing_decode)
+        stream = bundle.iter_targets_for([sample], config=config)
+        with pytest.raises(TargetSnapshotError, match="changed after verification"):
+            next(stream)
+        assert bundle.statistics["decompressed_shards"] == 1
+
+
+def test_iterator_releases_prior_target_and_document_before_next_decode(sample, config, tmp_path, monkeypatch):
+    other = replace(sample, sample_id=sample.sample_id + "-other")
+    descriptor = codec.write_target_bundle(tmp_path / "lifetime.bundle",
+        [(s, target_for(s), None) for s in (sample, other)], config=config)
+    references = []
+    decode = codec._decode
+
+    def tracked_decode(encoded):
+        assert all(reference() is None for reference in references), "previous target graph survived next decode"
+        value = decode(encoded)
+        references.extend((weakref.ref(value), weakref.ref(value.document)))
+        return value
+
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        monkeypatch.setattr(codec, "_decode", tracked_decode)
+        stream = bundle.iter_targets_for([sample, other], config=config)
+        for expected in (sample.sample_id, other.sample_id):
+            item = next(stream)
+            assert item[0] == expected
+            assert references[-1]() is item[1].document
+            # Caller ownership is independent of the iterator's reference.
+            del item
+        with pytest.raises(StopIteration):
+            next(stream)
+        assert all(reference() is None for reference in references)
+
+
+def test_early_iterator_close_releases_graph_without_visiting_later_target(sample, config, tmp_path):
+    other = replace(sample, sample_id=sample.sample_id + "-other")
+    descriptor = codec.write_target_bundle(tmp_path / "closed-pass.bundle",
+        [(s, target_for(s), None) for s in (sample, other)], config=config)
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        stream = bundle.iter_targets_for([sample, other], config=config)
+        item = next(stream)
+        target, document = weakref.ref(item[1]), weakref.ref(item[1].document)
+        del item
+        stream.close()
+        assert target() is document() is None
+        assert bundle.statistics["decompressed_shards"] == 1
+        # Closing a pass neither closes the artifact nor caches a complete result.
+        assert list(bundle.targets_for([sample, other], config=config)) == [sample.sample_id, other.sample_id]
+        assert bundle.statistics["decompressed_shards"] == 3
+
+
+def test_iterator_does_not_keep_complete_requested_sample_containers(sample, config, tmp_path):
+    selected = replace(sample, sample_id=sample.sample_id + "-temporary")
+    descriptor = write(tmp_path, selected, config)
+    reference = weakref.ref(selected)
+    requested = [selected]
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        stream = bundle.iter_targets_for(requested, config=config)
+        expected_id = selected.sample_id
+        del selected, requested
+        assert reference() is None
+        item = next(stream)
+        assert item[0] == expected_id
+        del item
+        with pytest.raises(StopIteration):
+            next(stream)
+
+
+def test_eager_mapping_failure_always_closes_target_iterator(sample, config, tmp_path, monkeypatch):
+    descriptor = write(tmp_path, sample, config)
+    references = []
+    decode = codec._decode
+
+    def tracked_decode(encoded):
+        value = decode(encoded)
+        references.extend((weakref.ref(value), weakref.ref(value.document)))
+        return value
+
+    def allocation_failure(values):
+        next(values)
+        raise MemoryError("injected mapping allocation failure")
+
+    with codec.load_target_bundle(descriptor["path"], expected_sha256=descriptor["sha256"]) as bundle:
+        monkeypatch.setattr(codec, "_decode", tracked_decode)
+        monkeypatch.setattr(codec, "dict", allocation_failure, raising=False)
+        with pytest.raises(MemoryError, match="injected mapping"):
+            bundle.targets_for([sample], config=config)
+        assert references and all(reference() is None for reference in references)

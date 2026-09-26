@@ -1,0 +1,2223 @@
+{
+  "admitted": false,
+  "baseline_capture_artifact": {
+    "bytes": 131305,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/audit-receipt.json",
+    "sha256": "c467da6644051d580ae5affd68a56916a1a9a7d1dfe5e02ba8c9ef036675fd8a"
+  },
+  "baseline_release_artifact": {
+    "bytes": 4557,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/resource-release.json",
+    "sha256": "85fea5900dd0c9a734cee151e2621e15f539e14b68654c4816c71768abf75140"
+  },
+  "checks": {
+    "dependencies_unchanged": true,
+    "entity_context_not_imported": true,
+    "exact_collected_executed_membership": true,
+    "expected_collected_source_counts": true,
+    "expected_executed_source_counts": true,
+    "expected_focused_count": true,
+    "fixtures_within_external_charge": true,
+    "harness_unchanged": true,
+    "input_artifacts_unchanged": true,
+    "package_source_unchanged": true,
+    "protected_unchanged": true,
+    "pytest_argument_expansion_exact": true,
+    "pytest_exit_zero": true,
+    "zero_failures_errors_skips": true
+  },
+  "collected_counts_by_source": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 3,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py": 1,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 7,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py": 35,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py": 27,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py": 35,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py": 28,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": 10,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py": 63,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py": 13
+  },
+  "collected_test_membership": [
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[False-order0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[False-order1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[False-order2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[True-order0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[True-order1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[True-order2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streaming_releases_each_graph_before_next_decode",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_ineligible_full_fallback_never_converts_earlier_native_targets[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_ineligible_full_fallback_never_converts_earlier_native_targets[2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_decode_error_precedes_any_reducer_error[False-None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_decode_error_precedes_any_reducer_error[False-0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_decode_error_precedes_any_reducer_error[True-None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_decode_error_precedes_any_reducer_error[True-0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_reducer_error_propagates_after_all_validation_and_gc_restoration[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_reducer_error_propagates_after_all_validation_and_gc_restoration[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_hashing_stays_outside_deferred_gc_and_collections_are_counted",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_disabled_gc_remains_disabled_without_forced_collection",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_artifact_mutation_prevents_returning_capsules[between_passes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_artifact_mutation_prevents_returning_capsules[conversion]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_artifact_mutation_prevents_returning_capsules[final_exhaustion]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_reducer_ineligibility_discards_all_capsules_then_full_fallback",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[injected_trainer]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[unsupported_snapshot]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[not_spawn_worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[not_main_thread]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[other_python_threads]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_changed_native_class_contract_uses_identical_full_fallback",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_exact_full_target_payload_and_evaluation_parity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_rich_grammar_rejections_and_tuple_fields_are_complete",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_snapshot_identity_and_bytes_do_not_depend_on_destination",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_subset_loads_only_requested_target",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_duplicate_payload_uses_one_shard_but_hydration_never_aliases",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_full_target_compression_reduces_repeated_graph_bytes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_missing_records_keep_failure_inventory_and_cannot_inject",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_timeout_is_preserved_and_ordinary_summary_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_exact_sample_and_config_changes_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_rejects_misbound_document[document_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_rejects_misbound_document[source_text]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_rejects_duplicate_empty_and_unknown_object",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_producer_exhaustion_precedes_publication_and_failure_leaves_no_file",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_existing_destination_is_never_replaced_or_consumes_generator",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_exclusive_publish_race_keeps_competing_destination",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_size_bounds_fail_without_artifact[max_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_size_bounds_fail_without_artifact[max_manifest_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_size_bounds_fail_without_artifact[max_shard_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_config_bound_fails_before_producer_is_consumed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_loader_size_bounds[max_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_loader_size_bounds[max_manifest_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_loader_size_bounds[max_shard_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_external_sha_covers_even_unrequested_payloads",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_file_mutation_after_load_is_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[duplicate_record]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[duplicate_shard]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[dangling]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[unused]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[overlap]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[trailing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[schema]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[status]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[target_hash]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[snapshot_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[compressed_digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[expanded_digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[declared_huge]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[declared_small]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[truncated]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[trailing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[concatenated]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[unknown_type]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[duplicate_json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_duplicate_manifest_json_and_invalid_header_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_safe_paths_reject_symlink_ancestors_final_symlinks_traversal_and_fifo",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_unified_loader_retains_legacy_json_and_bundle_semantics",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_is_lazy_ordered_and_independently_repeatable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[duplicate]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[changed]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[missing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[unavailable]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[configuration]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_validates_a_late_corrupt_shard_without_reusing_prior_targets",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rechecks_file_at_resumption_and_exhaustion[before_first]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rechecks_file_at_resumption_and_exhaustion[between_targets]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rechecks_file_at_resumption_and_exhaustion[before_exhaustion]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rechecks_file_at_resumption_and_exhaustion[empty]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rejects_closed_bundle_and_changed_configuration_between_targets",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_does_not_yield_after_file_changes_during_decode",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_releases_prior_target_and_document_before_next_decode",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_early_iterator_close_releases_graph_without_visiting_later_target",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_does_not_keep_complete_requested_sample_containers",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_eager_mapping_failure_always_closes_target_iterator",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_full_document_preserves_fields_timestamps_and_numeric_payload",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_fresh_and_reopened_targets_have_exact_evaluation_outputs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_rich_grammar_payload_is_not_reduced_to_cache_summary[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_rich_grammar_payload_is_not_reduced_to_cache_summary[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_plain_dict_and_unknown_object_targets_fail_closed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_timeout_fallback_is_explicit_and_ordinary_summary_is_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_exact_embeddings_and_all_sample_fields_are_bound",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_subset_of_union_and_config_changes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_membership_and_failures_cannot_be_silently_skipped",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_tamper_external_hash_record_hash_duplicate_json_and_bound",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_record_hash_and_unknown_codec_fail_even_if_outer_seal_is_recomputed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_hydrated_mutation_cannot_change_snapshot",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_cross_process_reload_preserves_document_and_losses",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_native_values_exact_hashes_order_and_independent_immutable_storage",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_prepared_values_do_not_retain_original_graphs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_capsules_are_not_snapshot_codec_objects",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[value1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[value2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[value3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[value4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_mixed_targets_are_all_or_none_before_any_capsule_is_built",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[target-grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[target-legal_ir_grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[target-candidate_ir]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[target-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[document-canonical_hash]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[document-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[view-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRTrainingTarget-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRTrainingTarget-grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRTrainingTarget-candidate_ir]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRDocument-canonical_hash]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRDocument-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRDocument-to_json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LogicIRView-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_deleted_native_identity_falls_back[ipfs_datasets_py.logic.bridge.multiview-_NATIVE_LEGAL_IR_TRAINING_TARGET_TO_DICT]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_deleted_native_identity_falls_back[ipfs_datasets_py.logic.bridge.multiview-LegalIRTrainingTarget]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_deleted_native_identity_falls_back[ipfs_datasets_py.logic.bridge.types-LegalIRDocument]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_deleted_native_identity_falls_back[ipfs_datasets_py.logic.bridge.types-LogicIRView]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_function_code_falls_back",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_hash_failure_is_not_silently_converted_to_eligibility_fallback",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[0.0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[true]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[option5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[option6]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_optin_rejects_injected_owner_execution[executor]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_optin_rejects_injected_owner_execution[worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_optin_rejects_injected_owner_execution[both]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_independent_gc_and_reduction_policies_choose_exact_spawn_entry[False-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_independent_gc_and_reduction_policies_choose_exact_spawn_entry[False-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_independent_gc_and_reduction_policies_choose_exact_spawn_entry[True-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_independent_gc_and_reduction_policies_choose_exact_spawn_entry[True-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_worker_entrypoints_keep_default_and_injected_path_unchanged",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_private_reduction_entry_rejects_injected_trainer_before_reading_spec",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_default_public_worker_passes_original_full_hydrated_objects",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_native_method_override_preserves_full_mapping_without_invoking_override[LegalIRTrainingTarget-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_native_method_override_preserves_full_mapping_without_invoking_override[LegalIRDocument-canonical_hash]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_mixed_rich_grammar_targets_keep_original_mapping_and_live_revalidation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_native_attached_grammar_retains_full_mapping_and_exact_rejection[grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_native_attached_grammar_retains_full_mapping_and_exact_rejection[legal_ir_grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_generic_dynamic_serializer_keeps_observation_order_and_rejection",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_deferral_preserves_exact_target_and_collects_after_gc_restored",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[not_requested]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[unsupported_python]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[not_spawn_worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[not_main_thread]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[other_python_threads]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[gc_already_disabled]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[gc_debug_enabled]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[gc_callbacks_present]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_child_process_without_spawn_bypasses[fork]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_child_process_without_spawn_bypasses[forkserver]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_child_process_without_spawn_bypasses[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[None-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[0-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[-1-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[True-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[1024.0-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[1024-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[268435457-expanded_byte_limit]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_expansion_cap_is_inclusive",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_custom_snapshot_bypasses_without_observing_statistics[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_custom_snapshot_bypasses_without_observing_statistics[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_legacy_json_snapshot_remains_unchanged",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[RuntimeError-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[RuntimeError-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[TargetSnapshotError-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[TargetSnapshotError-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[MemoryError-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[MemoryError-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[KeyboardInterrupt-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[KeyboardInterrupt-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[SystemExit-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[SystemExit-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_interrupt_during_gc_disable_restores_gc_before_propagating",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_collection_failure_restores_gc_before_propagating",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_injects_complete_verified_shared_targets[json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_injects_complete_verified_shared_targets[bundle]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[json-sample]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[json-bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[json-snapshot_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[bundle-sample]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[bundle-bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[bundle-snapshot_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_closes_bundle_on_training_failure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_target_descriptor_cannot_raise_artifact_byte_bound",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    }
+  ],
+  "configured_pytest_addopts": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin"
+  ],
+  "constitution_formalized": false,
+  "deadline_historical_identity_case_selected": true,
+  "downloads_performed": false,
+  "executed_counts_by_source": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 3,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py": 1,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 7,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py": 35,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py": 27,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py": 35,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py": 28,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": 10,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py": 63,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py": 13
+  },
+  "executed_test_membership": [
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[False-order0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[False-order1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[False-order2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[True-order0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[True-order1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streamed_capsules_equal_full_reduction_and_payload[True-order2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_streaming_releases_each_graph_before_next_decode",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_ineligible_full_fallback_never_converts_earlier_native_targets[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_ineligible_full_fallback_never_converts_earlier_native_targets[2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_decode_error_precedes_any_reducer_error[False-None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_decode_error_precedes_any_reducer_error[False-0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_decode_error_precedes_any_reducer_error[True-None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_decode_error_precedes_any_reducer_error[True-0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_reducer_error_propagates_after_all_validation_and_gc_restoration[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_reducer_error_propagates_after_all_validation_and_gc_restoration[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_hashing_stays_outside_deferred_gc_and_collections_are_counted",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_disabled_gc_remains_disabled_without_forced_collection",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_artifact_mutation_prevents_returning_capsules[between_passes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_artifact_mutation_prevents_returning_capsules[conversion]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_artifact_mutation_prevents_returning_capsules[final_exhaustion]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_late_reducer_ineligibility_discards_all_capsules_then_full_fallback",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[injected_trainer]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[unsupported_snapshot]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[not_spawn_worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[not_main_thread]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_original_worker_reduction_environment_guards_remain[other_python_threads]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py::test_changed_native_class_contract_uses_identical_full_fallback",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_exact_full_target_payload_and_evaluation_parity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_rich_grammar_rejections_and_tuple_fields_are_complete",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_snapshot_identity_and_bytes_do_not_depend_on_destination",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_subset_loads_only_requested_target",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_duplicate_payload_uses_one_shard_but_hydration_never_aliases",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_full_target_compression_reduces_repeated_graph_bytes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_missing_records_keep_failure_inventory_and_cannot_inject",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_timeout_is_preserved_and_ordinary_summary_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_exact_sample_and_config_changes_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_rejects_misbound_document[document_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_rejects_misbound_document[source_text]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_rejects_duplicate_empty_and_unknown_object",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_producer_exhaustion_precedes_publication_and_failure_leaves_no_file",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_existing_destination_is_never_replaced_or_consumes_generator",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_exclusive_publish_race_keeps_competing_destination",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_size_bounds_fail_without_artifact[max_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_size_bounds_fail_without_artifact[max_manifest_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_writer_size_bounds_fail_without_artifact[max_shard_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_config_bound_fails_before_producer_is_consumed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_loader_size_bounds[max_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_loader_size_bounds[max_manifest_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_loader_size_bounds[max_shard_bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_external_sha_covers_even_unrequested_payloads",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_file_mutation_after_load_is_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[duplicate_record]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[duplicate_shard]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[dangling]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[unused]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[overlap]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[trailing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[schema]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[status]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[target_hash]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_resealed_invalid_manifests_fail_closed[snapshot_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[compressed_digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[expanded_digest]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[declared_huge]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[declared_small]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[truncated]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[trailing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[concatenated]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[unknown_type]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_independent_shard_verification_and_expansion_bounds[duplicate_json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_duplicate_manifest_json_and_invalid_header_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_safe_paths_reject_symlink_ancestors_final_symlinks_traversal_and_fifo",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_unified_loader_retains_legacy_json_and_bundle_semantics",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_is_lazy_ordered_and_independently_repeatable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[duplicate]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[changed]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[missing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[unavailable]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_preflights_every_request_before_any_shard_read[configuration]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_validates_a_late_corrupt_shard_without_reusing_prior_targets",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rechecks_file_at_resumption_and_exhaustion[before_first]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rechecks_file_at_resumption_and_exhaustion[between_targets]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rechecks_file_at_resumption_and_exhaustion[before_exhaustion]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rechecks_file_at_resumption_and_exhaustion[empty]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_rejects_closed_bundle_and_changed_configuration_between_targets",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_does_not_yield_after_file_changes_during_decode",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_releases_prior_target_and_document_before_next_decode",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_early_iterator_close_releases_graph_without_visiting_later_target",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_iterator_does_not_keep_complete_requested_sample_containers",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py::test_eager_mapping_failure_always_closes_target_iterator",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_full_document_preserves_fields_timestamps_and_numeric_payload",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_fresh_and_reopened_targets_have_exact_evaluation_outputs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_rich_grammar_payload_is_not_reduced_to_cache_summary[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_rich_grammar_payload_is_not_reduced_to_cache_summary[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_plain_dict_and_unknown_object_targets_fail_closed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_timeout_fallback_is_explicit_and_ordinary_summary_is_rejected",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_exact_embeddings_and_all_sample_fields_are_bound",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_subset_of_union_and_config_changes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_membership_and_failures_cannot_be_silently_skipped",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_tamper_external_hash_record_hash_duplicate_json_and_bound",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_record_hash_and_unknown_codec_fail_even_if_outer_seal_is_recomputed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_hydrated_mutation_cannot_change_snapshot",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py::test_cross_process_reload_preserves_document_and_losses",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_native_values_exact_hashes_order_and_independent_immutable_storage",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_prepared_values_do_not_retain_original_graphs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_capsules_are_not_snapshot_codec_objects",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[value1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[value2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[value3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_unsupported_or_empty_mapping_returns_identical_object[value4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_mixed_targets_are_all_or_none_before_any_capsule_is_built",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[target-grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[target-legal_ir_grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[target-candidate_ir]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[target-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[document-canonical_hash]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[document-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_extra_instance_fields_preserve_originals[view-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRTrainingTarget-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRTrainingTarget-grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRTrainingTarget-candidate_ir]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRDocument-canonical_hash]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRDocument-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LegalIRDocument-to_json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_class_methods_or_grammar_properties_fall_back_without_invocation[LogicIRView-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_deleted_native_identity_falls_back[ipfs_datasets_py.logic.bridge.multiview-_NATIVE_LEGAL_IR_TRAINING_TARGET_TO_DICT]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_deleted_native_identity_falls_back[ipfs_datasets_py.logic.bridge.multiview-LegalIRTrainingTarget]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_deleted_native_identity_falls_back[ipfs_datasets_py.logic.bridge.types-LegalIRDocument]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_deleted_native_identity_falls_back[ipfs_datasets_py.logic.bridge.types-LogicIRView]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_non_native_or_nonfinite_numeric_mappings_fall_back[value5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_changed_function_code_falls_back",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py::test_hash_failure_is_not_silently_converted_to_eligibility_fallback",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[0.0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[true]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[option5]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_option_requires_boolean_before_job_or_registry_access[option6]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_optin_rejects_injected_owner_execution[executor]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_optin_rejects_injected_owner_execution[worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_reduction_optin_rejects_injected_owner_execution[both]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_independent_gc_and_reduction_policies_choose_exact_spawn_entry[False-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_independent_gc_and_reduction_policies_choose_exact_spawn_entry[False-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_independent_gc_and_reduction_policies_choose_exact_spawn_entry[True-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_independent_gc_and_reduction_policies_choose_exact_spawn_entry[True-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_worker_entrypoints_keep_default_and_injected_path_unchanged",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_private_reduction_entry_rejects_injected_trainer_before_reading_spec",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices0]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices1]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices2]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices3]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_full_and_prepared_native_targets_keep_evaluation_state_and_capture[indices4]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_default_public_worker_passes_original_full_hydrated_objects",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_native_method_override_preserves_full_mapping_without_invoking_override[LegalIRTrainingTarget-to_dict]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_native_method_override_preserves_full_mapping_without_invoking_override[LegalIRDocument-canonical_hash]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_mixed_rich_grammar_targets_keep_original_mapping_and_live_revalidation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_native_attached_grammar_retains_full_mapping_and_exact_rejection[grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_native_attached_grammar_retains_full_mapping_and_exact_rejection[legal_ir_grammar_validation]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py::test_generic_dynamic_serializer_keeps_observation_order_and_rejection",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_deferral_preserves_exact_target_and_collects_after_gc_restored",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[not_requested]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[unsupported_python]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[not_spawn_worker]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[not_main_thread]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[other_python_threads]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[gc_already_disabled]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[gc_debug_enabled]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_ineligible_execution_uses_ordinary_hydration[gc_callbacks_present]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_child_process_without_spawn_bypasses[fork]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_child_process_without_spawn_bypasses[forkserver]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_child_process_without_spawn_bypasses[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[None-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[0-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[-1-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[True-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[1024.0-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[1024-invalid_expanded_byte_count]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_invalid_or_large_expansion_bypasses[268435457-expanded_byte_limit]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_expansion_cap_is_inclusive",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_custom_snapshot_bypasses_without_observing_statistics[False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_custom_snapshot_bypasses_without_observing_statistics[True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_legacy_json_snapshot_remains_unchanged",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[RuntimeError-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[RuntimeError-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[TargetSnapshotError-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[TargetSnapshotError-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[MemoryError-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[MemoryError-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[KeyboardInterrupt-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[KeyboardInterrupt-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[SystemExit-True]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_hydration_failure_preserves_exception_and_gc_state[SystemExit-False]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_interrupt_during_gc_disable_restores_gc_before_propagating",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py::test_collection_failure_restores_gc_before_propagating",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_injects_complete_verified_shared_targets[json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_injects_complete_verified_shared_targets[bundle]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[json-sample]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[json-bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[json-snapshot_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[bundle-sample]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[bundle-bytes]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training[bundle-snapshot_id]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_closes_bundle_on_training_failure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_target_descriptor_cannot_raise_artifact_byte_bound",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_compiler.py"
+    }
+  ],
+  "exit_code": 0,
+  "expanded_pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_injects_complete_verified_shared_targets",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_closes_bundle_on_training_failure",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_target_descriptor_cannot_raise_artifact_byte_bound",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-streamed-target-reduction-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-streamed-target-reduction-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-streamed-target-reduction-20260926/capture-r1/tests/tests.xml"
+  ],
+  "five_case_pilot_included": true,
+  "fixture_directory": "/tmp/pytest-of-barberb/campaign-streamed-target-reduction-20260926-r1",
+  "fixture_inventory": {
+    "apparent_bytes": 0,
+    "entry_count": 0,
+    "special_file_count": 0,
+    "symlink_count": 0
+  },
+  "fixture_inventory_scope": "current retained bytes, not cumulative generated bytes or continuous peak",
+  "fixtures_outside_strict_attempt": true,
+  "global_holdout_verified": false,
+  "input_artifacts": [
+    {
+      "bytes": 110656,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/control_common.py",
+      "sha256": "a8458637efb1cc8f54f916dd762baad07bb97e12060c2f91bf6137df9b654c4b"
+    },
+    {
+      "bytes": 13647,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/run_control.py",
+      "sha256": "c6b74469d68af373c43b642fd9e2b09b8c9722d0df4949bfeb7163a3a49a351c"
+    },
+    {
+      "bytes": 9449,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/offline_checks.py",
+      "sha256": "47da3dd0b754a912960b6962dfc0e7e88f61a058fc03e9679667d58e902d08b4"
+    },
+    {
+      "bytes": 131305,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/audit-receipt.json",
+      "sha256": "c467da6644051d580ae5affd68a56916a1a9a7d1dfe5e02ba8c9ef036675fd8a"
+    },
+    {
+      "bytes": 4557,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/resource-release.json",
+      "sha256": "85fea5900dd0c9a734cee151e2621e15f539e14b68654c4816c71768abf75140"
+    },
+    {
+      "bytes": 161163,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/tests/tests-receipt.json",
+      "sha256": "6beed5a06ab7ecc47a185be17cb78b7b8e953ec57caca2b5cd29dea5a8a066da"
+    },
+    {
+      "bytes": 39609,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/tests/tests.xml",
+      "sha256": "010dbea68f54648c9a4b5799f275c113c47ae3488a6ac5e73609bdb7222cadf4"
+    },
+    {
+      "bytes": 1264989,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/sources-before.json",
+      "sha256": "e46a3412d78058027b025559b076a386d288f24bb5d4a8f202a24e3e41d1dafc"
+    },
+    {
+      "bytes": 1264989,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/sources-after.json",
+      "sha256": "e46a3412d78058027b025559b076a386d288f24bb5d4a8f202a24e3e41d1dafc"
+    },
+    {
+      "bytes": 177235,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/dependencies-before.json",
+      "sha256": "5802b02dd8899b8bfaa5c03cc264a9a1f6f346188443e865ae41877bbc209464"
+    },
+    {
+      "bytes": 177235,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/dependencies-after.json",
+      "sha256": "5802b02dd8899b8bfaa5c03cc264a9a1f6f346188443e865ae41877bbc209464"
+    },
+    {
+      "bytes": 1264989,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/tests/sources-before.json",
+      "sha256": "e46a3412d78058027b025559b076a386d288f24bb5d4a8f202a24e3e41d1dafc"
+    },
+    {
+      "bytes": 1264989,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/tests/sources-after.json",
+      "sha256": "e46a3412d78058027b025559b076a386d288f24bb5d4a8f202a24e3e41d1dafc"
+    },
+    {
+      "bytes": 177235,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/tests/dependencies-before.json",
+      "sha256": "5802b02dd8899b8bfaa5c03cc264a9a1f6f346188443e865ae41877bbc209464"
+    },
+    {
+      "bytes": 177235,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-isolation-20260926/capture-r1/tests/dependencies-after.json",
+      "sha256": "5802b02dd8899b8bfaa5c03cc264a9a1f6f346188443e865ae41877bbc209464"
+    },
+    {
+      "bytes": 1381,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/cap-increase-60gb-20260926.json",
+      "sha256": "bb3316c00de7161e710246aa0fc1a6a42d850898c70fbf791e47cb11bd0496fb"
+    },
+    {
+      "bytes": 92871,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.before-cap-60gb-20260926.json",
+      "sha256": "3dad515ba59e9494687f2bfa9c9b8be36479e80ced854cff6a415e7b8eb66b76"
+    },
+    {
+      "bytes": 89784,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156"
+    },
+    {
+      "bytes": 27359,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py",
+      "sha256": "01fc0250746eabfdd0958c0dd0c19edbd9dc7858fedefd38b6ca6b66bfa9db68"
+    },
+    {
+      "bytes": 16871,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py",
+      "sha256": "190147c046285e0d4bb6a257d1a3494774db6be73d39f3526a7aacbc4b8b6f0f"
+    },
+    {
+      "bytes": 34866,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py",
+      "sha256": "d2d95b94a3d8918fbd1ffbb34c5083855b412501ff4500fa71f2a960c936c7fa"
+    }
+  ],
+  "jevops_regressions_included": false,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 222
+  },
+  "lake_execution_performed": false,
+  "live_accelerate_service_contacted": false,
+  "live_hub_calls": false,
+  "native_memory_improvement_claim": false,
+  "native_model_training_performed": false,
+  "native_or_pinned_checkpoint_execution": false,
+  "native_training_validation_deferred": true,
+  "native_worker_execution": false,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "nonexecuted_context_delta": [],
+  "original_pytest_args": [
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_injects_complete_verified_shared_targets",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_closes_bundle_on_training_failure",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_target_descriptor_cannot_raise_artifact_byte_bound",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-streamed-target-reduction-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-streamed-target-reduction-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-streamed-target-reduction-20260926/capture-r1/tests/tests.xml"
+  ],
+  "passed": true,
+  "prior_failed_fixture_cleanup_performed": false,
+  "produced_artifacts": [
+    {
+      "bytes": 46371,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-streamed-target-reduction-20260926/capture-r1/tests/tests.xml",
+      "sha256": "95cf3a439b8b8e50973059b59f4273916f225ec6042efa2dd8db6a3e8c3fdbba"
+    }
+  ],
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "prover_execution_performed": false,
+  "publication_performed": false,
+  "pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_snapshot.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_reduction_integration.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_hydration_gc.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_injects_complete_verified_shared_targets",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_refuses_changed_target_bindings_before_training",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_closes_bundle_on_training_failure",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_worker_target_descriptor_cannot_raise_artifact_byte_bound",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-streamed-target-reduction-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-streamed-target-reduction-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-streamed-target-reduction-20260926/capture-r1/tests/tests.xml"
+  ],
+  "pytest_ini_artifact": {
+    "bytes": 1536,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+  },
+  "pytest_tmp_path_retention_policy": "failed",
+  "pytest_tmpdir_policy_module": {
+    "bytes": 13271,
+    "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/tmpdir.py",
+    "sha256": "5099f71d89413191c9e7515c9d4fe9fc7083bb73306f2cf1f73a9f89c862ed90"
+  },
+  "resolved_logic_paths": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "schema": "offline-streamed-target-reduction-regression-v1",
+  "source_artifacts": [
+    {
+      "bytes": 89784,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156"
+    },
+    {
+      "bytes": 27359,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py",
+      "sha256": "01fc0250746eabfdd0958c0dd0c19edbd9dc7858fedefd38b6ca6b66bfa9db68"
+    }
+  ],
+  "source_authority_authenticated": false,
+  "speed_claim": false,
+  "successful_tmp_path_fixtures_ephemeral": true,
+  "synthetic_evaluator_calls_allowed": true,
+  "test_artifacts": [
+    {
+      "bytes": 16871,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_streamed_target_reduction.py",
+      "sha256": "190147c046285e0d4bb6a257d1a3494774db6be73d39f3526a7aacbc4b8b6f0f"
+    },
+    {
+      "bytes": 34866,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_bundle.py",
+      "sha256": "d2d95b94a3d8918fbd1ffbb34c5083855b412501ff4500fa71f2a960c936c7fa"
+    }
+  ],
+  "test_counts_by_module": {
+    "tests.integration.logic.test_canonical_semantic_roundtrip": 3,
+    "tests.unit.logic.legal_ir.test_canonical_compiler": 1,
+    "tests.unit.logic.test_autoformal_speed_semantics": 7,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_prepared_targets": 35,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_streamed_target_reduction": 27,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_target_hydration_gc": 35,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_target_reduction_integration": 28,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker": 10,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_target_bundle": 63,
+    "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_target_snapshot": 13
+  },
+  "test_seal_reuse_disabled": true,
+  "tiny_synthetic_state_construction_allowed": true,
+  "wall_seconds": 9.539956339984201
+}

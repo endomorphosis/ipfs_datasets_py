@@ -633,8 +633,8 @@ def _memory_observation() -> dict[str, Any]:
     return result
 
 
-def _hydrate_shared_targets(snapshot: Any, members: Any, config: Any, *,
-                            defer_gc: bool) -> tuple[dict[str, Any], dict[str, Any]]:
+def _hydrate_target_operation(snapshot: Any, *, defer_gc: bool,
+                              hydrate: Callable[[], Any]) -> tuple[Any, dict[str, Any]]:
     """Optionally defer cyclic scans in an isolated native bundle worker.
 
     The bundle still checks every requested sample, shard and complete target.
@@ -692,7 +692,7 @@ def _hydrate_shared_targets(snapshot: Any, members: Any, config: Any, *,
         # failure with a cleanup exception or perform forced GC on that path.
         try:
             gc.disable()
-            targets = snapshot.targets_for(members, config=config)
+            targets = hydrate()
         finally:
             gc.enable() if enabled else gc.disable()
         telemetry["hydrate_seconds"] = time.perf_counter() - hydrate_started
@@ -704,7 +704,7 @@ def _hydrate_shared_targets(snapshot: Any, members: Any, config: Any, *,
             gc.enable() if enabled else gc.disable()
         telemetry["collection_seconds"] = time.perf_counter() - collection_started
     else:
-        targets = snapshot.targets_for(members, config=config)
+        targets = hydrate()
         telemetry["hydrate_seconds"] = time.perf_counter() - hydrate_started
     stats_after = gc.get_stats()
     telemetry.update(gc_enabled_after=gc.isenabled(), gc_threshold_after=list(gc.get_threshold()),
@@ -713,6 +713,171 @@ def _hydrate_shared_targets(snapshot: Any, members: Any, config: Any, *,
                                      for before, after in zip(stats_before, stats_after)],
                      total_seconds=time.perf_counter() - started)
     return targets, telemetry
+
+
+def _hydrate_shared_targets(snapshot: Any, members: Any, config: Any, *,
+                            defer_gc: bool) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Keep ordinary full hydration and its GC policy unchanged."""
+    return _hydrate_target_operation(
+        snapshot, defer_gc=defer_gc,
+        hydrate=lambda: snapshot.targets_for(members, config=config))
+
+
+def _target_reduction_skip_reason(snapshot: Any, trainer: Any) -> str | None:
+    from .legal_ir_target_bundle import TargetBundle
+
+    if trainer is not None:
+        return "injected_trainer"
+    if type(snapshot) is not TargetBundle:
+        return "unsupported_snapshot"
+    if multiprocessing.parent_process() is None or multiprocessing.get_start_method(allow_none=True) != "spawn":
+        return "not_spawn_worker"
+    if threading.current_thread() is not threading.main_thread():
+        return "not_main_thread"
+    if threading.active_count() != 1:
+        return "other_python_threads"
+    return None
+
+
+def _stream_reduced_shared_targets(snapshot: Any, members: Any, config: Any, *,
+                                   defer_gc: bool, prepare: Callable[..., Any]) -> tuple[Any, dict[str, Any], dict[str, Any]]:
+    """Bound rich-graph retention, at the cost of a second validated decode.
+
+    Only the isolated native worker calls this helper. The first pass validates
+    the complete selection before any reducer hashing/conversion. The second
+    pass retains immutable capsules only. Unsupported envelopes take the full
+    loader/reducer path; nothing partial is installed. The reducer's extra
+    hashing/conversion runs outside our GC-deferral scopes, preserving an
+    originally disabled GC state. Existing full-validation document hashing
+    remains inside hydration as before.
+    These are memory-oriented mechanics, not a native speed qualification.
+    """
+    from . import _autoencoder_prepared_targets as reduction
+
+    started = time.perf_counter()
+    observations = []
+    stream = {"policy": "two_pass_verified_target_reduction_v1",
+              "validation_pass_targets": 0, "conversion_pass_targets": 0,
+              "fallback_full_hydration": False, "fallback_reason": None, "fallback_hydrated_targets": 0,
+              "validation_authority": False, "native_performance_qualified": False,
+              "validation_pass_seconds": 0.0, "conversion_hydration_seconds": 0.0,
+              "reduction_seconds": 0.0, "release_seconds": 0.0,
+              "release_scope": "caller reference unlink only; prior graph cleanup occurs on iterator advance or finalization",
+              "iterator_finalization_seconds": 0.0}
+    first_reason = None
+
+    def validate_selection():
+        nonlocal first_reason
+        iterator = snapshot.iter_targets_for(members, config=config)
+        try:
+            for sample_id, target in iterator:
+                reason = reduction._eligible(target, sample_id)
+                if first_reason is None and reason is not None:
+                    first_reason = reason
+                stream["validation_pass_targets"] += 1
+                # Both caller and iterator release this graph before next decode.
+                del target
+        finally:
+            iterator.close()
+
+    _, observation = _hydrate_target_operation(
+        snapshot, defer_gc=defer_gc, hydrate=validate_selection)
+    observations.append(observation)
+    stream["validation_pass_seconds"] = observation["total_seconds"]
+    if not reduction._native_classes_unchanged():
+        first_reason = "native_class_contract_changed"
+    if not members:
+        first_reason = "non_native_or_empty_target_mapping"
+
+    def fallback(reason):
+        stream["fallback_full_hydration"] = True
+        stream["fallback_reason"] = reason
+        full, observation = _hydrate_shared_targets(snapshot, members, config, defer_gc=defer_gc)
+        observations.append(observation)
+        stream["fallback_hydrated_targets"] = len(full)
+        stream["conversion_hydration_seconds"] += observation["total_seconds"]
+        reduce_started = time.perf_counter()
+        result, telemetry = prepare(full)
+        stream["reduction_seconds"] += time.perf_counter() - reduce_started
+        return result, telemetry
+
+    if first_reason is not None:
+        targets, telemetry = fallback(first_reason)
+    else:
+        prepared = {}
+        telemetry = {"applied": True, "skip_reason": None,
+                     "original_target_count": len(members), "prepared_target_count": 0,
+                     "preparation_seconds": 0.0, "hash_seconds": 0.0}
+        iterator = snapshot.iter_targets_for(members, config=config)
+        late_reason = None
+        try:
+            for _ in members:
+                pair, observation = _hydrate_target_operation(
+                    snapshot, defer_gc=defer_gc, hydrate=lambda: next(iterator))
+                observations.append(observation)
+                stream["conversion_hydration_seconds"] += observation["total_seconds"]
+                sample_id, target = pair
+                del pair
+                stream["conversion_pass_targets"] += 1
+                reduce_started = time.perf_counter()
+                converted, details = prepare({sample_id: target})
+                stream["reduction_seconds"] += time.perf_counter() - reduce_started
+                telemetry["preparation_seconds"] += details["preparation_seconds"]
+                telemetry["hash_seconds"] += details["hash_seconds"]
+                if not details["applied"]:
+                    late_reason = details["skip_reason"]
+                else:
+                    prepared[sample_id] = converted[sample_id]
+                release_started = time.perf_counter()
+                del target, converted
+                stream["release_seconds"] += time.perf_counter() - release_started
+                if late_reason is not None:
+                    break
+            if late_reason is None:
+                finalization_started = time.perf_counter()
+                sentinel = object()
+                if next(iterator, sentinel) is not sentinel:
+                    raise TrainingJobValidationError("streamed target selection contains extra rows")
+                stream["iterator_finalization_seconds"] += time.perf_counter() - finalization_started
+        finally:
+            finalization_started = time.perf_counter()
+            iterator.close()
+            stream["iterator_finalization_seconds"] += time.perf_counter() - finalization_started
+        if late_reason is None and not reduction._native_classes_unchanged():
+            late_reason = "native_class_contract_changed"
+        if late_reason is not None:
+            release_started = time.perf_counter()
+            prepared.clear()
+            stream["release_seconds"] += time.perf_counter() - release_started
+            targets, telemetry = fallback(late_reason)
+        else:
+            telemetry["prepared_target_count"] = len(prepared)
+            targets = MappingProxyType(prepared)
+    # Sum disjoint hydration scopes; reduction/hash/release are separately timed.
+    # GC is restored and collected after each scope, before any conversion.
+    gc_result = dict(observations[0])
+    last = observations[-1]
+    for key in ("hydrate_seconds", "collection_seconds", "total_seconds"):
+        gc_result[key] = sum(item[key] for item in observations)
+    gc_result.update(
+        gc_enabled_after=last["gc_enabled_after"], gc_threshold_after=last["gc_threshold_after"],
+        gc_stats_after=last["gc_stats_after"], streamed_operation_count=len(observations),
+        explicit_collection_performed=any(item["explicit_collection_performed"] for item in observations),
+        explicit_collection_count=sum(item["explicit_collection_performed"] for item in observations),
+        applied=any(item["applied"] for item in observations),
+        all_streamed_operations_deferred=all(item["applied"] for item in observations),
+        streamed_skip_reasons=[item["skip_reason"] for item in observations],
+        gc_stats_scope="first hydration start through last hydration end, including intervening unpaused reduction")
+    gc_result["gc_stats_delta"] = [
+        {key: after[key] - before[key] for key in after}
+        for before, after in zip(gc_result["gc_stats_before"], gc_result["gc_stats_after"])]
+    stream["decoded_target_count"] = (stream["validation_pass_targets"]
+                                      + stream["conversion_pass_targets"]
+                                      + stream["fallback_hydrated_targets"])
+    stream["total_seconds"] = time.perf_counter() - started
+    telemetry["streaming"] = stream
+    telemetry["release_seconds"] = stream["release_seconds"]
+    return targets, gc_result, telemetry
 
 
 def verify_corpus_job_inputs(spec: TrainingJobSpec) -> dict[str, Any]:
@@ -974,6 +1139,9 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
     target_hydration_seconds = 0.0
     target_hydration_gc = None
     target_snapshot_sample_count = 0
+    streamed_reduction = None
+    streamed_memory_before = None
+    streamed_memory_after = None
     if spec.target_snapshot_artifact is not None:
         from .autoencoder_target_preparation import target_snapshot_config, unique_training_samples
         from .legal_ir_target_bundle import DEFAULT_MAX_BYTES, load_target_artifact
@@ -997,9 +1165,19 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
             raise TrainingJobValidationError("target snapshot identity mismatch")
         target_snapshot_sample_count = target_snapshot.sample_count
         target_hydration_started = time.perf_counter()
-        shared_targets, target_hydration_gc = _hydrate_shared_targets(
-            target_snapshot, members, target_config, defer_gc=defer_target_hydration_gc)
-        target_hydration_seconds = time.perf_counter() - target_hydration_started
+        if reduce_native_targets and _target_reduction_skip_reason(target_snapshot, trainer) is None:
+            streamed_memory_before = _memory_observation()
+            shared_targets, target_hydration_gc, streamed_reduction = _stream_reduced_shared_targets(
+                target_snapshot, members, target_config, defer_gc=defer_target_hydration_gc,
+                prepare=prepare_native_targets)
+            streamed_memory_after = _memory_observation()
+            # Hash/conversion and release are outside the disjoint hydration
+            # scopes. The encompassing target_load_seconds includes all work.
+            target_hydration_seconds = target_hydration_gc["total_seconds"]
+        else:
+            shared_targets, target_hydration_gc = _hydrate_shared_targets(
+                target_snapshot, members, target_config, defer_gc=defer_target_hydration_gc)
+            target_hydration_seconds = time.perf_counter() - target_hydration_started
         target_storage_statistics = dict(getattr(target_snapshot, "statistics", {}))
         target_artifact_format = target_storage_statistics.get("artifact_format", "json")
         statuses = target_snapshot.statuses
@@ -1017,21 +1195,18 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         "total_seconds": reduction_initialization_seconds, "memory_before": None, "memory_after": None,
         "validation_authority": False,
     }
-    if reduce_native_targets:
-        from .legal_ir_target_bundle import TargetBundle
+    if streamed_reduction is not None:
+        target_reduction.update(streamed_reduction)
+        stream = streamed_reduction["streaming"]
+        target_reduction.update(
+            memory_before=streamed_memory_before, memory_after=streamed_memory_after,
+            memory_observation_scope="before first streamed validation and after final conversion/fallback",
+            total_seconds=(reduction_initialization_seconds + stream["reduction_seconds"]
+                           + stream["release_seconds"] + stream["iterator_finalization_seconds"]))
+    elif reduce_native_targets:
         reduction_started = time.perf_counter()
         target_reduction["memory_before"] = _memory_observation()
-        reason = None
-        if trainer is not None:
-            reason = "injected_trainer"
-        elif type(target_snapshot) is not TargetBundle:
-            reason = "unsupported_snapshot"
-        elif multiprocessing.parent_process() is None or multiprocessing.get_start_method(allow_none=True) != "spawn":
-            reason = "not_spawn_worker"
-        elif threading.current_thread() is not threading.main_thread():
-            reason = "not_main_thread"
-        elif threading.active_count() != 1:
-            reason = "other_python_threads"
+        reason = _target_reduction_skip_reason(target_snapshot, trainer)
         target_reduction["skip_reason"] = reason
         if reason is None:
             prepared, preparation = prepare_native_targets(shared_targets)

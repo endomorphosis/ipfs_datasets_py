@@ -26,6 +26,18 @@ immutable request descriptors and leaves actual execution to an explicit owner
 drain, retaining the existing shared-target, sparse-update and optional Arrow
 path. No full-corpus, native or legal-IR speed qualification follows.
 
+The next training-memory change is
+[incremental target hydration](../reports/autoencoder_streamed_target_reduction.md)
+under the existing default-off reduction option. It keeps numeric weights local
+and changes neither the Quack protocol nor sparse replay. Two validated passes
+avoid retaining the whole rich-target batch but add decoding, validation hashes
+and collections. All 222 selected offline cases passed with stable provenance
+guards. Native memory and complete-job throughput qualification remain deferred;
+offline correctness alone does not justify more parallel workers.
+The next delivery integration must stream the complete declared source inventory,
+partitions and embedding dispositions into queryable rows. Current model-history
+events and selected packages do not constitute a full federal-law dataset.
+
 The later [combined integration validation](../reports/autoencoder_campaign_integration_validation.md)
 passed all 580 selected offline tests with stable source/dependency guards and
 released its fresh reservation. It includes B1, semantic repairs, Constitution

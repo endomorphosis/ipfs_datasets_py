@@ -8,6 +8,12 @@ median improved 3.5%, but one of the two pairs was slightly slower. This is
 primarily a measured memory improvement, with a modest and noisy job-time
 result. It is not a new accepted weight update or corpus formalization.
 
+Subsequent implementation, 2026-09-26:
+[incremental hydration](autoencoder_streamed_target_reduction.md) replaces the
+opt-in worker's initial full-batch retention with two validated passes. The
+measurements below describe the original implementation only. Native validation
+of that later strategy remains deferred, and the option remains off by default.
+
 The [native receipt](evidence/autoencoder_control_plane_plan/worker-target-reduction-native-20260925.json)
 contains four independent owner-managed jobs, complete worker receipts, exact
 comparison exemptions, retained source snapshots and before/after producer

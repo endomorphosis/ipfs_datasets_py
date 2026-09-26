@@ -18,7 +18,7 @@ from pathlib import Path
 import stat
 import struct
 import time
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Iterator, Mapping, Sequence
 import uuid
 import zlib
 
@@ -236,8 +236,25 @@ class TargetBundle:
         return self._descriptor
 
     def targets_for(self, samples: Sequence[Any], *, config: TargetSnapshotConfig) -> dict[str, Any]:
-        descriptor = self._check_open()
-        if _json(config.to_dict()) != _json(self._manifest["config"]):
+        targets = self.iter_targets_for(samples, config=config)
+        try:
+            return dict(targets)
+        finally:
+            targets.close()
+
+    def iter_targets_for(self, samples: Sequence[Any], *, config: TargetSnapshotConfig) -> Iterator[tuple[str, Any]]:
+        """Yield complete verified targets without retaining previous graphs.
+
+        All request bindings are checked eagerly before selected-shard reads.
+        Each iterator is an independent pass; no decoded target is cached. Only
+        full exhaustion reaches the final file guard. Close an abandoned pass
+        explicitly, and release caller-held targets before advancing to avoid
+        retaining two graphs across the next decode. Early close is not complete
+        requested-target verification.
+        """
+        self._check_open()
+        configuration = _json(config.to_dict())
+        if configuration != _json(self._manifest["config"]):
             raise TargetSnapshotError("target configuration/provenance mismatch")
         requested = []
         seen = set()
@@ -251,31 +268,52 @@ class TargetBundle:
                 raise TargetSnapshotError("missing or changed sample payload")
             if not row["has_target"]:
                 raise TargetSnapshotError(f"sample has no injectable target: {row['status']}")
-            requested.append((sample, row))
-        result = {}
-        for sample, row in requested:
-            started = time.perf_counter()
-            shard = self._shards[row["target_sha256"]]
-            compressed = _read_at(descriptor, shard["compressed_bytes"], self._payload_offset + shard["offset"])
-            if _sha(compressed) != shard["compressed_sha256"]:
-                raise TargetSnapshotError("compressed target shard digest mismatch")
-            raw = _expand(compressed, shard["uncompressed_bytes"])
-            if _sha(raw) != shard["target_sha256"]:
-                raise TargetSnapshotError("expanded target shard digest mismatch")
-            self._statistics["read_decompress_seconds"] += time.perf_counter() - started
-            self._statistics["decompressed_shards"] += 1
-            self._statistics["decompressed_bytes"] += len(raw)
-            self._decompressed.add(shard["target_sha256"])
-            started = time.perf_counter()
-            target = _decode(_parse(raw))
-            _validate_target(target, sample.sample_id, config, row["status"])
-            document = getattr(target, "document", None)
-            if type(document) is LegalIRDocument and document.source_text != sample.text:
-                raise TargetSnapshotError("target document/source text mismatch")
-            result[sample.sample_id] = target
-            self._statistics["hydrate_validate_seconds"] += time.perf_counter() - started
-        self._check_open()
-        return result
+            # The decoder needs only these values, not the full sample's
+            # embedding/frame containers throughout the iterator lifetime.
+            requested.append((sample_id, sample.text, row))
+
+        def values():
+            for sample_id, source_text, row in requested:
+                descriptor = self._check_open()
+                if _json(config.to_dict()) != configuration:
+                    raise TargetSnapshotError("target configuration/provenance mismatch")
+                target = self._hydrate_target(descriptor, sample_id, source_text, row, config)
+                try:
+                    self._check_open()
+                    yield sample_id, target
+                finally:
+                    # The helper's compressed/raw/parsed/document references
+                    # have already gone before yield. Release this final owned
+                    # graph reference before decoding another requested shard.
+                    del target
+            self._check_open()
+            if _json(config.to_dict()) != configuration:
+                raise TargetSnapshotError("target configuration/provenance mismatch")
+
+        return values()
+
+    def _hydrate_target(self, descriptor: int, sample_id: str, source_text: str,
+                        row: Mapping[str, Any], config: TargetSnapshotConfig) -> Any:
+        started = time.perf_counter()
+        shard = self._shards[row["target_sha256"]]
+        compressed = _read_at(descriptor, shard["compressed_bytes"], self._payload_offset + shard["offset"])
+        if _sha(compressed) != shard["compressed_sha256"]:
+            raise TargetSnapshotError("compressed target shard digest mismatch")
+        raw = _expand(compressed, shard["uncompressed_bytes"])
+        if _sha(raw) != shard["target_sha256"]:
+            raise TargetSnapshotError("expanded target shard digest mismatch")
+        self._statistics["read_decompress_seconds"] += time.perf_counter() - started
+        self._statistics["decompressed_shards"] += 1
+        self._statistics["decompressed_bytes"] += len(raw)
+        self._decompressed.add(shard["target_sha256"])
+        started = time.perf_counter()
+        target = _decode(_parse(raw))
+        _validate_target(target, sample_id, config, row["status"])
+        document = getattr(target, "document", None)
+        if type(document) is LegalIRDocument and document.source_text != source_text:
+            raise TargetSnapshotError("target document/source text mismatch")
+        self._statistics["hydrate_validate_seconds"] += time.perf_counter() - started
+        return target
 
     def close(self) -> None:
         descriptor, self._descriptor = self._descriptor, None
