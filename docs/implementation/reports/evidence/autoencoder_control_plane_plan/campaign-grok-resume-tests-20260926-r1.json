@@ -1,0 +1,654 @@
+{
+  "additional_nonexecuted_context": [
+    {
+      "bytes": 6754,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/ingest_ipfs_uscode_entities.py",
+      "sha256": "1810b0a3a751d3b04a5d31845984c6f6ed54fd2978c80a9ea77c03b8c4de329f"
+    },
+    {
+      "bytes": 28958,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_loop.py",
+      "sha256": "2742a2a488c1dce948368a3db63eeb847c57178d3e2ddf6f1263d33c0c0157b1"
+    }
+  ],
+  "admitted": false,
+  "advisory_resume_and_isolated_task_fixture_scope_only": true,
+  "b2_unchanged_artifacts": [
+    {
+      "bytes": 30562,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_execution.py",
+      "sha256": "d6817357e7733aea795759361cfc18602c82d8765eba0b14eb68ab7e57ca0b9c"
+    },
+    {
+      "bytes": 27628,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_training.py",
+      "sha256": "e9535396232db9cf7b0b39d8386863a089a81505fb4b292fc1cf0732e0d9550e"
+    },
+    {
+      "bytes": 77024,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "sha256": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447"
+    },
+    {
+      "bytes": 23673,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_operation_journal.py",
+      "sha256": "8008b2cf10e7dab119ee703a84a84b0bd2c72931615969170002230e224036e3"
+    },
+    {
+      "bytes": 16847,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_process.py",
+      "sha256": "92011e155ec44ddc95d2ae7effa3c808273cd95692bac3738beb8266e8f17fdf"
+    },
+    {
+      "bytes": 8301,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_process_worker.py",
+      "sha256": "b01b4b08bd9d76c82c9cce06aaa7641944abfa6f1a70f313dd0d4937dcb378e1"
+    },
+    {
+      "bytes": 31151,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_owned_execution.py",
+      "sha256": "b3365ba96ebd45de83663b7d61f199bf13695ebf46d51431bf07390b382658cf"
+    },
+    {
+      "bytes": 23324,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_owned_training_coordinator.py",
+      "sha256": "18536aea2bed36736b05167cb0ed63fd0deeb25035affabedd5f4bdf5b84e528"
+    },
+    {
+      "bytes": 21159,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_process.py",
+      "sha256": "0e2bb14ad675479a3070f022162ee3c36ae8212a4b4392481b5d06ebeb80deb6"
+    }
+  ],
+  "checks": {
+    "dependencies_unchanged": true,
+    "entity_context_not_imported": true,
+    "exact_collected_executed_membership": true,
+    "expected_collected_source_counts": true,
+    "expected_executed_source_counts": true,
+    "expected_focused_count": true,
+    "fixtures_within_external_charge": true,
+    "harness_unchanged": true,
+    "input_artifacts_unchanged": true,
+    "package_source_unchanged": true,
+    "protected_unchanged": true,
+    "pytest_argument_expansion_exact": true,
+    "pytest_exit_zero": true,
+    "zero_failures_errors_skips": true
+  },
+  "collected_counts_by_source": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 3,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 7,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py": 24,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_ready_task_cids.py": 2
+  },
+  "collected_test_membership": [
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_resume_parquet_carries_board_seals_and_agent",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_checkpoint_is_advisory_without_unsealing_local",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_shared_terms_multiple_agents_and_claims_remain_advisory",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_missing_or_foreign_source_hash_is_not_an_observation[]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_missing_or_foreign_source_hash_is_not_an_observation[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_missing_or_foreign_source_hash_is_not_an_observation[0000000000000000000000000000000000000000000000000000000000000000]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_dataset_must_match_one_local_dataset_record[foreign]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_dataset_must_match_one_local_dataset_record[missing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_dataset_must_match_one_local_dataset_record[duplicate]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_agent_rows_are_distinct_compatible_and_preserve_existing",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_conflicting_new_remote_agents_roll_back",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_import_rolls_back_when_later_statement_fails",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_incomplete_old_imported_compile_payload_is_requeued_on_access[]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_incomplete_old_imported_compile_payload_is_requeued_on_access[not-json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_incomplete_old_imported_compile_payload_is_requeued_on_access[[]]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_valid_empty_local_compile_payload_preserves_existing_cache_contract",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_checkpoint_resumes_after_the_last_committed_document",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_claim_batch_is_exclusive_until_completed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_terms_from_rule_name_actor_action_object",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_seal_skips_compile_and_unseals_when_parser_hash_changes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_process_pending_skips_sealed_and_compiles_unsealed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_loop_uses_sealed_cache_on_recensus",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_supervisor_loop_emits_cache_progress",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_flush_writes_parquet_not_jsonl",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_supervisor_ready_task_cids.py::test_ready_task_ids_are_sorted_scoped_and_do_not_mutate_task_or_goal_state",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_ready_task_cids.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_supervisor_ready_task_cids.py::test_parked_ready_lookup_with_missing_intent_returns_no_candidates",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_ready_task_cids.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    }
+  ],
+  "configured_pytest_addopts": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin"
+  ],
+  "constitution_formalized": false,
+  "downloads_performed": false,
+  "entity_feature_executed": false,
+  "entity_feature_qualified": false,
+  "exact_assigned_test_dependencies": [
+    {
+      "bytes": 21251,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py",
+      "sha256": "e403bad20b3ffdcdd8f91f6985f15a4134b024bb76652158fb9c7c899850f597"
+    },
+    {
+      "bytes": 3241,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_ready_task_cids.py",
+      "sha256": "6b43d8d840683f0ffbdcd211b754cbd10bb32e86a2ea1075c5042486fd26cfd5"
+    }
+  ],
+  "exact_b2_source_delta": [
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py",
+    "ipfs_datasets_py/logic/autoformal/span_cache.py",
+    "ipfs_datasets_py/logic/autoformal/supervisor_loop.py"
+  ],
+  "executed_counts_by_source": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py": 3,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py": 7,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py": 24,
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_ready_task_cids.py": 2
+  },
+  "executed_test_membership": [
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_resume_parquet_carries_board_seals_and_agent",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_checkpoint_is_advisory_without_unsealing_local",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_shared_terms_multiple_agents_and_claims_remain_advisory",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_missing_or_foreign_source_hash_is_not_an_observation[]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_missing_or_foreign_source_hash_is_not_an_observation[None]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_missing_or_foreign_source_hash_is_not_an_observation[0000000000000000000000000000000000000000000000000000000000000000]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_dataset_must_match_one_local_dataset_record[foreign]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_dataset_must_match_one_local_dataset_record[missing]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_dataset_must_match_one_local_dataset_record[duplicate]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_agent_rows_are_distinct_compatible_and_preserve_existing",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_conflicting_new_remote_agents_roll_back",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_remote_import_rolls_back_when_later_statement_fails",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_incomplete_old_imported_compile_payload_is_requeued_on_access[]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_incomplete_old_imported_compile_payload_is_requeued_on_access[not-json]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_incomplete_old_imported_compile_payload_is_requeued_on_access[[]]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_valid_empty_local_compile_payload_preserves_existing_cache_contract",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_checkpoint_resumes_after_the_last_committed_document",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_claim_batch_is_exclusive_until_completed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_terms_from_rule_name_actor_action_object",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_seal_skips_compile_and_unseals_when_parser_hash_changes",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_process_pending_skips_sealed_and_compiles_unsealed",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_loop_uses_sealed_cache_on_recensus",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_supervisor_loop_emits_cache_progress",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_span_cache.py::test_flush_writes_parquet_not_jsonl",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_span_cache.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_supervisor_ready_task_cids.py::test_ready_task_ids_are_sorted_scoped_and_do_not_mutate_task_or_goal_state",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_ready_task_cids.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_supervisor_ready_task_cids.py::test_parked_ready_lookup_with_missing_intent_returns_no_candidates",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_supervisor_ready_task_cids.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[Company A shall submit backup report within 10 days unless emergency.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The agency shall not disclose records.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback[The officer shall retain the file for at least 20 days.]",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_speed_semantics.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    },
+    {
+      "nodeid": "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/test_canonical_semantic_roundtrip.py"
+    }
+  ],
+  "existing_injected_spawn_pool_fixture_included": false,
+  "exit_code": 0,
+  "expanded_pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_span_cache.py",
+    "tests/unit/logic/test_supervisor_ready_task_cids.py",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-snapshot-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-grok-resume-snapshot-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-snapshot-20260926/capture-r1/tests/tests.xml"
+  ],
+  "five_case_pilot_included": true,
+  "fixture_directory": "/tmp/pytest-of-barberb/campaign-grok-resume-snapshot-20260926-r1",
+  "fixture_inventory": {
+    "apparent_bytes": 0,
+    "entry_count": 0,
+    "special_file_count": 0,
+    "symlink_count": 0
+  },
+  "fixture_inventory_scope": "current retained bytes, not cumulative generated bytes or continuous peak",
+  "fixtures_outside_strict_attempt": true,
+  "global_holdout_verified": false,
+  "jevops_regressions_included": false,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 36
+  },
+  "lake_execution_performed": false,
+  "live_accelerate_service_contacted": false,
+  "live_hub_calls": false,
+  "native_cycle_performed": false,
+  "native_model_training_performed": false,
+  "native_training_validation_deferred": true,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "nonexecuted_entity_context": [
+    {
+      "bytes": 16483,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/entity_cache.py",
+      "sha256": "265188b221bfa0b377994ac1ec37ef437b434e26f22d78b7eb02aaaa9bf6ae06"
+    },
+    {
+      "bytes": 1937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_entity_cache.py",
+      "sha256": "71a96c31c8fbe9dfd260c6e143fd5af0c793ec39910a1caa308b93602a790db1"
+    }
+  ],
+  "original_pytest_args": [
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_span_cache.py",
+    "tests/unit/logic/test_supervisor_ready_task_cids.py",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-snapshot-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-grok-resume-snapshot-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-snapshot-20260926/capture-r1/tests/tests.xml"
+  ],
+  "passed": true,
+  "passed_b2_capture_artifact": {
+    "bytes": 84420,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-owned-execution-repair-20260926/capture-r1/audit-receipt.json",
+    "sha256": "078a0a8592f06a4f76ccec6634649d1bc492945e65f7e936d04863f236b3c8f1"
+  },
+  "pinned_semantic_test_dependency": {
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py": "8f6e80fd5230c59d378ee0e26ae274c05911be70a48d0e9d71808c0e5b7de011"
+  },
+  "prior_failed_fixture_cleanup_performed": false,
+  "produced_artifacts": [
+    {
+      "bytes": 5595,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-snapshot-20260926/capture-r1/tests/tests.xml",
+      "sha256": "00220b9b25ec42761d294d77f16cce8cb97f361fd79fcdef6104a4dc61924c77"
+    }
+  ],
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "prover_execution_performed": false,
+  "publication_performed": false,
+  "publication_supervisor_test_scope": "historical archived snapshot; neither latest live test nor archived test selected in this capture",
+  "publication_supervisor_test_snapshot": {
+    "bytes": 27521,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-repair-20260926/pre-fix/tests/unit/logic/test_supervisor_loop.py",
+    "sha256": "34ae120d780f5bfb730df324b5a0d1ee62a5f42a92402636338c8f24ecbf53e9"
+  },
+  "pytest_args": [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-p",
+    "no:anyio",
+    "-p",
+    "no:asyncio",
+    "-p",
+    "anyio.pytest_plugin",
+    "-p",
+    "pytest_asyncio.plugin",
+    "-q",
+    "-c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "--rootdir=/home/barberb/lift_coding/external/ipfs_datasets",
+    "-p",
+    "jevops.pytest_seals",
+    "--test-seal=off",
+    "tests/unit/logic/test_span_cache.py",
+    "tests/unit/logic/test_supervisor_ready_task_cids.py",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_workspace_tree_pin_checks_all_three_components",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_deadline_and_exception_remain_nonrenderable",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_prohibition_remains_negative",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_minimum_retains_quantity_without_duplicate_temporal_text",
+    "tests/unit/logic/test_autoformal_speed_semantics.py::test_empty_vocabulary_abstains_without_compiler_fallback",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "--tb=short",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-snapshot-20260926/capture-r1/tests/pytest-cache",
+    "-o",
+    "tmp_path_retention_policy=failed",
+    "--basetemp=/tmp/pytest-of-barberb/campaign-grok-resume-snapshot-20260926-r1",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-grok-resume-snapshot-20260926/capture-r1/tests/tests.xml"
+  ],
+  "pytest_ini_artifact": {
+    "bytes": 1536,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini",
+    "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+  },
+  "pytest_tmp_path_retention_policy": "failed",
+  "pytest_tmpdir_policy_module": {
+    "bytes": 13271,
+    "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/tmpdir.py",
+    "sha256": "5099f71d89413191c9e7515c9d4fe9fc7083bb73306f2cf1f73a9f89c862ed90"
+  },
+  "qualified_source_delta": [
+    "ipfs_datasets_py/logic/autoformal/span_cache.py",
+    "ipfs_datasets_py/logic/autoformal/supervisor_loop.py"
+  ],
+  "resolved_logic_paths": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "schema": "offline-campaign-grok-resume-repair-regression-v1",
+  "source_authority_authenticated": false,
+  "speed_claim": false,
+  "successful_tmp_path_fixtures_ephemeral": true,
+  "test_counts_by_module": {
+    "tests.integration.logic.test_canonical_semantic_roundtrip": 3,
+    "tests.unit.logic.test_autoformal_speed_semantics": 7,
+    "tests.unit.logic.test_span_cache": 24,
+    "tests.unit.logic.test_supervisor_ready_task_cids": 2
+  },
+  "test_seal_reuse_disabled": true,
+  "tiny_synthetic_state_construction_allowed": false,
+  "wall_seconds": 15.77395816205535
+}

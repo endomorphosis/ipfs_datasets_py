@@ -229,8 +229,17 @@ def test_sealed_todos_link_to_constitution_span_subgoals(tmp_path: Path) -> None
         assert all(task.body.get("packet_sha256") for task in tasks)
         assert all(task.status == "ready" for task in tasks)
         assert source.snapshot().to_dict()["goal_count"] >= 4
-        from ipfs_datasets_py.logic.autoformal.supervisor_loop import mark_span_subgoal_review
+        from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+            goal_status_counts,
+            mark_span_subgoal_review,
+        )
 
+        before = goal_status_counts(source)
+        ready_before = {
+            item["goal_cid"]: item["ready_task_cids"] for item in before["open_goals"]
+        }
+        assert tasks[0].task_cid in ready_before[tasks[0].goal_cid]
+        assert tasks[1].task_cid in ready_before[tasks[1].goal_cid]
         marked = mark_span_subgoal_review(
             source, tasks[0].task_cid, "abc123", ["parser"],
         )
@@ -281,6 +290,13 @@ def test_sealed_todos_link_to_constitution_span_subgoals(tmp_path: Path) -> None
         open_ids = {item["goal_cid"] for item in summary["open_goals"]}
         assert held["goal_cid"] not in open_ids
         assert parent["goal_cid"] not in open_ids
+        claimable = [
+            task_cid
+            for item in summary["open_goals"]
+            for task_cid in item["ready_task_cids"]
+        ]
+        assert tasks[0].task_cid not in claimable
+        assert tasks[1].task_cid not in claimable
         assert all(item["status"] == "open" for item in summary["open_goals"])
         assert all(item["admitted"] is False for item in summary["open_goals"])
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from ipfs_datasets_py.huggingface.autoformal_span_cache import build_span_cache_package, flush_span_cache
 from ipfs_datasets_py.logic.autoformal.span_cache import SpanCache, terms_from_rule
 from ipfs_datasets_py.logic.autoformal.supervisor_loop import recensus_open_todos
@@ -77,6 +79,224 @@ def test_resume_parquet_carries_board_seals_and_agent(tmp_path: Path) -> None:
     assert other.release_stale_claims("agent-b") == 1
     other.close()
     cache.close()
+
+
+def test_remote_checkpoint_is_advisory_without_unsealing_local(tmp_path: Path) -> None:
+    writer = SpanCache(tmp_path / "writer.duckdb")
+    writer.register_agent("agent-b", dataset_id="justicedao/ipfs_uscode")
+    writer.enqueue(
+        [
+            {"source_span_id": "s1", "text": "Each agency shall make records available.", "legal_id": "usc:us:5:552"},
+            {"source_span_id": "s2", "text": "Whoever shall be imprisoned.", "legal_id": "usc:us:18:1001"},
+        ]
+    )
+    writer.apply_census(
+        {"rows": [_agreed("s1"), _gap("s2")]},
+        path_hashes={"ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "aaa"},
+        code_identity="sha256:remote",
+    )
+    remote = tmp_path / "remote.parquet"
+    writer.write_resume_parquet(remote)
+    reader = SpanCache(tmp_path / "reader.duckdb")
+    reader.register_agent("control-plane", dataset_id="justicedao/ipfs_uscode")
+    reader.enqueue(
+        [
+            {"source_span_id": "s1", "text": "Each agency shall make records available.", "legal_id": "usc:us:5:552"},
+            {"source_span_id": "s2", "text": "Whoever shall be imprisoned.", "legal_id": "usc:us:18:1001"},
+            {"source_span_id": "s3", "text": "The clerk shall keep a journal.", "legal_id": "usc:us:1:1"},
+        ]
+    )
+    reader.apply_census(
+        {"rows": [_agreed("s3")]},
+        path_hashes={"ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "aaa"},
+        code_identity="sha256:local",
+    )
+    before = _local_tables(reader)
+    merged = reader.upsert_remote_resume(remote, agent_id="control-plane")
+    assert merged["sealed"] == merged["gaps"] == merged["claimed"] == 0
+    assert merged["advisory_only"] is True
+    assert merged["source_matched_status_counts"] == {"gap": 1, "sealed": 1}
+    assert merged["admitted"] is False
+    assert merged["formalized"] is False
+    assert _local_tables(reader) == before
+    pending = {item["source_span_id"] for item in reader.pending(limit=10)}
+    assert pending == {"s1", "s2"}
+    assert reader.skip_compile("s1") is None
+    assert reader.stats()["sealed"] == 1
+    calls = []
+    reader.process_pending(lambda text: calls.append(text) or {"compiler_status": "abstain"})
+    assert len(calls) == 2
+    writer.close()
+    reader.close()
+
+
+def _local_tables(cache, *, include_agents=False):
+    tables = ["span_cache", "sealed_terms", "span_terms", "compiler_snapshot",
+              "cache_meta", "lean_statutes", "lean_terms", "task_board"]
+    if include_agents:
+        tables.append("agent_lease")
+    return {table: cache._db.execute(f"SELECT * FROM {table} ORDER BY ALL").fetchall()
+            for table in tables}
+
+
+@pytest.fixture
+def remote_resume(tmp_path):
+    writer = SpanCache(tmp_path / "remote.duckdb")
+    reader = SpanCache(tmp_path / "local.duckdb")
+    dataset = "justicedao/ipfs_uscode"
+    writer.register_agent("remote-a", dataset_id=dataset)
+    writer.register_agent("remote-b", dataset_id=dataset)
+    reader.register_agent("control-plane", dataset_id=dataset)
+    spans = [_agreed("s1"), _agreed("s2"), _gap("g1"), _agreed("c1")]
+    writer.enqueue(spans)
+    reader.enqueue(spans)
+    writer.apply_census({"rows": spans[:3]}, code_identity="sha256:foreign-compiler")
+    assert writer.claim_batch("remote-a", limit=1)[0]["source_span_id"] == "c1"
+    reader._db.execute("UPDATE span_cache SET status = 'claimed', claim_worker = 'local-worker', "
+                       "claim_token = 'local-token' WHERE source_span_id = 's2'")
+    reader.refresh_task_board()
+    path = tmp_path / "remote.parquet"
+    writer.write_resume_parquet(path)
+    try:
+        yield writer, reader, path
+    finally:
+        writer.close()
+        reader.close()
+
+
+def _rewrite_resume(path, destination, transform):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    table = pq.read_table(path)
+    rows = transform(table.to_pylist())
+    pq.write_table(pa.Table.from_pylist(rows, schema=table.schema), destination)
+    return destination
+
+
+def test_remote_shared_terms_multiple_agents_and_claims_remain_advisory(remote_resume):
+    writer, reader, path = remote_resume
+    # A normal checkpoint repeats each shared term for both agreeing spans.
+    assert writer._db.execute("SELECT count(*) FROM span_terms").fetchone()[0] > writer._db.execute(
+        "SELECT count(*) FROM sealed_terms").fetchone()[0]
+    before = _local_tables(reader)
+    result = reader.upsert_remote_resume(path, agent_id="control-plane")
+    assert result["source_matched_status_counts"] == {"claimed": 1, "gap": 1, "sealed": 2}
+    assert result["sealed"] == result["gaps"] == result["claimed"] == 0
+    assert result["agents_imported"] == 2
+    assert _local_tables(reader) == before
+    assert reader.skip_compile("s1") is None
+    assert {row[0] for row in reader._db.execute("SELECT agent_id FROM agent_lease").fetchall()} == {
+        "control-plane", "remote-a", "remote-b"}
+    assert reader._db.execute("SELECT count(*) FROM agent_lease WHERE admitted OR formalized").fetchone()[0] == 0
+    after = _local_tables(reader, include_agents=True)
+    repeated = reader.upsert_remote_resume(path, agent_id="control-plane")
+    assert repeated == {**result, "agents_imported": 0}
+    assert _local_tables(reader, include_agents=True) == after
+
+
+@pytest.mark.parametrize("source_hash", ["", None, "0" * 64])
+def test_remote_missing_or_foreign_source_hash_is_not_an_observation(remote_resume, tmp_path, source_hash):
+    _, reader, path = remote_resume
+    def alter(rows):
+        return [{**row, "source_sha256": source_hash} if row["record_kind"] == "span" else row
+                for row in rows]
+    changed = _rewrite_resume(path, tmp_path / "changed.parquet", alter)
+    before = _local_tables(reader)
+    result = reader.upsert_remote_resume(changed, agent_id="control-plane")
+    assert result["source_matched_status_counts"] == {}
+    assert _local_tables(reader) == before
+
+
+@pytest.mark.parametrize("metadata", ["foreign", "missing", "duplicate"])
+def test_remote_dataset_must_match_one_local_dataset_record(remote_resume, tmp_path, metadata):
+    _, reader, path = remote_resume
+    def alter(rows):
+        if metadata == "missing":
+            return [row for row in rows if row["record_kind"] != "meta"]
+        if metadata == "duplicate":
+            return rows + [next(row for row in rows if row["record_kind"] == "meta")]
+        return [{**row, "dataset_id": "other-dataset"} if row["record_kind"] == "meta" else row
+                for row in rows]
+    changed = _rewrite_resume(path, tmp_path / "changed.parquet", alter)
+    before = _local_tables(reader, include_agents=True)
+    result = reader.upsert_remote_resume(changed, agent_id="control-plane")
+    assert result["dataset_matched"] is False
+    assert result["source_matched_status_counts"] == {} and result["agents_imported"] == 0
+    assert _local_tables(reader, include_agents=True) == before
+
+
+def test_remote_agent_rows_are_distinct_compatible_and_preserve_existing(remote_resume, tmp_path):
+    _, reader, path = remote_resume
+    def alter(rows):
+        agent = next(row for row in rows if row["record_kind"] == "agent")
+        return rows + [agent, {**agent, "agent_id": "foreign", "dataset_id": "other"},
+                       {**agent, "agent_id": "control-plane", "heartbeat": "different"}]
+    changed = _rewrite_resume(path, tmp_path / "changed.parquet", alter)
+    local_agent = reader._db.execute("SELECT * FROM agent_lease WHERE agent_id = 'control-plane'").fetchone()
+    result = reader.upsert_remote_resume(changed, agent_id="control-plane")
+    assert result["agents_imported"] == 2
+    assert reader._db.execute("SELECT * FROM agent_lease WHERE agent_id = 'control-plane'").fetchone() == local_agent
+    assert reader._db.execute("SELECT count(*) FROM agent_lease WHERE agent_id = 'foreign'").fetchone()[0] == 0
+
+
+def test_conflicting_new_remote_agents_roll_back(remote_resume, tmp_path):
+    _, reader, path = remote_resume
+    def alter(rows):
+        agent = next(row for row in rows if row["record_kind"] == "agent")
+        return rows + [{**agent, "heartbeat": "conflicting"}]
+    changed = _rewrite_resume(path, tmp_path / "changed.parquet", alter)
+    before = _local_tables(reader, include_agents=True)
+    with pytest.raises(Exception, match="conflicting remote agent"):
+        reader.upsert_remote_resume(changed, agent_id="control-plane")
+    assert _local_tables(reader, include_agents=True) == before
+    assert reader.upsert_remote_resume(path, agent_id="control-plane")["agents_imported"] == 2
+
+
+def test_remote_import_rolls_back_when_later_statement_fails(remote_resume):
+    _, reader, path = remote_resume
+    before = _local_tables(reader, include_agents=True)
+    real = reader._db
+    class FailAfterInsert:
+        def execute(self, sql, *args):
+            if sql == "DROP TABLE remote_resume_agents":
+                assert real.execute("SELECT count(*) FROM agent_lease").fetchone()[0] == 3
+                raise RuntimeError("injected failure after agent insertion")
+            return real.execute(sql, *args)
+    reader._db = FailAfterInsert()
+    try:
+        with pytest.raises(RuntimeError, match="after agent insertion"):
+            reader.upsert_remote_resume(path, agent_id="control-plane")
+    finally:
+        reader._db = real
+    assert _local_tables(reader, include_agents=True) == before
+    assert reader.upsert_remote_resume(path, agent_id="control-plane")["agents_imported"] == 2
+
+
+@pytest.mark.parametrize("raw_rule", ["", "not-json", "[]"])
+def test_incomplete_old_imported_compile_payload_is_requeued_on_access(tmp_path, raw_rule):
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    try:
+        cache.enqueue([_agreed()])
+        cache._db.execute("UPDATE span_cache SET status = 'sealed', sealed = TRUE, rule_json = ?", [raw_rule])
+        assert cache.skip_compile("s1") is None
+        row = cache._db.execute("SELECT status, sealed, rule_json, reason, admitted, formalized FROM span_cache").fetchone()
+        assert row == ("unsealed", False, raw_rule, "incomplete_compile_cache", False, False)
+        assert cache.pending()[0]["source_span_id"] == "s1"
+    finally:
+        cache.close()
+
+
+def test_valid_empty_local_compile_payload_preserves_existing_cache_contract(tmp_path):
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    try:
+        cache.apply_census({"rows": [{**_agreed(), "rule": {}}]})
+        before = _local_tables(cache)
+        cached = cache.skip_compile("s1")
+        assert cached["rule"] == {} and cached["agrees"] is True
+        assert cached["admitted"] is False and cached["formalized"] is False
+        assert _local_tables(cache) == before
+    finally:
+        cache.close()
 
 
 def test_checkpoint_resumes_after_the_last_committed_document(tmp_path: Path) -> None:

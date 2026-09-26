@@ -758,6 +758,50 @@ def _prepare_completion(registry: Any, spec: TrainingJobSpec, returned: Mapping[
     return candidate, receipt_artifact, summary
 
 
+def _owned_operation_slot(run_id: str, kind: str, renewal_number: int | None = None) -> str:
+    """Stable semantic slots inside an already owner-bound request journal."""
+    if kind not in {"claim", "renew", "complete", "fail"}:
+        raise TrainingCoordinationError("unsupported owned coordinator operation")
+    suffix = kind
+    if kind == "renew":
+        if type(renewal_number) is not int or renewal_number < 1:
+            raise TrainingCoordinationError("owned renewal number must be positive")
+        suffix += f"-{renewal_number:06d}"
+    elif renewal_number is not None:
+        raise TrainingCoordinationError("only renewals have an ordinal")
+    return "training-" + _sha(run_id.encode("utf-8")) + "-" + suffix
+
+
+def _owned_journal_capacity(journal: Any, *, run_count: int, max_workers: int,
+                            lease_seconds: float, poll_seconds: float,
+                            timeout_seconds: float) -> dict[str, int]:
+    """Conservative operation/byte allowance before any claim or launch.
+
+    This does not reserve capacity in the journal or admit host resources. Its
+    existing bounds still apply to every subsequent durable write.
+    """
+    from .autoencoder_daemon_operation_journal import (
+        DurableDaemonOperationJournal, MAX_JOURNAL_BYTES, MAX_OPERATIONS, MAX_VALUE_BYTES,
+    )
+    if type(journal) is not DurableDaemonOperationJournal:
+        raise TrainingCoordinationError("owned dispatch requires the exact durable journal")
+    operations = journal.operations()
+    if journal.pending():
+        raise TrainingCoordinationError("unresolved journal operations require recovery")
+    margin = max(poll_seconds * 2, lease_seconds / 3)
+    renewal_interval = lease_seconds - margin
+    # Claim, two forced renewals, completion and a possible failure per run;
+    # other renewals are bounded across concurrently active jobs by the deadline.
+    concurrent = min(run_count, max_workers)
+    additional = (5 + max(0, concurrent - 1)) * run_count + concurrent * (
+        math.ceil(timeout_seconds / renewal_interval) + 1)
+    current_bytes = len(_read_bounded(journal.path, MAX_JOURNAL_BYTES))
+    projected_bytes = current_bytes + MAX_VALUE_BYTES + additional * (2 * MAX_VALUE_BYTES + 1024)
+    if len(operations) + additional > MAX_OPERATIONS or projected_bytes > MAX_JOURNAL_BYTES:
+        raise TrainingCoordinationError("dispatch exceeds conservative durable journal capacity")
+    return {"additional_operation_bound": additional, "projected_journal_bytes": projected_bytes}
+
+
 def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_workers: int = 2,
                       lease_seconds: float = 300.0, poll_seconds: float = 0.25,
                       worker_id_prefix: str = "autoencoder",
@@ -767,6 +811,91 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
                       defer_target_hydration_gc: bool = False,
                       reduce_native_targets: bool = False,
                       sparse_checkpoint_policy: SparseCheckpointPolicy = SparseCheckpointPolicy()) -> dict[str, Any]:
+    """Dispatch registered jobs with the existing spawned-worker defaults.
+
+    Injected executor/worker hooks remain test evidence. Persistent prepared
+    campaign execution uses the separate private owner entry point.
+    """
+    return _run_training_jobs(
+        registry, specs, max_workers=max_workers, lease_seconds=lease_seconds,
+        poll_seconds=poll_seconds, worker_id_prefix=worker_id_prefix,
+        executor_factory=executor_factory, worker_function=worker_function, clock=clock,
+        defer_target_hydration_gc=defer_target_hydration_gc,
+        reduce_native_targets=reduce_native_targets, sparse_checkpoint_policy=sparse_checkpoint_policy)
+
+
+def _run_owned_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *,
+                             operation_journal: Any, before_claim: Callable[[TrainingJobSpec], None],
+                             before_prepare: Callable[[TrainingJobSpec, Mapping[str, Any]], None],
+                             worker_id: str, timeout_seconds: float, supervisor: Any = None,
+                             before_submit: Callable[..., None] | None = None,
+                             after_terminal: Callable[..., None] | None = None,
+                             max_workers: int = 2, lease_seconds: float = 300.0,
+                             poll_seconds: float = 0.25,
+                             executor_factory: Callable[..., Any] | None = None,
+                             worker_function: Callable[..., Mapping[str, Any]] = execute_training_job,
+                             clock: Callable[[], float] = time.time,
+                             defer_target_hydration_gc: bool = False,
+                             reduce_native_targets: bool = False,
+                             sparse_checkpoint_policy: SparseCheckpointPolicy = SparseCheckpointPolicy()) -> dict[str, Any]:
+    """Execute a freshly validated owner selection with durable mutations.
+
+    The adapter owns request, resource and restart reconciliation. It supplies
+    only pristine queued jobs; this function never resumes a prior attempt.
+    Test injection has no native process identity and stays ``injected_test``.
+    """
+    from .autoencoder_daemon_operation_journal import DurableDaemonOperationJournal
+    if type(operation_journal) is not DurableDaemonOperationJournal:
+        raise TrainingCoordinationError("owned dispatch requires the exact durable journal")
+    owner = {"database_path": str(registry.database_path), "artifact_root": str(registry.artifact_root)}
+    if operation_journal.binding.get("owner") != owner:
+        raise TrainingCoordinationError("owned journal belongs to another registry")
+    if not callable(before_claim) or not callable(before_prepare):
+        raise TrainingCoordinationError("owned dispatch requires admission and completion resource checks")
+    if after_terminal is not None and not callable(after_terminal):
+        raise TrainingCoordinationError("owned terminal callback must be callable")
+    if (isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float))
+            or not math.isfinite(timeout_seconds) or not 0 < timeout_seconds <= 86400):
+        raise TrainingCoordinationError("owned timeout_seconds must be within (0, 86400]")
+    if supervisor is not None:
+        from .autoencoder_campaign_process import _CampaignProcessExecutor
+        if type(supervisor) is not _CampaignProcessExecutor:
+            raise TrainingCoordinationError("owned native execution requires the exact supervisor")
+        if executor_factory is not None or worker_function is not execute_training_job:
+            raise TrainingCoordinationError("native supervisor cannot carry injected worker hooks")
+        if (supervisor.defer_target_hydration_gc != defer_target_hydration_gc
+                or supervisor.reduce_native_targets != reduce_native_targets):
+            raise TrainingCoordinationError("native supervisor runtime policy differs")
+    elif executor_factory is None:
+        raise TrainingCoordinationError("owned execution requires a supervisor or injected test executor")
+    elif not callable(before_submit):
+        raise TrainingCoordinationError("injected owned execution requires a start callback")
+    return _run_training_jobs(
+        registry, specs, max_workers=max_workers, lease_seconds=lease_seconds,
+        poll_seconds=poll_seconds, worker_id_prefix=worker_id,
+        executor_factory=executor_factory, worker_function=worker_function, clock=clock,
+        defer_target_hydration_gc=defer_target_hydration_gc,
+        reduce_native_targets=reduce_native_targets, sparse_checkpoint_policy=sparse_checkpoint_policy,
+        operation_journal=operation_journal, owned_supervisor=supervisor,
+        before_claim=before_claim, before_prepare=before_prepare, before_submit=before_submit,
+        after_terminal=after_terminal, timeout_seconds=timeout_seconds)
+
+
+def _run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_workers: int = 2,
+                      lease_seconds: float = 300.0, poll_seconds: float = 0.25,
+                      worker_id_prefix: str = "autoencoder",
+                      executor_factory: Callable[..., Any] | None = None,
+                      worker_function: Callable[..., Mapping[str, Any]] = execute_training_job,
+                      clock: Callable[[], float] = time.time,
+                      defer_target_hydration_gc: bool = False,
+                      reduce_native_targets: bool = False,
+                      sparse_checkpoint_policy: SparseCheckpointPolicy = SparseCheckpointPolicy(),
+                      operation_journal: Any = None, owned_supervisor: Any = None,
+                      before_claim: Callable[[TrainingJobSpec], None] | None = None,
+                      before_prepare: Callable[[TrainingJobSpec, Mapping[str, Any]], None] | None = None,
+                      before_submit: Callable[..., None] | None = None,
+                      after_terminal: Callable[..., None] | None = None,
+                      timeout_seconds: float | None = None) -> dict[str, Any]:
     """Dispatch precreated runs, stage results, and durably record completion.
 
     Native execution uses ``spawn``. Test injection is always marked as such in
@@ -800,7 +929,10 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
         raise TrainingCoordinationError("defer_target_hydration_gc must be boolean")
     if type(reduce_native_targets) is not bool:
         raise TrainingCoordinationError("reduce_native_targets must be boolean")
-    native = executor_factory is None and worker_function is execute_training_job
+    owned = operation_journal is not None
+    native = (owned_supervisor is not None if owned else
+              executor_factory is None and worker_function is execute_training_job)
+    owned_deadline = time.monotonic() + timeout_seconds if owned else None
     if defer_target_hydration_gc and not native:
         raise TrainingCoordinationError("GC deferral requires the native spawned worker executor")
     if reduce_native_targets and not native:
@@ -814,10 +946,22 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
     if not isinstance(worker_id_prefix, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:@+-]{0,127}", worker_id_prefix):
         raise TrainingCoordinationError("worker_id_prefix must be a bounded identifier")
     spec_list = list(specs)
+    if owned and not 1 <= len(spec_list) <= 64:
+        raise TrainingCoordinationError("owned dispatch requires between 1 and 64 fresh jobs")
     for spec in spec_list:
         if not isinstance(spec, TrainingJobSpec) or spec.training_config.max_seconds > lease_seconds:
             raise TrainingCoordinationError("each job's max_seconds must fit within the bounded lease")
     corpus_checks = _validate_runs(registry, spec_list)
+    journal_capacity = None
+    if owned:
+        journal_capacity = _owned_journal_capacity(
+            operation_journal, run_count=len(spec_list), max_workers=max_workers,
+            lease_seconds=lease_seconds, poll_seconds=poll_seconds, timeout_seconds=timeout_seconds)
+        prior_operations = operation_journal.operations()
+        for spec in spec_list:
+            prefix = _owned_operation_slot(spec.run_id, "claim").removesuffix("claim")
+            if any(slot.startswith(prefix) for slot in prior_operations):
+                raise TrainingCoordinationError("previous job operations require owner reconciliation")
     invocation = uuid.uuid4().hex
     started = time.perf_counter()
     completed: list[dict[str, Any]] = []
@@ -827,6 +971,15 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
     operation_counter = 0
     mutation_retries = 0
     resolved_operations = 0
+    abort_dispatch = False
+    needs_recovery = False
+
+    def poll_owned() -> None:
+        if owned:
+            if time.monotonic() >= owned_deadline:
+                raise TrainingCoordinationError("owned dispatch exceeded its wall-time bound")
+            if owned_supervisor is not None:
+                owned_supervisor.poll()
 
     def operation(kind: str) -> str:
         nonlocal operation_counter
@@ -834,7 +987,7 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
         return f"training:{invocation}:{kind}:{operation_counter}"
 
     def mutate(command: str, method: Callable[..., dict[str, Any]], args: tuple[Any, ...],
-               payload: Mapping[str, Any]) -> dict[str, Any]:
+               payload: Mapping[str, Any], *, renewal_number: int | None = None) -> dict[str, Any]:
         """Resolve response loss using the same operation ID and exact payload.
 
         A registry method may commit successfully and then lose its response.
@@ -842,6 +995,14 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
         The public ledger lookup verifies the original command/payload binding.
         """
         nonlocal mutation_retries, resolved_operations
+        if owned:
+            if operation_journal.pending():
+                raise TrainingCoordinationError("unresolved journal operation requires recovery")
+            run_id = payload["run_id"] if command == "ClaimRun" else payload["lease"]["run_id"]
+            kind = {"ClaimRun": "claim", "RenewLease": "renew",
+                    "CompleteRun": "complete", "FailRun": "fail"}[command]
+            slot = _owned_operation_slot(run_id, kind, renewal_number)
+            return operation_journal.invoke(registry, slot, command, _read_json(_bytes(payload)))
         operation_id = operation(command)
         retained_payload = _read_json(_bytes(payload))
         last_error: Exception | None = None
@@ -868,17 +1029,46 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
         if force or clock() >= item["lease"]["expires_at"] - margin:
             lease = item["lease"]
             item["lease"] = mutate("RenewLease", registry.renew_lease, (lease, lease_seconds),
-                                   {"lease": lease, "lease_seconds": lease_seconds})["lease"]
+                                   {"lease": lease, "lease_seconds": lease_seconds},
+                                   renewal_number=item["renewal_count"] + 1)["lease"]
             item["renewal_count"] += 1
 
     def record_failure(item: dict[str, Any], exc: BaseException) -> None:
+        nonlocal abort_dispatch, needs_recovery
         error = {"run_id": item["spec"].run_id, "job_id": item["spec"].job_id,
                  "admitted": False, "promotion_performed": False,
                  "error_type": type(exc).__name__, "error": str(exc)[:2048],
                  "execution_mode": "native_training" if native else "injected_test"}
+        if owned:
+            # A registry transition cannot turn an uncertain live child into
+            # a failed job. The supervisor raises if death cannot be confirmed.
+            if owned_supervisor is not None:
+                owned_supervisor.stop(item["spec"])
+            if operation_journal.pending():
+                abort_dispatch = True
+                needs_recovery = True
+                failed.append({**error, "failure_recorded": False, "recovery_required": True})
+                return
         try:
             current = registry.get_run(item["spec"].run_id)
+            if owned and current["status"] == "failed":
+                slot = _owned_operation_slot(item["spec"].run_id, "fail")
+                old = operation_journal.operations().get(slot)
+                durable = (operation_journal.resolve(registry, slot)
+                           if old is not None and old["command"] == "FailRun" else None)
+                error["failure_recorded"] = durable is not None
+                if durable is None:
+                    abort_dispatch = True
+                    needs_recovery = True
+                    error["recovery_required"] = True
+                failed.append(error)
+                return
             if current["status"] == "completed":
+                if owned:
+                    abort_dispatch = True
+                    needs_recovery = True
+                    failed.append({**error, "failure_recorded": False, "recovery_required": True})
+                    return
                 # If operation receipt reads remain unavailable, do not relabel
                 # authoritative completed work as failed or issue FailRun.
                 completed.append({"run_id": current["run_id"], "job_id": item["spec"].job_id,
@@ -890,41 +1080,64 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
             durable = mutate("FailRun", registry.fail_run, (lease, error),
                              {"lease": lease, "result": error})
             error["failure_recorded"] = durable["status"] == "failed"
+            if (owned and after_terminal is not None and not item.get("quarantined")
+                    and not operation_journal.pending()):
+                after_terminal(item["spec"], _read_json(_bytes(
+                    {**durable, "job_id": item["spec"].job_id, "result": error})))
         except Exception as failure:
-            error["failure_recorded"] = False
+            error.setdefault("failure_recorded", False)
             error["failure_record_error"] = str(failure)[:2048]
+            if owned:
+                abort_dispatch = True
+                needs_recovery = True
+                error["recovery_required"] = True
         failed.append(error)
 
-    def renew_active() -> None:
+    def renew_active(*, force: bool = False, exclude_run_id: str | None = None) -> None:
         for future, item in list(active.items()):
-            if item.get("quarantined"):
+            if item.get("quarantined") or item["spec"].run_id == exclude_run_id:
                 continue
             try:
-                renew(item)
+                renew(item, force=force)
             except Exception as exc:
                 future.cancel()
+                if owned:
+                    # A preparation thread may still be writing CAS evidence.
+                    # Root cleanup follows the drained pool; do not release its
+                    # resource monitoring from this failure callback.
+                    item["quarantined"] = True
                 record_failure(item, exc)
                 item["quarantined"] = True
 
     factory = executor_factory or ProcessPoolExecutor
-    executor = factory(max_workers=max_workers, mp_context=multiprocessing.get_context("spawn"))
+    executor = (owned_supervisor if owned_supervisor is not None else
+                factory(max_workers=max_workers, mp_context=multiprocessing.get_context("spawn")))
     preparation_pool = None
     try:
         preparation_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="autoencoder-completion")
-        while next_index < len(spec_list) or active:
-            while next_index < len(spec_list) and len(active) < max_workers:
+        while (next_index < len(spec_list) and not abort_dispatch) or active:
+            poll_owned()
+            while next_index < len(spec_list) and len(active) < max_workers and not abort_dispatch:
                 spec = spec_list[next_index]
                 next_index += 1
                 try:
-                    worker_id = f"{worker_id_prefix}:{invocation[:12]}:{next_index}"
+                    if owned:
+                        before_claim(spec)
+                        poll_owned()
+                    worker_id = (worker_id_prefix if owned else
+                                 f"{worker_id_prefix}:{invocation[:12]}:{next_index}")
                     lease = mutate("ClaimRun", registry.claim_run, (spec.run_id, worker_id, lease_seconds),
                                    {"run_id": spec.run_id, "worker_id": worker_id,
                                     "lease_seconds": lease_seconds})["lease"]
                 except Exception as exc:
+                    if owned:
+                        abort_dispatch = True
+                        needs_recovery = bool(operation_journal.pending())
                     failed.append({"run_id": spec.run_id, "job_id": spec.job_id,
                                    "admitted": False, "promotion_performed": False,
                                    "failure_recorded": False, "error_type": type(exc).__name__,
-                                   "error": str(exc)[:2048]})
+                                   "error": str(exc)[:2048],
+                                   **({"recovery_required": needs_recovery} if owned else {})})
                     continue
                 item = {"spec": spec, "lease": lease, "renewal_count": 0}
                 try:
@@ -934,7 +1147,16 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
                                  if defer_target_hydration_gc else _execute_native_training_job_with_reduced_targets)
                     else:
                         entry = _execute_native_training_job_with_deferred_gc if defer_target_hydration_gc else worker_function
-                    future = executor.submit(entry, spec)
+                    if owned:
+                        job_ref = registry.verify_artifact(
+                            registry.get_run(spec.run_id)["spec"]["job_spec_artifact"])
+                        job_artifact = {**job_ref, "path": str(registry.artifact_path(job_ref))}
+                    if owned_supervisor is not None:
+                        future = executor.submit(spec, lease=lease, job_artifact=job_artifact)
+                    else:
+                        if owned:
+                            before_submit(spec, lease, job_artifact)
+                        future = executor.submit(entry, spec)
                     active[future] = item
                 except Exception as exc:
                     record_failure(item, exc)
@@ -942,6 +1164,7 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
             if not active:
                 continue
             done, _ = wait(tuple(active), timeout=poll_seconds, return_when=FIRST_COMPLETED)
+            poll_owned()
             for future in done:
                 item = active[future]
                 spec = item["spec"]
@@ -952,6 +1175,9 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
                 try:
                     returned = future.result()
                     renew(item, force=True)
+                    if owned:
+                        before_prepare(spec, returned)
+                        poll_owned()
                     preparation = preparation_pool.submit(
                         _prepare_completion, registry, spec, returned, native=native,
                         corpus_verification=corpus_checks[spec.run_id],
@@ -959,6 +1185,7 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
                     # Keep this item and all other done/running workers in active
                     # until finalization. Quarantine never stops other heartbeats.
                     while not preparation.done():
+                        poll_owned()
                         renew_active()
                         if item.get("quarantined"):
                             preparation.cancel()
@@ -975,9 +1202,22 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
                             name: lease[name] for name in ("run_id", "attempt", "owner_generation", "fence", "worker_id")}
                     durable = mutate("CompleteRun", registry.complete_run, (lease, candidate, summary),
                                      {"lease": lease, "artifact": candidate, "result": summary})
-                    completed.append({**durable, "job_id": spec.job_id, "candidate": candidate,
-                                      "worker_receipt_artifact": receipt_artifact, "result": summary,
-                                      "lease_renewal_count": item["renewal_count"]})
+                    terminal = {**durable, "job_id": spec.job_id, "candidate": candidate,
+                                "worker_receipt_artifact": receipt_artifact, "result": summary,
+                                "lease_renewal_count": item["renewal_count"]}
+                    if owned and after_terminal is not None and not operation_journal.pending():
+                        if owned_supervisor is not None:
+                            owned_supervisor.stop(spec)
+                        # The callback may replay registry-bound completion on
+                        # this owner thread. Give every other active lease a
+                        # fresh interval; Python/I/O liveness stays cooperative.
+                        renew_active(force=True, exclude_run_id=spec.run_id)
+                        if operation_journal.pending():
+                            raise TrainingCoordinationError("pending mutation blocks terminal qualification")
+                        poll_owned()
+                        after_terminal(spec, _read_json(_bytes(terminal)))
+                        poll_owned()
+                    completed.append(terminal)
                 except Exception as exc:
                     record_failure(item, exc)
                 finally:
@@ -991,8 +1231,11 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
             if preparation_pool is not None:
                 preparation_pool.shutdown(wait=True, cancel_futures=True)
         finally:
-            executor.shutdown(wait=True, cancel_futures=True)
-    return {"schema_version": "autoencoder-training-coordinator-receipt-v1",
+            if owned_supervisor is not None:
+                executor.close()
+            else:
+                executor.shutdown(wait=True, cancel_futures=True)
+    report = {"schema_version": "autoencoder-training-coordinator-receipt-v1",
             "admitted": False, "promotion_performed": False,
             "execution_mode": "native_training" if native else "injected_test",
             "defer_target_hydration_gc": defer_target_hydration_gc,
@@ -1001,6 +1244,12 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
             "lease_seconds": lease_seconds, "elapsed_seconds": time.perf_counter() - started,
             "mutation_retry_count": mutation_retries, "resolved_operation_count": resolved_operations,
             "completed": completed, "failed": failed}
+    if owned:
+        report.update(operation_journal_used=True, journal_capacity=journal_capacity,
+                      mutation_retry_count=None, resolved_operation_count=None,
+                      recovery_required=needs_recovery,
+                      undispatched_run_ids=[spec.run_id for spec in spec_list[next_index:]])
+    return report
 
 
 __all__ = ["SparseCheckpointPolicy", "TrainingCoordinationError", "registered_checkpoint_inputs", "run_training_jobs"]

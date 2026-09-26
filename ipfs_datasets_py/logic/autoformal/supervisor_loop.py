@@ -777,7 +777,23 @@ def goal_status_counts(task_source: Any) -> dict[str, Any]:
     }
 
 
+def _ready_tasks_by_goal(task_source: Any) -> dict[str, list[str]]:
+    grouped: dict[str, list[str]] = {}
+    with task_source._intent._connection(write=False) as connection:
+        rows = connection.execute(
+            "SELECT task_cid, goal_cid, status FROM tasks"
+        ).fetchall()
+    for row in rows:
+        if str(row[2] or "") != "ready":
+            continue
+        grouped.setdefault(str(row[1] or ""), []).append(str(row[0]))
+    for task_ids in grouped.values():
+        task_ids.sort()
+    return grouped
+
+
 def _goals_with_status(task_source: Any, status: str) -> list[dict[str, Any]]:
+    ready_by_goal = _ready_tasks_by_goal(task_source)
     with task_source._intent._connection(write=False) as connection:
         rows = connection.execute(
             "SELECT goal_cid FROM goals WHERE status = ? ORDER BY goal_cid",
@@ -804,12 +820,35 @@ def _goals_with_status(task_source: Any, status: str) -> list[dict[str, Any]]:
             "kind": str(body.get("kind") or ""),
             "parent_goal_cid": str(goal.get("parent_goal_cid") or ""),
             "proposal_keys": keys,
+            "ready_task_cids": list(ready_by_goal.get(str(goal.get("goal_cid") or ""), [])),
             "repair_targets": targets,
             "source_span_ids": spans,
             "status": status,
             "title": str(goal.get("title") or ""),
         })
     return listed
+
+
+def ready_task_cids_under_inconclusive_goals(task_source: Any) -> set[str]:
+    """Ready todos whose goal is already parked. A claim must not take these."""
+
+    intent = getattr(task_source, "_intent", None)
+    if intent is None:
+        return set()
+    with intent._connection(write=False) as connection:
+        goal_rows = connection.execute(
+            "SELECT goal_cid FROM goals WHERE status = ?",
+            ["analysis_inconclusive"],
+        ).fetchall()
+        task_rows = connection.execute(
+            "SELECT task_cid, goal_cid, status FROM tasks"
+        ).fetchall()
+    parked = {str(row[0]) for row in goal_rows}
+    return {
+        str(row[0])
+        for row in task_rows
+        if str(row[2] or "").lower() == "ready" and str(row[1] or "") in parked
+    }
 
 
 def open_goals(task_source: Any) -> list[dict[str, Any]]:

@@ -569,6 +569,7 @@ def test_status_lists_a_parked_router_review_without_reopening_it(tmp_path, caps
     assert report["inconclusive_goals"] == []
     assert report["open_goal_count"] == len(report["open_goals"])
     assert all(item["status"] == "open" and item["admitted"] is False for item in report["open_goals"])
+    assert all(task.task_cid not in item["ready_task_cids"] for item in report["open_goals"])
     assert all(item["goal_cid"] for item in report["open_goals"])
     assert report["formalized"] is False
     assert report["review_holds"][0]["applied"] is False

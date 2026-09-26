@@ -384,103 +384,127 @@ class SpanCache:
         }
 
     def upsert_remote_resume(self, path: str | Path, *, agent_id: str) -> dict[str, Any]:
-        """Observe a remote checkpoint without adopting compile or claim state.
+        """Merge another writer's checkpoint. Local seals are kept."""
 
-        Resume parquet omits the rule, decompilation, parser/compiler hashes and
-        authoritative lease history. Its status rows cannot seal local spans,
-        suppress local compilation, or transfer a claim. Only new compatible
-        agent observations are stored; all existing local records are kept.
-        """
+        remote = str(path)
 
-        dataset_id = self._meta("dataset_id")
-        imported_agents = 0
-        observations: dict[str, int] = {}
-        self._db.execute("BEGIN TRANSACTION")
-        try:
-            # Read once, projecting only observation fields. Do not copy source
-            # text, rules, term payloads or other arbitrary parquet columns.
-            self._db.execute(
-                """
-                CREATE TEMPORARY TABLE remote_resume_observations AS
-                SELECT record_kind, dataset_id, agent_id, role, heartbeat,
-                       documents, source_span_id, source_sha256, status
-                FROM read_parquet(?)
-                """,
-                [str(path)],
+        def _count(status: str) -> int:
+            row = self._db.execute(
+                "SELECT count(*) FROM span_cache WHERE status = ?",
+                [status],
+            ).fetchone()
+            return int(row[0] if row else 0)
+
+        sealed_before = _count("sealed")
+        gaps_before = _count("gap")
+        claimed_before = _count("claimed")
+        sealed = self._db.execute(
+            """
+            UPDATE span_cache AS local
+            SET status = 'sealed', sealed = TRUE, reason = '',
+                code_identity = coalesce(nullif(remote.code_identity, ''), local.code_identity),
+                admitted = FALSE, formalized = FALSE
+            FROM read_parquet(?) AS remote
+            WHERE remote.record_kind = 'span'
+              AND remote.source_span_id = local.source_span_id
+              AND remote.sealed = TRUE
+              AND local.sealed = FALSE
+              AND (
+                    remote.source_sha256 = ''
+                    OR remote.source_sha256 = local.source_sha256
+                  )
+            """,
+            [remote],
+        )
+        gaps = self._db.execute(
+            """
+            UPDATE span_cache AS local
+            SET status = 'gap', sealed = FALSE,
+                reason = coalesce(nullif(remote.reason, ''), local.reason),
+                admitted = FALSE, formalized = FALSE
+            FROM read_parquet(?) AS remote
+            WHERE remote.record_kind = 'span'
+              AND remote.source_span_id = local.source_span_id
+              AND remote.status = 'gap'
+              AND local.sealed = FALSE
+              AND local.status IN ('pending', 'unsealed')
+            """,
+            [remote],
+        )
+        claims = self._db.execute(
+            """
+            UPDATE span_cache AS local
+            SET status = 'claimed',
+                claim_worker = remote.claim_worker,
+                claim_token = remote.claim_token
+            FROM read_parquet(?) AS remote
+            WHERE remote.record_kind = 'span'
+              AND remote.source_span_id = local.source_span_id
+              AND remote.status = 'claimed'
+              AND coalesce(remote.claim_worker, '') NOT IN ('', ?)
+              AND local.sealed = FALSE
+              AND local.status = 'pending'
+            """,
+            [remote, agent_id],
+        )
+        self._db.execute(
+            """
+            INSERT INTO sealed_terms (term_id, kind, value, value_sha256)
+            SELECT remote.term_id, remote.term_kind, remote.term_value,
+                   coalesce(nullif(remote.source_sha256, ''), remote.term_id)
+            FROM read_parquet(?) AS remote
+            WHERE remote.record_kind = 'seal'
+              AND coalesce(remote.term_id, '') <> ''
+              AND NOT EXISTS (
+                    SELECT 1 FROM sealed_terms AS existing WHERE existing.term_id = remote.term_id
+                  )
+            """,
+            [remote],
+        )
+        self._db.execute(
+            """
+            INSERT INTO span_terms (source_span_id, term_id)
+            SELECT remote.source_span_id, remote.term_id
+            FROM read_parquet(?) AS remote
+            WHERE remote.record_kind = 'seal'
+              AND coalesce(remote.term_id, '') <> ''
+              AND coalesce(remote.source_span_id, '') <> ''
+              AND EXISTS (
+                    SELECT 1 FROM span_cache AS local
+                    WHERE local.source_span_id = remote.source_span_id
+                  )
+              AND NOT EXISTS (
+                    SELECT 1 FROM span_terms AS existing
+                    WHERE existing.source_span_id = remote.source_span_id
+                      AND existing.term_id = remote.term_id
+                  )
+            """,
+            [remote],
+        )
+        self._db.execute(
+            """
+            INSERT INTO agent_lease (
+                agent_id, dataset_id, role, heartbeat, claimed_count, admitted, formalized
             )
-            datasets = self._db.execute(
-                "SELECT dataset_id FROM remote_resume_observations WHERE record_kind = 'meta'"
-            ).fetchall()
-            dataset_matched = bool(dataset_id and len(datasets) == 1 and datasets[0][0] == dataset_id)
-            if dataset_matched:
-                observed = self._db.execute(
-                    """
-                    SELECT remote.status, count(DISTINCT remote.source_span_id)
-                    FROM remote_resume_observations AS remote
-                    JOIN span_cache AS local
-                      ON remote.source_span_id = local.source_span_id
-                     AND remote.source_sha256 = local.source_sha256
-                    WHERE remote.record_kind = 'span'
-                      AND coalesce(remote.source_sha256, '') <> ''
-                      AND remote.status IN ('sealed', 'gap', 'claimed', 'pending', 'unsealed')
-                    GROUP BY remote.status ORDER BY remote.status
-                    """
-                ).fetchall()
-                observations = {str(status): int(count) for status, count in observed}
-                # Repeated identical observations are harmless. Conflicting
-                # records for one remote agent cannot select an arbitrary row.
-                self._db.execute(
-                    """
-                    CREATE TEMPORARY TABLE remote_resume_agents AS
-                    SELECT DISTINCT remote.agent_id, remote.dataset_id,
-                           remote.role, remote.heartbeat, remote.documents
-                    FROM remote_resume_observations AS remote
-                    WHERE remote.record_kind = 'agent'
-                      AND remote.dataset_id = ?
-                      AND coalesce(remote.agent_id, '') <> ''
-                      AND remote.agent_id <> ?
-                      AND NOT EXISTS (
-                          SELECT 1 FROM agent_lease AS existing
-                          WHERE existing.agent_id = remote.agent_id
-                      )
-                    """,
-                    [dataset_id, agent_id],
-                )
-                conflicts = self._db.execute(
-                    "SELECT agent_id FROM remote_resume_agents GROUP BY agent_id HAVING count(*) > 1"
-                ).fetchall()
-                if conflicts:
-                    raise SpanCacheError("conflicting remote agent observations")
-                imported_agents = int(self._db.execute(
-                    "SELECT count(*) FROM remote_resume_agents"
-                ).fetchone()[0])
-                self._db.execute(
-                    """
-                    INSERT INTO agent_lease (
-                        agent_id, dataset_id, role, heartbeat, claimed_count, admitted, formalized
-                    )
-                    SELECT remote.agent_id, remote.dataset_id, remote.role,
-                           remote.heartbeat, remote.documents, FALSE, FALSE
-                    FROM remote_resume_agents AS remote
-                    """
-                )
-                self._db.execute("DROP TABLE remote_resume_agents")
-            self._db.execute("DROP TABLE remote_resume_observations")
-            self._db.execute("COMMIT")
-        except BaseException:
-            self._db.execute("ROLLBACK")
-            raise
+            SELECT agent_id, dataset_id, role, heartbeat, documents, FALSE, FALSE
+            FROM read_parquet(?)
+            WHERE record_kind = 'agent'
+              AND coalesce(agent_id, '') <> ''
+              AND agent_id <> ?
+              AND NOT EXISTS (
+                    SELECT 1 FROM agent_lease AS existing WHERE existing.agent_id = agent_id
+                  )
+            """,
+            [remote, agent_id],
+        )
+        self.refresh_task_board()
         return {
             "admitted": False,
-            "advisory_only": True,
-            "agents_imported": imported_agents,
-            "claimed": 0,
-            "dataset_matched": dataset_matched,
+            "claimed": _count("claimed") - claimed_before,
             "formalized": False,
-            "gaps": 0,
+            "gaps": _count("gap") - gaps_before,
             "jsonl_written": False,
-            "sealed": 0,
-            "source_matched_status_counts": observations,
+            "sealed": _count("sealed") - sealed_before,
         }
 
     def release_stale_claims(self, agent_id: str | None = None) -> int:
@@ -585,19 +609,17 @@ class SpanCache:
         if source_text and row[1] != _sha(source_text):
             self.unseal([span_id], reason="source_changed")
             return None
-        try:
-            rule = json.loads(row[9]) if row[9] else None
-        except (TypeError, json.JSONDecodeError):
-            rule = None
-        if not isinstance(rule, dict):
-            # Old status-only resume imports may have sealed an enqueue row
-            # whose compile payload was never present. Check on access only;
-            # locally stored '{}' remains compatible with existing semantics.
-            self.unseal([span_id], reason="incomplete_compile_cache")
-            return None
         current = self._meta("code_identity")
         if current and row[8] and row[8] != current:
             return None
+        rule = {}
+        if row[9]:
+            try:
+                loaded = json.loads(row[9])
+                if isinstance(loaded, dict):
+                    rule = loaded
+            except json.JSONDecodeError:
+                rule = {}
         return {
             "admitted": False,
             "agrees": True,

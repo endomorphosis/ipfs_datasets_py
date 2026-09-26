@@ -436,6 +436,26 @@ class DurableDaemonOperationJournal:
                 raise
             return self._record_receipt(slot, result)
 
+    def resolve(self, registry: Any, slot: str) -> dict | None:
+        """Resolve an existing exact intent without dispatching any mutation.
+
+        An absent receipt leaves a pending intent unchanged. A saved receipt
+        still requires the registry's original command/payload history.
+        """
+        with self._mutex:
+            self._unchanged()
+            self._slot(slot)
+            operation = self._data["operations"].get(slot)
+            if operation is None:
+                raise DaemonOperationJournalError("cannot resolve an unknown journal slot")
+            resolved = registry.resolve_operation(
+                operation["operation_id"], operation["command"], _copy(operation["payload"]))
+            if resolved is not None:
+                return self._record_receipt(slot, resolved)
+            if operation["receipt"] is not None:
+                raise DaemonOperationJournalError("saved receipt is absent from registry history")
+            return None
+
     @property
     def binding(self) -> dict:
         with self._mutex:

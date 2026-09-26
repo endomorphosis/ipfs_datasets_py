@@ -1,11 +1,13 @@
-"""Prepare exact registered campaign jobs for a future owned worker executor.
+"""Prepare exact registered campaign jobs for the separate owned worker executor.
 
 Preparation adds immutable control artifacts and operation bindings only. It
 does not claim runs, hydrate targets, load weights, reserve runtime capacity or
 launch workers. Original job bytes, settings and completion rules are retained.
 The request is not accepted by the daemon's owned-control profile. Callers must
 admit preparation's own filesystem work separately from its declared future
-per-worker resource policy. Importing this module starts no service.
+per-worker resource policy. The explicit execution entry lazily delegates to
+the owned executor; preparation and inspection remain metadata-only.
+Importing this module starts no service.
 """
 from __future__ import annotations
 
@@ -492,4 +494,11 @@ def inspect_campaign_training(registry, request_artifact):
         "capacity_admitted": False, **{field: False for field in codec.FALSE_FIELDS}}
 
 
-__all__ = ["CampaignOwnedTrainingError", "prepare_campaign_training", "inspect_campaign_training"]
+def execute_prepared_campaign_training(registry, request_artifact, *, max_new_batches=1, max_workers=1):
+    """Execute a bounded slice of the original prepared jobs under their owner."""
+    from .autoencoder_campaign_owned_execution import execute_prepared_campaign_training as execute
+    return execute(registry, request_artifact, max_new_batches=max_new_batches, max_workers=max_workers)
+
+
+__all__ = ["CampaignOwnedTrainingError", "prepare_campaign_training", "inspect_campaign_training",
+           "execute_prepared_campaign_training"]

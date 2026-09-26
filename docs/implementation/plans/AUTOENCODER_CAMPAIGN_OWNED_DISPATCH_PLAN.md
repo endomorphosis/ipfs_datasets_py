@@ -7,8 +7,10 @@ passed 338 bounded offline regression cases on the captured source revision:
 skips. The user-authorized 60 GB cap increase preserved every historical ledger
 record; the fresh 50 MB test reservation and host lease were released. The
 [audit receipt](../reports/evidence/autoencoder_control_plane_plan/campaign-owned-preparation-audit-20260926-r1.json)
-records unchanged package/dependency and protected-input guards. B2 worker
-execution and B3 transport remain proposals. No native qualification, full-corpus
+records unchanged package/dependency and protected-input guards.
+[B2 worker execution](../reports/autoencoder_campaign_owned_execution.md) is now
+implemented and passed 486 guarded offline regression cases. B3 transport remains
+proposed. No native qualification, full-corpus
 run, legal-IR speedup, live Quack listener, DuckLake write or Hugging Face upload
 is claimed. Native validation remains deferred.
 
@@ -37,9 +39,9 @@ changes that status.
 
 Prioritize owner-controlled execution of the existing v8 worker jobs. It keeps
 the user's shared targets, accepted sparse updates and optional Arrow weights
-on the already implemented worker/coordinator path. First implement an offline,
-immutable prepared-request and assignment contract; then add durable operation
-recovery and resource supervision before exposing execution through Quack.
+on the already implemented worker/coordinator path. The offline immutable request contract, durable operation recovery and resource
+supervision are implemented and regression-tested. Exposing this execution
+through Quack is the next stage.
 
 An input-to-prepared-daemon map is smaller, but solves a different problem. A
 daemon consumes the original job's corpus snapshot while using its own parsed
@@ -49,10 +51,10 @@ enable it. Shared-target consumption and sparse persistence also differ. Use
 such a map only when explicitly choosing a separate daemon
 experiment; it is not the default campaign execution adapter.
 
-| Route | Reuses | Missing contract | Result |
+| Route | Reuses | Status | Result |
 |---|---|---|---|
-| Restricted daemon input map | Existing prepared handles, daemon journals, owned Quack control | Exact batch-to-input-to-request mapping and separate progress | A separately configured daemon run consumes campaign inputs |
-| Owned v8 worker dispatch, recommended | Exact registered jobs, target bundles, worker patches, owner replay/compaction, Arrow weights | Durable coordinator operations, sealed resource policy and supervised native launch | The original registered campaign jobs complete through their existing acceptance path |
+| Restricted daemon input map | Existing prepared handles, daemon journals, owned Quack control | Proposed: exact batch-to-input-to-request mapping and separate progress | A separately configured daemon run consumes campaign inputs |
+| Owned v8 worker dispatch, recommended | Exact registered jobs, target bundles, worker patches, owner replay/compaction, Arrow weights | Implemented B1/B2; native validation deferred and Quack transport pending | The original registered campaign jobs complete through their existing acceptance path |
 
 Neither route puts parameter access in DuckDB or Quack. Numeric reads remain
 local; the control plane carries bounded immutable descriptors and status.
@@ -67,8 +69,8 @@ local; the control plane carries bounded immutable descriptors and status.
   validates all selected jobs before claiming one. `_verify_receipt_payload`,
   `_prepare_completion` and `_verify_and_stage_patches` retain independent
   receipt validation, accepted-patch replay and owner compaction policy.
-  `run_training_jobs` currently creates random per-call operation IDs; its
-  response-loss resolution is not a persistent restart journal.
+  Public `run_training_jobs` keeps its per-call operation IDs. The separate
+  owned route adds a persistent journal without changing that public default.
 - [`export_daemon_corpus_inputs`](../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_corpus_inputs.py)
   already exports immutable v8 corpus snapshots with both roles verified.
   The wrapper binds corpus identity and does not translate training policy.
@@ -134,7 +136,7 @@ No new transport command or callable-from-wire callback is needed for route A.
 
 Stage B1 is implemented in `optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_training.py`
 with the separate `autoencoder_campaign_training_request.py` codec. Its bounded
-offline regression capture passed; its public API has no training entry:
+offline regression capture passed; preparation and inspection remain metadata-only:
 
 ```python
 prepare_campaign_training(registry, plan_artifact, *, selected_batch_ids,
@@ -167,7 +169,7 @@ with `execution_available=false`, `capacity_admitted=false` and
 `completion_verified=false` for every selected job. Existing-only journal opens
 prevent inspection or retries from silently recreating missing history.
 
-Stage B2 supplies an owner-only execution entry point after B1 is qualified:
+Stage B2 now supplies an owner-only execution entry point:
 
 ```python
 execute_prepared_campaign_training(registry, prepared_artifact, *,
@@ -194,6 +196,14 @@ v8 training requests. Preserve the three bounded submit/read/resolve operations;
 remote callers still provide no paths, arguments, policies, leases or results.
 Keep the existing daemon profile and strict controller type checks intact.
 Owner drains run outside the gateway pump; no listener is part of B1/B2 tests.
+Use a separate campaign controller: one prepared request can contain multiple
+original runs, and B2 can return partial `ready` progress. Cap the union of
+assigned original runs, and initially drain requests sequentially while B2
+provides parallelism within a request. A durable drain start without a finish
+must remain `recovery_required`; calling B2 again could train an untouched next
+batch. Continue only through an explicit new owner drain after the previous
+finish is recorded. Status reads should use durable control/registry history,
+not contend for the execution journal while a drain holds it.
 
 ## Identity, restart and resource rules for route B
 
