@@ -29,10 +29,14 @@ from .snapshot import (
 DEFAULT_MAX_TOTAL_BYTES = 128 * 1024 * 1024
 DEFAULT_MAX_METADATA_BYTES = 32 * 1024 * 1024
 # Metadata operations inspect the same large packs as blob decoders. Bound
-# their mappings/cache too, including nested Git status invocations.
+# their mappings/cache too, including nested Git status invocations. Index
+# observation is deliberately sequential: thread exhaustion must not prevent
+# checking the complete checkout, and nested submodule checks inherit -c.
 GIT_METADATA_CONFIG = (("core.packedGitWindowSize", "8388608"),
                        ("core.packedGitLimit", "33554432"),
-                       ("core.deltaBaseCacheLimit", "16777216"))
+                       ("core.deltaBaseCacheLimit", "16777216"),
+                       ("core.preloadIndex", "false"),
+                       ("index.threads", "1"))
 
 
 @dataclass(frozen=True)
