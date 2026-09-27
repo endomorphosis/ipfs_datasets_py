@@ -112,6 +112,20 @@ def _json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
 
+def _repair_json(value: Any) -> str:
+    if not isinstance(value, Mapping):
+        return "{}"
+    return _json(value)
+
+
+def _repair_load(raw: Any) -> dict[str, Any]:
+    try:
+        loaded = json.loads(str(raw or "") or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
 def terms_from_rule(rule: Mapping[str, Any] | None, *, decompiled: str = "") -> list[dict[str, str]]:
     """Name the IR atoms a compiled span used. Empty when there is no rule."""
 
@@ -352,6 +366,72 @@ class SpanCache:
             "jsonl_written": False,
             "path": str(destination),
             "task_count": self._db.execute("SELECT count(*) FROM task_board").fetchone()[0],
+        }
+
+    def write_progress_parquet(self, path: str | Path) -> dict[str, Any]:
+        """Write sealed and gap rows only. Pending span text stays in DuckDB."""
+
+        destination = Path(path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        dataset_id = (self._meta("dataset_id") or "ipfs_uscode").replace("'", "''")
+        source_parquet = self._meta("enqueue_parquet").replace("'", "''")
+        documents = int(self._meta("enqueue_documents") or 0)
+        stats = self.stats()
+        target = str(destination).replace("'", "''")
+        self._db.execute(
+            f"""
+            COPY (
+                SELECT * FROM (
+                    SELECT
+                        'meta' AS record_kind,
+                        '{dataset_id}' AS dataset_id,
+                        '' AS agent_id,
+                        '' AS role,
+                        '' AS heartbeat,
+                        {documents} AS documents,
+                        '{source_parquet}' AS source_parquet,
+                        '' AS source_span_id,
+                        '' AS legal_id,
+                        'progress' AS status,
+                        FALSE AS sealed,
+                        '' AS claim_worker,
+                        '' AS claim_token,
+                        '' AS source_sha256,
+                        '' AS reason,
+                        '' AS code_identity,
+                        '' AS term_id,
+                        '' AS term_kind,
+                        '' AS term_value,
+                        '' AS task_id,
+                        '' AS failure_mode,
+                        '' AS work_kind,
+                        '' AS owner_agent,
+                        {int(stats['sealed'])} AS sealed_count,
+                        {int(stats['gaps'])} AS gap_count,
+                        {int(stats['pending'])} AS pending_count,
+                        FALSE AS admitted,
+                        FALSE AS formalized
+                    UNION ALL
+                    SELECT
+                        'span', '', coalesce(claim_worker, ''), '', '', 0, '',
+                        source_span_id, coalesce(legal_id, ''), status, sealed,
+                        coalesce(claim_worker, ''), coalesce(claim_token, ''),
+                        source_sha256, coalesce(reason, ''), coalesce(code_identity, ''),
+                        '', '', '', '', '', '', '',
+                        0, 0, 0, admitted, formalized
+                    FROM span_cache
+                    WHERE sealed = TRUE OR status = 'gap'
+                )
+            ) TO '{target}' (FORMAT PARQUET)
+            """
+        )
+        return {
+            "admitted": False,
+            "formalized": False,
+            "gaps": stats["gaps"],
+            "path": str(destination),
+            "pending": stats["pending"],
+            "sealed": stats["sealed"],
         }
 
     def resume_summary(self, path: str | Path) -> dict[str, Any]:
@@ -722,7 +802,8 @@ class SpanCache:
                     """
                     UPDATE span_cache
                     SET source_sha256 = ?, legal_id = ?, source_text = ?, decompiled = ?,
-                        reason = ?, status = 'gap', sealed = FALSE, admitted = FALSE, formalized = FALSE
+                        reason = ?, rule_json = ?, status = 'gap', sealed = FALSE,
+                        admitted = FALSE, formalized = FALSE
                     WHERE source_span_id = ?
                     """,
                     [
@@ -731,6 +812,7 @@ class SpanCache:
                         text,
                         str(row.get("decompiled") or "")[:MAX_TEXT],
                         str(row.get("reason") or ""),
+                        _repair_json(row.get("repair")),
                         span_id,
                     ],
                 )
@@ -889,7 +971,7 @@ class SpanCache:
                     """
                     UPDATE span_cache
                     SET source_sha256 = ?, legal_id = ?, source_text = ?, decompiled = ?,
-                        reason = ?, status = 'gap', sealed = FALSE, claim_worker = '',
+                        reason = ?, rule_json = ?, status = 'gap', sealed = FALSE, claim_worker = '',
                         claim_token = '', admitted = FALSE, formalized = FALSE
                     WHERE source_span_id = ?
                     """,
@@ -899,6 +981,7 @@ class SpanCache:
                         text,
                         str(row.get("decompiled") or "")[:MAX_TEXT],
                         str(row.get("reason") or "compiler_abstain"),
+                        _repair_json(row.get("repair")),
                         span_id,
                     ],
                 )
@@ -1014,6 +1097,57 @@ class SpanCache:
                 }
             )
         return payload
+
+    def save_gap_repairs(self, rows: Sequence[Mapping[str, Any]]) -> int:
+        """Store the codec and compiler capsule on existing gap rows. Does not admit them."""
+
+        saved = 0
+        for row in rows:
+            if not isinstance(row, Mapping):
+                continue
+            span_id = str(row.get("source_span_id") or "")
+            repair = row.get("repair")
+            if not span_id or not isinstance(repair, Mapping):
+                continue
+            self._db.execute(
+                """
+                UPDATE span_cache
+                SET rule_json = ?, admitted = FALSE, formalized = FALSE
+                WHERE source_span_id = ? AND status = 'gap'
+                """,
+                [_repair_json(repair), span_id],
+            )
+            found = self._db.execute(
+                "SELECT rule_json FROM span_cache WHERE source_span_id = ? AND status = 'gap'",
+                [span_id],
+            ).fetchone()
+            if found and found[0]:
+                saved += 1
+        return saved
+
+    def list_gaps(self, *, limit: int = 64, after: str = "") -> list[dict[str, Any]]:
+        """Return failed span compiles for a replay loop. Does not train."""
+
+        rows = self._db.execute(
+            """
+            SELECT source_span_id, legal_id, source_text, reason, rule_json
+            FROM span_cache
+            WHERE status = 'gap' AND source_span_id > ?
+            ORDER BY source_span_id
+            LIMIT ?
+            """,
+            [after, max(1, min(int(limit), MAX_BATCH))],
+        ).fetchall()
+        return [
+            {
+                "legal_id": str(row[1] or ""),
+                "reason": str(row[3] or ""),
+                "repair": _repair_load(row[4] if len(row) > 4 else ""),
+                "source_span_id": str(row[0]),
+                "text": str(row[2] or ""),
+            }
+            for row in rows
+        ]
 
     def stats(self) -> dict[str, int]:
         sealed = self._db.execute("SELECT count(*) FROM span_cache WHERE sealed = TRUE").fetchone()[0]

@@ -176,6 +176,78 @@ def test_constitution_spans_without_citations_become_subgoals() -> None:
     assert all(task["admitted"] is False and task["formalized"] is False for task in tree["tasks"])
 
 
+def _assert_claim_skips_parked_goal(tmp_path: Path, open_task_cid: str) -> None:
+    from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import parse_args
+    from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon_runner import (
+        build_database_implementation_daemon_from_args,
+    )
+    from ipfs_datasets_py.logic.autoformal.supervisor_queue import NAMESPACE
+
+    parsed = parse_args([
+        "--todo-path", str(tmp_path / "control.duckdb"),
+        "--state-dir", str(tmp_path / "state"),
+        "--state-prefix", "parked-goal",
+        "--authority-mode", "embedded",
+        "--task-source-kind", "duckdb",
+        "--board-namespace", NAMESPACE,
+        "--state-store-id", "parked-goal",
+        "--state-failover-policy", "fail_closed",
+        "--max-task-attempts", "3",
+    ])
+    daemon = build_database_implementation_daemon_from_args(parsed)
+    try:
+        claim = daemon.claim_next()
+        assert claim is not None
+        assert claim.task_cid == open_task_cid
+    finally:
+        daemon.close()
+
+
+def _assert_no_claim_when_goals_are_inconclusive(tmp_path: Path) -> None:
+    from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import parse_args
+    from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon_runner import (
+        build_database_implementation_daemon_from_args,
+    )
+    from ipfs_datasets_py.logic.autoformal.supervisor_queue import NAMESPACE
+
+    parsed = parse_args([
+        "--todo-path", str(tmp_path / "control.duckdb"),
+        "--state-dir", str(tmp_path / "state-parked"),
+        "--state-prefix", "all-parked",
+        "--authority-mode", "embedded",
+        "--task-source-kind", "duckdb",
+        "--board-namespace", NAMESPACE,
+        "--state-store-id", "all-parked",
+        "--state-failover-policy", "fail_closed",
+        "--max-task-attempts", "3",
+    ])
+    daemon = build_database_implementation_daemon_from_args(parsed)
+    try:
+        assert daemon.claim_next() is None
+        withdrawal = dict(daemon._last_claim_withdrawal)
+    finally:
+        daemon.close()
+    assert withdrawal["reason"] == "goals_inconclusive"
+    assert withdrawal["claim_state"] == "not_claimed"
+    assert withdrawal["admitted"] is False
+    assert withdrawal["formalized"] is False
+    assert withdrawal["task_cids"]
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+        claim_block_for_inconclusive_goals,
+    )
+    from ipfs_accelerate_py.agent_supervisor.task_sources.database_task_source import (
+        DatabaseTaskSource,
+    )
+
+    with DatabaseTaskSource(tmp_path / "control.duckdb", install_schema=False) as source:
+        blocked = claim_block_for_inconclusive_goals(source)
+    assert blocked["claim_blocked_reason"] == "goals_inconclusive"
+    assert blocked["admitted"] is False
+    assert blocked["formalized"] is False
+    assert blocked["claim_blocked_task_cids"] == withdrawal["task_cids"]
+    assert blocked["claimable_ready_task_cids"] == []
+
+
 def test_sealed_todos_link_to_constitution_span_subgoals(tmp_path: Path) -> None:
     from ipfs_accelerate_py.agent_supervisor.task_sources.database_task_source import DatabaseTaskSource
     from ipfs_datasets_py.logic.autoformal.supervisor_loop import attach_goal_tree
@@ -260,6 +332,65 @@ def test_sealed_todos_link_to_constitution_span_subgoals(tmp_path: Path) -> None
         assert other["status"] == "open"
         assert marked["rolled_up"] == []
         assert all(goal["status"] == "open" for goal in campaign_rows)
+        from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+            ready_task_cids_under_inconclusive_goals,
+        )
+
+        skipped = ready_task_cids_under_inconclusive_goals(source)
+        assert tasks[0].task_cid in skipped
+        assert tasks[1].task_cid not in skipped
+        import importlib.util
+
+        launcher_path = (
+            Path(__file__).resolve().parents[3]
+            / "scripts" / "ops" / "legal_ir" / "run_autoformal_supervisor.py"
+        )
+        spec = importlib.util.spec_from_file_location("autoformal_supervisor_preflight", launcher_path)
+        assert spec is not None and spec.loader is not None
+        supervisor_launch = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(supervisor_launch)
+        preflight = supervisor_launch.preflight_next_repair(
+            source, tmp_path, probe=lambda *_args, **_kwargs: {"passed": True},
+        )
+        assert preflight["eligible"] is True
+        assert preflight["task_cid"] == tasks[1].task_cid
+        assert preflight["claim_blocked_reason"] == ""
+        assert preflight["admitted"] is False
+        assert preflight["formalized"] is False
+        assert preflight["tasks_claimed"] is False
+        calls: list[str] = []
+
+        def generate(prompt, temperature=0, task_kind="legal"):
+            calls.append(prompt)
+            return json.dumps({"parser": "def parse_statute(text):\n    return text\n"})
+
+        proposed = supervisor_launch.propose_ready_gap(
+            source, tmp_path, generate, probe=lambda *_args, **_kwargs: {"passed": True},
+        )
+        assert len(calls) == 1
+        assert proposed["router_called"] is True
+        assert proposed["preflight_passed"] is True
+        assert proposed["task_id"] == tasks[1].task_alias
+        assert proposed["admitted"] is False
+        assert proposed["formalized"] is False
+        assert proposed["imported"] is False
+        assert proposed["wrote_compiler"] is False
+
+        def refuse_repeat(*_args, **_kwargs):
+            raise AssertionError("router called again for the same proposal")
+
+        repeated = supervisor_launch.propose_ready_gap(
+            source, tmp_path, refuse_repeat, probe=lambda *_args, **_kwargs: {"passed": True},
+        )
+        assert repeated["router_called"] is False
+        assert repeated["reason"] == "proposal_already_recorded"
+        assert repeated["proposal_sha256"] == proposed["proposal_sha256"]
+        assert repeated["proposal_keys"] == proposed["proposal_keys"]
+        assert repeated["admitted"] is False
+        assert repeated["formalized"] is False
+        assert repeated["imported"] is False
+        assert source.get(tasks[1].task_cid).status == "ready"
+        _assert_claim_skips_parked_goal(tmp_path, tasks[1].task_cid)
         both = mark_span_subgoal_review(
             source, tasks[1].task_cid, "def456", ["compiler"],
         )
@@ -299,6 +430,29 @@ def test_sealed_todos_link_to_constitution_span_subgoals(tmp_path: Path) -> None
         assert tasks[1].task_cid not in claimable
         assert all(item["status"] == "open" for item in summary["open_goals"])
         assert all(item["admitted"] is False for item in summary["open_goals"])
+        refused = supervisor_launch.preflight_next_repair(
+            source, tmp_path, probe=lambda *_args, **_kwargs: {"passed": True},
+        )
+        assert refused["eligible"] is False
+        assert refused["claim_blocked_reason"] == "goals_inconclusive"
+        assert refused["passed"] is None
+        assert refused["tasks_claimed"] is False
+        assert refused["admitted"] is False
+        assert refused["formalized"] is False
+
+        def refuse_generate(*_args, **_kwargs):
+            raise AssertionError("router called for a parked goal")
+
+        parked_proposal = supervisor_launch.propose_ready_gap(
+            source, tmp_path, refuse_generate, probe=lambda *_args, **_kwargs: {"passed": True},
+        )
+        assert parked_proposal["router_called"] is False
+        assert parked_proposal["reason"] == "goals_inconclusive"
+        assert parked_proposal["preflight_passed"] is False
+        assert parked_proposal["admitted"] is False
+        assert parked_proposal["formalized"] is False
+        assert parked_proposal["imported"] is False
+        _assert_no_claim_when_goals_are_inconclusive(tmp_path)
 
 
 def test_spawn_goal_tree_emits_duckdb_population_semantics() -> None:

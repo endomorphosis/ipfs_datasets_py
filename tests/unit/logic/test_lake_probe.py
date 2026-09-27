@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 from ipfs_datasets_py.logic.autoformal.lake_probe import (
+    lake_check,
+    pattern_from_fixture,
     pattern_from_rule,
     probe_census_rules,
+    render_fixture,
     render_norm,
 )
 from ipfs_datasets_py.logic.autoformal.supervisor_loop import run_supervisor_loop
@@ -30,6 +33,47 @@ def test_probe_reports_injected_lake_errors_without_admitting() -> None:
     assert receipt["theorem_count"] == 1
     assert receipt["admitted"] is False
     assert receipt["formalized"] is False
+
+
+def test_belief_knowledge_and_actorless_prohibition_are_definitional_fixtures() -> None:
+    belief = {"modality": "B", "actor": "", "action": "willfully_falsify_material_fact_shall_fin", "object": "willfully_falsify_material_fact"}
+    knowledge = {"modality": "K", "actor": "knowingly", "action": "falsify_material_fact_shall_fin_title", "object": "falsify_material_fact_shall"}
+    actorless = {"modality": "F", "actor": "", "action": "commit_theft", "object": "commit_theft"}
+    frame = {"modality": "Frame", "actor": "", "action": "united_states_code_edition_title_armed", "object": ""}
+    assert pattern_from_rule(belief) is None
+    assert pattern_from_rule(knowledge) is None
+    assert pattern_from_rule(actorless) is None
+    assert pattern_from_rule(frame) is None
+    patterns = [
+        pattern_from_fixture(belief),
+        pattern_from_fixture(knowledge),
+        pattern_from_fixture(actorless),
+        pattern_from_fixture(frame),
+    ]
+    assert [item["fixture"] for item in patterns] == ["B", "K", "actorless_F", "Frame"]
+    assert patterns[3]["modality"] == 6
+    assert patterns[0]["bearer"] == "fixture:bearer"
+    assert patterns[1]["bearer"] == "knowingly"
+    source = "\n".join(render_fixture(pattern, suffix=str(index)) for index, pattern in enumerate(patterns))
+    assert " axiom " not in f" {source} "
+    assert "sorry" not in source.split()
+    assert "admit" not in source.split()
+    receipt = lake_check(source, timeout=180)
+    assert receipt["lake_ok"] is True
+    assert receipt["admitted"] is False
+    assert receipt["formalized"] is False
+
+
+def test_frame_family_has_a_cross_entropy_floor_when_a_frame_is_selected() -> None:
+    from ipfs_datasets_py.logic.modal.codec import target_family_distribution_for_modal_ir
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import ModalIRDocument
+
+    document = ModalIRDocument(document_id="t", source="t", normalized_text="t")
+    plain = target_family_distribution_for_modal_ir(document)
+    framed = target_family_distribution_for_modal_ir(document, require_frame=True)
+    assert "frame" not in plain
+    assert framed["frame"] >= 0.368
+    assert abs(sum(framed.values()) - 1.0) < 1e-6
 
 
 def test_loop_logs_census_spans_and_lake_errors(tmp_path) -> None:

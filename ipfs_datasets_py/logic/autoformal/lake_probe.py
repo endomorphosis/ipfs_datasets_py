@@ -24,6 +24,18 @@ _MODALITY_CODE = {
     "P": 1,
     "F": 2,
 }
+# Stand-ins for operators that are not a duty of a named actor.
+# These are definitional fixtures. The Lean keyword axiom stays refused.
+_FIXTURE_CODE = {
+    "B": 3,
+    "belief": 3,
+    "K": 4,
+    "knowledge": 4,
+    "actorless_F": 5,
+    "Frame": 6,
+    "frame": 6,
+}
+FIXTURE_BEARER = "fixture:bearer"
 
 
 class LakeProbeError(RuntimeError):
@@ -45,6 +57,55 @@ def pattern_from_rule(rule: Mapping[str, Any] | None) -> dict[str, Any] | None:
     payload = "\n".join((modality, actor, action, str(rule.get("object") or "").strip()))
     fingerprint = int(hashlib.sha256(payload.encode("utf-8")).hexdigest()[:8], 16)
     return {"kind": "norm", "modality": _MODALITY_CODE[modality], "fingerprint": fingerprint}
+
+
+def pattern_from_fixture(rule: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """Lock a belief, knowledge, frame, or actorless prohibition fixture. Not a proof."""
+
+    if not isinstance(rule, Mapping):
+        return None
+    modality = str(rule.get("modality") or "")
+    action = str(rule.get("action") or "").strip()
+    if not action:
+        return None
+    actor = str(rule.get("actor") or "").strip()
+    if modality in {"B", "belief", "K", "knowledge"}:
+        code_name = "B" if modality in {"B", "belief"} else "K"
+        bearer = actor or FIXTURE_BEARER
+    elif modality in {"F", "prohibition"} and not actor:
+        code_name = "actorless_F"
+        bearer = FIXTURE_BEARER
+    elif modality in {"Frame", "frame"}:
+        code_name = "Frame"
+        bearer = actor or FIXTURE_BEARER
+    else:
+        return None
+    payload = "\n".join(
+        ("fixture", code_name, bearer, action, str(rule.get("object") or "").strip())
+    )
+    fingerprint = int(hashlib.sha256(payload.encode("utf-8")).hexdigest()[:8], 16)
+    return {
+        "bearer": bearer,
+        "fixture": code_name,
+        "fingerprint": fingerprint,
+        "kind": "fixture",
+        "modality": _FIXTURE_CODE[code_name],
+    }
+
+
+def render_fixture(pattern: Mapping[str, Any], *, suffix: str = "") -> str:
+    """Definitional stand-in. Does not emit a Lean axiom."""
+
+    kind = int(pattern["modality"])
+    fingerprint = int(pattern["fingerprint"])
+    return (
+        f"def fixtureKindCode{suffix} : Nat := {kind}\n"
+        f"def fixtureFingerprint{suffix} : Nat := {fingerprint}\n"
+        f"def fixtureLocked{suffix} (k f : Nat) : Bool := decide (k = fixtureKindCode{suffix} /\\ f = fixtureFingerprint{suffix})\n"
+        f"theorem fixtureBoundary{suffix} : fixtureLocked{suffix} fixtureKindCode{suffix} fixtureFingerprint{suffix} = true := by\n"
+        f"  unfold fixtureLocked{suffix} fixtureKindCode{suffix} fixtureFingerprint{suffix}\n"
+        "  decide\n"
+    )
 
 
 def render_norm(pattern: Mapping[str, Any], *, suffix: str = "") -> str:

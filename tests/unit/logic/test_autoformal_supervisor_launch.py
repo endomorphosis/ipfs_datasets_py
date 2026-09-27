@@ -501,7 +501,8 @@ def test_status_lists_a_parked_router_review_without_reopening_it(tmp_path, caps
     import ipfs_accelerate_py
     from ipfs_accelerate_py.agent_supervisor.task_sources.database_task_source import DatabaseTaskSource
 
-    task = selected_queue(tmp_path)[0]
+    queued = selected_queue(tmp_path)
+    task, other = queued[0], queued[1]
     claim = {
         "operation": "database_claim",
         "claim_id": "claim-status",
@@ -567,6 +568,9 @@ def test_status_lists_a_parked_router_review_without_reopening_it(tmp_path, caps
     assert report["verified_complete_count"] == 0
     assert report["inconclusive_goal_count"] == 0
     assert report["inconclusive_goals"] == []
+    assert report["claim_blocked_reason"] == ""
+    assert report["claim_blocked_task_cids"] == []
+    assert report["claimable_ready_task_cids"] == [other.task_cid]
     assert report["open_goal_count"] == len(report["open_goals"])
     assert all(item["status"] == "open" and item["admitted"] is False for item in report["open_goals"])
     assert all(task.task_cid not in item["ready_task_cids"] for item in report["open_goals"])

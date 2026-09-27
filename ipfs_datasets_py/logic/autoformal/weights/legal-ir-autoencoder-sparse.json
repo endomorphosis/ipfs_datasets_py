@@ -1,0 +1,8 @@
+{
+  "admitted": false,
+  "cells": 2145,
+  "formalized": false,
+  "min_abs_delta": 0.001,
+  "schema": "uscode-autoencoder-sparse/v1",
+  "source_state_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+}

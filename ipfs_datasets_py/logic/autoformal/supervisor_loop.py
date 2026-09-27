@@ -851,6 +851,30 @@ def ready_task_cids_under_inconclusive_goals(task_source: Any) -> set[str]:
     }
 
 
+def claim_block_for_inconclusive_goals(task_source: Any) -> dict[str, Any]:
+    """Explain a refused claim when ready todos sit under parked goals."""
+
+    blocked = sorted(ready_task_cids_under_inconclusive_goals(task_source))
+    blocked_set = set(blocked)
+    claimable: list[str] = []
+    intent = getattr(task_source, "_intent", None)
+    if intent is not None:
+        with intent._connection(write=False) as connection:
+            rows = connection.execute("SELECT task_cid, status FROM tasks").fetchall()
+        claimable = sorted(
+            str(row[0])
+            for row in rows
+            if str(row[1] or "").lower() == "ready" and str(row[0]) not in blocked_set
+        )
+    return {
+        "admitted": False,
+        "claim_blocked_reason": "goals_inconclusive" if blocked else "",
+        "claim_blocked_task_cids": blocked,
+        "claimable_ready_task_cids": claimable,
+        "formalized": False,
+    }
+
+
 def open_goals(task_source: Any) -> list[dict[str, Any]]:
     """Name goals the supervisor can still work. Parked goals are not included."""
 

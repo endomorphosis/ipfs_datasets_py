@@ -165,14 +165,28 @@ def preflight_next_repair(source, repository: Path, *, probe=None, task_id: str 
     before = source.snapshot().revision
     # Never use status alone, caller-supplied completed IDs, or priority
     # changes to select a task. Absence from this bounded native-ready set
-    # means no dispatch; it never falls back to another alias.
-    page = source.ready_tasks(limit=1000 if task_id else 1)
+    # means no dispatch; it never falls back to another alias. A requested
+    # alias under a parked goal is not replaced by a different task.
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+        ready_task_cids_under_inconclusive_goals,
+    )
+
+    parked = ready_task_cids_under_inconclusive_goals(source)
+    page = source.ready_tasks(limit=1000)
     selected = [record for record in page.tasks if not task_id or record.task_alias == task_id]
     if task_id and len(selected) > 1:
         raise RepairQueueError("requested task alias is ambiguous in native readiness")
+    requested_parked = bool(task_id and selected and str(selected[0].task_cid) in parked)
+    if requested_parked:
+        selected = []
+    elif not task_id:
+        selected = [record for record in selected if str(record.task_cid) not in parked][:1]
+    blocked_reason = "goals_inconclusive" if (requested_parked or (not selected and parked)) else ""
     report = {"schema": "uscode-autoformal-launch-preflight/v1", "queue_revision": before,
               "eligible": bool(selected), "passed": None, "tasks_claimed": False,
-              "provider_dispatched": False, "production_promotion": False}
+              "provider_dispatched": False, "production_promotion": False,
+              "admitted": False, "formalized": False,
+              "claim_blocked_reason": blocked_reason}
     if task_id:
         report.update(requested_task_id=task_id, selection_scan_limit=1000)
     if deployment is not None:
@@ -240,13 +254,60 @@ def propose_ready_gap(source, repository: Path, generate, *, probe=None) -> dict
         "task_id": report.get("task_id") or "",
         "wrote_compiler": False,
     }
+    if report.get("claim_blocked_reason") == "goals_inconclusive":
+        receipt["reason"] = "goals_inconclusive"
+        receipt["preflight_passed"] = False
+        return receipt
     if report.get("passed") is not True:
         receipt["reason"] = "preflight_refused"
+        return receipt
+    record = source.get(report["task_cid"])
+    body = dict(record.body or {})
+    recorded = body.get("router_proposal")
+    if (
+        isinstance(recorded, dict)
+        and str(recorded.get("proposal_sha256") or "")
+        and recorded.get("applied") is False
+        and recorded.get("imported") is False
+        and recorded.get("wrote_compiler") is False
+    ):
+        receipt.update(
+            reason="proposal_already_recorded",
+            proposal_sha256=str(recorded.get("proposal_sha256") or ""),
+            proposal_keys=list(recorded.get("proposal_keys") or []),
+            preflight_passed=True,
+        )
         return receipt
     packet = read_packet(Path(report["packet_path"]), report["packet_sha256"])
     resolved = resolve_gap_with_router(row_for_packet(packet), generate)
     receipt.update(resolved)
     receipt["preflight_passed"] = True
+    if resolved.get("proposal_sha256") and not resolved.get("reason"):
+        body["router_proposal"] = {
+            "admitted": False,
+            "applied": False,
+            "formalized": False,
+            "imported": False,
+            "proposal_keys": list(resolved.get("proposal_keys") or []),
+            "proposal_sha256": str(resolved.get("proposal_sha256") or ""),
+            "wrote_compiler": False,
+        }
+        source._intent.upsert_task(
+            task_cid=record.task_cid,
+            task_alias=record.task_alias,
+            goal_cid=str(record.goal_cid or ""),
+            ordinal=int(record.ordinal),
+            status=str(record.status),
+            priority=str(record.priority or "P0"),
+            plan_cid=str(record.plan_cid or ""),
+            objective_id=str(record.objective_id or ""),
+            body=body,
+            expected_revision=int(record.revision),
+            dependencies=list(record.dependencies),
+            outputs=list(record.outputs),
+            acceptance=list(record.acceptance),
+            validations=list(record.validations),
+        )
     return receipt
 
 
@@ -744,13 +805,20 @@ def main(argv: list[str] | None = None) -> int:
                 cursor = page.next_cursor
                 if not cursor:
                     break
-            from ipfs_datasets_py.logic.autoformal.supervisor_loop import goal_status_counts
+            from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+                claim_block_for_inconclusive_goals,
+                goal_status_counts,
+            )
             from ipfs_datasets_py.logic.autoformal.supervisor_router import review_holds
             holds = review_holds(source)
             goals = goal_status_counts(source)
+            blocked = claim_block_for_inconclusive_goals(source)
             print(json.dumps({
                 **binding,
                 "admitted": False,
+                "claim_blocked_reason": blocked["claim_blocked_reason"],
+                "claim_blocked_task_cids": blocked["claim_blocked_task_cids"],
+                "claimable_ready_task_cids": blocked["claimable_ready_task_cids"],
                 "counts": counts,
                 "formalized": False,
                 "goal_status_counts": goals["goal_status_counts"],

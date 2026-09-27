@@ -13,6 +13,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -68,7 +69,7 @@ def _flush_checkpoint(cache, destination: Path, *, upload: bool, agent_id: str) 
     destination.mkdir(parents=True, exist_ok=True)
     path = destination / "resume-checkpoint.parquet"
     cache.register_agent(agent_id, dataset_id="justicedao/ipfs_uscode", role="compile")
-    written = cache.write_resume_parquet(path)
+    written = cache.write_progress_parquet(path)
     receipt = {
         "admitted": False,
         "formalized": False,
@@ -94,10 +95,41 @@ def _flush_checkpoint(cache, destination: Path, *, upload: bool, agent_id: str) 
         )
         receipt["uploaded"] = True
         receipt["repo_id"] = repo_id
+        info = api.get_paths_info(
+            repo_id,
+            ["autoformal/uscode/resume-checkpoint.parquet"],
+            repo_type="dataset",
+        )
+        if info:
+            cache._set_meta("remote_checkpoint_oid", str(getattr(info[0], "blob_id", "") or ""))
     except Exception as exc:
         receipt["error"] = type(exc).__name__
         print(f"HF upload deferred error={type(exc).__name__}", flush=True)
     return receipt
+
+
+def _poll_remote_checkpoint(cache, *, agent_id: str) -> dict:
+    """Download another writer's parquet checkpoint and upsert it."""
+
+    from huggingface_hub import HfApi, hf_hub_download
+
+    repo_id = "justicedao/uscode-autoformal-span-cache"
+    repo_path = "autoformal/uscode/resume-checkpoint.parquet"
+    try:
+        api = HfApi()
+        info = api.get_paths_info(repo_id, [repo_path], repo_type="dataset")
+        oid = str(getattr(info[0], "blob_id", "") or "") if info else ""
+        if oid and oid == cache._meta("remote_checkpoint_oid"):
+            return {"changed": False, "admitted": False, "formalized": False}
+        local = hf_hub_download(repo_id, repo_path, repo_type="dataset")
+        merged = cache.upsert_remote_resume(local, agent_id=agent_id)
+        if oid:
+            cache._set_meta("remote_checkpoint_oid", oid)
+        merged["changed"] = True
+        return merged
+    except Exception as exc:
+        print(f"HF poll deferred error={type(exc).__name__}", flush=True)
+        return {"changed": False, "error": type(exc).__name__, "admitted": False, "formalized": False}
 
 
 def enqueue_corpus(
@@ -121,6 +153,13 @@ def enqueue_corpus(
             skip = int(point["documents"] or 0)
     print(
         f"RESUME documents={skip} parquet={parquet} admitted=false formalized=false",
+        flush=True,
+    )
+    polled = _poll_remote_checkpoint(cache, agent_id="control-plane")
+    print(
+        f"HF poll changed={str(bool(polled.get('changed'))).lower()} "
+        f"sealed={polled.get('sealed', 0)} gaps={polled.get('gaps', 0)} "
+        f"claimed={polled.get('claimed', 0)} error={polled.get('error') or 'none'}",
         flush=True,
     )
     documents = skip
@@ -163,6 +202,13 @@ def enqueue_corpus(
                     f"cache={cache.stats()}",
                     flush=True,
                 )
+                polled = _poll_remote_checkpoint(cache, agent_id="control-plane")
+                print(
+                    f"HF poll changed={str(bool(polled.get('changed'))).lower()} "
+                    f"sealed={polled.get('sealed', 0)} gaps={polled.get('gaps', 0)} "
+                    f"claimed={polled.get('claimed', 0)} error={polled.get('error') or 'none'}",
+                    flush=True,
+                )
                 flushed = _flush_checkpoint(cache, upload_dir, upload=upload, agent_id="control-plane")
                 print(
                     f"HF checkpoint documents={documents} uploaded={str(flushed.get('uploaded')).lower()} "
@@ -192,7 +238,7 @@ _WORKER: dict = {}
 
 
 def _init_worker() -> None:
-    """Load the compiler once per process. Workers never open DuckDB."""
+    """Load the compiler and the codec once per process. Workers never open DuckDB."""
 
     from ipfs_datasets_py.logic.autoformal import AutoformalSession
 
@@ -202,22 +248,49 @@ def _init_worker() -> None:
 
 def _compile_claimed(item: dict) -> dict:
     from ipfs_datasets_py.logic.autoformal import AutoformalSession, compile_span
+    from ipfs_datasets_py.logic.autoformal.repair_report import (
+        codec_capture,
+        formula_evidence,
+        repair_report,
+    )
 
     _WORKER["n"] = int(_WORKER.get("n") or 0) + 1
     if _WORKER["n"] % 32 == 0 or "session" not in _WORKER:
         _WORKER["session"] = AutoformalSession()
-    result = compile_span(_WORKER["session"], str(item.get("text") or ""), str(item.get("source_span_id") or ""))
+    text = str(item.get("text") or "")
+    captured = codec_capture(text)
+    result = compile_span(_WORKER["session"], str(captured.get("decoded_text") or text), str(item.get("source_span_id") or ""))
     status = str(result.get("compiler_status") or result.get("status") or "")
     agrees = status in {"compiled", "roundtrip_ok"}
     rule = result.get("rule") if isinstance(result.get("rule"), dict) else {}
+    # Agreed spans still keep formulas so the consensus rate can count them.
+    # The seal stores the compiler rule, not this capsule.
+    if agrees:
+        repair = {
+            "admitted": False,
+            "autoencoder": {
+                "decoded_text": str(captured.get("decoded_text") or "")[:240],
+                "formulas": formula_evidence(captured),
+            },
+            "citations": [str(cite) for cite in captured.get("citations") or [] if str(cite)][:8],
+            "formalized": False,
+        }
+    else:
+        repair = repair_report(compiler=result, autoencoder=captured)
     return {
         "agrees": agrees,
+        "cosine_loss": captured.get("cosine_loss"),
+        "cosine_similarity": captured.get("cosine_similarity"),
+        "cross_entropy_loss": captured.get("cross_entropy_loss"),
         "decompiled": str(result.get("decompiled") or ""),
+        "ir_compression_loss": captured.get("ir_compression_loss"),
         "legal_id": str(item.get("legal_id") or ""),
         "reason": "" if agrees else str(result.get("reason") or "compiler_abstain"),
+        "reconstruction_loss": captured.get("reconstruction_loss"),
+        "repair": repair,
         "rule": rule,
         "source_span_id": str(item.get("source_span_id") or ""),
-        "text": str(item.get("text") or ""),
+        "text": text,
     }
 
 
@@ -229,29 +302,74 @@ def drain(
     code_identity: str,
     upload: bool,
     upload_dir: Path,
+    compile_workers: int = 0,
+    gap_gateway: Any = None,
+    cache_path: Path | None = None,
+    supervisor_database: Path | None = None,
 ) -> dict:
     """Owner claims batches from DuckDB; worker processes only compile."""
 
     from concurrent.futures import ProcessPoolExecutor
 
+    from ipfs_datasets_py.logic.autoformal.gap_compile_replay import FailureClassLedger
     from ipfs_datasets_py.logic.autoformal.worker_budget import worker_budget
 
-    totals = {"processed": 0, "sealed": 0, "gaps": 0, "workers": worker_budget()}
+    pinned = max(0, int(compile_workers))
+    totals = {"processed": 0, "sealed": 0, "gaps": 0, "workers": pinned or worker_budget()}
+    disagreement_ledger = FailureClassLedger()
+
+    def _collect_disagreements(batch_rows: list[dict]) -> None:
+        for item in batch_rows:
+            census = dict(item.get("census") or {})
+            if census.get("train"):
+                totals["train_needed"] = True
+            if census.get("agree") is True:
+                continue
+            decoded = str(((item.get("repair") or {}).get("autoencoder") or {}).get("decoded_text") or item.get("text") or "")
+            if not decoded.strip():
+                continue
+            disagreement_ledger.observe(
+                {
+                    "compiled": False,
+                    "compiler_reason": str(item.get("reason") or ""),
+                    "legal_id": str(item.get("legal_id") or ""),
+                    "output_text": decoded,
+                    "repair": dict(item.get("repair") or {}),
+                    "source_span_id": str(item.get("source_span_id") or ""),
+                }
+            )
     started = time.monotonic()
     pool = ProcessPoolExecutor(max_workers=totals["workers"], initializer=_init_worker)
     print(
-        f"CONTROL owner=duckdb workers={totals['workers']} "
+        f"CONTROL owner=duckdb workers={totals['workers']} pinned={str(bool(pinned)).lower()} "
         f"note=workers_do_not_open_the_catalog admitted=false formalized=false",
         flush=True,
     )
+    if gap_gateway is not None:
+        gap_gateway.start()
+        published = gap_gateway.publish(cache_path or Path("span-cache.duckdb"))
+        print(
+            f"CONTROL quack endpoint={published['endpoint']} "
+            "transport=quack catalog_owner=span-cache "
+            "ducklake_activation_held=true admitted=false formalized=false",
+            flush=True,
+        )
     try:
         while True:
-            budget = worker_budget()
-            if abs(budget - totals["workers"]) >= 2:
-                pool.shutdown(wait=True, cancel_futures=False)
-                totals["workers"] = budget
-                pool = ProcessPoolExecutor(max_workers=budget, initializer=_init_worker)
-                print(f"CONTROL scale workers={budget}", flush=True)
+            if gap_gateway is not None:
+                gap_gateway.serve(cache)
+            budget = pinned or worker_budget()
+            if not pinned and abs(budget - totals["workers"]) >= 2:
+                if gap_gateway is not None:
+                    print(
+                        "CONTROL quack keeps the compile pool stable while the owner serves gap reads",
+                        flush=True,
+                    )
+                else:
+                    pool.shutdown(wait=True, cancel_futures=False)
+                    totals["workers"] = budget
+                    pool = ProcessPoolExecutor(max_workers=budget, initializer=_init_worker)
+                    print(f"CONTROL scale workers={budget}", flush=True)
             claimed = cache.claim_batch("control-plane", limit=max(batch, budget))
             if not claimed:
                 break
@@ -261,6 +379,29 @@ def drain(
             except Exception:
                 cache.release_claims(ids)
                 raise
+            from ipfs_datasets_py.logic.autoformal.span_agreement import (
+                annotate_compiled_batch,
+                consensus_summary,
+            )
+
+            results = annotate_compiled_batch(results, lake_limit=4)
+            consensus = consensus_summary(results)
+            rate = consensus["agreement_rate"]
+            print(
+                "CONSENSUS "
+                f"encoded={consensus['encoded']} agree={consensus['agree']} "
+                f"disagree={consensus['disagree']} unscored={consensus['unscored']} "
+                f"agreement_rate={'' if rate is None else f'{rate:.4f}'} "
+                "admitted=false formalized=false",
+                flush=True,
+            )
+            try:
+                from ipfs_datasets_py.logic.autoformal.autoencoder_weight_store import record_consensus
+
+                record_consensus(consensus)
+            except Exception as exc:
+                print(f"CONSENSUS store_error={type(exc).__name__}", flush=True)
+            _collect_disagreements(results)
             receipt = cache.complete_claimed(
                 results,
                 code_identity=code_identity,
@@ -277,7 +418,43 @@ def drain(
                 f"admitted=false formalized=false",
                 flush=True,
             )
+            if gap_gateway is not None:
+                gap_gateway.serve(cache)
+            if totals.get("train_needed") and totals["processed"] % 256 == 0 and not totals.get("canary_trained"):
+                from ipfs_datasets_py.logic.autoformal.span_agreement import train_until_canary_improves
+
+                try:
+                    canary = train_until_canary_improves(rounds=1)
+                except Exception as exc:
+                    canary = {"trained": False, "error": type(exc).__name__, "admitted": False, "formalized": False}
+                totals["canary_trained"] = True
+                print(
+                    f"CANARY trained={str(bool(canary.get('trained'))).lower()} "
+                    f"improved={str(bool(canary.get('improved'))).lower()} "
+                    f"before={canary.get('before')} after={canary.get('after')} "
+                    f"admitted=false formalized=false error={canary.get('error') or 'none'}",
+                    flush=True,
+                )
+            if supervisor_database is not None and totals["processed"] % 256 == 0 and disagreement_ledger.class_count():
+                from ipfs_datasets_py.logic.autoformal.gap_compile_replay import upsert_failure_goals_through_quack
+
+                try:
+                    fed = upsert_failure_goals_through_quack(disagreement_ledger, supervisor_database)
+                except Exception as exc:
+                    fed = {"ingested": False, "error": type(exc).__name__}
+                print(
+                    f"GOAL classes={disagreement_ledger.class_count()} ingested={str(bool(fed.get('ingested'))).lower()} "
+                    f"admitted=false formalized=false error={fed.get('error') or 'none'}",
+                    flush=True,
+                )
             if totals["processed"] % 256 == 0:
+                polled = _poll_remote_checkpoint(cache, agent_id="control-plane")
+                print(
+                    f"HF poll changed={str(bool(polled.get('changed'))).lower()} "
+                    f"sealed={polled.get('sealed', 0)} gaps={polled.get('gaps', 0)} "
+                    f"claimed={polled.get('claimed', 0)} error={polled.get('error') or 'none'}",
+                    flush=True,
+                )
                 flushed = _flush_checkpoint(cache, upload_dir, upload=upload, agent_id="control-plane")
                 print(
                     f"HF checkpoint processed={totals['processed']} "
@@ -299,11 +476,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--batch", type=int, default=128)
+    parser.add_argument("--compile-workers", type=int, default=0,
+                        help="Pin compile processes. 0 keeps the load-and-memory budget.")
     parser.add_argument("--release-id", default="ipfs-uscode-5016b86a")
     parser.add_argument("--enqueue-only", action="store_true")
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--upload", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--upload-dir", type=Path, default=None)
+    parser.add_argument(
+        "--quack-gaps",
+        action="store_true",
+        help="Serve gap reads on a loopback Quack endpoint. Does not open a second catalog owner.",
+    )
+    parser.add_argument(
+        "--supervisor-database",
+        type=Path,
+        default=None,
+        help="Accelerate supervisor DuckDB for disagreement goals. Not the span cache.",
+    )
     args = parser.parse_args(argv)
     from ipfs_datasets_py.logic.autoformal.span_cache import SpanCache, compiler_identity, compiler_path_hashes
 
@@ -328,6 +518,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.enqueue_only:
             print(json.dumps({"stage": "enqueued", **enqueued, "stats": cache.stats()}, sort_keys=True), flush=True)
             return 0
+        gateway = None
+        if args.quack_gaps:
+            from ipfs_datasets_py.duckdb_control.span_cache_quack import SpanCacheQuackGateway
+
+            gateway = SpanCacheQuackGateway()
         drained = drain(
             cache,
             batch=args.batch,
@@ -335,6 +530,10 @@ def main(argv: list[str] | None = None) -> int:
             code_identity=identity,
             upload=args.upload,
             upload_dir=upload_dir,
+            compile_workers=args.compile_workers,
+            gap_gateway=gateway,
+            cache_path=args.cache,
+            supervisor_database=args.supervisor_database,
         )
         print(
             json.dumps(
@@ -344,6 +543,8 @@ def main(argv: list[str] | None = None) -> int:
             flush=True,
         )
     finally:
+        if "gateway" in locals() and gateway is not None:
+            gateway.close()
         cache.close()
     return 0
 
