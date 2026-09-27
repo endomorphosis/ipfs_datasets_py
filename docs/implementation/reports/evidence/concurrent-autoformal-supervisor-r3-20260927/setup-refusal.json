@@ -1,0 +1,97 @@
+{
+  "accepted_update": null,
+  "admitted": false,
+  "all_lanes_absent": true,
+  "artifact_census": {
+    "file_count": 93,
+    "follows_regular_file_stat": true,
+    "hash_inventory": "artifact-census.json",
+    "includes_hidden_files": true,
+    "inventory_sha256": "98206a1c49435ef588749e36068066517e8f03415caf69a05618b9a940562ba4",
+    "logical_bytes": 49188906
+  },
+  "bridge_evaluation_metrics": null,
+  "capture_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r3",
+  "conclusion": "Native implementation setup refused the configured non-ephemeral path before either lane. Validation attempted=false and reason=not_run; the accompanying placeholder passed=true is not validation execution.",
+  "conversion_executed": false,
+  "database_opened": false,
+  "database_read_required": false,
+  "events": [
+    {
+      "event": {
+        "attempt": 1,
+        "board_namespace": "concurrent-autoformal-smoke-v1",
+        "canonical_task_cid": "baguqeera63nf5ojfqfdeaszzcgfo2noi4jhxsyhmmzusift3boqexy6whhxa",
+        "canonical_task_key": "task/v1/f6da5eb9258146404b39118aed35c8e24f7960ec666924167b0ba04be3d639ee",
+        "command": [],
+        "event_id": "sha256:8c5790dd9725e412f6ad7f6bf7eea42b49d27192138ae8e1a4407e3c73b18d18",
+        "exception_type": "RuntimeError",
+        "message": "non-ephemeral implementation path refused while worktree_root=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r3/supervisor/tmp/211-ai-implementation-worktrees is configured; enable ephemeral worktrees for provider dispatch",
+        "phase": "implementation_setup",
+        "previous_event_id": "sha256:6784cc4137e80a2ef1b79ded80db86c80bae9f2251151025c31740fac63dadd3",
+        "sequence": 2,
+        "snapshot_id": "event-log-snapshot:sha256:d6c650c17dbb4b481cb216669b8f8ea09113d544f8ca04dd3c6ae30ca3cf2f9b",
+        "stream_id": "event-log:sha256:d6c650c17dbb4b481cb216669b8f8ea09113d544f8ca04dd3c6ae30ca3cf2f9b",
+        "task_id": "SMOKE-a6cc3955b41a76bb4a7f",
+        "timestamp": "2026-09-27T17:24:26.008622+00:00",
+        "type": "implementation_exception"
+      },
+      "line_number": 2
+    },
+    {
+      "event": {
+        "attempt": 1,
+        "attempt_consumed": true,
+        "board_namespace": "concurrent-autoformal-smoke-v1",
+        "canonical_task_cid": "baguqeera63nf5ojfqfdeaszzcgfo2noi4jhxsyhmmzusift3boqexy6whhxa",
+        "canonical_task_key": "task/v1/f6da5eb9258146404b39118aed35c8e24f7960ec666924167b0ba04be3d639ee",
+        "context_receipt_path": "",
+        "diagnostic_receipt_id": "baguqeeraadylwdkusofuaunh2lofboh7b4cscahf6rrzbpruo65qntv2picq",
+        "event_id": "sha256:5dfdd20f264c192ae00f4e5e0e9a2f876126114020c30412b74910f05886cb18",
+        "exception_result": {
+          "command": [],
+          "exception_type": "RuntimeError",
+          "message": "non-ephemeral implementation path refused while worktree_root=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r3/supervisor/tmp/211-ai-implementation-worktrees is configured; enable ephemeral worktrees for provider dispatch",
+          "phase": "implementation_setup"
+        },
+        "log_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r3/supervisor/state/smoke_database_portal_attempts/19bc8a970279ce97610f448c/implementation-logs/smoke-a6cc3955b41a76bb4a7f-attempt-1-b286bf728638d32794ac87c0b9b13bf6.log",
+        "previous_event_id": "sha256:8c5790dd9725e412f6ad7f6bf7eea42b49d27192138ae8e1a4407e3c73b18d18",
+        "returncode": 1,
+        "sequence": 3,
+        "snapshot_id": "event-log-snapshot:sha256:d6c650c17dbb4b481cb216669b8f8ea09113d544f8ca04dd3c6ae30ca3cf2f9b",
+        "stream_id": "event-log:sha256:d6c650c17dbb4b481cb216669b8f8ea09113d544f8ca04dd3c6ae30ca3cf2f9b",
+        "task_id": "SMOKE-a6cc3955b41a76bb4a7f",
+        "timestamp": "2026-09-27T17:24:26.019905+00:00",
+        "type": "implementation_finished",
+        "validation_result": {
+          "attempted": false,
+          "passed": true,
+          "reason": "not_run",
+          "results": [],
+          "returncode": 0
+        }
+      },
+      "line_number": 3
+    }
+  ],
+  "formalized": false,
+  "lane_directories_found": [],
+  "recorded_at": "2026-09-27T17:27:17.393347+00:00",
+  "runtime_markers_found": {
+    "conversion-finished.json": [],
+    "conversion-started.json": [],
+    "evaluate-timings.json": [],
+    "smoke-receipt.json": [],
+    "training-finished.json": [],
+    "training-started.json": []
+  },
+  "schema": "concurrent-autoformal-r3-setup-refusal-observation-v1",
+  "source": {
+    "bytes": 5923,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r3/supervisor/state/smoke_database_portal_attempts/19bc8a970279ce97610f448c/portal-events.jsonl",
+    "sha256_after": "0cf7353814d9c5e4d3e71073b3ff568e0af3296b8cd14762376fd81698f8e479",
+    "sha256_before": "0cf7353814d9c5e4d3e71073b3ff568e0af3296b8cd14762376fd81698f8e479",
+    "unchanged": true
+  },
+  "training_executed": false
+}

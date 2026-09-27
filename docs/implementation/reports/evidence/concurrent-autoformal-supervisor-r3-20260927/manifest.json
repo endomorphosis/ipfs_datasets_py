@@ -1,0 +1,55 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "artifact-census.json": {
+      "bytes": 17227,
+      "sha256": "98206a1c49435ef588749e36068066517e8f03415caf69a05618b9a940562ba4"
+    },
+    "audit-receipt.json": {
+      "bytes": 250119,
+      "sha256": "b7ef968d65e09b542851a3e4b2e002343b1a06d2cd0ea5d6f159cec12afab549"
+    },
+    "child-source-receipt.json": {
+      "bytes": 62825,
+      "sha256": "07f6462030113a4acfbf6f6ac3f51ce060078dfc38eed612753432678ea6794b"
+    },
+    "child-terminal.json": {
+      "bytes": 127,
+      "sha256": "ee713e2f51cc2e11d0a6bff7cbd151b9c4f83eaa431ffbea3b942dc13d11fd3f"
+    },
+    "native-child.log": {
+      "bytes": 955,
+      "sha256": "8549a3b75fdb78435611c27d36244918de2f9d9abded70f87eb62eab2b22abbf"
+    },
+    "prior-argument-parse.json": {
+      "bytes": 5953,
+      "sha256": "b7ceabc02d4c25a277b8bf9eb0b91ce341252f50a7fb3a2a2e13db9364b07adc"
+    },
+    "r4-native-supervisor-driver.py": {
+      "bytes": 11995,
+      "sha256": "289a78b8aed5dc26e75ebee33d5b7086531ff993689666cd082356f5e5af54e0"
+    },
+    "r4-preparation-manifest.json": {
+      "bytes": 3013,
+      "sha256": "cb68fc82ce6584e645261bfebf97ff22d97100bdafdb96cfcc6369661ac8c0f5"
+    },
+    "r4-worktree-config.json": {
+      "bytes": 589,
+      "sha256": "8ba54391b3e004ba6b2fd52c439b66b7f651cc30a297c3d1fba088f260744ab4"
+    },
+    "resource-retention.json": {
+      "bytes": 3143,
+      "sha256": "517a5c50ff9a6690af09991488a1adf18c403951e405ad909af5377b4238ede6"
+    },
+    "setup-refusal.json": {
+      "bytes": 5341,
+      "sha256": "ac4045b87ce7d524c69b3ec8449607804a4b9974ba94fa2bb1d6b085f8e8c1a8"
+    },
+    "supervisor-receipt.json": {
+      "bytes": 8397,
+      "sha256": "54c427409f24a13072555964512fb88da5bda5da7b308d5e7dd52be58bd73794"
+    }
+  },
+  "formalized": false,
+  "schema": "concurrent-smoke-r3-evidence/v1"
+}

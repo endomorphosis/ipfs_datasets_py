@@ -1,0 +1,81 @@
+{
+  "accelerate_dependency": {
+    "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r2/dependency-manifest.json",
+    "manifest_sha256": "29232cae3436e2983a1feeccb9aec0ef82eeb604a64ae483bad838d26055019f",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r2/published-source",
+    "snapshot_commit": "7683fc071d4394e46f413c832273e10f10cf7ed0",
+    "source_commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a"
+  },
+  "canonical_source_hashes_preserved": true,
+  "cpu_slots": 2,
+  "files": [
+    {
+      "bytes": 11995,
+      "path": "native_supervisor_driver.py",
+      "sha256": "289a78b8aed5dc26e75ebee33d5b7086531ff993689666cd082356f5e5af54e0"
+    },
+    {
+      "bytes": 13836,
+      "path": "parent_harness.py",
+      "sha256": "2fbbe348511e956c54c0a9585e0b7f2efba2585f445d3d7dc4f3c2b8dce86d76"
+    },
+    {
+      "bytes": 10622,
+      "path": "training_lane.py",
+      "sha256": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528"
+    },
+    {
+      "bytes": 8808,
+      "path": "conversion_lane.py",
+      "sha256": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b"
+    },
+    {
+      "bytes": 12937,
+      "path": "frozen-config.json",
+      "sha256": "5ea2f21b52f3eca02d881913a0005a9172375c2ee869c61d4c6900d11bd96d89"
+    },
+    {
+      "bytes": 7093,
+      "path": "smoke_resource_common.py",
+      "sha256": "8ede37beaf19fcdefa99a6dc6cf0650cfea191f4cfc13f3a715b0aa155ee653b"
+    },
+    {
+      "bytes": 2670,
+      "path": "native_guard_child.py",
+      "sha256": "92f5b0cb50d5103c7208e0d0e6670293513326e3e11800e4807a3d3b6c559bac"
+    },
+    {
+      "bytes": 13856,
+      "path": "run_native_smoke_reserved.py",
+      "sha256": "04284381f9743a9f4907f067e6894b62b3ab4e6957320c5e2ad68bc4a0cbe4a1"
+    },
+    {
+      "bytes": 5376,
+      "path": "dependency_binding.py",
+      "sha256": "d296ff8a3a5b5839e955ac27103eb5ef84f4a115b48533488d1475618215e02e"
+    },
+    {
+      "bytes": 10106,
+      "path": "dependency_export_common.py",
+      "sha256": "1f93574ee0c9a1b321b64b79391773cb846165bb408f569e3b77659d4c2893b8"
+    },
+    {
+      "bytes": 16410,
+      "path": "create_published_dependency_reserved.py",
+      "sha256": "b0943d4971bea01900716181276a1639686553eb4ab982423001dfa7426124fc"
+    },
+    {
+      "bytes": 3293,
+      "path": "lane_bootstrap.py",
+      "sha256": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55"
+    }
+  ],
+  "memory_mb": 8192,
+  "native_smoke_executed": false,
+  "orchestration_directory": "Owned attempt, then native runtime subdirectory; explicitly configured before imports.",
+  "prior_manifest_sha256": "2a6c4c62ca7828016d0e77a9367eb546d492c4767063c82f5ecddcec5b3754f9",
+  "schema": "concurrent-smoke-r4-preparation/v1",
+  "seconds": 600,
+  "storage_bytes": 150000000,
+  "supersedes_attempt": "capture-r3"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "concurrent-smoke-r4-worktree-config/v1",
+  "before_sha256": "5e3d12ef9a092d58ac7a72c5a2857c7f3cf638925b90d04e46d46a4d4240c4ec",
+  "after_sha256": "289a78b8aed5dc26e75ebee33d5b7086531ff993689666cd082356f5e5af54e0",
+  "change": "Explicit worktree_root equals the new owned private repository, as permitted by native guard; assert canonical runtime child.",
+  "retention": "Keep existing --no-ephemeral-worktree and disabled worktree pool; no cleanup callback override.",
+  "success_conditions_changed": false,
+  "source_products_changed": false,
+  "native_execution": false
+}
