@@ -221,6 +221,28 @@ def cid_for_bytes(data: bytes) -> str:
     return _cid_from_digest_bytes(payload, codec=SOURCE_CODEC)
 
 
+def cid_for_byte_chunks(chunks: Iterable[bytes], *, max_chunk_bytes: int) -> str:
+    """Hash every source byte with bounded frames and the ordinary raw CID.
+
+    This consumes the iterator completely and retains no source bytes. A
+    supplied or partially consumed iterator is not evidence of full hashing.
+    Chunk boundaries do not change the source content identity.
+    """
+    import hashlib
+    from multiformats import CID, multihash
+
+    if type(max_chunk_bytes) is not int or max_chunk_bytes < 1:
+        raise ContentIdentityError("max_chunk_bytes must be a positive integer")
+    digest = hashlib.sha256()
+    for chunk in chunks:
+        _require_bytes(chunk)
+        if len(chunk) > max_chunk_bytes:
+            raise ContentIdentityError("source frame exceeds max_chunk_bytes")
+        digest.update(chunk)
+    return str(CID(CID_BASE, CID_VERSION, SOURCE_CODEC,
+                   multihash.wrap(digest.digest(), MULTIHASH_TYPE)))
+
+
 def cid_for_obj(obj: Any) -> str:
     """Return the structured CIDv1 (dag-json / sha2-256 / base32).
 
@@ -554,6 +576,7 @@ __all__ = [
     "StructuredIdentityError",
     "canonical_dag_json_bytes",
     "cid_for_bytes",
+    "cid_for_byte_chunks",
     "cid_for_obj",
     "cid_for_structured",
     "cid_vectors_document",
