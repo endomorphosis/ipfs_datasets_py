@@ -1,0 +1,104 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "application-manifest.json": {
+      "bytes": 4634,
+      "sha256": "22011bd23d01f847a7292709959ed3b9c9fbeb76ed3682d982d9ae09774fd328"
+    },
+    "application-receipt.json": {
+      "bytes": 441,
+      "sha256": "0679277ddc2435eb27ac0eae6d9be8bd9fbe7aa8b4d34ac281680b6d40bebebe"
+    },
+    "authorization.json": {
+      "bytes": 299,
+      "sha256": "6c202e30fbfa0148cb9924815c28e1f8557699036286c51eaf493e1fed84b243"
+    },
+    "initial-pytest-setup-failure.json": {
+      "bytes": 279,
+      "sha256": "be657a8d324550e748d6304f1ea20db462b29f826f8088e7db4582063a809609"
+    },
+    "migration-test-result.json": {
+      "bytes": 821,
+      "sha256": "85b2769904b913249c83a2d7c7c80fa7a41c6ce01e84a8b19b9cd4362d81ab04"
+    },
+    "migration-unit-tests.log": {
+      "bytes": 734,
+      "sha256": "463aedc351727cde492a067c616fcddb3b2bc5a1b6ae14294127e5113f1f6b81"
+    },
+    "resource-test-result.json": {
+      "bytes": 189,
+      "sha256": "3b64eea925fe59aec4de2513525254d451a8b3f4539821c6ce650ab73d6768ea"
+    },
+    "resource-tests.xml": {
+      "bytes": 10693,
+      "sha256": "2984364bb5e901e5e8b6b4e783a14b540783014ddee69c651b7562390855d3ff"
+    },
+    "source-application.json": {
+      "bytes": 1081,
+      "sha256": "fd58295a6c4d83aa66c586d130e048a2a8b0a00592a3a6b75438ce5d7ee7cf23"
+    }
+  },
+  "byte_identical_copies": [
+    {
+      "bytes": 4634,
+      "path": "application-manifest.json",
+      "private_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/application-manifest.json",
+      "sha256": "22011bd23d01f847a7292709959ed3b9c9fbeb76ed3682d982d9ae09774fd328"
+    },
+    {
+      "bytes": 441,
+      "path": "application-receipt.json",
+      "private_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/applied-migration/receipt.json",
+      "sha256": "0679277ddc2435eb27ac0eae6d9be8bd9fbe7aa8b4d34ac281680b6d40bebebe"
+    },
+    {
+      "bytes": 1081,
+      "path": "source-application.json",
+      "private_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/source-application.json",
+      "sha256": "fd58295a6c4d83aa66c586d130e048a2a8b0a00592a3a6b75438ce5d7ee7cf23"
+    },
+    {
+      "bytes": 299,
+      "path": "authorization.json",
+      "private_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/authorization.json",
+      "sha256": "6c202e30fbfa0148cb9924815c28e1f8557699036286c51eaf493e1fed84b243"
+    },
+    {
+      "bytes": 189,
+      "path": "resource-test-result.json",
+      "private_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/resource-test-result-r2.json",
+      "sha256": "3b64eea925fe59aec4de2513525254d451a8b3f4539821c6ce650ab73d6768ea"
+    },
+    {
+      "bytes": 10693,
+      "path": "resource-tests.xml",
+      "private_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/resource-tests-r2.xml",
+      "sha256": "2984364bb5e901e5e8b6b4e783a14b540783014ddee69c651b7562390855d3ff"
+    },
+    {
+      "bytes": 734,
+      "path": "migration-unit-tests.log",
+      "private_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/migration-unit-tests.log",
+      "sha256": "463aedc351727cde492a067c616fcddb3b2bc5a1b6ae14294127e5113f1f6b81"
+    },
+    {
+      "bytes": 279,
+      "path": "initial-pytest-setup-failure.json",
+      "private_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/resource-test-initial-setup-failure.json",
+      "sha256": "be657a8d324550e748d6304f1ea20db462b29f826f8088e7db4582063a809609"
+    }
+  ],
+  "formalized": false,
+  "full_ledger_backup_published": false,
+  "new_limit_bytes": 75000000000,
+  "old_limit_bytes": 62000000000,
+  "per_worker_limit_bytes": 50000000000,
+  "private_authority_receipt": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/applied-migration/receipt.json",
+  "private_authority_receipt_sha256": "0679277ddc2435eb27ac0eae6d9be8bd9fbe7aa8b4d34ac281680b6d40bebebe",
+  "records_at_migration": 88,
+  "released_records_at_migration": 52,
+  "retained_records_at_migration": 36,
+  "retry_executed_by_this_change": false,
+  "schema": "campaign-cap-75gb-published-evidence-v1",
+  "scope": "authorized resource-cap change and accounting preservation; no native-training, performance, legal-correctness or proof claim"
+}

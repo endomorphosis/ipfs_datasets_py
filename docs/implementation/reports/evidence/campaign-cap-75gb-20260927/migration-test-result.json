@@ -1,0 +1,12 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "log_sha256": "463aedc351727cde492a067c616fcddb3b2bc5a1b6ae14294127e5113f1f6b81",
+  "private_migration_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/migrate_ledger_cap.py",
+  "private_migration_source_sha256": "d17ce977561934248e37489a48a8a5f9f5151ab6d0d96bbd341347f3a36fc9ba",
+  "private_test_source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/cap-75gb/test_migrate_ledger_cap.py",
+  "private_test_source_sha256": "2cf6a431e731dc95b2a21d356395fa7fe289adfe2c3d19b96336fd964140515a",
+  "schema": "campaign-cap-migration-unit-result-v1",
+  "scope": "pure in-memory proposal transformation; no model inference or live ledger mutation",
+  "tests_passed": 6
+}

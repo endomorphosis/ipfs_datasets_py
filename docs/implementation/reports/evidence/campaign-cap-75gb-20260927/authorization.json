@@ -1,0 +1,7 @@
+{
+  "authorized": true,
+  "new_limit_bytes": 75000000000,
+  "old_limit_bytes": 62000000000,
+  "schema": "campaign-cap-authorization-v1",
+  "user_message": "just increase it to 75GB, make sure that we commit the work that we were doing and grok was doing to github origin/main, and then try again"
+}
