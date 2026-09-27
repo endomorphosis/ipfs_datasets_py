@@ -1,0 +1,146 @@
+{
+  "admitted": false,
+  "cap_proposal_applied": false,
+  "files": {
+    ".gitattributes": {
+      "bytes": 110,
+      "sha256": "e945bdedf965d69a6a8d52de653b6d8b30d4580c6623c792b79465d9db6bcf33"
+    },
+    "cap-proposal/cap-change.patch": {
+      "bytes": 3722,
+      "sha256": "889deda81ebd24081c6bc45888de67fb0a56933bf64c64bcf0f33bc6754f0d7f"
+    },
+    "cap-proposal/dry-run/receipt.json": {
+      "bytes": 444,
+      "sha256": "fdb5c71f2b928c12be39282f6b45543c12104d6a003b3b275165fa5fb80aad1a"
+    },
+    "cap-proposal/migrate_ledger_cap.py": {
+      "bytes": 6729,
+      "sha256": "2560b960ef9148e0a0b682b89e0453a157d6e023d959b7cac4c58ccd044f501f"
+    },
+    "cap-proposal/migration-unit-tests.log": {
+      "bytes": 644,
+      "sha256": "6d6cdfb882e57185f02df58f4f7e39df1518b9d3032224a211ae454603ace4bb"
+    },
+    "cap-proposal/proposal.json": {
+      "bytes": 820,
+      "sha256": "eb5a1df639c47f1ecb420252d21ad26f3b069a97018eb32cea1e28d57a19dd6c"
+    },
+    "cap-proposal/review-manifest.json": {
+      "bytes": 1913,
+      "sha256": "86e8c5d7a5a6b906a05c577e25b7fd84220a00e80f3b4ca04ba41c537718f481"
+    },
+    "cap-proposal/test-result.json": {
+      "bytes": 247,
+      "sha256": "5143330f6fd90481efd484e87cd27f00da3bf3d4b83f6688bc4b02066be57f91"
+    },
+    "r1-harness/conversion_lane.py": {
+      "bytes": 8808,
+      "sha256": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b"
+    },
+    "r1-harness/frozen-config.json": {
+      "bytes": 12312,
+      "sha256": "2abe54da7f6f147753780eeaedbeabfdd44d13021d7f6ebd0d26baea35dbff07"
+    },
+    "r1-harness/manifest.json": {
+      "bytes": 1743,
+      "sha256": "dcf5647ca9c84c3dbe1fa3c2ebde675ad5ab44cd97ceef7488083d827ad0c266"
+    },
+    "r1-harness/native_guard_child.py": {
+      "bytes": 2385,
+      "sha256": "e12de0d57d374a49d9d5762c00489caa16745348fdf41c494754e8bbd3511075"
+    },
+    "r1-harness/native_supervisor_driver.py": {
+      "bytes": 11216,
+      "sha256": "8fc441890fef21c74a345dfc0b9571a5784ba808cdcf266a98d79d7cef4bc652"
+    },
+    "r1-harness/parent_harness.py": {
+      "bytes": 13291,
+      "sha256": "02baf8c80e71016287cf198d554218f9ae2419e5e24ce35ebbd489b14bdfc02d"
+    },
+    "r1-harness/run_native_smoke_reserved.py": {
+      "bytes": 13342,
+      "sha256": "da962ffea697a38764d10284341f35a7b8a9145c9025cd1693281e01050d319b"
+    },
+    "r1-harness/smoke_resource_common.py": {
+      "bytes": 6866,
+      "sha256": "91e162c5bdd2a3ae9e8a2c512da1139996adeefba585beff8e6226708f8ae291"
+    },
+    "r1-harness/training_lane.py": {
+      "bytes": 10622,
+      "sha256": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528"
+    },
+    "r1-observation-facts.json": {
+      "bytes": 2790,
+      "sha256": "44a840df4e372ea6cf5cca21b25d156fc16bd7fab76f428b5c631592008b8cf5"
+    },
+    "r1/audit-receipt.json": {
+      "bytes": 240220,
+      "sha256": "da6a1cf9d1059f57bcd7a706aada34eea78a20485ab1d17bf11022dbb05d45c2"
+    },
+    "r1/child-source-receipt.json": {
+      "bytes": 47363,
+      "sha256": "7a81f521857468d54c0d161323bc5f2ce2f3c965e96a6f791a60f5782624c72c"
+    },
+    "r1/child-terminal.json": {
+      "bytes": 128,
+      "sha256": "47a0dac07a9f939bb99e1a80cd5c520544237bcad66cca9c7aa14914e894375e"
+    },
+    "r1/native-child.log": {
+      "bytes": 955,
+      "sha256": "880ce4e2b24b40506e16b15ee3e0dff61715668f9670460f8fa8a6669ff88028"
+    },
+    "r1/prepared-inputs.json": {
+      "bytes": 645143,
+      "sha256": "1c6456d4295c9dcebbea3595b7d78870293396e71f82105c6c54a832f4d92fdd"
+    },
+    "r1/resource-retention.json": {
+      "bytes": 3141,
+      "sha256": "91f5fc2e1836617edc3726a1a7d334bf13200797630a15844a31788fe0d1ea77"
+    },
+    "r1/supervisor/supervisor-receipt.json": {
+      "bytes": 7253,
+      "sha256": "0a9b99a3c0df9d24b59502ea811ac55bd58318e1aa3d71dff8ea351f63e6e9fd"
+    },
+    "r2-prepared-harness/conversion_lane.py": {
+      "bytes": 8808,
+      "sha256": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b"
+    },
+    "r2-prepared-harness/frozen-config.json": {
+      "bytes": 12312,
+      "sha256": "2abe54da7f6f147753780eeaedbeabfdd44d13021d7f6ebd0d26baea35dbff07"
+    },
+    "r2-prepared-harness/native_guard_child.py": {
+      "bytes": 2385,
+      "sha256": "e12de0d57d374a49d9d5762c00489caa16745348fdf41c494754e8bbd3511075"
+    },
+    "r2-prepared-harness/native_supervisor_driver.py": {
+      "bytes": 11398,
+      "sha256": "ae27af8f2f957912c7d1cab1f9f6a5f2c246c7edb9760d3f7f3f17d6b1cc3e7d"
+    },
+    "r2-prepared-harness/parent_harness.py": {
+      "bytes": 13291,
+      "sha256": "02baf8c80e71016287cf198d554218f9ae2419e5e24ce35ebbd489b14bdfc02d"
+    },
+    "r2-prepared-harness/run_native_smoke_reserved.py": {
+      "bytes": 13342,
+      "sha256": "da962ffea697a38764d10284341f35a7b8a9145c9025cd1693281e01050d319b"
+    },
+    "r2-prepared-harness/smoke_resource_common.py": {
+      "bytes": 6866,
+      "sha256": "91e162c5bdd2a3ae9e8a2c512da1139996adeefba585beff8e6226708f8ae291"
+    },
+    "r2-prepared-harness/training_lane.py": {
+      "bytes": 10622,
+      "sha256": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528"
+    },
+    "retry-plan.json": {
+      "bytes": 2445,
+      "sha256": "a5e6e5f16dae3572fd0ce9838d6e48be1cbfc5830edbd590c65269249d4b2647"
+    }
+  },
+  "formalized": false,
+  "native_attempt_passed": false,
+  "r2_executed": false,
+  "schema": "concurrent-autoformal-smoke-publication-v1"
+}

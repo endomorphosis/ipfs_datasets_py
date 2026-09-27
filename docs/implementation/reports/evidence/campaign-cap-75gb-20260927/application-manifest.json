@@ -1,0 +1,76 @@
+{
+  "files": {
+    "applied-migration/authorization.json": "6c202e30fbfa0148cb9924815c28e1f8557699036286c51eaf493e1fed84b243",
+    "applied-migration/ledger.before.json": "3ea8907c2e2e06fa5e0da4e4bfa4118902408178e4bfd877d8dfebc3301d9c12",
+    "applied-migration/ledger.proposed.json": "ef60f23dcbcee5d58e7fd6d12e817e15e781a47efb2b3298e7e905a9052e4df2",
+    "applied-migration/receipt.json": "0679277ddc2435eb27ac0eae6d9be8bd9fbe7aa8b4d34ac281680b6d40bebebe",
+    "authorization.json": "6c202e30fbfa0148cb9924815c28e1f8557699036286c51eaf493e1fed84b243",
+    "autoencoder_daemon_resources.py.applied": "d02a72945f559ed92d94062b92cb4ec0bbe6f3948aec34a337b4daa7e99f05d8",
+    "autoencoder_daemon_resources.py.before": "b745f1945d565d235ca2a005bc4db5cdba4c2b502ef4ba090667be368dc494bb",
+    "dry-run/ledger.before.json": "3ea8907c2e2e06fa5e0da4e4bfa4118902408178e4bfd877d8dfebc3301d9c12",
+    "dry-run/ledger.proposed.json": "ef60f23dcbcee5d58e7fd6d12e817e15e781a47efb2b3298e7e905a9052e4df2",
+    "dry-run/receipt.json": "97bb8f264f179c7187686888835c151a432fb66664d4e70969c608747eb5ad26",
+    "migrate_ledger_cap.py": "d17ce977561934248e37489a48a8a5f9f5151ab6d0d96bbd341347f3a36fc9ba",
+    "migration-unit-tests.log": "463aedc351727cde492a067c616fcddb3b2bc5a1b6ae14294127e5113f1f6b81",
+    "resource-test-initial-setup-failure.json": "be657a8d324550e748d6304f1ea20db462b29f826f8088e7db4582063a809609",
+    "resource-test-result-r2.json": "3b64eea925fe59aec4de2513525254d451a8b3f4539821c6ce650ab73d6768ea",
+    "resource-test-result.json": "a23950ad351a719a1189bea0cb98cb15282c3ce372ae177bc3836788359a8ccc",
+    "resource-tests-r2.xml": "2984364bb5e901e5e8b6b4e783a14b540783014ddee69c651b7562390855d3ff",
+    "run_native_smoke_reserved.py.before": "da962ffea697a38764d10284341f35a7b8a9145c9025cd1693281e01050d319b",
+    "source-application.json": "fd58295a6c4d83aa66c586d130e048a2a8b0a00592a3a6b75438ce5d7ee7cf23",
+    "source-tests.patch": "9bdc39ea0b1f8d83603d0bb13131efe2c3954f94b2d2e8683457e3d9a909292f",
+    "test_autoencoder_daemon_resources.py.applied": "596bc4b72946033f7b8457cc74b05b13097a9350eb0a29437e0665350dcb582c",
+    "test_autoencoder_daemon_resources.py.before": "a73ee8b176bbf78dec71bdcbcf6b9db251b55183f1f9a4811a1fdcc670017585",
+    "test_migrate_ledger_cap.py": "2cf6a431e731dc95b2a21d356395fa7fe289adfe2c3d19b96336fd964140515a"
+  },
+  "git_modified": false,
+  "ledger": {
+    "after_sha256": "ef60f23dcbcee5d58e7fd6d12e817e15e781a47efb2b3298e7e905a9052e4df2",
+    "all_records_identical": true,
+    "before_sha256": "3ea8907c2e2e06fa5e0da4e4bfa4118902408178e4bfd877d8dfebc3301d9c12",
+    "bytes": 172781,
+    "live_controller_read_verified": true,
+    "non_cap_bytes_identical": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "readback_reservation_not_entered": true,
+    "reservation_count": 88,
+    "statuses": {
+      "released": 52,
+      "retained": 36
+    }
+  },
+  "native_training_launched": false,
+  "new_limit_bytes": 75000000000,
+  "old_limit_bytes": 62000000000,
+  "per_worker_limit_unchanged": 50000000000,
+  "schema": "campaign-cap-75gb-application-v1",
+  "source_changes": [
+    {
+      "after_sha256": "d02a72945f559ed92d94062b92cb4ec0bbe6f3948aec34a337b4daa7e99f05d8",
+      "before_sha256": "b745f1945d565d235ca2a005bc4db5cdba4c2b502ef4ba090667be368dc494bb",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"
+    },
+    {
+      "after_sha256": "596bc4b72946033f7b8457cc74b05b13097a9350eb0a29437e0665350dcb582c",
+      "before_sha256": "a73ee8b176bbf78dec71bdcbcf6b9db251b55183f1f9a4811a1fdcc670017585",
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py"
+    },
+    {
+      "after_sha256": "e7c2bb819b54651a87495fe63d0154a6d85f7d30c874e13332d6f931f0ee12c8",
+      "before_sha256": "da962ffea697a38764d10284341f35a7b8a9145c9025cd1693281e01050d319b",
+      "private_path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/run_native_smoke_reserved.py"
+    }
+  ],
+  "tests": {
+    "initial_pytest_setup_failure_retained": true,
+    "migration_cases_passed": 6,
+    "resource_cases_passed": 56
+  },
+  "user_authorization": {
+    "authorized": true,
+    "new_limit_bytes": 75000000000,
+    "old_limit_bytes": 62000000000,
+    "schema": "campaign-cap-authorization-v1",
+    "user_message": "just increase it to 75GB, make sure that we commit the work that we were doing and grok was doing to github origin/main, and then try again"
+  }
+}

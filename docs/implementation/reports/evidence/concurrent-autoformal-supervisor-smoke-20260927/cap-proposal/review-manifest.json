@@ -1,0 +1,30 @@
+{
+  "applied": false,
+  "authorization_required": true,
+  "files": {
+    "autoencoder_daemon_resources.py.before": "b745f1945d565d235ca2a005bc4db5cdba4c2b502ef4ba090667be368dc494bb",
+    "autoencoder_daemon_resources.py.proposed": "df7318baa42ba51e1b3efef5b3cda86325cf24c03ac91262d882683e11ff385d",
+    "cap-change.patch": "889deda81ebd24081c6bc45888de67fb0a56933bf64c64bcf0f33bc6754f0d7f",
+    "dry-run/ledger.before.json": "3ea8907c2e2e06fa5e0da4e4bfa4118902408178e4bfd877d8dfebc3301d9c12",
+    "dry-run/ledger.proposed.json": "437d4c0c3352a2102bf791ba2c185bfcef06cf9d80f2a59b2b8f60a5a6a35639",
+    "dry-run/receipt.json": "fdb5c71f2b928c12be39282f6b45543c12104d6a003b3b275165fa5fb80aad1a",
+    "migrate_ledger_cap.py": "2560b960ef9148e0a0b682b89e0453a157d6e023d959b7cac4c58ccd044f501f",
+    "migration-unit-tests.log": "6d6cdfb882e57185f02df58f4f7e39df1518b9d3032224a211ae454603ace4bb",
+    "proposal.json": "eb5a1df639c47f1ecb420252d21ad26f3b069a97018eb32cea1e28d57a19dd6c",
+    "test-result.json": "5143330f6fd90481efd484e87cd27f00da3bf3d4b83f6688bc4b02066be57f91",
+    "test_autoencoder_daemon_resources.py.before": "a73ee8b176bbf78dec71bdcbcf6b9db251b55183f1f9a4811a1fdcc670017585",
+    "test_autoencoder_daemon_resources.py.proposed": "705339bbac5cf35c3ed22db223bc49f87b8648c66349422a6f8106b88123cea7",
+    "test_migrate_ledger_cap.py": "2cf6a431e731dc95b2a21d356395fa7fe289adfe2c3d19b96336fd964140515a",
+    "test_resources_proposed.py": "705339bbac5cf35c3ed22db223bc49f87b8648c66349422a6f8106b88123cea7"
+  },
+  "focused_resource_tests_passed": 7,
+  "increase_bytes": 200000000,
+  "ledger_unchanged": true,
+  "live_ledger_sha256": "3ea8907c2e2e06fa5e0da4e4bfa4118902408178e4bfd877d8dfebc3301d9c12",
+  "migration_unit_tests_passed": 6,
+  "new_limit_bytes": 62200000000,
+  "old_limit_bytes": 62000000000,
+  "reservation_count": 88,
+  "schema": "campaign-cap-change-review-v1",
+  "source_unchanged": true
+}

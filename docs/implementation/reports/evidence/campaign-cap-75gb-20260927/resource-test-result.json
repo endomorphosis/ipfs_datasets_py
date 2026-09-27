@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "prior_setup_failure_retained": "resource-test-result.json",
+  "scope": "complete resource module on test-local fixtures; no campaign admission or native model job"
+}

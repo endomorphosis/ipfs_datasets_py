@@ -1,0 +1,23 @@
+{
+  "changes": [
+    {
+      "after_sha256": "d02a72945f559ed92d94062b92cb4ec0bbe6f3948aec34a337b4daa7e99f05d8",
+      "before_sha256": "b745f1945d565d235ca2a005bc4db5cdba4c2b502ef4ba090667be368dc494bb",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"
+    },
+    {
+      "after_sha256": "596bc4b72946033f7b8457cc74b05b13097a9350eb0a29437e0665350dcb582c",
+      "before_sha256": "a73ee8b176bbf78dec71bdcbcf6b9db251b55183f1f9a4811a1fdcc670017585",
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py"
+    },
+    {
+      "after_sha256": "e7c2bb819b54651a87495fe63d0154a6d85f7d30c874e13332d6f931f0ee12c8",
+      "before_sha256": "da962ffea697a38764d10284341f35a7b8a9145c9025cd1693281e01050d319b",
+      "private_path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/run_native_smoke_reserved.py"
+    }
+  ],
+  "ledger_applied": false,
+  "native_launched": false,
+  "per_worker_limit_unchanged": 50000000000,
+  "source_applied": true
+}

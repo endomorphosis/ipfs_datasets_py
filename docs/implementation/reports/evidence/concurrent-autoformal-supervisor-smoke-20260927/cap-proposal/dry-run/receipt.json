@@ -1,0 +1,13 @@
+{
+  "after_sha256": "437d4c0c3352a2102bf791ba2c185bfcef06cf9d80f2a59b2b8f60a5a6a35639",
+  "all_records_preserved": true,
+  "applied": false,
+  "before_sha256": "3ea8907c2e2e06fa5e0da4e4bfa4118902408178e4bfd877d8dfebc3301d9c12",
+  "bytes": 172781,
+  "mode": "dry-run",
+  "new_limit_bytes": 62200000000,
+  "non_cap_bytes_identical": true,
+  "old_limit_bytes": 62000000000,
+  "per_worker_limit_unchanged": 50000000000,
+  "reservation_count": 88
+}

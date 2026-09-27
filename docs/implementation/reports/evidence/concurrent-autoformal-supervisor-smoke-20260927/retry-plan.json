@@ -1,0 +1,47 @@
+{
+  "admitted": false,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r2",
+  "command": [
+    "python3",
+    "-u",
+    "-B",
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/run_native_smoke_reserved.py",
+    "--attempt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r2"
+  ],
+  "cpu_slots": 2,
+  "current_cap_bytes": 62000000000,
+  "execution_enabled": false,
+  "fix": {
+    "change": "Create new runtime/state before constructing the native daemon; no native guard or status override.",
+    "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/native_supervisor_driver.py",
+    "sha256": "ae27af8f2f957912c7d1cab1f9f6a5f2c246c7edb9760d3f7f3f17d6b1cc3e7d"
+  },
+  "formalized": false,
+  "fresh_admission_required_bytes": 165000000,
+  "margin_bytes": 5000000,
+  "memory_mb": 8192,
+  "preconditions": [
+    "Explicit user approval for the proposed 62.2 GB cap; no cap change is performed by this plan.",
+    "Reviewed canonical resource cap and ledger migration preserve every prior reservation row and the 50 GB worker cap.",
+    "Update the wrapper expected-cap assertion only after that approved migration.",
+    "Fresh source/checkpoint/affinity/memory and storage census must pass.",
+    "All R1 source snapshots, artifacts and retained resource claim remain untouched."
+  ],
+  "projected_growth_bytes": 80000000,
+  "proposed_cap_bytes": 62200000000,
+  "r1_failure": {
+    "cause": "driver supplied runtime/state but did not create that required sealed parent",
+    "effect_claim_count": 0,
+    "lanes_ran": false,
+    "native_task_status": "blocked",
+    "provider_invocation_count": 0,
+    "reason": "database Portal attempt parent is unavailable",
+    "source": "ipfs_accelerate_py/agent_supervisor/todo_daemon/database_portal_bridge.py:1752"
+  },
+  "reserve_bytes": 80000000,
+  "schema": "concurrent-autoformal-native-retry-plan/v1",
+  "scope": "Actual deterministic-only native supervisor task dispatch of concurrent span conversion/compiler-decompiler checks and bounded native autoencoder training; not compiler repair, model promotion, or legal admission.",
+  "timeout_seconds": 600,
+  "user_storage_approval_pending": true
+}

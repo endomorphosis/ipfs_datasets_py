@@ -1,0 +1,5 @@
+{
+  "exit_code": 3,
+  "message": "Repository tests/conftest.py requires config.cache; initial -p no:cacheprovider caused AttributeError. No test cases ran. R2 enabled cacheprovider with private cache directory and all56passed.",
+  "stage": "pytest_configure_before_collection"
+}

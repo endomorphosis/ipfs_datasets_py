@@ -1,0 +1,2 @@
+# Preserve required context prefixes in this retained unified diff.
+cap-proposal/cap-change.patch -whitespace

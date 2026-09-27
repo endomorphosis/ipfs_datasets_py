@@ -1,0 +1,11 @@
+test_active_claim_refused (test_migrate_ledger_cap.MigrationTests.test_active_claim_refused) ... ok
+test_duplicate_key_refused (test_migrate_ledger_cap.MigrationTests.test_duplicate_key_refused) ... ok
+test_noncanonical_encoding_refused (test_migrate_ledger_cap.MigrationTests.test_noncanonical_encoding_refused) ... ok
+test_only_top_level_limit_changes (test_migrate_ledger_cap.MigrationTests.test_only_top_level_limit_changes) ... ok
+test_overbound_refused (test_migrate_ledger_cap.MigrationTests.test_overbound_refused) ... ok
+test_wrong_old_limit_refused (test_migrate_ledger_cap.MigrationTests.test_wrong_old_limit_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.004s
+
+OK

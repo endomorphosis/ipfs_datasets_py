@@ -1,0 +1,20 @@
+{
+  "applied": false,
+  "authorization_required": true,
+  "increase_bytes": 200000000,
+  "new_limit_bytes": 62200000000,
+  "old_limit_bytes": 62000000000,
+  "per_worker_limit_unchanged": 50000000000,
+  "source_changes": [
+    {
+      "before_sha256": "b745f1945d565d235ca2a005bc4db5cdba4c2b502ef4ba090667be368dc494bb",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "proposed_sha256": "df7318baa42ba51e1b3efef5b3cda86325cf24c03ac91262d882683e11ff385d"
+    },
+    {
+      "before_sha256": "a73ee8b176bbf78dec71bdcbcf6b9db251b55183f1f9a4811a1fdcc670017585",
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "proposed_sha256": "705339bbac5cf35c3ed22db223bc49f87b8648c66349422a6f8106b88123cea7"
+    }
+  ]
+}
