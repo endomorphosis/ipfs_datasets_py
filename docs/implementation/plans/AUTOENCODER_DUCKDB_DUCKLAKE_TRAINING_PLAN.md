@@ -1,7 +1,7 @@
 # Versioned autoencoder training with DuckDB, Quack, DuckLake, and Arrow
 
 Status: original implementation plan, audited 2026-09-24–25, with scoped
-implementation updates through 2026-09-26. The reports below distinguish
+implementation updates through 2026-09-27. The reports below distinguish
 implemented slices from remaining deployment and qualification. Owner:
 `external/ipfs_datasets` in the lift_coding
 workspace. This extends the [U.S. Code plan](US_CODE_AUTOFORMALIZATION_PLAN.md).
@@ -49,9 +49,16 @@ so this is a source I/O observation. The database costs
 986,460,160 bytes plus a
 263,671,066-byte package per physical
 release. Numeric weights and shared targets remain local to training workers.
-The next delivery work is a dataset-specific Quack profile, durable DuckLake
-source-table adapter and sealed Hugging Face publication. Official source coverage,
-Constitution integration and actual Lake formalization remain separate gates.
+The [source delivery adapter](../reports/source_corpus_delivery.md) now adds a
+bounded, durable Quack submission profile, a shared package binding, an isolated
+native DuckLake source table and an offline Hugging Face release plan. On
+2026-09-27, all 783 selected tests passed and independent reopened readback
+preserved all 62,931 rows and 33 fields. The native sink occupies 197,307,549 bytes;
+the complete delivery check took 234.845 seconds with uncontrolled filesystem
+caches. The plan includes all 103 package files, including its manifest. No Hub
+upload or native Quack listener ran. Production delivery, official source
+coverage, Constitution integration and actual Lake formalization remain separate
+gates; native model and training qualification remains deferred.
 
 The later [combined integration validation](../reports/autoencoder_campaign_integration_validation.md)
 passed all 580 selected offline tests with stable source/dependency guards and

@@ -1,0 +1,20 @@
+{
+  "admitted": false,
+  "all_33_fields_preserved": true,
+  "embedding_statuses": {
+    "embedded": 51,
+    "token_limit_exceeded": 13,
+    "unattempted": 62867
+  },
+  "formalized": false,
+  "query_count": 246,
+  "query_wall_seconds": 18.10192149784416,
+  "row_count": 62931,
+  "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+  "splits": {
+    "canary": 3147,
+    "holdout": 3144,
+    "train": 50282,
+    "validation": 6358
+  }
+}

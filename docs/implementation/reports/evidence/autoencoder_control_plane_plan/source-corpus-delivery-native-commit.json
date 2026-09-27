@@ -1,0 +1,45 @@
+{
+  "operation_id": "full-uscode-source-delivery",
+  "qualification": {
+    "admitted": false,
+    "formalized": false,
+    "language_verified": false,
+    "production_activated": false,
+    "publication_performed": false,
+    "source_authority_authenticated": false
+  },
+  "request_digest": "sha256:3f10625e40d59ca0b9281812aed0c46cb1102770062c312c1da0db6deff15886",
+  "row_count": 62931,
+  "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+  "schema_version": "source-corpus-ducklake-commit-v1",
+  "scope": "isolated_source_corpus",
+  "sink_id": "sha256:970fabeb0c745ea1f0ac819eee33561ac1e5f42d5e49e3a923075e9dce32f569",
+  "snapshot_id": 2,
+  "source_package_currently_verified": false,
+  "source_rows_verified": true,
+  "source_version": {
+    "dataset": {
+      "jurisdiction": "us",
+      "namespace": "uscode",
+      "profile": "uscode-source-export-v1",
+      "source_language": "en"
+    },
+    "dataset_id": "sha256:a025ad694036805bb0ddad541cd02a87d26c4b9039534ab1c6032d7398c090d9",
+    "package_manifest_artifact": {
+      "bytes": 31640,
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "qualification": {
+      "admitted": false,
+      "formalized": false,
+      "language_verified": false,
+      "publication_performed": false,
+      "source_authority_authenticated": false
+    },
+    "release_id": "sha256:02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "row_count": 62931,
+    "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "schema_version": "source-corpus-version-v1",
+    "version_id": "sha256:87e740ca0794cd6fea6dd997a308e6ace4ed5880a308d1b33a9f05fdb51e061e"
+  }
+}

@@ -251,6 +251,25 @@ class SourceCorpusCatalog:
                     self._owner_file.close()
                     self._closed = True
 
+    @contextmanager
+    def try_owner_access(self):
+        """Acquire the actual owner lock without blocking a command dispatcher.
+
+        Callers must leave a false result immediately. A true result covers the
+        complete bounded command, including any nested catalog transactions.
+        Heavy owner work uses the same lock, including direct register/verify
+        calls made outside a controller.
+        """
+        _require(os.getpid() == self._pid, "catalog used by a different process")
+        acquired = self._lock.acquire(blocking=False)
+        try:
+            if acquired:
+                self._ensure_owner()
+            yield acquired
+        finally:
+            if acquired:
+                self._lock.release()
+
     def _operation(self, cx, operation_id, payload):
         row = cx.execute("SELECT request_digest, request_json, receipt FROM source_corpus.operations WHERE operation_id=?", [operation_id]).fetchone()
         if row is None:
@@ -271,6 +290,59 @@ class SourceCorpusCatalog:
         operation_id, payload = _token(operation_id), _payload(payload)
         with self._transaction() as cx:
             return self._operation(cx, operation_id, payload)
+
+    def _registration_status(self, cx, operation_id, payload):
+        exists = cx.execute("SELECT operation_id FROM source_corpus.operations WHERE operation_id=?",
+                            [operation_id]).fetchone() is not None
+        receipt = self._operation(cx, operation_id, payload)
+        return {"schema_version": "source-corpus-operation-status-v1",
+                "operation_id": operation_id,
+                "state": "completed" if receipt is not None else "pending" if exists else "unknown",
+                "receipt": receipt, "admitted": False, "formalized": False}
+
+    @_normalize_errors
+    def registration_status(self, operation_id, payload):
+        """Bounded historical operation status; no source files are decoded."""
+        operation_id, payload = _token(operation_id), _payload(payload)
+        with self._transaction() as cx:
+            return self._registration_status(cx, operation_id, payload)
+
+    @_normalize_errors
+    def reserve_registration(self, operation_id, payload):
+        """Durably reserve an exact intent, without resolving or copying files.
+
+        The owner subsequently executes register_export with the same payload.
+        A pending intent survives restart but is neither an imported release nor
+        evidence that its package is currently available.
+        """
+        operation_id, payload = _token(operation_id), _payload(payload)
+        with self._transaction() as cx:
+            status = self._registration_status(cx, operation_id, payload)
+            if status["state"] == "unknown":
+                _require(cx.execute("SELECT count(*) FROM source_corpus.operations").fetchone()[0]
+                         < self.limits.max_operations, "operation capacity exceeded")
+                cx.execute("INSERT INTO source_corpus.operations VALUES (?,?,?,NULL)",
+                           [operation_id, _digest(payload), _json(payload)])
+                status["state"] = "pending"
+            return status
+
+    @_normalize_errors
+    def pending_registrations(self, limit=1, *, operation_prefix=None):
+        """Owner-only bounded enumeration; pending work is never auto-started."""
+        _require(type(limit) is int and 1 <= limit <= 64, "invalid pending operation bound")
+        if operation_prefix is not None:
+            operation_prefix = _token(operation_prefix)
+        with self._transaction() as cx:
+            rows = cx.execute("SELECT operation_id,request_digest,request_json FROM source_corpus.operations WHERE receipt IS NULL AND (? IS NULL OR starts_with(operation_id,?)) ORDER BY operation_id LIMIT ?",
+                              [operation_prefix, operation_prefix, limit]).fetchall()
+            result = []
+            for operation_id, digest, encoded in rows:
+                operation_id = _token(operation_id)
+                payload = _payload(json.loads(encoded))
+                _require(digest == _digest(payload) and encoded == _json(payload),
+                         "pending operation payload corruption")
+                result.append({"operation_id": operation_id, "payload": payload})
+            return result
 
     def _version(self, cx, version_id):
         row = cx.execute("SELECT v.dataset_id,v.release_id,v.metadata,d.binding,r.manifest,r.package_directory,r.row_count,r.row_digest,r.status,r.next_ordinal FROM source_corpus.versions v JOIN source_corpus.datasets d ON d.dataset_id=v.dataset_id JOIN source_corpus.releases r ON r.release_id=v.release_id WHERE v.version_id=?", [version_id]).fetchone()

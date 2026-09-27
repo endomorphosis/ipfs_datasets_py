@@ -158,7 +158,145 @@ def _envelope(command: str, payload: Mapping[str, Any], operation_id: str) -> di
         raise RegistryTransportError(str(exc)) from exc
 
 
-class RegistryQuackGateway:
+class _TransientQuackGateway:
+    """Shared bounded inbox/reply transport; subclasses enforce owner scope.
+
+    No owner database is attached to the transient served connection. Starting
+    the installed native listener remains an explicit, separate operation.
+    """
+
+    def __init__(self):
+        self._server = None
+        self._thread = None
+        self._stop = threading.Event()
+        self._token = secrets.token_urlsafe(32)
+        self._endpoint = ""
+        self._failure: str | None = None
+        self._sequence = 0
+        self.capability: dict[str, Any] = {}
+
+    def _before_start(self):
+        raise NotImplementedError("a typed owner profile is required")
+
+    def dispatch(self, envelope):
+        raise NotImplementedError("a typed owner profile is required")
+
+    def _expected_error(self, error):
+        return str(error)
+
+    def _pump(self) -> None:
+        connection = self._server.cursor()
+        try:
+            while not self._stop.is_set():
+                rows = connection.execute("SELECT slot, envelope_json FROM command_inbox ORDER BY slot").fetchall()
+                for slot, encoded in rows:
+                    request_id = "invalid-request"
+                    envelope = None
+                    try:
+                        envelope = parse_request(encoded)
+                        request_id = envelope["request_id"]
+                        result = self.dispatch(envelope)
+                        reply = make_reply(envelope, result=result)
+                    except (RegistryError, RegistryTransportError, QuackWireError, ValueError, TypeError, KeyError) as exc:
+                        # A failed reply can follow a committed mutation. Never
+                        # represent it as evidence that an operation did not run.
+                        error = self._expected_error(exc)
+                        try:
+                            reply = make_reply(envelope, error=error) if envelope is not None else make_unbound_error("invalid request envelope")
+                        except QuackWireError:
+                            reply = make_reply(envelope, error="owner reply unavailable; resolve the original operation before retrying")
+                    except Exception:
+                        # An unexpected owner failure is not a receipt of
+                        # success. Do not expose private SQL, paths or traces.
+                        error = "owner operation failed; retry the same operation ID and payload"
+                        reply = make_reply(envelope, error=error) if envelope is not None else make_unbound_error(error)
+                    encoded_reply = canonical_json_bytes(reply).decode()
+                    self._sequence += 1
+                    connection.execute("BEGIN")
+                    try:
+                        connection.execute("INSERT OR REPLACE INTO command_replies VALUES (?, ?, ?)",
+                                           [request_id, encoded_reply, self._sequence])
+                        connection.execute("DELETE FROM command_inbox WHERE slot=? AND envelope_json=?", [slot, encoded])
+                        connection.execute(
+                            "DELETE FROM command_replies WHERE request_id NOT IN "
+                            f"(SELECT request_id FROM command_replies ORDER BY sequence DESC LIMIT {MAX_PENDING})"
+                        )
+                        connection.execute("COMMIT")
+                    except BaseException:
+                        connection.execute("ROLLBACK")
+                        raise
+                self._stop.wait(0.01)
+        except Exception:
+            self._failure = "gateway owner pump failed; retry through a new gateway"
+        finally:
+            connection.close()
+
+    def start(self):
+        if self._server is not None:
+            raise RegistryTransportError("gateway is already started")
+        self._before_start()
+        server, capability = _connect_native()
+        with socket.socket() as reservation:
+            reservation.bind(("127.0.0.1", 0))
+            port = reservation.getsockname()[1]
+        self._endpoint = f"quack:127.0.0.1:{port}"
+        started = False
+        try:
+            server.execute(
+                "CREATE TABLE command_inbox (slot INTEGER PRIMARY KEY "
+                f"CHECK (slot BETWEEN 1 AND {MAX_PENDING}), envelope_json VARCHAR NOT NULL "
+                f"CHECK (octet_length(encode(envelope_json)) BETWEEN 1 AND {MAX_COMMAND_BYTES}))"
+            )
+            server.execute("CREATE TABLE command_replies (request_id VARCHAR PRIMARY KEY, reply_json VARCHAR, sequence BIGINT)")
+            permitted = (_APPEND_QUERY, _REPLY_QUERY, _CATALOG_SCHEMAS, _CATALOG_RELATIONS)
+            comparisons = " OR ".join("query = " + _literal(query) for query in permitted)
+            server.execute("CREATE MACRO training_gateway_authz(sid, query) AS "
+                           f"(sid IS NOT NULL AND query IS NOT NULL AND ({comparisons}))")
+            server.execute("SET GLOBAL quack_authentication_function = 'quack_check_token'")
+            server.execute("SET GLOBAL quack_authorization_function = 'training_gateway_authz'")
+            server.execute("CALL quack_serve(?, token := ?, disable_ssl := true)",
+                           [self._endpoint, self._token]).fetchall()
+            started = True
+            self._server, self.capability = server, capability
+            self._stop.clear()
+            self._failure = None
+            self._thread = threading.Thread(target=self._pump, name="autoencoder-quack-owner", daemon=True)
+            self._thread.start()
+            return self
+        except BaseException:
+            if started:
+                server.execute("CALL quack_stop(?)", [self._endpoint]).fetchall()
+            server.close()
+            self._server = None
+            raise
+
+    def connection_parameters(self) -> dict[str, str]:
+        """Private worker handoff; contains a bearer token and must not be logged."""
+        if self._server is None:
+            raise RegistryTransportError("gateway is not started")
+        return {"endpoint": self._endpoint, "token": self._token}
+
+    def close(self) -> None:
+        if self._server is None:
+            return
+        self._stop.set()
+        self._thread.join(timeout=10)
+        if self._thread.is_alive():
+            raise RegistryTransportError("owner pump did not stop; close owner only after it finishes")
+        try:
+            self._server.execute("CALL quack_stop(?)", [self._endpoint]).fetchall()
+        finally:
+            self._server.close()
+            self._server = None
+
+    def __enter__(self):
+        return self.start()
+
+    def __exit__(self, *exc: Any) -> None:
+        self.close()
+
+
+class RegistryQuackGateway(_TransientQuackGateway):
     """One transient, scoped native endpoint backed by a durable local owner.
 
     ``enable_prototype=True`` is required explicitly. It does not bypass the
@@ -189,14 +327,7 @@ class RegistryQuackGateway:
         self.registry, self.scope = registry, scope
         self._owned_control = owned_control
         self._campaign_control = campaign_control
-        self._server = None
-        self._thread = None
-        self._stop = threading.Event()
-        self._token = secrets.token_urlsafe(32)
-        self._endpoint = ""
-        self._failure: str | None = None
-        self._sequence = 0
-        self.capability: dict[str, Any] = {}
+        super().__init__()
 
     def _run_scope(self, run_id: Any) -> str:
         if run_id not in self.scope.run_ids:
@@ -301,98 +432,9 @@ class RegistryQuackGateway:
             raise RegistryTransportError("version is outside the assigned worker scope")
         return {"admitted": False, "version": version}
 
-    def _pump(self) -> None:
-        connection = self._server.cursor()
-        try:
-            while not self._stop.is_set():
-                rows = connection.execute("SELECT slot, envelope_json FROM command_inbox ORDER BY slot").fetchall()
-                for slot, encoded in rows:
-                    request_id = "invalid-request"
-                    envelope = None
-                    try:
-                        envelope = parse_request(encoded)
-                        request_id = envelope["request_id"]
-                        result = self.dispatch(envelope)
-                        reply = make_reply(envelope, result=result)
-                    except (RegistryError, RegistryTransportError, QuackWireError, ValueError, TypeError, KeyError) as exc:
-                        # A failed reply can follow a committed mutation. Never
-                        # represent it as evidence that an operation did not run.
-                        error = str(exc)
-                        try:
-                            reply = make_reply(envelope, error=error) if envelope is not None else make_unbound_error("invalid request envelope")
-                        except QuackWireError:
-                            reply = make_reply(envelope, error="owner reply unavailable; resolve the original operation before retrying")
-                    except Exception:
-                        # An unexpected owner failure is not a receipt of
-                        # success. Do not expose private SQL, paths or traces.
-                        error = "owner operation failed; retry the same operation ID and payload"
-                        reply = make_reply(envelope, error=error) if envelope is not None else make_unbound_error(error)
-                    encoded_reply = canonical_json_bytes(reply).decode()
-                    self._sequence += 1
-                    connection.execute("BEGIN")
-                    try:
-                        connection.execute("INSERT OR REPLACE INTO command_replies VALUES (?, ?, ?)",
-                                           [request_id, encoded_reply, self._sequence])
-                        connection.execute("DELETE FROM command_inbox WHERE slot=? AND envelope_json=?", [slot, encoded])
-                        connection.execute(
-                            "DELETE FROM command_replies WHERE request_id NOT IN "
-                            f"(SELECT request_id FROM command_replies ORDER BY sequence DESC LIMIT {MAX_PENDING})"
-                        )
-                        connection.execute("COMMIT")
-                    except BaseException:
-                        connection.execute("ROLLBACK")
-                        raise
-                self._stop.wait(0.01)
-        except Exception:
-            self._failure = "gateway owner pump failed; retry through a new gateway"
-        finally:
-            connection.close()
-
-    def start(self) -> "RegistryQuackGateway":
-        if self._server is not None:
-            raise RegistryTransportError("gateway is already started")
+    def _before_start(self):
         for run_id in self.scope.run_ids:
             self.registry.get_run(run_id)
-        server, capability = _connect_native()
-        with socket.socket() as reservation:
-            reservation.bind(("127.0.0.1", 0))
-            port = reservation.getsockname()[1]
-        self._endpoint = f"quack:127.0.0.1:{port}"
-        started = False
-        try:
-            server.execute(
-                "CREATE TABLE command_inbox (slot INTEGER PRIMARY KEY "
-                f"CHECK (slot BETWEEN 1 AND {MAX_PENDING}), envelope_json VARCHAR NOT NULL "
-                f"CHECK (octet_length(encode(envelope_json)) BETWEEN 1 AND {MAX_COMMAND_BYTES}))"
-            )
-            server.execute("CREATE TABLE command_replies (request_id VARCHAR PRIMARY KEY, reply_json VARCHAR, sequence BIGINT)")
-            permitted = (_APPEND_QUERY, _REPLY_QUERY, _CATALOG_SCHEMAS, _CATALOG_RELATIONS)
-            comparisons = " OR ".join("query = " + _literal(query) for query in permitted)
-            server.execute("CREATE MACRO training_gateway_authz(sid, query) AS "
-                           f"(sid IS NOT NULL AND query IS NOT NULL AND ({comparisons}))")
-            server.execute("SET GLOBAL quack_authentication_function = 'quack_check_token'")
-            server.execute("SET GLOBAL quack_authorization_function = 'training_gateway_authz'")
-            server.execute("CALL quack_serve(?, token := ?, disable_ssl := true)",
-                           [self._endpoint, self._token]).fetchall()
-            started = True
-            self._server, self.capability = server, capability
-            self._stop.clear()
-            self._failure = None
-            self._thread = threading.Thread(target=self._pump, name="autoencoder-quack-owner", daemon=True)
-            self._thread.start()
-            return self
-        except BaseException:
-            if started:
-                server.execute("CALL quack_stop(?)", [self._endpoint]).fetchall()
-            server.close()
-            self._server = None
-            raise
-
-    def connection_parameters(self) -> dict[str, str]:
-        """Private worker handoff; contains a bearer token and must not be logged."""
-        if self._server is None:
-            raise RegistryTransportError("gateway is not started")
-        return {"endpoint": self._endpoint, "token": self._token}
 
     def status(self) -> dict[str, Any]:
         return {"schema": SCHEMA, "prototype": True, "runtime_qualified": False,
@@ -406,24 +448,6 @@ class RegistryQuackGateway:
                 "private_registry_served": False, "transient_gateway_database": True,
                 "failure": self._failure, "capability": self.capability}
 
-    def close(self) -> None:
-        if self._server is None:
-            return
-        self._stop.set()
-        self._thread.join(timeout=10)
-        if self._thread.is_alive():
-            raise RegistryTransportError("owner pump did not stop; close owner only after it finishes")
-        try:
-            self._server.execute("CALL quack_stop(?)", [self._endpoint]).fetchall()
-        finally:
-            self._server.close()
-            self._server = None
-
-    def __enter__(self) -> "RegistryQuackGateway":
-        return self.start()
-
-    def __exit__(self, *exc: Any) -> None:
-        self.close()
 
 
 class RegistryTransportClient:
@@ -446,10 +470,14 @@ class RegistryTransportClient:
             self._connection.close()
             raise RegistryTransportError(str(exc).replace(token, "<redacted>")) from None
 
+    @staticmethod
+    def _request_envelope(command, payload, operation_id):
+        return _envelope(command, payload, operation_id)
+
     def request(self, command: str, payload: Mapping[str, Any], operation_id: str, *, timeout: float = 10) -> dict[str, Any]:
         if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not 0 < timeout <= 60:
             raise RegistryTransportError("timeout must be within (0, 60] seconds")
-        envelope = _envelope(command, payload, operation_id)
+        envelope = self._request_envelope(command, payload, operation_id)
         with self._lock:
             if self._closed:
                 raise RegistryTransportError("client is closed")
