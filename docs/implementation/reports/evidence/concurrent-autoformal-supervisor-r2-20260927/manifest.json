@@ -1,0 +1,43 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "audit-receipt.json": {
+      "bytes": 248336,
+      "sha256": "19cac4b5cc997024e7ce27cb7bdbe8d28a30537423ee4b5b338084a6b5663edf"
+    },
+    "child-source-receipt.json": {
+      "bytes": 54383,
+      "sha256": "a32b26ce4be20a061830f138327fec797530e1296b2d698c7a4ce55cadabd9c2"
+    },
+    "child-terminal.json": {
+      "bytes": 128,
+      "sha256": "43c4d532fbd7461210010e4379f9ec2c669b726721e493c9442f6935cd094563"
+    },
+    "native-child.log": {
+      "bytes": 6767,
+      "sha256": "6dd65d9ae4151d8790ab78c0e25c5a3794ea3d44a66912a009e2f7557750eefc"
+    },
+    "observation.json": {
+      "bytes": 654,
+      "sha256": "62d09b88714fd634c011c1c3100c0ca8c05549ef6b0e6840023f2026640a846b"
+    },
+    "r3-cli-fix.json": {
+      "bytes": 465,
+      "sha256": "0943840423bbafe93cca30024e2518e36eb2f4c906c2ba7f886431e9c691d76f"
+    },
+    "r3-native-supervisor-driver.py": {
+      "bytes": 11797,
+      "sha256": "5e3d12ef9a092d58ac7a72c5a2857c7f3cf638925b90d04e46d46a4d4240c4ec"
+    },
+    "r3-preparation-manifest.json": {
+      "bytes": 3013,
+      "sha256": "5173568ef60ec7a0235a1c3bc343bff23184aa357705ca2ef72356f754cc112f"
+    },
+    "resource-retention.json": {
+      "bytes": 3140,
+      "sha256": "8b76723fa9e6763d6a6e835b7418a77ac4b1efb26877890bf58104c6adbf4c55"
+    }
+  },
+  "formalized": false,
+  "schema": "concurrent-smoke-r2-evidence/v1"
+}

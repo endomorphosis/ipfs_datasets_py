@@ -1,0 +1,18 @@
+{
+  "schema": "concurrent-smoke-r2-observation/v1",
+  "passed": false,
+  "failure": "CLI rejects unsupported --retain-worktree-artifacts before daemon construction and both lanes.",
+  "outer_elapsed_seconds": 48.18553032213822,
+  "child_elapsed_seconds": 47.798266,
+  "final_retained_files": 60,
+  "final_retained_bytes": 29906744,
+  "reservation_id": "4ea25ddadcb54fa1a797b01e469476cc",
+  "retained_reservation_bytes": 150000000,
+  "owned_descendants_dead": true,
+  "training_or_conversion_executed": false,
+  "optimizer_update_observed": false,
+  "bridge_evaluate_count": 0,
+  "lean_build_executed": false,
+  "admitted": false,
+  "formalized": false
+}

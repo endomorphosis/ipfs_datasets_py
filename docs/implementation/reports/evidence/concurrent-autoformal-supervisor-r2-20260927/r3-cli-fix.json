@@ -1,0 +1,9 @@
+{
+  "schema": "concurrent-smoke-r3-cli-fix/v1",
+  "only_change": "Remove unsupported unused --retain-worktree-artifacts CLI flag; private --no-ephemeral-worktree fixture still retained.",
+  "before_sha256": "3a73f2cbf15f51f5100db4e5098ff2e6148dbaf4af8932a1cca4efc6336b5d3c",
+  "after_sha256": "5e3d12ef9a092d58ac7a72c5a2857c7f3cf638925b90d04e46d46a4d4240c4ec",
+  "logic_sources_changed": false,
+  "training_parameters_changed": false,
+  "native_execution": false
+}
