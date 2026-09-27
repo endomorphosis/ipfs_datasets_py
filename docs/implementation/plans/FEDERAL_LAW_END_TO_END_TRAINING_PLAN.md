@@ -1473,9 +1473,13 @@ The next implemented R6 prerequisite is a
 for the exact private model package. It checks actual private visibility and
 the complete planned release namespace without downloading weights, retaining
 distinct LFS SHA-256 and Git blob SHA-1 evidence. Missing digests remain pending.
-It neither reconciles an unknown upload outcome nor acknowledges an event;
-the durable delivery consumer and full-row federal-law exporter remain pending.
-No new training, semantic coverage or Lake evidence is supplied by this check.
+At that milestone, remote delivery and full-row export were still pending.
+The separate [complete declared-source exporter](../reports/autoencoder_uscode_corpus_export.md)
+and [source delivery adapter](../reports/source_corpus_delivery.md) now provide
+full-row packages, isolated DuckLake delivery and offline HF planning. The
+metadata verifier still neither reconciles an unknown upload outcome nor
+acknowledges an event; actual remote delivery remains deferred. None of these
+storage checks supplies new training, semantic coverage or Lake evidence.
 
 Estimates below are engineering effort ranges for the described bounded slices,
 not promises of full federal-law formalization. They exclude unmeasured legal
@@ -1548,11 +1552,42 @@ executable jobs or supply training, source-authority or Lake evidence.
 The report preserves all failed attempts separately. Profile remaining
 complete-call cost before further cache or backend changes. Complete upstream
 source payload closure remains a subsequent package scope.
-Fenced recovery of interrupted attempts and future-parent realization
-need explicit contracts; the existing owned Quack interface accepts prepared
-invocation handles and still needs a plan adapter. Keep Arrow
-optional; multi-receipt Arrow inputs still need their own contract, and fresh
-native qualification remains deferred. Completing the entire
-formalization requires measured semantic coverage and review progress; no
-current timing or storage benchmark supports a date for 100% faithful federal
-law formalization.
+The [B1 prepared-request adapter](../reports/autoencoder_campaign_owned_preparation.md),
+[B2 owned execution](../reports/autoencoder_campaign_owned_execution.md) and
+[B3 campaign Quack profile](../reports/autoencoder_campaign_quack_control.md)
+now connect immutable plans to the original registered jobs with durable
+operation recovery. The daemon prepared-handle profile remains a separate
+training contract. Uncertain starts require explicit recovery, and future-parent
+realization remains separate work. Keep Arrow optional; multi-receipt Arrow
+inputs still need their own contract, and fresh native qualification remains
+deferred. Completing the entire formalization requires measured semantic
+coverage and review progress; no current timing or storage benchmark supports
+a date for 100% faithful federal-law formalization.
+
+### Next work under the current validation boundary
+
+1. Finish the paired supervisor claim diagnostics and any necessary bounded
+   repairs. Preserve every requested assertion and report upstream collection
+   blockers separately. A standalone supplemental regression may add scoped
+   evidence; it cannot turn a blocked original case into a passed one or qualify
+   the whole suite.
+2. Close the two outstanding offline publication qualifications against a
+   captured stable revision: the [private model package](../reports/autoencoder_durable_private_publication.md)
+   had 555 passing tests but failed its combined source guard, and the
+   [selected-page campaign package](../reports/autoencoder_campaign_packages.md)
+   passed its test/restore captures but failed two current-tree closeout checks
+   (41 of 43 passed). Preserve those original failures and retained claims;
+   the passed full-row source delivery is a separate qualification.
+3. Extend source/receipt/target coverage and reviewed semantic families through
+   the existing contracts, retaining unsupported and unattempted dispositions.
+   Do not build replacement export or campaign-control adapters for already
+   implemented paths. Native producer or model work remains outside the current
+   offline validation scope.
+4. When native validation resumes, measure complete cold/shared-target jobs,
+   retained and peak memory, accepted sparse replay, optional Arrow and held-out
+   outcomes before changing defaults or worker counts. The streamed reduction
+   option remains default-off; source-processing timings do not qualify training.
+5. Keep production listener activation and actual Hugging Face upload/recovery
+   deferred. Existing offline packages and delivery plans can be reviewed now;
+   production delivery, source fidelity, semantic coverage and actual Lake
+   receipts remain distinct gates. The Constitution remains unformalized.
