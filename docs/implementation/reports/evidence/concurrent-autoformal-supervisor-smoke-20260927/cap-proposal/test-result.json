@@ -1,0 +1,5 @@
+{
+  "focused_pytest_exit": 0,
+  "scope": "in-memory proposed module; seven focused tests on private temporary fixtures; no live admission or model inference",
+  "source_sha256": "df7318baa42ba51e1b3efef5b3cda86325cf24c03ac91262d882683e11ff385d"
+}

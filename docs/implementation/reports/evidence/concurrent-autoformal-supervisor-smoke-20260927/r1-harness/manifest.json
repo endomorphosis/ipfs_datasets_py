@@ -1,0 +1,48 @@
+{
+  "captured_inputs": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1/prepared-inputs.json",
+  "captured_inputs_sha256": "1c6456d4295c9dcebbea3595b7d78870293396e71f82105c6c54a832f4d92fdd",
+  "files": [
+    {
+      "bytes": 11216,
+      "name": "native_supervisor_driver.py",
+      "sha256": "8fc441890fef21c74a345dfc0b9571a5784ba808cdcf266a98d79d7cef4bc652"
+    },
+    {
+      "bytes": 13291,
+      "name": "parent_harness.py",
+      "sha256": "02baf8c80e71016287cf198d554218f9ae2419e5e24ce35ebbd489b14bdfc02d"
+    },
+    {
+      "bytes": 10622,
+      "name": "training_lane.py",
+      "sha256": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528"
+    },
+    {
+      "bytes": 8808,
+      "name": "conversion_lane.py",
+      "sha256": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b"
+    },
+    {
+      "bytes": 12312,
+      "name": "frozen-config.json",
+      "sha256": "2abe54da7f6f147753780eeaedbeabfdd44d13021d7f6ebd0d26baea35dbff07"
+    },
+    {
+      "bytes": 6866,
+      "name": "smoke_resource_common.py",
+      "sha256": "91e162c5bdd2a3ae9e8a2c512da1139996adeefba585beff8e6226708f8ae291"
+    },
+    {
+      "bytes": 2385,
+      "name": "native_guard_child.py",
+      "sha256": "e12de0d57d374a49d9d5762c00489caa16745348fdf41c494754e8bbd3511075"
+    },
+    {
+      "bytes": 13342,
+      "name": "run_native_smoke_reserved.py",
+      "sha256": "da962ffea697a38764d10284341f35a7b8a9145c9025cd1693281e01050d319b"
+    }
+  ],
+  "purpose": "Preserve failed R1 input bytes before fixing missing native state parent; no runtime or lifecycle mutation.",
+  "schema": "concurrent-autoformal-r1-preparation-preserved/v1"
+}

@@ -1,0 +1,178 @@
+{
+  "accelerate_pin": {
+    "accelerate_module": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/__init__.py",
+    "accelerate_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py"
+  },
+  "admitted": false,
+  "after": {
+    "dependency_count": 0,
+    "event_cursor": 5,
+    "formal_plan_id": "baguqeerauisu4tzibwrh32iqbtxdat5uf3yggnq3zdhk6bijjair3jx4aqxq",
+    "goal_count": 1,
+    "objective_count": 0,
+    "plan_count": 1,
+    "plan_root_cid": "baguqeerauisu4tzibwrh32iqbtxdat5uf3yggnq3zdhk6bijjair3jx4aqxq",
+    "projection_cid": "baguqeeraxua4kxn27xnk24jk7566qd3x4522jmgi324tdxyv3lafebrefezq",
+    "repository_tree_id": "",
+    "revision": 5,
+    "schema": "ipfs_accelerate_py/agent-supervisor/database-task-source-snapshot@1",
+    "schema_version": 1,
+    "source_identity": "baguqeerav4i2dr2rozjre3ql2ufurcezq6nkh6wotpjk75ebby34e6fzwfha",
+    "source_schema": "ipfs_accelerate_py/agent-supervisor/database-task-source@1",
+    "task_count": 1,
+    "terminal": false
+  },
+  "authority_mode": "embedded-single-owner",
+  "before": {
+    "dependency_count": 0,
+    "event_cursor": 3,
+    "formal_plan_id": "baguqeerauisu4tzibwrh32iqbtxdat5uf3yggnq3zdhk6bijjair3jx4aqxq",
+    "goal_count": 1,
+    "objective_count": 0,
+    "plan_count": 1,
+    "plan_root_cid": "baguqeerauisu4tzibwrh32iqbtxdat5uf3yggnq3zdhk6bijjair3jx4aqxq",
+    "projection_cid": "baguqeera2mjoiwt24p4r5wgyludjjfouiq4j4w4bypa23uemx2x3aoyqfrea",
+    "repository_tree_id": "af86c1cb4fca7fdd1c726e0ffc2b266da25a24f5",
+    "revision": 3,
+    "schema": "ipfs_accelerate_py/agent-supervisor/database-task-source-snapshot@1",
+    "schema_version": 1,
+    "source_identity": "baguqeera5kwwvmgpf7nuvcc4pieoryc46z4mwftqzkxfqygsyietagpxsl5q",
+    "source_schema": "ipfs_accelerate_py/agent-supervisor/database-task-source@1",
+    "task_count": 1,
+    "terminal": false
+  },
+  "elapsed_seconds": 24.98450639983639,
+  "error": null,
+  "formalized": false,
+  "logic_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "native_result": {
+    "active_task_id": "SMOKE-6f24d0db18726bcf4de0",
+    "attempt_id": "attempt:8ee617f42920434891759afd810fab7a",
+    "authority_mode": "embedded",
+    "claim_id": "claim:b093930c9a084cd1a3b8cb639699db4d",
+    "claimed_task_cid": "baguqeerabvwij3wt3ecrz54x3fxzjo44iroaz4n3ulkn7fr7zgfoghsaj45q",
+    "completion_reconciliations": [],
+    "control_schema_evidence": {
+      "profile_id": "",
+      "schema_fingerprint": "",
+      "state_schema_revision": "",
+      "verified": false
+    },
+    "expired_attempt_reconciliations": [],
+    "implementation_result": {
+      "attempt_id": "attempt:8ee617f42920434891759afd810fab7a",
+      "portal_terminal_failure": true,
+      "reason": "database Portal attempt parent is unavailable",
+      "resumed": true,
+      "settlement": {
+        "attempt_id": "attempt:8ee617f42920434891759afd810fab7a",
+        "claim_id": "claim:b093930c9a084cd1a3b8cb639699db4d",
+        "claim_state": "released",
+        "control_revision": 3,
+        "control_status": "blocked",
+        "control_superseded": false,
+        "coordination_attempt_status": "failed",
+        "effect_claim_count": 0,
+        "execution_status": "failed",
+        "provider_invocation_count": 0,
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-claim-failure-settlement@1",
+        "settlement_id": "baguqeerasqiba6rprx6fajfcou7xaqyn4pa56vabrh3ooexnf3nzp6jqjxgq",
+        "task_alias": "SMOKE-6f24d0db18726bcf4de0",
+        "task_cid": "baguqeerabvwij3wt3ecrz54x3fxzjo44iroaz4n3ulkn7fr7zgfoghsaj45q"
+      },
+      "status": "blocked",
+      "task_alias": "SMOKE-6f24d0db18726bcf4de0"
+    },
+    "markdown_status_writes": 0,
+    "orphan_claim_reconciliations": [],
+    "portal_failure_rearms": [],
+    "portal_failure_reconciliations": [],
+    "projections_required": false,
+    "task_source_kind": "duckdb",
+    "unchanged": false,
+    "write_count": 1
+  },
+  "native_task": {
+    "acceptance": [
+      {
+        "criterion": "The declared test runs both real lanes concurrently and verifies all retained receipts. Completion applies only to this smoke task, never legal admission or model promotion.",
+        "evidence_policy": {
+          "criterion": "The declared test runs both real lanes concurrently and verifies all retained receipts. Completion applies only to this smoke task, never legal admission or model promotion."
+        },
+        "ordinal": 0
+      }
+    ],
+    "body": {
+      "board_namespace": "concurrent-autoformal-smoke-v1",
+      "completion": "auto",
+      "completion_receipt": {
+        "attempt_id": "attempt:8ee617f42920434891759afd810fab7a",
+        "attempt_number": 1,
+        "automatic_retry_admitted": false,
+        "claim_id": "claim:b093930c9a084cd1a3b8cb639699db4d",
+        "control_expected_revision": 2,
+        "control_expected_status": "in_progress",
+        "effect_claim_count": 0,
+        "failure_kind": "terminal_portal_bridge_error",
+        "failure_payload_digest": "sha256:ac665c8d69707f34e014d0313242c569db4c33b377708fbc68a4f4acdbe7de56",
+        "fence_epoch": 1,
+        "fencing_token": 1,
+        "lease_id": "lease:eb27dd2625cf445db5c70427dd45b82d",
+        "operation": "database_task_claim_failure",
+        "owner_session_id": "embedded-store:370d6da7d077304f54791a08cfaff91b",
+        "provider_invocation_count": 0,
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-claim-failure-settlement@1",
+        "settlement_id": "baguqeerasqiba6rprx6fajfcou7xaqyn4pa56vabrh3ooexnf3nzp6jqjxgq",
+        "task_cid": "baguqeerabvwij3wt3ecrz54x3fxzjo44iroaz4n3ulkn7fr7zgfoghsaj45q"
+      },
+      "context_budget_tokens": 4096,
+      "is_schedulable": true,
+      "provider_role": "deterministic-only",
+      "review_only": false,
+      "title": "Execute and verify concurrent autoformal smoke",
+      "track": "bounded-validation"
+    },
+    "dependencies": [],
+    "goal_cid": "goal:default",
+    "objective_id": "",
+    "ordinal": 1,
+    "outputs": [
+      {
+        "effect": {
+          "path": "results/smoke.json"
+        },
+        "ordinal": 0,
+        "path": "results/smoke.json"
+      }
+    ],
+    "plan_cid": "baguqeerauisu4tzibwrh32iqbtxdat5uf3yggnq3zdhk6bijjair3jx4aqxq",
+    "priority": "P1",
+    "revision": 3,
+    "status": "blocked",
+    "task_alias": "SMOKE-6f24d0db18726bcf4de0",
+    "task_cid": "baguqeerabvwij3wt3ecrz54x3fxzjo44iroaz4n3ulkn7fr7zgfoghsaj45q",
+    "updated_at": "2026-09-27T16:03:49Z",
+    "validations": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/test_concurrent_smoke.py",
+          "-q"
+        ],
+        "ordinal": 0,
+        "policy": {}
+      }
+    ]
+  },
+  "passed": false,
+  "production_promotion": false,
+  "quack_transport_exercised": false,
+  "schema": "concurrent-autoformal-native-supervisor-smoke/v1",
+  "scope": "deterministic-only smoke task; no compiler code repair"
+}

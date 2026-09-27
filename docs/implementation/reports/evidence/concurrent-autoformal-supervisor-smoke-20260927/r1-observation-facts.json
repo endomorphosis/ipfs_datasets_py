@@ -1,0 +1,53 @@
+{
+  "admitted": false,
+  "capture_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1",
+  "capture_post_close_apparent_bytes": 40924463,
+  "capture_regular_file_count": 62,
+  "current_reservation_count": 88,
+  "formalized": false,
+  "ledger_sha256_observed": "3ea8907c2e2e06fa5e0da4e4bfa4118902408178e4bfd877d8dfebc3301d9c12",
+  "observed_at": "2026-09-27T16:09:40.668857+00:00",
+  "prior_reservation_count": 87,
+  "prior_reservations_unchanged": true,
+  "published": false,
+  "receipts": [
+    {
+      "bytes": 240220,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1/audit-receipt.json",
+      "sha256": "da6a1cf9d1059f57bcd7a706aada34eea78a20485ab1d17bf11022dbb05d45c2"
+    },
+    {
+      "bytes": 3141,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1/resource-retention.json",
+      "sha256": "91f5fc2e1836617edc3726a1a7d334bf13200797630a15844a31788fe0d1ea77"
+    },
+    {
+      "bytes": 128,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1/child-terminal.json",
+      "sha256": "47a0dac07a9f939bb99e1a80cd5c520544237bcad66cca9c7aa14914e894375e"
+    },
+    {
+      "bytes": 47363,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1/child-source-receipt.json",
+      "sha256": "7a81f521857468d54c0d161323bc5f2ce2f3c965e96a6f791a60f5782624c72c"
+    },
+    {
+      "bytes": 645143,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1/prepared-inputs.json",
+      "sha256": "1c6456d4295c9dcebbea3595b7d78870293396e71f82105c6c54a832f4d92fdd"
+    },
+    {
+      "bytes": 7253,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1/supervisor/supervisor-receipt.json",
+      "sha256": "0a9b99a3c0df9d24b59502ea811ac55bd58318e1aa3d71dff8ea351f63e6e9fd"
+    }
+  ],
+  "retained_reservation_id": "197b8975b9ef44e5a4950ba88bc52317",
+  "root_reported_post_run_census": {
+    "charged_bytes": 61930106185,
+    "limit_bytes": 62000000000,
+    "remaining_bytes": 69893815,
+    "scope": "root-owned post-run named-root census supplied to report preparer; this report preparation did not rerun campaign inventory"
+  },
+  "schema": "concurrent-autoformal-r1-report-observation/v1"
+}
