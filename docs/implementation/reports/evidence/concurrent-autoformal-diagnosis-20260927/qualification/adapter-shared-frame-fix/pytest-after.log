@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/pytest-cache
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 10 items
+
+tests/unit/logic/legal_ir/test_formalization_adapter.py ..........       [100%]
+
+- generated xml file: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/pytest-after.xml -
+============================== 10 passed in 3.02s ==============================

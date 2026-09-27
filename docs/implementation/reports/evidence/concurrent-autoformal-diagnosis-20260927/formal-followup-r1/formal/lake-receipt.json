@@ -1,0 +1,79 @@
+{
+  "artifacts": {
+    "lake-minimum-duration/.lake/build/lib/lean/Legal.olean": {
+      "bytes": 32376,
+      "sha256": "825710b5a19b5b20e3e656da1373a02b9a4ec71deaff3f1ea65b9097d4303bca"
+    },
+    "lake-minimum-duration/Legal.lean": {
+      "bytes": 169,
+      "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+    },
+    "lake-minimum-duration/lake.log": {
+      "bytes": 189,
+      "sha256": "9a60a8578fc4d98bf09f28badeebe8fb3cbe785af3709efc20680dc78626a790"
+    },
+    "lake-minimum-duration/lakefile.lean": {
+      "bytes": 66,
+      "sha256": "7f21110e6d75c8b8e3207e259bb38c1067019b5989c740cd8d4fdd22468d1171"
+    },
+    "lake-minimum-duration/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    }
+  },
+  "canonical_rule": {
+    "action": "retain",
+    "actor": "officer",
+    "conditions": [],
+    "exceptions": [],
+    "modality": "O",
+    "object": "the file for at least 20 days",
+    "temporal": [
+      "20 days"
+    ],
+    "temporal_records": [
+      {
+        "quantity": 20,
+        "temporal_kind": "minimum_duration",
+        "value": "20 days"
+      }
+    ]
+  },
+  "command": [
+    "/home/barberb/.elan/toolchains/leanprover--lean4---v4.26.0/bin/lake",
+    "build",
+    "Legal"
+  ],
+  "cwd": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/formal-followup-r1/formal/lake-minimum-duration",
+  "elapsed_seconds": 1.2783045421820134,
+  "generated_source": "def bound : Nat := 20\ndef meets (n : Nat) : Bool := decide (bound <= n)\ntheorem boundary : ((meets 19 = false) /\\ (meets 20 = true)) := by\n  unfold meets bound\n  decide\n",
+  "generated_theorem_admitted_by_lake": true,
+  "lake_executed": true,
+  "learned_checkpoint_program": false,
+  "legal_span_admitted": false,
+  "mathlib_imported": false,
+  "non_renderable_gate_indices": [
+    0,
+    1
+  ],
+  "offline_scope": "absolute installed toolchain, no package dependencies or installer; parent owns network isolation",
+  "passed": true,
+  "pattern": {
+    "fail": 19,
+    "kind": "threshold",
+    "meet": 20
+  },
+  "producer_lineage": "source text -> pinned typed-deontic rule -> JevOps numeric pattern -> locked Lean -> lake build Legal",
+  "proof_scope": "Natural-number threshold boundary at 19 and 20. This omits actor, retention action, time units and the complete legal duty.",
+  "returncode": 0,
+  "source_and_tools_unchanged": true,
+  "source_gate_index": 2,
+  "source_text": "The officer shall retain the file for at least 20 days.",
+  "statement_lock_sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+  "timed_out": false,
+  "timeout_seconds": 30,
+  "toolchain_binary_sha256": {
+    "lake": "65e6788674aa50c98da101339ca213c5a9599414830fa74f963ad794e025efc7",
+    "lean": "e215cbe9eab0914b49761e9e486d388e2e701cf876d1079d1ba733c48edb2d7b"
+  }
+}

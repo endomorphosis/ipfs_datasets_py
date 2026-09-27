@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "path": "pytest.log",
+      "bytes": 896,
+      "sha256": "d5c87f3825f8b69f29e6b959a0c50bdc4c4185b08951ee3c6ce185244d63be92"
+    },
+    {
+      "path": "pytest.xml",
+      "bytes": 1449,
+      "sha256": "797bd5088ac0c61183c1961f2e6cacc590e0e91ed5ac0eb6ed375ec7174724e8"
+    },
+    {
+      "path": "reviewed.patch",
+      "bytes": 2103,
+      "sha256": "31181dc77faea276bfd8c7aa8fc8eee1f1fd75e4ce88cd8f810f5ba03dd41a72"
+    },
+    {
+      "path": "test_uscode_ingest.remote.py",
+      "bytes": 7684,
+      "sha256": "10a39c682698f3f0977417a1b56b991d4ebb5068c51e4e3c0b314ad616966e33"
+    },
+    {
+      "path": "uscode_ingest.remote.py",
+      "bytes": 9718,
+      "sha256": "36580b1642ff881374122034b3d339992207d72182740bbc7f4dd64312f1f080"
+    },
+    {
+      "path": "verification-receipt.json",
+      "bytes": 2372,
+      "sha256": "3174687d11b5429d7ca587d25a8bcfa8c9e88174b9baecef98e53ae60701fa23"
+    }
+  ]
+}

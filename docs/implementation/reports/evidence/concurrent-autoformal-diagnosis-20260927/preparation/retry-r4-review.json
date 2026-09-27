@@ -1,0 +1,22 @@
+{
+  "harness_sha256": {
+    "conversion_lane.py": "e259e8e93699afd65ed6bea8d6f550b8dbeb0d61fc1f40e043af9a4e53c40161",
+    "dependency_binding.py": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e",
+    "formal_validation.py": "c1c67d32e4a0f12fcd48c272b9e0efe17d4cd00086599c1f73cf249781d67201",
+    "frozen-config.json": "412bfc84799afba4cb7415b8c4edaf3cb637318a71f50402253b99cf2ad241eb",
+    "lane_bootstrap.py": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55",
+    "native_guard_child.py": "c83879782defa3b4a866ec26a3a6f3aeed6d188e3f5338d6be6e1c144de3053e",
+    "native_supervisor_driver.py": "cc6115322a9aef4f2262494ec46e33b5ee27ac73e0d04bd7a5fe5b889b1da61a",
+    "parent_harness.py": "e080bb397e13bf491c681dd1954d0ded7fe68c692642518209979c1e3693a033",
+    "prepare_five_frozen_targets.py": "0543038f6219bfb9166d58274bb0077a177785ac5c92706c3749cc03155204e3",
+    "run_native_smoke_reserved.py": "34e1d60c5a2a78226b810a1877f782e4ddda8b207303601c378226073ac3df65",
+    "smoke_resource_common.py": "5d30977a768874ac820d04a8e7b8e40e4d796c653103f38855e8e25428750d65",
+    "target-preparation-payload.json": "97f2d421d53e4584b5318d0d0b6445218971b02356bd0a926f60c3780d01c81c",
+    "training_lane.py": "b9db591f13ab1d77fc81ff80b1bf00f6873730b535be3f67f26ce7a94359f847"
+  },
+  "maximum_preparation_observations": 1,
+  "proposal_wait_change": "Refuse when linked training summary exists without method entry.",
+  "reason": "Supervisor validation filters outer timeout env. Explicitly propagate the declared60s setting in the two lane environments; no optimizer criteria or source changes.",
+  "source_unchanged": true,
+  "target_timeout_seconds": 60
+}

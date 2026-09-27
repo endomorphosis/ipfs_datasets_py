@@ -1,0 +1,82 @@
+{
+  "apparent_bytes": 10850882,
+  "binary_artifacts_remain_local": true,
+  "files": [
+    {
+      "bytes": 0,
+      "path": ".proposal.duckdb.intent.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "path": ".proposal.duckdb.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "path": ".proposal.duckdb.migration.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 10183,
+      "path": "audit-receipt.json",
+      "sha256": "f78ac3c676cdcb281c084d63f320e12576307aff5d9663dc83cf29e4ea7c3124"
+    },
+    {
+      "bytes": 88,
+      "path": "child-terminal.json",
+      "sha256": "d26b015ec45a9a3dc892d54a2321932e99656e0c0f531fd70ef9632c284a422d"
+    },
+    {
+      "bytes": 26573,
+      "path": "goal-task-payload.json",
+      "sha256": "b617538137496484640c2de3673ff4552b25c87e1384571d06a67ab4bcbd2bd2"
+    },
+    {
+      "bytes": 3048,
+      "path": "prepared-inputs.json",
+      "sha256": "a3804eb46804b879f48ec970b25c40535b44bae42d3d681913f1ac4302c4f8be"
+    },
+    {
+      "bytes": 4565,
+      "path": "prompt.txt",
+      "sha256": "94479ce22695761ae225bd64968dea384d3062d0b71be7ddd92ee93d6b9ca4f5"
+    },
+    {
+      "bytes": 29712,
+      "path": "proposal-receipt.json",
+      "sha256": "113cc982d96fffe0bdf7e51fc290694e174e5e0ed06115d048d6d9bb35351244"
+    },
+    {
+      "bytes": 10760192,
+      "path": "proposal.duckdb",
+      "sha256": "f0d75e0c3733490f20d2a2f978e0586721a579741b3e6bc84822d29711d39c77"
+    },
+    {
+      "bytes": 4615,
+      "path": "rendered-prompt.txt",
+      "sha256": "944660bcf3960131bcf6b28749e7cbf4d4c8f832e008af336fda60b949599265"
+    },
+    {
+      "bytes": 927,
+      "path": "repair-lane.log",
+      "sha256": "fb61063eeb8d1de4f2691ca9d43f16871c75c9df533680f1c65e0b8ed07de9e4"
+    },
+    {
+      "bytes": 301,
+      "path": "request-budget.json",
+      "sha256": "f5332d77ec84bd721651bf38d241f65376522d0baa68abb5b4e41ae20c024429"
+    },
+    {
+      "bytes": 3138,
+      "path": "resource-retention.json",
+      "sha256": "3d843f1cd3e5d9e67f5893b7f50605bf3ae167ad36e6695c344bf99120b39c6a"
+    },
+    {
+      "bytes": 7540,
+      "path": "sealed-plan.json",
+      "sha256": "7d5003e82f9018165594cd98f7773274478109bf9d476d5428e58f4f2f190bba"
+    }
+  ],
+  "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r1"
+}

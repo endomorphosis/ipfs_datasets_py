@@ -1,0 +1,72 @@
+{
+  "apparent_bytes": 65776,
+  "binary_artifacts_remain_local": true,
+  "files": [
+    {
+      "bytes": 14251,
+      "path": "audit-receipt.json",
+      "sha256": "2dc939d2c868cb40f121adbcd214d3e588ce81651eb9610cb1cfa476b58694b9"
+    },
+    {
+      "bytes": 15851,
+      "path": "child-source-receipt.json",
+      "sha256": "dfa8964259422d906eb767554b1df840f64ff5a80b47b19dc7cb4872682a02f4"
+    },
+    {
+      "bytes": 88,
+      "path": "child-terminal.json",
+      "sha256": "43d32880601aee35dbc6c632d2d07ee432096b0a5da749a95c0c876de765b085"
+    },
+    {
+      "bytes": 5732,
+      "path": "prepared-inputs.json",
+      "sha256": "2743678891d201206be1a3bd92fcf4f425384d0502dbedb5ed98b955b2afe9e0"
+    },
+    {
+      "bytes": 3788,
+      "path": "resource-release.json",
+      "sha256": "0679915232cb70d1becd29aeb7e09ad973bc6a8222f8964777d9a85a6346c917"
+    },
+    {
+      "bytes": 1875,
+      "path": "span-child.log",
+      "sha256": "ff62ea306a3c7a5295fd33dea2ed2512e4cce137440d25d889c0f703fcf2ea66"
+    },
+    {
+      "bytes": 1424,
+      "path": "spans/span-01.json",
+      "sha256": "1b043cfde0d1092a82823fcf8268c2130e0c9303e2d901438ea9398530a4b6e7"
+    },
+    {
+      "bytes": 1134,
+      "path": "spans/span-02.json",
+      "sha256": "992c4bab5de0436ccac0c53b7887a43d8551bf1e6f8abbf938bdcd77e47a2287"
+    },
+    {
+      "bytes": 1366,
+      "path": "spans/span-03.json",
+      "sha256": "7a06181f3f8159a4ba53c969401d5011e8d00a9e97d5d3647e14779ae26c9254"
+    },
+    {
+      "bytes": 2181,
+      "path": "spans/span-04.json",
+      "sha256": "2ca53e81e3419f85129b942ae688175106a17507ddb09590644ddfb0bbfc764e"
+    },
+    {
+      "bytes": 1972,
+      "path": "spans/span-05.json",
+      "sha256": "dc21400d775bfeb246b1fb1c5c7d6cf98e5a71c0ff96d88efec34cc664fff16c"
+    },
+    {
+      "bytes": 1798,
+      "path": "spans/span-06.json",
+      "sha256": "dcd44ecf57ca24a4e68d6665e9af255590c8b2210cb316194b59d39b7738c907"
+    },
+    {
+      "bytes": 14316,
+      "path": "spans/span-timing-receipt.json",
+      "sha256": "5b3d8ab07e11e2f1915410f328ad867a145e74b9a6794a0fdb81fac38c8d147a"
+    }
+  ],
+  "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/span-timing-r1"
+}

@@ -1,0 +1,27 @@
+{
+  "changed_files": [],
+  "changed_symbols": [],
+  "failure": {
+    "kind": "validation_failure",
+    "returncode": 1,
+    "validation": {
+      "failed_commands": [
+        "python3 -m pytest tests/test_concurrent_smoke.py -q"
+      ],
+      "passed": false,
+      "reason": "declared_validation_failed",
+      "returncode": 1
+    },
+    "validation_environment_guidance": "## Authoritative validation environment (fail-closed)\n- `PATH` is exactly \"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin\". The provider/implementer process's inherited `PATH` is ignored.\n- The canonical Python interpreter target is exactly \"/usr/bin/python3.12\"; the validation runner may expose it through a sealed launcher.\n- Each validation command receives a fresh private `HOME` whose directory name starts with `ipfs-accelerate-validation-home-`. Its XDG paths are exactly `$HOME/.cache`, `$HOME/.config`, `$HOME/.local/share`, and `$HOME/.local/state`. Operator profile state such as `~/.elan`, shell startup files, and provider-only managed toolchains is unavailable.\n- An operator can replace the complete validation `PATH` only through \"IPFS_ACCELERATE_AGENT_VALIDATION_PATH\" before supervisor dispatch. Every entry and ancestor must pass the existing non-writable toolchain check; user-writable tool directories are rejected.\n- Judge external-tool availability and write semantic assertions against this exact environment, not a successful provider-side probe. If a required prover is absent, report a dependency/capability gap or add an approved digest-bound deployment; never claim usability or weaken mandatory tests."
+  },
+  "failure_id": "baguqeeranybw6slkmbjw7ljvfyx2pcjo6ffpbxxhqmdbp74zgmqmywbzkvmq",
+  "prior_decision_id": "baguqeeravmajmgusnbvo6cc4kk5lvobrbmayyjt4lljcad7c32skf3y4hkqa",
+  "receipt_id": "baguqeerakywock42cueieoczqgzmrgihcz63ldziqid5bgdzwobrm4tmly6q",
+  "repository_id": "repository:sha256:84584746b159feb3bbc77eec11a6e526150bf9ef68039d4bbebd186ec67f49a4",
+  "schema": "ipfs_accelerate_py/agent-supervisor/implementation-diagnostic-receipt@1",
+  "tree_id": "cfb7a6a330a62b39c31d38f9be106693bde1536f",
+  "unresolved_requirements": [
+    "baguqeeraaxmvuibxnba3qqgrfuv7qus2swh2id5gmd7wk4y3qv6w35aier6a",
+    "baguqeeravhcwhoqmaokg3sfsusiam2gzs33gjpdskdkivxwjctitq6qhqvvq"
+  ]
+}

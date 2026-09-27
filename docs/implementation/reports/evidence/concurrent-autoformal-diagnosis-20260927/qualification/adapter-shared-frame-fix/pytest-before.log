@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/pytest-cache
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 10 items
+
+tests/unit/logic/legal_ir/test_formalization_adapter.py .........F       [100%]
+
+=================================== FAILURES ===================================
+__________ test_frame_formulas_share_complete_immutable_graph_context __________
+tests/unit/logic/legal_ir/test_formalization_adapter.py:332: in test_frame_formulas_share_complete_immutable_graph_context
+    assert all(context is contexts[0] for context in contexts)
+E   assert False
+E    +  where False = all(<generator object test_frame_formulas_share_complete_immutable_graph_context.<locals>.<genexpr> at 0xf7546de4c3c0>)
+- generated xml file: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/pytest-before.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/logic/legal_ir/test_formalization_adapter.py::test_frame_formulas_share_complete_immutable_graph_context
+========================= 1 failed, 9 passed in 3.11s ==========================

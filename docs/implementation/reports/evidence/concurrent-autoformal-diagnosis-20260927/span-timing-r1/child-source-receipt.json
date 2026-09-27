@@ -1,0 +1,349 @@
+{
+  "accelerate_dependency": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "accelerate_dependency_after": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "admitted": false,
+  "database_opened": false,
+  "formalized": false,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "passed": true,
+  "provider_calls": 0,
+  "schema": "span-timing-followup-pinned-child/v1",
+  "scoped_sources": [
+    {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    {
+      "bytes": 11004,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/__init__.py",
+      "sha256": "42c252ba4fb85301b649bc3afe497a2799d27460b9556e57c7398b5441ba13e8"
+    },
+    {
+      "bytes": 3636,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py",
+      "sha256": "c0306a55184bc6baabf7528bf7a255604ff8c49d2c510afde13eae2e8108ff88"
+    },
+    {
+      "bytes": 1866,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/__init__.py",
+      "sha256": "96a6aae98c7d6ee877559b847f455f57e60a81c476468c61d77d6fde86b774b1"
+    },
+    {
+      "bytes": 4332,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/base.py",
+      "sha256": "3763cc86f14697a68cb7a38dab9c7e6a9d0160910b73ba1ea2e965cd89d6e905"
+    },
+    {
+      "bytes": 6937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/cec_delegate.py",
+      "sha256": "ebaf1bde83b2c00d5b0028fa34f43c52e6e0628d19bb8ffeb1a6c1987b61a9ef"
+    },
+    {
+      "bytes": 12658,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/forward_chaining.py",
+      "sha256": "0c56b8663063aeb30c5bbbda045a3f723ab26fffe08e23b14f3c94e866392f09"
+    },
+    {
+      "bytes": 12397,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/modal_tableaux.py",
+      "sha256": "ffc1489b684e0630b7940b2ba688ddb99142f7fcce203e06fbfa55643826d1c4"
+    },
+    {
+      "bytes": 8483,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/strategy_selector.py",
+      "sha256": "5b7b71c5256dca709917fd6e8d55fd014d7ec0d4a216b56cff1b633b2143f501"
+    },
+    {
+      "bytes": 28721,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+      "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+    },
+    {
+      "bytes": 24431,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
+      "sha256": "41fa83374a9e7b188255476710e778a056a3090ee1fdfe3b151caa6359855476"
+    },
+    {
+      "bytes": 4434,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/__init__.py",
+      "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+    },
+    {
+      "bytes": 48070,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30"
+    },
+    {
+      "bytes": 1948,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/tree_pin.py",
+      "sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d"
+    },
+    {
+      "bytes": 2438,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/__init__.py",
+      "sha256": "e574c74067e7059cc506b32c780bc0444de89c63b55dade3df00ae9fd563431e"
+    },
+    {
+      "bytes": 6656,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/bounded_cache.py",
+      "sha256": "29a450b5fc08c5577964774035717dc5d7be85c159cfd502fba5252c4ec9c9fa"
+    },
+    {
+      "bytes": 13962,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/converters.py",
+      "sha256": "f530c453775f2c1a4a2f8a26aa647df1f725be109078df258288eab33a427fde"
+    },
+    {
+      "bytes": 2268,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/errors.py",
+      "sha256": "10d21acd8d0fd6049297a1b36d10db1fcc09146095f1dabfe5a686b887f4b8cf"
+    },
+    {
+      "bytes": 4875,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/feature_detection.py",
+      "sha256": "a285d84f9b13ee3c2c54023e07ccf9da94ce93e6736362c1881421db9e509d76"
+    },
+    {
+      "bytes": 168205,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/proof_cache.py",
+      "sha256": "b68c36ff934ba6ee7a308162ee7035c78f4c522a5483e85e536b428db8485b36"
+    },
+    {
+      "bytes": 6398,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/utility_monitor.py",
+      "sha256": "ef23631a622dfd555cefcdf69793e78a7c64a115c7451aea4dfff5389b014985"
+    },
+    {
+      "bytes": 8374,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/validators.py",
+      "sha256": "e58dbba7d3f346545e2ff572928ed9c7bb9adc71b20e8cc8dc816a7fc060e0c7"
+    },
+    {
+      "bytes": 2644,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/__init__.py",
+      "sha256": "1eeb1a57e388c37415facf3989a26d3b960b176b4bf1e65eef66e106c1aadb4b"
+    },
+    {
+      "bytes": 19375,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/analyzer.py",
+      "sha256": "8953235974d062f968334106c952d0978cc31a58408206bb56c26da174f29d6c"
+    },
+    {
+      "bytes": 2743,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/compiler_repairs.py",
+      "sha256": "53ff5b4b6cf3303f46569f43e748b5d15a75b1895dbb4c4a054b541e9fc5569e"
+    },
+    {
+      "bytes": 27572,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/converter.py",
+      "sha256": "e1749ca0403f34834374b5089d78523f1866d53d3ec923137b6fb526fdffe7c8"
+    },
+    {
+      "bytes": 31862,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/decoder.py",
+      "sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9"
+    },
+    {
+      "bytes": 221362,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/exports.py",
+      "sha256": "ac46bf1efa79925620199b56f6f1dbde34c92889a0a2a474cc6b9e408ea3c3de"
+    },
+    {
+      "bytes": 391770,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/formula_builder.py",
+      "sha256": "156261487326b214c8e9c59f70a87e3faa4dfc20c3c4a4be575555f0ee6fb1ba"
+    },
+    {
+      "bytes": 22853,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/graph.py",
+      "sha256": "5a595b05f5bec6d74f6c8c06129cc7f1a7860a2beff98d1f28b9fde6635bdfde"
+    },
+    {
+      "bytes": 114441,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/ir.py",
+      "sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416"
+    },
+    {
+      "bytes": 7285,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/knowledge_base.py",
+      "sha256": "a6e59bf538caa19cfeff6e02aa5da0b964b83c73396d05e58c3830e39dd97d9a"
+    },
+    {
+      "bytes": 11583,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+      "sha256": "abb138e7b51dbb071b9ab98865e3fb6c64dfd6a6cc5674a0853d523f00a7797a"
+    },
+    {
+      "bytes": 15413,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/metrics.py",
+      "sha256": "5a2f92bc24154e14d3d2e3b6e73dcc128e6183957b5832b9bc1d72e60f7370da"
+    },
+    {
+      "bytes": 67553,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/prover_syntax.py",
+      "sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31"
+    },
+    {
+      "bytes": 6124,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/support_map.py",
+      "sha256": "e48a537061611eee0cacff129839ce04992db838b86a3edbe8f422f1018fda84"
+    },
+    {
+      "bytes": 112,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/__init__.py",
+      "sha256": "6b3ede4588f4d18b84b6a06ebc774b8d3755627a0b5313147de7838503032f3c"
+    },
+    {
+      "bytes": 298921,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "sha256": "9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1"
+    },
+    {
+      "bytes": 14312,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/integration/__init__.py",
+      "sha256": "11c1b240f9c1fb53653322c57f9150847ac62c43491da61b5dede542b4cc9b41"
+    },
+    {
+      "bytes": 1646,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/integration/converters/__init__.py",
+      "sha256": "39c7ab8a267e9fab2c40fb89b6d82a8db24a037d4db013771830b9354508df96"
+    },
+    {
+      "bytes": 19507,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/integration/converters/deontic_logic_core.py",
+      "sha256": "8e4b2e21bf19349c6c11dd29b8ceefa21403aa44eca610ecc27c3cdaa59ab504"
+    },
+    {
+      "bytes": 300,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/integration/deontic_logic_core.py",
+      "sha256": "55e55aa7a2091f7d87e66de007982977e1cc4efb2b20964f9b2fc287bc7ae3b2"
+    },
+    {
+      "bytes": 1457,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/integrations/__init__.py",
+      "sha256": "bdb2341ef1aa175864b322be35079f1043ad4aabfe5c81a9b01227d7a41af776"
+    },
+    {
+      "bytes": 78186,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/integrations/typesafe_advisor.py",
+      "sha256": "f8647ffcf8dc1266030182a05929e51de5f4bc701f610f00ee544fb24f552b52"
+    },
+    {
+      "bytes": 20391,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_document.py",
+      "sha256": "b44785f720df1a60495bb7086a78fc00325a5d653a7e1782c0712fb7691454f2"
+    },
+    {
+      "bytes": 2594,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/__init__.py",
+      "sha256": "38b169f6f7a40c40880bec32ef23730e9a3c6c47b6441e3b39e80fa5a9d1f4c2"
+    },
+    {
+      "bytes": 34289,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "sha256": "f19ede6f735f20309745802b96038ae2a6443a52d486182bc4584000b96abc7a"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 13262,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2"
+    },
+    {
+      "bytes": 3873,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/__init__.py",
+      "sha256": "60359f47e39c12483d2ffa702d66b611ecba8451678d7a1f7e228e30e795402e"
+    },
+    {
+      "bytes": 3009,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/bridge_types.py",
+      "sha256": "5ec9c47e1d5c527f66a01ec0790335ff70d784e6d3e20cc2dd73e1bc647449ad"
+    },
+    {
+      "bytes": 2859,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/common_types.py",
+      "sha256": "0ad8f7b7e6f38540414c94dc9d6da6aba9665d4dee6283499d8a637a53dfc500"
+    },
+    {
+      "bytes": 10681,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/deontic_types.py",
+      "sha256": "6fa123ecf0afb1d3293736c24633043aeb3349a3b3f7728247bfd08ea8cafe94"
+    },
+    {
+      "bytes": 3529,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/fol_types.py",
+      "sha256": "d1debd330e7a3102a1580efcbc6e06b863ee8ca9d78b2e34a60cd98b5ba1e902"
+    },
+    {
+      "bytes": 741,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/proof_types.py",
+      "sha256": "8c96df27865d86cd54ae242497e4d9ddeaf89c5cd7484718b521dccf123fcb97"
+    },
+    {
+      "bytes": 2591,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/translation_types.py",
+      "sha256": "5a0e4314692fdd4945bfd3c9b04d80e2fda86aa7f4b264f4c9c21964afe1343e"
+    },
+    {
+      "bytes": 33265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "sha256": "6f8d85259db92105eba40ab9c2779ddcc8aef674eb748af74d6d4f9c04774355"
+    },
+    {
+      "bytes": 5845,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/router_deps.py",
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    },
+    {
+      "bytes": 175,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/__init__.py",
+      "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+    },
+    {
+      "bytes": 12149,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/anyio_compat.py",
+      "sha256": "75fe36e8ffb3f8cec2240aa3fd91385493555fba6d573dff1d3c1d6270b58530"
+    },
+    {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  ],
+  "span_receipt": {
+    "bytes": 14316,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/span-timing-r1/spans/span-timing-receipt.json",
+    "sha256": "5b3d8ab07e11e2f1915410f328ad867a145e74b9a6794a0fdb81fac38c8d147a"
+  },
+  "span_returncode": 0,
+  "training_executed": false
+}

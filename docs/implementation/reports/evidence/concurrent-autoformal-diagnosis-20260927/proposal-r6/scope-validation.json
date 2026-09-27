@@ -1,0 +1,10 @@
+{
+  "admitted": false,
+  "formalized": false,
+  "imported": false,
+  "proposal_keys": [],
+  "proposal_sha256": "",
+  "reason": "router_output_unreadable",
+  "router_called": true,
+  "wrote_compiler": false
+}

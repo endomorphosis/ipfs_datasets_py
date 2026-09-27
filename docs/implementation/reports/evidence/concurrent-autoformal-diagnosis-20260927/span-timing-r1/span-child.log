@@ -1,0 +1,9 @@
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+{"compiler_status": "success", "source_span_id": "synthetic-timing-gate-0", "span_index": 0, "wall_seconds": 0.2986389498692006}
+{"compiler_status": "success", "source_span_id": "synthetic-timing-gate-1", "span_index": 1, "wall_seconds": 0.057516701053828}
+{"compiler_status": "success", "source_span_id": "synthetic-timing-gate-2", "span_index": 2, "wall_seconds": 0.03870663698762655}
+{"compiler_status": "abstained", "source_span_id": "uscode-span-0cfe94ff35f040dd0b3761a3c73db89cf3943ecd938377cdca09c4a48bfa5134", "span_index": 3, "wall_seconds": 0.05279830889776349}
+{"compiler_status": "abstained", "source_span_id": "uscode-span-011cc5288c8740a1106ef812d248c5f6f4340f1564a713d7e3746fbdcb8b8349", "span_index": 4, "wall_seconds": 0.049116857117041945}
+{"compiler_status": "abstained", "source_span_id": "uscode-span-cd23a19d6f1c1492d1f5e09498cb297da282a4fd45c9828e907821e55f8d259f", "span_index": 5, "wall_seconds": 0.03732279594987631}
+{"passed": true, "receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/span-timing-r1/spans/span-timing-receipt.json", "error": null}

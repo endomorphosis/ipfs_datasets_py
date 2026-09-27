@@ -1,0 +1,34 @@
+{
+  "changes_since_first_manifest": {
+    "logic/CEC/native/dcec_integration.py": {
+      "after": "3309196821c2ff357ecf587cba7b79bb997db3a0d003b2eec0b55126d8eab6b9",
+      "before": "6b1a94cacdfb70088fe110499811b0d017b5509eb1a20fc8aeeca4c0c81f5304"
+    },
+    "logic/autoformal/family_supervision.py": {
+      "after": "fc7ac2e91343e061eb632a6c46d16ce37a01b540271e145d615051f0074e3307",
+      "before": null
+    }
+  },
+  "files": 7814,
+  "harness_sha256": {
+    "conversion_lane.py": "e259e8e93699afd65ed6bea8d6f550b8dbeb0d61fc1f40e043af9a4e53c40161",
+    "dependency_binding.py": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e",
+    "formal_validation.py": "c1c67d32e4a0f12fcd48c272b9e0efe17d4cd00086599c1f73cf249781d67201",
+    "frozen-config.json": "d8a5394e38dd79937d4db47d93a8fb447eec7a131bf021ff788540f53d1063be",
+    "lane_bootstrap.py": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55",
+    "native_guard_child.py": "c83879782defa3b4a866ec26a3a6f3aeed6d188e3f5338d6be6e1c144de3053e",
+    "native_supervisor_driver.py": "cc6115322a9aef4f2262494ec46e33b5ee27ac73e0d04bd7a5fe5b889b1da61a",
+    "parent_harness.py": "ce782cca4d75c091f6e6cb979ad348444cc8dd5541df478d297ad370a3ea2442",
+    "prepare_five_frozen_targets.py": "5459e5295ab4593e6a218c13620344f1cccb2106089ea6e62934e7bf5d6825b6",
+    "run_native_smoke_reserved.py": "7c91789897582340110a3563c11913c2d2787b5cd53c1678cf916f9a29a25f25",
+    "smoke_resource_common.py": "8e75a05f73381a44da97a40c464307fb8561f082bf545d913a9f92b6ae3e262d",
+    "target-preparation-payload.json": "52882136cf97ab40fca3a245ed1ebfa4ee459d73eb7dbd2c4eab8ab3ebb71792",
+    "training_lane.py": "556a26e14c16117edd44fd06c6cf658be666a08625319949c9a6c05952411acd"
+  },
+  "package_manifest_sha256": "8780fd4efecca5c81d0f2f74263b564941e0813b1d4622d454e407ee38ed007d",
+  "review": "DCEC prefix syntax fix qualified by81 passing tests; newly observed Grok family_supervision.py inventoried but not imported by smoke or substituted for canonical compiler.",
+  "training_bounds": {
+    "aggregate_output_bytes": 80000000,
+    "inherited_per_file_fsize_bytes": 30000000
+  }
+}

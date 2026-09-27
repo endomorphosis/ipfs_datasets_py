@@ -1,0 +1,75 @@
+{
+  "status": "qualified",
+  "production_change": "_LegalIRTargetTimeout derives from BaseException so adapter Exception handlers cannot swallow owner cancellation; owner still records existing fallback and restores its timer.",
+  "authorization": "Root approved minimal owner-timeout fix and existing target timing test stopwatch scoped to interrupted bridge body; threshold 0.9 seconds retained.",
+  "files": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "before_sha256": "c24e2e4dd65313d32ed969b8250148410556e74a9316e94aa5adf1fce9877307",
+      "after_sha256": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+      "bytes": 1357523,
+      "kind": "production"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py",
+      "before_sha256": "8eba60a9a4e7e598752f29e7ca7e587a5f40ae9a2a49cb10d3e238e239b21296",
+      "after_sha256": "8a0e0e9c6008ea676af486d8231e2f301ad1a6b556fb72b51610e2542c4df331",
+      "bytes": 18547,
+      "kind": "test"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+      "before_sha256": "adba3d3fbd2f44f27322fb9e1c2ca4f05b2ce4816cc12ffd8b27763859396262",
+      "after_sha256": "54ce43fe5408c0e1869e76117abf2298aadc7ca6642cfff64e6013e1bd217121",
+      "bytes": 528220,
+      "kind": "test"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_owned_timeout.py",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_owned_timeout.py",
+      "before_sha256": null,
+      "after_sha256": "6a49af312460a2696b64cc8a39bad404c0fb4aab30a89335eb28f14c6d051d19",
+      "bytes": 3163,
+      "kind": "test"
+    }
+  ],
+  "tests": {
+    "private_reproduction_before": {
+      "failed": 3,
+      "passed": 1
+    },
+    "private_reproduction_candidate": {
+      "passed": 4
+    },
+    "canonical_r1": {
+      "passed": 40,
+      "failed": 1,
+      "reason": "Old whole-evaluate timing assertion included unrelated setup and downstream work."
+    },
+    "canonical_r2": {
+      "passed": 0,
+      "failed": 1,
+      "reason": "Torch-preimport did not remove unrelated whole-evaluate time; this failed attempt is retained."
+    },
+    "canonical_r3": {
+      "passed": 41,
+      "failed": 0,
+      "pytest_seconds": 4.88,
+      "runner_seconds": 6.379144505830482
+    }
+  },
+  "invariants": {
+    "target_timeout_seconds": 15,
+    "class_space_changed": false,
+    "acceptance_threshold_changed": false,
+    "training_run": false,
+    "admitted": false,
+    "formalized": false,
+    "checkpoint_modified": false,
+    "weights_downloaded": false
+  },
+  "scope": "Unit qualification only; complete frozen bridge coverage and subsequent shared-target native smoke remain required."
+}

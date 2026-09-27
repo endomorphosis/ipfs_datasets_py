@@ -1,0 +1,418 @@
+{
+  "admitted": false,
+  "bridge_evaluate_executed": false,
+  "bridge_names": [],
+  "cache_observation": "Fresh standalone process. No metric bridge cache is used; OS page cache and host CPU contention are uncontrolled.",
+  "checks": {
+    "deadline_exception_and_nonrenderability": true,
+    "empty_vocabulary_abstains": true,
+    "minimum_duration": true,
+    "prohibition": true,
+    "three_gates_compiled": true,
+    "three_original_source_gaps_preserved": true
+  },
+  "cold_speed_baseline_claim": false,
+  "concurrency_claim": false,
+  "constitution_processed": false,
+  "elapsed_seconds": 1.2237286269664764,
+  "empty_vocabulary_checks": [
+    {
+      "abstained_as_required": true,
+      "admitted": false,
+      "compiler_status": "abstained",
+      "error": "unsupported_semantics",
+      "text": "Company A shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "abstained_as_required": true,
+      "admitted": false,
+      "compiler_status": "abstained",
+      "error": "unsupported_semantics",
+      "text": "The agency shall not disclose records."
+    },
+    {
+      "abstained_as_required": true,
+      "admitted": false,
+      "compiler_status": "abstained",
+      "error": "unsupported_semantics",
+      "text": "The officer shall retain the file for at least 20 days."
+    }
+  ],
+  "error": null,
+  "formalized": false,
+  "gate_rows": [
+    {
+      "admitted": false,
+      "allow_partial": false,
+      "compiler_seconds": 0.04175657802261412,
+      "compiler_status": "success",
+      "compiler_status_scope": "native OperationStatus; success is not admission",
+      "decompiled": [
+        "Company A must submit backup report within 10 days unless emergency."
+      ],
+      "decompiler_seconds": 1.3791956007480621e-05,
+      "diagnostic_fields": [],
+      "error": null,
+      "evidence_wall_seconds": 0.2987620709463954,
+      "formalized": false,
+      "parser_temporal_records": [
+        {
+          "quantity": 10,
+          "temporal_kind": "within_duration",
+          "value": "10 days"
+        }
+      ],
+      "parser_vocabulary": {
+        "actions": [
+          "submit"
+        ],
+        "actors": [
+          "Company A"
+        ],
+        "objects": [
+          "backup report"
+        ],
+        "qualifiers": [
+          "emergency",
+          "within 10 days"
+        ]
+      },
+      "rules": [
+        {
+          "action": "submit",
+          "actor": "Company A",
+          "conditions": [],
+          "exceptions": [
+            "emergency"
+          ],
+          "modality": "O",
+          "object": "backup report",
+          "temporal": [
+            "within 10 days"
+          ]
+        }
+      ],
+      "source": {
+        "source_span_id": "synthetic-timing-gate-0",
+        "synthetic": true,
+        "text": "Company A shall submit backup report within 10 days unless emergency."
+      },
+      "synthetic": true,
+      "temporal_sidecar_seconds": 0.00012312107719480991,
+      "vocabulary_seconds": 0.256868579890579,
+      "wall_seconds": 0.2986389498692006
+    },
+    {
+      "admitted": false,
+      "allow_partial": false,
+      "compiler_seconds": 0.025621153181418777,
+      "compiler_status": "success",
+      "compiler_status_scope": "native OperationStatus; success is not admission",
+      "decompiled": [
+        "Agency must not disclose records."
+      ],
+      "decompiler_seconds": 9.295996278524399e-06,
+      "diagnostic_fields": [],
+      "error": null,
+      "evidence_wall_seconds": 0.05759356589987874,
+      "formalized": false,
+      "parser_temporal_records": [],
+      "parser_vocabulary": {
+        "actions": [
+          "disclose"
+        ],
+        "actors": [
+          "agency"
+        ],
+        "objects": [
+          "records"
+        ],
+        "qualifiers": []
+      },
+      "rules": [
+        {
+          "action": "disclose",
+          "actor": "agency",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "F",
+          "object": "records",
+          "temporal": []
+        }
+      ],
+      "source": {
+        "source_span_id": "synthetic-timing-gate-1",
+        "synthetic": true,
+        "text": "The agency shall not disclose records."
+      },
+      "synthetic": true,
+      "temporal_sidecar_seconds": 7.686484605073929e-05,
+      "vocabulary_seconds": 0.0318862518761307,
+      "wall_seconds": 0.057516701053828
+    },
+    {
+      "admitted": false,
+      "allow_partial": false,
+      "compiler_seconds": 0.026156502775847912,
+      "compiler_status": "success",
+      "compiler_status_scope": "native OperationStatus; success is not admission",
+      "decompiled": [
+        "Officer must retain the file for at least 20 days."
+      ],
+      "decompiler_seconds": 7.856171578168869e-06,
+      "diagnostic_fields": [],
+      "error": null,
+      "evidence_wall_seconds": 0.03881134302355349,
+      "formalized": false,
+      "parser_temporal_records": [
+        {
+          "quantity": 20,
+          "temporal_kind": "minimum_duration",
+          "value": "20 days"
+        }
+      ],
+      "parser_vocabulary": {
+        "actions": [
+          "retain"
+        ],
+        "actors": [
+          "officer"
+        ],
+        "objects": [
+          "the file for at least 20 days"
+        ],
+        "qualifiers": [
+          "20 days"
+        ]
+      },
+      "rules": [
+        {
+          "action": "retain",
+          "actor": "officer",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "the file for at least 20 days",
+          "temporal": [
+            "20 days"
+          ]
+        }
+      ],
+      "source": {
+        "source_span_id": "synthetic-timing-gate-2",
+        "synthetic": true,
+        "text": "The officer shall retain the file for at least 20 days."
+      },
+      "synthetic": true,
+      "temporal_sidecar_seconds": 0.00010470603592693806,
+      "vocabulary_seconds": 0.012542278040200472,
+      "wall_seconds": 0.03870663698762655
+    }
+  ],
+  "input_manifest_sha256": "5cafa6ac17be00810b3a8ce0ae20a07504802bcc46d67212e1eac245e0bf4ecd",
+  "lake_executed": false,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_target_count": null,
+  "metric_disk_cache": 0,
+  "passed": true,
+  "real_us_code_span_count": 3,
+  "sample_count": 6,
+  "schema": "strict-six-span-timing-followup/v1",
+  "source_rows": [
+    {
+      "admitted": false,
+      "allow_partial": false,
+      "compiler_seconds": 0.026291896821931005,
+      "compiler_status": "abstained",
+      "compiler_status_scope": "native OperationStatus; success is not admission",
+      "decompiled": [],
+      "decompiler_seconds": 1.9208528101444244e-07,
+      "diagnostic_fields": [
+        "cross_references"
+      ],
+      "error": {
+        "code": "unsupported_semantics",
+        "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained."
+      },
+      "evidence_wall_seconds": 0.05296832695603371,
+      "formalized": false,
+      "parser_temporal_records": [],
+      "parser_vocabulary": {
+        "actions": [
+          "establish"
+        ],
+        "actors": [
+          "Secretary"
+        ],
+        "objects": [
+          "a market placement program for qualified beginning farmers and ranchers and other borrowers of farmer program loans that the Secretary believes have a reasonable chance of qualifying for commercial credit with a guarantee provided under this chapter"
+        ],
+        "qualifiers": []
+      },
+      "rules": [],
+      "source": {
+        "canonical_citation": "7 U.S.C. \u00a7 2006d",
+        "document_ordinal": 0,
+        "entry_cid": "sha256:f9e59dffd7ba14ebe9c4be12697ddd2945fab1b5965f973c070b85baba012063",
+        "id": "usc:us:7:2006d.span-1",
+        "legal_id": "usc:us:7:2006d",
+        "reason": "",
+        "release_point": "us/pl/119/102",
+        "retrieval_method": "sparse_bm25",
+        "retrieval_score": null,
+        "section": "2006d",
+        "source_span_id": "uscode-span-0cfe94ff35f040dd0b3761a3c73db89cf3943ecd938377cdca09c4a48bfa5134",
+        "span_text_sha256": "c3466d9a5aeba01348af5a7047866c6ab5f850dea52656e89e1c46259238ea42",
+        "status": "uncompiled",
+        "synthetic": false,
+        "text": "The Secretary shall establish a market placement program for qualified beginning farmers and ranchers and other borrowers of farmer program loans that the Secretary believes have a reasonable chance of qualifying for commercial credit with a guarantee provided under this chapter.",
+        "title": "7",
+        "unit_id": "usc:us:7:2006d"
+      },
+      "synthetic": false,
+      "temporal_sidecar_seconds": 0.000170018058270216,
+      "vocabulary_seconds": 0.02650621999055147,
+      "wall_seconds": 0.05279830889776349
+    },
+    {
+      "admitted": false,
+      "allow_partial": false,
+      "compiler_seconds": 0.029542142990976572,
+      "compiler_status": "abstained",
+      "compiler_status_scope": "native OperationStatus; success is not admission",
+      "decompiled": [],
+      "decompiler_seconds": 8.321367204189301e-07,
+      "diagnostic_fields": [
+        "overrides",
+        "cross_references",
+        "resolved_cross_references"
+      ],
+      "error": {
+        "code": "unsupported_semantics",
+        "message": "3 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained."
+      },
+      "evidence_wall_seconds": 0.04927852307446301,
+      "formalized": false,
+      "parser_temporal_records": [],
+      "parser_vocabulary": {
+        "actions": [
+          "complete"
+        ],
+        "actors": [
+          "employee or Member"
+        ],
+        "objects": [
+          "at least 5 years of civilian service creditable"
+        ],
+        "qualifiers": []
+      },
+      "rules": [],
+      "source": {
+        "canonical_citation": "5 U.S.C. \u00a7 8410",
+        "document_ordinal": 1,
+        "entry_cid": "sha256:fa18e6be4c00bc18c10550bb14f033e12d128e0fa09946552253451293f0cbee",
+        "id": "usc:us:5:8410.span-1",
+        "legal_id": "usc:us:5:8410",
+        "reason": "",
+        "release_point": "us/pl/119/102",
+        "retrieval_method": "sparse_bm25",
+        "retrieval_score": null,
+        "section": "8410",
+        "source_span_id": "uscode-span-011cc5288c8740a1106ef812d248c5f6f4340f1564a713d7e3746fbdcb8b8349",
+        "span_text_sha256": "e3eaf61f663e88012c4f4b9a0e2ba7422a525bf7d63108eec543ffe5664dd120",
+        "status": "uncompiled",
+        "synthetic": false,
+        "text": "Notwithstanding any other provision of this chapter, an employee or Member must complete at least 5 years of civilian service creditable under section 8411 in order to be eligible for an annuity under this subchapter.",
+        "title": "5",
+        "unit_id": "usc:us:5:8410"
+      },
+      "synthetic": false,
+      "temporal_sidecar_seconds": 0.00016166595742106438,
+      "vocabulary_seconds": 0.019573881989344954,
+      "wall_seconds": 0.049116857117041945
+    },
+    {
+      "admitted": false,
+      "allow_partial": false,
+      "compiler_seconds": 0.02283323183655739,
+      "compiler_status": "abstained",
+      "compiler_status_scope": "native OperationStatus; success is not admission",
+      "decompiled": [],
+      "decompiler_seconds": 3.520399332046509e-07,
+      "diagnostic_fields": [
+        "cross_references"
+      ],
+      "error": {
+        "code": "unsupported_semantics",
+        "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained."
+      },
+      "evidence_wall_seconds": 0.03742497391067445,
+      "formalized": false,
+      "parser_temporal_records": [],
+      "parser_vocabulary": {
+        "actions": [
+          "terminate"
+        ],
+        "actors": [
+          "authority of the Secretary to carry out this chapter"
+        ],
+        "objects": [
+          "September"
+        ],
+        "qualifiers": []
+      },
+      "rules": [],
+      "source": {
+        "canonical_citation": "16 U.S.C. \u00a7 6809",
+        "document_ordinal": 2,
+        "entry_cid": "sha256:fa16eea29f17778b478fac87d7b608cd20a7904cf7a66d8a94231ad8fda4e440",
+        "id": "usc:us:16:6809.span-1",
+        "legal_id": "usc:us:16:6809",
+        "reason": "",
+        "release_point": "us/pl/119/102",
+        "retrieval_method": "sparse_bm25",
+        "retrieval_score": null,
+        "section": "6809",
+        "source_span_id": "uscode-span-cd23a19d6f1c1492d1f5e09498cb297da282a4fd45c9828e907821e55f8d259f",
+        "span_text_sha256": "0b5751a3df700f63efdd65374dbce959733e4831563c3b79fe9ce23717878c88",
+        "status": "uncompiled",
+        "synthetic": false,
+        "text": "The authority of the Secretary to carry out this chapter shall terminate September 30, 2031 .",
+        "title": "16",
+        "unit_id": "usc:us:16:6809"
+      },
+      "synthetic": false,
+      "temporal_sidecar_seconds": 0.00010217796079814434,
+      "vocabulary_seconds": 0.014489212073385715,
+      "wall_seconds": 0.03732279594987631
+    }
+  ],
+  "source_selection": "Exact prior inventory; no resampling or synthetic substitution for real U.S. Code.",
+  "source_unchanged": true,
+  "synthetic_gate_count": 3,
+  "targets_generated": false,
+  "timing_scope": "Separate wall times for vocabulary_from_clause, TypedDeonticCanonicalCompiler.compile, and decompile_rule. The compiler reparses; this measures the existing double-parse path.",
+  "timing_summary": {
+    "retained_us_code": {
+      "compiler_seconds": 0.02622242388315499,
+      "decompiler_seconds": 4.5875397821267444e-07,
+      "sample_count": 3,
+      "vocabulary_seconds": 0.02018977135109405,
+      "wall_seconds": 0.04641265398822725
+    },
+    "synthetic_gates": {
+      "compiler_seconds": 0.031178077993293602,
+      "decompiler_seconds": 1.031470795472463e-05,
+      "sample_count": 3,
+      "vocabulary_seconds": 0.10043236993563671,
+      "wall_seconds": 0.13162076263688505
+    }
+  },
+  "training_executed": false,
+  "tree_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "worker_count": 1
+}

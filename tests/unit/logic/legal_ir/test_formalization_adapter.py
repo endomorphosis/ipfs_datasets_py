@@ -306,3 +306,42 @@ def test_custom_generic_config_explains_unemitted_views_and_empty_producer() -> 
     assert "emits no formula" in missing_view_diagnostic.message
     assert missing_view_diagnostic.producer_id == adapter.producer_id
     assert artifact.compiler_config.producer_id == ""
+
+
+def test_frame_formulas_share_complete_immutable_graph_context() -> None:
+    """Many frame formulas retain one full context without shared mutable data."""
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
+
+    source = _reviewed_fixture().to_dict()
+    graph = source["modal_ir"]["frame_logic"]
+    graph["triples"] = [
+        {"subject": "agency", "predicate": "relation_" + str(index),
+         "object": "notice_" + str(index), "metadata": {"index": index}}
+        for index in range(8)
+    ]
+    graph["metadata"]["nested"] = {"tags": ["complete", "retained"]}
+    expected = deepcopy(graph)
+    artifact = LegalIRFormalizationAdapter().adapt(source)
+    frames = [formula for formula in artifact.formulas
+              if formula.view_id == "legal-ir-view/frame-logic/v1"]
+    assert len(frames) == len(expected["triples"])
+    contexts = [formula.expression["legal_frame_logic"] for formula in frames]
+    assert all(isinstance(context, FrozenMap) for context in contexts)
+    assert all(context.to_dict() == expected for context in contexts)
+    assert all(context is contexts[0] for context in contexts)
+    for formula, triple in zip(frames, expected["triples"]):
+        serialized = formula.to_dict()["expression"]
+        assert serialized["legal_frame_logic"] == expected
+        assert {key: serialized[key] for key in ("subject", "predicate", "object")} == {
+            key: triple[key] for key in ("subject", "predicate", "object")}
+    with pytest.raises(TypeError):
+        contexts[0]["graph_id"] = "changed"
+    with pytest.raises(TypeError):
+        contexts[0]["triples"][0]["object"] = "changed"
+    with pytest.raises(TypeError):
+        contexts[0]["metadata"]["nested"]["tags"][0] = "changed"
+    graph["triples"][0]["object"] = "mutated source"
+    detached = frames[0].to_dict()
+    detached["expression"]["legal_frame_logic"]["metadata"]["nested"]["tags"].append("mutated copy")
+    assert all(context.to_dict() == expected for context in contexts)

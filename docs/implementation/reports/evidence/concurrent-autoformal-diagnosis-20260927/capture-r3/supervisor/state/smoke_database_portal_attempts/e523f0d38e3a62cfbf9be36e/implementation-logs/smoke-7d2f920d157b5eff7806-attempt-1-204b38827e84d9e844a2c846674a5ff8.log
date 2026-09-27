@@ -1,0 +1,27 @@
+Task: SMOKE-7d2f920d157b5eff7806 Train learned compiler and decompiler heads beside strict span conversion
+Started: 2026-09-27T23:31:51.627914+00:00
+Execution: typed local declared-validation-plan
+
+
+Validation:
+[validation selection] scope=pre_merge changed=[] escalated=False
+$ python3 -m pytest tests/test_concurrent_smoke.py -q [targeted]
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests/test_concurrent_smoke.py F                                         [100%]
+
+=================================== FAILURES ===================================
+____________________ test_real_concurrent_autoformal_smoke _____________________
+tests/test_concurrent_smoke.py:19: in test_real_concurrent_autoformal_smoke
+    assert report['passed'] is True
+E   assert False is True
+=========================== short test summary info ============================
+FAILED tests/test_concurrent_smoke.py::test_real_concurrent_autoformal_smoke
+============================== 1 failed in 37.52s ==============================
+[validation failed] returncode=1
+[validation stopped]

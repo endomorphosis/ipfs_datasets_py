@@ -1,0 +1,117 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-cache
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 81 items
+
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py ............. [ 16%]
+..................FFF...FF.FFFFFFF..F                                    [ 61%]
+tests/unit_tests/logic/CEC/native/test_dcec_parsing.py ................. [ 82%]
+..............                                                           [100%]
+
+=================================== FAILURES ===================================
+_ test_generated_bridge_unary_deontic_formula_preserves_operator[obligated-DeonticOperator.OBLIGATION] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:452: in test_generated_bridge_unary_deontic_formula_preserves_operator
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='O', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', '(happens', 'officer', 'retain_file', 't0)))']
+_ test_generated_bridge_unary_deontic_formula_preserves_operator[permitted-DeonticOperator.PERMISSION] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:452: in test_generated_bridge_unary_deontic_formula_preserves_operator
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='P', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((P', '(happens', 'officer', 'retain_file', 't0)))']
+_ test_generated_bridge_unary_deontic_formula_preserves_operator[forbidden-DeonticOperator.PROHIBITION] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:452: in test_generated_bridge_unary_deontic_formula_preserves_operator
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='F', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((F', '(happens', 'officer', 'retain_file', 't0)))']
+__ test_unary_deontic_token_preserves_operator[O-DeonticOperator.OBLIGATION] ___
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:477: in test_unary_deontic_token_preserves_operator
+    assert isinstance(formula, DeonticFormula)
+E   assert False
+E    +  where False = isinstance(None, DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:347 Could not convert token to formula: O
+__ test_unary_deontic_token_preserves_operator[P-DeonticOperator.PERMISSION] ___
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:476: in test_unary_deontic_token_preserves_operator
+    formula = token_to_formula(ParseToken(name, [ParseToken("happens", ["officer", "retain_file", "t0"])]))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/CEC/native/dcec_integration.py:261: in token_to_formula
+    return DeonticFormula(DeonticOperator.PERMISSIBLE, formula)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'DeonticOperator' has no attribute 'PERMISSIBLE'. Did you mean: 'PERMISSION'?
+_______ test_multiargument_obligation_string_keeps_inner_formula[agent,] _______
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:486: in test_multiargument_obligation_string_keeps_inner_formula
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='O', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', 'agent', '(happens', 'officer', 'retain_file', 't0)))']
+___ test_multiargument_obligation_string_keeps_inner_formula[agent,moment,] ____
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:486: in test_multiargument_obligation_string_keeps_inner_formula
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='O', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', 'agent', 'moment', '(happens', 'officer', 'retain_file', 't0)))']
+_ test_multiargument_obligation_string_keeps_inner_formula[agent,moment,condition,] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:486: in test_multiargument_obligation_string_keeps_inner_formula
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='O', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', 'agent', 'moment', 'condition', '(happens', 'officer', 'retain_file', 't0)))']
+_ test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,retain_file,t0))garbage] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:503: in test_malformed_or_unsupported_nested_prefix_is_not_accepted
+    with pytest.raises(DCECParsingError):
+E   Failed: DID NOT RAISE DCECParsingError
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', '(happens', 'officer', 'retain_file', 't0))garbage)']
+_ test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,retain_file,t0)) another] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:503: in test_malformed_or_unsupported_nested_prefix_is_not_accepted
+    with pytest.raises(DCECParsingError):
+E   Failed: DID NOT RAISE DCECParsingError
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', '(happens', 'officer', 'retain_file', 't0))', 'another)']
+_ test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,,t0))] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:503: in test_malformed_or_unsupported_nested_prefix_is_not_accepted
+    with pytest.raises(DCECParsingError):
+E   Failed: DID NOT RAISE DCECParsingError
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', '(happens', 'officer', 't0)))']
+_ test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,retain_file,t0),)] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:503: in test_malformed_or_unsupported_nested_prefix_is_not_accepted
+    with pytest.raises(DCECParsingError):
+E   Failed: DID NOT RAISE DCECParsingError
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', '(happens', 'officer', 'retain_file', 't0)))']
+_ test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,event(file),t0))] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:503: in test_malformed_or_unsupported_nested_prefix_is_not_accepted
+    with pytest.raises(DCECParsingError):
+E   Failed: DID NOT RAISE DCECParsingError
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', '(happens', 'officer', '(event', 'file)', 't0)))']
+- generated xml file: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-before-final.xml -
+=========================== short test summary info ============================
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_generated_bridge_unary_deontic_formula_preserves_operator[obligated-DeonticOperator.OBLIGATION]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_generated_bridge_unary_deontic_formula_preserves_operator[permitted-DeonticOperator.PERMISSION]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_generated_bridge_unary_deontic_formula_preserves_operator[forbidden-DeonticOperator.PROHIBITION]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_unary_deontic_token_preserves_operator[O-DeonticOperator.OBLIGATION]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_unary_deontic_token_preserves_operator[P-DeonticOperator.PERMISSION]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_multiargument_obligation_string_keeps_inner_formula[agent,]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_multiargument_obligation_string_keeps_inner_formula[agent,moment,]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_multiargument_obligation_string_keeps_inner_formula[agent,moment,condition,]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,retain_file,t0))garbage]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,retain_file,t0)) another]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,,t0))]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,retain_file,t0),)]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_malformed_or_unsupported_nested_prefix_is_not_accepted[O(happens(officer,event(file),t0))]
+======================== 13 failed, 68 passed in 0.27s =========================

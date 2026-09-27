@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "-m",
+    "pytest",
+    "tests/unit/logic/legal_ir/test_formalization_adapter.py",
+    "-q",
+    "--basetemp=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/pytest-after",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/pytest-cache",
+    "--junitxml=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/pytest-after.xml"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 4.426168727921322
+}

@@ -1,0 +1,58 @@
+{
+  "admitted": false,
+  "allow_partial": false,
+  "compiler_seconds": 0.026156502775847912,
+  "compiler_status": "success",
+  "compiler_status_scope": "native OperationStatus; success is not admission",
+  "decompiled": [
+    "Officer must retain the file for at least 20 days."
+  ],
+  "decompiler_seconds": 7.856171578168869e-06,
+  "diagnostic_fields": [],
+  "error": null,
+  "evidence_wall_seconds": 0.03881134302355349,
+  "formalized": false,
+  "parser_temporal_records": [
+    {
+      "quantity": 20,
+      "temporal_kind": "minimum_duration",
+      "value": "20 days"
+    }
+  ],
+  "parser_vocabulary": {
+    "actions": [
+      "retain"
+    ],
+    "actors": [
+      "officer"
+    ],
+    "objects": [
+      "the file for at least 20 days"
+    ],
+    "qualifiers": [
+      "20 days"
+    ]
+  },
+  "rules": [
+    {
+      "action": "retain",
+      "actor": "officer",
+      "conditions": [],
+      "exceptions": [],
+      "modality": "O",
+      "object": "the file for at least 20 days",
+      "temporal": [
+        "20 days"
+      ]
+    }
+  ],
+  "source": {
+    "source_span_id": "synthetic-timing-gate-2",
+    "synthetic": true,
+    "text": "The officer shall retain the file for at least 20 days."
+  },
+  "synthetic": true,
+  "temporal_sidecar_seconds": 0.00010470603592693806,
+  "vocabulary_seconds": 0.012542278040200472,
+  "wall_seconds": 0.03870663698762655
+}

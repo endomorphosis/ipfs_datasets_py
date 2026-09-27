@@ -1,0 +1,48 @@
+{
+  "admitted": false,
+  "allow_partial": false,
+  "compiler_seconds": 0.025621153181418777,
+  "compiler_status": "success",
+  "compiler_status_scope": "native OperationStatus; success is not admission",
+  "decompiled": [
+    "Agency must not disclose records."
+  ],
+  "decompiler_seconds": 9.295996278524399e-06,
+  "diagnostic_fields": [],
+  "error": null,
+  "evidence_wall_seconds": 0.05759356589987874,
+  "formalized": false,
+  "parser_temporal_records": [],
+  "parser_vocabulary": {
+    "actions": [
+      "disclose"
+    ],
+    "actors": [
+      "agency"
+    ],
+    "objects": [
+      "records"
+    ],
+    "qualifiers": []
+  },
+  "rules": [
+    {
+      "action": "disclose",
+      "actor": "agency",
+      "conditions": [],
+      "exceptions": [],
+      "modality": "F",
+      "object": "records",
+      "temporal": []
+    }
+  ],
+  "source": {
+    "source_span_id": "synthetic-timing-gate-1",
+    "synthetic": true,
+    "text": "The agency shall not disclose records."
+  },
+  "synthetic": true,
+  "temporal_sidecar_seconds": 7.686484605073929e-05,
+  "vocabulary_seconds": 0.0318862518761307,
+  "wall_seconds": 0.057516701053828
+}

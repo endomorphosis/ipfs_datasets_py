@@ -1,0 +1,87 @@
+{
+  "admission": {
+    "completion_authoritative": false,
+    "labels_may_select_provider": false,
+    "proof_authoritative": false,
+    "proposal_only": true,
+    "provider_result_admitted": false,
+    "repository_write_allowed": false
+  },
+  "attempts": [
+    {
+      "admitted": true,
+      "display_label": "",
+      "executable_id": "declared-validation-plan",
+      "invoked": true,
+      "prompt_bytes": 0,
+      "prompt_tokens": 0,
+      "reason_code": "completed",
+      "response_bytes": 0,
+      "role": "deterministic-local",
+      "stage": "local-operation",
+      "status": "succeeded"
+    }
+  ],
+  "bounds": {
+    "max_context_bytes": 16384,
+    "max_context_tokens": 4096,
+    "max_provider_response_bytes": 262144
+  },
+  "codex_review": null,
+  "completion_authoritative": false,
+  "context_usage": {
+    "byte_limit": 16384,
+    "bytes": 516,
+    "token_limit": 4096,
+    "tokens": 129
+  },
+  "daemon_integration": {
+    "raw_command_arguments_accepted": false,
+    "schema": "ipfs_accelerate_py/agent-supervisor/deterministic-task-execution-integration@1",
+    "validation_graph_id": "6a3afb1b12aa4582adcf92c92806e549fc63d97fa4a61f0bc38023800935d540",
+    "validation_plan_cid": "baguqeerarr3rymku2olcc7zohy4pqlvqhasegmrvbv3sl5pcxdyvof6t4qaa"
+  },
+  "evidence": {
+    "coverage": [
+      "deterministic-only-typed-allowlist-zero-provider-calls",
+      "task-context-bytes-tokens-hard-limits",
+      "provider-prompt-bytes-tokens-hard-limits",
+      "exact-grok-codex-executable-identity",
+      "independent-sequential-review-order",
+      "quota-failure-defer-without-promotion-or-fallback",
+      "display-labels-never-select-or-upgrade",
+      "proposal-only-admission-no-completion-or-proof-authority"
+    ],
+    "requirement_ids": [
+      "SCAEV167ROUTE"
+    ]
+  },
+  "grok_implementation": null,
+  "interface": "TaskExecutionPolicy@1",
+  "isolation_audit": {
+    "llm_call_count": 0,
+    "model_call_count": 0,
+    "provider_call_count": 0
+  },
+  "mode": "deterministic-only",
+  "prompt_usage": {
+    "byte_limit": 16384,
+    "bytes": 0,
+    "token_limit": 4096,
+    "tokens": 0
+  },
+  "proof_authoritative": false,
+  "reason_code": "completed",
+  "receipt_id": "baguqeerayh27hvwqb6frjfatupssjots52uf7okuiqcixcjrbloaa22cktwq",
+  "result": [
+    {
+      "authorized": true,
+      "task_id": "SMOKE-08848e9c2f1d58fe8499",
+      "validation_graph_id": "6a3afb1b12aa4582adcf92c92806e549fc63d97fa4a61f0bc38023800935d540",
+      "validation_plan_cid": "baguqeerarr3rymku2olcc7zohy4pqlvqhasegmrvbv3sl5pcxdyvof6t4qaa"
+    }
+  ],
+  "schema": "ipfs_accelerate_py/agent-supervisor/task-execution-receipt@1",
+  "status": "succeeded",
+  "task_id": "SMOKE-08848e9c2f1d58fe8499"
+}

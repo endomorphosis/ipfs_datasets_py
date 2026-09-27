@@ -1,0 +1,39 @@
+{
+  "status": "qualified",
+  "scope": "Preserve balanced pure prefix-call trees before the legacy infix path; accept unary obligation and use canonical permission enum. Existing multiargument obligation semantics remain unchanged. Malformed trailing/empty/unbalanced syntax and unsupported nested function terms fail explicitly.",
+  "files": [
+    {
+      "path": "ipfs_datasets_py/logic/CEC/native/dcec_integration.py",
+      "before_sha256": "6b1a94cacdfb70088fe110499811b0d017b5509eb1a20fc8aeeca4c0c81f5304",
+      "preimage": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/dcec_integration.before.py",
+      "after_sha256": "3309196821c2ff357ecf587cba7b79bb997db3a0d003b2eec0b55126d8eab6b9",
+      "bytes": 18383
+    },
+    {
+      "path": "tests/unit_tests/logic/CEC/native/test_dcec_integration.py",
+      "before_sha256": "d195573cb85d987dd4b112b7bf3df9db017cff5229c2ad9493b925f7023e84f7",
+      "preimage": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/test_dcec_integration.before.py",
+      "after_sha256": "eb47750fad7949a42f2196ded369eda5bd99df10ada25daec1cf73059b845f3b",
+      "bytes": 15326
+    }
+  ],
+  "tests": {
+    "before_final": {
+      "failed": 13,
+      "passed": 68,
+      "pytest_seconds": 0.27
+    },
+    "after": {
+      "passed": 81,
+      "failed": 0,
+      "pytest_seconds": 0.19
+    },
+    "earlier_fixture_attempts": "Retained initial missing-enum collection failure and intermediate term-rendering assertion failures; final before/after uses identical corrected tests."
+  },
+  "admitted": false,
+  "formalized": false,
+  "training_executed": false,
+  "prover_executed": false,
+  "checkpoint_modified": false,
+  "producer_manifest_refresh_required": true
+}

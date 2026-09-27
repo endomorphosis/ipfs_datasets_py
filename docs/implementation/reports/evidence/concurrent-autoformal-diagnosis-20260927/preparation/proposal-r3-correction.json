@@ -1,0 +1,7 @@
+{
+  "reason": "Native intent output identifiers must be relative safe paths; raw proposal retains absolute artifact reference in CAS evidence.",
+  "changed": "outputs[0].path = raw-proposal.txt",
+  "source_sha256": "06c552964e1ab4aebd555f579be171dbdf8a840882c279e7f6e7f25ef6408b1d",
+  "temperature_changed": false,
+  "context_budget_changed": false
+}

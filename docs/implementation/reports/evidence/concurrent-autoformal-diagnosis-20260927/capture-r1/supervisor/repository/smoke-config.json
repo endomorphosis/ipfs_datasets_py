@@ -1,0 +1,19 @@
+{
+  "admitted": false,
+  "bundle_sha256": {
+    "harness/conversion_lane.py": "e259e8e93699afd65ed6bea8d6f550b8dbeb0d61fc1f40e043af9a4e53c40161",
+    "harness/dependency_binding.py": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e",
+    "harness/formal_validation.py": "c1c67d32e4a0f12fcd48c272b9e0efe17d4cd00086599c1f73cf249781d67201",
+    "harness/frozen-config.json": "d8a5394e38dd79937d4db47d93a8fb447eec7a131bf021ff788540f53d1063be",
+    "harness/lane_bootstrap.py": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55",
+    "harness/parent_harness.py": "ce782cca4d75c091f6e6cb979ad348444cc8dd5541df478d297ad370a3ea2442",
+    "harness/prepare_five_frozen_targets.py": "5459e5295ab4593e6a218c13620344f1cccb2106089ea6e62934e7bf5d6825b6",
+    "harness/target-preparation-payload.json": "52882136cf97ab40fca3a245ed1ebfa4ee459d73eb7dbd2c4eab8ab3ebb71792",
+    "harness/training_lane.py": "556a26e14c16117edd44fd06c6cf658be666a08625319949c9a6c05952411acd"
+  },
+  "formalized": false,
+  "lane_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r1/supervisor/lanes",
+  "production_promotion": false,
+  "schema": "concurrent-autoformal-native-fixture/v1",
+  "scope": "native learned compiler-facing/decompiler-head training with frozen targets and concurrent strict conversion checks; source proposals are separately recorded, never applied here"
+}

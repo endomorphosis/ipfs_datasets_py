@@ -1,0 +1,116 @@
+{
+  "admitted": false,
+  "dcec": {
+    "passed": true,
+    "record_count": 1,
+    "records": [
+      {
+        "admitted": false,
+        "checked_field": "proof_input",
+        "error": null,
+        "expected_deontic_operator": "O",
+        "native_rendering": "O(happens(company_a:Object, submit_backup_report:Object, t0:Object))",
+        "native_validation_errors": [],
+        "parsed_class": "ipfs_datasets_py.logic.CEC.native.dcec_core.DeonticFormula",
+        "parsed_operator": "DeonticOperator.OBLIGATION",
+        "passed": true,
+        "proof_executed": false,
+        "proof_input_sha256": "becd6ce8eb56b7103793fc618e20f25bc8fb46d9a08c19779859488ef23b9d8b",
+        "record_index": 0,
+        "source_record": {
+          "formula": "O[company_a()](happens(company_a(), submit_backup_report(), t0()))",
+          "proof_input": "O(happens(company_a,submit_backup_report,t0))",
+          "source_id": "deontic:1b18974752be917315a9e692",
+          "valid": true
+        }
+      }
+    ],
+    "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+  },
+  "passed": false,
+  "producer": "retained deterministic shared bridge target, not learned output",
+  "representation_limits": {
+    "duration_observations": [
+      {
+        "canonical_record": {
+          "quantity": 10,
+          "temporal_kind": "within_duration",
+          "value": "10 days"
+        },
+        "quantity_literal_in_native_tdfol": false,
+        "semantic_encoding_verified": false,
+        "source_duration_absent_from_native_tdfol": true
+      }
+    ],
+    "exception_observations": [
+      {
+        "canonical_exception": "emergency",
+        "literal_in_native_tdfol": false,
+        "semantic_encoding_verified": false,
+        "source_exception_absent_from_native_tdfol": true
+      }
+    ],
+    "limitations": [
+      "Backend syntax and frame schema validation do not establish source semantic equivalence.",
+      "Absent source duration quantities or exceptions are not repaired or inferred by this check.",
+      "A lexical quantity or exception mention alone does not establish its legal scope.",
+      "TDFOL serialization does not preserve the producer agent/context metadata or distinguish every Constant from Variable; term-sort equivalence is not validated.",
+      "The Lake artifact checks a numeric boundary only, independently of these bridge programs."
+    ],
+    "source_semantic_equivalence_verified": false
+  },
+  "sample_id": "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722",
+  "source_text": "Company A shall submit backup report within 10 days unless emergency.",
+  "synthetic": true,
+  "target_document_sha256": "ca1ce54d044ec9fffd77c2390ea647eab43d32b8de070f405a0ad2db7febf27f",
+  "tdfol": {
+    "passed": true,
+    "record_count": 1,
+    "records": [
+      {
+        "admitted": false,
+        "checked_field": "proof_input",
+        "error": null,
+        "expected_deontic_operator": "O",
+        "native_rendering": "O(submit_backup_report(company_a))",
+        "operator_structure": {
+          "canonical_rendering": "O(submit_backup_report(company_a))",
+          "canonical_serialization_preserved": true,
+          "emitted_operators": [
+            {
+              "operator": "O",
+              "source_offset": 0
+            }
+          ],
+          "parsed_operator_paths": [
+            {
+              "class": "DeonticFormula",
+              "operator": "O",
+              "path": "$",
+              "time_bound": null
+            }
+          ],
+          "passed": true,
+          "scope": "operator types, multiplicity and canonical placement for this serialized program; source semantics and term sorts not established",
+          "temporal_operator_count": 0
+        },
+        "parsed_class": "ipfs_datasets_py.logic.TDFOL.tdfol_core.DeonticFormula",
+        "parsed_operator": "DeonticOperator.OBLIGATION",
+        "passed": true,
+        "proof_executed": false,
+        "proof_input_sha256": "ebc22bc2bf934198997fa93c88bbe8181c46336474b86d03c6eda69571b55821",
+        "record_index": 0,
+        "source_record": {
+          "formula": "O(submit_backup_report(company_a))",
+          "parse_ok": true,
+          "predicates": [
+            "submit_backup_report"
+          ],
+          "proof_input": "O(submit_backup_report(company_a))",
+          "source_id": "deontic:1b18974752be917315a9e692"
+        }
+      }
+    ],
+    "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+  }
+}

@@ -1,0 +1,63 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-cache
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 37 items
+
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py ............. [ 35%]
+..................FFFFFF                                                 [100%]
+
+=================================== FAILURES ===================================
+_ test_generated_bridge_unary_deontic_formula_preserves_operator[obligated-DeonticOperator.OBLIGATION] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:452: in test_generated_bridge_unary_deontic_formula_preserves_operator
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='O', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((O', '(happens', 'officer', 'retain_file', 't0)))']
+_ test_generated_bridge_unary_deontic_formula_preserves_operator[permitted-DeonticOperator.PERMISSION] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:452: in test_generated_bridge_unary_deontic_formula_preserves_operator
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='P', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((P', '(happens', 'officer', 'retain_file', 't0)))']
+_ test_generated_bridge_unary_deontic_formula_preserves_operator[forbidden-DeonticOperator.PROHIBITION] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:452: in test_generated_bridge_unary_deontic_formula_preserves_operator
+    assert isinstance(formula, DeonticFormula)
+E   AssertionError: assert False
+E    +  where False = isinstance(ConnectiveFormula(connective=<LogicalConnective.AND: '∧'>, formulas=[AtomicFormula(predicate=Predicate(name='F', argum...e', argument_sorts=[]), arguments=[]), AtomicFormula(predicate=Predicate(name='t0', argument_sorts=[]), arguments=[])]), DeonticFormula)
+------------------------------ Captured log call -------------------------------
+WARNING  ipfs_datasets_py.logic.CEC.native.dcec_integration:dcec_integration.py:159 Multiple top-level args, wrapping in 'and': ['((F', '(happens', 'officer', 'retain_file', 't0)))']
+_ test_multiargument_obligation_preserves_existing_last_argument_behavior[prefix0] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:468: in test_multiargument_obligation_preserves_existing_last_argument_behavior
+    assert [str(term) for term in formula.formula.arguments] == ["officer", "retain_file", "t0"]
+E   AssertionError: assert ['officer:Obj..., 't0:Object'] == ['officer', '...n_file', 't0']
+E     
+E     At index 0 diff: 'officer:Object' != 'officer'
+E     Use -v to get more diff
+_ test_multiargument_obligation_preserves_existing_last_argument_behavior[prefix1] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:468: in test_multiargument_obligation_preserves_existing_last_argument_behavior
+    assert [str(term) for term in formula.formula.arguments] == ["officer", "retain_file", "t0"]
+E   AssertionError: assert ['officer:Obj..., 't0:Object'] == ['officer', '...n_file', 't0']
+E     
+E     At index 0 diff: 'officer:Object' != 'officer'
+E     Use -v to get more diff
+_ test_multiargument_obligation_preserves_existing_last_argument_behavior[prefix2] _
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:468: in test_multiargument_obligation_preserves_existing_last_argument_behavior
+    assert [str(term) for term in formula.formula.arguments] == ["officer", "retain_file", "t0"]
+E   AssertionError: assert ['officer:Obj..., 't0:Object'] == ['officer', '...n_file', 't0']
+E     
+E     At index 0 diff: 'officer:Object' != 'officer'
+E     Use -v to get more diff
+- generated xml file: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-before.xml -
+=========================== short test summary info ============================
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_generated_bridge_unary_deontic_formula_preserves_operator[obligated-DeonticOperator.OBLIGATION]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_generated_bridge_unary_deontic_formula_preserves_operator[permitted-DeonticOperator.PERMISSION]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_generated_bridge_unary_deontic_formula_preserves_operator[forbidden-DeonticOperator.PROHIBITION]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_multiargument_obligation_preserves_existing_last_argument_behavior[prefix0]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_multiargument_obligation_preserves_existing_last_argument_behavior[prefix1]
+FAILED tests/unit_tests/logic/CEC/native/test_dcec_integration.py::test_multiargument_obligation_preserves_existing_last_argument_behavior[prefix2]
+========================= 6 failed, 31 passed in 0.20s =========================

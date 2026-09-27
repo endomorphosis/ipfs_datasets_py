@@ -1,0 +1,11 @@
+{
+  "actual_runtime_tokenizer_required": true,
+  "generation_executed": false,
+  "max_new_tokens": 768,
+  "prompt_bytes": 4565,
+  "prompt_characters": 4565,
+  "request_limit_tokens": 4096,
+  "rough_char4_estimate_not_tokenizer": 1142,
+  "sha256": "94479ce22695761ae225bd64968dea384d3062d0b71be7ddd92ee93d6b9ca4f5",
+  "template_margin_tokens": 64
+}

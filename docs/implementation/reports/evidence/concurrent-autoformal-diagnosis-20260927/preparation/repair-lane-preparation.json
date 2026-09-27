@@ -1,0 +1,72 @@
+{
+  "executed": false,
+  "files": [
+    {
+      "bytes": 18569,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/repair_lane.py",
+      "sha256": "0a32be3ce0552059610ae46c760eb69d4b2690fa6c18a095c922ecf1991cf051"
+    },
+    {
+      "bytes": 12377,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/run_repair_lane_reserved.py",
+      "sha256": "da673b07dd5e4d1078d637f73d560c2d4e767bcd9011ebc490af9b7e6da7d939"
+    },
+    {
+      "bytes": 7538,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/repair-proposal-plan.json",
+      "sha256": "f03ae92f8db79f890784b0be0c44fbaaabd7e3159f9075389b2103978745404c"
+    }
+  ],
+  "known_scope": [
+    "Separate native goal/task proposal producer alongside real deterministic training supervisor; it does not claim the repair task was executed or completed by the implementation daemon.",
+    "Shared model-server CPU/RSS is outside owned subprocess accounting; no server capacity/context changes are made.",
+    "Context/health/tokenization and exact HTTP body verified at runtime; unsupported endpoint APIs fail closed before generation.",
+    "No proposal source imported, executed or applied. No formalization, Lake admission or Hub publication."
+  ],
+  "model_generation_executed": false,
+  "native_job_executed": false,
+  "prepared_utc": "2026-09-27T23:13:58.650027+00:00",
+  "r1_preserved_at": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/proposal-pre-r2",
+  "r2_changes": {
+    "intent_metadata_preflight": "reject nested float values before DB writes",
+    "intent_temperature_metadata": "integer 0; actual HTTP temperature remains numeric 0.0",
+    "ledger_lock_timeout_seconds": 30,
+    "usage_poll_interval_seconds": 10
+  },
+  "readiness_observation": {
+    "cli_transport_not_selected_reason": "native structured CLI adapters do not forward invocation temperature or context parameters to child CLI argv",
+    "codex_login_status_returncode": 0,
+    "configuration_changed": false,
+    "existing_physical_n_ctx": 32768,
+    "existing_slots": 4,
+    "health_status": 200,
+    "local_base_url": "http://172.17.0.1:8080",
+    "model": "leanstral_local",
+    "probe_kind": "read-only HTTP GET metadata and CLI status/help; no inference",
+    "provider": "llamacpp"
+  },
+  "revision": "r2",
+  "runtime_contract": {
+    "campaign_cap_bytes": 75000000000,
+    "context_total_max": 4096,
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "outer_seconds": 600,
+    "output_max_tokens": 768,
+    "proposal_applied": false,
+    "readiness_seconds": 400,
+    "request_seconds": 120,
+    "storage_reservation_bytes": 75000000,
+    "task_claimed": false,
+    "task_completed": false,
+    "task_status_preserved": true,
+    "temperature": 0
+  },
+  "schema": "local-parser-proposal-preparation/v1",
+  "validation": {
+    "acceptance_fixture_text_included": false,
+    "native_provider_runtime_qualified": false,
+    "python_ast_parsed": true,
+    "three_training_source_hashes_match_receipts": true
+  }
+}

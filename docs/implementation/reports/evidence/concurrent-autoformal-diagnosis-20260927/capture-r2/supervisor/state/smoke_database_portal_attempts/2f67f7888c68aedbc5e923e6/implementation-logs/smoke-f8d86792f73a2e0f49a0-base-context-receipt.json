@@ -1,0 +1,62 @@
+{
+  "budget_resolution": {
+    "contract_version": 1,
+    "effective_input_limit": 4096,
+    "provider_context_window": 144576,
+    "provider_max_input_tokens": null,
+    "reserved_output_tokens": 16384,
+    "reserved_tool_tokens": 8192,
+    "schema": "ipfs_accelerate_py/agent-supervisor/context-budget-resolution@1",
+    "supervisor_max_input_tokens": 4096
+  },
+  "capsule_id": "baguqeeran4zdq4dujgwu4mcnxxw5srmy6ldakhcz26guevj7rqsrv4qztgpa",
+  "contract_version": 1,
+  "decisions": [],
+  "effective_input_limit": 4096,
+  "estimator_error_bps": 10000,
+  "estimator_name": "calibrated_utf8",
+  "evidence": {
+    "artifact_digest": "sha256:8b488536feb95fd82caa9f663e96802ecfb11b2fd13438bb9c528e329154747c",
+    "budget_resolution": {
+      "contract_version": 1,
+      "effective_input_limit": 4096,
+      "provider_context_window": 144576,
+      "provider_max_input_tokens": null,
+      "reserved_output_tokens": 16384,
+      "reserved_tool_tokens": 8192,
+      "schema": "ipfs_accelerate_py/agent-supervisor/context-budget-resolution@1",
+      "supervisor_max_input_tokens": 4096
+    },
+    "capsule_id": "baguqeeran4zdq4dujgwu4mcnxxw5srmy6ldakhcz26guevj7rqsrv4qztgpa",
+    "content_id": "baguqeeraou4knhfqkp6hwyfmsc26jc5sykd3ktpmpuvzxjy3qqmxfi5mq3eq",
+    "contract_version": 1,
+    "effective_input_limit": 4096,
+    "input_tokens": 2617,
+    "policy_id": "policy:implementation-daemon",
+    "policy_revision": "sha256:585aff7ef3c2bbb166a75d9be79ab49b136ff84e29fd957eed378f66fd8ca024",
+    "repository_id": "repository:sha256:d05d4e896568d5169b86f972e005d7a50af3d8b530ddd532bead8a2157f0569d",
+    "required_fields": [
+      "acceptance",
+      "authority",
+      "goal",
+      "scope"
+    ],
+    "required_reference_ids": [],
+    "requirement_id": "208290439421789408250562066350459701853",
+    "result": "passed",
+    "schema": "ipfs_accelerate_py/agent-supervisor/required-context-budget-evidence@2",
+    "selected_reference_ids": [],
+    "tree_id": "2879d35adfa28fbe2726f77d6c6ce5aabb93f643"
+  },
+  "evidence_claim_references": [
+    "208290439421789408250562066350459701853"
+  ],
+  "input_tokens": 2617,
+  "objective_id": "SMOKE-f8d86792f73a2e0f49a0",
+  "policy_id": "policy:implementation-daemon",
+  "policy_revision": "sha256:585aff7ef3c2bbb166a75d9be79ab49b136ff84e29fd957eed378f66fd8ca024",
+  "repository_id": "repository:sha256:d05d4e896568d5169b86f972e005d7a50af3d8b530ddd532bead8a2157f0569d",
+  "schema": "ipfs_accelerate_py/agent-supervisor/context-compilation-receipt@2",
+  "stage": "implementation",
+  "tree_id": "2879d35adfa28fbe2726f77d6c6ce5aabb93f643"
+}

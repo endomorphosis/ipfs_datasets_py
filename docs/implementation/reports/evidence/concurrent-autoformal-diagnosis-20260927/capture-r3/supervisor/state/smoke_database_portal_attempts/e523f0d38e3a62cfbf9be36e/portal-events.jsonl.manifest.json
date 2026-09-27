@@ -1,0 +1,34 @@
+{
+  "active_indexed_bytes": 18608,
+  "active_path": "portal-events.jsonl",
+  "earliest_sequence": 1,
+  "files": [
+    {
+      "canonical_events": true,
+      "device": 66306,
+      "event_count": 8,
+      "first_sequence": 1,
+      "inode": 67410287,
+      "last_sequence": 8,
+      "mtime_ns": 1790551993941097559,
+      "offset_index": [
+        [
+          1,
+          0
+        ]
+      ],
+      "path": "portal-events.jsonl",
+      "sha256": "",
+      "size_bytes": 18608,
+      "start_previous_event_id": ""
+    }
+  ],
+  "generation": 0,
+  "last_event_id": "sha256:613f2a327349bf385a1f76ee816f19e42d36e8066c38b616d7878dd7b6ef6d74",
+  "latest_sequence": 8,
+  "manifest_digest": "sha256:abb287782ad5a839af9b52ee57e123f44a242415122762fa18f4b94879b71f92",
+  "schema": "ipfs_accelerate_py.agent_supervisor.event-log-manifest@2",
+  "snapshot_id": "event-log-snapshot:sha256:d586323484c488ad00111faad143fdf1f338d9df2491ad8bde207bd04fdfd112",
+  "stream_id": "event-log:sha256:d586323484c488ad00111faad143fdf1f338d9df2491ad8bde207bd04fdfd112",
+  "updated_at": "2026-09-27T23:33:13.946575+00:00"
+}

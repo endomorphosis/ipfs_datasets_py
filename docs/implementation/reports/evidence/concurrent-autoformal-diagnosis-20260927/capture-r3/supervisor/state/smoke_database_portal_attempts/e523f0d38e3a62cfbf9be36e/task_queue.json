@@ -1,0 +1,44 @@
+{
+  "schema": "persistent_task_queue_v3",
+  "updated_at": 1790551993.8936827,
+  "entry_count": 1,
+  "entries": {
+    "baguqeerawmlizwm7mm3mq4qhiof5mnsnb63tptc54grjoxequkwkrr6x4tha": {
+      "task_id": "SMOKE-7d2f920d157b5eff7806",
+      "priority": "P1",
+      "track": "bounded-validation",
+      "canonical_task_cid": "baguqeerawmlizwm7mm3mq4qhiof5mnsnb63tptc54grjoxequkwkrr6x4tha",
+      "canonical_task_key": "task/v1/b3168cd99f6336c87207438bd6364d0fb737cc5de1a2975c90a2aca8c7d7e4ce",
+      "aliases": [
+        "SMOKE-7d2f920d157b5eff7806",
+        "concurrent-autoformal-smoke-v1::SMOKE-7d2f920d157b5eff7806"
+      ],
+      "provenance": [
+        {
+          "board_namespace": "concurrent-autoformal-smoke-v1",
+          "display_task_id": "SMOKE-7d2f920d157b5eff7806",
+          "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r3/supervisor/state/smoke_database_portal_attempts/e523f0d38e3a62cfbf9be36e/task-projection.runtime.todo.md"
+        }
+      ],
+      "selection_penalty": 100,
+      "attempt_count": 1,
+      "last_selected_at": 1790551911.324146,
+      "last_completed_at": 0.0,
+      "consecutive_failures": 1,
+      "consecutive_no_change": 0,
+      "merge_failure_count": 0,
+      "cooldown_until": 1790552293.8931909,
+      "notes": "validation_or_implementation_failed",
+      "authority_renewal_key": "",
+      "authority_renewal_failure_count": 0,
+      "authority_renewal_last_failure_at": 0.0,
+      "authority_renewal_cooldown_until": 0.0,
+      "authority_renewal_quarantined": false,
+      "authority_renewal_reason": ""
+    }
+  },
+  "aliases": {
+    "SMOKE-7d2f920d157b5eff7806": "baguqeerawmlizwm7mm3mq4qhiof5mnsnb63tptc54grjoxequkwkrr6x4tha",
+    "concurrent-autoformal-smoke-v1::SMOKE-7d2f920d157b5eff7806": "baguqeerawmlizwm7mm3mq4qhiof5mnsnb63tptc54grjoxequkwkrr6x4tha"
+  }
+}

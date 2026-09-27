@@ -1,0 +1,1 @@
+{"cache_policy": "metric disk cache disabled; later calls may use warm process targets; OS cache uncontrolled", "calls": [], "incomplete_calls": 0, "schema": "native-evaluate-wall-times-v1", "timing_scope": "unmodified native evaluate local PY_START/PY_RETURN events; no injected trainer"}

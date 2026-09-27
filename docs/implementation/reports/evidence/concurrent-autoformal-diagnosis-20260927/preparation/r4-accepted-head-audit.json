@@ -1,0 +1,101 @@
+{
+  "acceptance_criteria_changed": false,
+  "admitted": false,
+  "base_checkpoint_unchanged": true,
+  "categories": {
+    "compiler_facing_legal_ir_view": {
+      "committed_nonzero_fields": [
+        "legal_ir_view_family_logits"
+      ],
+      "declared_fields": [
+        "feature_legal_ir_view_logits",
+        "legal_ir_view_family_logits",
+        "legal_ir_view_logits",
+        "logic_signature_legal_ir_view_logits",
+        "predicate_argument_legal_ir_view_logits",
+        "round_trip_signal_legal_ir_view_logits"
+      ],
+      "passed": true
+    },
+    "decompiler": {
+      "committed_nonzero_fields": [
+        "decompiler_plan_family_logits"
+      ],
+      "declared_fields": [
+        "decompiler_plan_embedding_weights",
+        "decompiler_plan_family_logits",
+        "decompiler_plan_legal_ir_view_logits"
+      ],
+      "passed": true
+    }
+  },
+  "committed_head_rows": {
+    "decompiler_plan_family_logits": 315,
+    "legal_ir_view_family_logits": 6
+  },
+  "committed_scalar_counts": {
+    "decompiler_plan_family_logits": 2835,
+    "legal_ir_view_family_logits": 54
+  },
+  "formalized": false,
+  "inputs": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "bytes": 1357523,
+      "sha256": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/learned-head-observation.json": {
+      "bytes": 4268,
+      "sha256": "02ccd0a565f2fa5bc52a368dafa776b5e02e5addc5dac1339366b588dfad32c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/native/accepted-000000.patch.json": {
+      "bytes": 3754356,
+      "sha256": "1303963585470aff58528d0a60321353893e07b0a8e9ca5e7b9e89cebbe4b6c7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/native/candidate.manifest.json": {
+      "bytes": 973,
+      "sha256": "bbcfb4607bd4ac36de423e119f9eb89a4efcbbf745769bdc30d78a3996ec6c61"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/native/receipt.json": {
+      "bytes": 235711,
+      "sha256": "8fa1555e40619621bfc30452b5df881660b8455c96f7e8f07d8e21768897b633"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json": {
+      "bytes": 25895338,
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    }
+  },
+  "native_reported_update_norms": {
+    "decompiler_plan_family_logits": 0.13738197381,
+    "legal_ir_view_family_logits": 0.603726927044
+  },
+  "native_supervisor_success_inferred": false,
+  "original_helper_observation": {
+    "compiler_facing_update_committed": false,
+    "decompiler_update_committed": true,
+    "diagnosis": "Helper enumerates only legal_ir_view_logits and feature_legal_ir_view_logits; it omits the already-declared compiler-facing legal_ir_view_family_logits head.",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/learned-head-observation.json",
+    "preserved_unchanged": true,
+    "sha256": "02ccd0a565f2fa5bc52a368dafa776b5e02e5addc5dac1339366b588dfad32c5"
+  },
+  "passed": true,
+  "recomputed_update_norms": {
+    "decompiler_plan_family_logits": 0.1373819738103675,
+    "legal_ir_view_family_logits": 0.6037269270442369
+  },
+  "registry_source": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "sha256": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+    "symbol": "LEGAL_IR_TRAINABLE_HEAD_FIELDS"
+  },
+  "schema": "retained-r4-category-based-accepted-head-audit/v1",
+  "scope": "Independent retained-artifact audit; no training, evaluation, patch replay, or change to original smoke result.",
+  "selected_line_search_attempt": 1,
+  "selected_objective_gain": 0.065955627691483,
+  "selected_update": "family_logits",
+  "shared_target_count": 5,
+  "shared_target_status_counts": {
+    "ready": 5
+  },
+  "sparse_patch_bytes": 3754356,
+  "verified_patch_row_before_image_count": 4904
+}

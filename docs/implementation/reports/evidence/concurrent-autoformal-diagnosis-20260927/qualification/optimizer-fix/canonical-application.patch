@@ -1,0 +1,184 @@
+--- a/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py
+@@ -349,8 +349,12 @@
+         return float(self.losses.get("legal_ir_multiview_total_loss", 0.0))
+ 
+ 
+-class _LegalIRTargetTimeout(RuntimeError):
+-    """Raised when LegalIR metric target construction exceeds its budget."""
++class _LegalIRTargetTimeout(BaseException):
++    """Owner-caught cancellation when LegalIR target construction exceeds budget.
++
++    Adapter ``except Exception`` handlers must not turn this deadline into a
++    partial successful target; the target owner records its explicit fallback.
++    """
+ 
+ 
+ _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py
+@@ -136,7 +136,7 @@
+             snapshot.close()
+ 
+ 
+-def test_real_timeout_handler_caught_by_multiview_retains_ready_failure(context, monkeypatch, tmp_path):
++def test_real_timeout_handler_reaches_owner_and_records_timeout(context, monkeypatch, tmp_path):
+     import signal
+     from ipfs_datasets_py.logic.bridge import multiview
+ 
+@@ -147,9 +147,9 @@
+     calls = []
+ 
+     def interrupted_adapter(*args, **kwargs):
+-        # Invoke the real installed handler deterministically. Multiview's real
+-        # adapter catch must retain this failure rather than propagate it into
+-        # preparation's outer-timeout fallback. No sleep or timer race is used.
++        # Invoke the real installed handler deterministically. Owned cancellation
++        # must cross the adapter's ordinary Exception handler and reach the
++        # preparation owner. No sleep or timer race is used.
+         handler = signal.getsignal(signal.SIGALRM)
+         assert callable(handler) and handler is not original_handler
+         calls.append(kwargs)
+@@ -162,22 +162,22 @@
+     assert len(calls) == 1 and calls[0]["evaluate_provers"] is False
+     assert signal.getsignal(signal.SIGALRM) is original_handler
+     sample_id, status = next(iter(receipt["statuses"].items()))
+-    assert status == "ready" and receipt["admitted"] is False
++    assert status == "timeout" and receipt["admitted"] is False
+     telemetry = receipt["bridge_report_telemetry"][sample_id]
+-    assert telemetry["report_received"] is True and telemetry["report_accepted"] is False
+-    assert telemetry["outer_timeout"] is None
+-    assert telemetry["attempted_bridge_count"] == telemetry["failed_bridge_count"] == 1
+-    assert telemetry["implemented_bridge_count"] == telemetry["accepted_bridge_count"] == 0
+-    assert telemetry["failed_bridge_names"] == ["modal_frame_logic"]
+-    assert telemetry["failures"] == {
+-        "modal_frame_logic": "_LegalIRTargetTimeout: LegalIR target construction exceeded 15.000s"
++    assert telemetry["report_received"] is False and telemetry["report_accepted"] is None
++    assert telemetry["outer_timeout"] == {
++        "exception_type": "_LegalIRTargetTimeout",
++        "message": "LegalIR target construction exceeded 15.000s",
+     }
++    assert telemetry["failures"] == {}
++    for kind in ("attempted", "implemented", "failed", "accepted"):
++        assert telemetry[f"{kind}_bridge_count"] is None
++        assert telemetry[f"{kind}_bridge_names"] is None
+     snapshot = load_target_snapshot(receipt["artifact"]["path"], expected_sha256=receipt["artifact"]["sha256"])
+     sample = build_us_code_sample(**_records()[0].__dict__)
+     target = snapshot.targets_for([sample], config=snapshot.config)[sample_id]
+     assert target.accepted is False
+-    assert target.adapter_losses["modal_frame_logic"]["bridge_evaluation_failure_loss"] == 1.0
+-    assert "legal_ir_target_timeout_loss" not in target.losses
++    assert target.losses["legal_ir_target_timeout_loss"] == 1.0
+ 
+ 
+ @pytest.mark.parametrize("change", ["contents", "dependency", "environment"])
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py
+@@ -251,9 +251,15 @@
+         text="The agency shall publish a uniquely slow timeout fixture notice.",
+     )
+ 
++    target_elapsed = []
++
+     def slow_multiview(**kwargs):
+-        time.sleep(1.0)
+-        raise AssertionError("timeout should interrupt this fake bridge")
++        started = time.monotonic()
++        try:
++            time.sleep(1.0)
++            raise AssertionError("timeout should interrupt this fake bridge")
++        finally:
++            target_elapsed.append(time.monotonic() - started)
+ 
+     monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS", "0.01")
+     monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "0")
+@@ -263,14 +269,15 @@
+         slow_multiview,
+     )
+ 
+-    started = time.monotonic()
+     evaluation = AdaptiveModalAutoencoder().evaluate(
+         [sample],
+         legal_ir_bridge_names=("deontic_norms",),
+         legal_ir_evaluate_provers=False,
+     )
+ 
+-    assert time.monotonic() - started < 0.9
++    # The target deadline excludes model setup and downstream feature work.
++    assert len(target_elapsed) == 1
++    assert target_elapsed[0] < 0.9
+     assert evaluation.legal_ir_target_count == 1
+     assert evaluation.legal_ir_losses["legal_ir_target_timeout_loss"] == pytest.approx(1.0)
+     assert 0.0 < evaluation.legal_ir_losses["legal_ir_multiview_total_loss"] < 1.0
+--- /dev/null
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_owned_timeout.py
+@@ -0,0 +1,69 @@
++"""Target deadlines cross adapter error handlers and remain owner observations."""
++import signal
++
++import pytest
++
++from ipfs_datasets_py.logic.bridge import multiview
++from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_autoencoder as modal
++from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
++
++
++@pytest.mark.parametrize("nested_handler", [False, True])
++def test_owned_timeout_crosses_adapter_handlers_and_restores_signal(monkeypatch, nested_handler):
++    if not modal._legal_ir_target_timeout_enabled(15.0):
++        pytest.skip("requires main-thread SIGALRM target deadline")
++    sample = build_us_code_sample(
++        title="5", section="owned-timeout-boundary",
++        text="The agency shall publish the owned timeout boundary fixture notice.",
++    )
++    original_handler = signal.getsignal(signal.SIGALRM)
++    original_timer = signal.getitimer(signal.ITIMER_REAL)
++    assert original_timer == (0.0, 0.0)
++    calls, finalized = [], []
++    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS", "15")
++    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "0")
++    monkeypatch.setattr(modal, "_LEGAL_IR_TARGET_CACHE", {})
++    monkeypatch.setattr(multiview, "_MULTIVIEW_EVALUATION_CACHE", {})
++    monkeypatch.setattr(multiview, "load_logic_bridge_adapter", lambda name: name)
++
++    def interrupted_adapter(name, *args, **kwargs):
++        calls.append(name)
++        try:
++            handler = signal.getsignal(signal.SIGALRM)
++            assert callable(handler) and handler is not original_handler
++            if nested_handler:
++                try:
++                    handler(signal.SIGALRM, None)
++                except Exception:
++                    return None
++            handler(signal.SIGALRM, None)
++        finally:
++            finalized.append(name)
++
++    monkeypatch.setattr(multiview, "_evaluate_adapter", interrupted_adapter)
++    target = modal._legal_ir_target_items(
++        [sample], bridge_names=("modal_frame_logic", "deontic_norms"),
++        evaluate_provers=False, legal_ir_targets=None, parallel_workers=1,
++    )[0][1]
++    assert target.accepted is False
++    assert target.losses["legal_ir_target_timeout_loss"] == 1.0
++    assert target.document.canonical_hash().startswith("timeout-fallback:")
++    assert calls == finalized == ["modal_frame_logic"]
++    assert signal.getsignal(signal.SIGALRM) is original_handler
++    assert signal.getitimer(signal.ITIMER_REAL) == original_timer
++
++
++def test_ordinary_adapter_exception_still_becomes_reported_failure(monkeypatch):
++    monkeypatch.setattr(multiview, "load_logic_bridge_adapter", lambda name: name)
++
++    def ordinary_failure(*args, **kwargs):
++        raise RuntimeError("ordinary adapter failure")
++
++    monkeypatch.setattr(multiview, "_evaluate_adapter", ordinary_failure)
++    report = multiview.evaluate_legal_ir_multiview(
++        "ordinary error fixture", bridge_names=("modal_frame_logic",),
++        evaluate_provers=False, cache=False,
++    )
++    assert report.failures == {"modal_frame_logic": "RuntimeError: ordinary adapter failure"}
++    assert report.reports == {}
++    assert report.accepted is False

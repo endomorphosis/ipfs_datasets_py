@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "-m",
+    "pytest",
+    "tests/unit_tests/logic/CEC/native/test_dcec_integration.py",
+    "-q",
+    "--basetemp=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-before",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-cache",
+    "--junitxml=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-before.xml"
+  ],
+  "returncode": 2,
+  "elapsed_seconds": 0.6649101742077619
+}

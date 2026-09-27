@@ -1,0 +1,6 @@
+{
+  "returncode": 1,
+  "scope": "one existing timing-sensitive timeout test; torch dependency imported before pytest timer; no acceptance or timing threshold changed",
+  "prior_failed_suite": "pytest-r1.xml",
+  "no_native_training": true
+}

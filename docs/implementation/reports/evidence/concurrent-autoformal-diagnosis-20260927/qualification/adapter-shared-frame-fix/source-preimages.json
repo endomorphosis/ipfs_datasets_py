@@ -1,0 +1,14 @@
+[
+  {
+    "path": "ipfs_datasets_py/logic/legal_ir/adapter.py",
+    "before_sha256": "9ca0036ec77f0e4a7676d31c932091f35dff5aff4bee73134e51bfe98ceb9180",
+    "preimage": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/adapter.before.py",
+    "matches_origin_main_f342f78a": true
+  },
+  {
+    "path": "tests/unit/logic/legal_ir/test_formalization_adapter.py",
+    "before_sha256": "557c6d77ad09ee10f33575b4528dc9d4b16c67c21a132206cfe006e952fabfe4",
+    "preimage": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/adapter-shared-frame-fix/test_formalization_adapter.before.py",
+    "matches_origin_main_f342f78a": true
+  }
+]

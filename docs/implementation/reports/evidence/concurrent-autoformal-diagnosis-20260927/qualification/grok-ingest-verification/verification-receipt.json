@@ -1,0 +1,47 @@
+{
+  "schema": "grok-additive-uscode-ingest-review/v1",
+  "origin_main_commit": "1bc328e4607b85b16b14280eaaf257d2495e4d4f",
+  "files": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "origin_sha256": "36580b1642ff881374122034b3d339992207d72182740bbc7f4dd64312f1f080",
+      "current_sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "current_bytes": 10156
+    },
+    {
+      "path": "tests/unit/logic/test_uscode_ingest.py",
+      "origin_sha256": "10a39c682698f3f0977417a1b56b991d4ebb5068c51e4e3c0b314ad616966e33",
+      "current_sha256": "e6f251d56befff0f3a3a993d9a254ae40850ab7e3dd23cc3257b0287ec09ed7a",
+      "current_bytes": 8074
+    }
+  ],
+  "source_unchanged": true,
+  "command": [
+    "python3",
+    "-B",
+    "-m",
+    "pytest",
+    "tests/unit/logic/test_uscode_ingest.py",
+    "-q",
+    "--basetemp=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/grok-ingest-verification/pytest-work",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/grok-ingest-verification/pytest-cache",
+    "--junitxml=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/grok-ingest-verification/pytest.xml"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.6152747960295528,
+  "findings": [
+    "The production delta adds one compiled regex and pure boolean cue helper; it changes no ingest/census behavior or authority fields.",
+    "The new test checks two positive deontic/conditional cue examples and a title-heading negative.",
+    "The helper is a lexical selection heuristic. It is not evidence that input has formal semantics, has compiled, round-tripped, or been admitted; e.g. the word May can also be a month.",
+    "No changes to the incomplete family_supervision module or campaign runner are included."
+  ],
+  "recommendation": "Publish the two reviewed additive files if the observed focused suite passed and source hashes remain unchanged; preserve cue-only interpretation.",
+  "admitted": false,
+  "formalized": false,
+  "training_executed": false,
+  "huggingface_upload_performed": false,
+  "canonical_pythonpath": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "offline_flags": true,
+  "source_modified": false
+}

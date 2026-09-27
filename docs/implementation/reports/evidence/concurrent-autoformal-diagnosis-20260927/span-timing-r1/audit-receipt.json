@@ -1,0 +1,350 @@
+{
+  "accelerate_dependency": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "accelerate_dependency_after": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "admitted": false,
+  "bounds": {
+    "cpu_affinity": [
+      6
+    ],
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "seconds": 120,
+    "storage_bytes": 50000000
+  },
+  "capacity_plan": {
+    "additional_requested_bytes": 105000000,
+    "charged_bytes": 65310068931,
+    "inventory": {
+      "apparent_bytes": 44770068931,
+      "entry_count": 216835,
+      "special_file_count": 21,
+      "symlink_count": 3763
+    },
+    "limit_bytes": 75000000000,
+    "minimum_filesystem_free_bytes": 233124478976,
+    "observed_apparent_bytes": 44770068931,
+    "outstanding_full_reservations_bytes": 20435000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "child_group_dead": true,
+  "child_receipt": {
+    "bytes": 15851,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/span-timing-r1/child-source-receipt.json",
+    "sha256": "dfa8964259422d906eb767554b1df840f64ff5a80b47b19dc7cb4872682a02f4"
+  },
+  "child_returncode": 0,
+  "database_opened": false,
+  "descendant_peak_rss_bytes": 25452544,
+  "elapsed_seconds": 17.21421814383939,
+  "enforcement": "cooperative polled storage/RSS; offline seccomp; Linux subreaper PID-birth descendant custody",
+  "evidence_inputs": [
+    {
+      "bytes": 5715,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-span-batch-3-20260927-r2/capture-r1/outputs/source-inventory.json",
+      "sha256": "96f26cab3d13da6d2e60def5c82c0a1562b17e2174236a4f6404510796c12308"
+    },
+    {
+      "bytes": 274769,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/audit-receipt.json",
+      "sha256": "dc761c6a77827333304a1bca16c902fad4ba1780ac696fc7d86142890df4af9b"
+    },
+    {
+      "bytes": 48070,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30"
+    },
+    {
+      "bytes": 1948,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/tree_pin.py",
+      "sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d"
+    },
+    {
+      "bytes": 298921,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "sha256": "9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1"
+    },
+    {
+      "bytes": 114441,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/ir.py",
+      "sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416"
+    },
+    {
+      "bytes": 2644,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/__init__.py",
+      "sha256": "1eeb1a57e388c37415facf3989a26d3b960b176b4bf1e65eef66e106c1aadb4b"
+    },
+    {
+      "bytes": 34289,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "sha256": "f19ede6f735f20309745802b96038ae2a6443a52d486182bc4584000b96abc7a"
+    },
+    {
+      "bytes": 13262,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 19344,
+      "path": "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py",
+      "sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237"
+    }
+  ],
+  "final_usage": {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 47737,
+    "attempt_limit_bytes": 50000000,
+    "charged_bytes": 65255117909,
+    "checked_at": 1790553399.5270898,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 0,
+      "rss_bytes": 0
+    },
+    "inventory": {
+      "apparent_bytes": 44770117909,
+      "entry_count": 216851,
+      "special_file_count": 21,
+      "symlink_count": 3763
+    },
+    "limit_bytes": 75000000000,
+    "memory_limit_bytes": 2147483648,
+    "minimum_filesystem_free_bytes": 233124421632,
+    "observed_apparent_bytes": 44770117909,
+    "outstanding_full_reservations_bytes": 20485000000,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 47737
+  },
+  "formalized": false,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "owned_descendant_identities": {
+    "3687935": "112169506"
+  },
+  "owned_descendants_dead": true,
+  "passed": true,
+  "prepared_files": [
+    {
+      "bytes": 11045,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/run_span_timing_followup_reserved.py",
+      "sha256": "6dd0324f1a439dc5dd809dd6804591c53f3c4009bc1a9a7de7e0e202149c448a"
+    },
+    {
+      "bytes": 3228,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span_timing_guard_child.py",
+      "sha256": "46b88024f8c411803606312e89b45bad170df445ba48d7b3053e41bf286bb42e"
+    },
+    {
+      "bytes": 11226,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span_timing_followup.py",
+      "sha256": "61388d510bdd9fab969cde61a24d6191f464827e4271e4ac64fd922144bd1dd6"
+    },
+    {
+      "bytes": 25115,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/formal_validation.py",
+      "sha256": "c1c67d32e4a0f12fcd48c272b9e0efe17d4cd00086599c1f73cf249781d67201"
+    },
+    {
+      "bytes": 3430,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span-timing-inputs.json",
+      "sha256": "5cafa6ac17be00810b3a8ce0ae20a07504802bcc46d67212e1eac245e0bf4ecd"
+    },
+    {
+      "bytes": 7262,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/smoke_resource_common.py",
+      "sha256": "5d30977a768874ac820d04a8e7b8e40e4d796c653103f38855e8e25428750d65"
+    },
+    {
+      "bytes": 5376,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/dependency_binding.py",
+      "sha256": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e"
+    },
+    {
+      "bytes": 13430,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/frozen-config.json",
+      "sha256": "412bfc84799afba4cb7415b8c4edaf3cb637318a71f50402253b99cf2ad241eb"
+    },
+    {
+      "bytes": 13857,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/run_native_smoke_reserved.py",
+      "sha256": "34e1d60c5a2a78226b810a1877f782e4ddda8b207303601c378226073ac3df65"
+    }
+  ],
+  "prior_ledger_claims_preserved": true,
+  "provider_calls": 0,
+  "reservation_at_publication": {
+    "cleanup_error": null,
+    "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67410676,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/span-timing-r1"
+      },
+      "child": {
+        "birth": "112169506",
+        "pid": 3687935
+      },
+      "cpu_slots": 1,
+      "created_at": 1790553385.3261635,
+      "external_charges": {},
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 47737,
+        "attempt_limit_bytes": 50000000,
+        "charged_bytes": 65255117909,
+        "checked_at": 1790553399.5270898,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "inventory": {
+          "apparent_bytes": 44770117909,
+          "entry_count": 216851,
+          "special_file_count": 21,
+          "symlink_count": 3763
+        },
+        "limit_bytes": 75000000000,
+        "memory_limit_bytes": 2147483648,
+        "minimum_filesystem_free_bytes": 233124421632,
+        "observed_apparent_bytes": 44770117909,
+        "outstanding_full_reservations_bytes": 20485000000,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 47737
+      },
+      "memory_mb": 2048,
+      "owner_pid": 3685665,
+      "prior_children": [],
+      "reservation_id": "9c659626570e4413a10e7bfec6044146",
+      "scheduler_lane": "hammer_lean",
+      "status": "active",
+      "storage_bytes": 50000000,
+      "workload": "canonical_trainer"
+    },
+    "reservation_id": "9c659626570e4413a10e7bfec6044146",
+    "resource_lease": {
+      "acquired_at": 1790553385.3465667,
+      "cancelled": false,
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "gpu_memory_mb": 0,
+      "lane": "hammer_lean",
+      "lease_id": "129ede53c1334dc2900a87e3e18b8495",
+      "memory_mb": 2048,
+      "owner_pid": 3685665,
+      "parent_lease_id": null,
+      "released": false,
+      "requires_gpu": false,
+      "unified_memory_mb": 0,
+      "wait_seconds": 5.920883268117905e-07
+    },
+    "roots": [
+      {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "device": 66306,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      {
+        "device": 66306,
+        "inode": 526155,
+        "path": "/tmp/pytest-of-barberb"
+      }
+    ],
+    "scheduler_lane": "hammer_lean",
+    "schema": "daemon-resource-reservations-v1",
+    "status": "active",
+    "storage_limit_bytes": 75000000000,
+    "workload": "canonical_trainer"
+  },
+  "schema": "span-timing-followup-owned-resource-audit/v1",
+  "scoped_sources": [
+    {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    {
+      "bytes": 33265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "sha256": "6f8d85259db92105eba40ab9c2779ddcc8aef674eb748af74d6d4f9c04774355"
+    },
+    {
+      "bytes": 29349,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "d02a72945f559ed92d94062b92cb4ec0bbe6f3948aec34a337b4daa7e99f05d8"
+    },
+    {
+      "bytes": 74770,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "0927c3c7185ebc0a3a5591f918b88fd90a5e87e313249a6587c2c4efb5ae0b03"
+    },
+    {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    },
+    {
+      "bytes": 5845,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/router_deps.py",
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    }
+  ],
+  "span_receipt": {
+    "bytes": 14316,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/span-timing-r1/spans/span-timing-receipt.json",
+    "sha256": "5b3d8ab07e11e2f1915410f328ad867a145e74b9a6794a0fdb81fac38c8d147a"
+  },
+  "training_executed": false
+}

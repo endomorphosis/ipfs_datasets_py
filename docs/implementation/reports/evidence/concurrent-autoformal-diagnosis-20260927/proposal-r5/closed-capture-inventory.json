@@ -1,0 +1,107 @@
+{
+  "apparent_bytes": 29487403,
+  "binary_artifacts_remain_local": true,
+  "files": [
+    {
+      "bytes": 0,
+      "path": ".proposal.duckdb.intent.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "path": ".proposal.duckdb.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "path": ".proposal.duckdb.migration.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 10192,
+      "path": "audit-receipt.json",
+      "sha256": "52c2ca305bd39780aa1c95e0619228a2b0bb24334c522f22713358f54650eff6"
+    },
+    {
+      "bytes": 88,
+      "path": "child-terminal.json",
+      "sha256": "76e6fa01ee9b3a4f77437859748853c865467cf419bbce1464ce195c535a390e"
+    },
+    {
+      "bytes": 26425,
+      "path": "goal-task-payload.json",
+      "sha256": "0d5c225ca894ef9a1b9499091fa606acb66cd46b86e9706f6827bf82798c9444"
+    },
+    {
+      "bytes": 540,
+      "path": "materialization-receipt.json",
+      "sha256": "a4d3b3bfc421ed38af0db951cca85e3836b0c881221c2b3d9f4de77ea1561ff6"
+    },
+    {
+      "bytes": 14154,
+      "path": "native-goal-before.json",
+      "sha256": "b6ec3f18f90e874e192d5c424e7a24a4a19490029e6c6b14d3f0c49312c59a01"
+    },
+    {
+      "bytes": 12272,
+      "path": "native-task-before.json",
+      "sha256": "d74073c50d56eeffd20656be55843a152bd4b451ea27f92f60e5957b170347d6"
+    },
+    {
+      "bytes": 3048,
+      "path": "prepared-inputs.json",
+      "sha256": "003fe9c2f24041b7a39160a9a7b03cefd988fac73e63d9a7aa8c3d6b834c0917"
+    },
+    {
+      "bytes": 4565,
+      "path": "prompt.txt",
+      "sha256": "94479ce22695761ae225bd64968dea384d3062d0b71be7ddd92ee93d6b9ca4f5"
+    },
+    {
+      "bytes": 158,
+      "path": "proposal-ready.json",
+      "sha256": "f10a2c2be16b0e7d3586c1926925d07ab3738895c8c4a4efb35faa0f84139981"
+    },
+    {
+      "bytes": 26840,
+      "path": "proposal-receipt.json",
+      "sha256": "78051cdbedc7a953d53f5f9a61ae94efec2f03086fc795ef755b2e645a40cb8a"
+    },
+    {
+      "bytes": 29372416,
+      "path": "proposal.duckdb",
+      "sha256": "97761b20c29b45f396a431fc667a1a09443a59926fbd6efeea60418f2c2d4d27"
+    },
+    {
+      "bytes": 4615,
+      "path": "rendered-prompt.txt",
+      "sha256": "944660bcf3960131bcf6b28749e7cbf4d4c8f832e008af336fda60b949599265"
+    },
+    {
+      "bytes": 927,
+      "path": "repair-lane.log",
+      "sha256": "c0ba692431e734957001a3e275f82a4d83403b4419eceeabf8c5f39938d1411a"
+    },
+    {
+      "bytes": 301,
+      "path": "request-budget.json",
+      "sha256": "f5332d77ec84bd721651bf38d241f65376522d0baa68abb5b4e41ae20c024429"
+    },
+    {
+      "bytes": 3146,
+      "path": "resource-retention.json",
+      "sha256": "4d2994b7adf04d60965b04d34855ebe5891dcb83749de781112e44e49d6baf70"
+    },
+    {
+      "bytes": 7538,
+      "path": "sealed-plan.json",
+      "sha256": "f03ae92f8db79f890784b0be0c44fbaaabd7e3159f9075389b2103978745404c"
+    },
+    {
+      "bytes": 178,
+      "path": "upstream-cancellation.json",
+      "sha256": "cb719fdad57ab7c8693567a5d863f245546613e58940d46b71fda97437c77332"
+    }
+  ],
+  "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r5"
+}

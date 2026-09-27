@@ -1,0 +1,109 @@
+{
+  "admitted": false,
+  "dcec": {
+    "passed": true,
+    "record_count": 1,
+    "records": [
+      {
+        "admitted": false,
+        "checked_field": "proof_input",
+        "error": null,
+        "expected_deontic_operator": "O",
+        "native_rendering": "O(happens(officer:Object, retain_the_file_for_at_least_20_days:Object, t0:Object))",
+        "native_validation_errors": [],
+        "parsed_class": "ipfs_datasets_py.logic.CEC.native.dcec_core.DeonticFormula",
+        "parsed_operator": "DeonticOperator.OBLIGATION",
+        "passed": true,
+        "proof_executed": false,
+        "proof_input_sha256": "b73c949f15e11d3fb93d5c65155a7d88ce4911c9c5ba4666ebb32c7c59cbcbaf",
+        "record_index": 0,
+        "source_record": {
+          "formula": "O[officer()](happens(officer(), retain_the_file_for_at_least_20_days(), t0()))",
+          "proof_input": "O(happens(officer,retain_the_file_for_at_least_20_days,t0))",
+          "source_id": "deontic:10bf6f8fd65a1f2c358dad29",
+          "valid": true
+        }
+      }
+    ],
+    "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+  },
+  "passed": false,
+  "producer": "retained deterministic shared bridge target, not learned output",
+  "representation_limits": {
+    "duration_observations": [
+      {
+        "canonical_record": {
+          "quantity": 20,
+          "temporal_kind": "minimum_duration",
+          "value": "20 days"
+        },
+        "quantity_literal_in_native_tdfol": false,
+        "semantic_encoding_verified": false,
+        "source_duration_absent_from_native_tdfol": true
+      }
+    ],
+    "exception_observations": [],
+    "limitations": [
+      "Backend syntax and frame schema validation do not establish source semantic equivalence.",
+      "Absent source duration quantities or exceptions are not repaired or inferred by this check.",
+      "A lexical quantity or exception mention alone does not establish its legal scope.",
+      "TDFOL serialization does not preserve the producer agent/context metadata or distinguish every Constant from Variable; term-sort equivalence is not validated.",
+      "The Lake artifact checks a numeric boundary only, independently of these bridge programs."
+    ],
+    "source_semantic_equivalence_verified": false
+  },
+  "sample_id": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8",
+  "source_text": "The officer shall retain the file for at least 20 days.",
+  "synthetic": true,
+  "target_document_sha256": "ee580227a0ffa15b3f6f278940d05bd1600c5e4db5b1dd161a1e0449622e7168",
+  "tdfol": {
+    "passed": true,
+    "record_count": 1,
+    "records": [
+      {
+        "admitted": false,
+        "checked_field": "proof_input",
+        "error": null,
+        "expected_deontic_operator": "O",
+        "native_rendering": "O(retain_the_file_for_at_least_20_days(officer))",
+        "operator_structure": {
+          "canonical_rendering": "O(retain_the_file_for_at_least_20_days(officer))",
+          "canonical_serialization_preserved": true,
+          "emitted_operators": [
+            {
+              "operator": "O",
+              "source_offset": 0
+            }
+          ],
+          "parsed_operator_paths": [
+            {
+              "class": "DeonticFormula",
+              "operator": "O",
+              "path": "$",
+              "time_bound": null
+            }
+          ],
+          "passed": true,
+          "scope": "operator types, multiplicity and canonical placement for this serialized program; source semantics and term sorts not established",
+          "temporal_operator_count": 0
+        },
+        "parsed_class": "ipfs_datasets_py.logic.TDFOL.tdfol_core.DeonticFormula",
+        "parsed_operator": "DeonticOperator.OBLIGATION",
+        "passed": true,
+        "proof_executed": false,
+        "proof_input_sha256": "77f8165a57b918bbd9b36301ae9104090a22577ab35aa2fd897af9b57cddb358",
+        "record_index": 0,
+        "source_record": {
+          "formula": "O(retain_the_file_for_at_least_20_days(officer))",
+          "parse_ok": true,
+          "predicates": [
+            "retain_the_file_for_at_least_20_days"
+          ],
+          "proof_input": "O(retain_the_file_for_at_least_20_days(officer))",
+          "source_id": "deontic:10bf6f8fd65a1f2c358dad29"
+        }
+      }
+    ],
+    "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+  }
+}

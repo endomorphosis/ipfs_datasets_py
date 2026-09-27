@@ -1,0 +1,182 @@
+{
+  "admitted": false,
+  "dcec": {
+    "passed": true,
+    "record_count": 1,
+    "records": [
+      {
+        "admitted": false,
+        "checked_field": "proof_input",
+        "error": null,
+        "expected_deontic_operator": "F",
+        "native_rendering": "F(happens(agency:Object, disclose_records:Object, t0:Object))",
+        "native_validation_errors": [],
+        "parsed_class": "ipfs_datasets_py.logic.CEC.native.dcec_core.DeonticFormula",
+        "parsed_operator": "DeonticOperator.PROHIBITION",
+        "passed": true,
+        "proof_executed": false,
+        "proof_input_sha256": "a8857101a3be0ec475802a57dcbed4ec272259a0dfef53660256f712c8b79d93",
+        "record_index": 0,
+        "source_record": {
+          "formula": "F[agency()](happens(agency(), disclose_records(), t0()))",
+          "proof_input": "F(happens(agency,disclose_records,t0))",
+          "source_id": "deontic:e401c55228a324dcd5e8afdd",
+          "valid": true
+        }
+      }
+    ],
+    "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+  },
+  "frame_schema": {
+    "actual_adapter_constructed": true,
+    "adapter_construction_seconds": 0.2563341099303216,
+    "admitted": false,
+    "all_frame_schema_checks_executed": true,
+    "all_original_triples_preserved": true,
+    "contract_id": "legal-ir-view/frame-logic/v1",
+    "examples_first_last": [
+      {
+        "formula_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:frame:0",
+        "index": 0,
+        "opaque": false,
+        "passed": true,
+        "projection": {
+          "formula_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:frame:0",
+          "frame_id": "administrative_notice_hearing",
+          "object": "legal_modal_document",
+          "predicate": "type",
+          "provenance_ids": [
+            "source:us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877",
+            "span:us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:document"
+          ],
+          "role": "type",
+          "subject": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877"
+        },
+        "shared_context_sha256": "43598a5e0775416beda1b5a3903f7e503dcde9fff6f3bf75cccef9d8f913029d",
+        "validation": {
+          "contract_id": "legal-ir-view/frame-logic/v1",
+          "issues": [],
+          "missing_required_fields": [],
+          "valid": true,
+          "view": "frame_logic"
+        }
+      },
+      {
+        "formula_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:frame:999",
+        "index": 2257,
+        "opaque": false,
+        "passed": true,
+        "projection": {
+          "formula_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:frame:999",
+          "frame_id": "administrative_notice_hearing",
+          "object": "deontic",
+          "predicate": "bridge_modal_self_bridge_family",
+          "provenance_ids": [
+            "source:us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877",
+            "span:us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:document"
+          ],
+          "role": "bridge_modal_self_bridge_family",
+          "subject": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:spacy:f0001"
+        },
+        "shared_context_sha256": "43598a5e0775416beda1b5a3903f7e503dcde9fff6f3bf75cccef9d8f913029d",
+        "validation": {
+          "contract_id": "legal-ir-view/frame-logic/v1",
+          "issues": [],
+          "missing_required_fields": [],
+          "valid": true,
+          "view": "frame_logic"
+        }
+      }
+    ],
+    "existing_validator_equivalence": "Same required-field/provenance hooks on every actual field projection; shared immutable optional context forbidden-source check once, combined with every result. Frame-relation hook is empty. All triples checked without truncation.",
+    "failures_first_16": [],
+    "frame_formula_count": 2258,
+    "full_artifact_identity_qualified": false,
+    "full_artifact_serialization_qualified": false,
+    "original_triple_count": 2258,
+    "passed": true,
+    "shared_context_validation": {
+      "contract_id": "legal-ir-view/frame-logic/v1",
+      "issues": [],
+      "missing_required_fields": [],
+      "valid": true,
+      "view": "frame_logic"
+    },
+    "shared_full_context_identity": true,
+    "shared_full_context_sha256": "43598a5e0775416beda1b5a3903f7e503dcde9fff6f3bf75cccef9d8f913029d",
+    "validation_stream": {
+      "bytes": 1928031,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/formal-followup-r1/formal/us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877-frame-schema.jsonl",
+      "sha256": "bc81825a1d95c5f2e890aa229eb9729a0352ac4d6f5af5a36de980bdf6455301"
+    },
+    "whole_source_semantic_equivalence_qualified": false
+  },
+  "passed": true,
+  "producer": "retained deterministic shared bridge target, not learned output",
+  "representation_limits": {
+    "duration_observations": [],
+    "exception_observations": [],
+    "limitations": [
+      "Backend syntax and frame schema validation do not establish source semantic equivalence.",
+      "Absent source duration quantities or exceptions are not repaired or inferred by this check.",
+      "A lexical quantity or exception mention alone does not establish its legal scope.",
+      "TDFOL serialization does not preserve the producer agent/context metadata or distinguish every Constant from Variable; term-sort equivalence is not validated.",
+      "The Lake artifact checks a numeric boundary only, independently of these bridge programs."
+    ],
+    "source_semantic_equivalence_verified": false
+  },
+  "sample_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877",
+  "source_text": "The agency shall not disclose records.",
+  "synthetic": true,
+  "target_document_sha256": "9637b5a6028968f715dc4729b1108e3cd2622ef52e6205cca8ce6a7d93b0e2a7",
+  "tdfol": {
+    "passed": true,
+    "record_count": 1,
+    "records": [
+      {
+        "admitted": false,
+        "checked_field": "proof_input",
+        "error": null,
+        "expected_deontic_operator": "F",
+        "native_rendering": "F(disclose_records(agency))",
+        "operator_structure": {
+          "canonical_rendering": "F(disclose_records(agency))",
+          "canonical_serialization_preserved": true,
+          "emitted_operators": [
+            {
+              "operator": "F",
+              "source_offset": 0
+            }
+          ],
+          "parsed_operator_paths": [
+            {
+              "class": "DeonticFormula",
+              "operator": "F",
+              "path": "$",
+              "time_bound": null
+            }
+          ],
+          "passed": true,
+          "scope": "operator types, multiplicity and canonical placement for this serialized program; source semantics and term sorts not established",
+          "temporal_operator_count": 0
+        },
+        "parsed_class": "ipfs_datasets_py.logic.TDFOL.tdfol_core.DeonticFormula",
+        "parsed_operator": "DeonticOperator.PROHIBITION",
+        "passed": true,
+        "proof_executed": false,
+        "proof_input_sha256": "31970e1e4a4763c4223e575ed1c57baacbcf118cfab8a14215b1b390a7f92586",
+        "record_index": 0,
+        "source_record": {
+          "formula": "F(disclose_records(agency))",
+          "parse_ok": true,
+          "predicates": [
+            "disclose_records"
+          ],
+          "proof_input": "F(disclose_records(agency))",
+          "source_id": "deontic:e401c55228a324dcd5e8afdd"
+        }
+      }
+    ],
+    "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+  }
+}

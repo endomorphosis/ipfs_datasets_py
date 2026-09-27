@@ -1,0 +1,164 @@
+{
+  "accelerate_dependency": {
+    "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/dependency-manifest.json",
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "conversion_input_sha256": {
+    "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-span-batch-3-20260927-r2/capture-r1/outputs/source-inventory.json": "96f26cab3d13da6d2e60def5c82c0a1562b17e2174236a4f6404510796c12308"
+  },
+  "fixture_provenance": "Public compiler gate fixtures and two newly declared distinct-text acceptance-validation fixtures; stable SHA-256 mock embeddings via existing legal_samples helper; no corpus or learned embedding claim.",
+  "job": {
+    "autoencoder_config": {
+      "compiler_quality_family_logit_scale": 1.0,
+      "decompiler_plan_family_logit_scale": 1.0,
+      "decompiler_plan_legal_ir_view_logit_scale": 1.0
+    },
+    "base_version_id": "sha256:1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "candidate_storage": "sparse",
+    "capture_sparse_patches": true,
+    "code_identity": "sha256:8780fd4efecca5c81d0f2f74263b564941e0813b1d4622d454e407ee38ed007d",
+    "dataset_snapshot_id": "sha256:2debec8477f3f8d96e40e2182aa7d3aa2c5fd34cf41d40081c9dff249e35570f",
+    "job_id": "concurrent-autoformal-diagnosis-20260927-r2",
+    "run_id": "concurrent-autoformal-diagnosis-20260927-r2",
+    "samples": [
+      {
+        "embedding_model": "mock:stable-sha256",
+        "section": "backup",
+        "text": "Company A shall submit backup report within 10 days unless emergency.",
+        "title": "synthetic-smoke-fixture"
+      },
+      {
+        "embedding_model": "mock:stable-sha256",
+        "section": "prohibit",
+        "text": "The agency shall not disclose records.",
+        "title": "synthetic-smoke-fixture"
+      },
+      {
+        "embedding_model": "mock:stable-sha256",
+        "section": "minimum",
+        "text": "The officer shall retain the file for at least 20 days.",
+        "title": "synthetic-smoke-fixture"
+      }
+    ],
+    "schema_version": "autoencoder-training-job-v3",
+    "split_snapshot_id": "synthetic-distinct-text-acceptance-validation-not-qualified-canary",
+    "training_config": {
+      "epochs": 1,
+      "legal_ir_bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "legal_ir_evaluate_provers": false,
+      "legal_ir_parallel_workers": 1,
+      "max_line_search_attempts": 3,
+      "max_seconds": 180,
+      "metric_disk_cache": 0,
+      "profile_projection": true,
+      "projection_max_update_families": 3,
+      "projection_update_backend": "python_sparse_batch",
+      "use_sample_memory": false
+    },
+    "validation_samples": [
+      {
+        "embedding_model": "mock:stable-sha256",
+        "section": "holdout-notify",
+        "text": "The inspector shall notify the manager within 5 days unless emergency.",
+        "title": "synthetic-smoke-fixture"
+      },
+      {
+        "embedding_model": "mock:stable-sha256",
+        "section": "holdout-retain",
+        "text": "The clerk shall retain records for at least 30 days.",
+        "title": "synthetic-smoke-fixture"
+      }
+    ],
+    "variant": {
+      "model_variant": "synthetic-concurrent-supervisor-smoke"
+    }
+  },
+  "schema": "concurrent-autoformal-training-lane-config-v1",
+  "script_sha256": "556a26e14c16117edd44fd06c6cf658be666a08625319949c9a6c05952411acd",
+  "source_sha256": {
+    "ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "3309196821c2ff357ecf587cba7b79bb997db3a0d003b2eec0b55126d8eab6b9",
+    "ipfs_datasets_py/logic/autoformal/__init__.py": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30",
+    "ipfs_datasets_py/logic/autoformal/autoencoder_router.py": "b1c3327509698d159247315477500989e5925732774175d87e3646360bd80ee9",
+    "ipfs_datasets_py/logic/autoformal/autoencoder_weight_store.py": "06352dab25a83db636111676db746c836f55ee56ac46c4664c3fba81aa432963",
+    "ipfs_datasets_py/logic/autoformal/constitution_inventory.py": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+    "ipfs_datasets_py/logic/autoformal/corpus_index.py": "e9b332382517674f7adc89e365f89809e42829095f169a5ca275816c27c7a80e",
+    "ipfs_datasets_py/logic/autoformal/embedded_actor.py": "fac57b3fad69b347498bab4380a01efb5d58ffc637f23dc7ef453e86f44ee308",
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py": "35f9ad3bd0a7d5afb9b3e59ead221102e3a6670d9004e11fe4bac8b05c964bf7",
+    "ipfs_datasets_py/logic/autoformal/extended_repair.py": "e967169a8e6063063ff4ba36fa50220bb4f9901bb4e41b26c158b517d5f4e426",
+    "ipfs_datasets_py/logic/autoformal/feedback_cycle.py": "6d5f1a618040154bab66c7b9e48873657fdd54e1d159946adb199f441dbe9967",
+    "ipfs_datasets_py/logic/autoformal/gap_compile_replay.py": "a5f29209f74dc1822b4b66ddaed7c913d7e28c62cbbad8fda799e02418d4a40c",
+    "ipfs_datasets_py/logic/autoformal/goal_git_sync.py": "a17ec865bade85c1add39e2192452fe0c092622f236cc45426ec607ba4c1a0e6",
+    "ipfs_datasets_py/logic/autoformal/huggingface_schedule.py": "c3bb1b133b5716d935b2197e085828eca84534f00568b79c863e3a502e7c687b",
+    "ipfs_datasets_py/logic/autoformal/lake_probe.py": "fafa2c47c26e4d7da9862faba9ae86476dc6c794c4909cc7b258d26a5dd6fcf4",
+    "ipfs_datasets_py/logic/autoformal/lean_units.py": "d1979db995edf1e6471e2998f2f5f92bb390042f3e85c049915f0fefdb3c5760",
+    "ipfs_datasets_py/logic/autoformal/learned_feedback.py": "af1061217ab1a0e3d64d76cc6939b4af64c38d0ea1487bf7cf20259717e30133",
+    "ipfs_datasets_py/logic/autoformal/meta_ontology.py": "741692543fdcac5580cbe1cb28149be5dcb0cce7204bab94b3f3d121fc5f07f7",
+    "ipfs_datasets_py/logic/autoformal/ontology_capture.py": "d40e1cffe9e7d127b58eb8fe32829c7fd38c2f92723b705f1c730d4d7ae36b9f",
+    "ipfs_datasets_py/logic/autoformal/ontology_fragments.py": "f616b7dcefc42ce7708c273131e45a4100e7ca17e475549b826dc51174788fae",
+    "ipfs_datasets_py/logic/autoformal/procedure_slot.py": "f7fe98853048b2301f9fbfe9a76fb810e0c323445ba8c9d57f0da731a092dc86",
+    "ipfs_datasets_py/logic/autoformal/recipient_reference.py": "d682ea86a12735d49969ce372f14428d66a883d0d2a6be1876c3174bfe3437e4",
+    "ipfs_datasets_py/logic/autoformal/repair_context.py": "12b2e02474dab5fec5ffceb34d16350dad94d7724eb838ee3da758e7fa1d8b9e",
+    "ipfs_datasets_py/logic/autoformal/repair_intake.py": "de063914e0eb5b24b04f48e6746dac50ae0db9ee4e5407f8219fad48372fd59e",
+    "ipfs_datasets_py/logic/autoformal/repair_report.py": "9f5a6cf413bc5b7853cca2d79938649f3db94217e0fb2d13c953a5a27e9a4c4f",
+    "ipfs_datasets_py/logic/autoformal/repeal_fixture.py": "3c97a5b90ce3240b24e91251b2a87956dceefc10efcf4e4c79f4bdcddea2b989",
+    "ipfs_datasets_py/logic/autoformal/span_agreement.py": "4471ed72e8d6fed4da07727099b5d9620ab51b9b2324e060896d1f7110798261",
+    "ipfs_datasets_py/logic/autoformal/span_cache.py": "47593969a2afe5170648b7853f322c80834e1de26cc2f3b519f4597d2cda56fd",
+    "ipfs_datasets_py/logic/autoformal/span_evidence.py": "2954dfa10d2aad64178b3b3bfc799686389a98303652f6856bd2dbee9cae95ed",
+    "ipfs_datasets_py/logic/autoformal/supervisor_dispatch.py": "1d989b339a7c5e641463c406b34f1e2e7109dc9117219678e007491135f4f5a4",
+    "ipfs_datasets_py/logic/autoformal/supervisor_loop.py": "3c24de1f4747dcb168ecc139fc27f1cc0c931caee803ee19386ad429dee03c4b",
+    "ipfs_datasets_py/logic/autoformal/supervisor_queue.py": "2802b9a24618abdbd2acd58b5f475c8b634539e68d12d3cfd7a0dff0a2c05172",
+    "ipfs_datasets_py/logic/autoformal/supervisor_router.py": "31c493b8cf8dec0afe714106c3a5e7912b745ca2d0c575d7fb54b71267e8dfee",
+    "ipfs_datasets_py/logic/autoformal/supervisor_todo.py": "e4443a7fa3826ba9709c97c00f4ea2db2c4ab48b24b4aa759eef53d1199ccf70",
+    "ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py": "f0e9ba9880b1aa9cbe120ec30b566a856a17e9710792c7dbbc1dac2361237a37",
+    "ipfs_datasets_py/logic/autoformal/tree_pin.py": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+    "ipfs_datasets_py/logic/autoformal/uscode_ingest.py": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+    "ipfs_datasets_py/logic/autoformal/validator_profile.py": "40bca08771b355b32fe401d4124cb0467d1b9563fac301438535d78127dc8389",
+    "ipfs_datasets_py/logic/autoformal/worker_budget.py": "045a2a067c9eff2c1963bc0ceaac50ed712f13fadc18f0fc1807e864615032a9",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1",
+    "ipfs_datasets_py/logic/legal_ir/__init__.py": "38b169f6f7a40c40880bec32ef23730e9a3c6c47b6441e3b39e80fa5a9d1f4c2",
+    "ipfs_datasets_py/logic/legal_ir/adapter.py": "9ca0036ec77f0e4a7676d31c932091f35dff5aff4bee73134e51bfe98ceb9180",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "f19ede6f735f20309745802b96038ae2a6443a52d486182bc4584000b96abc7a",
+    "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2",
+    "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+    "ipfs_datasets_py/logic/legal_ir/constraint_query.py": "e402c61a72fd833974b36bf93b15492ac46637aa2a7bd690a73817e07f337e4e",
+    "ipfs_datasets_py/logic/legal_ir/extended_compiler.py": "cfc93cda333f0f9fa7795c8db262588114b599a34a59012be2d93642dde7e2dd",
+    "ipfs_datasets_py/logic/legal_ir/extended_contracts.py": "f3b0b4870f013bd7bb7657a522c7f2d11bde705e586a17cdd73daf18387d8509",
+    "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py": "0d23192b6d9a7f1b33ac223e4817cf6493866fde5cdcd381b8d5cbb648e11970",
+    "ipfs_datasets_py/logic/legal_ir/logic_slice_v2.py": "0054d223d89bc0c5cba0ef491aec7ef1ec7103cd59892e6fa269077d68461cb1",
+    "ipfs_datasets_py/logic/legal_ir/proof_cache.py": "7a9d277e02a089f9956b711f481b75710c15d52785ac72560adc173c8fec693f",
+    "ipfs_datasets_py/logic/legal_ir/typed_adapter.py": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/_autoencoder_prepared_targets.py": "28311ee1733d7be01870f3a7f15a87e9ee2f91daccdecc77b639eee84c79e7f7",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py": "a6b27ba6ee08048ddecb667228802a0f062ce315e5f41c801a6ec549b1bd2ef6",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "01fc0250746eabfdd0958c0dd0c19edbd9dc7858fedefd38b6ca6b66bfa9db68",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_patch_codec.py": "0a3f18c9ef8e7589cd0a880e4b89b6f4f53d37af7602a63f315595e692d1fb96",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_sparse_checkpoint.py": "dd974e0cbae003ff602104b7c2e2fea04c7fefcc9f9e1986e894d94450c49c73",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py": "d590112f9b6dcf3005c273a6291320b0fa0a218969326839f5c5be4ae332e89a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py": "bbd62e121201faf2012c247a4e19b7cedb221c2fe3aa90eb55589dc1f472f484",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/projection_profiler.py": "c5c5179cce6df49f694523b999f61cc8a842fa71424af956893400d574e3b4e8"
+  },
+  "worker_source_sha256": {
+    "autoencoder": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+    "compiler": "f19ede6f735f20309745802b96038ae2a6443a52d486182bc4584000b96abc7a",
+    "decompiler": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2",
+    "parser": "9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1",
+    "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "worker": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "monotonic_ns": 1121418460464453,
+  "pid": 3613525,
+  "sample_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877",
+  "stage": "before_actual_adapter_construction",
+  "triple_count": 2258
+}

@@ -1,0 +1,66 @@
+{
+  "campaign_executed": false,
+  "files": [
+    {
+      "bytes": 10156,
+      "path": "ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+    },
+    {
+      "bytes": 8074,
+      "path": "tests/unit/logic/test_uscode_ingest.py",
+      "sha256": "e6f251d56befff0f3a3a993d9a254ae40850ab7e3dd23cc3257b0287ec09ed7a"
+    },
+    {
+      "bytes": 10546,
+      "path": "ipfs_datasets_py/logic/autoformal/family_supervision.py",
+      "sha256": "fc7ac2e91343e061eb632a6c46d16ce37a01b540271e145d615051f0074e3307"
+    },
+    {
+      "bytes": 4593,
+      "path": "tests/unit/logic/test_family_supervision.py",
+      "sha256": "50b0d7aa1a3b0f11151ac15e29ec6419ca57f0b02d3976cfbd6db44691514fd0"
+    },
+    {
+      "bytes": 17471,
+      "path": "scripts/ops/legal_ir/run_uscode_formal_logic.py",
+      "sha256": "c402920630d53f326f62bc786c6a5c91e99602392a902654ef60a7587b3eb8b5"
+    }
+  ],
+  "findings": [
+    "Family-name checks use deontic/tdfol/cec/frame_logic against actual view-name keys; current fake fixtures reproduce wrong key shape rather than real evaluate output.",
+    "Absent/empty autoencoder report yields no disagreement for a compiled projection with all projected families.",
+    "Runner serializes truncated source text and strict status before later inference/Lake demotions; exported rows can remain stale roundtrip_ok while progress/queue says gap.",
+    "No require_workspace_logic_tree or explicit accelerate dependency pin in standalone runner.",
+    "No explicit line-search-attempt bound, checkpoint SHA pin or resource reservation in runner. --train-state path-only comparison cannot detect a hardlinked archived checkpoint alias.",
+    "enqueue-every is declared but not used; pending gaps and session rows accumulate until end, making interruption lose undelivered queue evidence.",
+    "Exported/bridge norm dictionaries strip conditions, exceptions, temporal data and all but first rule in family projection; family presence alone is not semantic agreement."
+  ],
+  "live_files_may_change": true,
+  "live_head_observed": "205bc6ef96c69c3ed9ddcd20ecf0b67f460f1841",
+  "pure_review_observations": {
+    "actual_r6_view_keys": [
+      "CEC.native",
+      "TDFOL.prover",
+      "deontic.ir",
+      "external_provers.router",
+      "knowledge_graphs.neo4j_compat"
+    ],
+    "current_runner_missing_family_key_check": [
+      "deontic",
+      "frame_logic",
+      "tdfol",
+      "cec"
+    ],
+    "empty_reason_means_no_goal": true,
+    "missing_autoencoder_report_reason": ""
+  },
+  "recommendation": {
+    "family_module_test_and_runner": "Preserve live files; do not publish as qualified campaign entrypoint until correctness and provenance defects are fixed and tested.",
+    "ingest_regex_and_its_test": "Small additive cue helper; reasonable independent candidate after focused validation. It is a selection heuristic, never evidence of formalization."
+  },
+  "remote_main": "1bc328e4607b85b16b14280eaaf257d2495e4d4f",
+  "remote_verified_with_ls_remote": true,
+  "schema": "grok-uncommitted-campaign-readonly-review/v1",
+  "source_modified": false
+}

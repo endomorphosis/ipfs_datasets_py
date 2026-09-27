@@ -1,0 +1,5 @@
+[project]
+name = "private-autoformal-concurrent-smoke"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = ["pytest", "duckdb", "numpy", "pyarrow", "spacy"]

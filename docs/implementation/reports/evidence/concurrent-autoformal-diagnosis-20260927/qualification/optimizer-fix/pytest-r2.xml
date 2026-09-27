@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.321" timestamp="2026-09-27T23:04:47.963341+00:00" hostname="spark-b271"><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_modal_autoencoder" name="test_legal_ir_target_timeout_becomes_loss" time="1.789"><failure message="assert (1118596.776090748 - 1118595.072815228) &lt; 0.9&#10; +  where 1118596.776090748 = &lt;built-in function monotonic&gt;()&#10; +    where &lt;built-in function monotonic&gt; = time.monotonic">tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py:273: in test_legal_ir_target_timeout_becomes_loss
+    assert time.monotonic() - started &lt; 0.9
+E   assert (1118596.776090748 - 1118595.072815228) &lt; 0.9
+E    +  where 1118596.776090748 = &lt;built-in function monotonic&gt;()
+E    +    where &lt;built-in function monotonic&gt; = time.monotonic</failure></testcase></testsuite></testsuites>

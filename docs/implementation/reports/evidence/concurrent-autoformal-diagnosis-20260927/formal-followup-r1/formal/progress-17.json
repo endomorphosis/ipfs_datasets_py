@@ -1,0 +1,8 @@
+{
+  "monotonic_ns": 1121419298923570,
+  "pid": 3613525,
+  "sample_id": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8",
+  "seconds": 0.2631586818024516,
+  "stage": "actual_adapter_constructed",
+  "total_formula_count": 2279
+}

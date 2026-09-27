@@ -1,0 +1,9 @@
+{
+  "input_tokens": 1303,
+  "max_new_tokens": 768,
+  "physical_server_context_changed": false,
+  "physical_server_context_tokens": 32768,
+  "request_context_budget_tokens": 4096,
+  "template_margin_tokens": 64,
+  "template_sha256": "944660bcf3960131bcf6b28749e7cbf4d4c8f832e008af336fda60b949599265"
+}

@@ -1,0 +1,68 @@
+--- before/repair_lane.py
++++ after/repair_lane.py
+@@ -24,6 +24,18 @@
+ MAX_OUTPUT = 768
+ MAX_CONTEXT = 4096
+ MAX_RESPONSE_BYTES = 64_000
++
++
++def require_intent_metadata(value):
++    """Native intent DAG-JSON accepts no floats; HTTP evidence stays separate."""
++    if isinstance(value, dict):
++        require(all(isinstance(key, str) for key in value), 'intent metadata keys must be strings')
++        for item in value.values(): require_intent_metadata(item)
++    elif isinstance(value, list):
++        for item in value: require_intent_metadata(item)
++    else:
++        require(value is None or isinstance(value, (str, int, bool)),
++                'intent metadata must use integer/decimal-string numbers, never float')
+ 
+ 
+ def event(stage, **extra):
+@@ -169,6 +181,7 @@
+                 'outputs': [{'path': str(runtime / 'raw-proposal.txt')}], 'acceptance_criteria': [acceptance],
+                 'validation_commands': []}
+         population = {'repository_tree_id': 'sha256:' + plan['parser_source']['sha256'], 'goals': [goal], 'tasks': [task]}
++        require_intent_metadata(population)
+         save(runtime / 'goal-task-payload.json', population)
+         task_source = DatabaseTaskSource(runtime / 'proposal.duckdb', owner_id='bounded-local-parser-proposal')
+         save(runtime / 'materialization-receipt.json', dict(task_source.materialize(population)))
+@@ -220,6 +233,7 @@
+                                   'raw_proposal': generated['artifact'], 'artifacts': artifacts,
+                                   'provider': plan['provider'], 'request_budget': budget,
+                                   'request_observation': ref(runtime / 'actual-http-request.json')}
++        require_intent_metadata(body)
+         task_source.intent.upsert_task(task_cid=before.task_cid, task_alias=before.task_alias,
+             goal_cid=before.goal_cid, ordinal=before.ordinal, status=before.status, priority=before.priority,
+             plan_cid=before.plan_cid, objective_id=before.objective_id, body=body,
+--- before/run_repair_lane_reserved.py
++++ after/run_repair_lane_reserved.py
+@@ -93,7 +93,7 @@
+     require(MAX_STORAGE_BYTES == 75_000_000_000, 'campaign cap changed')
+     roots = [ROOT / 'workspace/test-logs', ROOT / 'workspace/todo-queues', ROOT / 'docs/implementation/reports/evidence', Path('/tmp/pytest-of-barberb')]
+     owner = DaemonResourceReservation(LEDGER, roots=roots, storage_bytes=STORAGE, memory_mb=MEMORY_MB,
+-                                     cpu_slots=1, timeout_seconds=0, ledger_lock_timeout_seconds=5)
++                                     cpu_slots=1, timeout_seconds=0, ledger_lock_timeout_seconds=30)
+     prior = owner._read(); capacity = owner._account(prior, additional=2 * STORAGE + 5_000_000)
+     descendants = Descendants(_process)
+     child = identity = None
+@@ -133,7 +133,7 @@
+                     live = descendants.living(); rss = sum(x['rss_bytes'] for x in live)
+                     peak_rss = max(peak_rss, rss)
+                     require(rss <= MEMORY_MB * 1024**2, 'proposal owned descendant RSS exceeded 2 GiB')
+-                    if time.monotonic() - last_usage >= 5:
++                    if time.monotonic() - last_usage >= 10:
+                         usage = owner.check_usage(attempt); last_usage = time.monotonic()
+                         print(json.dumps({'elapsed_seconds': elapsed, 'attempt_bytes': usage['attempt_bytes'],
+                                           'descendant_rss_bytes': rss, 'owned_live_processes': len(live)}), flush=True)
+--- before/repair-proposal-plan.json
++++ after/repair-proposal-plan.json
+@@ -46,7 +46,7 @@
+     "physical_server_context_changed": false,
+     "physical_server_context_preflight": 32768,
+     "request_context_budget_tokens": 4096,
+-    "temperature": 0.0,
++    "temperature": 0,
+     "timeout_seconds": 120
+   },
+   "schema": "bounded-local-parser-proposal-plan/v1",

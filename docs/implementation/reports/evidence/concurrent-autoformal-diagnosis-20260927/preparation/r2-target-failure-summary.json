@@ -1,0 +1,177 @@
+{
+  "schema": "concurrent-autoformal-r2-target-failure-audit/v1",
+  "capture": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2",
+  "outcome": "Failed closed before native worker/training entry because complete five-bridge targets were unavailable after two retained preparations.",
+  "error": {
+    "message": "complete five-bridge targets unavailable after two retained observations",
+    "type": "RuntimeError"
+  },
+  "observations": [
+    {
+      "attempt": 1,
+      "cache_scope": "cold target-preparation process",
+      "wall_seconds": 50.80477643106133,
+      "wall_seconds_per_input_span": 10.160955286212266,
+      "target_generate_call_seconds": 35.549481524154544,
+      "target_generation_seconds_per_span": 7.109896304830909,
+      "sample_count": 5,
+      "legal_ir_target_count": 5,
+      "statuses": {
+        "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722": "timeout",
+        "us-code-synthetic-smoke-fixture-holdout-notify-a4399bdbcfa9ce99": "ready",
+        "us-code-synthetic-smoke-fixture-holdout-retain-d9e98c567cb9f89d": "ready",
+        "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8": "ready",
+        "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877": "ready"
+      },
+      "target_status_counts": {
+        "ready": 4,
+        "timeout": 1
+      },
+      "all_requested_bridge_reports_received": false,
+      "timeout_observations": {
+        "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722": {
+          "accepted_bridge_count": null,
+          "accepted_bridge_names": null,
+          "attempted_bridge_count": null,
+          "attempted_bridge_names": null,
+          "failed_bridge_count": null,
+          "failed_bridge_names": null,
+          "failures": {},
+          "implemented_bridge_count": null,
+          "implemented_bridge_names": null,
+          "outer_timeout": {
+            "exception_type": "_LegalIRTargetTimeout",
+            "message": "LegalIR target construction exceeded 15.000s"
+          },
+          "report_accepted": null,
+          "report_received": false
+        }
+      },
+      "artifact": {
+        "bytes": 2352504,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/training/target-preparation-1/targets.bundle",
+        "sha256": "be8888fc19c73c79dd671f33028516bb527e079ec748346191653e6be6b78a4c"
+      },
+      "source_unchanged": true
+    },
+    {
+      "attempt": 2,
+      "cache_scope": "explicit same-process warm retry of every unchanged input",
+      "wall_seconds": 59.7566368188709,
+      "wall_seconds_per_input_span": 11.95132736377418,
+      "target_generate_call_seconds": 36.76281035807915,
+      "target_generation_seconds_per_span": 7.35256207161583,
+      "sample_count": 5,
+      "legal_ir_target_count": 5,
+      "statuses": {
+        "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722": "timeout",
+        "us-code-synthetic-smoke-fixture-holdout-notify-a4399bdbcfa9ce99": "ready",
+        "us-code-synthetic-smoke-fixture-holdout-retain-d9e98c567cb9f89d": "ready",
+        "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8": "ready",
+        "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877": "ready"
+      },
+      "target_status_counts": {
+        "ready": 4,
+        "timeout": 1
+      },
+      "all_requested_bridge_reports_received": false,
+      "timeout_observations": {
+        "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722": {
+          "accepted_bridge_count": null,
+          "accepted_bridge_names": null,
+          "attempted_bridge_count": null,
+          "attempted_bridge_names": null,
+          "failed_bridge_count": null,
+          "failed_bridge_names": null,
+          "failures": {},
+          "implemented_bridge_count": null,
+          "implemented_bridge_names": null,
+          "outer_timeout": {
+            "exception_type": "_LegalIRTargetTimeout",
+            "message": "LegalIR target construction exceeded 15.000s"
+          },
+          "report_accepted": null,
+          "report_received": false
+        }
+      },
+      "artifact": {
+        "bytes": 2352503,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/training/target-preparation-2/targets.bundle",
+        "sha256": "a8914d49a3cb8e005450c16d2bbe0ef65c4dbf5e9adf424992fd56b32334ac70"
+      },
+      "source_unchanged": true
+    }
+  ],
+  "policy": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "metric_disk_cache": 0,
+    "use_sample_memory": false,
+    "target_timeout_seconds": 15,
+    "OS_cache": "uncontrolled"
+  },
+  "native_worker_entered": false,
+  "evaluate_call_count": 0,
+  "optimizer_accepted_epochs": null,
+  "optimizer_proposal_rejected": false,
+  "reason_no_optimizer_rejection": "No optimizer invocation occurred.",
+  "simultaneous_conversion_executed": false,
+  "parent": {
+    "passed": false,
+    "native_executed": false,
+    "lane_returncodes": {
+      "conversion": -15,
+      "training": 1
+    },
+    "elapsed_seconds": 177.81858232687227,
+    "error": {
+      "message": "training exited before training-started.json",
+      "type": "RuntimeError"
+    }
+  },
+  "pinned_checkpoint_unchanged": true,
+  "source_unchanged": true,
+  "admitted": false,
+  "formalized": false,
+  "production_promotion": false,
+  "interpretation": "legal_ir_target_count=5 includes one explicit timeout fallback; only four target observations were ready. Ergo resolution log lines are not a proof. No bridge-on evaluate speed or learned-head update can be reported.",
+  "evidence": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/training/target-preparation-1/target-preparation-observation.json",
+      "sha256": "9ac2b0f79434b5c6ad1786ef7e392925b645aa928af607df81a5cfa0caba8338",
+      "bytes": 11265
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/training/target-preparation-2/target-preparation-observation.json",
+      "sha256": "1bf4608611fd2586943f9586ba0393c7a2a54bd6def1cc621233edc57c0a4948",
+      "bytes": 11261
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/training/summary.json",
+      "bytes": 1265,
+      "sha256": "9bbed9067320d5b61c9212aadc9c85606b4e1df51c0359a850164016d7bc180e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/training/target-preparation-attempts.json",
+      "bytes": 980,
+      "sha256": "4f114c6b3b47ab4f38f0a1f1008d552ce980fec89391d88a0d670084ac429f0b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/training/evaluate-timings.json",
+      "bytes": 290,
+      "sha256": "621774279d5ecd606a5b68962966c76f9f186e10f5c375d94ec37e0a45ae0e1b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/smoke-receipt.json",
+      "bytes": 14979,
+      "sha256": "c59f2f4c121d861357a7383e0dfd5317e805488e8c35e46de9e84a2ab0172910"
+    }
+  ]
+}

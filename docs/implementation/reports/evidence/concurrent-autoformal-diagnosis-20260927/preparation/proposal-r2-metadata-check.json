@@ -1,0 +1,13 @@
+{
+  "corrected_r1_payload_passed_preflight": true,
+  "generation_executed": false,
+  "native_db_opened": false,
+  "r1_float_paths": [
+    "/goals/0/sealed_plan/provider/temperature",
+    "/tasks/0/provider_configuration/temperature"
+  ],
+  "r1_rejected_by_explicit_preflight": true,
+  "schema": "proposal-r2-intent-metadata-correction-check/v1",
+  "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r1/goal-task-payload.json",
+  "source_sha256": "b617538137496484640c2de3673ff4552b25c87e1384571d06a67ab4bcbd2bd2"
+}

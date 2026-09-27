@@ -1,0 +1,21 @@
+{
+  "prior_harness": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927",
+  "source_refresh": {
+    "path": "ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+    "before_sha256": "36580b1642ff881374122034b3d339992207d72182740bbc7f4dd64312f1f080",
+    "after_sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+    "review": "Grok added FORMAL_LOGIC regex and is_formal_logic helper only. These do not change the smoke input text or compiler gates."
+  },
+  "copied_files": [
+    "native_supervisor_driver.py",
+    "parent_harness.py",
+    "training_lane.py",
+    "conversion_lane.py",
+    "frozen-config.json",
+    "smoke_resource_common.py",
+    "native_guard_child.py",
+    "run_native_smoke_reserved.py",
+    "dependency_binding.py",
+    "lane_bootstrap.py"
+  ]
+}

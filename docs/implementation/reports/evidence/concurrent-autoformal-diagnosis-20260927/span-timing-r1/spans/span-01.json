@@ -1,0 +1,61 @@
+{
+  "admitted": false,
+  "allow_partial": false,
+  "compiler_seconds": 0.04175657802261412,
+  "compiler_status": "success",
+  "compiler_status_scope": "native OperationStatus; success is not admission",
+  "decompiled": [
+    "Company A must submit backup report within 10 days unless emergency."
+  ],
+  "decompiler_seconds": 1.3791956007480621e-05,
+  "diagnostic_fields": [],
+  "error": null,
+  "evidence_wall_seconds": 0.2987620709463954,
+  "formalized": false,
+  "parser_temporal_records": [
+    {
+      "quantity": 10,
+      "temporal_kind": "within_duration",
+      "value": "10 days"
+    }
+  ],
+  "parser_vocabulary": {
+    "actions": [
+      "submit"
+    ],
+    "actors": [
+      "Company A"
+    ],
+    "objects": [
+      "backup report"
+    ],
+    "qualifiers": [
+      "emergency",
+      "within 10 days"
+    ]
+  },
+  "rules": [
+    {
+      "action": "submit",
+      "actor": "Company A",
+      "conditions": [],
+      "exceptions": [
+        "emergency"
+      ],
+      "modality": "O",
+      "object": "backup report",
+      "temporal": [
+        "within 10 days"
+      ]
+    }
+  ],
+  "source": {
+    "source_span_id": "synthetic-timing-gate-0",
+    "synthetic": true,
+    "text": "Company A shall submit backup report within 10 days unless emergency."
+  },
+  "synthetic": true,
+  "temporal_sidecar_seconds": 0.00012312107719480991,
+  "vocabulary_seconds": 0.256868579890579,
+  "wall_seconds": 0.2986389498692006
+}

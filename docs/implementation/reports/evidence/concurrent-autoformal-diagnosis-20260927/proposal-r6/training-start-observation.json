@@ -1,0 +1,14 @@
+{
+  "artifact": {
+    "bytes": 217,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/training-started.json",
+    "sha256": "5cb1d261e4906e77e5a56800fee6108d078dd35e20d522ecb7b25bd55641b410"
+  },
+  "event": {
+    "monotonic_ns": 1120553443307391,
+    "pid": 3385808,
+    "stage": "native_training_method_entry",
+    "timing_scope": "unmodified train_generalizable_projection local PY_START event",
+    "utc": "2026-09-27T23:37:26.808522+00:00"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "reason": "capture-r3 target timeout policy failed preflight before training; cancel waiting proposal without provider call.",
+  "child_pid": 3323666,
+  "signal": "SIGINT"
+}

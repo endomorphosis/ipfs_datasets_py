@@ -1,0 +1,113 @@
+{
+  "accelerate_dependency": {
+    "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/dependency-manifest.json",
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "evidence_inputs": [
+    {
+      "bytes": 5715,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-span-batch-3-20260927-r2/capture-r1/outputs/source-inventory.json",
+      "sha256": "96f26cab3d13da6d2e60def5c82c0a1562b17e2174236a4f6404510796c12308"
+    },
+    {
+      "bytes": 274769,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/audit-receipt.json",
+      "sha256": "dc761c6a77827333304a1bca16c902fad4ba1780ac696fc7d86142890df4af9b"
+    },
+    {
+      "bytes": 48070,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30"
+    },
+    {
+      "bytes": 1948,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/tree_pin.py",
+      "sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d"
+    },
+    {
+      "bytes": 298921,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "sha256": "9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1"
+    },
+    {
+      "bytes": 114441,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/ir.py",
+      "sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416"
+    },
+    {
+      "bytes": 2644,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/__init__.py",
+      "sha256": "1eeb1a57e388c37415facf3989a26d3b960b176b4bf1e65eef66e106c1aadb4b"
+    },
+    {
+      "bytes": 34289,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "sha256": "f19ede6f735f20309745802b96038ae2a6443a52d486182bc4584000b96abc7a"
+    },
+    {
+      "bytes": 13262,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 19344,
+      "path": "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py",
+      "sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237"
+    }
+  ],
+  "files": [
+    {
+      "bytes": 11045,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/run_span_timing_followup_reserved.py",
+      "sha256": "6dd0324f1a439dc5dd809dd6804591c53f3c4009bc1a9a7de7e0e202149c448a"
+    },
+    {
+      "bytes": 3228,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span_timing_guard_child.py",
+      "sha256": "46b88024f8c411803606312e89b45bad170df445ba48d7b3053e41bf286bb42e"
+    },
+    {
+      "bytes": 11226,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span_timing_followup.py",
+      "sha256": "61388d510bdd9fab969cde61a24d6191f464827e4271e4ac64fd922144bd1dd6"
+    },
+    {
+      "bytes": 25115,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/formal_validation.py",
+      "sha256": "c1c67d32e4a0f12fcd48c272b9e0efe17d4cd00086599c1f73cf249781d67201"
+    },
+    {
+      "bytes": 3430,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span-timing-inputs.json",
+      "sha256": "5cafa6ac17be00810b3a8ce0ae20a07504802bcc46d67212e1eac245e0bf4ecd"
+    },
+    {
+      "bytes": 7262,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/smoke_resource_common.py",
+      "sha256": "5d30977a768874ac820d04a8e7b8e40e4d796c653103f38855e8e25428750d65"
+    },
+    {
+      "bytes": 5376,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/dependency_binding.py",
+      "sha256": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e"
+    },
+    {
+      "bytes": 13430,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/frozen-config.json",
+      "sha256": "412bfc84799afba4cb7415b8c4edaf3cb637318a71f50402253b99cf2ad241eb"
+    },
+    {
+      "bytes": 13857,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/run_native_smoke_reserved.py",
+      "sha256": "34e1d60c5a2a78226b810a1877f782e4ddda8b207303601c378226073ac3df65"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "actual_methods": [
+    "_invalidate_legal_ir_view_family_candidates",
+    "_is_legal_ir_view_family",
+    "_legal_ir_view_distribution",
+    "_legal_ir_view_family_candidates",
+    "_legal_ir_view_logits_for"
+  ],
+  "admitted": false,
+  "analytic_log_6_over_5": 0.1823215567939546,
+  "baseline_prediction_matches_r6": {
+    "CEC.native": 0.2,
+    "TDFOL.prover": 0.2,
+    "deontic.ir": 0.2,
+    "external_provers.router": 0.2,
+    "knowledge_graphs.neo4j_compat": 0.2
+  },
+  "complete_synthetic_target_ce_delta": -3.33333360913457e-12,
+  "complete_target_is_synthetic_control": true,
+  "formalized": false,
+  "passed": true,
+  "r6_aggregate_target": {
+    "CEC.native": 0.1852046795633195,
+    "TDFOL.prover": 0.2035250462778006,
+    "deontic.ir": 0.3682245924550821,
+    "external_provers.router": 0.12843437645310785,
+    "knowledge_graphs.neo4j_compat": 0.11461130525068992
+  },
+  "receipt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/lanes/training/native/receipt.json",
+  "receipt_sha256": "c1e2ec5f6cd7ece845a9d5aef7fb8c1ef7c125b655ae4d4a75fed5923059afaa",
+  "schema": "legal-ir-support-discontinuity-unit-reproduction-v1",
+  "scope": "actual support/logit functions; auxiliary heads empty; no parser, bridge or training execution",
+  "source_sha256": "c24e2e4dd65313d32ed969b8250148410556e74a9316e94aa5adf1fce9877307",
+  "zero_new_class_ce_penalty": 0.18232155679395468,
+  "zero_new_class_prediction": {
+    "CEC.native": 0.16666666666666666,
+    "TDFOL.prover": 0.16666666666666666,
+    "deontic.ir": 0.16666666666666666,
+    "external_provers.router": 0.16666666666666666,
+    "knowledge_graphs.neo4j_compat": 0.16666666666666666,
+    "modal.frame_logic": 0.16666666666666666
+  }
+}

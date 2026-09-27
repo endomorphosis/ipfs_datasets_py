@@ -1,0 +1,5 @@
+{
+  "reason": "The linked capture-r2 training preparation failed before method entry; cancel proposal wait without a provider call.",
+  "child_pid": 3257635,
+  "signal": "SIGINT"
+}

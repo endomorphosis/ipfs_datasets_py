@@ -1,0 +1,500 @@
+{
+  "accelerate_dependency_after": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "admitted": false,
+  "applied": false,
+  "elapsed_seconds": 2.2850988819263875,
+  "error": {
+    "message": "Object of type mappingproxy is not JSON serializable",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/repair_lane.py\", line 193, in main\n    save(runtime / 'native-goal-before.json', stored_goal)\n  File \"/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/smoke_resource_common.py\", line 55, in save\n    raw = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + '\\n').encode()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/__init__.py\", line 238, in dumps\n    **kw).encode(obj)\n          ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/encoder.py\", line 202, in encode\n    chunks = list(chunks)\n             ^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/encoder.py\", line 439, in _iterencode\n    o = _default(o)\n        ^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/encoder.py\", line 180, in default\n    raise TypeError(f'Object of type {o.__class__.__name__} '\nTypeError: Object of type mappingproxy is not JSON serializable\n",
+    "type": "TypeError"
+  },
+  "formalized": false,
+  "imported": false,
+  "native_claimed": false,
+  "native_daemon_executed": false,
+  "native_task_completed": false,
+  "passed": false,
+  "plan": {
+    "bytes": 7538,
+    "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/repair-proposal-plan.json",
+    "sha256": "f03ae92f8db79f890784b0be0c44fbaaabd7e3159f9075389b2103978745404c"
+  },
+  "provider": {
+    "allow_cross_provider_fallback": false,
+    "allow_local_fallback": false,
+    "autostart": false,
+    "base_url": "http://172.17.0.1:8080/v1",
+    "download": false,
+    "max_new_tokens": 768,
+    "model": "leanstral_local",
+    "name": "llama_cpp",
+    "physical_server_context_changed": false,
+    "physical_server_context_preflight": 32768,
+    "request_context_budget_tokens": 4096,
+    "temperature": 0,
+    "timeout_seconds": 120
+  },
+  "provider_calls": 0,
+  "review_required": true,
+  "schema": "native-goal-local-parser-proposal/v1",
+  "scoped_sources": [
+    {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    {
+      "bytes": 11004,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/__init__.py",
+      "sha256": "42c252ba4fb85301b649bc3afe497a2799d27460b9556e57c7398b5441ba13e8"
+    },
+    {
+      "bytes": 3636,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py",
+      "sha256": "c0306a55184bc6baabf7528bf7a255604ff8c49d2c510afde13eae2e8108ff88"
+    },
+    {
+      "bytes": 1866,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/__init__.py",
+      "sha256": "96a6aae98c7d6ee877559b847f455f57e60a81c476468c61d77d6fde86b774b1"
+    },
+    {
+      "bytes": 4332,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/base.py",
+      "sha256": "3763cc86f14697a68cb7a38dab9c7e6a9d0160910b73ba1ea2e965cd89d6e905"
+    },
+    {
+      "bytes": 6937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/cec_delegate.py",
+      "sha256": "ebaf1bde83b2c00d5b0028fa34f43c52e6e0628d19bb8ffeb1a6c1987b61a9ef"
+    },
+    {
+      "bytes": 12658,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/forward_chaining.py",
+      "sha256": "0c56b8663063aeb30c5bbbda045a3f723ab26fffe08e23b14f3c94e866392f09"
+    },
+    {
+      "bytes": 12397,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/modal_tableaux.py",
+      "sha256": "ffc1489b684e0630b7940b2ba688ddb99142f7fcce203e06fbfa55643826d1c4"
+    },
+    {
+      "bytes": 8483,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/strategies/strategy_selector.py",
+      "sha256": "5b7b71c5256dca709917fd6e8d55fd014d7ec0d4a216b56cff1b633b2143f501"
+    },
+    {
+      "bytes": 28721,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+      "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+    },
+    {
+      "bytes": 24431,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
+      "sha256": "41fa83374a9e7b188255476710e778a056a3090ee1fdfe3b151caa6359855476"
+    },
+    {
+      "bytes": 4434,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/__init__.py",
+      "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+    },
+    {
+      "bytes": 48070,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30"
+    },
+    {
+      "bytes": 11840,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/supervisor_router.py",
+      "sha256": "31c493b8cf8dec0afe714106c3a5e7912b745ca2d0c575d7fb54b71267e8dfee"
+    },
+    {
+      "bytes": 1948,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/tree_pin.py",
+      "sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d"
+    },
+    {
+      "bytes": 2438,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/__init__.py",
+      "sha256": "e574c74067e7059cc506b32c780bc0444de89c63b55dade3df00ae9fd563431e"
+    },
+    {
+      "bytes": 6656,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/bounded_cache.py",
+      "sha256": "29a450b5fc08c5577964774035717dc5d7be85c159cfd502fba5252c4ec9c9fa"
+    },
+    {
+      "bytes": 13962,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/converters.py",
+      "sha256": "f530c453775f2c1a4a2f8a26aa647df1f725be109078df258288eab33a427fde"
+    },
+    {
+      "bytes": 2268,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/errors.py",
+      "sha256": "10d21acd8d0fd6049297a1b36d10db1fcc09146095f1dabfe5a686b887f4b8cf"
+    },
+    {
+      "bytes": 4875,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/feature_detection.py",
+      "sha256": "a285d84f9b13ee3c2c54023e07ccf9da94ce93e6736362c1881421db9e509d76"
+    },
+    {
+      "bytes": 168205,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/proof_cache.py",
+      "sha256": "b68c36ff934ba6ee7a308162ee7035c78f4c522a5483e85e536b428db8485b36"
+    },
+    {
+      "bytes": 6398,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/utility_monitor.py",
+      "sha256": "ef23631a622dfd555cefcdf69793e78a7c64a115c7451aea4dfff5389b014985"
+    },
+    {
+      "bytes": 8374,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/validators.py",
+      "sha256": "e58dbba7d3f346545e2ff572928ed9c7bb9adc71b20e8cc8dc816a7fc060e0c7"
+    },
+    {
+      "bytes": 2644,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/__init__.py",
+      "sha256": "1eeb1a57e388c37415facf3989a26d3b960b176b4bf1e65eef66e106c1aadb4b"
+    },
+    {
+      "bytes": 19375,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/analyzer.py",
+      "sha256": "8953235974d062f968334106c952d0978cc31a58408206bb56c26da174f29d6c"
+    },
+    {
+      "bytes": 2743,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/compiler_repairs.py",
+      "sha256": "53ff5b4b6cf3303f46569f43e748b5d15a75b1895dbb4c4a054b541e9fc5569e"
+    },
+    {
+      "bytes": 27572,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/converter.py",
+      "sha256": "e1749ca0403f34834374b5089d78523f1866d53d3ec923137b6fb526fdffe7c8"
+    },
+    {
+      "bytes": 31862,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/decoder.py",
+      "sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9"
+    },
+    {
+      "bytes": 221362,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/exports.py",
+      "sha256": "ac46bf1efa79925620199b56f6f1dbde34c92889a0a2a474cc6b9e408ea3c3de"
+    },
+    {
+      "bytes": 391770,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/formula_builder.py",
+      "sha256": "156261487326b214c8e9c59f70a87e3faa4dfc20c3c4a4be575555f0ee6fb1ba"
+    },
+    {
+      "bytes": 22853,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/graph.py",
+      "sha256": "5a595b05f5bec6d74f6c8c06129cc7f1a7860a2beff98d1f28b9fde6635bdfde"
+    },
+    {
+      "bytes": 114441,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/ir.py",
+      "sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416"
+    },
+    {
+      "bytes": 7285,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/knowledge_base.py",
+      "sha256": "a6e59bf538caa19cfeff6e02aa5da0b964b83c73396d05e58c3830e39dd97d9a"
+    },
+    {
+      "bytes": 11583,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+      "sha256": "abb138e7b51dbb071b9ab98865e3fb6c64dfd6a6cc5674a0853d523f00a7797a"
+    },
+    {
+      "bytes": 15413,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/metrics.py",
+      "sha256": "5a2f92bc24154e14d3d2e3b6e73dcc128e6183957b5832b9bc1d72e60f7370da"
+    },
+    {
+      "bytes": 67553,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/prover_syntax.py",
+      "sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31"
+    },
+    {
+      "bytes": 6124,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/support_map.py",
+      "sha256": "e48a537061611eee0cacff129839ce04992db838b86a3edbe8f422f1018fda84"
+    },
+    {
+      "bytes": 112,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/__init__.py",
+      "sha256": "6b3ede4588f4d18b84b6a06ebc774b8d3755627a0b5313147de7838503032f3c"
+    },
+    {
+      "bytes": 298921,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "sha256": "9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1"
+    },
+    {
+      "bytes": 20391,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_document.py",
+      "sha256": "b44785f720df1a60495bb7086a78fc00325a5d653a7e1782c0712fb7691454f2"
+    },
+    {
+      "bytes": 2594,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/__init__.py",
+      "sha256": "38b169f6f7a40c40880bec32ef23730e9a3c6c47b6441e3b39e80fa5a9d1f4c2"
+    },
+    {
+      "bytes": 34289,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "sha256": "f19ede6f735f20309745802b96038ae2a6443a52d486182bc4584000b96abc7a"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 13262,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2"
+    },
+    {
+      "bytes": 3873,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/__init__.py",
+      "sha256": "60359f47e39c12483d2ffa702d66b611ecba8451678d7a1f7e228e30e795402e"
+    },
+    {
+      "bytes": 3009,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/bridge_types.py",
+      "sha256": "5ec9c47e1d5c527f66a01ec0790335ff70d784e6d3e20cc2dd73e1bc647449ad"
+    },
+    {
+      "bytes": 2859,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/common_types.py",
+      "sha256": "0ad8f7b7e6f38540414c94dc9d6da6aba9665d4dee6283499d8a637a53dfc500"
+    },
+    {
+      "bytes": 10681,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/deontic_types.py",
+      "sha256": "6fa123ecf0afb1d3293736c24633043aeb3349a3b3f7728247bfd08ea8cafe94"
+    },
+    {
+      "bytes": 3529,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/fol_types.py",
+      "sha256": "d1debd330e7a3102a1580efcbc6e06b863ee8ca9d78b2e34a60cd98b5ba1e902"
+    },
+    {
+      "bytes": 741,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/proof_types.py",
+      "sha256": "8c96df27865d86cd54ae242497e4d9ddeaf89c5cd7484718b521dccf123fcb97"
+    },
+    {
+      "bytes": 2591,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/types/translation_types.py",
+      "sha256": "5a0e4314692fdd4945bfd3c9b04d80e2fda86aa7f4b264f4c9c21964afe1343e"
+    },
+    {
+      "bytes": 5845,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/router_deps.py",
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    },
+    {
+      "bytes": 175,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/__init__.py",
+      "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+    },
+    {
+      "bytes": 12149,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/anyio_compat.py",
+      "sha256": "75fe36e8ffb3f8cec2240aa3fd91385493555fba6d573dff1d3c1d6270b58530"
+    },
+    {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    {
+      "bytes": 46183,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_autoformal_supervisor.py",
+      "sha256": "f9bf1c9f483266eb44698dcc33475daef8d042db90475039b42a90398f3155d6"
+    },
+    {
+      "bytes": 40208,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/__init__.py",
+      "sha256": "5083369f823be18cd467346f6f3b955925ec65bedafe9eb28a61ca8897997c03"
+    },
+    {
+      "bytes": 328350,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_implementation_route.py",
+      "sha256": "9b34bc437fa2d1b6befd07153e9f0092b25efc19498a5d1e9f01eb743d211e7a"
+    },
+    {
+      "bytes": 188967,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/__init__.py",
+      "sha256": "3c16dfa0ab9f73de44418dcdb44996fbf0f293daaf7ce9979d2e42a7bb1a2436"
+    },
+    {
+      "bytes": 2730,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/control/__init__.py",
+      "sha256": "3149e832facdcebf525dbbe990f81a8f9fa79cb4b4295280cfe97124bc8a2e27"
+    },
+    {
+      "bytes": 328110,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/control/control_contracts.py",
+      "sha256": "b1a402d74f28584c26133e1b800f3010f69a0e643375037e693856a95ae8e1ca"
+    },
+    {
+      "bytes": 342723,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/control/control_plane.py",
+      "sha256": "7c1bf2a95a11fb34aaecbcd04da82964c1702a5e7e95206c40e4b9f5afa9d34b"
+    },
+    {
+      "bytes": 2872,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/objectives/__init__.py",
+      "sha256": "61b58d42ede1324024a280e35c0772263496c42d917deeb82991455964db0c15"
+    },
+    {
+      "bytes": 211038,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/objectives/goal_completion.py",
+      "sha256": "24ec899c60404447a3ded282bae3ccfa958229ee0578b15f9639c82183a290b4"
+    },
+    {
+      "bytes": 99,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/proof/__init__.py",
+      "sha256": "ae0ac8ba4b29666a7d527d7153b77869fd9a96b9e66b7a76e44273d663353b22"
+    },
+    {
+      "bytes": 74508,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/proof/formal_verification_contracts.py",
+      "sha256": "06d897f1679e615f18b6cf6fbc6a666515e0826ca87ea0daf89b82d8d2418450"
+    },
+    {
+      "bytes": 2437,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/runtime/__init__.py",
+      "sha256": "9e528fb4611c1c0d25646b85f751046c7de73ba5547e6a996572abe37ded0a64"
+    },
+    {
+      "bytes": 5730,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/runtime/configured_board_extension_cache.py",
+      "sha256": "30eb6e5cce5e759f9cf1bd63ad0c45687a358c9375c77e1fba03c795ca2af9f3"
+    },
+    {
+      "bytes": 41189,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/runtime/configured_board_extension_projection.py",
+      "sha256": "1ad67d3f10708310aaba666473c6d3c2bb4dcadad35cd7dd1917b32c30b526b6"
+    },
+    {
+      "bytes": 1558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/self_improvement/__init__.py",
+      "sha256": "7096b272db0aee285a2e3c08197a00e4fd61827171e8f0ee57569f655529668e"
+    },
+    {
+      "bytes": 15846,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/self_improvement/self_improvement_completion.py",
+      "sha256": "4dcd01c5d444baa22a7e9589e2395b5970bbf7fd030ef6b94af101f3bb923947"
+    },
+    {
+      "bytes": 3212,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/__init__.py",
+      "sha256": "247e63849d1bf589825fcf965b6c6d20cc95de4e147f6121cd6fe6fd7cf06deb"
+    },
+    {
+      "bytes": 58758,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_contracts.py",
+      "sha256": "ac1ea77073b7a8f8e009722e1c42dbe3e3ffe277cf01252413ca9a57ca724543"
+    },
+    {
+      "bytes": 61483,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_migrations.py",
+      "sha256": "8299b019f7b55612da209ca719126d8fa3f7198d03e4c258257c9f161fbaa5f6"
+    },
+    {
+      "bytes": 87099,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_schema.py",
+      "sha256": "a06d0b6a927836aca3b06fd4efcab73054bd308c61822337670e3dc4c1dda358"
+    },
+    {
+      "bytes": 188856,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py",
+      "sha256": "5b12ecdfa91ff53297fd6c99094a6c4b6acca1ab3e050ce34468b6f0d74227db"
+    },
+    {
+      "bytes": 63169,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/duckdb_state.py",
+      "sha256": "95c4792462deeea83228ce61a79ece61b1f4d9b78adeefe24787c564b9130d81"
+    },
+    {
+      "bytes": 189474,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/intent_repository.py",
+      "sha256": "f7b3091e49df02a0871289d59a9ed314582d4f763086c37612dd6572669408bd"
+    },
+    {
+      "bytes": 31568,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/quack_owner_command.py",
+      "sha256": "d4a7b0ac706e9ab18b36dc2cbde190a104b07b962bf99093da83d08a183a89f5"
+    },
+    {
+      "bytes": 70750,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/quack_owner_mutation.py",
+      "sha256": "ae75f139b95951a5f9f015ac8e913a89dad7350c8cc99147aceae477902bce61"
+    },
+    {
+      "bytes": 13703,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/agent_supervisor/task_sources/task_identity.py",
+      "sha256": "4168c617ba079ca8fbeb2346931d4c7fcfb6516a09e5ddc7079434fb3541654e"
+    },
+    {
+      "bytes": 312,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/common/__init__.py",
+      "sha256": "c11d3563a34a1a40c00a33dd2eba9ffea214a957048690a254f8b3711d704365"
+    },
+    {
+      "bytes": 23276,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/common/meta_model_api.py",
+      "sha256": "4dbeac5ceec657c0b6d4d97f172067c40e4fe91bbd394c44998ca1ce3f7ab7d5"
+    },
+    {
+      "bytes": 539269,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/llm_router.py",
+      "sha256": "08a51032d0415f1fb967be8de83f3f1a452f8be4f6fdcc79584562e06836ac87"
+    },
+    {
+      "bytes": 1596,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/model_catalog/__init__.py",
+      "sha256": "ecd4d6099e267ee2b65284691a298285f44d5443da4a1142e8bb260ae530ffd0"
+    },
+    {
+      "bytes": 8918,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/model_catalog/identity.py",
+      "sha256": "fbaf013ad8dd3035cfe04e9bfbb841aa72f8581ed04eb6a543abcd3d579caf44"
+    },
+    {
+      "bytes": 36138,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/model_catalog/schema.py",
+      "sha256": "872bcd9761aa3c50347648e18576f1b8f4ecd34bdf152c466da5acae79a45964"
+    },
+    {
+      "bytes": 8046,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/router_deps.py",
+      "sha256": "79e400fc5fdb03bad6a9e6f9102721c0080318c26c88f6d914ac9e3ff3a110ab"
+    },
+    {
+      "bytes": 357,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/utils/__init__.py",
+      "sha256": "07c143316f3fb9d40d5ee1d0f6c584948ba49438b059bcdb6d868e0f81e3d3e3"
+    },
+    {
+      "bytes": 9475,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/utils/mistral_vibe.py",
+      "sha256": "4c3bb7ef67053f2c14d592c4d0f1f706f6a815fa0605f527187d5d3a2e7498c7"
+    }
+  ],
+  "wrote_compiler": false
+}

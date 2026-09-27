@@ -1,0 +1,23 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/pytest-cache
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py F [100%]
+
+=================================== FAILURES ===================================
+__________________ test_legal_ir_target_timeout_becomes_loss ___________________
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py:273: in test_legal_ir_target_timeout_becomes_loss
+    assert time.monotonic() - started < 0.9
+E   assert (1118596.776090748 - 1118595.072815228) < 0.9
+E    +  where 1118596.776090748 = <built-in function monotonic>()
+E    +    where <built-in function monotonic> = time.monotonic
+----------------------------- Captured stdout call -----------------------------
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+- generated xml file: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/pytest-r2.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_legal_ir_target_timeout_becomes_loss
+============================== 1 failed in 2.32s ===============================

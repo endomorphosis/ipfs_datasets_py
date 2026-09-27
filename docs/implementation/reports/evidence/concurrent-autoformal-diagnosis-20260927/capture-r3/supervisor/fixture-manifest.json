@@ -1,0 +1,18 @@
+{
+  "files": {
+    ".gitignore": "a51104264729e7b362ea8c739de0ada29ba6e4f6047580ec3a3fd330ad20fd47",
+    "harness/conversion_lane.py": "e259e8e93699afd65ed6bea8d6f550b8dbeb0d61fc1f40e043af9a4e53c40161",
+    "harness/dependency_binding.py": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e",
+    "harness/formal_validation.py": "c1c67d32e4a0f12fcd48c272b9e0efe17d4cd00086599c1f73cf249781d67201",
+    "harness/frozen-config.json": "fa7af986598b2d18aa3bc1c70ef97446fbe04d4a17e1081fecac6df0b8a675c8",
+    "harness/lane_bootstrap.py": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55",
+    "harness/parent_harness.py": "ce782cca4d75c091f6e6cb979ad348444cc8dd5541df478d297ad370a3ea2442",
+    "harness/prepare_five_frozen_targets.py": "0543038f6219bfb9166d58274bb0077a177785ac5c92706c3749cc03155204e3",
+    "harness/target-preparation-payload.json": "97f2d421d53e4584b5318d0d0b6445218971b02356bd0a926f60c3780d01c81c",
+    "harness/training_lane.py": "c66d448390247866424be4f61e33c242b9a26e90a097126a2207ef666caa530e",
+    "pyproject.toml": "1e2aecaf91ca6dbb9ef5e23f5e1acbed95a408d6c7704f3d1b125309307fbe3e",
+    "smoke-config.json": "62e0ea1d3e7dd5b09d61ed3eabbd3099358dacdc2bec962909f87b2cbc1738c6",
+    "tests/test_concurrent_smoke.py": "2acf90b4b1b083e6564e603ef0c9c7fe247eb74a9f9916008c4d1fcd9cd0f009"
+  },
+  "head": "cfb7a6a330a62b39c31d38f9be106693bde1536f"
+}

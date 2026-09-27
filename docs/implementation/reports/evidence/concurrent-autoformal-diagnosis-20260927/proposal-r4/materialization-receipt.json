@@ -1,0 +1,14 @@
+{
+  "event_watermark": 3,
+  "goal_count": 1,
+  "goal_edge_count": 0,
+  "plan_count": 1,
+  "plan_root_cid": "baguqeerabrxjxhrici7fxwojissqnjywq3kaykby6bzfq35y23qqofelqbnq",
+  "projection_cid": "baguqeera5yyi5tqitzciz7qv233nfb6flhjke5hdegtzbpx6gauvorjno4ga",
+  "repository_tree_id": "sha256:9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1",
+  "schema": "ipfs_accelerate_py/agent-supervisor/database-task-source@1",
+  "task_cids": [
+    "baguqeeravz7rjxjtb5zcqukrmtjrm5ec6ibffjomtnil2chwwvaz5ameyusa"
+  ],
+  "task_count": 1
+}

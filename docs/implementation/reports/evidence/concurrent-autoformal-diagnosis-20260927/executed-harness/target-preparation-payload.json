@@ -1,0 +1,96 @@
+{
+  "admitted": false,
+  "artifact_format": "bundle",
+  "artifact_max_bytes": 30000000,
+  "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "expected_package_python_manifest_sha256": "8780fd4efecca5c81d0f2f74263b564941e0813b1d4622d454e407ee38ed007d",
+  "expected_unique_sample_count": 5,
+  "formalized": false,
+  "launch_ready": true,
+  "outer_owner_required": true,
+  "parent_job_spec_canonical_sha256": "e45bf12c653744e50c01535a131055a396e0787d027c4871f94afd3d23e99073",
+  "parent_worker_receipt": {
+    "bytes": 216585,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/lanes/training/native/receipt.json",
+    "sha256": "c1e2ec5f6cd7ece845a9d5aef7fb8c1ef7c125b655ae4d4a75fed5923059afaa"
+  },
+  "readiness_reason": "root must bind final reviewed package Python manifest after optimizer changes, then set launch_ready; do not silently rehash source drift",
+  "retries": 0,
+  "samples": [
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "backup",
+      "text": "Company A shall submit backup report within 10 days unless emergency.",
+      "title": "synthetic-smoke-fixture"
+    },
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "prohibit",
+      "text": "The agency shall not disclose records.",
+      "title": "synthetic-smoke-fixture"
+    },
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "minimum",
+      "text": "The officer shall retain the file for at least 20 days.",
+      "title": "synthetic-smoke-fixture"
+    }
+  ],
+  "schema": "five-frozen-sample-direct-target-preparation/v1",
+  "selection_frozen": true,
+  "target_timeout_seconds": 60,
+  "training_config": {
+    "epochs": 1,
+    "hard_example_fraction": 1.0,
+    "l2_regularization": 0.0,
+    "learning_rate": 0.35,
+    "legal_ir_bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "max_cosine_regression": 0.01,
+    "max_cross_entropy_regression": 0.0,
+    "max_legal_ir_loss_regression": 0.02,
+    "max_line_search_attempts": 3,
+    "max_reconstruction_regression": 0.02,
+    "max_seconds": 180,
+    "metric_disk_cache": 0,
+    "objective_cosine_gap_weight": 1.5,
+    "objective_cross_entropy_weight": 1.0,
+    "objective_legal_ir_weight": 1.0,
+    "objective_reconstruction_weight": 1.0,
+    "profile_projection": true,
+    "projection_max_update_families": 3,
+    "projection_update_backend": "python_sparse_batch",
+    "use_sample_memory": false
+  },
+  "validation_samples": [
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "holdout-notify",
+      "text": "The inspector shall notify the manager within 5 days unless emergency.",
+      "title": "synthetic-smoke-fixture"
+    },
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "holdout-retain",
+      "text": "The clerk shall retain records for at least 30 days.",
+      "title": "synthetic-smoke-fixture"
+    }
+  ]
+}

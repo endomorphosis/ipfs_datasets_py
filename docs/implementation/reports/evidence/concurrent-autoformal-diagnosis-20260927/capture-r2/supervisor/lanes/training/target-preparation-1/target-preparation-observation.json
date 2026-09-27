@@ -1,0 +1,311 @@
+{
+  "admitted": false,
+  "all_bridge_reports_accepted": false,
+  "all_requested_bridge_reports_received": false,
+  "artifact_max_bytes": 30000000,
+  "artifact_observed_and_verified": true,
+  "base_checkpoint_loaded": false,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "cache_policy": "direct preparation bypasses metric/multiview caches; OS cache uncontrolled",
+  "effective_rlimit_fsize": 30000000,
+  "elapsed_seconds": 50.80477643106133,
+  "error": null,
+  "exit_code": 0,
+  "failure_disposition": "retain all statuses and bridge failures; no retries or reselection",
+  "formalized": false,
+  "frozen_payload_unchanged": true,
+  "heldout_canary_qualified": false,
+  "huggingface_upload_performed": false,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "metric_disk_cache": 0,
+  "ordered_training_samples": [
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "backup",
+      "text": "Company A shall submit backup report within 10 days unless emergency.",
+      "title": "synthetic-smoke-fixture"
+    },
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "prohibit",
+      "text": "The agency shall not disclose records.",
+      "title": "synthetic-smoke-fixture"
+    },
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "minimum",
+      "text": "The officer shall retain the file for at least 20 days.",
+      "title": "synthetic-smoke-fixture"
+    }
+  ],
+  "ordered_validation_samples": [
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "holdout-notify",
+      "text": "The inspector shall notify the manager within 5 days unless emergency.",
+      "title": "synthetic-smoke-fixture"
+    },
+    {
+      "citation": null,
+      "embedding_model": "mock:stable-sha256",
+      "embedding_vector": null,
+      "section": "holdout-retain",
+      "text": "The clerk shall retain records for at least 30 days.",
+      "title": "synthetic-smoke-fixture"
+    }
+  ],
+  "parent_job_spec_canonical_sha256": "e45bf12c653744e50c01535a131055a396e0787d027c4871f94afd3d23e99073",
+  "parent_receipt_unchanged": true,
+  "parent_worker_receipt": {
+    "bytes": 216585,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/lanes/training/native/receipt.json",
+    "sha256": "c1e2ec5f6cd7ece845a9d5aef7fb8c1ef7c125b655ae4d4a75fed5923059afaa"
+  },
+  "payload_sha256": "52882136cf97ab40fca3a245ed1ebfa4ee459d73eb7dbd2c4eab8ab3ebb71792",
+  "promotion_performed": false,
+  "sample_count": 5,
+  "schema": "five-frozen-sample-direct-target-observation/v1",
+  "script_sha256": "5459e5295ab4593e6a218c13620344f1cccb2106089ea6e62934e7bf5d6825b6",
+  "source_file_count": 7814,
+  "source_manifest_sha256": "8780fd4efecca5c81d0f2f74263b564941e0813b1d4622d454e407ee38ed007d",
+  "source_unchanged": true,
+  "target_preparation": {
+    "admitted": false,
+    "artifact": {
+      "bytes": 2352504,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2/supervisor/lanes/training/target-preparation-1/targets.bundle",
+      "sha256": "be8888fc19c73c79dd671f33028516bb527e079ec748346191653e6be6b78a4c"
+    },
+    "artifact_builder_retains_all_targets": false,
+    "artifact_format": "bundle",
+    "artifact_statistics": {
+      "artifact_bytes": 2352504,
+      "artifact_format": "bundle",
+      "compressed_target_bytes": 1243091,
+      "compression_seconds": 3.180302958935499,
+      "deduplicated_target_count": 0,
+      "encoding_validate_seconds": 2.3053076460491866,
+      "manifest_bytes": 1109397,
+      "referenced_uncompressed_target_bytes": 22722193,
+      "sample_count": 5,
+      "schema_version": "legal-ir-target-bundle-v1",
+      "shard_count": 5,
+      "target_reference_count": 5,
+      "unique_uncompressed_target_bytes": 22722193
+    },
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "bridge_report_telemetry": {
+      "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722": {
+        "accepted_bridge_count": null,
+        "accepted_bridge_names": null,
+        "attempted_bridge_count": null,
+        "attempted_bridge_names": null,
+        "failed_bridge_count": null,
+        "failed_bridge_names": null,
+        "failures": {},
+        "implemented_bridge_count": null,
+        "implemented_bridge_names": null,
+        "outer_timeout": {
+          "exception_type": "_LegalIRTargetTimeout",
+          "message": "LegalIR target construction exceeded 15.000s"
+        },
+        "report_accepted": null,
+        "report_received": false
+      },
+      "us-code-synthetic-smoke-fixture-holdout-notify-a4399bdbcfa9ce99": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "us-code-synthetic-smoke-fixture-holdout-retain-d9e98c567cb9f89d": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      }
+    },
+    "cache_observation": "targets built directly; metric and multiview caches bypassed; OS cache uncontrolled",
+    "elapsed_seconds": 50.40370623511262,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 5,
+    "maximum_pending_generation_results": 1,
+    "metric_disk_cache": 0,
+    "metric_process_cache_used": false,
+    "multiview_process_cache_used": false,
+    "sample_count": 5,
+    "sample_preparation_seconds": 1.9503174489364028,
+    "schema_version": "autoencoder-target-preparation-v1",
+    "status_definitions": {
+      "ready": "a returned multiview report produced a target; does not imply bridge acceptance or admission",
+      "timeout": "the outer target timeout escaped evaluation; a fallback target was produced"
+    },
+    "statuses": {
+      "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722": "timeout",
+      "us-code-synthetic-smoke-fixture-holdout-notify-a4399bdbcfa9ce99": "ready",
+      "us-code-synthetic-smoke-fixture-holdout-retain-d9e98c567cb9f89d": "ready",
+      "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8": "ready",
+      "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877": "ready"
+    },
+    "target_generate_call_seconds": 35.549481524154544,
+    "target_generation_and_artifact_seconds": 44.917661661980674,
+    "target_generation_seconds": 35.549481524154544,
+    "target_generation_seconds_per_span": 7.109896304830909,
+    "target_generation_timing_scope": "union of producer call wall intervals; parallel generation may overlap bundle encoding",
+    "target_pipeline_non_generation_seconds": 9.36818013782613,
+    "target_snapshot_id": "sha256:4a07a5b76d43d6bba37edabd30d2709aa5d6cca6c95e14f344bd8d8b384944af",
+    "target_timeout_enforcement": "main_thread_sigalrm"
+  },
+  "target_status_counts": {
+    "ready": 4,
+    "timeout": 1
+  },
+  "training_executed": false,
+  "training_sample_count": 3,
+  "tree_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "use_sample_memory": false,
+  "validation_sample_count": 2,
+  "wall_seconds_per_input_span": 10.160955286212266
+}

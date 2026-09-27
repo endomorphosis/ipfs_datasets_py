@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-cache
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 81 items
+
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py ............. [ 16%]
+.....................................                                    [ 61%]
+tests/unit_tests/logic/CEC/native/test_dcec_parsing.py ................. [ 82%]
+..............                                                           [100%]
+
+- generated xml file: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-after.xml -
+============================== 81 passed in 0.19s ==============================

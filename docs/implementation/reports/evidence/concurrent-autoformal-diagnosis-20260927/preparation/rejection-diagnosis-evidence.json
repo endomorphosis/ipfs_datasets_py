@@ -1,0 +1,137 @@
+{
+  "admitted": false,
+  "formalized": false,
+  "observations": {
+    "r5": {
+      "capsule": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/state/smoke_database_portal_attempts/6963ffde015a04951c4d443e/implementation-logs/smoke-cbe72d01668de2117f39-base-context-capsule.json",
+      "context": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/state/smoke_database_portal_attempts/6963ffde015a04951c4d443e/implementation-logs/smoke-cbe72d01668de2117f39-base-context-receipt.json",
+      "disabled_heads": {
+        "compiler_quality_family_logit_scale": 0.0,
+        "decompiler_plan_family_logit_scale": 0.0,
+        "decompiler_plan_legal_ir_view_logit_scale": 0.0
+      },
+      "effective_input_limit": 4096,
+      "execution": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/state/smoke_database_portal_attempts/6963ffde015a04951c4d443e/implementation-logs/smoke-cbe72d01668de2117f39-attempt-1-task-execution-receipt.json",
+      "input_tokens": 2321,
+      "native": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/lanes/training/native/receipt.json",
+      "omissions": [],
+      "provider_call_count": 0,
+      "truncated": false
+    },
+    "r6": {
+      "capsule": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation-logs/smoke-3ab02fd285da0179a20c-base-context-capsule.json",
+      "context": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation-logs/smoke-3ab02fd285da0179a20c-base-context-receipt.json",
+      "disabled_heads": {
+        "compiler_quality_family_logit_scale": 0.0,
+        "decompiler_plan_family_logit_scale": 0.0,
+        "decompiler_plan_legal_ir_view_logit_scale": 0.0
+      },
+      "effective_input_limit": 4096,
+      "execution": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation-logs/smoke-3ab02fd285da0179a20c-attempt-1-task-execution-receipt.json",
+      "input_tokens": 2321,
+      "native": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/lanes/training/native/receipt.json",
+      "omissions": [],
+      "provider_call_count": 0,
+      "truncated": false
+    }
+  },
+  "references": [
+    {
+      "bytes": 2576,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/state/smoke_database_portal_attempts/6963ffde015a04951c4d443e/implementation-logs/smoke-cbe72d01668de2117f39-base-context-receipt.json",
+      "sha256": "10cde6397fd2ada37ddad00cf20eff13d5f7722b8bd8d1fb9c8084066f07c3ea"
+    },
+    {
+      "bytes": 10772,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/state/smoke_database_portal_attempts/6963ffde015a04951c4d443e/implementation-logs/smoke-cbe72d01668de2117f39-base-context-capsule.json",
+      "sha256": "e88aafd80cf541320c4abd8d5256181c1b913b764f5769108733e9af536bd922"
+    },
+    {
+      "bytes": 2691,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/state/smoke_database_portal_attempts/6963ffde015a04951c4d443e/implementation-logs/smoke-cbe72d01668de2117f39-attempt-1-task-execution-receipt.json",
+      "sha256": "daa9ffb4744a5b79e59fcf898851b9a582365f6f1998afa845e0e36a0446e8b9"
+    },
+    {
+      "bytes": 86926,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/lanes/training/native/receipt.json",
+      "sha256": "95e8a169dbb3a185eac794f536485a043d4fea45bd610d906a237326446bcd59"
+    },
+    {
+      "bytes": 916,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/task.json",
+      "sha256": "4cadd45536f3f30fa4440881e5a6187f6dfb4f10143af37faf67186bfb96c35e"
+    },
+    {
+      "bytes": 8397,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/supervisor-receipt.json",
+      "sha256": "145c9257c36af32ef49efb1238cd14f007ff0b94b8c2cd8f3df50e95e2ea3775"
+    },
+    {
+      "bytes": 2576,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation-logs/smoke-3ab02fd285da0179a20c-base-context-receipt.json",
+      "sha256": "925c6777e04af4c9c5c848911eeaa05ff7c89455d880ef24e202dc03d5a883f0"
+    },
+    {
+      "bytes": 10772,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation-logs/smoke-3ab02fd285da0179a20c-base-context-capsule.json",
+      "sha256": "dedfc37570a6941947a95c6e230ad3e5d9e033a22a775b17c631f7bb024bbe11"
+    },
+    {
+      "bytes": 2691,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation-logs/smoke-3ab02fd285da0179a20c-attempt-1-task-execution-receipt.json",
+      "sha256": "4cb6b9109f2a0bfa4a930f2b0beeb041dbd982e0222ca9cd343e44329967af4b"
+    },
+    {
+      "bytes": 216585,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/lanes/training/native/receipt.json",
+      "sha256": "c1e2ec5f6cd7ece845a9d5aef7fb8c1ef7c125b655ae4d4a75fed5923059afaa"
+    },
+    {
+      "bytes": 916,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/task.json",
+      "sha256": "f505ec06168698702cc6aab9310521990cffbe01948244e40728182d833c0a33"
+    },
+    {
+      "bytes": 8397,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/supervisor-receipt.json",
+      "sha256": "e74d0a3094e20a7a48a02488473ec43caec4cc43a4ebce994f86a87d5a240785"
+    },
+    {
+      "bytes": 856,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test-results.json",
+      "sha256": "d158a0a478163012b628347bdb10e8c8c872dbb82c89a89399dad30d6c248434"
+    },
+    {
+      "bytes": 1809,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/label-support-reproduction.json",
+      "sha256": "a0ea3a315f66f0e2e7a523619926e291e039c881c8685e1d51ff32757433d267"
+    },
+    {
+      "bytes": 8868,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/canonical-application.patch",
+      "sha256": "aab1d31cad755a4d540ac837104ed462e539959debf6e66c46f7953f5955061e"
+    },
+    {
+      "bytes": 1221,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/pytest-r3-observation.json",
+      "sha256": "0f1ef216f67cfc2314146c349d7ed2e8203e42751a7444f363227f5a5cd0f8d6"
+    },
+    {
+      "bytes": 7915,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/pytest-r3.xml",
+      "sha256": "e8348dcf807c2efe37c111b27c519ec8a88c19c337b07aa2f05023a9e52e2023"
+    },
+    {
+      "bytes": 6354,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/learned-head-smoke-plan.json",
+      "sha256": "8c19c7fbf9da11f280c81379a477ca4898d6b3185b4705f1242aceededa1f457"
+    },
+    {
+      "bytes": 2765,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/repair-lane-preparation.json",
+      "sha256": "bd610bfa649fec2d5aa668dd3457230506ebe76ed863c1a686f890e0162a94c4"
+    }
+  ],
+  "schema": "concurrent-autoformal-rejection-diagnosis-evidence/v1",
+  "scope": "historical R5/R6 and unit reproductions; new smoke outcome intentionally absent"
+}

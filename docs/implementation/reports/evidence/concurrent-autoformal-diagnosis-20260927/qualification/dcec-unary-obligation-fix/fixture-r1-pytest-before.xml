@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.158" timestamp="2026-09-27T23:16:27.740761+00:00" hostname="spark-b271"><testcase classname="" name="tests.unit_tests.logic.CEC.native.test_dcec_integration" time="0.000"><error message="collection failure">tests/unit_tests/logic/CEC/native/test_dcec_integration.py:438: in &lt;module&gt;
+    ("permitted", DeonticOperator.PERMISSIBLE),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'DeonticOperator' has no attribute 'PERMISSIBLE'. Did you mean: 'PERMISSION'?</error></testcase></testsuite></testsuites>

@@ -1,0 +1,9 @@
+test_deadline_reaches_owner_and_never_runs_later_adapter (__main__.TimeoutOwnerBoundaryTests.test_deadline_reaches_owner_and_never_runs_later_adapter) ... ok
+test_finally_cleanup_and_signal_restoration_remain (__main__.TimeoutOwnerBoundaryTests.test_finally_cleanup_and_signal_restoration_remain) ... ok
+test_nested_exception_handler_cannot_swallow_owned_deadline (__main__.TimeoutOwnerBoundaryTests.test_nested_exception_handler_cannot_swallow_owned_deadline) ... ok
+test_ordinary_adapter_errors_still_record_and_continue (__main__.TimeoutOwnerBoundaryTests.test_ordinary_adapter_errors_still_record_and_continue) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 1.216s
+
+OK

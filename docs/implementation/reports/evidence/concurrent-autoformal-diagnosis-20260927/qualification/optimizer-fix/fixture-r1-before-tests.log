@@ -1,0 +1,56 @@
+test_deadline_reaches_owner_and_never_runs_later_adapter (__main__.TimeoutOwnerBoundaryTests.test_deadline_reaches_owner_and_never_runs_later_adapter) ... ERROR
+test_finally_cleanup_and_signal_restoration_remain (__main__.TimeoutOwnerBoundaryTests.test_finally_cleanup_and_signal_restoration_remain) ... ERROR
+test_nested_exception_handler_cannot_swallow_owned_deadline (__main__.TimeoutOwnerBoundaryTests.test_nested_exception_handler_cannot_swallow_owned_deadline) ... ERROR
+test_ordinary_adapter_errors_still_record_and_continue (__main__.TimeoutOwnerBoundaryTests.test_ordinary_adapter_errors_still_record_and_continue) ... ERROR
+
+======================================================================
+ERROR: test_deadline_reaches_owner_and_never_runs_later_adapter (__main__.TimeoutOwnerBoundaryTests.test_deadline_reaches_owner_and_never_runs_later_adapter)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test_timeout_owner_boundary.py", line 94, in test_deadline_reaches_owner_and_never_runs_later_adapter
+    target = self.run_owner()
+             ^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test_timeout_owner_boundary.py", line 89, in run_owner
+    return self.scope['_legal_ir_target_items']([self.sample],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: _legal_ir_target_items() missing 1 required keyword-only argument: 'legal_ir_targets'
+
+======================================================================
+ERROR: test_finally_cleanup_and_signal_restoration_remain (__main__.TimeoutOwnerBoundaryTests.test_finally_cleanup_and_signal_restoration_remain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test_timeout_owner_boundary.py", line 105, in test_finally_cleanup_and_signal_restoration_remain
+    self.run_owner()
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test_timeout_owner_boundary.py", line 89, in run_owner
+    return self.scope['_legal_ir_target_items']([self.sample],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: _legal_ir_target_items() missing 1 required keyword-only argument: 'legal_ir_targets'
+
+======================================================================
+ERROR: test_nested_exception_handler_cannot_swallow_owned_deadline (__main__.TimeoutOwnerBoundaryTests.test_nested_exception_handler_cannot_swallow_owned_deadline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test_timeout_owner_boundary.py", line 101, in test_nested_exception_handler_cannot_swallow_owned_deadline
+    self.assertEqual(self.run_owner().kind, 'explicit-timeout')
+                     ^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test_timeout_owner_boundary.py", line 89, in run_owner
+    return self.scope['_legal_ir_target_items']([self.sample],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: _legal_ir_target_items() missing 1 required keyword-only argument: 'legal_ir_targets'
+
+======================================================================
+ERROR: test_ordinary_adapter_errors_still_record_and_continue (__main__.TimeoutOwnerBoundaryTests.test_ordinary_adapter_errors_still_record_and_continue)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test_timeout_owner_boundary.py", line 112, in test_ordinary_adapter_errors_still_record_and_continue
+    target = self.run_owner()
+             ^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/test_timeout_owner_boundary.py", line 89, in run_owner
+    return self.scope['_legal_ir_target_items']([self.sample],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: _legal_ir_target_items() missing 1 required keyword-only argument: 'legal_ir_targets'
+
+----------------------------------------------------------------------
+Ran 4 tests in 1.194s
+
+FAILED (errors=4)

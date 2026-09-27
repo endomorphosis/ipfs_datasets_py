@@ -1,0 +1,89 @@
+{
+  "files": [
+    {
+      "path": "canonical-application-receipt.json",
+      "bytes": 3350,
+      "sha256": "b8c76a28db7991fa57c883eb1f6e7d4eb2e05166a984df571495e2600dab4f07"
+    },
+    {
+      "path": "canonical-application.patch",
+      "bytes": 8868,
+      "sha256": "aab1d31cad755a4d540ac837104ed462e539959debf6e66c46f7953f5955061e"
+    },
+    {
+      "path": "source-preimages.json",
+      "bytes": 363,
+      "sha256": "3d4533bca0e82a169d0218d79d5ea20b1c693858d8b51a6c1bfcf64e4c756fd0"
+    },
+    {
+      "path": "timeout-propagation.patch",
+      "bytes": 764,
+      "sha256": "d55763240d5a6d89962c46e1328f0f253b7df9926f7285b08efa8ad447241e46"
+    },
+    {
+      "path": "test_timeout_owner_boundary.py",
+      "bytes": 6031,
+      "sha256": "3d2dac2894cc424916a125ce4c69dbc685d75cbac9564cc3ddcdb5f187362424"
+    },
+    {
+      "path": "before-tests.log",
+      "bytes": 3021,
+      "sha256": "e88e83541123d0faf5a44fba59f5eaf3c08729f9f5bd78472b9753f121e42e60"
+    },
+    {
+      "path": "candidate-tests.log",
+      "bytes": 720,
+      "sha256": "bd00775a2c2333092a50d58635def99d328728ead3e5352e16d61df6eab4eb8b"
+    },
+    {
+      "path": "test-results.json",
+      "bytes": 856,
+      "sha256": "d158a0a478163012b628347bdb10e8c8c872dbb82c89a89399dad30d6c248434"
+    },
+    {
+      "path": "reproduce_label_support.py",
+      "bytes": 4843,
+      "sha256": "e8d3656e8e03a0ae14b7acc04986aa8b9d43010ebd5c4cae56ea2a895a7b7d71"
+    },
+    {
+      "path": "label-support-reproduction.json",
+      "bytes": 1809,
+      "sha256": "a0ea3a315f66f0e2e7a523619926e291e039c881c8685e1d51ff32757433d267"
+    },
+    {
+      "path": "pytest-r1.xml",
+      "bytes": 8519,
+      "sha256": "32dccea516bea1e8f6ac54125e75930764b406365ed5cc9bd56bb1953c028d30"
+    },
+    {
+      "path": "pytest-r2.log",
+      "bytes": 2029,
+      "sha256": "e1f38a7bdacc91f404bbd8716b93e997fa00e96b0404475c01d95d479afe992a"
+    },
+    {
+      "path": "pytest-r2.xml",
+      "bytes": 1005,
+      "sha256": "a2cf118d0fcdcb1007b7b97292ccc7330260cca8b605db104f2391b91a028656"
+    },
+    {
+      "path": "pytest-r2-observation.json",
+      "bytes": 240,
+      "sha256": "fd4274e5ad73152dd5532dd7346e73823e395e873408ce0e6030533b155f19a8"
+    },
+    {
+      "path": "pytest-r3.log",
+      "bytes": 1473,
+      "sha256": "83816c4d3c180c4138a99a6edac4b31e414e7d96140dafa666699621e8c6a297"
+    },
+    {
+      "path": "pytest-r3.xml",
+      "bytes": 7915,
+      "sha256": "e8348dcf807c2efe37c111b27c519ec8a88c19c337b07aa2f05023a9e52e2023"
+    },
+    {
+      "path": "pytest-r3-observation.json",
+      "bytes": 1221,
+      "sha256": "0f1ef216f67cfc2314146c349d7ed2e8203e42751a7444f363227f5a5cd0f8d6"
+    }
+  ]
+}

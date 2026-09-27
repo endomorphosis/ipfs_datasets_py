@@ -1,0 +1,21 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "-m",
+    "pytest",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_owned_timeout.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_legal_ir_target_timeout_becomes_loss",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_legal_ir_timeout_fallback_does_not_poison_persistent_disk_cache",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_report_preparation.py",
+    "-q",
+    "--basetemp=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/pytest-r3",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/pytest-cache",
+    "--junitxml=/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/pytest-r3.xml"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 6.379144505830482,
+  "scope": "Focused unit tests only; no native smoke, training, downloads, or admission."
+}

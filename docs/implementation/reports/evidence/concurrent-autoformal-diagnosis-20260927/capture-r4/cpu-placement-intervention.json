@@ -1,0 +1,367 @@
+{
+  "reason": "cores0/1 saturated; schedstat showed139s runqueue wait vs2.9s conversion CPU while allowed cores4/5 were idle",
+  "monotonic_ns": 1120719531205002,
+  "owned_root_pid": 3371477,
+  "reserved_cpu_count_before": 2,
+  "reserved_cpu_count_after": 2,
+  "override": [
+    {
+      "pid": 3371477,
+      "tid": 3371477,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376067,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376089,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376090,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376091,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376092,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376120,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376123,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376126,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376127,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376128,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376129,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376130,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376131,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376132,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376133,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376134,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376135,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376136,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3376137,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3378533,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3371477,
+      "tid": 3384164,
+      "process_birth": 112039722,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3384216,
+      "tid": 3384216,
+      "process_birth": 112044803,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3384217,
+      "tid": 3384217,
+      "process_birth": 112044804,
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        4,
+        5
+      ]
+    },
+    {
+      "pid": 3385808,
+      "tid": 3385808,
+      "process_birth": 112045393,
+      "before": [
+        0
+      ],
+      "after": [
+        4
+      ]
+    },
+    {
+      "pid": 3385808,
+      "tid": 3394795,
+      "process_birth": 112045393,
+      "before": [
+        0
+      ],
+      "after": [
+        4
+      ]
+    },
+    {
+      "pid": 3385808,
+      "tid": 3400292,
+      "process_birth": 112045393,
+      "before": [
+        0
+      ],
+      "after": [
+        4
+      ]
+    },
+    {
+      "pid": 3385809,
+      "tid": 3385809,
+      "process_birth": 112045393,
+      "before": [
+        1
+      ],
+      "after": [
+        5
+      ]
+    }
+  ],
+  "initial_harness_affinity_is_historical": true,
+  "acceptance_or_deadlines_changed": false
+}

@@ -1,0 +1,230 @@
+{
+  "accelerate_dependency": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "accelerate_dependency_after": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "accelerate_pin": {
+    "accelerate_module": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/__init__.py",
+    "accelerate_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source"
+  },
+  "admitted": false,
+  "after": {
+    "dependency_count": 0,
+    "event_cursor": 5,
+    "formal_plan_id": "baguqeeratsla62u2fuzi4pqupwsy3tosr6ziqnfiy36e5svovtnpvou6iubq",
+    "goal_count": 1,
+    "objective_count": 0,
+    "plan_count": 1,
+    "plan_root_cid": "baguqeeratsla62u2fuzi4pqupwsy3tosr6ziqnfiy36e5svovtnpvou6iubq",
+    "projection_cid": "baguqeerayxxwcetil45nwcngqemjttcdqda7p7lkxppg7ikgwv5k6t63h35a",
+    "repository_tree_id": "",
+    "revision": 5,
+    "schema": "ipfs_accelerate_py/agent-supervisor/database-task-source-snapshot@1",
+    "schema_version": 1,
+    "source_identity": "baguqeeravuoyyahkwj4c6nf2oz6hqiwma2v3ox6x774zz5cd2u5gdx6yjyoq",
+    "source_schema": "ipfs_accelerate_py/agent-supervisor/database-task-source@1",
+    "task_count": 1,
+    "terminal": false
+  },
+  "authority_mode": "embedded-single-owner",
+  "before": {
+    "dependency_count": 0,
+    "event_cursor": 3,
+    "formal_plan_id": "baguqeeratsla62u2fuzi4pqupwsy3tosr6ziqnfiy36e5svovtnpvou6iubq",
+    "goal_count": 1,
+    "objective_count": 0,
+    "plan_count": 1,
+    "plan_root_cid": "baguqeeratsla62u2fuzi4pqupwsy3tosr6ziqnfiy36e5svovtnpvou6iubq",
+    "projection_cid": "baguqeeraue32tysmpntt2h2qacpn2pqhg4kiwcabum42gwpfuftqqlohktoa",
+    "repository_tree_id": "2879d35adfa28fbe2726f77d6c6ce5aabb93f643",
+    "revision": 3,
+    "schema": "ipfs_accelerate_py/agent-supervisor/database-task-source-snapshot@1",
+    "schema_version": 1,
+    "source_identity": "baguqeeranbe774qaftuevw6vhpzsmlvb3xlqiq64yki7vkns3dvzss5hq42a",
+    "source_schema": "ipfs_accelerate_py/agent-supervisor/database-task-source@1",
+    "task_count": 1,
+    "terminal": false
+  },
+  "elapsed_seconds": 242.06037749303505,
+  "error": null,
+  "formalized": false,
+  "logic_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "native_result": {
+    "active_task_id": "SMOKE-f8d86792f73a2e0f49a0",
+    "attempt_id": "attempt:62f52040e59b47f38953b59af720a91d",
+    "authority_mode": "embedded",
+    "claim_id": "claim:ef22daa1691c427096edd8e5f8d747fa",
+    "claimed_task_cid": "baguqeera2f27jkf3iyzbm7zu54cxi4ofx3fingafn4gzgffz45afkgl526pa",
+    "completion_reconciliations": [],
+    "control_schema_evidence": {
+      "profile_id": "",
+      "schema_fingerprint": "",
+      "state_schema_revision": "",
+      "verified": false
+    },
+    "expired_attempt_reconciliations": [],
+    "implementation_result": {
+      "attempt_id": "attempt:62f52040e59b47f38953b59af720a91d",
+      "portal_terminal_failure": true,
+      "reason": "portal_provider_failed",
+      "resumed": true,
+      "settlement": {
+        "attempt_id": "attempt:62f52040e59b47f38953b59af720a91d",
+        "claim_id": "claim:ef22daa1691c427096edd8e5f8d747fa",
+        "claim_state": "released",
+        "control_revision": 3,
+        "control_status": "blocked",
+        "control_superseded": false,
+        "coordination_attempt_status": "failed",
+        "effect_claim_count": 0,
+        "execution_status": "failed",
+        "provider_invocation_count": 0,
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-claim-failure-settlement@1",
+        "settlement_id": "baguqeeraphvf2cyt7mcouxyav6js6wsljt3mj6swmo5oxuuaf4qzhyv2mp3a",
+        "task_alias": "SMOKE-f8d86792f73a2e0f49a0",
+        "task_cid": "baguqeera2f27jkf3iyzbm7zu54cxi4ofx3fingafn4gzgffz45afkgl526pa"
+      },
+      "status": "blocked",
+      "task_alias": "SMOKE-f8d86792f73a2e0f49a0"
+    },
+    "markdown_status_writes": 0,
+    "orphan_claim_reconciliations": [],
+    "portal_failure_rearms": [],
+    "portal_failure_reconciliations": [],
+    "projections_required": false,
+    "task_source_kind": "duckdb",
+    "unchanged": false,
+    "write_count": 1
+  },
+  "native_task": {
+    "acceptance": [
+      {
+        "criterion": "The declared test runs strict conversion and native learned-head training with measured method overlap.",
+        "evidence_policy": {
+          "criterion": "The declared test runs strict conversion and native learned-head training with measured method overlap."
+        },
+        "ordinal": 0
+      },
+      {
+        "criterion": "All five requested bridges must produce complete frozen target reports. Preserve every timeout or failed preparation observation.",
+        "evidence_policy": {
+          "criterion": "All five requested bridges must produce complete frozen target reports. Preserve every timeout or failed preparation observation."
+        },
+        "ordinal": 1
+      },
+      {
+        "criterion": "Require finite nonzero compiler-facing and decompiler-head changes in the selected accepted sparse patch, as well as a native strictly accepted optimizer epoch. Do not weaken numeric acceptance or count a zero-gain proposal as success.",
+        "evidence_policy": {
+          "criterion": "Require finite nonzero compiler-facing and decompiler-head changes in the selected accepted sparse patch, as well as a native strictly accepted optimizer epoch. Do not weaken numeric acceptance or count a zero-gain proposal as success."
+        },
+        "ordinal": 2
+      },
+      {
+        "criterion": "Keep deadline, exception, prohibition, minimum-duration and empty-vocabulary gates unchanged; real unsupported spans must continue to abstain.",
+        "evidence_policy": {
+          "criterion": "Keep deadline, exception, prohibition, minimum-duration and empty-vocabulary gates unchanged; real unsupported spans must continue to abstain."
+        },
+        "ordinal": 3
+      },
+      {
+        "criterion": "Run installed offline lake build Legal on the exact generated minimum-duration threshold theorem, parse exact DCEC/TDFOL target programs, and validate frame schema. Record their limited proof scope.",
+        "evidence_policy": {
+          "criterion": "Run installed offline lake build Legal on the exact generated minimum-duration threshold theorem, parse exact DCEC/TDFOL target programs, and validate frame schema. Record their limited proof scope."
+        },
+        "ordinal": 4
+      },
+      {
+        "criterion": "Completion applies only to this smoke task. A model score, generated target, proposal or database row is never Lean admission or model promotion.",
+        "evidence_policy": {
+          "criterion": "Completion applies only to this smoke task. A model score, generated target, proposal or database row is never Lean admission or model promotion."
+        },
+        "ordinal": 5
+      }
+    ],
+    "body": {
+      "board_namespace": "concurrent-autoformal-smoke-v1",
+      "completion": "auto",
+      "completion_receipt": {
+        "attempt_id": "attempt:62f52040e59b47f38953b59af720a91d",
+        "attempt_number": 1,
+        "automatic_retry_admitted": false,
+        "claim_id": "claim:ef22daa1691c427096edd8e5f8d747fa",
+        "control_expected_revision": 2,
+        "control_expected_status": "in_progress",
+        "effect_claim_count": 0,
+        "failure_kind": "terminal_portal_bridge_error",
+        "failure_payload_digest": "sha256:a38267fcca732f42e12a66def76adc27676043e8fd2ab127f4b0097e74a35702",
+        "fence_epoch": 1,
+        "fencing_token": 1,
+        "lease_id": "lease:9d0a13237f61487cbcefa73438c97c31",
+        "operation": "database_task_claim_failure",
+        "owner_session_id": "embedded-store:fcf3b757c6ba55c7f43ee6b494c04026",
+        "provider_invocation_count": 0,
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-claim-failure-settlement@1",
+        "settlement_id": "baguqeeraphvf2cyt7mcouxyav6js6wsljt3mj6swmo5oxuuaf4qzhyv2mp3a",
+        "task_cid": "baguqeera2f27jkf3iyzbm7zu54cxi4ofx3fingafn4gzgffz45afkgl526pa"
+      },
+      "context_budget_tokens": 4096,
+      "description": "Use the sealed job and source tree, build five complete immutable bridge targets, run the native projection optimizer with compiler-facing and decompiler heads enabled, and retain every rejected proposal. Separate proposal evidence may be recorded in a review-only goal database; this task grants no source-write or model-promotion authority.",
+      "is_schedulable": true,
+      "provider_role": "deterministic-only",
+      "review_only": false,
+      "title": "Train learned compiler and decompiler heads beside strict span conversion",
+      "track": "bounded-validation"
+    },
+    "dependencies": [],
+    "goal_cid": "goal:default",
+    "objective_id": "",
+    "ordinal": 1,
+    "outputs": [
+      {
+        "effect": {
+          "path": "results/smoke.json"
+        },
+        "ordinal": 0,
+        "path": "results/smoke.json"
+      }
+    ],
+    "plan_cid": "baguqeeratsla62u2fuzi4pqupwsy3tosr6ziqnfiy36e5svovtnpvou6iubq",
+    "priority": "P1",
+    "revision": 3,
+    "status": "blocked",
+    "task_alias": "SMOKE-f8d86792f73a2e0f49a0",
+    "task_cid": "baguqeera2f27jkf3iyzbm7zu54cxi4ofx3fingafn4gzgffz45afkgl526pa",
+    "updated_at": "2026-09-27T23:29:42Z",
+    "validations": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/test_concurrent_smoke.py",
+          "-q"
+        ],
+        "ordinal": 0,
+        "policy": {}
+      }
+    ]
+  },
+  "passed": false,
+  "production_promotion": false,
+  "quack_transport_exercised": false,
+  "schema": "concurrent-autoformal-native-supervisor-smoke/v1",
+  "scope": "deterministic native learned-head training and strict conversion; source proposals are separate and remain unapplied"
+}

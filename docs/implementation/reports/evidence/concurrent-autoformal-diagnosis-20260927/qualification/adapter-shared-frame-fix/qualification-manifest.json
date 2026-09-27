@@ -1,0 +1,49 @@
+{
+  "files": [
+    {
+      "path": "source-preimages.json",
+      "bytes": 759,
+      "sha256": "e9d2a40f8b5758422f3006dcc1f0614aea08bf2705e8fac5f11e16bb0f4e8b34"
+    },
+    {
+      "path": "canonical-application.patch",
+      "bytes": 3644,
+      "sha256": "fefc3325bfc903439b25f9404015d380c62bc6e1ea6eba68996b37b05bcb4461"
+    },
+    {
+      "path": "canonical-application-receipt.json",
+      "bytes": 2625,
+      "sha256": "a785975d162720c8e7cb39a9b4e69d94b54af52e87e62b9c0022e85c996aa2fa"
+    },
+    {
+      "path": "pytest-before.log",
+      "bytes": 1615,
+      "sha256": "52d5ea1b41cfb14b97624c1505ce7d6abb264715388d52014e6b0c63d07c2acf"
+    },
+    {
+      "path": "pytest-before.xml",
+      "bytes": 2463,
+      "sha256": "d5d350af41c263ef273555c85275b1bb9ba0f4be2e2015fa53b60d5083e11aa3"
+    },
+    {
+      "path": "pytest-before-observation.json",
+      "bytes": 695,
+      "sha256": "f7c0ad0b5c1f77ff58c52006354b7d83a305c033e009712e2cef0ad6e675beb4"
+    },
+    {
+      "path": "pytest-after.log",
+      "bytes": 903,
+      "sha256": "7d35b93d9ee89be7cc9551202e53c27a6aebdfe813da1fdfee9b8260cd6908c4"
+    },
+    {
+      "path": "pytest-after.xml",
+      "bytes": 1890,
+      "sha256": "030845c2fec81fd7f436295cf4a3e251d75f2904e33087ee0094d3f1fb87ac07"
+    },
+    {
+      "path": "pytest-after-observation.json",
+      "bytes": 693,
+      "sha256": "695458abddea6d17e1eb28cf6b0397b2fc191d582cc86ebedcba8512ea00ce28"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+Error initializing IPFS Kit: foreign project execution
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/ipfs_kit_integration.py", line 320, in _try_init_ipfs_kit
+    from ipfs_kit_py.backends.base_adapter import BackendAdapter
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/smoke_resource_common.py", line 142, in audit
+    require(False, 'foreign project execution')
+  File "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/harness/smoke_resource_common.py", line 27, in require
+    raise RuntimeError(message)
+RuntimeError: foreign project execution
+{"passed": false, "provider_calls": 1, "receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r6/proposal-receipt.json"}

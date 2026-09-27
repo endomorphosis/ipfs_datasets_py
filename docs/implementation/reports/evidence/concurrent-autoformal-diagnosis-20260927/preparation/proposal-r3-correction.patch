@@ -1,0 +1,11 @@
+--- repair_lane.py:r2
++++ repair_lane.py:r3
+@@ -178,7 +178,7 @@
+                 'review_only': True, 'completion': 'evidence', 'context_budget_tokens': MAX_CONTEXT,
+                 'provider_configuration': plan['provider'], 'description': acceptance, 'body_markdown': prompt,
+                 'sealed_plan': plan_ref, 'training_sources': rows,
+-                'outputs': [{'path': str(runtime / 'raw-proposal.txt')}], 'acceptance_criteria': [acceptance],
++                'outputs': [{'path': 'raw-proposal.txt'}], 'acceptance_criteria': [acceptance],
+                 'validation_commands': []}
+         population = {'repository_tree_id': 'sha256:' + plan['parser_source']['sha256'], 'goals': [goal], 'tasks': [task]}
+         require_intent_metadata(population)

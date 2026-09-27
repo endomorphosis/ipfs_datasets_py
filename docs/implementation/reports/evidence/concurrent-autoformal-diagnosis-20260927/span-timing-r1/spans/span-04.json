@@ -1,0 +1,55 @@
+{
+  "admitted": false,
+  "allow_partial": false,
+  "compiler_seconds": 0.026291896821931005,
+  "compiler_status": "abstained",
+  "compiler_status_scope": "native OperationStatus; success is not admission",
+  "decompiled": [],
+  "decompiler_seconds": 1.9208528101444244e-07,
+  "diagnostic_fields": [
+    "cross_references"
+  ],
+  "error": {
+    "code": "unsupported_semantics",
+    "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained."
+  },
+  "evidence_wall_seconds": 0.05296832695603371,
+  "formalized": false,
+  "parser_temporal_records": [],
+  "parser_vocabulary": {
+    "actions": [
+      "establish"
+    ],
+    "actors": [
+      "Secretary"
+    ],
+    "objects": [
+      "a market placement program for qualified beginning farmers and ranchers and other borrowers of farmer program loans that the Secretary believes have a reasonable chance of qualifying for commercial credit with a guarantee provided under this chapter"
+    ],
+    "qualifiers": []
+  },
+  "rules": [],
+  "source": {
+    "canonical_citation": "7 U.S.C. \u00a7 2006d",
+    "document_ordinal": 0,
+    "entry_cid": "sha256:f9e59dffd7ba14ebe9c4be12697ddd2945fab1b5965f973c070b85baba012063",
+    "id": "usc:us:7:2006d.span-1",
+    "legal_id": "usc:us:7:2006d",
+    "reason": "",
+    "release_point": "us/pl/119/102",
+    "retrieval_method": "sparse_bm25",
+    "retrieval_score": null,
+    "section": "2006d",
+    "source_span_id": "uscode-span-0cfe94ff35f040dd0b3761a3c73db89cf3943ecd938377cdca09c4a48bfa5134",
+    "span_text_sha256": "c3466d9a5aeba01348af5a7047866c6ab5f850dea52656e89e1c46259238ea42",
+    "status": "uncompiled",
+    "synthetic": false,
+    "text": "The Secretary shall establish a market placement program for qualified beginning farmers and ranchers and other borrowers of farmer program loans that the Secretary believes have a reasonable chance of qualifying for commercial credit with a guarantee provided under this chapter.",
+    "title": "7",
+    "unit_id": "usc:us:7:2006d"
+  },
+  "synthetic": false,
+  "temporal_sidecar_seconds": 0.000170018058270216,
+  "vocabulary_seconds": 0.02650621999055147,
+  "wall_seconds": 0.05279830889776349
+}

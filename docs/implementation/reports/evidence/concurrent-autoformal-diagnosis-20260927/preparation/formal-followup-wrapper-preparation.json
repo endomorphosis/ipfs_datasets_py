@@ -1,0 +1,31 @@
+{
+  "bounds": {
+    "cpu_affinity": [
+      6
+    ],
+    "ledger_lock_timeout_seconds": 30,
+    "memory_mb": 2048,
+    "seconds": 120,
+    "storage_bytes": 50000000
+  },
+  "executed": false,
+  "helper": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/formal_followup.py",
+  "offline_bootstrap": "harness/smoke_resource_common.bootstrap",
+  "output_receipt": "formal/followup-receipt.json",
+  "required_input_manifest": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/formal-followup-inputs.json",
+  "root_owns_execution": true,
+  "schema": "formal-followup-resource-wrapper-preparation/v1",
+  "source_policy": "Old target producer artifacts retain their original hashes; current validator sources are separately bound. H config is not rewritten.",
+  "wrapper_files": [
+    {
+      "bytes": 10968,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/run_formal_followup_reserved.py",
+      "sha256": "16323829b39fa055c707efe2e22d44ee86a52b9f0add64619a04a57df2fd4828"
+    },
+    {
+      "bytes": 3197,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/formal_followup_guard_child.py",
+      "sha256": "ffdc3aec871c8865c8d6d0af0e85b31e6b9f10c784d2bba3f169e1c1c7a0c109"
+    }
+  ]
+}

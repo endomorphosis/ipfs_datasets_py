@@ -1,0 +1,808 @@
+{
+  "admitted": false,
+  "bridge_generation_executed": false,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "bundle_read_statistics": {
+    "artifact_bytes": 3047472,
+    "artifact_format": "bundle",
+    "closed": false,
+    "compressed_target_bytes": 1938050,
+    "decompressed_bytes": 21031164,
+    "decompressed_shards": 3,
+    "deduplicated_target_count": 0,
+    "hydrate_validate_seconds": 1.5417217649519444,
+    "manifest_bytes": 1109406,
+    "manifest_parse_validate_seconds": 0.037834195187315345,
+    "open_hash_seconds": 0.0048343411181122065,
+    "read_decompress_seconds": 0.04977637389674783,
+    "referenced_uncompressed_target_bytes": 35746903,
+    "sample_count": 5,
+    "schema_version": "legal-ir-target-bundle-v1",
+    "shard_count": 5,
+    "target_reference_count": 5,
+    "unique_decompressed_shards": 3,
+    "unique_uncompressed_target_bytes": 35746903
+  },
+  "concurrency_claim": false,
+  "constitution_formalized": false,
+  "current_training_reuse_qualified": false,
+  "elapsed_seconds": 13.303979379823431,
+  "error": null,
+  "formalized": false,
+  "full_adapter_construction_qualified": true,
+  "full_adapter_serialization_qualified": false,
+  "full_artifact_identity_qualified": false,
+  "gates": [
+    {
+      "admitted": false,
+      "result": {
+        "compiler_status": "compiled",
+        "decompiled": "Company A must submit backup report within 10 days unless emergency.",
+        "fields": [],
+        "reason": "",
+        "roundtrip": true,
+        "rule": {
+          "action": "submit",
+          "actor": "Company A",
+          "conditions": [],
+          "exceptions": [
+            "emergency"
+          ],
+          "modality": "O",
+          "object": "backup report",
+          "temporal": [
+            "within 10 days"
+          ],
+          "temporal_records": [
+            {
+              "quantity": 10,
+              "temporal_kind": "within_duration",
+              "value": "10 days"
+            }
+          ]
+        }
+      },
+      "synthetic": true,
+      "text": "Company A shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "admitted": false,
+      "result": {
+        "compiler_status": "compiled",
+        "decompiled": "Agency must not disclose records.",
+        "fields": [],
+        "reason": "",
+        "roundtrip": true,
+        "rule": {
+          "action": "disclose",
+          "actor": "agency",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "F",
+          "object": "records",
+          "temporal": []
+        }
+      },
+      "synthetic": true,
+      "text": "The agency shall not disclose records."
+    },
+    {
+      "admitted": false,
+      "result": {
+        "compiler_status": "compiled",
+        "decompiled": "Officer must retain the file for at least 20 days.",
+        "fields": [],
+        "reason": "",
+        "roundtrip": true,
+        "rule": {
+          "action": "retain",
+          "actor": "officer",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "the file for at least 20 days",
+          "temporal": [
+            "20 days"
+          ],
+          "temporal_records": [
+            {
+              "quantity": 20,
+              "temporal_kind": "minimum_duration",
+              "value": "20 days"
+            }
+          ]
+        }
+      },
+      "synthetic": true,
+      "text": "The officer shall retain the file for at least 20 days."
+    }
+  ],
+  "heldout_canary_qualified": false,
+  "historical_producer_config_sha256": "372dfa0117c0041a008366e4a0e6b2f0ec71cffe1d41ae27034d44245de5c46a",
+  "input_manifest_sha256": "c4c81d710126d119044eacef0f32c13df2cabd205b1b196c9cbfb1ada2ca29c5",
+  "lake": {
+    "artifacts": {
+      "lake-minimum-duration/.lake/build/lib/lean/Legal.olean": {
+        "bytes": 32376,
+        "sha256": "825710b5a19b5b20e3e656da1373a02b9a4ec71deaff3f1ea65b9097d4303bca"
+      },
+      "lake-minimum-duration/Legal.lean": {
+        "bytes": 169,
+        "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+      },
+      "lake-minimum-duration/lake.log": {
+        "bytes": 189,
+        "sha256": "9a60a8578fc4d98bf09f28badeebe8fb3cbe785af3709efc20680dc78626a790"
+      },
+      "lake-minimum-duration/lakefile.lean": {
+        "bytes": 66,
+        "sha256": "7f21110e6d75c8b8e3207e259bb38c1067019b5989c740cd8d4fdd22468d1171"
+      },
+      "lake-minimum-duration/lean-toolchain": {
+        "bytes": 25,
+        "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+      }
+    },
+    "canonical_rule": {
+      "action": "retain",
+      "actor": "officer",
+      "conditions": [],
+      "exceptions": [],
+      "modality": "O",
+      "object": "the file for at least 20 days",
+      "temporal": [
+        "20 days"
+      ],
+      "temporal_records": [
+        {
+          "quantity": 20,
+          "temporal_kind": "minimum_duration",
+          "value": "20 days"
+        }
+      ]
+    },
+    "command": [
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.26.0/bin/lake",
+      "build",
+      "Legal"
+    ],
+    "cwd": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/formal-followup-r1/formal/lake-minimum-duration",
+    "elapsed_seconds": 1.2783045421820134,
+    "generated_source": "def bound : Nat := 20\ndef meets (n : Nat) : Bool := decide (bound <= n)\ntheorem boundary : ((meets 19 = false) /\\ (meets 20 = true)) := by\n  unfold meets bound\n  decide\n",
+    "generated_theorem_admitted_by_lake": true,
+    "lake_executed": true,
+    "learned_checkpoint_program": false,
+    "legal_span_admitted": false,
+    "mathlib_imported": false,
+    "non_renderable_gate_indices": [
+      0,
+      1
+    ],
+    "offline_scope": "absolute installed toolchain, no package dependencies or installer; parent owns network isolation",
+    "passed": true,
+    "pattern": {
+      "fail": 19,
+      "kind": "threshold",
+      "meet": 20
+    },
+    "producer_lineage": "source text -> pinned typed-deontic rule -> JevOps numeric pattern -> locked Lean -> lake build Legal",
+    "proof_scope": "Natural-number threshold boundary at 19 and 20. This omits actor, retention action, time units and the complete legal duty.",
+    "returncode": 0,
+    "source_and_tools_unchanged": true,
+    "source_gate_index": 2,
+    "source_text": "The officer shall retain the file for at least 20 days.",
+    "statement_lock_sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+    "timed_out": false,
+    "timeout_seconds": 30,
+    "toolchain_binary_sha256": {
+      "lake": "65e6788674aa50c98da101339ca213c5a9599414830fa74f963ad794e025efc7",
+      "lean": "e215cbe9eab0914b49761e9e486d388e2e701cf876d1079d1ba733c48edb2d7b"
+    }
+  },
+  "learned_symbolic_program_validated": false,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "metric_disk_cache": 0,
+  "passed": true,
+  "prior_concurrent_capture": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4",
+  "prior_concurrent_capture_passed": false,
+  "prior_failure_preserved": "owned descendant RSS exceeded 8 GiB; no replacement of R4 audit",
+  "producer_vs_validator_source_changes": [
+    "logic/legal_ir/adapter.py"
+  ],
+  "samples": [
+    {
+      "admitted": false,
+      "dcec": {
+        "passed": true,
+        "record_count": 1,
+        "records": [
+          {
+            "admitted": false,
+            "checked_field": "proof_input",
+            "error": null,
+            "expected_deontic_operator": "O",
+            "native_rendering": "O(happens(company_a:Object, submit_backup_report:Object, t0:Object))",
+            "native_validation_errors": [],
+            "parsed_class": "ipfs_datasets_py.logic.CEC.native.dcec_core.DeonticFormula",
+            "parsed_operator": "DeonticOperator.OBLIGATION",
+            "passed": true,
+            "proof_executed": false,
+            "proof_input_sha256": "becd6ce8eb56b7103793fc618e20f25bc8fb46d9a08c19779859488ef23b9d8b",
+            "record_index": 0,
+            "source_record": {
+              "formula": "O[company_a()](happens(company_a(), submit_backup_report(), t0()))",
+              "proof_input": "O(happens(company_a,submit_backup_report,t0))",
+              "source_id": "deontic:1b18974752be917315a9e692",
+              "valid": true
+            }
+          }
+        ],
+        "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+      },
+      "frame_schema": {
+        "actual_adapter_constructed": true,
+        "adapter_construction_seconds": 5.28947023791261,
+        "admitted": false,
+        "all_frame_schema_checks_executed": true,
+        "all_original_triples_preserved": true,
+        "contract_id": "legal-ir-view/frame-logic/v1",
+        "examples_first_last": [
+          {
+            "formula_id": "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722:frame:0",
+            "index": 0,
+            "opaque": false,
+            "passed": true,
+            "projection": {
+              "formula_id": "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722:frame:0",
+              "frame_id": "administrative_notice_hearing",
+              "object": "legal_modal_document",
+              "predicate": "type",
+              "provenance_ids": [
+                "source:us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722",
+                "span:us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722:document"
+              ],
+              "role": "type",
+              "subject": "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722"
+            },
+            "shared_context_sha256": "2153ad0dd522db3848e42985141a1aca8f5d54fbb6f1faebe45d5e4989c9529f",
+            "validation": {
+              "contract_id": "legal-ir-view/frame-logic/v1",
+              "issues": [],
+              "missing_required_fields": [],
+              "valid": true,
+              "view": "frame_logic"
+            }
+          },
+          {
+            "formula_id": "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722:frame:999",
+            "index": 8121,
+            "opaque": false,
+            "passed": true,
+            "projection": {
+              "formula_id": "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722:frame:999",
+              "frame_id": "administrative_notice_hearing",
+              "object": "O",
+              "predicate": "modal_cue_operator",
+              "provenance_ids": [
+                "source:us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722",
+                "span:us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722:document"
+              ],
+              "role": "modal_cue_operator",
+              "subject": "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722:spacy:f0001"
+            },
+            "shared_context_sha256": "2153ad0dd522db3848e42985141a1aca8f5d54fbb6f1faebe45d5e4989c9529f",
+            "validation": {
+              "contract_id": "legal-ir-view/frame-logic/v1",
+              "issues": [],
+              "missing_required_fields": [],
+              "valid": true,
+              "view": "frame_logic"
+            }
+          }
+        ],
+        "existing_validator_equivalence": "Same required-field/provenance hooks on every actual field projection; shared immutable optional context forbidden-source check once, combined with every result. Frame-relation hook is empty. All triples checked without truncation.",
+        "failures_first_16": [],
+        "frame_formula_count": 8122,
+        "full_artifact_identity_qualified": false,
+        "full_artifact_serialization_qualified": false,
+        "original_triple_count": 8122,
+        "passed": true,
+        "shared_context_validation": {
+          "contract_id": "legal-ir-view/frame-logic/v1",
+          "issues": [],
+          "missing_required_fields": [],
+          "valid": true,
+          "view": "frame_logic"
+        },
+        "shared_full_context_identity": true,
+        "shared_full_context_sha256": "2153ad0dd522db3848e42985141a1aca8f5d54fbb6f1faebe45d5e4989c9529f",
+        "validation_stream": {
+          "bytes": 6866142,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/formal-followup-r1/formal/us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722-frame-schema.jsonl",
+          "sha256": "ef9f2754690b76e8e4c6e3e195f026c57bbd1861f3cc44f22cf2c3a0d9c1ec64"
+        },
+        "whole_source_semantic_equivalence_qualified": false
+      },
+      "passed": true,
+      "producer": "retained deterministic shared bridge target, not learned output",
+      "representation_limits": {
+        "duration_observations": [
+          {
+            "canonical_record": {
+              "quantity": 10,
+              "temporal_kind": "within_duration",
+              "value": "10 days"
+            },
+            "quantity_literal_in_native_tdfol": false,
+            "semantic_encoding_verified": false,
+            "source_duration_absent_from_native_tdfol": true
+          }
+        ],
+        "exception_observations": [
+          {
+            "canonical_exception": "emergency",
+            "literal_in_native_tdfol": false,
+            "semantic_encoding_verified": false,
+            "source_exception_absent_from_native_tdfol": true
+          }
+        ],
+        "limitations": [
+          "Backend syntax and frame schema validation do not establish source semantic equivalence.",
+          "Absent source duration quantities or exceptions are not repaired or inferred by this check.",
+          "A lexical quantity or exception mention alone does not establish its legal scope.",
+          "TDFOL serialization does not preserve the producer agent/context metadata or distinguish every Constant from Variable; term-sort equivalence is not validated.",
+          "The Lake artifact checks a numeric boundary only, independently of these bridge programs."
+        ],
+        "source_semantic_equivalence_verified": false
+      },
+      "sample_id": "us-code-synthetic-smoke-fixture-backup-5660d5d7bc9b6722",
+      "source_text": "Company A shall submit backup report within 10 days unless emergency.",
+      "synthetic": true,
+      "target_document_sha256": "ca1ce54d044ec9fffd77c2390ea647eab43d32b8de070f405a0ad2db7febf27f",
+      "tdfol": {
+        "passed": true,
+        "record_count": 1,
+        "records": [
+          {
+            "admitted": false,
+            "checked_field": "proof_input",
+            "error": null,
+            "expected_deontic_operator": "O",
+            "native_rendering": "O(submit_backup_report(company_a))",
+            "operator_structure": {
+              "canonical_rendering": "O(submit_backup_report(company_a))",
+              "canonical_serialization_preserved": true,
+              "emitted_operators": [
+                {
+                  "operator": "O",
+                  "source_offset": 0
+                }
+              ],
+              "parsed_operator_paths": [
+                {
+                  "class": "DeonticFormula",
+                  "operator": "O",
+                  "path": "$",
+                  "time_bound": null
+                }
+              ],
+              "passed": true,
+              "scope": "operator types, multiplicity and canonical placement for this serialized program; source semantics and term sorts not established",
+              "temporal_operator_count": 0
+            },
+            "parsed_class": "ipfs_datasets_py.logic.TDFOL.tdfol_core.DeonticFormula",
+            "parsed_operator": "DeonticOperator.OBLIGATION",
+            "passed": true,
+            "proof_executed": false,
+            "proof_input_sha256": "ebc22bc2bf934198997fa93c88bbe8181c46336474b86d03c6eda69571b55821",
+            "record_index": 0,
+            "source_record": {
+              "formula": "O(submit_backup_report(company_a))",
+              "parse_ok": true,
+              "predicates": [
+                "submit_backup_report"
+              ],
+              "proof_input": "O(submit_backup_report(company_a))",
+              "source_id": "deontic:1b18974752be917315a9e692"
+            }
+          }
+        ],
+        "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+      }
+    },
+    {
+      "admitted": false,
+      "dcec": {
+        "passed": true,
+        "record_count": 1,
+        "records": [
+          {
+            "admitted": false,
+            "checked_field": "proof_input",
+            "error": null,
+            "expected_deontic_operator": "F",
+            "native_rendering": "F(happens(agency:Object, disclose_records:Object, t0:Object))",
+            "native_validation_errors": [],
+            "parsed_class": "ipfs_datasets_py.logic.CEC.native.dcec_core.DeonticFormula",
+            "parsed_operator": "DeonticOperator.PROHIBITION",
+            "passed": true,
+            "proof_executed": false,
+            "proof_input_sha256": "a8857101a3be0ec475802a57dcbed4ec272259a0dfef53660256f712c8b79d93",
+            "record_index": 0,
+            "source_record": {
+              "formula": "F[agency()](happens(agency(), disclose_records(), t0()))",
+              "proof_input": "F(happens(agency,disclose_records,t0))",
+              "source_id": "deontic:e401c55228a324dcd5e8afdd",
+              "valid": true
+            }
+          }
+        ],
+        "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+      },
+      "frame_schema": {
+        "actual_adapter_constructed": true,
+        "adapter_construction_seconds": 0.2563341099303216,
+        "admitted": false,
+        "all_frame_schema_checks_executed": true,
+        "all_original_triples_preserved": true,
+        "contract_id": "legal-ir-view/frame-logic/v1",
+        "examples_first_last": [
+          {
+            "formula_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:frame:0",
+            "index": 0,
+            "opaque": false,
+            "passed": true,
+            "projection": {
+              "formula_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:frame:0",
+              "frame_id": "administrative_notice_hearing",
+              "object": "legal_modal_document",
+              "predicate": "type",
+              "provenance_ids": [
+                "source:us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877",
+                "span:us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:document"
+              ],
+              "role": "type",
+              "subject": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877"
+            },
+            "shared_context_sha256": "43598a5e0775416beda1b5a3903f7e503dcde9fff6f3bf75cccef9d8f913029d",
+            "validation": {
+              "contract_id": "legal-ir-view/frame-logic/v1",
+              "issues": [],
+              "missing_required_fields": [],
+              "valid": true,
+              "view": "frame_logic"
+            }
+          },
+          {
+            "formula_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:frame:999",
+            "index": 2257,
+            "opaque": false,
+            "passed": true,
+            "projection": {
+              "formula_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:frame:999",
+              "frame_id": "administrative_notice_hearing",
+              "object": "deontic",
+              "predicate": "bridge_modal_self_bridge_family",
+              "provenance_ids": [
+                "source:us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877",
+                "span:us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:document"
+              ],
+              "role": "bridge_modal_self_bridge_family",
+              "subject": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877:spacy:f0001"
+            },
+            "shared_context_sha256": "43598a5e0775416beda1b5a3903f7e503dcde9fff6f3bf75cccef9d8f913029d",
+            "validation": {
+              "contract_id": "legal-ir-view/frame-logic/v1",
+              "issues": [],
+              "missing_required_fields": [],
+              "valid": true,
+              "view": "frame_logic"
+            }
+          }
+        ],
+        "existing_validator_equivalence": "Same required-field/provenance hooks on every actual field projection; shared immutable optional context forbidden-source check once, combined with every result. Frame-relation hook is empty. All triples checked without truncation.",
+        "failures_first_16": [],
+        "frame_formula_count": 2258,
+        "full_artifact_identity_qualified": false,
+        "full_artifact_serialization_qualified": false,
+        "original_triple_count": 2258,
+        "passed": true,
+        "shared_context_validation": {
+          "contract_id": "legal-ir-view/frame-logic/v1",
+          "issues": [],
+          "missing_required_fields": [],
+          "valid": true,
+          "view": "frame_logic"
+        },
+        "shared_full_context_identity": true,
+        "shared_full_context_sha256": "43598a5e0775416beda1b5a3903f7e503dcde9fff6f3bf75cccef9d8f913029d",
+        "validation_stream": {
+          "bytes": 1928031,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/formal-followup-r1/formal/us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877-frame-schema.jsonl",
+          "sha256": "bc81825a1d95c5f2e890aa229eb9729a0352ac4d6f5af5a36de980bdf6455301"
+        },
+        "whole_source_semantic_equivalence_qualified": false
+      },
+      "passed": true,
+      "producer": "retained deterministic shared bridge target, not learned output",
+      "representation_limits": {
+        "duration_observations": [],
+        "exception_observations": [],
+        "limitations": [
+          "Backend syntax and frame schema validation do not establish source semantic equivalence.",
+          "Absent source duration quantities or exceptions are not repaired or inferred by this check.",
+          "A lexical quantity or exception mention alone does not establish its legal scope.",
+          "TDFOL serialization does not preserve the producer agent/context metadata or distinguish every Constant from Variable; term-sort equivalence is not validated.",
+          "The Lake artifact checks a numeric boundary only, independently of these bridge programs."
+        ],
+        "source_semantic_equivalence_verified": false
+      },
+      "sample_id": "us-code-synthetic-smoke-fixture-prohibit-e4ade102729ad877",
+      "source_text": "The agency shall not disclose records.",
+      "synthetic": true,
+      "target_document_sha256": "9637b5a6028968f715dc4729b1108e3cd2622ef52e6205cca8ce6a7d93b0e2a7",
+      "tdfol": {
+        "passed": true,
+        "record_count": 1,
+        "records": [
+          {
+            "admitted": false,
+            "checked_field": "proof_input",
+            "error": null,
+            "expected_deontic_operator": "F",
+            "native_rendering": "F(disclose_records(agency))",
+            "operator_structure": {
+              "canonical_rendering": "F(disclose_records(agency))",
+              "canonical_serialization_preserved": true,
+              "emitted_operators": [
+                {
+                  "operator": "F",
+                  "source_offset": 0
+                }
+              ],
+              "parsed_operator_paths": [
+                {
+                  "class": "DeonticFormula",
+                  "operator": "F",
+                  "path": "$",
+                  "time_bound": null
+                }
+              ],
+              "passed": true,
+              "scope": "operator types, multiplicity and canonical placement for this serialized program; source semantics and term sorts not established",
+              "temporal_operator_count": 0
+            },
+            "parsed_class": "ipfs_datasets_py.logic.TDFOL.tdfol_core.DeonticFormula",
+            "parsed_operator": "DeonticOperator.PROHIBITION",
+            "passed": true,
+            "proof_executed": false,
+            "proof_input_sha256": "31970e1e4a4763c4223e575ed1c57baacbcf118cfab8a14215b1b390a7f92586",
+            "record_index": 0,
+            "source_record": {
+              "formula": "F(disclose_records(agency))",
+              "parse_ok": true,
+              "predicates": [
+                "disclose_records"
+              ],
+              "proof_input": "F(disclose_records(agency))",
+              "source_id": "deontic:e401c55228a324dcd5e8afdd"
+            }
+          }
+        ],
+        "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+      }
+    },
+    {
+      "admitted": false,
+      "dcec": {
+        "passed": true,
+        "record_count": 1,
+        "records": [
+          {
+            "admitted": false,
+            "checked_field": "proof_input",
+            "error": null,
+            "expected_deontic_operator": "O",
+            "native_rendering": "O(happens(officer:Object, retain_the_file_for_at_least_20_days:Object, t0:Object))",
+            "native_validation_errors": [],
+            "parsed_class": "ipfs_datasets_py.logic.CEC.native.dcec_core.DeonticFormula",
+            "parsed_operator": "DeonticOperator.OBLIGATION",
+            "passed": true,
+            "proof_executed": false,
+            "proof_input_sha256": "b73c949f15e11d3fb93d5c65155a7d88ce4911c9c5ba4666ebb32c7c59cbcbaf",
+            "record_index": 0,
+            "source_record": {
+              "formula": "O[officer()](happens(officer(), retain_the_file_for_at_least_20_days(), t0()))",
+              "proof_input": "O(happens(officer,retain_the_file_for_at_least_20_days,t0))",
+              "source_id": "deontic:10bf6f8fd65a1f2c358dad29",
+              "valid": true
+            }
+          }
+        ],
+        "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+      },
+      "frame_schema": {
+        "actual_adapter_constructed": true,
+        "adapter_construction_seconds": 0.2631586818024516,
+        "admitted": false,
+        "all_frame_schema_checks_executed": true,
+        "all_original_triples_preserved": true,
+        "contract_id": "legal-ir-view/frame-logic/v1",
+        "examples_first_last": [
+          {
+            "formula_id": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8:frame:0",
+            "index": 0,
+            "opaque": false,
+            "passed": true,
+            "projection": {
+              "formula_id": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8:frame:0",
+              "frame_id": "administrative_notice_hearing",
+              "object": "legal_modal_document",
+              "predicate": "type",
+              "provenance_ids": [
+                "source:us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8",
+                "span:us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8:document"
+              ],
+              "role": "type",
+              "subject": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8"
+            },
+            "shared_context_sha256": "275ef5e5eb5a21c8116b25eb7fc664aa419d0bfc88d1c908b9669dd9be298b61",
+            "validation": {
+              "contract_id": "legal-ir-view/frame-logic/v1",
+              "issues": [],
+              "missing_required_fields": [],
+              "valid": true,
+              "view": "frame_logic"
+            }
+          },
+          {
+            "formula_id": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8:frame:999",
+            "index": 2277,
+            "opaque": false,
+            "passed": true,
+            "projection": {
+              "formula_id": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8:frame:999",
+              "frame_id": "administrative_notice_hearing",
+              "object": "O:shall",
+              "predicate": "cue_deontic",
+              "provenance_ids": [
+                "source:us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8",
+                "span:us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8:document"
+              ],
+              "role": "cue_deontic",
+              "subject": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8:spacy:f0001"
+            },
+            "shared_context_sha256": "275ef5e5eb5a21c8116b25eb7fc664aa419d0bfc88d1c908b9669dd9be298b61",
+            "validation": {
+              "contract_id": "legal-ir-view/frame-logic/v1",
+              "issues": [],
+              "missing_required_fields": [],
+              "valid": true,
+              "view": "frame_logic"
+            }
+          }
+        ],
+        "existing_validator_equivalence": "Same required-field/provenance hooks on every actual field projection; shared immutable optional context forbidden-source check once, combined with every result. Frame-relation hook is empty. All triples checked without truncation.",
+        "failures_first_16": [],
+        "frame_formula_count": 2278,
+        "full_artifact_identity_qualified": false,
+        "full_artifact_serialization_qualified": false,
+        "original_triple_count": 2278,
+        "passed": true,
+        "shared_context_validation": {
+          "contract_id": "legal-ir-view/frame-logic/v1",
+          "issues": [],
+          "missing_required_fields": [],
+          "valid": true,
+          "view": "frame_logic"
+        },
+        "shared_full_context_identity": true,
+        "shared_full_context_sha256": "275ef5e5eb5a21c8116b25eb7fc664aa419d0bfc88d1c908b9669dd9be298b61",
+        "validation_stream": {
+          "bytes": 1933147,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/formal-followup-r1/formal/us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8-frame-schema.jsonl",
+          "sha256": "4d92438d3858bd452d3d40dd811f7e986a76a79c5fdc7d1a12e3beb325dc3be8"
+        },
+        "whole_source_semantic_equivalence_qualified": false
+      },
+      "passed": true,
+      "producer": "retained deterministic shared bridge target, not learned output",
+      "representation_limits": {
+        "duration_observations": [
+          {
+            "canonical_record": {
+              "quantity": 20,
+              "temporal_kind": "minimum_duration",
+              "value": "20 days"
+            },
+            "quantity_literal_in_native_tdfol": false,
+            "semantic_encoding_verified": false,
+            "source_duration_absent_from_native_tdfol": true
+          }
+        ],
+        "exception_observations": [],
+        "limitations": [
+          "Backend syntax and frame schema validation do not establish source semantic equivalence.",
+          "Absent source duration quantities or exceptions are not repaired or inferred by this check.",
+          "A lexical quantity or exception mention alone does not establish its legal scope.",
+          "TDFOL serialization does not preserve the producer agent/context metadata or distinguish every Constant from Variable; term-sort equivalence is not validated.",
+          "The Lake artifact checks a numeric boundary only, independently of these bridge programs."
+        ],
+        "source_semantic_equivalence_verified": false
+      },
+      "sample_id": "us-code-synthetic-smoke-fixture-minimum-ca3d9c73d0bee5b8",
+      "source_text": "The officer shall retain the file for at least 20 days.",
+      "synthetic": true,
+      "target_document_sha256": "ee580227a0ffa15b3f6f278940d05bd1600c5e4db5b1dd161a1e0449622e7168",
+      "tdfol": {
+        "passed": true,
+        "record_count": 1,
+        "records": [
+          {
+            "admitted": false,
+            "checked_field": "proof_input",
+            "error": null,
+            "expected_deontic_operator": "O",
+            "native_rendering": "O(retain_the_file_for_at_least_20_days(officer))",
+            "operator_structure": {
+              "canonical_rendering": "O(retain_the_file_for_at_least_20_days(officer))",
+              "canonical_serialization_preserved": true,
+              "emitted_operators": [
+                {
+                  "operator": "O",
+                  "source_offset": 0
+                }
+              ],
+              "parsed_operator_paths": [
+                {
+                  "class": "DeonticFormula",
+                  "operator": "O",
+                  "path": "$",
+                  "time_bound": null
+                }
+              ],
+              "passed": true,
+              "scope": "operator types, multiplicity and canonical placement for this serialized program; source semantics and term sorts not established",
+              "temporal_operator_count": 0
+            },
+            "parsed_class": "ipfs_datasets_py.logic.TDFOL.tdfol_core.DeonticFormula",
+            "parsed_operator": "DeonticOperator.OBLIGATION",
+            "passed": true,
+            "proof_executed": false,
+            "proof_input_sha256": "77f8165a57b918bbd9b36301ae9104090a22577ab35aa2fd897af9b57cddb358",
+            "record_index": 0,
+            "source_record": {
+              "formula": "O(retain_the_file_for_at_least_20_days(officer))",
+              "parse_ok": true,
+              "predicates": [
+                "retain_the_file_for_at_least_20_days"
+              ],
+              "proof_input": "O(retain_the_file_for_at_least_20_days(officer))",
+              "source_id": "deontic:10bf6f8fd65a1f2c358dad29"
+            }
+          }
+        ],
+        "scope": "exact generated native proof_input syntax; display formula preserved separately; no semantic equivalence or proof claim"
+      }
+    }
+  ],
+  "schema": "retained-target-formal-followup/v1",
+  "shared_targets_historical_producer": true,
+  "source_semantic_equivalence_qualified": false,
+  "source_unchanged": true,
+  "target_artifact_sha256": "04433524b519b89fffc4ed6a33870ae156c57d362b8691652bb3ee496055766a",
+  "target_snapshot_id": "sha256:1b6dd04fc9d73d32f96da2259322fb3b138f1880f40367ccbcf0082a40e12ec4",
+  "training_executed": false,
+  "tree_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  }
+}

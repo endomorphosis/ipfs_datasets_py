@@ -1,0 +1,18 @@
+{
+  "schema": "owned-legal-ir-timeout-unit-reproduction-v1",
+  "test_count": 4,
+  "before_returncode": 1,
+  "candidate_returncode": 0,
+  "actual_source_ast_used": true,
+  "real_signal_handler_invoked": true,
+  "inference_executed": false,
+  "native_training_executed": false,
+  "initial_fixture_error_preserved": true,
+  "source_sha256": {
+    "modal_autoencoder.before.py": "c24e2e4dd65313d32ed969b8250148410556e74a9316e94aa5adf1fce9877307",
+    "modal_autoencoder.candidate.py": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+    "multiview.before.py": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+    "test_timeout_owner_boundary.py": "3d2dac2894cc424916a125ce4c69dbc685d75cbac9564cc3ddcdb5f187362424",
+    "timeout-propagation.patch": "d55763240d5a6d89962c46e1328f0f253b7df9926f7285b08efa8ad447241e46"
+  }
+}

@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-cache
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_ ERROR collecting tests/unit_tests/logic/CEC/native/test_dcec_integration.py __
+tests/unit_tests/logic/CEC/native/test_dcec_integration.py:438: in <module>
+    ("permitted", DeonticOperator.PERMISSIBLE),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'DeonticOperator' has no attribute 'PERMISSIBLE'. Did you mean: 'PERMISSION'?
+- generated xml file: /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/dcec-unary-obligation-fix/pytest-before.xml -
+=========================== short test summary info ============================
+ERROR tests/unit_tests/logic/CEC/native/test_dcec_integration.py - AttributeE...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.16s ===============================

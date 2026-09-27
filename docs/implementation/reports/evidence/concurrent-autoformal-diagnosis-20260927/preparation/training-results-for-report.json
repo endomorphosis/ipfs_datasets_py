@@ -1,0 +1,723 @@
+{
+  "accepted_head_audit": {
+    "audit_binding": {
+      "bytes": 4690,
+      "sha256": "fa8377d5a16932f213c5a696504a669696b0f946dea477e268d0820a19a7342f"
+    },
+    "audit_path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/r4-accepted-head-audit.json",
+    "categories": {
+      "compiler_facing_legal_ir_view": {
+        "committed_nonzero_fields": [
+          "legal_ir_view_family_logits"
+        ],
+        "declared_fields": [
+          "feature_legal_ir_view_logits",
+          "legal_ir_view_family_logits",
+          "legal_ir_view_logits",
+          "logic_signature_legal_ir_view_logits",
+          "predicate_argument_legal_ir_view_logits",
+          "round_trip_signal_legal_ir_view_logits"
+        ],
+        "passed": true
+      },
+      "decompiler": {
+        "committed_nonzero_fields": [
+          "decompiler_plan_family_logits"
+        ],
+        "declared_fields": [
+          "decompiler_plan_embedding_weights",
+          "decompiler_plan_family_logits",
+          "decompiler_plan_legal_ir_view_logits"
+        ],
+        "passed": true
+      }
+    },
+    "committed_scalar_counts": {
+      "decompiler_plan_family_logits": 2835,
+      "legal_ir_view_family_logits": 54
+    },
+    "interpretation": "Both named categories have finite nonzero changes in the selected, hash-bound patch. The original helper omitted a field already present in the canonical compiler-facing category registry; its false result is retained, not rewritten. No source compiler/decompiler semantics were trained by these learned-head deltas.",
+    "original_helper_compiler_committed": false,
+    "original_helper_preserved": true,
+    "recomputed_update_norms": {
+      "decompiler_plan_family_logits": 0.1373819738103675,
+      "legal_ir_view_family_logits": 0.6037269270442369
+    },
+    "supported": true,
+    "verified_before_image_rows": 4904
+  },
+  "admitted": false,
+  "bridge_on_evaluate_timings": [
+    {
+      "call_index": 0,
+      "end_monotonic_ns": 1120554255228624,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120553447398951,
+      "wall_seconds": 0.807829673,
+      "wall_seconds_per_span": 0.4039148365
+    },
+    {
+      "call_index": 1,
+      "end_monotonic_ns": 1120555443790664,
+      "legal_ir_target_count": 3,
+      "sample_count": 3,
+      "start_monotonic_ns": 1120554255345618,
+      "wall_seconds": 1.188445046,
+      "wall_seconds_per_span": 0.39614834866666665
+    },
+    {
+      "call_index": 2,
+      "end_monotonic_ns": 1120583272905818,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120580272968005,
+      "wall_seconds": 2.999937813,
+      "wall_seconds_per_span": 1.4999689065
+    },
+    {
+      "call_index": 3,
+      "end_monotonic_ns": 1120584917239875,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120584274025344,
+      "wall_seconds": 0.643214531,
+      "wall_seconds_per_span": 0.3216072655
+    },
+    {
+      "call_index": 4,
+      "end_monotonic_ns": 1120585878505191,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120585130481353,
+      "wall_seconds": 0.748023838,
+      "wall_seconds_per_span": 0.374011919
+    },
+    {
+      "call_index": 5,
+      "end_monotonic_ns": 1120617725659930,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120588219939730,
+      "wall_seconds": 29.5057202,
+      "wall_seconds_per_span": 14.7528601
+    },
+    {
+      "call_index": 6,
+      "end_monotonic_ns": 1120626133698821,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120625374683019,
+      "wall_seconds": 0.759015802,
+      "wall_seconds_per_span": 0.379507901
+    },
+    {
+      "call_index": 7,
+      "end_monotonic_ns": 1120644089133129,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120643448500950,
+      "wall_seconds": 0.640632179,
+      "wall_seconds_per_span": 0.3203160895
+    },
+    {
+      "call_index": 8,
+      "end_monotonic_ns": 1120645797147928,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120644712531729,
+      "wall_seconds": 1.084616199,
+      "wall_seconds_per_span": 0.5423080995
+    },
+    {
+      "call_index": 9,
+      "end_monotonic_ns": 1120677740710871,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120676149266464,
+      "wall_seconds": 1.591444407,
+      "wall_seconds_per_span": 0.7957222035
+    },
+    {
+      "call_index": 10,
+      "end_monotonic_ns": 1120692530981356,
+      "legal_ir_target_count": 2,
+      "sample_count": 2,
+      "start_monotonic_ns": 1120691813103171,
+      "wall_seconds": 0.717878185,
+      "wall_seconds_per_span": 0.3589390925
+    }
+  ],
+  "cpu_intervention": {
+    "all_evaluates_ended_before_intervention": true,
+    "binding": {
+      "bytes": 5466,
+      "sha256": "e92aa08cee8f9718ac9d9f034110d2cefda47f75d2d0417f5d3b19561088b14d"
+    },
+    "cpu_slots_after": 2,
+    "cpu_slots_before": 2,
+    "interpretation": "Congested initial CPU affinity affected recorded wall times; later owned-process placement changed to cores4/5 without increasing reserved CPU count. This is not a controlled speed A/B.",
+    "monotonic_ns": 1120719531205002,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/cpu-placement-intervention.json",
+    "reason": "cores0/1 saturated; schedstat showed139s runqueue wait vs2.9s conversion CPU while allowed cores4/5 were idle",
+    "speed_comparison_qualified": false,
+    "training_method_ended_before_intervention": true
+  },
+  "evaluation_policy": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "cache_scope": "verified shared targets; no cold target-generation claim; disk metric cache disabled",
+    "cold_evaluate_claim": false,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "metric_disk_cache": 0,
+    "os_cache": "uncontrolled",
+    "use_sample_memory": false
+  },
+  "evidence": {
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/optimizer-fix/label-support-reproduction.json": {
+      "bytes": 1809,
+      "sha256": "a0ea3a315f66f0e2e7a523619926e291e039c881c8685e1d51ff32757433d267"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/r4-accepted-head-audit.json": {
+      "bytes": 4690,
+      "sha256": "fa8377d5a16932f213c5a696504a669696b0f946dea477e268d0820a19a7342f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/audit-receipt.json": {
+      "bytes": 274769,
+      "sha256": "dc761c6a77827333304a1bca16c902fad4ba1780ac696fc7d86142890df4af9b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/cpu-placement-intervention.json": {
+      "bytes": 5466,
+      "sha256": "e92aa08cee8f9718ac9d9f034110d2cefda47f75d2d0417f5d3b19561088b14d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/evaluate-timings.json": {
+      "bytes": 8413,
+      "sha256": "26a9c261eb2a6c6b2be3133d3512b4eaedbd8e5e177ed937ba1903abfd3bc419"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/learned-head-observation.json": {
+      "bytes": 4268,
+      "sha256": "02ccd0a565f2fa5bc52a368dafa776b5e02e5addc5dac1339366b588dfad32c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/native/receipt.json": {
+      "bytes": 235711,
+      "sha256": "8fa1555e40619621bfc30452b5df881660b8455c96f7e8f07d8e21768897b633"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/summary.json": {
+      "bytes": 1954,
+      "sha256": "88acc49b681616f64352f91c5c7180e9748b3a292fe18e6d48da53cccf6da628"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/target-preparation-1/target-preparation-observation.json": {
+      "bytes": 11609,
+      "sha256": "fd0e5c321b47cc2c8a5e0a69edf1f48aacc38c1be56d58c29d859787bf9b323c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/training-finished.json": {
+      "bytes": 239,
+      "sha256": "453ea35d73963c2fa1792a31f36c640816deacc465af2171fa68a3d7b5c29683"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/training-started.json": {
+      "bytes": 217,
+      "sha256": "5cb1d261e4906e77e5a56800fee6108d078dd35e20d522ecb7b25bd55641b410"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/lanes/training/native/receipt.json": {
+      "bytes": 86926,
+      "sha256": "95e8a169dbb3a185eac794f536485a043d4fea45bd610d906a237326446bcd59"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/lanes/training/native/receipt.json": {
+      "bytes": 216585,
+      "sha256": "c1e2ec5f6cd7ece845a9d5aef7fb8c1ef7c125b655ae4d4a75fed5923059afaa"
+    }
+  },
+  "formalized": false,
+  "heldout_canary_qualified": false,
+  "historical_diagnosis": {
+    "causal_limit": "R4 also changed target construction/cancellation, shared-target usage, target deadline15\u219260, and learned-head scales, with CPU contention. It does not isolate a single causal speed or acceptance improvement.",
+    "context_insufficiency_supported": false,
+    "criteria_too_strict_supported": false,
+    "findings": [
+      "R5/R6 produced no accepted update and rolled back rejected proposals; recorded LegalIR regressions exceeded unchanged guardrails.",
+      "Incomplete timing-dependent target reports changed class support; the separate retained-source reproduction demonstrates a ln(6/5) CE penalty from adding an absent zero-weight class.",
+      "Owned cancellation propagation now prevents adapters from silently swallowing deadlines; R2 explicitly retained incomplete targets and refused training.",
+      "R4 uses complete frozen shared targets and enabled learned compiler/decompiler head scales; all9 proposals satisfy the original optimizer criteria."
+    ],
+    "same_acceptance_thresholds_and_objective_weights": true
+  },
+  "historical_rejections": [
+    {
+      "accepted_epochs": 0,
+      "after_legal_ir_view_ce": 1.7005986908310775,
+      "autoencoder_config": {},
+      "before_holdout_deontic_metrics": {
+        "autoencoder_cosine_similarity": 1.0,
+        "autoencoder_cosine_similarity_observation_count": 2.0,
+        "autoencoder_cross_entropy_loss": 2.197224577336219,
+        "autoencoder_cross_entropy_loss_observation_count": 2.0,
+        "ir_cosine_similarity": 0.9777041363501084,
+        "ir_cosine_similarity_observation_count": 2.0,
+        "ir_cross_entropy_loss": 0.6554197792014671,
+        "ir_cross_entropy_loss_observation_count": 2.0,
+        "sample_count": 2.0,
+        "sample_weight": 0.5928149829601309,
+        "symbolic_validity_success_rate": 1.0,
+        "symbolic_validity_success_rate_observation_count": 2.0
+      },
+      "before_holdout_target_hashes": {
+        "us-code-synthetic-smoke-fixture-holdout-notify-a4399bdbcfa9ce99": "f897503bf826b4cdabcb2d7f4cbf88a6aee4c84b80644bc2fd65757782e88dab",
+        "us-code-synthetic-smoke-fixture-holdout-retain-d9e98c567cb9f89d": "9a56e28ed4dd553f63b613b3de9c43736f70fe48a23df000688baf5c9953ba7f"
+      },
+      "before_legal_ir_view_ce": 1.7005986908310775,
+      "line_search_attempts": 1,
+      "proposal_count": 1,
+      "proposals": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "effective_learning_rate": 0.175,
+          "legal_ir_view_cross_entropy_improvement": -0.08478265751101377,
+          "objective_gain": -0.18623310728646203,
+          "pareto_regressions": {
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.08478265751101377,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 0.08478265751101377,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.03433765326658267,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.08478265751101366,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 0.08478265751101377,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.09133322552918359
+          },
+          "update": "legal_ir_view_global_logits"
+        }
+      ],
+      "receipt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/lanes/training/native/receipt.json",
+      "run": "r5",
+      "sample_count": 3,
+      "shared_targets_verified": false,
+      "stopped_reason": null,
+      "training_seconds": 89.65225887903944,
+      "update_family_limit": 1,
+      "validation_sample_count": 2,
+      "zero_update_rollback": true
+    },
+    {
+      "accepted_epochs": 0,
+      "after_legal_ir_view_ce": 1.6094379124341003,
+      "autoencoder_config": {},
+      "before_holdout_deontic_metrics": {
+        "autoencoder_cosine_similarity": 1.0,
+        "autoencoder_cosine_similarity_observation_count": 2.0,
+        "autoencoder_cross_entropy_loss": 2.1972245773362196,
+        "autoencoder_cross_entropy_loss_observation_count": 2.0,
+        "ir_cosine_similarity": 0.95978882439481,
+        "ir_cosine_similarity_observation_count": 2.0,
+        "ir_cross_entropy_loss": 0.7341828109520757,
+        "ir_cross_entropy_loss_observation_count": 2.0,
+        "sample_count": 2.0,
+        "sample_weight": 0.7364491849101642,
+        "symbolic_validity_success_rate": 1.0,
+        "symbolic_validity_success_rate_observation_count": 2.0
+      },
+      "before_holdout_target_hashes": {
+        "us-code-synthetic-smoke-fixture-holdout-notify-a4399bdbcfa9ce99": "7eb7199cdc7ada04ae927e63e09ef3df417cf881c192a73d1ed8eab08bc25b98",
+        "us-code-synthetic-smoke-fixture-holdout-retain-d9e98c567cb9f89d": "1660b3935e2581bb115dc6313722884ddc24ea5ae4ac0fc7173364628fd4e0a0"
+      },
+      "before_legal_ir_view_ce": 1.6094379124341003,
+      "line_search_attempts": 3,
+      "proposal_count": 9,
+      "proposals": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "effective_learning_rate": 0.175,
+          "legal_ir_view_cross_entropy_improvement": -0.1735996851318864,
+          "objective_gain": -0.18775979946832555,
+          "pareto_regressions": {
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.1735996851318865,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 0.1735996851318864,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.07202667604706786,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.1735996851318865,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 0.1735996851318864,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.033256824528016204,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_loss": 0.03325682452801615,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.18269682263951934,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_loss": 0.18269682263951934
+          },
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "effective_learning_rate": 0.0875,
+          "legal_ir_view_cross_entropy_improvement": -0.17785121636072998,
+          "objective_gain": -0.19418252175825534,
+          "pareto_regressions": {
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.17785121636072998,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 0.17785121636072998,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.07561504418443571,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.17785121636072976,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 0.17785121636072976,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.03721024282548746,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_loss": 0.03721024282548746,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.18252233506355361,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_loss": 0.18252233506355361
+          },
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": false,
+          "attempt": 3,
+          "effective_learning_rate": 0.04375,
+          "legal_ir_view_cross_entropy_improvement": -0.18005848957753456,
+          "objective_gain": -0.19750288052791332,
+          "pareto_regressions": {
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.18005848957753467,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 0.18005848957753456,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.07746388747622385,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.18005848957753445,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 0.18005848957753434,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.03925456312754155,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_loss": 0.0392545631275415,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.18242536406263357,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_loss": 0.18242536406263357
+          },
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": false,
+          "attempt": 1,
+          "effective_learning_rate": 0.175,
+          "legal_ir_view_cross_entropy_improvement": -0.17252708895863145,
+          "objective_gain": -0.18613496954782693,
+          "pareto_regressions": {
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.17252708895863134,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 0.17252708895863145,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.07111691024207284,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.17252708895863123,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 0.17252708895863123,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.032253270174680715,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_loss": 0.032253270174680715,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.182734521951893,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_loss": 0.182734521951893
+          },
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "effective_learning_rate": 0.0875,
+          "legal_ir_view_cross_entropy_improvement": -0.17728720253938768,
+          "objective_gain": -0.19333326015657937,
+          "pareto_regressions": {
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.17728720253938768,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 0.17728720253938768,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0751417917969876,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.17728720253938757,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 0.17728720253938746,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.03668542439049172,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_loss": 0.03668542439049172,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.1825444021656215,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_loss": 0.1825444021656215
+          },
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "attempt": 3,
+          "effective_learning_rate": 0.04375,
+          "legal_ir_view_cross_entropy_improvement": -0.17976933656060123,
+          "objective_gain": -0.1970688370088749,
+          "pareto_regressions": {
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.17976933656060112,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 0.17976933656060123,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.07722261263514074,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.17976933656060112,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 0.179769336560601,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.03898624375595772,
+            "legal_ir:legal_ir_view_family_deontic_cross_entropy_loss": 0.038986243755957606,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.18243725347754972,
+            "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_loss": 0.18243725347754972
+          },
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "attempt": 1,
+          "effective_learning_rate": 0.35,
+          "legal_ir_view_cross_entropy_improvement": 0.0,
+          "objective_gain": 0.0,
+          "pareto_regressions": {},
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "effective_learning_rate": 0.175,
+          "legal_ir_view_cross_entropy_improvement": 0.0,
+          "objective_gain": 0.0,
+          "pareto_regressions": {},
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "attempt": 3,
+          "effective_learning_rate": 0.0875,
+          "legal_ir_view_cross_entropy_improvement": 0.0,
+          "objective_gain": 0.0,
+          "pareto_regressions": {},
+          "update": "family_logits"
+        }
+      ],
+      "receipt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/lanes/training/native/receipt.json",
+      "run": "r6",
+      "sample_count": 3,
+      "shared_targets_verified": false,
+      "stopped_reason": null,
+      "training_seconds": 116.27506225090474,
+      "update_family_limit": 3,
+      "validation_sample_count": 2,
+      "zero_update_rollback": true
+    }
+  ],
+  "limits": {
+    "backend": "python_sparse_batch",
+    "context_and_temperature_changed": false,
+    "lane_storage_bytes": 80000000,
+    "lane_wall_seconds": 420,
+    "objective_and_regression_criteria": {
+      "max_cosine_regression": 0.01,
+      "max_cross_entropy_regression": 0.0,
+      "max_legal_ir_loss_regression": 0.02,
+      "max_reconstruction_regression": 0.02,
+      "objective_cosine_gap_weight": 1.5,
+      "objective_cross_entropy_weight": 1.0,
+      "objective_legal_ir_weight": 1.0,
+      "objective_reconstruction_weight": 1.0
+    },
+    "outer": {
+      "cpu_slots": 2,
+      "memory_mb": 8192,
+      "seconds": 600,
+      "storage_bytes": 250000000
+    },
+    "training": {
+      "epochs": 1,
+      "hard_example_fraction": 1.0,
+      "l2_regularization": 0.0,
+      "learning_rate": 0.35,
+      "legal_ir_bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "legal_ir_evaluate_provers": false,
+      "legal_ir_parallel_workers": 1,
+      "max_cosine_regression": 0.01,
+      "max_cross_entropy_regression": 0.0,
+      "max_legal_ir_loss_regression": 0.02,
+      "max_line_search_attempts": 3,
+      "max_reconstruction_regression": 0.02,
+      "max_seconds": 180,
+      "metric_disk_cache": 0,
+      "objective_cosine_gap_weight": 1.5,
+      "objective_cross_entropy_weight": 1.0,
+      "objective_legal_ir_weight": 1.0,
+      "objective_reconstruction_weight": 1.0,
+      "profile_projection": true,
+      "projection_max_update_families": 3,
+      "projection_update_backend": "python_sparse_batch",
+      "use_sample_memory": false
+    }
+  },
+  "overall_native_attempt": {
+    "child_returncode": -15,
+    "elapsed_seconds": 378.9952822739724,
+    "error": {
+      "message": "owned descendant RSS exceeded 8 GiB",
+      "type": "RuntimeError"
+    },
+    "interpretation": "Training completed and accepted a real sparse update, but this whole native attempt failed the8GiB RSS limit later; no complete smoke qualification is inferred.",
+    "passed": false
+  },
+  "production_promotion": false,
+  "run": "diagnosis-capture-r4",
+  "schema": "concurrent-autoformal-training-results-report/v1",
+  "scope": "Three synthetic gate training sentences and two distinct synthetic acceptance-validation sentences; no qualified held-out canary or corpus-wide result.",
+  "selected_metrics": {
+    "deontic_ir_cosine_similarity": {
+      "after": 0.9953841784402758,
+      "before": 0.9953841784402758
+    },
+    "deontic_ir_cross_entropy": {
+      "after": 0.5554807558778581,
+      "before": 0.5554807558778581
+    },
+    "embedding_cosine_similarity": {
+      "after": 1.0,
+      "before": 1.0
+    },
+    "family_cross_entropy": {
+      "after": 2.14199950258564,
+      "before": 2.2079551302771225,
+      "delta_after_minus_before": -0.06595562769148255
+    },
+    "interpretation": "Committed improvement is family cross-entropy; selected LegalIR view cross-entropy and deontic IR metrics did not change. Six accepted alternative LegalIR proposals improved view CE but were not selected.",
+    "legal_ir_view_cross_entropy": {
+      "after": 1.791759469228055,
+      "before": 1.791759469228055
+    }
+  },
+  "shared_targets": {
+    "all_bridge_reports_accepted": true,
+    "all_requested_bridge_reports_received": true,
+    "artifact": {
+      "bytes": 3047472,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/target-preparation-1/targets.bundle",
+      "sha256": "04433524b519b89fffc4ed6a33870ae156c57d362b8691652bb3ee496055766a"
+    },
+    "before_after_target_hashes_identical": true,
+    "cold_preparation_target_generate_seconds": 35.34842793853022,
+    "cold_preparation_wall_seconds": 48.60373957408592,
+    "cold_preparation_wall_seconds_per_input_span": 9.720747914817185,
+    "count": 5,
+    "holdout_target_hashes": {
+      "us-code-synthetic-smoke-fixture-holdout-notify-a4399bdbcfa9ce99": "deb5c197b0bccb1fd79091ced314025a7de9050b8a2f511c8bca634dfda13cae",
+      "us-code-synthetic-smoke-fixture-holdout-retain-d9e98c567cb9f89d": "26440a8826ca986b4a22125ce0d4822ac1291a15eea799017e0214499aa5031f"
+    },
+    "snapshot_id": "sha256:1b6dd04fc9d73d32f96da2259322fb3b138f1880f40367ccbcf0082a40e12ec4",
+    "statuses": {
+      "ready": 5
+    },
+    "target_deadline_seconds": 60,
+    "verified": true
+  },
+  "sparse_output": {
+    "base_checkpoint": {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    "candidate_manifest": {
+      "bytes": 973,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/native/candidate.manifest.json",
+      "sha256": "bbcfb4607bd4ac36de423e119f9eb89a4efcbbf745769bdc30d78a3996ec6c61"
+    },
+    "candidate_materialized_identity": "fedf76e45066f8eefc062f43e25c0ed15ee926e0417b6802b4d7738dd5b9262e",
+    "full_candidate_checkpoint_written": false,
+    "patch": {
+      "bytes": 3754356,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4/supervisor/lanes/training/native/accepted-000000.patch.json",
+      "sha256": "1303963585470aff58528d0a60321353893e07b0a8e9ca5e7b9e89cebbe4b6c7"
+    },
+    "protected_checkpoint_unchanged": true
+  },
+  "training": {
+    "accepted_epochs": 1,
+    "accepted_proposal_count": 9,
+    "base_checkpoint_load_seconds": 1.148885436123237,
+    "candidate_serialization_seconds": 14.642595418961719,
+    "candidate_storage": "sparse",
+    "completed": true,
+    "execution_mode": "native_training",
+    "full_worker_entry_exit_seconds": 176.708989308,
+    "method_wall_seconds": 142.413471706,
+    "proposal_count": 9,
+    "proposals": [
+      {
+        "accepted": true,
+        "attempt": 1,
+        "effective_learning_rate": 0.175,
+        "legal_ir_view_cross_entropy_improvement": 0.004248924382270758,
+        "objective_gain": 0.014903781077284073,
+        "pareto_regressions": {},
+        "update": "legal_ir_view_global_logits"
+      },
+      {
+        "accepted": true,
+        "attempt": 2,
+        "effective_learning_rate": 0.0875,
+        "legal_ir_view_cross_entropy_improvement": 0.0022030068978666772,
+        "objective_gain": 0.007720832428657509,
+        "pareto_regressions": {},
+        "update": "legal_ir_view_global_logits"
+      },
+      {
+        "accepted": true,
+        "attempt": 3,
+        "effective_learning_rate": 0.04375,
+        "legal_ir_view_cross_entropy_improvement": 0.001121689410934934,
+        "objective_gain": 0.003929407517889061,
+        "pareto_regressions": {},
+        "update": "legal_ir_view_global_logits"
+      },
+      {
+        "accepted": true,
+        "attempt": 1,
+        "effective_learning_rate": 0.175,
+        "legal_ir_view_cross_entropy_improvement": 0.004813236854023906,
+        "objective_gain": 0.016885621480766666,
+        "pareto_regressions": {},
+        "update": "legal_ir_view_logits"
+      },
+      {
+        "accepted": true,
+        "attempt": 2,
+        "effective_learning_rate": 0.0875,
+        "legal_ir_view_cross_entropy_improvement": 0.002507555416808138,
+        "objective_gain": 0.008788341299357239,
+        "pareto_regressions": {},
+        "update": "legal_ir_view_logits"
+      },
+      {
+        "accepted": true,
+        "attempt": 3,
+        "effective_learning_rate": 0.04375,
+        "legal_ir_view_cross_entropy_improvement": 0.0012798071945809841,
+        "objective_gain": 0.004483085904476436,
+        "pareto_regressions": {},
+        "update": "legal_ir_view_logits"
+      },
+      {
+        "accepted": true,
+        "attempt": 1,
+        "effective_learning_rate": 0.35,
+        "legal_ir_view_cross_entropy_improvement": 0.0,
+        "objective_gain": 0.065955627691483,
+        "pareto_regressions": {},
+        "update": "family_logits"
+      },
+      {
+        "accepted": true,
+        "attempt": 2,
+        "effective_learning_rate": 0.175,
+        "legal_ir_view_cross_entropy_improvement": 0.0,
+        "objective_gain": 0.03320577651913936,
+        "pareto_regressions": {},
+        "update": "family_logits"
+      },
+      {
+        "accepted": true,
+        "attempt": 3,
+        "effective_learning_rate": 0.0875,
+        "legal_ir_view_cross_entropy_improvement": 0.0,
+        "objective_gain": 0.016659044240949328,
+        "pareto_regressions": {},
+        "update": "family_logits"
+      }
+    ],
+    "rejected_proposal_count": 0,
+    "sample_count": 3,
+    "selected_learning_rate": 0.35,
+    "selected_line_search_attempt": 1,
+    "selected_objective_gain": 0.065955627691483,
+    "selected_update": "family_logits",
+    "target_load_seconds": 4.627149415900931,
+    "validation_sample_count": 2,
+    "weight_storage": "private_json",
+    "worker_training_seconds": 142.72341419314034
+  },
+  "training_or_evaluation_rerun_for_this_report": false
+}

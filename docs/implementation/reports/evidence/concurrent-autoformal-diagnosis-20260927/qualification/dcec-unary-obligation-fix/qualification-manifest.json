@@ -1,0 +1,79 @@
+{
+  "files": [
+    {
+      "path": "canonical-application-receipt.json",
+      "sha256": "2e381c4f009883d523da57c9a719d8389b67f1e877efc6fcd64ebfc4b75bcb22",
+      "bytes": 1857
+    },
+    {
+      "path": "canonical-application.patch",
+      "sha256": "c9f45b995191da564716e4e0a758356dcc4cef2bed2b932548f5d0c3a8d7b731",
+      "bytes": 7482
+    },
+    {
+      "path": "source-preimages.json",
+      "sha256": "6734df43ff3687183149b9b56d3f1c5bb03af753a13c31d12bfbc0395b0f366d",
+      "bytes": 695
+    },
+    {
+      "path": "pytest-before-final.log",
+      "sha256": "46bf25d87f119dc0c60423efc7a6d53258bb51c3b005899334e91bae8359a22f",
+      "bytes": 12670
+    },
+    {
+      "path": "pytest-before-final.xml",
+      "sha256": "be2aa9fc0a6159bee89c26461719d16db73276f5d1c5503e494362daae106f02",
+      "bytes": 20280
+    },
+    {
+      "path": "pytest-before-final-observation.json",
+      "sha256": "0853667eb5f2d22ea5584464b57f2f72d168fb01c408a7530f9187d66e1d8a0d",
+      "bytes": 776
+    },
+    {
+      "path": "pytest-after.log",
+      "sha256": "b5b61b8ce694c0617ef77d8ce56679a710e703302cfd8568e7f4215dd40f656c",
+      "bytes": 1145
+    },
+    {
+      "path": "pytest-after.xml",
+      "sha256": "a82efdbacc0ac76e22c62cb2246768c2729efc11d570bce767e051e5977f67ef",
+      "bytes": 12501
+    },
+    {
+      "path": "pytest-after-observation.json",
+      "sha256": "a1e6242268f2a5f16ff618c63c9305f03f6e58163b28a304d93342c864fb3358",
+      "bytes": 762
+    },
+    {
+      "path": "fixture-r1-pytest-before.log",
+      "sha256": "644cc8ce8e06a325a7beeaf6f0c481875e0c767d250d319e60e7a029550c130e",
+      "bytes": 1519
+    },
+    {
+      "path": "fixture-r1-pytest-before.xml",
+      "sha256": "671935844e2dcdf447c877eaa2280c2e662f1591187e0affc8473e88cb039b54",
+      "bytes": 685
+    },
+    {
+      "path": "fixture-r1-pytest-before-observation.json",
+      "sha256": "dde48bc2db44ae95c8d4a3f94aaff0e7606e0c9c39543ef4642d847a93f30941",
+      "bytes": 702
+    },
+    {
+      "path": "pytest-before.log",
+      "sha256": "0998feaab836014966f5621b923c54446fde5229c3bf7ffa01a82b0645fa5e5d",
+      "bytes": 6223
+    },
+    {
+      "path": "pytest-before.xml",
+      "sha256": "a701afc57e3886d09323ab491d1e49c087b5c1bf952827186b139037613f56a0",
+      "bytes": 10341
+    },
+    {
+      "path": "pytest-before-observation.json",
+      "sha256": "e98df63d2db959bb120171ae15fd065c6f50d61a7da5f6ff39e8472498c5c67b",
+      "bytes": 705
+    }
+  ]
+}

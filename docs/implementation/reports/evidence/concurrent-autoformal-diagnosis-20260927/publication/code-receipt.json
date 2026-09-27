@@ -1,0 +1,21 @@
+{
+  "base_commit": "1bc328e4607b85b16b14280eaaf257d2495e4d4f",
+  "commit": "f342f78a84b42823cdf8ca42b52f5292e04ae1c3",
+  "live_head_and_index": {
+    "head": "205bc6ef96c69c3ed9ddcd20ecf0b67f460f1841",
+    "index_sha256": "89acaf1ef77ad2d709ac3798364047bd246a67a3e929fbec648d1671f93ad9a0"
+  },
+  "live_head_and_index_preserved": true,
+  "paths": [
+    "ipfs_datasets_py/logic/CEC/native/dcec_integration.py",
+    "ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "tests/unit/logic/test_uscode_ingest.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_owned_timeout.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+    "tests/unit_tests/logic/CEC/native/test_dcec_integration.py"
+  ],
+  "plan_sha256": "48606242b268bcfe77ffafe3bffad2b897f0b394c5a3c0ec4228a359cc78ea7d",
+  "repository": "/home/barberb/lift_coding/external/ipfs_datasets"
+}

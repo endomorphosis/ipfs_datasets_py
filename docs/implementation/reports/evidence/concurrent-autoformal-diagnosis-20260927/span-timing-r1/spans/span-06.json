@@ -1,0 +1,55 @@
+{
+  "admitted": false,
+  "allow_partial": false,
+  "compiler_seconds": 0.02283323183655739,
+  "compiler_status": "abstained",
+  "compiler_status_scope": "native OperationStatus; success is not admission",
+  "decompiled": [],
+  "decompiler_seconds": 3.520399332046509e-07,
+  "diagnostic_fields": [
+    "cross_references"
+  ],
+  "error": {
+    "code": "unsupported_semantics",
+    "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained."
+  },
+  "evidence_wall_seconds": 0.03742497391067445,
+  "formalized": false,
+  "parser_temporal_records": [],
+  "parser_vocabulary": {
+    "actions": [
+      "terminate"
+    ],
+    "actors": [
+      "authority of the Secretary to carry out this chapter"
+    ],
+    "objects": [
+      "September"
+    ],
+    "qualifiers": []
+  },
+  "rules": [],
+  "source": {
+    "canonical_citation": "16 U.S.C. \u00a7 6809",
+    "document_ordinal": 2,
+    "entry_cid": "sha256:fa16eea29f17778b478fac87d7b608cd20a7904cf7a66d8a94231ad8fda4e440",
+    "id": "usc:us:16:6809.span-1",
+    "legal_id": "usc:us:16:6809",
+    "reason": "",
+    "release_point": "us/pl/119/102",
+    "retrieval_method": "sparse_bm25",
+    "retrieval_score": null,
+    "section": "6809",
+    "source_span_id": "uscode-span-cd23a19d6f1c1492d1f5e09498cb297da282a4fd45c9828e907821e55f8d259f",
+    "span_text_sha256": "0b5751a3df700f63efdd65374dbce959733e4831563c3b79fe9ce23717878c88",
+    "status": "uncompiled",
+    "synthetic": false,
+    "text": "The authority of the Secretary to carry out this chapter shall terminate September 30, 2031 .",
+    "title": "16",
+    "unit_id": "usc:us:16:6809"
+  },
+  "synthetic": false,
+  "temporal_sidecar_seconds": 0.00010217796079814434,
+  "vocabulary_seconds": 0.014489212073385715,
+  "wall_seconds": 0.03732279594987631
+}

@@ -1,0 +1,43 @@
+--- repair_lane.py:r3
++++ repair_lane.py:r4
+@@ -5,6 +5,7 @@
+ """
+ from __future__ import annotations
+ import argparse
++from collections.abc import Mapping
+ import hashlib
+ import json
+ import os
+@@ -36,6 +37,14 @@
+     else:
+         require(value is None or isinstance(value, (str, int, bool)),
+                 'intent metadata must use integer/decimal-string numbers, never float')
++
++
++def plain_json(value):
++    if isinstance(value, Mapping):
++        return {key: plain_json(member) for key, member in value.items()}
++    if isinstance(value, (tuple, list)):
++        return [plain_json(member) for member in value]
++    return value
+ 
+ 
+ def event(stage, **extra):
+@@ -190,7 +199,7 @@
+         stored_goal = task_source.intent.get_goal(goal_id)
+         require(stored_goal['body']['prompt'] == prompt, 'native goal lost prompt')
+         save(runtime / 'native-task-before.json', before.to_dict())
+-        save(runtime / 'native-goal-before.json', stored_goal)
++        save(runtime / 'native-goal-before.json', plain_json(stored_goal))
+         save(runtime / 'proposal-ready.json', event('native_goal_prepared_waiting_for_training'))
+         while not marker.exists():
+             require(time.monotonic() - started < 400, 'training method entry marker not observed within 400 seconds')
+@@ -227,7 +236,7 @@
+             save(runtime / 'canonical-proposal.json', proposal)
+         trace = llm_router.get_last_generation_trace()
+         save(runtime / 'router-trace.json', trace)
+-        artifacts = [ref(path) for path in sorted(runtime.glob('*')) if path.is_file() and path.suffix != '.duckdb' and '.duckdb.' not in path.name]
++        artifacts = [ref(path) for path in sorted(runtime.glob('*')) if path.is_file() and path.name != 'repair-lane.log' and path.suffix != '.duckdb' and '.duckdb.' not in path.name]
+         body = dict(before.body)
+         body['router_proposal'] = {**resolved, 'applied': False, 'review_required': True,
+                                   'raw_proposal': generated['artifact'], 'artifacts': artifacts,

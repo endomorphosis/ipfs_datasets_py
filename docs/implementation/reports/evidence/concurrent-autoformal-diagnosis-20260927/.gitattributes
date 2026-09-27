@@ -1,0 +1,5 @@
+# Preserve byte-exact captured logs, native task projections and unified diffs.
+*.patch -whitespace
+*.log -whitespace
+*.xml -whitespace
+task-projection.runtime.todo.md -whitespace

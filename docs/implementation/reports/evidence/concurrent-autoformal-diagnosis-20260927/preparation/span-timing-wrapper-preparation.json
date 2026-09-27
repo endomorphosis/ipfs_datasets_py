@@ -1,0 +1,31 @@
+{
+  "bounds": {
+    "cpu_affinity": [
+      6
+    ],
+    "ledger_lock_timeout_seconds": 30,
+    "memory_mb": 2048,
+    "seconds": 120,
+    "storage_bytes": 50000000
+  },
+  "executed": false,
+  "helper": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span_timing_followup.py",
+  "offline_bootstrap": "harness/smoke_resource_common.bootstrap",
+  "output_receipt": "spans/span-timing-receipt.json",
+  "required_input_manifest": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span-timing-inputs.json",
+  "root_owns_execution": true,
+  "schema": "span-timing-resource-wrapper-preparation/v1",
+  "source_policy": "Fresh isolated span timing validation; original formal smoke remains failed. Input/validator hashes checked before and after.",
+  "wrapper_files": [
+    {
+      "bytes": 11045,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/run_span_timing_followup_reserved.py",
+      "sha256": "6dd0324f1a439dc5dd809dd6804591c53f3c4009bc1a9a7de7e0e202149c448a"
+    },
+    {
+      "bytes": 3228,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-diagnosis-20260927/span_timing_guard_child.py",
+      "sha256": "46b88024f8c411803606312e89b45bad170df445ba48d7b3053e41bf286bb42e"
+    }
+  ]
+}

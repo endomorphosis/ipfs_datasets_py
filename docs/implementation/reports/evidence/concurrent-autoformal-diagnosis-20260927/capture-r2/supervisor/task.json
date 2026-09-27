@@ -1,0 +1,39 @@
+{
+  "acceptance_criteria": [
+    "The declared test runs strict conversion and native learned-head training with measured method overlap.",
+    "All five requested bridges must produce complete frozen target reports. Preserve every timeout or failed preparation observation.",
+    "Require finite nonzero compiler-facing and decompiler-head changes in the selected accepted sparse patch, as well as a native strictly accepted optimizer epoch. Do not weaken numeric acceptance or count a zero-gain proposal as success.",
+    "Keep deadline, exception, prohibition, minimum-duration and empty-vocabulary gates unchanged; real unsupported spans must continue to abstain.",
+    "Run installed offline lake build Legal on the exact generated minimum-duration threshold theorem, parse exact DCEC/TDFOL target programs, and validate frame schema. Record their limited proof scope.",
+    "Completion applies only to this smoke task. A model score, generated target, proposal or database row is never Lean admission or model promotion."
+  ],
+  "board_namespace": "concurrent-autoformal-smoke-v1",
+  "completion": "auto",
+  "context_budget_tokens": 4096,
+  "description": "Use the sealed job and source tree, build five complete immutable bridge targets, run the native projection optimizer with compiler-facing and decompiler heads enabled, and retain every rejected proposal. Separate proposal evidence may be recorded in a review-only goal database; this task grants no source-write or model-promotion authority.",
+  "is_schedulable": true,
+  "outputs": [
+    {
+      "path": "results/smoke.json"
+    }
+  ],
+  "priority": "P1",
+  "provider_role": "deterministic-only",
+  "review_only": false,
+  "status": "ready",
+  "task_cid": "baguqeera2f27jkf3iyzbm7zu54cxi4ofx3fingafn4gzgffz45afkgl526pa",
+  "task_id": "SMOKE-f8d86792f73a2e0f49a0",
+  "title": "Train learned compiler and decompiler heads beside strict span conversion",
+  "track": "bounded-validation",
+  "validation_commands": [
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/test_concurrent_smoke.py",
+        "-q"
+      ]
+    }
+  ]
+}
