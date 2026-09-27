@@ -1,0 +1,263 @@
+{
+  "admitted": false,
+  "artifacts": {
+    ".gitattributes": {
+      "bytes": 335,
+      "sha256": "8199a7abac0f70a7c44b9cdceb8366fcbdc5f5b16102f7e7de03d4e959bd99db"
+    },
+    "README.md": {
+      "bytes": 5089,
+      "sha256": "57448ded2838db53399e8b15fc3100c009930280e6ecab093f62e02d49cac0af"
+    },
+    "artifact-origins.json": {
+      "bytes": 13109,
+      "sha256": "88381f9239d443b804803220b88cbcec98a7264e6172331c9a9e43186b214cd1"
+    },
+    "candidate-manifest.json": {
+      "bytes": 1282,
+      "sha256": "63cd78759bfcbb5c520d32eed7ea4492a2dd86eb684e7316ad62b70deb9191fa"
+    },
+    "candidate.patch": {
+      "bytes": 1859,
+      "sha256": "8e5d62a8c5dcedec483f04852ac845d3b4c1459711dea74c68c04aa0dd1e4e82"
+    },
+    "collection-failed-r1/bounded-tests-receipt.json": {
+      "bytes": 241,
+      "sha256": "2c2db9a14f392d39d04d491d89e11bea2c22dde5cf1f2532818f8cd6e46187b9"
+    },
+    "collection-failed-r1/fixture-ownership.json": {
+      "bytes": 109,
+      "sha256": "0c42c56be500f121b45e6f87c47959a9b7f7eb212ac31d11cb9fceb13f919028"
+    },
+    "collection-failed-r1/focused-tests-receipt.json": {
+      "bytes": 35822,
+      "sha256": "615b8263edbad19171a2e5865ba0fe8dd33e02e505441df9b59ff02e798caa3e"
+    },
+    "collection-failed-r1/focused-tests.log": {
+      "bytes": 2424,
+      "sha256": "528d3780d769d994b3eac8c475a036d1aeba84cc460a607850c2410fb33f81ab"
+    },
+    "collection-failed-r1/focused-tests.xml": {
+      "bytes": 1439,
+      "sha256": "2d6783346a484d03f506f8467c0f26d8119063fefe9af5541e91d8cc97495600"
+    },
+    "collection-failed-r1/run_tests.py": {
+      "bytes": 3811,
+      "sha256": "a08f9951b4c8ff076632d729243dc5efb40c19ef26a6b8adb4b6766d6475116b"
+    },
+    "collection-failed-r1/run_tests_bounded.py": {
+      "bytes": 1263,
+      "sha256": "3ce9f89254fac8d1dc7aa3cf93f6d49a9c63b1328d94f075820634dd36bd292e"
+    },
+    "dependency/audit-summary.json": {
+      "bytes": 8917,
+      "sha256": "768a61dc3942fcd1c1f4ab42915a50fc86a7ba8cace19bec952d34ef7a0ec385"
+    },
+    "dependency/child-terminal.json": {
+      "bytes": 88,
+      "sha256": "34395508297509f164c9dcbb5623559fe7fdce02ceba59d9581fefb56bdde819"
+    },
+    "dependency/dependency-binding.json": {
+      "bytes": 585,
+      "sha256": "9e832ffeb0831bf54c7a3e39d0fb65f0cbbace530ff7c2353980155b65321ad2"
+    },
+    "dependency/dependency-manifest.json": {
+      "bytes": 1009221,
+      "sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485"
+    },
+    "dependency/export.log": {
+      "bytes": 546,
+      "sha256": "8f5e3e00e67494de96d6a23deef39f8e3571d54c8bd5676e2878cf3cac44f80d"
+    },
+    "dependency/resource-release.json": {
+      "bytes": 3805,
+      "sha256": "8b7c04294250c2038838abfb6f3bd77f40f8de31662af66c9327cae7bb03ab60"
+    },
+    "focused-r2/bounded-tests-receipt.json": {
+      "bytes": 246,
+      "sha256": "5bc54fda5548dcf1526a88a5496bf5f865fb49f378212d771140156881a479d7"
+    },
+    "focused-r2/fixture-ownership.json": {
+      "bytes": 112,
+      "sha256": "e68634cef6050c1994c8e806f073ea523073a6f6e4f64290231a53cd2064dbb8"
+    },
+    "focused-r2/focused-tests-receipt.json": {
+      "bytes": 35501,
+      "sha256": "a5b4e219f3ff4f6382d78ba57291422f4b949eb1dc70136624d0545d2c718841"
+    },
+    "focused-r2/focused-tests.log": {
+      "bytes": 1790,
+      "sha256": "5b4a61490cc15a4204f189832b35280210769c1016d09c79074c09c5495aea26"
+    },
+    "focused-r2/focused-tests.xml": {
+      "bytes": 3809,
+      "sha256": "179cb206d8ce521452c0d02fcddbccc260a2048f13076231b4177565a20be0da"
+    },
+    "focused-r2/run_tests.py": {
+      "bytes": 3927,
+      "sha256": "3662e23313839620d1acd546ff04027960042a78324a7a4ba383c95150a2a243"
+    },
+    "focused-r2/run_tests_bounded.py": {
+      "bytes": 1263,
+      "sha256": "3ce9f89254fac8d1dc7aa3cf93f6d49a9c63b1328d94f075820634dd36bd292e"
+    },
+    "focused-r2/test-extraction.json": {
+      "bytes": 1584,
+      "sha256": "3b30b8c7e33bcecce3f5a81bc8fc846b955848822c889ae7e1332c1df8840c19"
+    },
+    "focused-r2/test_preflight_existing_regressions.py": {
+      "bytes": 4210,
+      "sha256": "23a59b8e3d60676be13f4af7bbcb4bf18314bb35b7a234c50c56efc3be51f3a5"
+    },
+    "focused-r3/bounded-tests-receipt.json": {
+      "bytes": 245,
+      "sha256": "0c8657e06a55e300dc45bc3ee06fc56802555e14e78006fc70f9bc0d06b8cd3f"
+    },
+    "focused-r3/fixture-ownership.json": {
+      "bytes": 112,
+      "sha256": "975e088dd922ad712f28c8f577ebbbc65af7dbd4cfd58888ba37d88b27e01699"
+    },
+    "focused-r3/focused-tests-receipt.json": {
+      "bytes": 5117,
+      "sha256": "c34e4b52835237fb3a802df97c8c8e5fcca0393d872a56fb1f7de98afe80321e"
+    },
+    "focused-r3/focused-tests.log": {
+      "bytes": 98,
+      "sha256": "01cdd48247cab7b390581fe6c4304671fcddf040b2a9072ef90373db72da86eb"
+    },
+    "focused-r3/focused-tests.xml": {
+      "bytes": 348,
+      "sha256": "81cf404cacc2bc81718c18040324123587787f7d3eddab1edba5207aacb58e42"
+    },
+    "focused-r3/pytest-empty.ini": {
+      "bytes": 9,
+      "sha256": "8250d20f42b419af40706490ead78aabab9feba93eab09a3f626e3de5256e1f4"
+    },
+    "focused-r3/run_tests.py": {
+      "bytes": 3272,
+      "sha256": "c61861a10927fad077ff68449bbd8be03dffbbd6acd3c2ba0e09a516503916f5"
+    },
+    "focused-r3/run_tests_bounded.py": {
+      "bytes": 1263,
+      "sha256": "3ce9f89254fac8d1dc7aa3cf93f6d49a9c63b1328d94f075820634dd36bd292e"
+    },
+    "focused-r3/test_preflight_existing_regressions.py": {
+      "bytes": 4281,
+      "sha256": "babf15454e81e7baeab3805ef171c0bab9263cbb8b77f4deb403de4b61266e1e"
+    },
+    "focused-r3/zip-fixture-correction.json": {
+      "bytes": 439,
+      "sha256": "32db453dc3f827c5e3bf0b59f967a73d7801b69f0d12128597fdbeec0e33d3fa"
+    },
+    "lane-environment-fix/before.json": {
+      "bytes": 436,
+      "sha256": "c8437fca881e7107ddd123064127eb5dbc74135cb74e2f1474c7609ff18fdc00"
+    },
+    "lane-environment-fix/parent_harness.before.py": {
+      "bytes": 13836,
+      "sha256": "2fbbe348511e956c54c0a9585e0b7f2efba2585f445d3d7dc4f3c2b8dce86d76"
+    },
+    "lane-environment-fix/parent_harness.diff": {
+      "bytes": 918,
+      "sha256": "1464442ca583bc1fed0830e7686264e033cd9f6a53668640f63ea329eb1e819e"
+    },
+    "lane-environment-fix/receipt.json": {
+      "bytes": 1580,
+      "sha256": "53e30f6d3d3851854236ef86d5a093561bc7b47b324041e744916bbcb67ea6b5"
+    },
+    "lane-environment-fix/test_lane_environment.py": {
+      "bytes": 3765,
+      "sha256": "08abf0045622172d8aee833cc5fa367f6fdbe85870994f680ef6d631f6bd5ed8"
+    },
+    "lane-environment-fix/tests.log": {
+      "bytes": 896,
+      "sha256": "32eb50c4dfba056a702f25bfc9c75ff5fbde7aed8b001ccaace2df21f26d288f"
+    },
+    "original-tests/test_agent_supervisor_project_dependency_preflight.py": {
+      "bytes": 61974,
+      "sha256": "ef683fc4249aa32c0262cbad78983352d8402e92ef954e4c32176aa0c73ce058"
+    },
+    "original-tests/test_agent_supervisor_validation_scheduler.py": {
+      "bytes": 101843,
+      "sha256": "6a51bf51d068fc7c03fecb7c75020003a12c368e589a440071a9c7c81134156c"
+    },
+    "qualification.json": {
+      "bytes": 7046,
+      "sha256": "a35f76f843b74463319718297a46c71f8f433e44d367c8f4db7b4a82df64b241"
+    },
+    "r5-harness/conversion_lane.py": {
+      "bytes": 8808,
+      "sha256": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b"
+    },
+    "r5-harness/create_published_dependency_reserved.py": {
+      "bytes": 16410,
+      "sha256": "dae2240a9037caf5c638bf39ab0766130952e52d705d099e1a986657df94e42a"
+    },
+    "r5-harness/dependency_binding.py": {
+      "bytes": 5376,
+      "sha256": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e"
+    },
+    "r5-harness/dependency_export_common.py": {
+      "bytes": 10106,
+      "sha256": "1f93574ee0c9a1b321b64b79391773cb846165bb408f569e3b77659d4c2893b8"
+    },
+    "r5-harness/frozen-config.json": {
+      "bytes": 12937,
+      "sha256": "59a95d61118d91325e9071e1ef441b861dbf8a44105b6141ee3d4ef3b7696ffe"
+    },
+    "r5-harness/lane_bootstrap.py": {
+      "bytes": 3293,
+      "sha256": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55"
+    },
+    "r5-harness/native_guard_child.py": {
+      "bytes": 2670,
+      "sha256": "92f5b0cb50d5103c7208e0d0e6670293513326e3e11800e4807a3d3b6c559bac"
+    },
+    "r5-harness/native_supervisor_driver.py": {
+      "bytes": 11995,
+      "sha256": "289a78b8aed5dc26e75ebee33d5b7086531ff993689666cd082356f5e5af54e0"
+    },
+    "r5-harness/parent_harness.py": {
+      "bytes": 14062,
+      "sha256": "6095a2832659e7a1833f8d5e39b9948d786291df6d9623b0a827f8ccbe7e6c4b"
+    },
+    "r5-harness/run_native_smoke_reserved.py": {
+      "bytes": 13856,
+      "sha256": "04284381f9743a9f4907f067e6894b62b3ab4e6957320c5e2ad68bc4a0cbe4a1"
+    },
+    "r5-harness/smoke_resource_common.py": {
+      "bytes": 7093,
+      "sha256": "8ede37beaf19fcdefa99a6dc6cf0650cfea191f4cfc13f3a715b0aa155ee653b"
+    },
+    "r5-harness/training_lane.py": {
+      "bytes": 10622,
+      "sha256": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528"
+    },
+    "r5-preparation.json": {
+      "bytes": 1039,
+      "sha256": "d7274673a56b792bb43077f5a460b04115d8f43c393068042b68303fe2b8dea6"
+    },
+    "retry-intent.json": {
+      "bytes": 899,
+      "sha256": "9f057f386083719daa3c9d5da783b3053a432af62c9547cf00815a044cb7e4ee"
+    },
+    "root-publication-plan.json": {
+      "bytes": 1722,
+      "sha256": "b1fbd684cb291ced8bc64e49bf521406b9395e888a24ec69078cb6a6542d984d"
+    },
+    "root-publication/receipt.json": {
+      "bytes": 691,
+      "sha256": "a170f7a454972ffb79cd1031459094051e6aabb898a466fc2fa38159e1f87026"
+    },
+    "source-provenance.json": {
+      "bytes": 41870,
+      "sha256": "fa2c9e0fc575d4d5473b0be0c38fa7e70bbfe293e032575e387ff5e3009964c2"
+    }
+  },
+  "base_accelerate_commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a",
+  "formalized": false,
+  "native_success": false,
+  "published_accelerate_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82",
+  "schema": "concurrent-smoke-fd-fix-evidence/v1",
+  "status": "focused_fix_qualified_native_retry_pending"
+}

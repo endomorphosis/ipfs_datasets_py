@@ -1,0 +1,128 @@
+{
+  "base_commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a",
+  "production_change": {
+    "paths": [
+      "ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py",
+      "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py"
+    ],
+    "additions": 5,
+    "deletions": 0,
+    "scope": "Pass only launcher_receipt.inherited_fds into the dependency probe and both first-hop daemon launches. Preserve default close_fds=True, seal policy, descriptor lifetime, and execution/output bounds."
+  },
+  "review": {
+    "production_context_consumers": 2,
+    "first_hop_spawns": 3,
+    "independent_review": "span_batch_review approved exact patch SHA256; concurrent_smoke_training confirmed empty-tuple and fd-lifetime compatibility."
+  },
+  "validation": {
+    "initial_collection_failure": {
+      "executed_tests": 0,
+      "reason": "Unchanged upstream preflight test module imports missing MAX_DEPENDENCY_PREFLIGHT_PROJECTION_BYTES. Target definitions extracted byte-for-byte with only necessary imports and REPO_ROOT adaptation.",
+      "elapsed_seconds": 30.27609572908841
+    },
+    "focused_r2": {
+      "passed": 12,
+      "failed": 1,
+      "pytest_seconds": 98.09,
+      "outer_seconds": 98.62583066895604,
+      "peak_sampled_fixture_bytes": 743,
+      "remaining_fixture_bytes": 0,
+      "failure": "Existing sealed ZIP fixture patched __loader__ but not the __spec__.loader used by production. SourceFileLoader raised NotADirectoryError before launch."
+    },
+    "corrected_single_case_r3": {
+      "passed": 1,
+      "failed": 0,
+      "pytest_seconds": 1.28,
+      "outer_seconds": 15.764670193893835,
+      "fixture_correction": "Bind __spec__.loader to the exact same real zipimporter already installed as __loader__; retain every original assertion.",
+      "product_changes_between_runs": false,
+      "remaining_fixture_bytes": 0
+    },
+    "unique_qualified_cases": 13,
+    "original_preflight_module_collects": false,
+    "real_non_dumpable_probe_regression_passed": true,
+    "real_non_dumpable_daemon_regression_passed": true,
+    "ordinary_default_helper_passed": true,
+    "sealed_source_delivery_passed": true,
+    "sealed_ruff_spellings_and_forgery_checks_passed": true,
+    "descriptor_cleanup_passed": true,
+    "full_suite": false,
+    "native_execution": false,
+    "admitted": false,
+    "new_tests_for_publication": false
+  },
+  "artifacts": [
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/candidate.patch",
+      "sha256": "8e5d62a8c5dcedec483f04852ac845d3b4c1459711dea74c68c04aa0dd1e4e82",
+      "bytes": 1859
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/manifest.json",
+      "sha256": "63cd78759bfcbb5c520d32eed7ea4492a2dd86eb684e7316ad62b70deb9191fa",
+      "bytes": 1282
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/collection-failed-r1/focused-tests.log",
+      "sha256": "528d3780d769d994b3eac8c475a036d1aeba84cc460a607850c2410fb33f81ab",
+      "bytes": 2424
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/collection-failed-r1/bounded-tests-receipt.json",
+      "sha256": "2c2db9a14f392d39d04d491d89e11bea2c22dde5cf1f2532818f8cd6e46187b9",
+      "bytes": 241
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/focused-r2/focused-tests.log",
+      "sha256": "5b4a61490cc15a4204f189832b35280210769c1016d09c79074c09c5495aea26",
+      "bytes": 1790
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/focused-r2/focused-tests.xml",
+      "sha256": "179cb206d8ce521452c0d02fcddbccc260a2048f13076231b4177565a20be0da",
+      "bytes": 3809
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/focused-r2/focused-tests-receipt.json",
+      "sha256": "a5b4e219f3ff4f6382d78ba57291422f4b949eb1dc70136624d0545d2c718841",
+      "bytes": 35501
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/focused-r2/bounded-tests-receipt.json",
+      "sha256": "5bc54fda5548dcf1526a88a5496bf5f865fb49f378212d771140156881a479d7",
+      "bytes": 246
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/focused-r2/test-extraction.json",
+      "sha256": "3b30b8c7e33bcecce3f5a81bc8fc846b955848822c889ae7e1332c1df8840c19",
+      "bytes": 1584
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/focused-tests.log",
+      "sha256": "01cdd48247cab7b390581fe6c4304671fcddf040b2a9072ef90373db72da86eb",
+      "bytes": 98
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/focused-tests.xml",
+      "sha256": "81cf404cacc2bc81718c18040324123587787f7d3eddab1edba5207aacb58e42",
+      "bytes": 348
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/focused-tests-receipt.json",
+      "sha256": "c34e4b52835237fb3a802df97c8c8e5fcca0393d872a56fb1f7de98afe80321e",
+      "bytes": 5117
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/bounded-tests-receipt.json",
+      "sha256": "0c8657e06a55e300dc45bc3ee06fc56802555e14e78006fc70f9bc0d06b8cd3f",
+      "bytes": 245
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/zip-fixture-correction.json",
+      "sha256": "32db453dc3f827c5e3bf0b59f967a73d7801b69f0d12128597fdbeec0e33d3fa",
+      "bytes": 439
+    }
+  ],
+  "no_canonical_checkout_mutation": true,
+  "no_remote_publication_by_agent": true
+}

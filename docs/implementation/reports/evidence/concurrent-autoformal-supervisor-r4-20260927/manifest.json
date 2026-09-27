@@ -1,0 +1,39 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "audit-receipt.json": {
+      "bytes": 251986,
+      "sha256": "8a98a661e44f0eee3c929af3965133609a4cc111c9b4baacd6a29fe050eec892"
+    },
+    "child-source-receipt.json": {
+      "bytes": 62825,
+      "sha256": "63f53501b70b98604fe6ba71bfc922bb7dc6b3f91abb3d470fd27a957e66994c"
+    },
+    "child-terminal.json": {
+      "bytes": 129,
+      "sha256": "0b2b3c122aac4db5e422594a009983b75a5956ad6a5322b91e76ecbec1ddc6a6"
+    },
+    "native-child.log": {
+      "bytes": 959,
+      "sha256": "52edb67a1ad7fb99b376172213781dded756783057c0ce1d790acd9758b5118a"
+    },
+    "observation.json": {
+      "bytes": 1006,
+      "sha256": "4d2f85b2dcd5b428b883e54b2681aad8540e3c1ae010da04765f19606f313862"
+    },
+    "portal-events.jsonl": {
+      "bytes": 10224,
+      "sha256": "17952d4dec447f7aefc01229b7c15cebe3da6b45e7825db52a4cd69c949ab642"
+    },
+    "resource-retention.json": {
+      "bytes": 3143,
+      "sha256": "12b364bc43647dc4d2cd1bb751b1d854dd59202979b7c21191ae0eec89213f1d"
+    },
+    "supervisor-receipt.json": {
+      "bytes": 6987,
+      "sha256": "7b4ed7f13330898825b453bb362aaf5432265b8caead9c5adceee1ab387840d4"
+    }
+  },
+  "formalized": false,
+  "schema": "concurrent-smoke-r4-evidence/v1"
+}

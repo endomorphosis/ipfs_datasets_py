@@ -1,0 +1,18 @@
+ERROR: found no collectors for /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_project_dependency_preflight.py::test_dependency_probe_output_is_bounded_while_child_is_running
+
+ERROR: found no collectors for /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_project_dependency_preflight.py::test_dependency_probe_uses_inherited_sealed_fd_when_parent_is_non_dumpable
+
+ERROR: found no collectors for /home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_project_dependency_preflight.py::test_dependency_probe_reads_source_from_sealed_memfd_zip
+
+
+==================================== ERRORS ====================================
+_ ERROR collecting test/api/test_agent_supervisor_project_dependency_preflight.py _
+ImportError while importing test module '/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_project_dependency_preflight.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_project_dependency_preflight.py:22: in <module>
+    from ipfs_accelerate_py.agent_supervisor.validation.project_dependency_preflight import (
+E   ImportError: cannot import name 'MAX_DEPENDENCY_PREFLIGHT_PROJECTION_BYTES' from 'ipfs_accelerate_py.agent_supervisor.validation.project_dependency_preflight' (/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py)
+=========================== short test summary info ============================
+ERROR .git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_project_dependency_preflight.py
+1 error in 29.75s

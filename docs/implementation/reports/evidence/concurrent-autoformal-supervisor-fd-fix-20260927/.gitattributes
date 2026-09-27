@@ -1,0 +1,6 @@
+# Exact captured diff and helper bytes.
+candidate.patch -whitespace
+lane-environment-fix/parent_harness.diff -whitespace
+r5-harness/dependency_export_common.py whitespace=-blank-at-eof
+focused-r2/test_preflight_existing_regressions.py whitespace=-blank-at-eof
+focused-r3/test_preflight_existing_regressions.py whitespace=-blank-at-eof

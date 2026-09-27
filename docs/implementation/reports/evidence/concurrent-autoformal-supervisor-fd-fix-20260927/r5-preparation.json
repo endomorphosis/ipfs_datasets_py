@@ -1,0 +1,19 @@
+{
+  "accelerate_dependency": {
+    "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/dependency-manifest.json",
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "admitted": false,
+  "campaign_cap_bytes": 75000000000,
+  "canonical_source_hashes_preserved": 64,
+  "cpu_slots": 2,
+  "formalized": false,
+  "memory_mb": 8192,
+  "native_smoke_executed": false,
+  "scope": "One native concurrent synthetic optimizer/conversion smoke, plus three retained US Code gap spans; no compiler training or corpus qualification",
+  "storage_bytes": 150000000,
+  "timeout_seconds": 600
+}

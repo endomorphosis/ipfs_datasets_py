@@ -1,0 +1,7 @@
+{
+  "test": "test_dependency_probe_reads_source_from_sealed_memfd_zip",
+  "change": "Bind module.__spec__.loader to the exact same real sealed-memfd zipimporter already supplied as module.__loader__. All original assertions unchanged.",
+  "before_sha256": "23a59b8e3d60676be13f4af7bbcb4bf18314bb35b7a234c50c56efc3be51f3a5",
+  "after_sha256": "babf15454e81e7baeab3805ef171c0bab9263cbb8b77f4deb403de4b61266e1e",
+  "product_changes": false
+}

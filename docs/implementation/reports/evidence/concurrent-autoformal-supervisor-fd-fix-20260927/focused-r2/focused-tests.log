@@ -1,0 +1,18 @@
+..F..........                                                            [100%]
+=================================== FAILURES ===================================
+___________ test_dependency_probe_reads_source_from_sealed_memfd_zip ___________
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/test_preflight_existing_regressions.py:112: in test_dependency_probe_reads_source_from_sealed_memfd_zip
+    result = preflight_module._run_dependency_probe({"projects": []})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py:3038: in _run_dependency_probe
+    source = _read_dependency_probe_source()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py:3018: in _read_dependency_probe_source
+    source = loader_reader(__file__)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap_external>:1186: in get_data
+    ???
+E   NotADirectoryError: [Errno 20] Not a directory: '/proc/self/fd/11/ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py'
+=========================== short test summary info ============================
+FAILED .git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source::test_dependency_probe_reads_source_from_sealed_memfd_zip
+1 failed, 12 passed in 98.09s (0:01:38)

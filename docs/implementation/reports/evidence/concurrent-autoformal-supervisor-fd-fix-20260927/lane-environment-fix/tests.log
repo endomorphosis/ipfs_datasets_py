@@ -1,0 +1,11 @@
+test_absent_path_does_not_discover_external_roots (__main__.LaneEnvironmentTests.test_absent_path_does_not_discover_external_roots) ... ok
+test_duplicates_keep_explicit_roots_first (__main__.LaneEnvironmentTests.test_duplicates_keep_explicit_roots_first) ... ok
+test_empty_entries_do_not_add_current_directory (__main__.LaneEnvironmentTests.test_empty_entries_do_not_add_current_directory) ... ok
+test_offline_cpu_and_cache_settings_remain (__main__.LaneEnvironmentTests.test_offline_cpu_and_cache_settings_remain) ... ok
+test_parent_environment_is_not_mutated (__main__.LaneEnvironmentTests.test_parent_environment_is_not_mutated) ... ok
+test_preserves_approved_package_roots_after_pinned_projects (__main__.LaneEnvironmentTests.test_preserves_approved_package_roots_after_pinned_projects) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.010s
+
+OK

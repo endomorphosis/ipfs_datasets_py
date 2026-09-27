@@ -1,0 +1,2 @@
+{"stage": "exporting_committed_dependency", "revision": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82", "committed_bytes": 123966701, "destination": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source"}
+{"stage": "snapshot_created_not_yet_qualified", "receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source-snapshot.json"}

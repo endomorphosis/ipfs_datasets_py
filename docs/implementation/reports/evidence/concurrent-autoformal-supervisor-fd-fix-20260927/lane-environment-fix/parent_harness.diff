@@ -1,0 +1,14 @@
+--- parent_harness.before.py
++++ parent_harness.py
+@@ -90,7 +90,10 @@
+     for name in ('GIT_INDEX_FILE', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR',
+                  'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES'):
+         env.pop(name, None)
+-    env.update({'PYTHONPATH': str(ACCELERATE) + os.pathsep + str(ROOT),
++    # Preserve only roots already supplied by the validated parent environment.
++    python_path = [str(ACCELERATE), str(ROOT)]
++    python_path.extend(value for value in env.get('PYTHONPATH', '').split(os.pathsep) if value)
++    env.update({'PYTHONPATH': os.pathsep.join(dict.fromkeys(python_path)),
+         'PYTHONDONTWRITEBYTECODE': '1', 'HF_HUB_OFFLINE': '1', 'TRANSFORMERS_OFFLINE': '1',
+         'IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE': '0', 'IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI': '0',
+         'IPFS_DATASETS_MODAL_AUTOENCODER_AUTO_CUDA': '0', 'CUDA_VISIBLE_DEVICES': '',

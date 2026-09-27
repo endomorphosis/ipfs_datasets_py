@@ -1,0 +1,26 @@
+{
+  "original_file": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_project_dependency_preflight.py",
+  "original_file_sha256": "ef683fc4249aa32c0262cbad78983352d8402e92ef954e4c32176aa0c73ce058",
+  "copy": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/test_preflight_existing_regressions.py",
+  "definitions": [
+    {
+      "name": "test_dependency_probe_output_is_bounded_while_child_is_running",
+      "original_start_line": 695,
+      "original_end_line": 716,
+      "exact_definition_sha256": "3e2bcc1950d3e16b44d37b6d321899f5c24300e53e2a638d00758c0ae8b7847e"
+    },
+    {
+      "name": "test_dependency_probe_uses_inherited_sealed_fd_when_parent_is_non_dumpable",
+      "original_start_line": 719,
+      "original_end_line": 754,
+      "exact_definition_sha256": "74baf422365b7a981baaf86324765adcec2db95cd7c935ad339f92d991ee3837"
+    },
+    {
+      "name": "test_dependency_probe_reads_source_from_sealed_memfd_zip",
+      "original_start_line": 757,
+      "original_end_line": 810,
+      "exact_definition_sha256": "1099478b08ec2f3a90c7a2ea0a5e19aed9328d8f852c9c354ab408b71a543115"
+    }
+  ],
+  "reason": "Unchanged 07804 full test module fails collection importing missing MAX_DEPENDENCY_PREFLIGHT_PROJECTION_BYTES; only imports and REPO_ROOT location adapted. Selected definitions and all assertions are byte-identical."
+}

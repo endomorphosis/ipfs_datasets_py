@@ -1,0 +1,19 @@
+{
+  "repository": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py",
+  "base_commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a",
+  "files": [
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/candidate/ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py",
+      "sha256": "1cf0d5209efea70a7741fac2e3821b91921aef5ccad1b078caf658458419790b",
+      "before_sha256": "8d8b18d18d7d4fc1a6650b1c18470dd0610d9becbc87e75f351d8a8aa9b90a85"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/candidate/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+      "sha256": "db199155bd08a1710a3f76ab994510e74a15a76db2ca52b398c3fe716654d9bf",
+      "before_sha256": "63d502c88eff144a4ed2bbaae2baa8bcb1f8898e14970b6ce323d84fb0beb03c"
+    }
+  ],
+  "message": "Preserve sealed launcher descriptors through validation subprocesses\n\nValidation uses /proc/self/fd launchers, but default subprocess descriptor\nclosure made the dependency probe fail with FileNotFoundError. Forward only\nthe receipt-owned descriptors into the bounded dependency probe, launcher\nself-test, and actual validation command. Keep unrelated descriptors closed\nand retain the existing seals, lifetime, and validation authority."
+}

@@ -1,0 +1,44 @@
+--- a/ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py
++++ b/ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py
+@@ -2912,6 +2912,7 @@
+     *,
+     input_payload: bytes,
+     environment: Mapping[str, str],
++    pass_fds: Sequence[int] = (),
+ ) -> tuple[int | None, bytes, dict[str, Any]]:
+     """Capture child output incrementally and kill it at the byte/time bound."""
+ 
+@@ -2924,6 +2925,7 @@
+             stdout=subprocess.PIPE,
+             stderr=subprocess.STDOUT,
+             env=dict(environment),
++            pass_fds=tuple(pass_fds),
+         )
+         if process.stdout is None:  # pragma: no cover - Popen contract guard
+             process.kill()
+@@ -3060,6 +3062,7 @@
+                 ],
+                 input_payload=_canonical_json(payload).encode("utf-8"),
+                 environment=launcher_environment,
++                pass_fds=launcher_receipt.inherited_fds,
+             )
+         except OSError as exc:
+             return {
+--- a/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py
++++ b/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py
+@@ -47138,6 +47138,7 @@
+                             ),
+                             check=False,
+                             env=launcher_environment,
++                            pass_fds=launcher_receipt.inherited_fds,
+                         )
+                     except (OSError, subprocess.TimeoutExpired) as exc:
+                         return {
+@@ -47197,6 +47198,7 @@
+                         timeout=timeout_seconds,
+                         check=False,
+                         env=launcher_environment,
++                        pass_fds=launcher_receipt.inherited_fds,
+                     )
+             except ValidationRuntimeError as exc:
+                 return {

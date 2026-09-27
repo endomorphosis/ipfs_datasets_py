@@ -1,0 +1,17 @@
+{
+  "schema": "concurrent-smoke-r5-retry-intent/v1",
+  "status": "pending_fresh_export_and_native_execution",
+  "nested_accelerate_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82",
+  "dependency_export_attempt": "concurrent-autoformal-dependency-20260927/capture-r3",
+  "native_attempt": "concurrent-autoformal-smoke-20260927/capture-r5",
+  "dataset_logic_tree": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "purpose": "Retry actual deterministic supervisor lifecycle, allowing bounded concurrent native autoencoder training and real span compile/decompile gates to execute if all native preflights pass.",
+  "dependency_binding_pending": true,
+  "native_execution_completed": false,
+  "training_executed": false,
+  "span_conversion_executed": false,
+  "compiler_decompiler_training_claimed": false,
+  "admitted": false,
+  "formalized": false,
+  "hugging_face_upload_performed": false
+}

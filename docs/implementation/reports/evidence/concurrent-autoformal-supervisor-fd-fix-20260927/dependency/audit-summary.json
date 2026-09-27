@@ -1,0 +1,240 @@
+{
+  "admitted": false,
+  "bounds": {
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "seconds": 600,
+    "storage_bytes": 1000000000
+  },
+  "capacity_plan": {
+    "additional_requested_bytes": 2005000000,
+    "charged_bytes": 64831310161,
+    "inventory": {
+      "apparent_bytes": 44141310161,
+      "entry_count": 207438,
+      "special_file_count": 21,
+      "symlink_count": 3763
+    },
+    "limit_bytes": 75000000000,
+    "minimum_filesystem_free_bytes": 234625605632,
+    "observed_apparent_bytes": 44141310161,
+    "outstanding_full_reservations_bytes": 18685000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "child_returncode": 0,
+  "committed_bytes": 123966701,
+  "dependency_binding": {
+    "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/dependency-manifest.json",
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "dependency_observation": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "dependency_qualified": false,
+  "descendant_peak_rss_bytes": 161554432,
+  "elapsed_seconds": 55.8002822289709,
+  "exporter": {
+    "bytes": 6190,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/prepare_autoformal_dependency.py",
+    "sha256": "e7d83c1939020cc2b538e8f8c6c8f55aa1018d79a7fc220b0cedc2303b0220a8"
+  },
+  "final_usage": {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 156573713,
+    "attempt_limit_bytes": 1000000000,
+    "charged_bytes": 63982885120,
+    "checked_at": 1790531073.4588404,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 0,
+      "rss_bytes": 0
+    },
+    "inventory": {
+      "apparent_bytes": 44297885120,
+      "entry_count": 215258,
+      "special_file_count": 21,
+      "symlink_count": 3763
+    },
+    "limit_bytes": 75000000000,
+    "memory_limit_bytes": 2147483648,
+    "minimum_filesystem_free_bytes": 234449309696,
+    "observed_apparent_bytes": 44297885120,
+    "outstanding_full_reservations_bytes": 19685000000,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 156573713
+  },
+  "formalized": false,
+  "implementation": [
+    {
+      "bytes": 16410,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/create_published_dependency_reserved.py",
+      "sha256": "dae2240a9037caf5c638bf39ab0766130952e52d705d099e1a986657df94e42a"
+    },
+    {
+      "bytes": 10106,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/dependency_export_common.py",
+      "sha256": "1f93574ee0c9a1b321b64b79391773cb846165bb408f569e3b77659d4c2893b8"
+    },
+    {
+      "bytes": 5376,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/dependency_binding.py",
+      "sha256": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e"
+    }
+  ],
+  "live_quack_exercised": false,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "omitted_fields": [
+    "prior_ledger_rows",
+    "scoped_sources"
+  ],
+  "owned_descendant_identities": {
+    "2694308": "109933319",
+    "2702340": "109934609",
+    "2702770": "109934781",
+    "2703952": "109934986"
+  },
+  "owned_descendants_dead": true,
+  "passed": true,
+  "prior_ledger_rows_unchanged": true,
+  "reservation_at_publication": {
+    "cleanup_error": null,
+    "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67247791,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3"
+      },
+      "child": {
+        "birth": "109933319",
+        "pid": 2694308
+      },
+      "cpu_slots": 1,
+      "created_at": 1790531023.5577497,
+      "external_charges": {},
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 156573713,
+        "attempt_limit_bytes": 1000000000,
+        "charged_bytes": 63982885120,
+        "checked_at": 1790531073.4588404,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "inventory": {
+          "apparent_bytes": 44297885120,
+          "entry_count": 215258,
+          "special_file_count": 21,
+          "symlink_count": 3763
+        },
+        "limit_bytes": 75000000000,
+        "memory_limit_bytes": 2147483648,
+        "minimum_filesystem_free_bytes": 234449309696,
+        "observed_apparent_bytes": 44297885120,
+        "outstanding_full_reservations_bytes": 19685000000,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 156573713
+      },
+      "memory_mb": 2048,
+      "owner_pid": 2693294,
+      "prior_children": [],
+      "reservation_id": "5b2bf955a9db4b2b84a4e26c9b8cf1fa",
+      "scheduler_lane": "hammer_lean",
+      "status": "active",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    "reservation_id": "5b2bf955a9db4b2b84a4e26c9b8cf1fa",
+    "resource_lease": {
+      "acquired_at": 1790531023.5773337,
+      "cancelled": false,
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "gpu_memory_mb": 0,
+      "lane": "hammer_lean",
+      "lease_id": "bd42f4ae33b94570bc3708489286552b",
+      "memory_mb": 2048,
+      "owner_pid": 2693294,
+      "parent_lease_id": null,
+      "released": false,
+      "requires_gpu": false,
+      "unified_memory_mb": 0,
+      "wait_seconds": 5.280598998069763e-07
+    },
+    "roots": [
+      {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "device": 66306,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      {
+        "device": 66306,
+        "inode": 526155,
+        "path": "/tmp/pytest-of-barberb"
+      }
+    ],
+    "scheduler_lane": "hammer_lean",
+    "schema": "daemon-resource-reservations-v1",
+    "status": "active",
+    "storage_limit_bytes": 75000000000,
+    "workload": "canonical_trainer"
+  },
+  "schema": "autoformal-published-dependency-owned-export/v1",
+  "scope": "committed source export only",
+  "selected_files": 3553,
+  "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82",
+  "source_identity_after": {
+    "head": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+    "index": {
+      "bytes": 2062323,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/modules/ipfs_accelerate_py/index",
+      "sha256": "e3d7031944ede2066d585f5714a3b19bc9ccb8639e6728a279ebfa5cb11f3425"
+    }
+  },
+  "source_identity_before": {
+    "head": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+    "index": {
+      "bytes": 2062323,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/modules/ipfs_accelerate_py/index",
+      "sha256": "e3d7031944ede2066d585f5714a3b19bc9ccb8639e6728a279ebfa5cb11f3425"
+    }
+  },
+  "source_receipt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/audit-receipt.json",
+  "source_receipt_sha256": "890297b286bc07c7da41aff00f32e441537993073bc485fb0ae6d961e0c91585",
+  "source_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py",
+  "training_run": false
+}

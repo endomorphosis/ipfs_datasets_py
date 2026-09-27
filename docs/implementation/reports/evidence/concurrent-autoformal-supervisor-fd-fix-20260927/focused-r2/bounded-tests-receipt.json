@@ -1,0 +1,10 @@
+{
+  "path": "/tmp/sealed-launcher-fd-regressions-r2-0_fmcngs",
+  "max_bytes": 150000000,
+  "max_seconds": 240,
+  "returncode": 1,
+  "elapsed_seconds": 98.62583066895604,
+  "peak_sampled_bytes": 743,
+  "final_bytes": 0,
+  "stopped_reason": null
+}

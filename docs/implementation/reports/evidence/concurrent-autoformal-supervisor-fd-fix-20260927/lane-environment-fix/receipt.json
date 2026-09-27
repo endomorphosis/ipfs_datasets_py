@@ -1,0 +1,39 @@
+{
+  "admitted": false,
+  "after_parent_harness_sha256": "6095a2832659e7a1833f8d5e39b9948d786291df6d9623b0a827f8ccbe7e6c4b",
+  "approved_root_policy": "Preserve inherited parent PYTHONPATH entries after two explicit project roots; remove empty and duplicate entries; no package-root discovery or additional external roots",
+  "artifacts": {
+    "before.json": {
+      "bytes": 436,
+      "sha256": "c8437fca881e7107ddd123064127eb5dbc74135cb74e2f1474c7609ff18fdc00"
+    },
+    "parent_harness.before.py": {
+      "bytes": 13836,
+      "sha256": "2fbbe348511e956c54c0a9585e0b7f2efba2585f445d3d7dc4f3c2b8dce86d76"
+    },
+    "parent_harness.diff": {
+      "bytes": 918,
+      "sha256": "1464442ca583bc1fed0830e7686264e033cd9f6a53668640f63ea329eb1e819e"
+    },
+    "test_lane_environment.py": {
+      "bytes": 3765,
+      "sha256": "08abf0045622172d8aee833cc5fa367f6fdbe85870994f680ef6d631f6bd5ed8"
+    },
+    "tests.log": {
+      "bytes": 896,
+      "sha256": "32eb50c4dfba056a702f25bfc9c75ff5fbde7aed8b001ccaace2df21f26d288f"
+    }
+  },
+  "before_parent_harness_sha256": "2fbbe348511e956c54c0a9585e0b7f2efba2585f445d3d7dc4f3c2b8dce86d76",
+  "conversion_lane_unchanged": true,
+  "formalized": false,
+  "lane_bootstrap_unchanged": true,
+  "native_lanes_executed": false,
+  "passed": true,
+  "recorded_at": "2026-09-27T17:46:12.949343+00:00",
+  "schema": "r5-lane-environment-fix-v1",
+  "test_count": 6,
+  "test_returncode": 0,
+  "training_lane_unchanged": true,
+  "validation_scope": "stdlib-only execution of actual environment-construction AST; no project imports or native lanes"
+}

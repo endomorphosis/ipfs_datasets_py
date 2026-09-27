@@ -1,0 +1,20 @@
+{
+  "base_commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a",
+  "files": [
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py",
+      "before_sha256": "8d8b18d18d7d4fc1a6650b1c18470dd0610d9becbc87e75f351d8a8aa9b90a85",
+      "after_sha256": "1cf0d5209efea70a7741fac2e3821b91921aef5ccad1b078caf658458419790b",
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/candidate/ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+      "before_sha256": "63d502c88eff144a4ed2bbaae2baa8bcb1f8898e14970b6ce323d84fb0beb03c",
+      "after_sha256": "db199155bd08a1710a3f76ab994510e74a15a76db2ca52b398c3fe716654d9bf",
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/sealed-launcher-fd-fix/candidate/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py"
+    }
+  ],
+  "tests_unchanged_from_base": true,
+  "full_suite": false,
+  "native_execution": false
+}

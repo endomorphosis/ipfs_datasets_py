@@ -1,0 +1,15 @@
+{
+  "base_commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a",
+  "commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82",
+  "live_head_and_index": {
+    "head": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+    "index_sha256": "e3d7031944ede2066d585f5714a3b19bc9ccb8639e6728a279ebfa5cb11f3425"
+  },
+  "live_head_and_index_preserved": true,
+  "paths": [
+    "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+    "ipfs_accelerate_py/agent_supervisor/validation/project_dependency_preflight.py"
+  ],
+  "plan_sha256": "b1fbd684cb291ced8bc64e49bf521406b9395e888a24ec69078cb6a6542d984d",
+  "repository": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py"
+}

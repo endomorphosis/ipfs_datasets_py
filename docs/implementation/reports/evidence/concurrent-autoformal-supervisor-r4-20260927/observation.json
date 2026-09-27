@@ -1,0 +1,19 @@
+{
+  "schema": "concurrent-smoke-r4-observation/v1",
+  "passed": false,
+  "failure": "Dependency probe subprocess unavailable: FileNotFoundError. Published probe launches sealed /proc/self/fd executable without passing inherited_fds.",
+  "outer_elapsed_seconds": 62.15504899597727,
+  "retained_files": 94,
+  "retained_bytes": 48420477,
+  "storage_reservation_id": "ace678f9047a4f399de1c05893cd33ae",
+  "retained_reservation_bytes": 150000000,
+  "lanes_executed": false,
+  "bridge_evaluate_count": 0,
+  "automatic_install_attempted": false,
+  "probe_ran": false,
+  "missing_dependency_verdict_available": false,
+  "source_event_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r4/supervisor/state/smoke_database_portal_attempts/a562e49169fb8d8cd8bf14d1/portal-events.jsonl",
+  "source_event_sha256": "17952d4dec447f7aefc01229b7c15cebe3da6b45e7825db52a4cd69c949ab642",
+  "admitted": false,
+  "formalized": false
+}
