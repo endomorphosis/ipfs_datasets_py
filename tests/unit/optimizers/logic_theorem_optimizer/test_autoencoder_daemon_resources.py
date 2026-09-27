@@ -31,26 +31,27 @@ def setup(tmp_path, monkeypatch):
     return factory, roots, ledger, scheduler
 
 
-def test_production_storage_cap_is_sixty_gb_without_admission(tmp_path):
+def test_production_storage_cap_is_sixty_two_gb_without_admission(tmp_path):
     root = tmp_path / "outputs"
     root.mkdir()
     ledger = tmp_path / "disk.json"
     reservation = resources.DaemonResourceReservation(
         ledger, roots=[root], storage_bytes=7, memory_mb=1)
-    assert resources.MAX_STORAGE_BYTES == 60_000_000_000
+    assert resources.MAX_STORAGE_BYTES == 62_000_000_000
     assert reservation._read() == {
         "schema": resources.SCHEMA, "roots": reservation.root_identities,
-        "limit_bytes": 60_000_000_000, "reservations": {},
+        "limit_bytes": 62_000_000_000, "reservations": {},
     }
-    assert reservation.to_dict()["storage_limit_bytes"] == 60_000_000_000
+    assert reservation.to_dict()["storage_limit_bytes"] == 62_000_000_000
     assert reservation.to_dict()["status"] == "not_entered"
     assert reservation.to_dict()["resource_lease"] is None
     assert not ledger.exists()
     assert not reservation.lock_path.exists()
 
 
-@pytest.fixture
-def historical_fifty_gb_ledger(tmp_path):
+@pytest.fixture(params=[50_000_000_000, 60_000_000_000], ids=["fifty-gb", "sixty-gb"])
+def historical_storage_ledger(tmp_path, request):
+    previous_limit = request.param
     root = tmp_path / "outputs"
     root.mkdir()
     (root / "preserved-output").write_bytes(b"abc")
@@ -63,25 +64,25 @@ def historical_fifty_gb_ledger(tmp_path):
             "owner_pid": os.getpid(), "storage_bytes": 4_000,
             "external_charges": {"journal": 2},
             "retention_reason": "context_failed", "artifacts_durable_asserted": False,
-            "last_usage": {"limit_bytes": 50_000_000_000, "charged_bytes": 4_003},
+            "last_usage": {"limit_bytes": previous_limit, "charged_bytes": 4_003},
             "prior_children": [{"pid": 17, "birth": "historical", "group_observed_dead_at": 1.0}],
         },
         "released": {
             "reservation_id": "released", "status": "released",
             "owner_pid": os.getpid(), "storage_bytes": 9_000,
             "external_charges": {}, "artifacts_durable_asserted": True,
-            "final_accounting": {"limit_bytes": 50_000_000_000},
+            "final_accounting": {"limit_bytes": previous_limit},
         },
     }
     historical = {"schema": resources.SCHEMA, "roots": reservation.root_identities,
-                  "limit_bytes": 50_000_000_000, "reservations": records}
+                  "limit_bytes": previous_limit, "reservations": records}
     raw = (json.dumps(historical, sort_keys=True, separators=(",", ":")) + "\n").encode()
     ledger.write_bytes(raw)
     return reservation, ledger, historical, raw
 
 
-def test_historical_fifty_gb_ledger_fails_closed_without_implicit_migration(historical_fifty_gb_ledger):
-    reservation, ledger, historical, raw = historical_fifty_gb_ledger
+def test_historical_ledger_fails_closed_without_implicit_migration(historical_storage_ledger):
+    reservation, ledger, historical, raw = historical_storage_ledger
     with pytest.raises(resources.DaemonResourceError, match="storage scope differs"):
         reservation._read()
     assert ledger.read_bytes() == raw
@@ -90,10 +91,10 @@ def test_historical_fifty_gb_ledger_fails_closed_without_implicit_migration(hist
     assert not reservation.lock_path.exists()
 
 
-def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(historical_fifty_gb_ledger):
-    reservation, ledger, historical, raw = historical_fifty_gb_ledger
-    old_prefix = b'{"limit_bytes":50000000000,'
-    new_prefix = b'{"limit_bytes":60000000000,'
+def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(historical_storage_ledger):
+    reservation, ledger, historical, raw = historical_storage_ledger
+    old_prefix = ('{"limit_bytes":' + str(historical["limit_bytes"]) + ',').encode()
+    new_prefix = b'{"limit_bytes":62000000000,'
     assert raw.startswith(old_prefix)
     # Model the explicit one-time edit on a tiny, test-owned fixture. This
     # neither introduces an implicit migration API nor acquires a reservation.
@@ -102,11 +103,11 @@ def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(
     backup.write_bytes(raw)
     ledger.write_bytes(migrated)
     current = reservation._read()
-    assert current == {**historical, "limit_bytes": 60_000_000_000}
+    assert current == {**historical, "limit_bytes": 62_000_000_000}
     assert current["reservations"] == historical["reservations"]
     assert migrated[len(new_prefix):] == raw[len(old_prefix):]
     usage = reservation._account(current, additional=13)
-    assert usage["limit_bytes"] == 60_000_000_000
+    assert usage["limit_bytes"] == 62_000_000_000
     assert usage["observed_apparent_bytes"] == 3
     assert usage["outstanding_full_reservations_bytes"] == 4_000
     assert usage["additional_requested_bytes"] == 13

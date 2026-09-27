@@ -413,6 +413,18 @@ The proposed 750 MB full-source capture needs 1.505 GB of campaign headroom;
 the successful audit's release observed only about 451 MB under the 60 GB cap.
 Failed claims remain retained and native model validation remains deferred.
 
+The user authorized a further campaign-cap increase to 62,000,000,000 bytes on
+2026-09-27 for full-source entity validation. The explicit locked migration
+preserved all 75 reservation records (29 retained, 46 released), every root
+identity and the protected checkpoint. The per-worker 50 GB bound is unchanged.
+The [cap qualification and full-source attempt](../reports/campaign_storage_cap_62gb.md)
+passed all five cap/migration tests. The later 750 MB / 1 GiB / one-CPU full-source
+attempt failed on child RSS and also exposed a CLI-output decoding error before
+independent readback. Its artifacts and 750 MB claim remain retained; the run is
+not a full-source validation or speed result. Bounded Parquet export and harness
+repairs precede any fresh comparison. Native training and Hub uploads remain
+deferred; the Constitution remains unformalized.
+
 ## 1. Decision and intended outcome
 
 The latest [production-adoption audit](../reports/autoencoder_daemon_production_adoption_audit.md)

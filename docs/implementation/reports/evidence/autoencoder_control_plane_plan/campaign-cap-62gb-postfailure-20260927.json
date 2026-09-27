@@ -1,0 +1,23 @@
+{
+  "admitted": false,
+  "all_75_preexisting_reservation_records_unchanged": true,
+  "audit_reported_owned_process_group_dead": true,
+  "campaign_limit_bytes": 62000000000,
+  "constitution_formalized": false,
+  "failed_artifacts_modified": false,
+  "failed_claim_id": "f03a653cc81942bd9f9009a7e32da4f7",
+  "failed_claim_retention_reason": "context_failed",
+  "failed_claim_status": "retained",
+  "failed_claim_storage_bytes": 750000000,
+  "failed_run_relabelled": false,
+  "hub_uploads_deferred": true,
+  "ledger_observed_artifact": {
+    "bytes": 151333,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "f708cc9138bfc87b6c457efc00595c10f2f9a3bf19be304efac645df53b7d600"
+  },
+  "native_training_validation_deferred": true,
+  "per_worker_limit_bytes": 50000000000,
+  "roots_unchanged": true,
+  "schema": "campaign-cap-62gb-postfailure-observation-v1"
+}
