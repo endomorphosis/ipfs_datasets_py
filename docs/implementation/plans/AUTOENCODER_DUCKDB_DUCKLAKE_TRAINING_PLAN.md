@@ -393,6 +393,19 @@ hydration still sets a much larger memory peak; these results do not justify
 doubling parallelism or moving numeric accesses into Quack. No new target
 artifact format, model-version schema or publication protocol is introduced.
 
+The [source-bound entity v2 path](../reports/entity_source_bound_resume.md) now
+commits exact input prefixes with queue updates, preserves claim tokens and
+streams Arrow batches through DuckDB for resume validation. All 132 selected
+offline cases passed with unchanged captured source/dependency bytes and a
+released reservation; the preserved 24-hour deadline and exception gates remain
+green. A separate read-only census measured 180,257 entities, 120,136
+relationships and 360,516 legacy resume rows. V2 requires a fresh cache and its
+own snapshot namespace. Full-source v2 throughput/reopen and actual Hub delivery
+remain unqualified; this is not a training speedup or legal-admission result.
+The proposed 750 MB full-source capture needs 1.505 GB of campaign headroom;
+the successful audit's release observed only about 451 MB under the 60 GB cap.
+Failed claims remain retained and native model validation remains deferred.
+
 ## 1. Decision
 
 Use DuckDB behind Quack for the small, authoritative control records: model

@@ -1,0 +1,37 @@
+{
+  "admitted": false,
+  "capture_directory_exists": false,
+  "dependency_delta": {
+    "scripts/ops/legal_ir/run_autoformal_supervisor.py": {
+      "after_observation": "9ad2768aa02e650b6024c45e1807c5815df0c3cedf6801cc68bcca150a3ca97b",
+      "before": "2c8c6a20bafbc82ecf666b40e44dd919a0d544bd3c6dec59ccd30a07d7a48cb6"
+    },
+    "tests/unit/logic/test_autoformal_supervisor_launch.py": {
+      "after_observation": "f936937dc470450670421b4c8432070bd8dc4f19a2cf62546a73f89b66f2537f",
+      "before": "926cb386b88b321b5bd87ba420afe5602793e7d9a5be221c39254552572e2aa8"
+    },
+    "tests/unit/logic/test_supervisor_loop.py": {
+      "after_observation": "8a82d762842c828a2e907a9016d8fdf77ac6d0fc11d64fcc34922083c5e603ef",
+      "before": "95ac16275e60621f2aedb83f9cbcf9292cd4408dbb2a33f46c3d26278ff13661"
+    }
+  },
+  "error": "source/dependency/harness changed during pre-admission stability window; no reservation attempted",
+  "formalized": false,
+  "frozen": {
+    "bytes": 1680680,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r3/frozen.json",
+    "sha256": "879e0ef19e34596676bfa3c74d2c620ca8c1f1f523c55b32f65370e185778f38"
+  },
+  "observed_at": "2026-09-27T01:04:27.072450+00:00",
+  "passed": false,
+  "process_exit_code": 1,
+  "reservation_attempted": false,
+  "schema": "offline-entity-pre-admission-failure-v1",
+  "source_delta": {
+    "ipfs_datasets_py/logic/autoformal/supervisor_loop.py": {
+      "after_observation": "3c24de1f4747dcb168ecc139fc27f1cc0c931caee803ee19386ad429dee03c4b",
+      "before": "4483e3a56e316c8956fdc845d8e0eba7cd7e828c5d27af4d3a7589ab9dfd0c64"
+    }
+  },
+  "test_execution_performed": false
+}

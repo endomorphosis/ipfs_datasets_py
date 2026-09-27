@@ -1,0 +1,224 @@
+{
+  "admitted": false,
+  "arrow_threads": 1,
+  "arrow_version": "23.0.1",
+  "artifacts": {
+    "entities": {
+      "artifact": {
+        "bytes": 9653603,
+        "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/77aa4e3f71d88c157d9856a02cd5bb5cd03d52307873e2a03fd9216c67e0ce83",
+        "sha256": "77aa4e3f71d88c157d9856a02cd5bb5cd03d52307873e2a03fd9216c67e0ce83"
+      },
+      "board_matches_entity_ids": null,
+      "columns": "id: string\ntype: string\nlabel: string\nproperties_json: string",
+      "decoded_json_bytes": 53574990,
+      "distinct_board_entities": 0,
+      "distinct_entities": 180257,
+      "duplicate_board_entities": 0,
+      "duplicate_entities": 0,
+      "empty_string_counts": {
+        "id": 0,
+        "label": 0,
+        "properties_json": 0,
+        "type": 0
+      },
+      "footer_uncompressed_bytes": 21224635,
+      "max_batch_arrow_bytes": 17857,
+      "max_context_target_list": 0,
+      "max_relationship_targets_per_source": 0,
+      "max_string_utf8_bytes": {
+        "id": 87,
+        "label": 526,
+        "properties_json": 246,
+        "type": 14
+      },
+      "record_kinds": {
+        "document": 60068,
+        "legal_document": 60068,
+        "section": 60068,
+        "usc_title": 53
+      },
+      "relationship_sources_with_multiple_targets": 0,
+      "row_groups": 1,
+      "rows": 180257,
+      "string_utf8_bytes": 41978489,
+      "wall_seconds": 1.0616869740188122
+    },
+    "relationships": {
+      "artifact": {
+        "bytes": 10805567,
+        "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/746f9b81669c26c93ae418e2ca1b560738f4aa93a140a13d1a0390bffac080fb",
+        "sha256": "746f9b81669c26c93ae418e2ca1b560738f4aa93a140a13d1a0390bffac080fb"
+      },
+      "board_matches_entity_ids": null,
+      "columns": "id: string\nsource: string\ntarget: string\ntype: string\nproperties_json: string",
+      "decoded_json_bytes": 29576106,
+      "distinct_board_entities": 0,
+      "distinct_entities": 0,
+      "duplicate_board_entities": 0,
+      "duplicate_entities": 0,
+      "empty_string_counts": {
+        "id": 0,
+        "properties_json": 0,
+        "source": 0,
+        "target": 0,
+        "type": 0
+      },
+      "footer_uncompressed_bytes": 20827046,
+      "max_batch_arrow_bytes": 13129,
+      "max_context_target_list": 0,
+      "max_relationship_targets_per_source": 1,
+      "max_string_utf8_bytes": {
+        "id": 71,
+        "properties_json": 2,
+        "source": 59,
+        "target": 87,
+        "type": 11
+      },
+      "record_kinds": {
+        "HAS_SECTION": 60068,
+        "IN_TITLE": 60068
+      },
+      "relationship_sources_with_multiple_targets": 0,
+      "row_groups": 1,
+      "rows": 120136,
+      "string_utf8_bytes": 21887402,
+      "wall_seconds": 0.8901621329132468
+    },
+    "resume": {
+      "artifact": {
+        "bytes": 41842488,
+        "path": "/tmp/ipfs-uscode-entities/hf-checkpoint/entity-resume-checkpoint.parquet",
+        "sha256": "0f450b12352768701e36b56456cabed5ed23e1ea696d6c9cf9f2fd720b51b9a1"
+      },
+      "board_matches_entity_ids": true,
+      "columns": "record_kind: string\ndataset_id: string\nagent_id: string\nrole: string\nheartbeat: string\nentities: int32\nsource_parquet: string\nentity_id: string\nentity_type: string\nlabel: string\nstatus: string\nwork_kind: string\nclaim_worker: string\nclaim_token: string\nsource_sha256: string\nproperties_json: string\ncontext_json: string\nadmitted: bool\nformalized: bool",
+      "decoded_json_bytes": 260196113,
+      "distinct_board_entities": 180257,
+      "distinct_entities": 180257,
+      "duplicate_board_entities": 0,
+      "duplicate_entities": 0,
+      "empty_string_counts": {
+        "agent_id": 360515,
+        "claim_token": 360516,
+        "claim_worker": 360516,
+        "context_json": 180259,
+        "dataset_id": 360514,
+        "entity_id": 2,
+        "entity_type": 2,
+        "heartbeat": 360515,
+        "label": 2,
+        "properties_json": 180259,
+        "record_kind": 0,
+        "role": 360515,
+        "source_parquet": 360515,
+        "source_sha256": 180259,
+        "status": 2,
+        "work_kind": 180259
+      },
+      "footer_uncompressed_bytes": 130620410,
+      "max_batch_arrow_bytes": 698749,
+      "max_context_target_list": 8443,
+      "max_relationship_targets_per_source": 0,
+      "max_string_utf8_bytes": {
+        "agent_id": 20,
+        "claim_token": 0,
+        "claim_worker": 0,
+        "context_json": 655228,
+        "dataset_id": 22,
+        "entity_id": 87,
+        "entity_type": 14,
+        "heartbeat": 10,
+        "label": 526,
+        "properties_json": 246,
+        "record_kind": 6,
+        "role": 14,
+        "source_parquet": 141,
+        "source_sha256": 64,
+        "status": 8,
+        "work_kind": 21
+      },
+      "record_kinds": {
+        "agent": 1,
+        "board": 180257,
+        "entity": 180257,
+        "meta": 1
+      },
+      "relationship_sources_with_multiple_targets": 0,
+      "row_groups": 3,
+      "rows": 360516,
+      "string_utf8_bytes": 142908024,
+      "wall_seconds": 6.924659814918414
+    }
+  },
+  "checks": {
+    "dependencies_unchanged": true,
+    "harness_unchanged": true,
+    "input_artifacts_unchanged": true,
+    "package_source_unchanged": true,
+    "protected_unchanged": true
+  },
+  "child_lifetime_peak_rss_bytes": 254693376,
+  "constitution_formalized": false,
+  "file_cache_state": "uncontrolled",
+  "formalized": false,
+  "hf_calls_performed": false,
+  "input_artifacts": [
+    {
+      "bytes": 160162,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/audit-receipt.json",
+      "sha256": "8e26dfe36cc1e955cba9cf61e8d98a93c3061ddbf372cdbd048fe7f6fd2387ff"
+    },
+    {
+      "bytes": 4681,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r3/capture-r3/resource-release.json",
+      "sha256": "f551c036384f06c8507eb31f88a06d814273398129e2a858bbf356a44d646b41"
+    },
+    {
+      "bytes": 1381,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/cap-increase-60gb-20260926.json",
+      "sha256": "bb3316c00de7161e710246aa0fc1a6a42d850898c70fbf791e47cb11bd0496fb"
+    },
+    {
+      "bytes": 92871,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.before-cap-60gb-20260926.json",
+      "sha256": "3dad515ba59e9494687f2bfa9c9b8be36479e80ced854cff6a415e7b8eb66b76"
+    },
+    {
+      "bytes": 9653603,
+      "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/77aa4e3f71d88c157d9856a02cd5bb5cd03d52307873e2a03fd9216c67e0ce83",
+      "sha256": "77aa4e3f71d88c157d9856a02cd5bb5cd03d52307873e2a03fd9216c67e0ce83"
+    },
+    {
+      "bytes": 10805567,
+      "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/746f9b81669c26c93ae418e2ca1b560738f4aa93a140a13d1a0390bffac080fb",
+      "sha256": "746f9b81669c26c93ae418e2ca1b560738f4aa93a140a13d1a0390bffac080fb"
+    },
+    {
+      "bytes": 41842488,
+      "path": "/tmp/ipfs-uscode-entities/hf-checkpoint/entity-resume-checkpoint.parquet",
+      "sha256": "0f450b12352768701e36b56456cabed5ed23e1ea696d6c9cf9f2fd720b51b9a1"
+    }
+  ],
+  "legal_ir_speed_claim": false,
+  "live_database_opened": false,
+  "model_execution_performed": false,
+  "native_training_validation_deferred": true,
+  "network_guard": {
+    "denied_syscalls": [
+      "socket",
+      "connect",
+      "sendto",
+      "sendmsg",
+      "sendmmsg"
+    ],
+    "mechanism": "linux_seccomp",
+    "socket_denial_verified": true
+  },
+  "passed": true,
+  "produced_artifacts": [],
+  "schema": "entity-source-sizing-v1",
+  "source_authority_authenticated": false,
+  "wall_seconds": 11.820004294044338,
+  "weights_downloaded": false
+}
