@@ -329,7 +329,10 @@ def test_real_packed_delta_objects_stream_under_decoder_bounds(source):
 
 def test_decoder_address_refusal_returns_no_verified_manifest(source, monkeypatch):
     root, request = source
-    monkeypatch.setattr(c, "MAX_GIT_DECODER_ADDRESS_BYTES", 1024)
+    # Fault the child launcher itself; unsupported caller limits can no longer
+    # be smuggled through mutation of the legacy public constant.
+    monkeypatch.setattr(c, "_GIT_STREAM_LAUNCHER",
+                        c._GIT_STREAM_LAUNCHER.replace("n=int(sys.argv[1]);", "n=1024;"))
     with pytest.raises(c.GitBlobDecoderError) as refused:
         c.snapshot_chunked_repository(root, **request)
-    assert refused.value.decoder_address_limit_bytes == 1024
+    assert refused.value.decoder_address_limit_bytes == c.MAX_GIT_DECODER_ADDRESS_BYTES

@@ -24,6 +24,9 @@ from .chunked_snapshot import (
     ChunkedProjection, ChunkedRepositorySnapshot, MAX_FRAME_BYTES, MAX_MATERIALIZED_FILE_BYTES,
     _hash_blob,
 )
+from .git_decoder_profile import (
+    DEFAULT_DECODER_PROFILE, DEFAULT_DECODER_BUDGET, require_decoder_profile,
+)
 from .committed_snapshot import _fence
 from .models import ArtifactRecord, DependencyEdge, RepositoryState, SourceSpan, SymbolRecord
 from .paged_snapshot import admit_chunked_snapshot_manifest, page_snapshot_evidence
@@ -318,7 +321,8 @@ class StreamingChunkedScan:
 
 
 def scan_chunked_repository_streaming(repository, chunked, *, max_file_bytes=MAX_MATERIALIZED_FILE_BYTES,
-                                      limits=StreamingScanLimits()):
+                                      limits=StreamingScanLimits(),
+                                      decoder_profile=DEFAULT_DECODER_PROFILE, decoder_budget=DEFAULT_DECODER_BUDGET):
     """Consume every committed blob while retaining only one file's bytes.
 
     Metadata admission precedes content use. All content identities and source
@@ -331,10 +335,12 @@ def scan_chunked_repository_streaming(repository, chunked, *, max_file_bytes=MAX
         raise StreamingAnalysisError("fixed_file_limit", phase="admission")
     if sys.platform != "linux":
         raise StreamingAnalysisError("unsupported_analysis_platform", phase="admission")
+    decoder = require_decoder_profile(chunked.decoder_profile, decoder_profile, decoder_budget)
     root = Path(repository).resolve(strict=True)
     manifest_cid, blocks = chunked.manifest_blocks()
     chunked = admit_chunked_snapshot_manifest(root, manifest_cid, blocks, repository_id=chunked.repository_id,
-        expected_commit=chunked.git_commit, expected_tree=chunked.git_tree, limits=chunked.limits)
+        expected_commit=chunked.git_commit, expected_tree=chunked.git_tree, limits=chunked.limits,
+        decoder_profile=decoder, decoder_budget=decoder_budget)
     before = _fence(root, chunked.git_commit, chunked.git_tree, chunked.limits.max_metadata_bytes)
     profile = analysis_process_profile()
     members = defaultdict(list)
@@ -379,7 +385,8 @@ def scan_chunked_repository_streaming(repository, chunked, *, max_file_bytes=MAX
     for blob in chunked.blobs:
         capture = any(item.git_mode in {"100644", "100755"} and item.size_bytes <= max_file_bytes
                       and not _malformed_raw(bytes.fromhex(item.raw_path_hex)) for item in members[blob.git_object_oid])
-        observed, data = _hash_blob(root, blob.git_object_oid, blob.size_bytes, chunked.limits.frame_bytes, capture=capture)
+        observed, data = _hash_blob(root, blob.git_object_oid, blob.size_bytes, chunked.limits.frame_bytes, capture=capture,
+                                    decoder_profile=decoder)
         if observed != blob:
             raise StreamingAnalysisError("committed_content_mismatch", phase="projection")
         peak_source = max(peak_source, len(data) if data is not None else 0)
@@ -427,6 +434,9 @@ def scan_chunked_repository_streaming(repository, chunked, *, max_file_bytes=MAX
         "accumulated_file_fact_bytes": total_facts, "worker_count": worker_count + 1,
         "peak_worker_rss_bytes": peak_worker_rss, "analysis_process_profile": profile,
         "limits": asdict(limits), "complete_analysis_authority": False, "completion_authority": False}
+    if decoder != DEFAULT_DECODER_PROFILE or decoder_budget != DEFAULT_DECODER_BUDGET:
+        observation.update(git_decoder_profile=decoder.payload(),
+                           git_decoder_budget=asdict(decoder_budget))
     return StreamingChunkedScan(ChunkedProjection(snapshot, manifest_cid,
                 observation["unique_blob_bytes_verified"], 0), result, observation)
 
