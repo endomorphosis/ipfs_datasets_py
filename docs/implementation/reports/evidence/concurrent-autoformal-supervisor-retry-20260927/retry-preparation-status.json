@@ -1,0 +1,23 @@
+{
+  "admitted": false,
+  "attempt_storage_bytes": 150000000,
+  "bootstrap_stdlib_cases_passed": 8,
+  "campaign_cap_bytes": 75000000000,
+  "corrected_integrity_cases_passed": 3,
+  "dependency_binding": {
+    "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r2/dependency-manifest.json",
+    "manifest_sha256": "29232cae3436e2983a1feeccb9aec0ef82eeb604a64ae483bad838d26055019f",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r2/published-source",
+    "snapshot_commit": "7683fc071d4394e46f413c832273e10f10cf7ed0",
+    "source_commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a"
+  },
+  "formalized": false,
+  "initial_fixture_failures_preserved": true,
+  "initial_snapshot_preserved": true,
+  "integration_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664",
+  "native_smoke_executed": false,
+  "original_integrity_passed": 83,
+  "schema": "concurrent-autoformal-retry-preparation-status/v2",
+  "selected_dependency_commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a",
+  "upstream_state_routing_cases_passed": 12
+}

@@ -1,0 +1,23 @@
+{
+  "base_commit": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+  "commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664",
+  "live_head_and_index": {
+    "head": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+    "index_sha256": "e3d7031944ede2066d585f5714a3b19bc9ccb8639e6728a279ebfa5cb11f3425"
+  },
+  "live_head_and_index_preserved": true,
+  "paths": [
+    "ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_migrations.py",
+    "ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py",
+    "ipfs_accelerate_py/agent_supervisor/task_sources/intent_repository.py",
+    "ipfs_accelerate_py/agent_supervisor/task_sources/sql/0005_tasks_index_repair.sql",
+    "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+    "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon_runner.py",
+    "test/api/test_agent_supervisor_control_plane_migrations.py",
+    "test/api/test_agent_supervisor_goal_claim_integrity.py",
+    "test/api/test_agent_supervisor_intent_repository.py",
+    "test/api/test_agent_supervisor_tasks_index_upgrade.py"
+  ],
+  "plan_sha256": "b8d5d8fc25b085dff454c3cf5edd29c02489fb4a7b4fd33aa5c1ba9e4d72dc16",
+  "repository": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py"
+}

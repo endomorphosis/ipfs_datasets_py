@@ -1,0 +1,71 @@
+{
+  "schema_version": "focused-supervisor-integration-qualification-v1",
+  "passed": true,
+  "original_run": {
+    "tests": 86,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0
+  },
+  "corrected_case_run": {
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "covered_distinct_cases": 86,
+  "prior_passing_cases_reused": 83,
+  "corrections": [
+    {
+      "test": "test_v4_upgrade_preserves_rows_and_receipts_and_reapplies_without_writes",
+      "reason": "No-op migration replay returns historical receipts; assert all historical receipt identities and exact unchanged durable records."
+    },
+    {
+      "test": "test_database_factories_forward_bounded_execution_slice[2]",
+      "reason": "Choose valid embedded authority for local fixture; quack requires endpoint_secret_handle."
+    }
+  ],
+  "product_code_changed_between_runs": false,
+  "full_repository_suite_run": false,
+  "native_supervisor_execution_qualified": false,
+  "live_quack_qualified": false,
+  "provider_or_model_executed": false,
+  "admitted": false,
+  "artifacts": {
+    "focused-tests.xml": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/focused-tests.xml",
+      "bytes": 20050,
+      "sha256": "995821526c93bcc69edc52af3b684ac2d0b0a56b78e769c7a5fb950f65e01311"
+    },
+    "focused-tests.log": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/focused-tests.log",
+      "bytes": 6039,
+      "sha256": "e53c89ade349153e09607aa6d0861b04db82bd82572da70ee66aa7ad416f7f9a"
+    },
+    "focused-tests-receipt.json": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/focused-tests-receipt.json",
+      "bytes": 40083,
+      "sha256": "2172357ed5184a20a3e9fb59577849688320494185d344e6f0d46c09e84e03c9"
+    },
+    "corrected-tests.xml": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/corrected-tests.xml",
+      "bytes": 814,
+      "sha256": "2efccd1a405560d2ab75cf570f11b81103d31c6d70147f18afdb0a0c69c9177b"
+    },
+    "corrected-tests.log": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/corrected-tests.log",
+      "bytes": 99,
+      "sha256": "e730fc2f313d280ecb0f45caabc18dde43418d88e919eaaac639ecd97297d8a9"
+    },
+    "corrected-tests-receipt.json": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/corrected-tests-receipt.json",
+      "bytes": 37324,
+      "sha256": "b6d8432b59394ea4f4cee249fa0c79a91b1c0c150c4f9e231f9321b903154051"
+    },
+    "r1-migration-compatibility.json": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/r1-migration-compatibility.json",
+      "bytes": 2122,
+      "sha256": "f692d1d61257cecb6a2c249ac47786eef846cc1815267529f741efbfbf2ab480"
+    }
+  }
+}

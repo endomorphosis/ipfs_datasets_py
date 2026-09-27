@@ -1,0 +1,27 @@
+{
+  "schema_version": "native-smoke-owned-orchestration-config-v1",
+  "files": [
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/smoke_resource_common.py",
+      "before_sha256": "635859ddea93c5e12d12bd2c9d96c1fd0a4025558ceadf5a3b3883d5527427cc",
+      "sha256": "8ede37beaf19fcdefa99a6dc6cf0650cfea191f4cfc13f3a715b0aa155ee653b",
+      "bytes": 7093
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/dependency_export_common.py",
+      "before_sha256": "bc7da24b5bab6f5c16ec6c51bddfa0891ff33fddce1102f077cfb660863d531d",
+      "sha256": "1f93574ee0c9a1b321b64b79391773cb846165bb408f569e3b77659d4c2893b8",
+      "bytes": 10106
+    },
+    {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/native_supervisor_driver.py",
+      "before_sha256": "ad8177681092a2d5ef1421a89afb514368fd05f1ca17dc1ce0d57d4384fbda1c",
+      "sha256": "3a73f2cbf15f51f5100db4e5098ff2e6148dbaf4af8932a1cca4efc6336b5d3c",
+      "bytes": 11828
+    }
+  ],
+  "static_environment_checks_passed": true,
+  "native_execution": false,
+  "source_products_changed": false,
+  "purpose": "Keep explicit and incidental native catalogs within owned attempt root under upstream07804 catalog relocation policy."
+}

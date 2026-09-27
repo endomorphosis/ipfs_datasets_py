@@ -1,0 +1,77 @@
+{
+  "schema_version": "upstream-07804-smoke-impact-review-v1",
+  "commit": "07804e0c057c884c6d9cc4df8361ca4b3a4e8e5a",
+  "parent_integrated_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664",
+  "passed": true,
+  "source_changes_reviewed": 6,
+  "source_files_ast_valid": true,
+  "initial_fixture_run": {
+    "tests": 12,
+    "failures": 8,
+    "errors": 0,
+    "skipped": 0
+  },
+  "standard_tmp_fixture_rerun": {
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "source_or_assertions_modified_for_rerun": false,
+  "fixture_correction": "The first inherited fixture root was inside .git; move unchanged tests to owned system temp so expected non-Git catalog paths and repository identity match normal pytest tmp_path. Per-test orchestration directories isolate every catalog.",
+  "bounded_test_run": {
+    "path": "/tmp/native-upstream-07804-test-pkovs7ar",
+    "owned_fresh": true,
+    "max_bytes": 150000000,
+    "max_seconds": 300,
+    "source_or_assertion_changes": false,
+    "returncode": 0,
+    "elapsed_seconds": 120.71319140912965,
+    "peak_sampled_bytes": 8967532,
+    "final_bytes": 0,
+    "stopped_reason": null
+  },
+  "smoke_impact": "resolve_duckdb_path now relocates Git-resident catalogs. Explicitly configure IPFS_ACCELERATE_AGENT_ORCHESTRATION_DIR to owned attempt/runtime root before imports; existing catalogs beneath this supported configured root stay there.",
+  "sawm_review": "Changes scripted M70 replay status-successor observation; not imported or executed by direct embedded smoke. No SAWM qualification claimed.",
+  "native_supervisor_execution_qualified": false,
+  "live_quack_qualified": false,
+  "admitted": false,
+  "canonical_worktree_modified": false,
+  "artifacts": {
+    "upstream-07804-tests.xml": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upstream-07804-tests.xml",
+      "bytes": 11956,
+      "sha256": "6892390667dbcaaf5d130d1e62340368acab726d2a203725fdeb2404eba4ac72"
+    },
+    "upstream-07804-tests.log": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upstream-07804-tests.log",
+      "bytes": 8973,
+      "sha256": "376db1eae06013f4aa0978b9fe7b53e9545e60b1bdb857bfe71772d30b92232a"
+    },
+    "upstream-07804-tests-receipt.json": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upstream-07804-tests-receipt.json",
+      "bytes": 44587,
+      "sha256": "485c14a03545edf4b793140c16ad850b62c9456991c104b6b7a6c1bd610e5241"
+    },
+    "upstream-07804-tmp-tests.xml": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upstream-07804-tmp-tests.xml",
+      "bytes": 2003,
+      "sha256": "f032518f8d606746fb96c1ab13ddf23ab22f3b50481fe43d3e584bc9cb0aa3a0"
+    },
+    "upstream-07804-tmp-tests.log": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upstream-07804-tmp-tests.log",
+      "bytes": 111,
+      "sha256": "fd1d717a3fea4f61e751407b4c2b21f2384515888484762e64ef42b32659a9af"
+    },
+    "upstream-07804-tmp-tests-receipt.json": {
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upstream-07804-tmp-tests-receipt.json",
+      "bytes": 44925,
+      "sha256": "a4f17d6f19c7de18041268a60c6e2d032d355f6cde1eca5652abdd47dc55f389"
+    }
+  },
+  "source_update_manifest": {
+    "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upstream-07804/source-update-manifest.json",
+    "bytes": 1752,
+    "sha256": "8a3a89d494b246a279271400a02b0ca6fcd1c5240409d6b13fdeef9384edc55f"
+  }
+}

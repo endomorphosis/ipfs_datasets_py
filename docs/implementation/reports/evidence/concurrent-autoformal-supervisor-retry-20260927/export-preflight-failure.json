@@ -1,0 +1,62 @@
+{
+  "schema": "dependency-export-preflight-failure/v1",
+  "attempt": "capture-r2",
+  "error": "DaemonResourceError: disk ledger storage scope differs",
+  "before_reservation": true,
+  "attempt_directory_created": false,
+  "ledger_sha256": "ec09155e91695bd60020d9f55ee04de0e9f2866c5d6750a6adc90f55fc17cb79",
+  "root_observations": [
+    {
+      "prior": {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      "observed": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+        "device": 66306,
+        "inode": 66764317
+      }
+    },
+    {
+      "prior": {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      "observed": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+        "device": 66306,
+        "inode": 58092485
+      }
+    },
+    {
+      "prior": {
+        "device": 66306,
+        "inode": 51016135,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      "observed": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+        "device": 66306,
+        "inode": 51016937
+      }
+    },
+    {
+      "prior": {
+        "device": 66306,
+        "inode": 526155,
+        "path": "/tmp/pytest-of-barberb"
+      },
+      "observed": {
+        "path": "/tmp/pytest-of-barberb",
+        "device": 66306,
+        "inode": 526155
+      }
+    }
+  ],
+  "limit_bytes": 75000000000,
+  "record_count": 89,
+  "admitted": false,
+  "formalized": false
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "closed-native-r1-migration-observation-v1",
+  "database": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1/supervisor/supervisor.duckdb",
+  "read_only": true,
+  "before_sha256": "971c893076a7fcd567959350186c1a3a9a5ba2112b2275cbf0218cbc500de604",
+  "after_sha256": "971c893076a7fcd567959350186c1a3a9a5ba2112b2275cbf0218cbc500de604",
+  "rows": [
+    {
+      "version": 1,
+      "migration_id": "0001_control_plane",
+      "checksum": "sha256:bace5842b431da39ac25d550338481ff4d68a2fc36327c8128280115adeaba36",
+      "outcome": "applied",
+      "receipt_cid": "baguqeeraldsm4bij6sc2oxyvezeixrbyoxmuawwf6c4epkqpasg4vyf7ks7a"
+    },
+    {
+      "version": 2,
+      "migration_id": "0002_causal_event_federation_core",
+      "checksum": "sha256:9253504546b6bdad0ad9c1d00842016bfb474c40c2650d6d024919126589949c",
+      "outcome": "applied",
+      "receipt_cid": "baguqeeralbyj7xp2z64njkij2iqwjivsx367khduvfvcstnocwxajr3nnala"
+    },
+    {
+      "version": 3,
+      "migration_id": "0003_state_server_restart_identity",
+      "checksum": "sha256:21b423d3aaf280cbbe1b066611bdfeaf94128ab994cc429cc7ed44f125b50fdc",
+      "outcome": "applied",
+      "receipt_cid": "baguqeerahrie4jezhtxiruodu3aa6bhhshumwep36fqytjoqrrpgifyahscq"
+    },
+    {
+      "version": 4,
+      "migration_id": "0004_hash_observations",
+      "checksum": "sha256:21e54254564d1cc7fc0bb667fcaae77e08e70dbe9d40fc03dbdd7e0bfa6750a2",
+      "outcome": "applied",
+      "receipt_cid": "baguqeeraqrixsh5xtfa5oe2hoy6zt254bllwbozcpiahan2pudftxt2gwdzq"
+    },
+    {
+      "version": 5,
+      "migration_id": "0005_tasks_index_repair",
+      "checksum": "sha256:e5ff06f3e3bc0bc64ff20487589ba88ef6adca7d9eff0fd8cd572f5829cfeeb2",
+      "outcome": "applied",
+      "receipt_cid": "baguqeerafphxcabnz5w22dl4gecl4fo64bzwgx26lx6sehmnrj2goghrw26a"
+    }
+  ],
+  "candidate_v5_checksum": "sha256:5cd6bc0dece24daa65a7c4123b347f1ffbce9e8200bafe2bc5ad2c56b225320a",
+  "compatible_in_place": false,
+  "history_rewritten": false,
+  "production_databases_opened": false
+}

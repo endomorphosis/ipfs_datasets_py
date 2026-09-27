@@ -1,0 +1,3 @@
+# Preserve exact captured helper bytes, including trailing blank lines.
+r2-harness/dependency_export_common.py whitespace=-blank-at-eof
+initial-r2-harness/dependency_export_common.py whitespace=-blank-at-eof

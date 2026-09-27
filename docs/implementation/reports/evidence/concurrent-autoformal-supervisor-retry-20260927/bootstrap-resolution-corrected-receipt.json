@@ -1,0 +1,18 @@
+{
+  "bootstrap_sha256": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55",
+  "checks": {
+    "foreign_loaded_module_refused": true,
+    "live_top_level_refused": true,
+    "mixed_namespace_refused": true,
+    "no_real_project_modules_imported": true,
+    "pinned_child_ignores_root_prepend": true,
+    "selected_loaded_module_allowed": true,
+    "selected_namespace_allowed": true,
+    "selected_top_level": true
+  },
+  "executed_project_code": false,
+  "native_lanes_executed": false,
+  "passed": true,
+  "prior_setup_failure_preserved": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/explicit-dependency-preparation/bootstrap-resolution-check-r1/receipt.json",
+  "schema": "smoke-bootstrap-stdlib-resolution-check/v1"
+}

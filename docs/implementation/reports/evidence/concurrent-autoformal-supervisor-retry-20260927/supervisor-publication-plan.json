@@ -1,0 +1,87 @@
+{
+  "repository": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py",
+  "base_commit": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+  "files": [
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py",
+      "bytes": 188856,
+      "sha256": "5b12ecdfa91ff53297fd6c99094a6c4b6acca1ab3e050ce34468b6f0d74227db",
+      "git_object": "fdd1b54e1f57f8510046192f6d304a5530396da8",
+      "before_sha256": "adec9d0b811268e727221c611b22cd1ef0cf6525ac48c99a925e6e6b45d734ae"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/intent_repository.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/task_sources/intent_repository.py",
+      "bytes": 189474,
+      "sha256": "f7b3091e49df02a0871289d59a9ed314582d4f763086c37612dd6572669408bd",
+      "git_object": "55a7ba1423b7347ea8af6c4164268ddc7abc1cfc",
+      "before_sha256": "a0ac41386628cabc1b613a6edfe2bda5fdef3a2e05a2480a8cae8d84e6261c10"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/sql/0005_tasks_index_repair.sql",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/task_sources/sql/0005_tasks_index_repair.sql",
+      "bytes": 590,
+      "sha256": "5cd6bc0dece24daa65a7c4123b347f1ffbce9e8200bafe2bc5ad2c56b225320a",
+      "git_object": "260dee7f7265dc0abdaf92612af36c1e284f8361",
+      "before_sha256": "e5ff06f3e3bc0bc64ff20487589ba88ef6adca7d9eff0fd8cd572f5829cfeeb2"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+      "bytes": 3130897,
+      "sha256": "63d502c88eff144a4ed2bbaae2baa8bcb1f8898e14970b6ce323d84fb0beb03c",
+      "git_object": "66f89af7b9cd42f88565046538c48533f98e8111",
+      "before_sha256": "683becffd9279b663d2a6c35a2db4da87e0fe53fe1e56907d2f3f7d190a4b4f0"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon_runner.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon_runner.py",
+      "bytes": 68337,
+      "sha256": "0da3f6ab1b95ebfcf2a8cfc8df1394df4b828a63fcad524cdf4dbffa5d84d2b0",
+      "git_object": "9f34f765e048a7e6b1a307b949562ae095a7780f",
+      "before_sha256": "a7775370eb951f4e793f4a52718f1d099f238e038945b3b95e7376aa7bc2f8b9"
+    },
+    {
+      "path": "test/api/test_agent_supervisor_control_plane_migrations.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/test/api/test_agent_supervisor_control_plane_migrations.py",
+      "bytes": 20144,
+      "sha256": "e7e0baaa868b344df7351ad32864e41d52cedea057c29dfbd760b85e5e16f7a1",
+      "git_object": "06eada0b078c6ed8683a1b926ccdd741ac1c88bd",
+      "before_sha256": "6fb51cf73d28783a84e27f8ee873d9dab19c394eafce6ff18be16c5b63cfdd3e"
+    },
+    {
+      "path": "test/api/test_agent_supervisor_goal_claim_integrity.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/test/api/test_agent_supervisor_goal_claim_integrity.py",
+      "bytes": 34353,
+      "sha256": "966d41eda8ae23822c9424f7b44a3dc5e140953d0ba2d606919c7bae24ba8408",
+      "git_object": "53be8fb283a73389681edb330e36c67aadac01ca",
+      "before_sha256": null
+    },
+    {
+      "path": "test/api/test_agent_supervisor_intent_repository.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/test/api/test_agent_supervisor_intent_repository.py",
+      "bytes": 106328,
+      "sha256": "652d1f943c0360c26ccf32339d795c71844b1292ff62f1fd745538f853579600",
+      "git_object": "b633fb0335052b72851968bcaa0bcf847b9abb52",
+      "before_sha256": "d8c74169f716fc24c9b9b2dff79491cf5ad3245eb4c6dfd3b02019d832e8a116"
+    },
+    {
+      "path": "test/api/test_agent_supervisor_tasks_index_upgrade.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/test/api/test_agent_supervisor_tasks_index_upgrade.py",
+      "bytes": 4241,
+      "sha256": "904f6fc644a5b39e8e274a49974be6fa56ae93c4d56f4308302743449f0cbc9b",
+      "git_object": "3b7760f1df093b2f8ae73a004c5dfeb76843e998",
+      "before_sha256": null
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_migrations.py",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_migrations.py",
+      "bytes": 61483,
+      "sha256": "8299b019f7b55612da209ca719126d8fa3f7198d03e4c258257c9f161fbaa5f6",
+      "git_object": "5a2c943578f412afa0ccbffad16c8cbbf1c562a2",
+      "before_sha256": "6e8cb817d3a46de4e326df72afa652714434205503e6f93e6d572074a040a7bf"
+    }
+  ],
+  "message": "Integrate receipt-fenced task claims and activate tested task-index repair\n\nPreserve Grok router refusal and parked-goal work while fencing receipt CAS,\nfiltering execution slices before readiness limits, and retaining canonical\nupstream evidence fields. Register the v5 catalog repair using a distinct\nreplacement index. Test populated v4 upgrades, replay, claim races, refusal\ncustody, and factory forwarding. Existing private v5 catalogs remain incompatible\nwith the corrected checksum; no live database migration is performed."
+}

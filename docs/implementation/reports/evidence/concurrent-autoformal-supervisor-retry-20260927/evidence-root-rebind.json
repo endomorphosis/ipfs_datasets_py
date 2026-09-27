@@ -1,0 +1,89 @@
+{
+  "accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 62089632058,
+    "inventory": {
+      "apparent_bytes": 43854632058,
+      "entry_count": 199135,
+      "special_file_count": 21,
+      "symlink_count": 3763
+    },
+    "limit_bytes": 75000000000,
+    "minimum_filesystem_free_bytes": 234985877504,
+    "observed_apparent_bytes": 43854632058,
+    "outstanding_full_reservations_bytes": 18235000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "admitted": false,
+  "after_inode": 51016937,
+  "authority": "Maintenance necessary for authorized main sync and bounded retry; no accounting guard relaxed.",
+  "before_inode": 51016135,
+  "cap_bytes": 75000000000,
+  "changed_field": "roots[2].inode",
+  "claims_released": false,
+  "device": 66306,
+  "formalized": false,
+  "new_ledger_sha256": "64efda950edd4f6739dbeda9ff93ff0aca9e48fc11821174456f8e5c4be27ab5",
+  "new_reservation_acquired": false,
+  "old_ledger_sha256": "ec09155e91695bd60020d9f55ee04de0e9f2866c5d6750a6adc90f55fc17cb79",
+  "other_root_identities_unchanged": true,
+  "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+  "preservation": {
+    "pending_bytes": 1290325,
+    "pending_files": 40,
+    "pending_manifest_sha256": "4af29c0dcacd9e0acad5714a35184f08df293aa0f598f0c1814887c11a48efd4",
+    "published_bytes": 153071181,
+    "published_commit": "f24d83a2b0b646e1ac872d4f09566d8b5c31403f",
+    "published_files": 289,
+    "scope": "Published and pending evidence verified; no complete pre-sync untracked inventory is asserted."
+  },
+  "reservation_count": 89,
+  "reservation_records_unchanged": true,
+  "schema": "explicit-evidence-root-rebind/v1",
+  "sources": [
+    {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    {
+      "bytes": 33265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "sha256": "6f8d85259db92105eba40ab9c2779ddcc8aef674eb748af74d6d4f9c04774355"
+    },
+    {
+      "bytes": 29349,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "d02a72945f559ed92d94062b92cb4ec0bbe6f3948aec34a337b4daa7e99f05d8"
+    },
+    {
+      "bytes": 74770,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "0927c3c7185ebc0a3a5591f918b88fd90a5e87e313249a6587c2c4efb5ae0b03"
+    },
+    {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    },
+    {
+      "bytes": 5845,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/router_deps.py",
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    }
+  ],
+  "statuses": {
+    "released": 53,
+    "retained": 36
+  }
+}

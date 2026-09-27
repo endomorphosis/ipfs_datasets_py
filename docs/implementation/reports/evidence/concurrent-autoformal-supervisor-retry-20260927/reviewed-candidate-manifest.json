@@ -1,0 +1,170 @@
+{
+  "origin_main": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+  "files": [
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py",
+      "status": "same_base",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py",
+      "sha256": "5b12ecdfa91ff53297fd6c99094a6c4b6acca1ab3e050ce34468b6f0d74227db",
+      "bytes": 188856,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/ipfs_accelerate_py__agent_supervisor__task_sources__database_task_source.py.diff",
+      "git_object": "fdd1b54e1f57f8510046192f6d304a5530396da8"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/intent_repository.py",
+      "status": "same_base",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/task_sources/intent_repository.py",
+      "sha256": "f7b3091e49df02a0871289d59a9ed314582d4f763086c37612dd6572669408bd",
+      "bytes": 189474,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/ipfs_accelerate_py__agent_supervisor__task_sources__intent_repository.py.diff",
+      "git_object": "55a7ba1423b7347ea8af6c4164268ddc7abc1cfc"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/sql/0005_tasks_index_repair.sql",
+      "status": "new",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/task_sources/sql/0005_tasks_index_repair.sql",
+      "sha256": "5cd6bc0dece24daa65a7c4123b347f1ffbce9e8200bafe2bc5ad2c56b225320a",
+      "bytes": 590,
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/ipfs_accelerate_py__agent_supervisor__task_sources__sql__0005_tasks_index_repair.sql.diff",
+      "git_object": "260dee7f7265dc0abdaf92612af36c1e284f8361"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+      "status": "merge_required",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+      "sha256": "63d502c88eff144a4ed2bbaae2baa8bcb1f8898e14970b6ce323d84fb0beb03c",
+      "bytes": 3130897,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/ipfs_accelerate_py__agent_supervisor__todo_daemon__implementation_daemon.py.diff",
+      "git_object": "66f89af7b9cd42f88565046538c48533f98e8111"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon_runner.py",
+      "status": "same_base",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon_runner.py",
+      "sha256": "0da3f6ab1b95ebfcf2a8cfc8df1394df4b828a63fcad524cdf4dbffa5d84d2b0",
+      "bytes": 68337,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/ipfs_accelerate_py__agent_supervisor__todo_daemon__implementation_daemon_runner.py.diff",
+      "git_object": "9f34f765e048a7e6b1a307b949562ae095a7780f"
+    },
+    {
+      "path": "test/api/test_agent_supervisor_control_plane_migrations.py",
+      "status": "same_base",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/test/api/test_agent_supervisor_control_plane_migrations.py",
+      "sha256": "e7e0baaa868b344df7351ad32864e41d52cedea057c29dfbd760b85e5e16f7a1",
+      "bytes": 20144,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/test__api__test_agent_supervisor_control_plane_migrations.py.diff",
+      "git_object": "06eada0b078c6ed8683a1b926ccdd741ac1c88bd"
+    },
+    {
+      "path": "test/api/test_agent_supervisor_goal_claim_integrity.py",
+      "status": "new",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/test/api/test_agent_supervisor_goal_claim_integrity.py",
+      "sha256": "966d41eda8ae23822c9424f7b44a3dc5e140953d0ba2d606919c7bae24ba8408",
+      "bytes": 34353,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/test__api__test_agent_supervisor_goal_claim_integrity.py.diff",
+      "git_object": "53be8fb283a73389681edb330e36c67aadac01ca"
+    },
+    {
+      "path": "test/api/test_agent_supervisor_intent_repository.py",
+      "status": "same_base",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/test/api/test_agent_supervisor_intent_repository.py",
+      "sha256": "652d1f943c0360c26ccf32339d795c71844b1292ff62f1fd745538f853579600",
+      "bytes": 106328,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/test__api__test_agent_supervisor_intent_repository.py.diff",
+      "git_object": "b633fb0335052b72851968bcaa0bcf847b9abb52"
+    },
+    {
+      "path": "test/api/test_agent_supervisor_tasks_index_upgrade.py",
+      "status": "new",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/test/api/test_agent_supervisor_tasks_index_upgrade.py",
+      "sha256": "904f6fc644a5b39e8e274a49974be6fa56ae93c4d56f4308302743449f0cbc9b",
+      "bytes": 4241,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/test__api__test_agent_supervisor_tasks_index_upgrade.py.diff",
+      "git_object": "3b7760f1df093b2f8ae73a004c5dfeb76843e998"
+    },
+    {
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_migrations.py",
+      "status": "same_base",
+      "conflict": false,
+      "candidate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/candidate/ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_migrations.py",
+      "sha256": "8299b019f7b55612da209ca719126d8fa3f7198d03e4c258257c9f161fbaa5f6",
+      "bytes": 61483,
+      "ast_valid": true,
+      "removed_upstream_definitions": [],
+      "diff": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/diffs/ipfs_accelerate_py__agent_supervisor__task_sources__control_plane_migrations.py.diff",
+      "git_object": "5a2c943578f412afa0ccbffad16c8cbbf1c562a2"
+    }
+  ],
+  "delete": [
+    "ipfs_accelerate_py/agent_supervisor/task_sources/sql/0002_tasks_index_repair.sql"
+  ],
+  "shared_head_index_worktree_changed": false,
+  "publication_authorized_but_root_owned": true,
+  "tests_in_progress": false,
+  "prior_candidate": "paired-214-inputs-r3-index-name",
+  "test_source_bytes": 141277211,
+  "candidate_tree": "e970dcffb37a6fc8dc6dd13a477c88d6a31e465d",
+  "private_index": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/final-9b5c-integration.index",
+  "original_focused_result": {
+    "passed": 83,
+    "failed": 3,
+    "seconds": 791.55,
+    "corrections": "Only test assumptions/fixtures; no product code changes"
+  },
+  "test_result_pending": false,
+  "focused_qualification": {
+    "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/focused-qualification.json",
+    "bytes": 3334,
+    "sha256": "117d7abb2eabc5cece0fcef4a4d6473e34df960efaa7f34db13bb63af0705ce4"
+  },
+  "publication_status": "published_by_root",
+  "published_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664",
+  "published_parent": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+  "root_publication_receipt": {
+    "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/root-publication/receipt.json",
+    "bytes": 1269,
+    "sha256": "05194f607015de404a9ce9dc48aef7530c3f7adaad607a704484c1aafe1c7a98"
+  },
+  "live_checkout_observation": {
+    "initial_head": "91a1253c24a023c2f113d4549fecbfa042666464",
+    "initial_index_sha256": "7c97f8611bef125ceb30ed2db2c8c24cbf0bcf9224932450e3155f0eb2063973",
+    "final_head": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+    "final_index_sha256": "e3d7031944ede2066d585f5714a3b19bc9ccb8639e6728a279ebfa5cb11f3425",
+    "advanced_externally_during_review": true,
+    "this_agent_changed_shared_head_or_index": false,
+    "this_agent_actions": "Read/fetch remote refs; wrote blobs and three task-private indexes only; no shared checkout/reset/rebase/commit/push."
+  },
+  "final_focused_result": {
+    "distinct_cases": 86,
+    "original_passed": 83,
+    "corrected_reruns_passed": 3,
+    "full_repository_suite_run": false,
+    "live_quack_qualified": false,
+    "native_supervisor_execution_qualified": false
+  }
+}

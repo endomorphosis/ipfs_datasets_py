@@ -1,0 +1,90 @@
+{
+  "prior_ledger_record_count": 88,
+  "prior_ledger_records_omitted": true,
+  "projection_only": true,
+  "schema": "autoformal-published-dependency-audit-projection/v1",
+  "selected_receipt_fields": {
+    "admitted": false,
+    "bounds": {
+      "cpu_slots": 1,
+      "memory_mb": 2048,
+      "seconds": 600,
+      "storage_bytes": 1000000000
+    },
+    "child_returncode": 0,
+    "committed_bytes": 123965078,
+    "dependency_binding": {
+      "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/dependency-manifest.json",
+      "manifest_sha256": "a99a1e9a83f6f9719330a300012a7d258de2ed8d22cb1fe6d4a8f2cfccdc4b80",
+      "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/published-source",
+      "snapshot_commit": "917bfad0878467049b0cdbc26e605def27e31f4d",
+      "source_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664"
+    },
+    "dependency_observation": {
+      "file_count": 3553,
+      "manifest_sha256": "a99a1e9a83f6f9719330a300012a7d258de2ed8d22cb1fe6d4a8f2cfccdc4b80",
+      "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/published-source",
+      "snapshot_commit": "917bfad0878467049b0cdbc26e605def27e31f4d",
+      "source_bytes": 123965078,
+      "source_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664"
+    },
+    "dependency_qualified": false,
+    "elapsed_seconds": 56.710201687878,
+    "final_usage": {
+      "additional_requested_bytes": 0,
+      "attempt_bytes": 156571475,
+      "attempt_limit_bytes": 1000000000,
+      "charged_bytes": 63088070389,
+      "checked_at": 1790528326.0702279,
+      "external_charged_bytes": 0,
+      "group_rss": {
+        "available": true,
+        "live_processes": 0,
+        "rss_bytes": 0
+      },
+      "inventory": {
+        "apparent_bytes": 43853070389,
+        "entry_count": 199088,
+        "special_file_count": 21,
+        "symlink_count": 3763
+      },
+      "limit_bytes": 75000000000,
+      "memory_limit_bytes": 2147483648,
+      "minimum_filesystem_free_bytes": 235047809024,
+      "observed_apparent_bytes": 43853070389,
+      "outstanding_full_reservations_bytes": 19235000000,
+      "scope": "named_roots_only_apparent_bytes",
+      "total_attempt_charged_bytes": 156571475
+    },
+    "formalized": false,
+    "live_quack_exercised": false,
+    "owned_descendants_dead": true,
+    "passed": true,
+    "prior_ledger_rows_unchanged": true,
+    "schema": "autoformal-published-dependency-owned-export/v1",
+    "scope": "committed source export only",
+    "selected_files": 3553,
+    "source_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664",
+    "source_identity_after": {
+      "head": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+      "index": {
+        "bytes": 2062323,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/modules/ipfs_accelerate_py/index",
+        "sha256": "e3d7031944ede2066d585f5714a3b19bc9ccb8639e6728a279ebfa5cb11f3425"
+      }
+    },
+    "source_identity_before": {
+      "head": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+      "index": {
+        "bytes": 2062323,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/modules/ipfs_accelerate_py/index",
+        "sha256": "e3d7031944ede2066d585f5714a3b19bc9ccb8639e6728a279ebfa5cb11f3425"
+      }
+    },
+    "source_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py",
+    "training_run": false
+  },
+  "source_receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/audit-receipt.json",
+  "source_receipt_bytes": 245923,
+  "source_receipt_sha256": "5c71a7052581e73438e307ce38f65d9a3885fae9321bcc460a24b4d14bda9d80"
+}

@@ -1,0 +1,16 @@
+{
+  "same_candidate_tree": true,
+  "candidate_unmodified_during_running_tests": true,
+  "rows": [
+    {
+      "base": "58be8dc1fd63c414596b95c827c73333034eab5a",
+      "tree": "65cef3f02dd572b1275e5b3df29721033dd0bc33",
+      "index": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/58be-integration.index"
+    },
+    {
+      "base": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+      "tree": "65cef3f02dd572b1275e5b3df29721033dd0bc33",
+      "index": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/9b5c-integration.index"
+    }
+  ]
+}

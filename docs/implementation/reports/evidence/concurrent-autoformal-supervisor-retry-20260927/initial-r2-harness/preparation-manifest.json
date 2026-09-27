@@ -1,0 +1,102 @@
+{
+  "archive": "explicit-dependency-preparation/preselection-r2",
+  "canonical_source_hashes_preserved": 64,
+  "config_prior_keys_preserved": true,
+  "dependency_commit_placeholders_unfilled": false,
+  "export_action": "Root supplies published40SHA to create_published_dependency_reserved.py; resulting dependency-binding.json is explicitly copied into frozen config by root before smoke.",
+  "export_limits": {
+    "cpu_slots": 1,
+    "max_files": 5000,
+    "max_source_bytes": 180000000,
+    "memory_mb": 2048,
+    "seconds": 600,
+    "storage_bytes": 1000000000
+  },
+  "export_wrapper_files_unchanged_during_root_export": true,
+  "files": [
+    {
+      "bytes": 11763,
+      "path": "native_supervisor_driver.py",
+      "sha256": "ad8177681092a2d5ef1421a89afb514368fd05f1ca17dc1ce0d57d4384fbda1c"
+    },
+    {
+      "bytes": 13836,
+      "path": "parent_harness.py",
+      "sha256": "2fbbe348511e956c54c0a9585e0b7f2efba2585f445d3d7dc4f3c2b8dce86d76"
+    },
+    {
+      "bytes": 10622,
+      "path": "training_lane.py",
+      "sha256": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528"
+    },
+    {
+      "bytes": 8808,
+      "path": "conversion_lane.py",
+      "sha256": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b"
+    },
+    {
+      "bytes": 12937,
+      "path": "frozen-config.json",
+      "sha256": "e3170750e82ac77dca9559b7075b322fd609bf2ffe1a16ed37983efd6c38bbe3"
+    },
+    {
+      "bytes": 7024,
+      "path": "smoke_resource_common.py",
+      "sha256": "635859ddea93c5e12d12bd2c9d96c1fd0a4025558ceadf5a3b3883d5527427cc"
+    },
+    {
+      "bytes": 2670,
+      "path": "native_guard_child.py",
+      "sha256": "92f5b0cb50d5103c7208e0d0e6670293513326e3e11800e4807a3d3b6c559bac"
+    },
+    {
+      "bytes": 13856,
+      "path": "run_native_smoke_reserved.py",
+      "sha256": "04284381f9743a9f4907f067e6894b62b3ab4e6957320c5e2ad68bc4a0cbe4a1"
+    },
+    {
+      "bytes": 5376,
+      "path": "dependency_binding.py",
+      "sha256": "259b114de293d55f99228204f683dab4cb8410dd67241a79cfd78e043d6974bf"
+    },
+    {
+      "bytes": 10037,
+      "path": "dependency_export_common.py",
+      "sha256": "bc7da24b5bab6f5c16ec6c51bddfa0891ff33fddce1102f077cfb660863d531d"
+    },
+    {
+      "bytes": 16410,
+      "path": "create_published_dependency_reserved.py",
+      "sha256": "5df15398ba50028a4df416bb72460c5e6169c756772e0e82160d7e89205ded01"
+    },
+    {
+      "bytes": 3293,
+      "path": "lane_bootstrap.py",
+      "sha256": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55"
+    }
+  ],
+  "lane_bootstrap_receipt": {
+    "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/explicit-dependency-preparation/bootstrap-resolution-check-r2/receipt.json",
+    "sha256": "fee92170a820971709cc4998d0be7f7ec95f46335ce4f99c954b8d5e669f3e2c"
+  },
+  "launch_enabled": false,
+  "launch_note": "Root owns final publication, frozen binding review, reservation and runtime invocation. Preparation does not launch.",
+  "pre_lane_bootstrap_archive": "explicit-dependency-preparation/pre-lane-bootstrap",
+  "runtime_limits": {
+    "cpu_slots": 2,
+    "lane_combined_bytes": 60000000,
+    "memory_mb": 8192,
+    "seconds": 600,
+    "storage_bytes": 150000000,
+    "training_lane_bytes": 30000000
+  },
+  "schema": "concurrent-autoformal-explicit-dependency-preparation/v1",
+  "source_pin": "canonical datasets tree unchanged",
+  "storage_rationale": {
+    "additional_headroom_bytes": 49075537,
+    "lane_allowance_bytes": 60000000,
+    "r1_observed_native_bytes": 40924463
+  },
+  "training_and_conversion_bytes_preserved": true,
+  "validation": "AST/JSON checks and8 stdlib-only import resolution checks passed; initial fixture setup error preserved. No native lanes or training executed by preparer. Root separately executed source export."
+}

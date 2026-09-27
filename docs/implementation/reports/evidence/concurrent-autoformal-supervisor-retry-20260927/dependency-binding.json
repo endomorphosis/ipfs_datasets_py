@@ -1,0 +1,7 @@
+{
+  "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/dependency-manifest.json",
+  "manifest_sha256": "a99a1e9a83f6f9719330a300012a7d258de2ed8d22cb1fe6d4a8f2cfccdc4b80",
+  "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/published-source",
+  "snapshot_commit": "917bfad0878467049b0cdbc26e605def27e31f4d",
+  "source_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664"
+}

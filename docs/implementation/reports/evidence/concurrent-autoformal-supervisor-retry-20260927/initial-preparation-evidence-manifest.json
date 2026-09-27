@@ -1,0 +1,414 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "bootstrap-resolution-corrected-receipt.json": {
+      "bytes": 792,
+      "sha256": "fee92170a820971709cc4998d0be7f7ec95f46335ce4f99c954b8d5e669f3e2c"
+    },
+    "bootstrap-resolution-original-fixture-failure.json": {
+      "bytes": 241,
+      "sha256": "83c52bc440728c62377f9b6869180f6bfc3066609dba7e7d336d0052a0589b70"
+    },
+    "corrected-tests-receipt.json": {
+      "bytes": 37324,
+      "sha256": "b6d8432b59394ea4f4cee249fa0c79a91b1c0c150c4f9e231f9321b903154051"
+    },
+    "corrected-tests.log": {
+      "bytes": 99,
+      "sha256": "e730fc2f313d280ecb0f45caabc18dde43418d88e919eaaac639ecd97297d8a9"
+    },
+    "corrected-tests.xml": {
+      "bytes": 814,
+      "sha256": "2efccd1a405560d2ab75cf570f11b81103d31c6d70147f18afdb0a0c69c9177b"
+    },
+    "dependency-binding.json": {
+      "bytes": 585,
+      "sha256": "cd84377ee2f5d4c31b5d1bf551babe1368aecf816d049ab0329f3a8b250d9e2b"
+    },
+    "dependency-child-terminal.json": {
+      "bytes": 88,
+      "sha256": "4df11246b4d7d7d2864d30dd049674e2af47f9f4c713f9decc803a384d7c592a"
+    },
+    "dependency-export-audit-summary.json": {
+      "bytes": 3971,
+      "sha256": "21fa5370460208d8ef23f11ca2408240cedc68c9935ae83d78c7cfe5a0409ed7"
+    },
+    "dependency-export.log": {
+      "bytes": 546,
+      "sha256": "98d08ed0bf5e503409027dee203c7e0e1bd198288ef1e5373a5307256af56608"
+    },
+    "dependency-manifest.json": {
+      "bytes": 1009221,
+      "sha256": "a99a1e9a83f6f9719330a300012a7d258de2ed8d22cb1fe6d4a8f2cfccdc4b80"
+    },
+    "dependency-resource-release.json": {
+      "bytes": 3802,
+      "sha256": "8585d6d15d3318d9f426e1dcaf9aed5e348b1a5b0f8abbc428845efc9ec7d133"
+    },
+    "focused-qualification.json": {
+      "bytes": 3334,
+      "sha256": "117d7abb2eabc5cece0fcef4a4d6473e34df960efaa7f34db13bb63af0705ce4"
+    },
+    "original-focused-tests-receipt.json": {
+      "bytes": 40083,
+      "sha256": "2172357ed5184a20a3e9fb59577849688320494185d344e6f0d46c09e84e03c9"
+    },
+    "original-focused-tests.log": {
+      "bytes": 6039,
+      "sha256": "e53c89ade349153e09607aa6d0861b04db82bd82572da70ee66aa7ad416f7f9a"
+    },
+    "original-focused-tests.xml": {
+      "bytes": 20050,
+      "sha256": "995821526c93bcc69edc52af3b684ac2d0b0a56b78e769c7a5fb950f65e01311"
+    },
+    "r1-migration-compatibility.json": {
+      "bytes": 2122,
+      "sha256": "f692d1d61257cecb6a2c249ac47786eef846cc1815267529f741efbfbf2ab480"
+    },
+    "r1-observation-facts.json": {
+      "bytes": 2790,
+      "sha256": "44a840df4e372ea6cf5cca21b25d156fc16bd7fab76f428b5c631592008b8cf5"
+    },
+    "r2-harness/conversion_lane.py": {
+      "bytes": 8808,
+      "sha256": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b"
+    },
+    "r2-harness/create_published_dependency_reserved.py": {
+      "bytes": 16410,
+      "sha256": "5df15398ba50028a4df416bb72460c5e6169c756772e0e82160d7e89205ded01"
+    },
+    "r2-harness/dependency_binding.py": {
+      "bytes": 5376,
+      "sha256": "259b114de293d55f99228204f683dab4cb8410dd67241a79cfd78e043d6974bf"
+    },
+    "r2-harness/dependency_export_common.py": {
+      "bytes": 10037,
+      "sha256": "bc7da24b5bab6f5c16ec6c51bddfa0891ff33fddce1102f077cfb660863d531d"
+    },
+    "r2-harness/frozen-config.json": {
+      "bytes": 12937,
+      "sha256": "e3170750e82ac77dca9559b7075b322fd609bf2ffe1a16ed37983efd6c38bbe3"
+    },
+    "r2-harness/lane_bootstrap.py": {
+      "bytes": 3293,
+      "sha256": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55"
+    },
+    "r2-harness/native_guard_child.py": {
+      "bytes": 2670,
+      "sha256": "92f5b0cb50d5103c7208e0d0e6670293513326e3e11800e4807a3d3b6c559bac"
+    },
+    "r2-harness/native_supervisor_driver.py": {
+      "bytes": 11763,
+      "sha256": "ad8177681092a2d5ef1421a89afb514368fd05f1ca17dc1ce0d57d4384fbda1c"
+    },
+    "r2-harness/parent_harness.py": {
+      "bytes": 13836,
+      "sha256": "2fbbe348511e956c54c0a9585e0b7f2efba2585f445d3d7dc4f3c2b8dce86d76"
+    },
+    "r2-harness/preparation-manifest.json": {
+      "bytes": 3841,
+      "sha256": "2a6c4c62ca7828016d0e77a9367eb546d492c4767063c82f5ecddcec5b3754f9"
+    },
+    "r2-harness/run_native_smoke_reserved.py": {
+      "bytes": 13856,
+      "sha256": "04284381f9743a9f4907f067e6894b62b3ab4e6957320c5e2ad68bc4a0cbe4a1"
+    },
+    "r2-harness/smoke_resource_common.py": {
+      "bytes": 7024,
+      "sha256": "635859ddea93c5e12d12bd2c9d96c1fd0a4025558ceadf5a3b3883d5527427cc"
+    },
+    "r2-harness/training_lane.py": {
+      "bytes": 10622,
+      "sha256": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528"
+    },
+    "retry-preparation-status.json": {
+      "bytes": 2090,
+      "sha256": "b2b16dbf8bd10839a04c44b3aebb2712520ba40faecd13a4dfda7caf0d5c31d4"
+    },
+    "reviewed-candidate-manifest.json": {
+      "bytes": 11071,
+      "sha256": "c4b24f3426f9b12a22ba45a94c8f568a1275872803f80c4c6c3ec258ba8a856a"
+    },
+    "run_corrected_tests.py": {
+      "bytes": 2675,
+      "sha256": "80226efb92a666f4fc6c92a71515efe2b7cd57c0eefe62f573529412ae94abd6"
+    },
+    "run_focused_tests.py": {
+      "bytes": 2684,
+      "sha256": "9bb1adcc263ea793616c81921bd6a600073d6b5b3ab6379b631c904833ad4ac9"
+    },
+    "supervisor-publication-plan.json": {
+      "bytes": 6528,
+      "sha256": "b8d5d8fc25b085dff454c3cf5edd29c02489fb4a7b4fd33aa5c1ba9e4d72dc16"
+    },
+    "supervisor-publication-receipt.json": {
+      "bytes": 1269,
+      "sha256": "05194f607015de404a9ce9dc48aef7530c3f7adaad607a704484c1aafe1c7a98"
+    },
+    "upgrade-diagnostic-receipt.json": {
+      "bytes": 6947,
+      "sha256": "c275a9cbb496a9b417774e8dc0a05f66bf275ca2b5138bb724d2cc7dbf745dcd"
+    },
+    "upgrade-diagnostic.log": {
+      "bytes": 1671,
+      "sha256": "981d71673fc4f20c628149b303258dc7c78f6d9c53d301fe3e5f6d30ff133c33"
+    },
+    "upgrade-diagnostic.xml": {
+      "bytes": 2297,
+      "sha256": "490738c6094654d4432b6c8b087ff0adba96b3a2ecf8fb0f844ab2749adf56a4"
+    },
+    "upstream-integration-proof.json": {
+      "bytes": 719,
+      "sha256": "ae1978c845691377bc008b9839e136606a494d678d22c83955a7f42c7ee5b543"
+    }
+  },
+  "copied_sources": [
+    {
+      "bytes": 3334,
+      "path": "focused-qualification.json",
+      "sha256": "117d7abb2eabc5cece0fcef4a4d6473e34df960efaa7f34db13bb63af0705ce4",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/focused-qualification.json"
+    },
+    {
+      "bytes": 20050,
+      "path": "original-focused-tests.xml",
+      "sha256": "995821526c93bcc69edc52af3b684ac2d0b0a56b78e769c7a5fb950f65e01311",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/focused-tests.xml"
+    },
+    {
+      "bytes": 6039,
+      "path": "original-focused-tests.log",
+      "sha256": "e53c89ade349153e09607aa6d0861b04db82bd82572da70ee66aa7ad416f7f9a",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/focused-tests.log"
+    },
+    {
+      "bytes": 40083,
+      "path": "original-focused-tests-receipt.json",
+      "sha256": "2172357ed5184a20a3e9fb59577849688320494185d344e6f0d46c09e84e03c9",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/focused-tests-receipt.json"
+    },
+    {
+      "bytes": 814,
+      "path": "corrected-tests.xml",
+      "sha256": "2efccd1a405560d2ab75cf570f11b81103d31c6d70147f18afdb0a0c69c9177b",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/corrected-tests.xml"
+    },
+    {
+      "bytes": 99,
+      "path": "corrected-tests.log",
+      "sha256": "e730fc2f313d280ecb0f45caabc18dde43418d88e919eaaac639ecd97297d8a9",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/corrected-tests.log"
+    },
+    {
+      "bytes": 37324,
+      "path": "corrected-tests-receipt.json",
+      "sha256": "b6d8432b59394ea4f4cee249fa0c79a91b1c0c150c4f9e231f9321b903154051",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/corrected-tests-receipt.json"
+    },
+    {
+      "bytes": 719,
+      "path": "upstream-integration-proof.json",
+      "sha256": "ae1978c845691377bc008b9839e136606a494d678d22c83955a7f42c7ee5b543",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upstream-9b5c-integration-proof.json"
+    },
+    {
+      "bytes": 2122,
+      "path": "r1-migration-compatibility.json",
+      "sha256": "f692d1d61257cecb6a2c249ac47786eef846cc1815267529f741efbfbf2ab480",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/r1-migration-compatibility.json"
+    },
+    {
+      "bytes": 1269,
+      "path": "supervisor-publication-receipt.json",
+      "sha256": "05194f607015de404a9ce9dc48aef7530c3f7adaad607a704484c1aafe1c7a98",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/root-publication/receipt.json"
+    },
+    {
+      "bytes": 11071,
+      "path": "reviewed-candidate-manifest.json",
+      "sha256": "c4b24f3426f9b12a22ba45a94c8f568a1275872803f80c4c6c3ec258ba8a856a",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/manifest.json"
+    },
+    {
+      "bytes": 6528,
+      "path": "supervisor-publication-plan.json",
+      "sha256": "b8d5d8fc25b085dff454c3cf5edd29c02489fb4a7b4fd33aa5c1ba9e4d72dc16",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/root-publication-plan.json"
+    },
+    {
+      "bytes": 2684,
+      "path": "run_focused_tests.py",
+      "sha256": "9bb1adcc263ea793616c81921bd6a600073d6b5b3ab6379b631c904833ad4ac9",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/run_focused_tests.py"
+    },
+    {
+      "bytes": 2675,
+      "path": "run_corrected_tests.py",
+      "sha256": "80226efb92a666f4fc6c92a71515efe2b7cd57c0eefe62f573529412ae94abd6",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/run_corrected_tests.py"
+    },
+    {
+      "bytes": 2297,
+      "path": "upgrade-diagnostic.xml",
+      "sha256": "490738c6094654d4432b6c8b087ff0adba96b3a2ecf8fb0f844ab2749adf56a4",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upgrade-diagnostic.xml"
+    },
+    {
+      "bytes": 1671,
+      "path": "upgrade-diagnostic.log",
+      "sha256": "981d71673fc4f20c628149b303258dc7c78f6d9c53d301fe3e5f6d30ff133c33",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upgrade-diagnostic.log"
+    },
+    {
+      "bytes": 6947,
+      "path": "upgrade-diagnostic-receipt.json",
+      "sha256": "c275a9cbb496a9b417774e8dc0a05f66bf275ca2b5138bb724d2cc7dbf745dcd",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/upgrade-diagnostic-receipt.json"
+    },
+    {
+      "bytes": 2790,
+      "path": "r1-observation-facts.json",
+      "sha256": "44a840df4e372ea6cf5cca21b25d156fc16bd7fab76f428b5c631592008b8cf5",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/r1-observation-facts.json"
+    },
+    {
+      "bytes": 1009221,
+      "path": "dependency-manifest.json",
+      "sha256": "a99a1e9a83f6f9719330a300012a7d258de2ed8d22cb1fe6d4a8f2cfccdc4b80",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/dependency-manifest.json"
+    },
+    {
+      "bytes": 585,
+      "path": "dependency-binding.json",
+      "sha256": "cd84377ee2f5d4c31b5d1bf551babe1368aecf816d049ab0329f3a8b250d9e2b",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/dependency-binding.json"
+    },
+    {
+      "bytes": 3802,
+      "path": "dependency-resource-release.json",
+      "sha256": "8585d6d15d3318d9f426e1dcaf9aed5e348b1a5b0f8abbc428845efc9ec7d133",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/resource-release.json"
+    },
+    {
+      "bytes": 88,
+      "path": "dependency-child-terminal.json",
+      "sha256": "4df11246b4d7d7d2864d30dd049674e2af47f9f4c713f9decc803a384d7c592a",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/child-terminal.json"
+    },
+    {
+      "bytes": 546,
+      "path": "dependency-export.log",
+      "sha256": "98d08ed0bf5e503409027dee203c7e0e1bd198288ef1e5373a5307256af56608",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/export.log"
+    },
+    {
+      "bytes": 11763,
+      "path": "r2-harness/native_supervisor_driver.py",
+      "sha256": "ad8177681092a2d5ef1421a89afb514368fd05f1ca17dc1ce0d57d4384fbda1c",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/native_supervisor_driver.py"
+    },
+    {
+      "bytes": 13836,
+      "path": "r2-harness/parent_harness.py",
+      "sha256": "2fbbe348511e956c54c0a9585e0b7f2efba2585f445d3d7dc4f3c2b8dce86d76",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/parent_harness.py"
+    },
+    {
+      "bytes": 10622,
+      "path": "r2-harness/training_lane.py",
+      "sha256": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/training_lane.py"
+    },
+    {
+      "bytes": 8808,
+      "path": "r2-harness/conversion_lane.py",
+      "sha256": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/conversion_lane.py"
+    },
+    {
+      "bytes": 12937,
+      "path": "r2-harness/frozen-config.json",
+      "sha256": "e3170750e82ac77dca9559b7075b322fd609bf2ffe1a16ed37983efd6c38bbe3",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/frozen-config.json"
+    },
+    {
+      "bytes": 7024,
+      "path": "r2-harness/smoke_resource_common.py",
+      "sha256": "635859ddea93c5e12d12bd2c9d96c1fd0a4025558ceadf5a3b3883d5527427cc",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/smoke_resource_common.py"
+    },
+    {
+      "bytes": 2670,
+      "path": "r2-harness/native_guard_child.py",
+      "sha256": "92f5b0cb50d5103c7208e0d0e6670293513326e3e11800e4807a3d3b6c559bac",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/native_guard_child.py"
+    },
+    {
+      "bytes": 13856,
+      "path": "r2-harness/run_native_smoke_reserved.py",
+      "sha256": "04284381f9743a9f4907f067e6894b62b3ab4e6957320c5e2ad68bc4a0cbe4a1",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/run_native_smoke_reserved.py"
+    },
+    {
+      "bytes": 5376,
+      "path": "r2-harness/dependency_binding.py",
+      "sha256": "259b114de293d55f99228204f683dab4cb8410dd67241a79cfd78e043d6974bf",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/dependency_binding.py"
+    },
+    {
+      "bytes": 10037,
+      "path": "r2-harness/dependency_export_common.py",
+      "sha256": "bc7da24b5bab6f5c16ec6c51bddfa0891ff33fddce1102f077cfb660863d531d",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/dependency_export_common.py"
+    },
+    {
+      "bytes": 16410,
+      "path": "r2-harness/create_published_dependency_reserved.py",
+      "sha256": "5df15398ba50028a4df416bb72460c5e6169c756772e0e82160d7e89205ded01",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/create_published_dependency_reserved.py"
+    },
+    {
+      "bytes": 3293,
+      "path": "r2-harness/lane_bootstrap.py",
+      "sha256": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/lane_bootstrap.py"
+    },
+    {
+      "bytes": 3841,
+      "path": "r2-harness/preparation-manifest.json",
+      "sha256": "2a6c4c62ca7828016d0e77a9367eb546d492c4767063c82f5ecddcec5b3754f9",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/explicit-dependency-preparation/preparation-manifest.json"
+    },
+    {
+      "bytes": 241,
+      "path": "bootstrap-resolution-original-fixture-failure.json",
+      "sha256": "83c52bc440728c62377f9b6869180f6bfc3066609dba7e7d336d0052a0589b70",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/explicit-dependency-preparation/bootstrap-resolution-check-r1/receipt.json"
+    },
+    {
+      "bytes": 792,
+      "path": "bootstrap-resolution-corrected-receipt.json",
+      "sha256": "fee92170a820971709cc4998d0be7f7ec95f46335ce4f99c954b8d5e669f3e2c",
+      "source": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/explicit-dependency-preparation/bootstrap-resolution-check-r2/receipt.json"
+    }
+  ],
+  "datasets_publication_base_commit": "205bc6ef96c69c3ed9ddcd20ecf0b67f460f1841",
+  "dependency_binding": {
+    "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/dependency-manifest.json",
+    "manifest_sha256": "a99a1e9a83f6f9719330a300012a7d258de2ed8d22cb1fe6d4a8f2cfccdc4b80",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r1/published-source",
+    "snapshot_commit": "917bfad0878467049b0cdbc26e605def27e31f4d",
+    "source_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664"
+  },
+  "dependency_binding_status": "filled and verified against exported manifest; native qualification pending",
+  "formalized": false,
+  "integration_commit": "7793cbf14d9fb9f2d600ff088aca4a64bca1a664",
+  "preparation_manifest_sha256": "2a6c4c62ca7828016d0e77a9367eb546d492c4767063c82f5ecddcec5b3754f9",
+  "prepared_at": "2026-09-27T17:00:21.674241+00:00",
+  "prepared_harness_files": 12,
+  "qualification_scope": "86 distinct focused cases via 83 original passing cases plus3 corrected cases; product code unchanged; not full repository suite/native/liveQuack qualification",
+  "r2_executed": false,
+  "schema": "concurrent-autoformal-supervisor-retry-evidence-v1",
+  "updated_at": "2026-09-27T17:04:44.309125+00:00",
+  "upstream_base_commit": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba"
+}

@@ -1,0 +1,7 @@
+{
+  "error": "KeyError: ipfs_accelerate_py; stub parent module was not registered before namespace resolution",
+  "executed_project_code": false,
+  "native_lanes_executed": false,
+  "passed": false,
+  "stage": "stdlib-check-fixture-setup"
+}

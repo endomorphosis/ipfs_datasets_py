@@ -1,0 +1,93 @@
+{
+  "exit_code": 1,
+  "elapsed_seconds": 41.84077444602735,
+  "origins": [
+    {
+      "module": "ipfs_accelerate_py",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/__init__.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/__init__.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.control",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/control/__init__.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.control.control_contracts",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/control/control_contracts.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.control.control_plane",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/control/control_plane.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.objectives",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/objectives/__init__.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.objectives.goal_completion",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/objectives/goal_completion.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.proof",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/proof/__init__.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.proof.formal_verification_contracts",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/proof/formal_verification_contracts.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.runtime",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/runtime/__init__.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.runtime.configured_board_extension_cache",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/runtime/configured_board_extension_cache.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.runtime.configured_board_extension_projection",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/runtime/configured_board_extension_projection.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.self_improvement",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/self_improvement/__init__.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.self_improvement.self_improvement_completion",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/self_improvement/self_improvement_completion.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.task_sources",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/task_sources/__init__.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.task_sources.control_plane_contracts",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_contracts.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.task_sources.control_plane_migrations",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/task_sources/control_plane_migrations.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.task_sources.duckdb_state",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/task_sources/duckdb_state.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.task_sources.quack_owner_command",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/task_sources/quack_owner_command.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.task_sources.quack_owner_mutation",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/task_sources/quack_owner_mutation.py"
+    },
+    {
+      "module": "ipfs_accelerate_py.agent_supervisor.task_sources.task_identity",
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/task_sources/task_identity.py"
+    }
+  ],
+  "full_suite": false,
+  "native_execution": false,
+  "admitted": false
+}

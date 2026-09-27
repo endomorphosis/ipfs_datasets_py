@@ -1,0 +1,47 @@
+.....................F.................................................. [ 83%]
+...........FF.                                                           [100%]
+=================================== FAILURES ===================================
+___ test_v4_upgrade_preserves_rows_and_receipts_and_reapplies_without_writes ___
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_tasks_index_upgrade.py:93: in test_v4_upgrade_preserves_rows_and_receipts_and_reapplies_without_writes
+    assert not replay.receipts
+E   AssertionError: assert not (MigrationReceipt(receipt_cid='baguqeera2pveqocefro3kooq36dad55ejz4tfnvdcjsolwxl56jy4qr6uy4q', version=1, migration_id...uogqvl4d7ip5yoxrbivwq', error_text='', schema='ipfs_accelerate_py/agent-supervisor/control-plane-migration-receipt@1'))
+E    +  where (MigrationReceipt(receipt_cid='baguqeera2pveqocefro3kooq36dad55ejz4tfnvdcjsolwxl56jy4qr6uy4q', version=1, migration_id...uogqvl4d7ip5yoxrbivwq', error_text='', schema='ipfs_accelerate_py/agent-supervisor/control-plane-migration-receipt@1')) = MigrationRunReport(from_version=5, to_version=5, receipts=(MigrationReceipt(receipt_cid='baguqeera2pveqocefro3kooq36da...ymm547octsby25nd5cpzi4ye4q', changed=False, schema='ipfs_accelerate_py/agent-supervisor/control-plane-migration-run@1').receipts
+_ test_database_factories_forward_bounded_execution_slice[build_portal_implementation_daemon_from_args] _
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_goal_claim_integrity.py:605: in test_database_factories_forward_bounded_execution_slice
+    daemon, _ = factory(parsed, repo_root=tmp_path)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon_runner.py:1363: in build_portal_implementation_daemon_from_args
+    program = database_program_from_daemon_namespace(parsed)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py:75617: in database_program_from_daemon_namespace
+    return DatabaseProgramConfig.from_mapping(payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/runtime/multi_supervisor_runner.py:1043: in from_mapping
+    return cls(
+<string>:16: in __init__
+    ???
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/runtime/multi_supervisor_runner.py:879: in __post_init__
+    raise DatabaseProgramConfigError(
+E   ipfs_accelerate_py.agent_supervisor.runtime.multi_supervisor_runner.DatabaseProgramConfigError: quack authority requires endpoint_secret_handle
+_ test_database_factories_forward_bounded_execution_slice[build_database_implementation_daemon_from_args] _
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_goal_claim_integrity.py:607: in test_database_factories_forward_bounded_execution_slice
+    daemon = factory(parsed)
+             ^^^^^^^^^^^^^^^
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon_runner.py:1546: in build_database_implementation_daemon_from_args
+    program = database_program_from_daemon_namespace(parsed)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py:75617: in database_program_from_daemon_namespace
+    return DatabaseProgramConfig.from_mapping(payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/runtime/multi_supervisor_runner.py:1043: in from_mapping
+    return cls(
+<string>:16: in __init__
+    ???
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/ipfs_accelerate_py/agent_supervisor/runtime/multi_supervisor_runner.py:879: in __post_init__
+    raise DatabaseProgramConfigError(
+E   ipfs_accelerate_py.agent_supervisor.runtime.multi_supervisor_runner.DatabaseProgramConfigError: quack authority requires endpoint_secret_handle
+=========================== short test summary info ============================
+FAILED .git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_tasks_index_upgrade.py::test_v4_upgrade_preserves_rows_and_receipts_and_reapplies_without_writes
+FAILED .git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_goal_claim_integrity.py::test_database_factories_forward_bounded_execution_slice[build_portal_implementation_daemon_from_args]
+FAILED .git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_goal_claim_integrity.py::test_database_factories_forward_bounded_execution_slice[build_database_implementation_daemon_from_args]
+3 failed, 83 passed in 791.55s (0:13:11)

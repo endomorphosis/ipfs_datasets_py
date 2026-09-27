@@ -1,0 +1,10 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_v4_upgrade_preserves_rows_and_receipts_and_reapplies_without_writes ___
+.git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_tasks_index_upgrade.py:93: in test_v4_upgrade_preserves_rows_and_receipts_and_reapplies_without_writes
+    assert not replay.receipts
+E   AssertionError: assert not (MigrationReceipt(receipt_cid='baguqeeramq3zxnrnjscviqhqeujv33gikcnfefszokxqc44iy5kjmvbulwsq', version=1, migration_id...uogqvl4d7ip5yoxrbivwq', error_text='', schema='ipfs_accelerate_py/agent-supervisor/control-plane-migration-receipt@1'))
+E    +  where (MigrationReceipt(receipt_cid='baguqeeramq3zxnrnjscviqhqeujv33gikcnfefszokxqc44iy5kjmvbulwsq', version=1, migration_id...uogqvl4d7ip5yoxrbivwq', error_text='', schema='ipfs_accelerate_py/agent-supervisor/control-plane-migration-receipt@1')) = MigrationRunReport(from_version=5, to_version=5, receipts=(MigrationReceipt(receipt_cid='baguqeeramq3zxnrnjscviqhqeujv...ymm547octsby25nd5cpzi4ye4q', changed=False, schema='ipfs_accelerate_py/agent-supervisor/control-plane-migration-run@1').receipts
+=========================== short test summary info ============================
+FAILED .git/modules/external/ipfs_datasets/concurrent-autoformal-smoke-20260927/nested-main-integration-review/reviewed/test-source/test/api/test_agent_supervisor_tasks_index_upgrade.py::test_v4_upgrade_preserves_rows_and_receipts_and_reapplies_without_writes
+1 failed in 41.05s
