@@ -9,6 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import io
+import os
+import re
+import stat
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
@@ -250,9 +254,12 @@ def generate_span_evidence(
     code_identity: str = "",
     dataset_id: str = DATASET_ID,
     repository_id: str = DEFAULT_REPOSITORY_ID,
+    compiler_input_mode: str = "decoded",
 ) -> list[dict[str, Any]]:
     """Census each span and project one evidence row. Does not open the span cache."""
 
+    if compiler_input_mode not in {"decoded", "source"}:
+        raise SpanEvidenceError("compiler_input_mode must be decoded or source")
     from .repair_report import formula_evidence, repair_report
     from .span_agreement import annotate_compiled_batch, decide_span, result_alignment
 
@@ -279,14 +286,16 @@ def generate_span_evidence(
     for span in spans:
         if not isinstance(span, Mapping):
             continue
-        text = str(span.get("text") or span.get("source_text") or "").strip()
+        original_text = str(span.get("text") or span.get("source_text") or "")
+        text = original_text if compiler_input_mode == "source" else original_text.strip()
         span_id = str(span.get("source_span_id") or span.get("id") or "")
-        if not text or not span_id:
+        if not text.strip() or not span_id:
             continue
         legal_id = str(span.get("legal_id") or "")
         captured = dict(capture(text) or {})
         decoded = " ".join(str(captured.get("decoded_text") or text).split())
-        compiled = dict(compile_one(session, decoded or text, span_id) or {})
+        compiler_input = text if compiler_input_mode == "source" else (decoded or text)
+        compiled = dict(compile_one(session, compiler_input, span_id) or {})
         status = str(compiled.get("compiler_status") or compiled.get("status") or "")
         agrees = status in {"compiled", "roundtrip_ok"}
         rule = compiled.get("rule") if isinstance(compiled.get("rule"), Mapping) else {}
@@ -486,7 +495,9 @@ def evidence_schema():
     return pa.schema(fields)
 
 
-def write_span_evidence_parquet(rows: Sequence[Mapping[str, Any]], path: str | Path) -> dict[str, Any]:
+def write_span_evidence_parquet(
+    rows: Sequence[Mapping[str, Any]], path: str | Path, *, exclusive: bool = False,
+) -> dict[str, Any]:
     """Write the evidence parquet. Does not write JSONL or the resume checkpoint."""
 
     import pyarrow as pa
@@ -501,7 +512,18 @@ def write_span_evidence_parquet(rows: Sequence[Mapping[str, Any]], path: str | P
     table = pa.Table.from_pylist(projected, schema=evidence_schema()) if projected else pa.Table.from_pylist(
         [], schema=evidence_schema()
     )
-    pq.write_table(table, destination)
+    if exclusive:
+        with destination.open("xb") as stream:
+            pq.write_table(table, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        fd = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    else:
+        pq.write_table(table, destination)
     return {
         "admitted": False,
         "bytes": destination.stat().st_size,
@@ -554,3 +576,123 @@ def publish_span_evidence(
     receipt["dry_run"] = False
     receipt["commit"] = str(getattr(commit, "commit_url", "") or getattr(commit, "oid", "") or "")
     return receipt
+
+
+BATCH_PROVENANCE_SCHEMA = "uscode-autoformal-span-batch-provenance/v1"
+MAX_BATCH_ROWS = 64
+MAX_BATCH_FILE_BYTES = 8 * 1024 * 1024
+
+
+def _batch_snapshot(path: str | Path) -> bytes:
+    """Capture one bounded immutable upload payload; never pass a live path to Hub."""
+    source = Path(path).absolute()
+    if source.resolve(strict=True) != source:
+        raise SpanEvidenceError("batch input path is aliased")
+    fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    identity = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+    with os.fdopen(fd, "rb") as stream:
+        before = os.fstat(stream.fileno())
+        if not stat.S_ISREG(before.st_mode) or not 0 < before.st_size <= MAX_BATCH_FILE_BYTES:
+            raise SpanEvidenceError("batch input is not a bounded regular file")
+        raw = stream.read(MAX_BATCH_FILE_BYTES + 1)
+        after = os.fstat(stream.fileno())
+    if (len(raw) != before.st_size or identity(before) != identity(after)
+            or identity(before) != identity(source.stat(follow_symlinks=False))):
+        raise SpanEvidenceError("batch input changed while reading")
+    return raw
+
+
+def publish_span_evidence_batch(
+    path: str | Path,
+    provenance_path: str | Path,
+    *,
+    batch_id: str,
+    audited_parent_commit: str,
+    upload: bool = False,
+    repository_id: str = DEFAULT_REPOSITORY_ID,
+    api: Any | None = None,
+) -> dict[str, Any]:
+    """Append exactly two immutable files with parent CAS; never retry a write.
+
+    A transport exception can follow a committed write. The caller must inspect
+    this exact batch at an immutable remote commit before deciding on recovery.
+    """
+    if (not isinstance(batch_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,95}", batch_id)
+            or ".." in batch_id):
+        raise SpanEvidenceError("invalid batch_id")
+    if not isinstance(audited_parent_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", audited_parent_commit):
+        raise SpanEvidenceError("an exact audited parent commit is required")
+    if repository_id != DEFAULT_REPOSITORY_ID:
+        raise SpanEvidenceError("source batch publication is bound to the span-cache repository")
+    if type(upload) is not bool:
+        raise SpanEvidenceError("upload must be boolean")
+    raw = _batch_snapshot(path)
+    proof_raw = _batch_snapshot(provenance_path)
+    try:
+        proof = json.loads(proof_raw)
+    except (ValueError, UnicodeError) as exc:
+        raise SpanEvidenceError("invalid batch provenance") from exc
+    if not isinstance(proof, dict):
+        raise SpanEvidenceError("batch provenance must be an object")
+    if not isinstance(proof.get("parquet"), dict):
+        raise SpanEvidenceError("batch provenance requires a parquet descriptor")
+    if (proof.get("schema_version") != BATCH_PROVENANCE_SCHEMA
+            or proof.get("admitted") is not False or proof.get("formalized") is not False
+            or proof.get("native_model_training") is not False
+            or proof.get("statute_semantics_proved") is not False
+            or proof.get("batch_id") != batch_id
+            or proof.get("parquet", {}).get("sha256") != hashlib.sha256(raw).hexdigest()
+            or type(proof.get("parquet", {}).get("bytes")) is not int
+            or proof["parquet"]["bytes"] != len(raw)):
+        raise SpanEvidenceError("batch provenance does not bind these bytes")
+    import pyarrow.parquet as pq
+
+    parquet = pq.ParquetFile(io.BytesIO(raw))
+    if not parquet.schema_arrow.equals(evidence_schema(), check_metadata=False):
+        raise SpanEvidenceError("batch evidence schema differs")
+    count = parquet.metadata.num_rows
+    if (not 1 <= count <= MAX_BATCH_ROWS or type(proof["parquet"].get("row_count")) is not int
+            or proof["parquet"]["row_count"] != count):
+        raise SpanEvidenceError("batch row count differs or exceeds bound")
+    if sum(parquet.metadata.row_group(i).total_byte_size for i in range(parquet.num_row_groups)) > MAX_BATCH_FILE_BYTES:
+        raise SpanEvidenceError("batch decoded size exceeds bound")
+    rows = parquet.read(use_threads=False).to_pylist()
+    ids = set()
+    for row in rows:
+        if (row["schema_version"] != EVIDENCE_SCHEMA or row["record_kind"] != "span"
+                or not row["source_span_id"] or row["source_span_id"] in ids
+                or row["source_sha256"] != _sha(row["source_text"])
+                or any(row[key] is not False for key in ("admitted", "formalized", "wrote_compiler"))):
+            raise SpanEvidenceError("batch row identity or authority differs")
+        ids.add(row["source_span_id"])
+    prefix = f"autoformal/uscode/batches/{batch_id}"
+    payloads = ((prefix + "/span-evidence.parquet", raw), (prefix + "/provenance.json", proof_raw))
+    receipt = {
+        "schema_version": "uscode-autoformal-span-batch-publication/v1",
+        "repository_id": repository_id, "batch_id": batch_id,
+        "parent_commit": audited_parent_commit, "commit_sha": None,
+        "files": [{"path_in_repo": name, "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+                  for name, body in payloads],
+        "admitted": False, "formalized": False, "dry_run": not upload, "uploaded": False,
+    }
+    if not upload:
+        return receipt
+    if api is None:
+        from huggingface_hub import HfApi
+        api = HfApi()
+    head = api.repo_info(repo_id=repository_id, repo_type="dataset", revision="main")
+    if getattr(head, "sha", None) != audited_parent_commit:
+        raise SpanEvidenceError("remote parent changed; batch requires a fresh audit")
+    existing = api.get_paths_info(repo_id=repository_id, repo_type="dataset",
+                                  paths=[prefix, *(name for name, _ in payloads)], revision=audited_parent_commit)
+    if list(existing):
+        raise SpanEvidenceError("batch prefix already exists; refusing overwrite")
+    from huggingface_hub import CommitOperationAdd
+    operations = [CommitOperationAdd(path_in_repo=name, path_or_fileobj=body) for name, body in payloads]
+    committed = api.create_commit(repo_id=repository_id, repo_type="dataset", revision="main",
+                                  parent_commit=audited_parent_commit, operations=operations,
+                                  commit_message=f"Append source-backed span evidence batch {batch_id}")
+    sha = getattr(committed, "oid", None)
+    if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise SpanEvidenceError("remote write returned no immutable commit; recovery required")
+    return {**receipt, "uploaded": True, "dry_run": False, "commit_sha": sha}
