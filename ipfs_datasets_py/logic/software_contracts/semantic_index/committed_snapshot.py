@@ -28,6 +28,11 @@ from .snapshot import (
 
 DEFAULT_MAX_TOTAL_BYTES = 128 * 1024 * 1024
 DEFAULT_MAX_METADATA_BYTES = 32 * 1024 * 1024
+# Metadata operations inspect the same large packs as blob decoders. Bound
+# their mappings/cache too, including nested Git status invocations.
+GIT_METADATA_CONFIG = (("core.packedGitWindowSize", "8388608"),
+                       ("core.packedGitLimit", "33554432"),
+                       ("core.deltaBaseCacheLimit", "16777216"))
 
 
 @dataclass(frozen=True)
@@ -110,6 +115,7 @@ def _run_git(root: Path, args: tuple[str, ...], maximum_bytes: int) -> bytes:
     """Bound both Git output streams before retaining them in memory."""
     env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
     argv = ["git", "--no-optional-locks", "--no-replace-objects", "-c", "core.fsmonitor=false",
+            *(arg for key, value in GIT_METADATA_CONFIG for arg in ("-c", key + "=" + value)),
             "-c", "core.hooksPath=/dev/null", "-C", str(root), *args]
     try:
         child = subprocess.Popen(argv, env=env, stdin=subprocess.DEVNULL,
