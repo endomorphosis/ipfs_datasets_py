@@ -70,6 +70,57 @@ class DCECParsingError(Exception):
     pass
 
 
+def _prefix_call_token(expression: str) -> Optional[ParseToken]:
+    """Preserve pure functional syntax before the legacy infix comma splitting."""
+    import re
+
+    expression = expression.strip()
+    match = re.match(r"([A-Za-z_]\w*)\s*\(", expression)
+    if match is None:
+        return None
+    depth = 1
+    start = match.end()
+    parts = []
+    for position in range(start, len(expression)):
+        char = expression[position]
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                trailing = expression[position + 1:].strip()
+                if trailing:
+                    if re.match(r"(?:and\b|or\b|implies\b|iff\b|->|=>|<->|&|\|)", trailing):
+                        return None  # Existing mixed/infix notation keeps its old path.
+                    raise DCECParsingError("Trailing syntax after functional expression")
+                parts.append(expression[start:position].strip())
+                break
+        elif char == "," and depth == 1:
+            parts.append(expression[start:position].strip())
+            start = position + 1
+    else:
+        raise DCECParsingError("Unbalanced functional expression")
+    if not parts or any(not part for part in parts):
+        raise DCECParsingError("Empty argument in functional expression")
+    args = []
+    for part in parts:
+        child = _prefix_call_token(part)
+        if child is not None:
+            args.append(child)
+        elif re.fullmatch(r"[A-Za-z_]\w*", part):
+            args.append(part)
+        elif re.search(r"\b(?:and|or|not|implies|iff)\b|->|=>|[&|]", part):
+            return None  # Unsupported mixed syntax remains with the infix parser.
+        else:
+            raise DCECParsingError("Unsupported argument in functional expression")
+    name = match.group(1)
+    formula_operators = {"o", "p", "f", "and", "or", "not", "implies", "iff",
+                         "ifandonlyif", "b", "k", "i", "always", "box", "eventually", "diamond"}
+    if name.lower() not in formula_operators and any(isinstance(arg, ParseToken) for arg in args):
+        raise DCECParsingError("Nested function terms are not supported")
+    return ParseToken(name, args)
+
+
 def parse_expression_to_token(
     expression: str, namespace: Optional[DCECPrototypeNamespace] = None
 ) -> Optional[ParseToken]:
@@ -119,6 +170,10 @@ def parse_expression_to_token(
         sub_token = parse_expression_to_token(sub_expr, namespace)
         if sub_token is not None:
             return ParseToken("not", [sub_token])
+
+    functional = _prefix_call_token(expr)
+    if functional is not None:
+        return functional
 
     # Step 2: Clean whitespace and validate
     expr = strip_whitespace(expr)
@@ -247,8 +302,8 @@ def token_to_formula(
 
     # Deontic operators
     elif func_name == "o":  # Obligation
-        if len(token.args) >= 2:
-            # O(agent, moment, formula) or O(agent, moment, condition, formula)
+        if len(token.args) >= 1:
+            # O(formula), O(agent, moment, formula), or the conditional form.
             formula_arg = token.args[-1]
             formula = _arg_to_formula(formula_arg, namespace, variables)
             if formula:
@@ -258,7 +313,7 @@ def token_to_formula(
         if len(token.args) >= 1:
             formula = _arg_to_formula(token.args[-1], namespace, variables)
             if formula:
-                return DeonticFormula(DeonticOperator.PERMISSIBLE, formula)
+                return DeonticFormula(DeonticOperator.PERMISSION, formula)
 
     elif func_name == "f":  # Forbidden
         if len(token.args) >= 1:

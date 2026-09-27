@@ -429,3 +429,76 @@ class TestEndToEndIntegration:
         # THEN
         assert formula is not None
         assert isinstance(formula, ConnectiveFormula)
+
+
+@pytest.mark.parametrize(
+    ("modality", "operator"),
+    [
+        ("obligated", DeonticOperator.OBLIGATORY),
+        ("permitted", DeonticOperator.PERMISSION),
+        ("forbidden", DeonticOperator.FORBIDDEN),
+    ],
+)
+def test_generated_bridge_unary_deontic_formula_preserves_operator(modality, operator):
+    """The actual bridge export must retain its deontic type when reparsed."""
+    from ipfs_datasets_py.logic.bridge.cec_dcec import _proof_input_formula_text
+    from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+
+    expression = _proof_input_formula_text(
+        actor="officer", event="retain_file", modality=modality
+    )
+    assert expression == f"{operator.value}(happens(officer,retain_file,t0))"
+    formula = parse_dcec_string(expression)
+    assert isinstance(formula, DeonticFormula)
+    assert formula.operator is operator
+    assert formula.agent is None
+    assert isinstance(formula.formula, AtomicFormula)
+    assert formula.formula.predicate.name == "happens"
+    assert [term.variable.name for term in formula.formula.arguments] == ["officer", "retain_file", "t0"]
+
+
+@pytest.mark.parametrize("prefix", [["agent"], ["agent", "moment"], ["agent", "moment", "condition"]])
+def test_multiargument_obligation_preserves_existing_last_argument_behavior(prefix):
+    token = ParseToken("O", [*prefix, ParseToken("happens", ["officer", "retain_file", "t0"])])
+    formula = token_to_formula(token)
+    assert isinstance(formula, DeonticFormula)
+    assert formula.operator is DeonticOperator.OBLIGATORY
+    assert formula.agent is None
+    assert formula.formula.predicate.name == "happens"
+    assert [term.variable.name for term in formula.formula.arguments] == ["officer", "retain_file", "t0"]
+
+
+@pytest.mark.parametrize(
+    ("name", "operator"),
+    [("O", DeonticOperator.OBLIGATION), ("P", DeonticOperator.PERMISSION), ("F", DeonticOperator.PROHIBITION)],
+)
+def test_unary_deontic_token_preserves_operator(name, operator):
+    formula = token_to_formula(ParseToken(name, [ParseToken("happens", ["officer", "retain_file", "t0"])]))
+    assert isinstance(formula, DeonticFormula)
+    assert formula.operator is operator
+    assert formula.formula.predicate.name == "happens"
+    assert [term.variable.name for term in formula.formula.arguments] == ["officer", "retain_file", "t0"]
+
+
+@pytest.mark.parametrize("prefix", ["agent,", "agent,moment,", "agent,moment,condition,"])
+def test_multiargument_obligation_string_keeps_inner_formula(prefix):
+    formula = parse_dcec_string(f"O({prefix}happens(officer,retain_file,t0))")
+    assert isinstance(formula, DeonticFormula)
+    assert formula.operator is DeonticOperator.OBLIGATION
+    assert formula.agent is None
+    assert formula.formula.predicate.name == "happens"
+    assert [term.variable.name for term in formula.formula.arguments] == ["officer", "retain_file", "t0"]
+
+
+@pytest.mark.parametrize("expression", [
+    "O(happens(officer,retain_file,t0))garbage",
+    "O(happens(officer,retain_file,t0)) another",
+    "O(happens(officer,,t0))",
+    "O(happens(officer,retain_file,t0),)",
+    "O(happens(officer,retain_file,t0)",
+    "O(happens(officer,retain_file,t0)))",
+    "O(happens(officer,event(file),t0))",
+])
+def test_malformed_or_unsupported_nested_prefix_is_not_accepted(expression):
+    with pytest.raises(DCECParsingError):
+        parse_dcec_string(expression)

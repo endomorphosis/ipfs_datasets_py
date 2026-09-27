@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from ipfs_datasets_py.logic.autoformal.constitution_inventory import (
@@ -18,6 +19,18 @@ from ipfs_datasets_py.logic.autoformal.constitution_inventory import (
 
 SCHEMA = "uscode-sparse-autoformal-span-v1"
 RETRIEVAL_METHOD = "sparse_bm25"
+FORMAL_LOGIC = re.compile(
+    r"\b(?:shall|must|may|required|prohibit(?:ed)?|authorized|eligible|entitled|"
+    r"except|unless|provided|subject\s+to|not\s+later\s+than|repealed|"
+    r"means|defined|includes|penalty|violation)\b",
+    re.IGNORECASE,
+)
+
+
+def is_formal_logic(text: str) -> bool:
+    """A deontic, temporal, conditional, or definition cue. Not an admit."""
+
+    return bool(FORMAL_LOGIC.search(str(text or "")))
 
 
 def _clean(value: Any) -> str:
