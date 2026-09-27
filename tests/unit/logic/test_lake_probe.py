@@ -64,16 +64,14 @@ def test_belief_knowledge_and_actorless_prohibition_are_definitional_fixtures() 
     assert receipt["formalized"] is False
 
 
-def test_frame_family_has_a_cross_entropy_floor_when_a_frame_is_selected() -> None:
+def test_frame_selection_does_not_invent_a_target_probability_floor() -> None:
     from ipfs_datasets_py.logic.modal.codec import target_family_distribution_for_modal_ir
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import ModalIRDocument
 
     document = ModalIRDocument(document_id="t", source="t", normalized_text="t")
     plain = target_family_distribution_for_modal_ir(document)
-    framed = target_family_distribution_for_modal_ir(document, require_frame=True)
     assert "frame" not in plain
-    assert framed["frame"] >= 0.368
-    assert abs(sum(framed.values()) - 1.0) < 1e-6
+    assert abs(sum(plain.values()) - 1.0) < 1e-6
 
 
 def test_loop_logs_census_spans_and_lake_errors(tmp_path) -> None:

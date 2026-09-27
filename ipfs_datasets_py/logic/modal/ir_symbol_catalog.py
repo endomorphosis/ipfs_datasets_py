@@ -6,6 +6,7 @@ is replaced by the closest catalog symbol. The catalog does not grow.
 """
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import replace
 from functools import lru_cache
@@ -226,16 +227,18 @@ def append_bluebook_citation_formulas(
 
 
 def dedupe_modal_ir_formulas(modal_ir: ModalIRDocument) -> ModalIRDocument:
-    """Drop a later formula with the same operator, predicate, and arguments."""
+    """Drop exact duplicate formulas while retaining semantic and source differences.
 
-    seen: set[tuple[str, str, tuple[str, ...]]] = set()
+    Formula IDs identify occurrences, so they alone do not distinguish content.
+    Conditions, exceptions, operator fields, roles, provenance, and metadata do.
+    """
+
+    seen: set[str] = set()
     kept: list[ModalIRFormula] = []
     for formula in modal_ir.formulas:
-        key = (
-            str(formula.operator.symbol or ""),
-            str(formula.predicate.name or ""),
-            tuple(str(item) for item in formula.predicate.arguments or []),
-        )
+        content = formula.to_dict()
+        content.pop("formula_id", None)
+        key = json.dumps(content, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
         if key in seen:
             continue
         seen.add(key)

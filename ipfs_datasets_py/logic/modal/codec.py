@@ -135,7 +135,6 @@ _COMPILER_GUIDANCE_FRAME_AUDIT_COMPONENT_GAP_KEYS = (
     "legal_ir_component_gaps",
 )
 _DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR = 0.368
-_FRAME_TARGET_FAMILY_PROBABILITY_FLOOR = 0.368
 _CONDITIONAL_NORMATIVE_TARGET_FAMILY_PROBABILITY_FLOOR = 0.368
 _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("provided that", "provided_that"),
@@ -2853,10 +2852,7 @@ class DeterministicModalLogicCodec:
         )
         family_probabilities = _softmax(family_logits)
         target_family = target_family_for_modal_ir(modal_ir)
-        target_family_distribution = target_family_distribution_for_modal_ir(
-            modal_ir,
-            require_frame=bool(selected_frame),
-        )
+        target_family_distribution = target_family_distribution_for_modal_ir(modal_ir)
         semantic_family_probabilities = _modal_ir_semantic_family_distribution_with_floors(
             family_probabilities,
             modal_ir,
@@ -3530,39 +3526,19 @@ def target_family_for_modal_ir(modal_ir: ModalIRDocument) -> str:
     return modal_ir.formulas[0].operator.family
 
 
-def target_family_distribution_for_modal_ir(
-    modal_ir: ModalIRDocument,
-    *,
-    require_frame: bool = False,
-) -> Dict[str, float]:
+def target_family_distribution_for_modal_ir(modal_ir: ModalIRDocument) -> Dict[str, float]:
     """Return observed modal-family frequencies for multi-family legal clauses."""
     families = [formula.operator.family for formula in modal_ir.formulas]
-    frame_family = ModalLogicFamily.FRAME.value
-    has_frame_formula = _has_frame_formula(modal_ir)
     if not families:
-        distribution = {ModalLogicFamily.HYBRID.value: 1.0}
-    else:
-        counts: Dict[str, int] = {}
-        for family in families:
-            counts[family] = counts.get(family, 0) + 1
-        total = float(sum(counts.values()))
-        distribution = {family: count / total for family, count in sorted(counts.items())}
-        distribution = _deontic_target_distribution_with_floor(distribution, families=families)
-    if require_frame or has_frame_formula:
-        distribution = _distribution_with_probability_floors(
-            distribution,
-            {frame_family: _FRAME_TARGET_FAMILY_PROBABILITY_FLOOR},
-        )
-    return distribution
+        return {ModalLogicFamily.HYBRID.value: 1.0}
+    counts: Dict[str, int] = {}
+    for family in families:
+        counts[family] = counts.get(family, 0) + 1
+    total = float(sum(counts.values()))
+    distribution = {family: count / total for family, count in sorted(counts.items())}
+    return _deontic_target_distribution_with_floor(distribution, families=families)
 
 
-def _has_frame_formula(modal_ir: ModalIRDocument) -> bool:
-    for formula in modal_ir.formulas:
-        family = str(formula.operator.family or "").strip()
-        symbol = str(formula.operator.symbol or "").strip()
-        if family == ModalLogicFamily.FRAME.value or symbol in {"Frame", "frame"}:
-            return True
-    return False
 
 
 def _deontic_target_distribution_with_floor(
@@ -3626,8 +3602,6 @@ def _modal_ir_semantic_family_distribution_with_floors(
             has_deontic_force = True
         if family == ModalLogicFamily.DEONTIC.value or symbol in {"O", "P", "F"}:
             has_deontic_force = True
-        if family == ModalLogicFamily.FRAME.value or symbol in {"Frame", "frame"}:
-            floors[ModalLogicFamily.FRAME.value] = _FRAME_TARGET_FAMILY_PROBABILITY_FLOOR
 
     if has_deontic_force:
         floors[ModalLogicFamily.DEONTIC.value] = _DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR
