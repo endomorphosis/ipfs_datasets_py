@@ -1,0 +1,7 @@
+{
+  "cases": 2,
+  "exact_limit_passes": true,
+  "one_byte_above_limit_fails": true,
+  "passed": true,
+  "project_imports_performed": false
+}

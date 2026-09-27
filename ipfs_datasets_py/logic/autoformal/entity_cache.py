@@ -1323,16 +1323,26 @@ class EntityCache:
                 path,fingerprint,kinds,cursor=_stage_resume(self._db,Path(path),binding)
                 after=''
                 while True:
+                    # Select only keys before constructing the rich join. Both
+                    # sides are restricted to this same bounded local window.
+                    keys=self._db.execute('SELECT entity_id FROM entity_queue WHERE entity_id>? '
+                                          'ORDER BY entity_id LIMIT 64',[after]).fetchall()
+                    if not keys: break
+                    upper=keys[-1][0]
+                    identifiers=[key[0] for key in keys]
                     page=self._db.execute("""SELECT e.entity_id,e.entity_type,e.label,e.properties_json,e.source_sha256,e.context_json,
                         r.entity_type,r.label,r.properties_json,r.source_sha256,r.context_json
                         FROM entity_queue e JOIN _entity_resume_stage r ON e.entity_id=r.entity_id AND r.record_kind='entity'
-                        WHERE e.entity_id>? ORDER BY e.entity_id LIMIT 64""",[after]).fetchall()
-                    if not page: break
+                        WHERE e.entity_id>? AND e.entity_id<=? AND r.entity_id>? AND r.entity_id<=?
+                        AND r.entity_id IN ("""+','.join('?' for _ in identifiers)+""")
+                        ORDER BY e.entity_id LIMIT 64""",[after,upper,after,upper,*identifiers]).fetchall()
                     for row in page:
                         _require(tuple(row[1:5])==tuple(row[6:10]),'remote immutable entity differs')
                         _require(_json(_object(row[5] or '',MAX_CONTEXT_BYTES,'local context'))==row[10],'remote context differs')
-                    after=page[-1][0]
-                    del page
+                    # An entire local window may have no remote observation.
+                    # Its upper key still advances, preserving later matches.
+                    after=upper
+                    del keys,identifiers,page
                 prepared=self._db.execute("""SELECT count(*) FROM entity_queue e JOIN _entity_resume_stage r
                     ON e.entity_id=r.entity_id AND r.record_kind='entity' WHERE e.status='pending' AND r.status='prepared'""").fetchone()[0]
                 self._db.execute("""UPDATE entity_queue SET status='prepared',claim_worker='',claim_token='',admitted=FALSE,formalized=FALSE

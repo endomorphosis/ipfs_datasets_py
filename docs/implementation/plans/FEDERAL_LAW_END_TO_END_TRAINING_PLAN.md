@@ -438,6 +438,17 @@ cache comparison. The 196.773-second snapshot self-observation is the next
 measured source-processing cost. No native training, bridge speedup, fresh-DB
 restore, Hub upload or legal admission is established by this capture.
 
+[Bounded snapshot re-import](../reports/entity_cache_resume_window.md) now passes
+152 focused tests plus 12 decoder checks and a separate full-source integrity
+capture. In one full-overlap comparison, self-observation fell from 196.773 to
+103.969 seconds; whole-audit time fell from 630.679 to 522.211 seconds.
+Filesystem caches were uncontrolled and sparse-import latency is unmeasured.
+The new terminal lifetime-peak guard passed at 1,070,927,872 bytes, only
+2,813,952 bytes below 1 GiB. All five database table digests remained unchanged
+during R3 self-observation, and all 79 prior claims were preserved. Compare sparse, empty and foreign-heavy observations
+before changing traversal again. Native training and Hub uploads remain deferred;
+this source result establishes no legal-IR speedup or admission.
+
 ## 1. Decision and intended outcome
 
 The latest [production-adoption audit](../reports/autoencoder_daemon_production_adoption_audit.md)

@@ -705,3 +705,93 @@ def test_grouped_export_failure_retains_previous_complete_snapshot_and_state(tmp
     assert path.read_bytes()==before and _state(cache)==state
     assert not list(tmp_path.glob('.*.tmp'))
     cache.close()
+
+
+
+@pytest.mark.parametrize('selected',[[],[63],[64],[129],[63,64,129]])
+def test_remote_sparse_observations_advance_empty_windows_and_include_boundaries(tmp_path,selected):
+    rows=[_row('doc:'+str(i).zfill(4)) for i in range(130)]
+    local=_ready(tmp_path,rows,name='local');remote=_ready(tmp_path,rows,name='remote')
+    local._db.execute("UPDATE entity_queue SET status='pending'")
+    local.refresh_task_board()
+    path=tmp_path/'partial.parquet';_snapshot(remote,path)
+    identifiers={'doc:'+str(i).zfill(4) for i in selected}
+    def subset(records):
+        records[:]=[row for row in records if row['record_kind'] not in {'entity','board'}
+                    or row['entity_id'] in identifiers]
+    _mutate_snapshot(path,subset)
+    result=local.upsert_remote_resume(path,agent_id='observer')
+    assert result==dict(admitted=False,formalized=False,claimed=0,prepared=len(identifiers))
+    observed=local._db.execute('SELECT entity_id,status,claim_worker,claim_token,admitted,formalized FROM entity_queue ORDER BY entity_id').fetchall()
+    assert len(observed)==130
+    assert observed==[(row['id'],'prepared' if row['id'] in identifiers else 'pending','', '',False,False) for row in rows]
+    assert local._db.execute('SELECT count(*) FROM agent_lease').fetchone()==(0,)
+    assert local._db.execute("SELECT count(*) FROM task_board WHERE status='prepared'").fetchone()==(len(identifiers),)
+    local.close();remote.close()
+
+
+@pytest.mark.parametrize('conflict',['immutable','context'])
+def test_remote_late_window_conflict_rolls_back_earlier_valid_observations(tmp_path,conflict):
+    rows=[_row('doc:'+str(i).zfill(4)) for i in range(130)]
+    local=_ready(tmp_path,rows,name='local');remote=_ready(tmp_path,rows,name='remote')
+    local._db.execute("UPDATE entity_queue SET status='pending'");local.refresh_task_board()
+    before=_state(local);path=tmp_path/'conflict.parquet';_snapshot(remote,path)
+    def alter(records):
+        row=next(row for row in records if row['record_kind']=='entity' and row['entity_id']=='doc:0129')
+        if conflict=='immutable':
+            row['properties_json']='{"changed":true}'
+            row['source_sha256']=module._entity_record(row)[4]
+        else: row['context_json']='{"changed":true}'
+    _mutate_snapshot(path,alter)
+    with pytest.raises(module.EntityCacheError,match='remote immutable|remote context'):
+        local.upsert_remote_resume(path,agent_id='observer')
+    assert _state(local)==before and local.stats()==dict(pending=130,claimed=0,prepared=0)
+    local.close();remote.close()
+
+
+def test_remote_windowed_import_preserves_claim_at_page_boundary(tmp_path):
+    rows=[_row('doc:'+str(i).zfill(4)) for i in range(130)]
+    local=_ready(tmp_path,rows,name='local');remote=_ready(tmp_path,rows,name='remote')
+    local._db.execute("UPDATE entity_queue SET status='pending'")
+    local._db.execute("UPDATE entity_queue SET status='claimed',claim_worker='owner',claim_token=? WHERE entity_id='doc:0064'",['1'*32])
+    local.register_agent('owner');local.refresh_task_board()
+    agents=local._db.execute('SELECT * FROM agent_lease ORDER BY agent_id').fetchall()
+    path=tmp_path/'observed.parquet';_snapshot(remote,path)
+    assert local.upsert_remote_resume(path,agent_id='foreign-observer')==dict(admitted=False,formalized=False,claimed=0,prepared=129)
+    assert local._db.execute("SELECT status,claim_worker,claim_token FROM entity_queue WHERE entity_id='doc:0064'").fetchone()==('claimed','owner','1'*32)
+    assert local._db.execute('SELECT * FROM agent_lease ORDER BY agent_id').fetchall()==agents
+    assert local.stats()==dict(pending=0,claimed=1,prepared=129)
+    assert local._db.execute('SELECT count(*) FROM entity_queue WHERE admitted OR formalized').fetchone()==(0,)
+    local.close();remote.close()
+
+
+def test_remote_windowed_import_final_hash_failure_rolls_back_all_pages(tmp_path,monkeypatch):
+    rows=[_row('doc:'+str(i).zfill(4)) for i in range(130)]
+    local=_ready(tmp_path,rows,name='local');remote=_ready(tmp_path,rows,name='remote')
+    local._db.execute("UPDATE entity_queue SET status='pending'");local.refresh_task_board()
+    before=_state(local);path=tmp_path/'late-drift.parquet';_snapshot(remote,path)
+    def changed(*args): raise module.EntityCacheError('late snapshot changed')
+    monkeypatch.setattr(module,'_resume_current',changed)
+    with pytest.raises(module.EntityCacheError,match='late snapshot changed'):
+        local.upsert_remote_resume(path,agent_id='observer')
+    assert _state(local)==before
+    local.close();remote.close()
+
+
+
+def test_remote_only_identity_inside_local_key_window_remains_unimported(tmp_path):
+    rows=[_row('doc:'+str(i).zfill(4)) for i in range(130)]
+    local=_ready(tmp_path,rows,name='local');remote=_ready(tmp_path,rows,name='remote')
+    local._db.execute("UPDATE entity_queue SET status='pending'");local.refresh_task_board()
+    path=tmp_path/'interleaved.parquet';_snapshot(remote,path)
+    def alter(records):
+        for row in records:
+            if row['record_kind'] in {'entity','board'} and row['entity_id']=='doc:0000':
+                row['entity_id']='doc:0063-extra'
+                if row['record_kind']=='entity':row['source_sha256']=module._entity_record(row)[4]
+    _mutate_snapshot(path,alter)
+    assert local.upsert_remote_resume(path,agent_id='observer')['prepared']==129
+    assert local._db.execute("SELECT count(*) FROM entity_queue WHERE entity_id='doc:0063-extra'").fetchone()==(0,)
+    assert local._db.execute("SELECT status FROM entity_queue WHERE entity_id='doc:0000'").fetchone()==('pending',)
+    assert local._db.execute('SELECT count(*) FROM entity_queue').fetchone()==(130,)
+    local.close();remote.close()

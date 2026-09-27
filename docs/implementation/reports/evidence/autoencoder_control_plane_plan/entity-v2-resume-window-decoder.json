@@ -1,0 +1,19 @@
+{
+  "cases": 12,
+  "harness_artifacts": [
+    {
+      "bytes": 33386,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-resume-window-validation-20260927/source_checks.py",
+      "sha256": "1d9634d6518f6880ce99e891b1b328ad87f40843cc86dc7e4989e1fd7317e416"
+    },
+    {
+      "bytes": 1823,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-resume-window-validation-20260927/decoder_checks.py",
+      "sha256": "b3ae88d8e248f6c7b482eb7c666a6501d73bb6470a559f18cd624df03f474850"
+    }
+  ],
+  "passed": true,
+  "project_imports_performed": false,
+  "runtime_source_work_performed": false,
+  "schema": "offline-entity-cli-stdout-decoder-v1"
+}
