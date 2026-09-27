@@ -1,0 +1,33 @@
+{
+  "acceptance_criteria": [
+    "The declared test runs both real lanes concurrently and verifies all retained receipts. Completion applies only to this smoke task, never legal admission or model promotion."
+  ],
+  "board_namespace": "concurrent-autoformal-smoke-v1",
+  "completion": "auto",
+  "context_budget_tokens": 4096,
+  "is_schedulable": true,
+  "outputs": [
+    {
+      "path": "results/smoke.json"
+    }
+  ],
+  "priority": "P1",
+  "provider_role": "deterministic-only",
+  "review_only": false,
+  "status": "ready",
+  "task_cid": "baguqeera2lj74gi3i4wofsh5ei5glsmvp44ffwanctkztykm5f53arx57qia",
+  "task_id": "SMOKE-3ab02fd285da0179a20c",
+  "title": "Execute and verify concurrent autoformal smoke",
+  "track": "bounded-validation",
+  "validation_commands": [
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/test_concurrent_smoke.py",
+        "-q"
+      ]
+    }
+  ]
+}

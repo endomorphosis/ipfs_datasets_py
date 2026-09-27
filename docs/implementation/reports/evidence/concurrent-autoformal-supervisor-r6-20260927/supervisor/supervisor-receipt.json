@@ -1,0 +1,194 @@
+{
+  "accelerate_dependency": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "accelerate_dependency_after": {
+    "file_count": 3553,
+    "manifest_sha256": "4df3e5a67c6dd0ac21147eada76a7b472ffcaad41c40a2c820457534b0bac485",
+    "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source",
+    "snapshot_commit": "aa873b3e47e68bf14bcda55e5a972ec6b37671f3",
+    "source_bytes": 123966701,
+    "source_commit": "7adfbfc548baaaf7ca86cf70b18ec7effb71ad82"
+  },
+  "accelerate_pin": {
+    "accelerate_module": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/__init__.py",
+    "accelerate_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source"
+  },
+  "admitted": false,
+  "after": {
+    "dependency_count": 0,
+    "event_cursor": 5,
+    "formal_plan_id": "baguqeeraytp2k5q2ktl35fjgj57tfudmdc2fqlrle4lvjfmsiadld2atubda",
+    "goal_count": 1,
+    "objective_count": 0,
+    "plan_count": 1,
+    "plan_root_cid": "baguqeeraytp2k5q2ktl35fjgj57tfudmdc2fqlrle4lvjfmsiadld2atubda",
+    "projection_cid": "baguqeera6lupbx5niyd4y4mciakb77b2y3qhvq3xg7exh776vuzbklayincq",
+    "repository_tree_id": "",
+    "revision": 5,
+    "schema": "ipfs_accelerate_py/agent-supervisor/database-task-source-snapshot@1",
+    "schema_version": 1,
+    "source_identity": "baguqeeravsegxlzuppse55zz4yntutrc6e5nzwk4twdqkao5o7jseixw7cba",
+    "source_schema": "ipfs_accelerate_py/agent-supervisor/database-task-source@1",
+    "task_count": 1,
+    "terminal": false
+  },
+  "authority_mode": "embedded-single-owner",
+  "before": {
+    "dependency_count": 0,
+    "event_cursor": 3,
+    "formal_plan_id": "baguqeeraytp2k5q2ktl35fjgj57tfudmdc2fqlrle4lvjfmsiadld2atubda",
+    "goal_count": 1,
+    "objective_count": 0,
+    "plan_count": 1,
+    "plan_root_cid": "baguqeeraytp2k5q2ktl35fjgj57tfudmdc2fqlrle4lvjfmsiadld2atubda",
+    "projection_cid": "baguqeerabfljnfqdqp6k6ozo5clgm36eoz5r6natot2dh6rbc7jb47iobjqa",
+    "repository_tree_id": "89b7f493145d4293291b3b1c73eaaf4829b94741",
+    "revision": 3,
+    "schema": "ipfs_accelerate_py/agent-supervisor/database-task-source-snapshot@1",
+    "schema_version": 1,
+    "source_identity": "baguqeerawbecrgdn3onrj75e7h2bzvc7m64bqosnuis2cu6zv4vr4jqwyczq",
+    "source_schema": "ipfs_accelerate_py/agent-supervisor/database-task-source@1",
+    "task_count": 1,
+    "terminal": false
+  },
+  "elapsed_seconds": 207.04050307301804,
+  "error": null,
+  "formalized": false,
+  "logic_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "native_result": {
+    "active_task_id": "SMOKE-3ab02fd285da0179a20c",
+    "attempt_id": "attempt:04a834595c7548af8ba302025b13b5ac",
+    "authority_mode": "embedded",
+    "claim_id": "claim:b007053659d04117ae67c4d367669d1a",
+    "claimed_task_cid": "baguqeera2lj74gi3i4wofsh5ei5glsmvp44ffwanctkztykm5f53arx57qia",
+    "completion_reconciliations": [],
+    "control_schema_evidence": {
+      "profile_id": "",
+      "schema_fingerprint": "",
+      "state_schema_revision": "",
+      "verified": false
+    },
+    "expired_attempt_reconciliations": [],
+    "implementation_result": {
+      "attempt_id": "attempt:04a834595c7548af8ba302025b13b5ac",
+      "portal_terminal_failure": true,
+      "reason": "portal_provider_failed",
+      "resumed": true,
+      "settlement": {
+        "attempt_id": "attempt:04a834595c7548af8ba302025b13b5ac",
+        "claim_id": "claim:b007053659d04117ae67c4d367669d1a",
+        "claim_state": "released",
+        "control_revision": 3,
+        "control_status": "blocked",
+        "control_superseded": false,
+        "coordination_attempt_status": "failed",
+        "effect_claim_count": 0,
+        "execution_status": "failed",
+        "provider_invocation_count": 0,
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-claim-failure-settlement@1",
+        "settlement_id": "baguqeera7asfpft7dhipkjhwnizxtgw3jmbv3tgfg3pcb5kaeng4zsybrpnq",
+        "task_alias": "SMOKE-3ab02fd285da0179a20c",
+        "task_cid": "baguqeera2lj74gi3i4wofsh5ei5glsmvp44ffwanctkztykm5f53arx57qia"
+      },
+      "status": "blocked",
+      "task_alias": "SMOKE-3ab02fd285da0179a20c"
+    },
+    "markdown_status_writes": 0,
+    "orphan_claim_reconciliations": [],
+    "portal_failure_rearms": [],
+    "portal_failure_reconciliations": [],
+    "projections_required": false,
+    "task_source_kind": "duckdb",
+    "unchanged": false,
+    "write_count": 1
+  },
+  "native_task": {
+    "acceptance": [
+      {
+        "criterion": "The declared test runs both real lanes concurrently and verifies all retained receipts. Completion applies only to this smoke task, never legal admission or model promotion.",
+        "evidence_policy": {
+          "criterion": "The declared test runs both real lanes concurrently and verifies all retained receipts. Completion applies only to this smoke task, never legal admission or model promotion."
+        },
+        "ordinal": 0
+      }
+    ],
+    "body": {
+      "board_namespace": "concurrent-autoformal-smoke-v1",
+      "completion": "auto",
+      "completion_receipt": {
+        "attempt_id": "attempt:04a834595c7548af8ba302025b13b5ac",
+        "attempt_number": 1,
+        "automatic_retry_admitted": false,
+        "claim_id": "claim:b007053659d04117ae67c4d367669d1a",
+        "control_expected_revision": 2,
+        "control_expected_status": "in_progress",
+        "effect_claim_count": 0,
+        "failure_kind": "terminal_portal_bridge_error",
+        "failure_payload_digest": "sha256:e077f556680e37e72ea677f7eba0b9cb820094840136374a0fb22f20ae83a249",
+        "fence_epoch": 1,
+        "fencing_token": 1,
+        "lease_id": "lease:fe759c26e09543d68c26ebea6f521c9b",
+        "operation": "database_task_claim_failure",
+        "owner_session_id": "embedded-store:df3a183e22c9d3755076b6082749d93c",
+        "provider_invocation_count": 0,
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-claim-failure-settlement@1",
+        "settlement_id": "baguqeera7asfpft7dhipkjhwnizxtgw3jmbv3tgfg3pcb5kaeng4zsybrpnq",
+        "task_cid": "baguqeera2lj74gi3i4wofsh5ei5glsmvp44ffwanctkztykm5f53arx57qia"
+      },
+      "context_budget_tokens": 4096,
+      "is_schedulable": true,
+      "provider_role": "deterministic-only",
+      "review_only": false,
+      "title": "Execute and verify concurrent autoformal smoke",
+      "track": "bounded-validation"
+    },
+    "dependencies": [],
+    "goal_cid": "goal:default",
+    "objective_id": "",
+    "ordinal": 1,
+    "outputs": [
+      {
+        "effect": {
+          "path": "results/smoke.json"
+        },
+        "ordinal": 0,
+        "path": "results/smoke.json"
+      }
+    ],
+    "plan_cid": "baguqeeraytp2k5q2ktl35fjgj57tfudmdc2fqlrle4lvjfmsiadld2atubda",
+    "priority": "P1",
+    "revision": 3,
+    "status": "blocked",
+    "task_alias": "SMOKE-3ab02fd285da0179a20c",
+    "task_cid": "baguqeera2lj74gi3i4wofsh5ei5glsmvp44ffwanctkztykm5f53arx57qia",
+    "updated_at": "2026-09-27T17:57:35Z",
+    "validations": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/test_concurrent_smoke.py",
+          "-q"
+        ],
+        "ordinal": 0,
+        "policy": {}
+      }
+    ]
+  },
+  "passed": false,
+  "production_promotion": false,
+  "quack_transport_exercised": false,
+  "schema": "concurrent-autoformal-native-supervisor-smoke/v1",
+  "scope": "deterministic-only smoke task; no compiler code repair"
+}

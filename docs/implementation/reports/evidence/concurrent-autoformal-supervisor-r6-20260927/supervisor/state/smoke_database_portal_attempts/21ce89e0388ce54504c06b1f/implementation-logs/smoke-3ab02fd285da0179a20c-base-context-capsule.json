@@ -1,0 +1,139 @@
+{
+  "acceptance": {
+    "all_expected_outputs_required": true,
+    "criteria": "The declared test runs both real lanes concurrently and verifies all retained receipts. Completion applies only to this smoke task, never legal admission or model promotion.",
+    "validation_commands": [
+      "python3 -m pytest tests/test_concurrent_smoke.py -q"
+    ]
+  },
+  "authority": {
+    "completion_authoritative": false,
+    "durable_checkpoint": {
+      "directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation_checkpoints/smoke-3ab02fd285da0179a20c-f6da5eb92581",
+      "environment_variable": "IPFS_ACCELERATE_AGENT_TASK_CHECKPOINT_DIR",
+      "file_count": 0,
+      "manifest_cid": "baguqeera5jlyilnbj7hlk66jn6r2yku2htphnahsxomwuhgl7wdjxx7cgsvq"
+    },
+    "edit_policy": {
+      "allowed_paths": [
+        "results/smoke.json"
+      ],
+      "ast_import_companion_paths": [],
+      "descriptor_relocation_hints": [],
+      "diagnostic_read_only_paths": [],
+      "mode": "task_output_exact",
+      "operator_directive": "Operator-protected repository files (read-only; overrides every task, output, and breadth instruction):\n- .gitignore\n- pyproject.toml\n- smoke-config.json\n- tests/test_concurrent_smoke.py\n- harness/parent_harness.py\n- harness/training_lane.py\n- harness/conversion_lane.py\n- harness/frozen-config.json\n- harness/dependency_binding.py\n- harness/lane_bootstrap.py\nNever create, modify, rename, delete, replace, or regenerate these exact files.",
+      "protected_paths": [
+        ".gitignore",
+        "pyproject.toml",
+        "smoke-config.json",
+        "tests/test_concurrent_smoke.py",
+        "harness/parent_harness.py",
+        "harness/training_lane.py",
+        "harness/conversion_lane.py",
+        "harness/frozen-config.json",
+        "harness/dependency_binding.py",
+        "harness/lane_bootstrap.py"
+      ],
+      "read_only_outputs": [],
+      "subagents_allowed": true,
+      "validation_may_read_other_paths": true
+    },
+    "generic_prompt_policy": [
+      "Read the relevant plan and nearby code before editing.",
+      "Do not revert unrelated local changes.",
+      "Prefer existing repository patterns and implement every expected output without stubs or placeholders.",
+      "When a compact execution or goal packet is present, advance its shared evidence as one cohesive change.",
+      "Run the listed validation commands when practical.",
+      "The daemon commits and merges only after its validation gate passes.",
+      "Leave generated artifacts and shared dependency paths alone.",
+      "Do not mark backlog metadata complete unless the task explicitly requires it.",
+      "The final response must list changed files and validation results.",
+      "For resumable or long-running work, inspect and reuse valid coordinate checkpoints in /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation_checkpoints/smoke-3ab02fd285da0179a20c-f6da5eb92581 before rerunning completed work; write new checkpoints there atomically. The same path is available as $IPFS_ACCELERATE_AGENT_TASK_CHECKPOINT_DIR.",
+      "## Admission policy (fail-closed)\n- Declared Outputs may be files **or directory trees**. Descendants of a directory output are in-scope; undeclared paths outside those trees are not.\n- Proposal admission budgets (patch \u2264 2000000 bytes, provider output \u2264 2500000 bytes, single file \u2264 1048576 bytes). Pytest green does not bypass admission.\n- For fixture-heavy integration tasks prefer compact recipes/generators over bulk golden dumps that re-emit full envelopes per case.\n- Declared Outputs for this task: results/smoke.json\n\n## Authoritative validation environment (fail-closed)\n- `PATH` is exactly \"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin\". The provider/implementer process's inherited `PATH` is ignored.\n- The canonical Python interpreter target is exactly \"/usr/bin/python3.12\"; the validation runner may expose it through a sealed launcher.\n- Each validation command receives a fresh private `HOME` whose directory name starts with `ipfs-accelerate-validation-home-`. Its XDG paths are exactly `$HOME/.cache`, `$HOME/.config`, `$HOME/.local/share`, and `$HOME/.local/state`. Operator profile state such as `~/.elan`, shell startup files, and provider-only managed toolchains is unavailable.\n- An operator can replace the complete validation `PATH` only through \"IPFS_ACCELERATE_AGENT_VALIDATION_PATH\" before supervisor dispatch. Every entry and ancestor must pass the existing non-writable toolchain check; user-writable tool directories are rejected.\n- Judge external-tool availability and write semantic assertions against this exact environment, not a successful provider-side probe. If a required prover is absent, report a dependency/capability gap or add an approved digest-bound deployment; never claim usability or weaken mandatory tests.",
+      "For general implementation tasks, deliver the complete task in one pass, touching as many files as needed."
+    ],
+    "implementation_context_budget": {
+      "max_provider_input_bytes": null,
+      "provider_context_window": 144576,
+      "reserved_output_tokens": 16384,
+      "reserved_tool_tokens": 8192,
+      "source": "task_metadata",
+      "supervisor_max_input_tokens": 4096,
+      "task_max_input_tokens": 4096
+    },
+    "implementation_prompt_policy_appendix": "## Admission policy (fail-closed)\n- Declared Outputs may be files **or directory trees**. Descendants of a directory output are in-scope; undeclared paths outside those trees are not.\n- Proposal admission budgets (patch \u2264 2000000 bytes, provider output \u2264 2500000 bytes, single file \u2264 1048576 bytes). Pytest green does not bypass admission.\n- For fixture-heavy integration tasks prefer compact recipes/generators over bulk golden dumps that re-emit full envelopes per case.\n- Declared Outputs for this task: results/smoke.json\n\n## Authoritative validation environment (fail-closed)\n- `PATH` is exactly \"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin\". The provider/implementer process's inherited `PATH` is ignored.\n- The canonical Python interpreter target is exactly \"/usr/bin/python3.12\"; the validation runner may expose it through a sealed launcher.\n- Each validation command receives a fresh private `HOME` whose directory name starts with `ipfs-accelerate-validation-home-`. Its XDG paths are exactly `$HOME/.cache`, `$HOME/.config`, `$HOME/.local/share`, and `$HOME/.local/state`. Operator profile state such as `~/.elan`, shell startup files, and provider-only managed toolchains is unavailable.\n- An operator can replace the complete validation `PATH` only through \"IPFS_ACCELERATE_AGENT_VALIDATION_PATH\" before supervisor dispatch. Every entry and ancestor must pass the existing non-writable toolchain check; user-writable tool directories are rejected.\n- Judge external-tool availability and write semantic assertions against this exact environment, not a successful provider-side probe. If a required prover is absent, report a dependency/capability gap or add an approved digest-bound deployment; never claim usability or weaken mandatory tests.",
+    "implementation_timeout_policy": "{\"configured_timeout_seconds\":\"480\",\"max_timeout_seconds\":\"480\",\"progress_aware\":false,\"progress_timeout_seconds\":\"480\",\"source\":\"configured_absolute\"}",
+    "primary_plan_documents": {
+      "AGENT-": "docs/AI_AGENT_CHAT_IMPLEMENTATION_PLAN.md",
+      "PORTAL-": "docs/211_SERVICE_NAVIGATION_PORTAL_PLAN.md"
+    },
+    "source_line": 3,
+    "todo_file": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/task-projection.runtime.todo.md"
+  },
+  "budget": {
+    "content_id": "baguqeeraaj6hoh7uvbusx5c33a4btcl7axpcbu5c5sycwmizealocvbe5igq",
+    "contract_version": 1,
+    "max_depth": 12,
+    "max_input_tokens": 4096,
+    "max_item_bytes": 65536,
+    "max_items": 256,
+    "max_serialized_bytes": 1048576,
+    "max_text_bytes": 32768,
+    "reserved_output_tokens": 16384,
+    "reserved_tool_tokens": 8192,
+    "schema": "ipfs_accelerate_py/agent-supervisor/context-budget@1"
+  },
+  "caller": "agent-supervisor:implementation-daemon",
+  "content_id": "baguqeerawmn4qb5jcpudjeh6eti4m6rd3sjq5l2rbfnkd7mbvlkgaof6jtaq",
+  "contract_version": 1,
+  "evidence": [],
+  "expansion_references": [],
+  "goal": {
+    "attempt": 1,
+    "instruction": "Implement this backlog task completely and thoroughly as a production-ready change in one pass.",
+    "priority": "P1",
+    "task_id": "SMOKE-3ab02fd285da0179a20c",
+    "title": "Execute and verify concurrent autoformal smoke",
+    "track": "bounded-validation"
+  },
+  "input_tokens": 2321,
+  "objective_id": "SMOKE-3ab02fd285da0179a20c",
+  "objective_revision": "baguqeera63nf5ojfqfdeaszzcgfo2noi4jhxsyhmmzusift3boqexy6whhxa",
+  "omissions": [],
+  "parent_capsule_id": "",
+  "policy_id": "policy:implementation-daemon",
+  "policy_revision": "sha256:bb880ec9a367543a343c0deba59c6c7f2e0ff686d87bed0b8b35c445cd80b77b",
+  "repository_id": "repository:sha256:c8ecc6a97d2b5e4854f42065e94ba202fb09a4056556e744c1010d866dd9a049",
+  "schema": "ipfs_accelerate_py/agent-supervisor/context-capsule@1",
+  "scope": {
+    "allowed_edit_paths": [
+      "results/smoke.json"
+    ],
+    "checkpoint_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6/supervisor/state/smoke_database_portal_attempts/21ce89e0388ce54504c06b1f/implementation_checkpoints/smoke-3ab02fd285da0179a20c-f6da5eb92581",
+    "depends_on": [],
+    "evidence_output_paths": [],
+    "expected_outputs": [
+      "results/smoke.json"
+    ],
+    "implied_validation_output_paths": [],
+    "protected_edit_paths": [
+      ".gitignore",
+      "pyproject.toml",
+      "smoke-config.json",
+      "tests/test_concurrent_smoke.py",
+      "harness/parent_harness.py",
+      "harness/training_lane.py",
+      "harness/conversion_lane.py",
+      "harness/frozen-config.json",
+      "harness/dependency_binding.py",
+      "harness/lane_bootstrap.py"
+    ],
+    "retry_repair_failure_kind": "",
+    "retry_repair_source_task_id": "",
+    "validation_target_paths": []
+  },
+  "stage": "implementation",
+  "tree_id": "89b7f493145d4293291b3b1c73eaaf4829b94741",
+  "truncated": false
+}

@@ -1,0 +1,22 @@
+{
+  "after_sha256": "2b828d157e4115bbd527904d42c758e3b84b404e32efc52cfe476131ba083ca7",
+  "before_sha256": "59a95d61118d91325e9071e1ef441b861dbf8a44105b6141ee3d4ef3b7696ffe",
+  "changes": {
+    "job_and_run_id_suffix": "r6",
+    "max_line_search_attempts": [
+      1,
+      3
+    ],
+    "projection_max_update_families": [
+      1,
+      3
+    ]
+  },
+  "max_candidate_attempts": 9,
+  "native_r6_executed": false,
+  "native_seconds": 180,
+  "r5_preserved": true,
+  "same_bridge_flags_and_backend": true,
+  "same_data_validation_base_and_acceptance": true,
+  "stop_after_this_retry_if_no_accepted_update": true
+}

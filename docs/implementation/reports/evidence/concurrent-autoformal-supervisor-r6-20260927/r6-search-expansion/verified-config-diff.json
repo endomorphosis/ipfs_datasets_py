@@ -1,0 +1,29 @@
+{
+  "schema": "concurrent-smoke-r6-config-diff/v1",
+  "before_sha256": "59a95d61118d91325e9071e1ef441b861dbf8a44105b6141ee3d4ef3b7696ffe",
+  "after_sha256": "2b828d157e4115bbd527904d42c758e3b84b404e32efc52cfe476131ba083ca7",
+  "differences": [
+    {
+      "path": "job.job_id",
+      "before": "concurrent-autoformal-smoke-20260927",
+      "after": "concurrent-autoformal-smoke-20260927-r6"
+    },
+    {
+      "path": "job.run_id",
+      "before": "concurrent-autoformal-smoke-20260927",
+      "after": "concurrent-autoformal-smoke-20260927-r6"
+    },
+    {
+      "path": "job.training_config.max_line_search_attempts",
+      "before": 1,
+      "after": 3
+    },
+    {
+      "path": "job.training_config.projection_max_update_families",
+      "before": 1,
+      "after": 3
+    }
+  ],
+  "all_other_configuration_equal": true,
+  "runtime_config_matches_prepared_config": true
+}

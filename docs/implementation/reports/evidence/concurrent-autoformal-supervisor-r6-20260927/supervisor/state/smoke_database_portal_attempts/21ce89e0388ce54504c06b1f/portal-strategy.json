@@ -1,0 +1,23 @@
+{
+  "blocked_tasks": [],
+  "deprioritized_tasks": [],
+  "focus_tracks": [
+    "launch",
+    "platform",
+    "agent",
+    "graphrag",
+    "data",
+    "ui",
+    "mobile",
+    "wallet",
+    "privacy",
+    "runtime",
+    "quality",
+    "collab",
+    "pwa",
+    "ops"
+  ],
+  "generation": 0,
+  "last_rewrite_at": "",
+  "last_rewrite_reason": ""
+}

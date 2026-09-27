@@ -1,0 +1,16 @@
+{
+  "admitted": false,
+  "bundle_sha256": {
+    "harness/conversion_lane.py": "70a67a1958ac817504859491f215b2a1b37fcd84def184fafb16747027f8b70b",
+    "harness/dependency_binding.py": "8ed80dddfa4bdc1996cc86869b46bb050d51655f25d2f99d024716f53988ca9e",
+    "harness/frozen-config.json": "59a95d61118d91325e9071e1ef441b861dbf8a44105b6141ee3d4ef3b7696ffe",
+    "harness/lane_bootstrap.py": "cf9a02635548d6e6b2fd058d6cffff85ca4ed0cc6186ba008f3a297cfdc29c55",
+    "harness/parent_harness.py": "6095a2832659e7a1833f8d5e39b9948d786291df6d9623b0a827f8ccbe7e6c4b",
+    "harness/training_lane.py": "fe2a09133efb619a4a8c35ff15b63e665241182690c13349208a40b0ceb99528"
+  },
+  "formalized": false,
+  "lane_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5/supervisor/lanes",
+  "production_promotion": false,
+  "schema": "concurrent-autoformal-native-fixture/v1",
+  "scope": "current compiler/decompiler checks and native autoencoder training; no code repair"
+}
