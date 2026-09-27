@@ -1,0 +1,28 @@
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+{"stage": "source_phase_started", "phase": "cli_total"}
+{"stage": "source_phase_started", "phase": "cli_resumed_ingestion"}
+{"stage": "source_phase_finished", "phase": "cli_resumed_ingestion", "wall_seconds": 18.079554012045264}
+{"stage": "source_phase_started", "phase": "cli_containment"}
+{"stage": "source_phase_finished", "phase": "cli_containment", "wall_seconds": 73.13323426304851}
+{"stage": "source_phase_started", "phase": "cli_export_with_validation"}
+{"stage": "source_phase_finished", "phase": "cli_export_with_validation", "wall_seconds": 117.27912153105717}
+{"stage": "source_phase_finished", "phase": "cli_total", "wall_seconds": 208.66460888599977}
+{"stage": "source_phase_started", "phase": "cache_reopen"}
+{"stage": "source_phase_finished", "phase": "cache_reopen", "wall_seconds": 0.022035792004317045}
+{"stage": "source_phase_started", "phase": "independent_relationship_projection"}
+{"stage": "source_phase_finished", "phase": "independent_relationship_projection", "wall_seconds": 0.36136548791546375}
+{"stage": "source_phase_started", "phase": "independent_original_readback"}
+{"stage": "source_phase_finished", "phase": "independent_original_readback", "wall_seconds": 103.02033089206088}
+{"stage": "source_phase_started", "phase": "independent_snapshot_readback"}
+{"stage": "source_phase_finished", "phase": "independent_snapshot_readback", "wall_seconds": 8.969042751938105}
+{"stage": "source_phase_started", "phase": "tables_before_self_observation"}
+{"stage": "source_phase_finished", "phase": "tables_before_self_observation", "wall_seconds": 1.955747189000249}
+{"stage": "source_phase_started", "phase": "resume_summary"}
+{"stage": "source_phase_finished", "phase": "resume_summary", "wall_seconds": 22.348448971984908}
+{"stage": "source_phase_started", "phase": "self_observation"}
+{"stage": "source_phase_finished", "phase": "self_observation", "wall_seconds": 196.77334810001776}
+{"stage": "source_phase_started", "phase": "tables_after_self_observation"}
+{"stage": "source_phase_finished", "phase": "tables_after_self_observation", "wall_seconds": 1.9925415079342201}
+{"stage": "full_source_finished", "passed": true, "entity_count": 180257, "snapshot_physical_rows": 360516, "phase_wall_seconds": {"prefix_ingestion": 0.05837296904064715, "cli_resumed_ingestion": 18.079554012045264, "cli_containment": 73.13323426304851, "cli_export_with_validation": 117.27912153105717, "cli_total": 208.66460888599977, "cache_reopen": 0.022035792004317045, "independent_relationship_projection": 0.36136548791546375, "independent_original_readback": 103.02033089206088, "independent_snapshot_readback": 8.969042751938105, "tables_before_self_observation": 1.955747189000249, "resume_summary": 22.348448971984908, "self_observation": 196.77334810001776, "tables_after_self_observation": 1.9925415079342201, "whole_child_operation": 545.0184814479435}}

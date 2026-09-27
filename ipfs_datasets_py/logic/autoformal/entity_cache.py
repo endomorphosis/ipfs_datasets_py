@@ -229,6 +229,8 @@ MAX_RESUME_ROWS = 2 * MAX_ENTITIES + MAX_AGENTS + 1
 MAX_RESUME_DECODED_BYTES = 512 * 1024**2
 MAX_RESUME_BATCH_BYTES = 8 * 1024**2
 MAX_RESUME_ROW_GROUP_BYTES = 32 * 1024**2
+# Operational writer grouping only; v2 rows and reader limits remain unchanged.
+MAX_RESUME_WRITE_GROUP_ROWS = 1024
 INPUT_SCHEMA = 'entity-cache-inputs/v2'
 BINDING_SCHEMA = 'entity-cache-binding/v2' 
 MAX_CONTEXT_BYTES = 2 * 1024**2
@@ -426,35 +428,41 @@ def _stage_resume(db, path, binding):
         digest = _resume_digest(stream)
         stream.seek(0)
         parquet = pq.ParquetFile(stream)
-        _require(parquet.schema_arrow.equals(_resume_schema(), check_metadata=False), "unsupported resume schema; regenerate v2")
-        _require(1 <= parquet.metadata.num_rows <= 2 * MAX_ENTITIES + MAX_AGENTS + 1, "resume row count exceeds bound")
-        expanded = 0
-        for index in range(parquet.metadata.num_row_groups):
-            size = parquet.metadata.row_group(index).total_byte_size
-            _require(0 <= size <= MAX_RESUME_ROW_GROUP_BYTES, "resume row group exceeds bound")
-            expanded += size
-        _require(expanded <= MAX_RESUME_DECODED_BYTES, "resume expanded bytes exceed bound")
-        for batch in parquet.iter_batches(batch_size=64, use_threads=False):
-            _require(batch.nbytes <= MAX_RESUME_BATCH_BYTES, "resume Arrow batch exceeds bound")
-            records = batch.to_pylist()
-            batch_bytes = 0
-            for row in records:
-                _validate_resume_row(row, binding)
-                batch_bytes += len(_json(row).encode("utf-8"))
-            decoded += batch_bytes
-            count += len(records)
-            _require(batch_bytes <= MAX_RESUME_BATCH_BYTES and decoded <= MAX_RESUME_DECODED_BYTES,
-                     "resume JSON bytes exceed bound")
-            # Register only this bounded batch; do not execute other queries with
-            # an active fetchmany cursor on the owner connection.
-            table = pa.Table.from_pylist(records, schema=_resume_schema())
-            db.register('_entity_resume_batch', table)
+        try:
+            _require(parquet.schema_arrow.equals(_resume_schema(), check_metadata=False), "unsupported resume schema; regenerate v2")
+            _require(1 <= parquet.metadata.num_rows <= 2 * MAX_ENTITIES + MAX_AGENTS + 1, "resume row count exceeds bound")
+            expanded = 0
+            for index in range(parquet.metadata.num_row_groups):
+                size = parquet.metadata.row_group(index).total_byte_size
+                _require(0 <= size <= MAX_RESUME_ROW_GROUP_BYTES, "resume row group exceeds bound")
+                expanded += size
+            _require(expanded <= MAX_RESUME_DECODED_BYTES, "resume expanded bytes exceed bound")
+            for batch in parquet.iter_batches(batch_size=64, use_threads=False):
+                _require(batch.nbytes <= MAX_RESUME_BATCH_BYTES, "resume Arrow batch exceeds bound")
+                records = batch.to_pylist()
+                batch_bytes = 0
+                for row in records:
+                    _validate_resume_row(row, binding)
+                    batch_bytes += len(_json(row).encode("utf-8"))
+                decoded += batch_bytes
+                count += len(records)
+                _require(batch_bytes <= MAX_RESUME_BATCH_BYTES and decoded <= MAX_RESUME_DECODED_BYTES,
+                         "resume JSON bytes exceed bound")
+                # Register only this bounded batch; do not execute other queries with
+                # an active fetchmany cursor on the owner connection.
+                table = pa.Table.from_pylist(records, schema=_resume_schema())
+                db.register('_entity_resume_batch', table)
+                try:
+                    db.execute("INSERT INTO _entity_resume_stage SELECT * FROM _entity_resume_batch")
+                finally:
+                    db.unregister('_entity_resume_batch')
+                del table, records, batch
+            _require(count == parquet.metadata.num_rows, "resume physical count differs")
+        finally:
             try:
-                db.execute("INSERT INTO _entity_resume_stage SELECT * FROM _entity_resume_batch")
+                parquet.close()
             finally:
-                db.unregister('_entity_resume_batch')
-            del table, records, batch
-        _require(count == parquet.metadata.num_rows, "resume physical count differs")
+                del parquet
         after = os.fstat(stream.fileno())
     _require(_file_identity(before) == _file_identity(after) == _file_identity(path.lstat())
              and path.resolve() == path, "resume changed during validation")
@@ -1181,9 +1189,27 @@ class EntityCache:
                 decoded=count=0
                 with os.fdopen(fd,'wb') as stream:
                     writer=pq.ParquetWriter(stream,_resume_schema(),compression='zstd')
+                    pending_tables=[]
+                    pending_rows=pending_arrow_bytes=pending_json_bytes=0
                     try:
+                        def flush_group():
+                            nonlocal pending_rows,pending_arrow_bytes,pending_json_bytes
+                            if not pending_tables:
+                                return
+                            # Concatenation retains the bounded Arrow buffers; it
+                            # does not hydrate a second Python row graph.
+                            table=pa.concat_tables(pending_tables)
+                            _require(table.num_rows<=MAX_RESUME_WRITE_GROUP_ROWS
+                                     and table.nbytes<=MAX_RESUME_BATCH_BYTES,
+                                     'snapshot write group exceeds bound')
+                            writer.write_table(table,row_group_size=MAX_RESUME_WRITE_GROUP_ROWS)
+                            _require(stream.tell()<=MAX_RESUME_FILE_BYTES,'snapshot bytes exceed bound')
+                            pending_tables.clear()
+                            pending_rows=pending_arrow_bytes=pending_json_bytes=0
+
                         def write(rows):
-                            nonlocal decoded,count
+                            nonlocal decoded,count,pending_rows,pending_arrow_bytes,pending_json_bytes
+                            _require(0<len(rows)<=64,'snapshot validation page exceeds bound')
                             size=0
                             for row in rows:
                                 _validate_resume_row(row,binding)
@@ -1194,11 +1220,22 @@ class EntityCache:
                                      'snapshot decoded bytes exceed bound')
                             table=pa.Table.from_pylist(rows,schema=_resume_schema())
                             _require(table.nbytes<=MAX_RESUME_BATCH_BYTES,'snapshot Arrow batch exceeds bound')
-                            writer.write_table(table,row_group_size=64)
-                            _require(stream.tell()<=MAX_RESUME_FILE_BYTES,'snapshot bytes exceed bound')
+                            if pending_tables and (
+                                pending_rows+len(rows)>MAX_RESUME_WRITE_GROUP_ROWS
+                                or pending_arrow_bytes+table.nbytes>MAX_RESUME_BATCH_BYTES
+                                or pending_json_bytes+size>MAX_RESUME_BATCH_BYTES
+                            ):
+                                flush_group()
+                            pending_tables.append(table)
+                            pending_rows+=len(rows)
+                            pending_arrow_bytes+=table.nbytes
+                            pending_json_bytes+=size
+                            if pending_rows==MAX_RESUME_WRITE_GROUP_ROWS:
+                                flush_group()
                         meta=_blank_resume('meta',binding)
                         meta.update(dataset_id=DATASET_ID,entities=binding['next_ordinal'],input_manifest_json=_json(binding['input_manifest']))
                         write([meta])
+                        flush_group()
                         for table_name,key,kind,columns in (
                             ('agent_lease','agent_id','agent','agent_id,dataset_id,role,heartbeat,claimed_count,admitted,formalized'),
                             ('entity_queue','entity_id','entity','entity_id,entity_type,label,properties_json,source_sha256,status,claim_worker,claim_token,context_json,admitted,formalized'),
@@ -1225,8 +1262,17 @@ class EntityCache:
                                 write(records)
                                 after=page[-1][0]
                                 del records,page
+                            # Keep original role/page boundaries even when a
+                            # reader chooses to stop at a row-group boundary.
+                            flush_group()
                     finally:
-                        writer.close()
+                        pending_tables.clear()
+                        try:
+                            writer.close()
+                        finally:
+                            # Closing alone retains the writer's per-column
+                            # metadata until the Python owner is released.
+                            del writer
                     stream.flush()
                     os.fsync(stream.fileno())
                 _require(count==2*logical+agents+1,'snapshot physical closure differs')

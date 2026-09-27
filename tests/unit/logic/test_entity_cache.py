@@ -5,6 +5,7 @@ import copy
 import hashlib
 import json
 import os
+import weakref
 from pathlib import Path
 
 import duckdb
@@ -389,7 +390,11 @@ def test_export_and_import_use_bounded_arrow_batches(tmp_path,monkeypatch):
     summary=cache.resume_summary(path)
     assert len(seen)==261 and summary['kinds']==dict(meta=1,entity=130,board=130)
     parquet=pq.ParquetFile(path)
-    assert max(parquet.metadata.row_group(i).num_rows for i in range(parquet.metadata.num_row_groups))<=64
+    try:
+        assert max(parquet.metadata.row_group(i).num_rows for i in range(parquet.metadata.num_row_groups))<=1024
+        assert max(batch.num_rows for batch in parquet.iter_batches(batch_size=64,use_threads=False))<=64
+    finally:
+        parquet.close()
     cache.close()
 
 
@@ -577,3 +582,126 @@ def test_changed_live_constraints_rejected_despite_exact_columns_and_marker(tmp_
     with pytest.raises(module.EntityCacheError,match='schema differs'):
         module.EntityCache(path)
     assert {p.name:p.read_bytes() for p in tmp_path.iterdir()}==before
+
+
+def test_export_grouping_changes_only_physical_layout_and_preserves_order(tmp_path,monkeypatch):
+    cache=_ready(tmp_path,[_row('doc:'+str(index).zfill(4)) for index in range(130)])
+    first=tmp_path/'old-layout.parquet';second=tmp_path/'grouped.parquet'
+    monkeypatch.setattr(module,'MAX_RESUME_WRITE_GROUP_ROWS',64)
+    old=cache.write_resume_parquet(first)
+    monkeypatch.setattr(module,'MAX_RESUME_WRITE_GROUP_ROWS',1024)
+    grouped=cache.write_resume_parquet(second)
+    old_rows=pq.read_table(first,use_threads=False)
+    grouped_rows=pq.read_table(second,use_threads=False)
+    assert grouped_rows.schema.equals(old_rows.schema,check_metadata=True)
+    assert grouped_rows.to_pylist()==old_rows.to_pylist()
+    assert [r['record_kind'] for r in grouped_rows.to_pylist()]==['meta']+['entity']*130+['board']*130
+    assert all(r['admitted'] is r['formalized'] is False for r in grouped_rows.to_pylist())
+    assert {k:v for k,v in old.items() if k!='path'}=={k:v for k,v in grouped.items() if k!='path'}
+    with pq.ParquetFile(first) as before, pq.ParquetFile(second) as after:
+        assert after.num_row_groups < before.num_row_groups
+        for index in range(after.num_row_groups):
+            assert len(set(after.read_row_group(index,columns=['record_kind']).column(0).to_pylist()))==1
+    assert cache.resume_summary(first)==cache.resume_summary(second)
+    cache.close()
+
+
+@pytest.mark.parametrize('bound',['rows','bytes'])
+def test_writer_flushes_before_bounded_row_or_byte_group_limit(tmp_path,monkeypatch,bound):
+    # Every single record is <=1KiB in the byte case: any reader batch of
+    # <=64 records fits64KiB even if the reader crosses row-group boundaries.
+    label,properties=('L'*500,'{"p":"'+'x'*400+'"}') if bound=='rows' else ('L'*32,'{"p":"'+'x'*16+'"}')
+    rows=[_row('doc:'+str(i).zfill(4),label=label,properties=properties) for i in range(130)]
+    cache=_ready(tmp_path,rows)
+    if bound=='rows': monkeypatch.setattr(module,'MAX_RESUME_WRITE_GROUP_ROWS',128)
+    else: monkeypatch.setattr(module,'MAX_RESUME_BATCH_BYTES',65536)
+    observed=[]
+    real=pq.ParquetWriter
+    class Writer:
+        def __init__(self,*args,**kwargs): self.inner=real(*args,**kwargs)
+        def write_table(self,table,**kwargs):
+            encoded_sizes=[len(module._json(row).encode('utf-8')) for row in table.to_pylist()]
+            if bound=='bytes': assert max(encoded_sizes)<=module.MAX_RESUME_BATCH_BYTES//64
+            decoded=sum(encoded_sizes)
+            observed.append((table.num_rows,table.nbytes,decoded,kwargs['row_group_size']))
+            assert table.num_rows<=module.MAX_RESUME_WRITE_GROUP_ROWS
+            assert table.nbytes<=module.MAX_RESUME_BATCH_BYTES and decoded<=module.MAX_RESUME_BATCH_BYTES
+            return self.inner.write_table(table,**kwargs)
+        def close(self): self.inner.close()
+    monkeypatch.setattr(pq,'ParquetWriter',Writer)
+    path=tmp_path/'bounded.parquet';cache.write_resume_parquet(path)
+    assert len(observed)>1 and sum(item[0] for item in observed)==1+2*len(rows)
+    assert all(item[3]==module.MAX_RESUME_WRITE_GROUP_ROWS for item in observed)
+    if bound=='bytes': assert sum(item[2] for item in observed)>module.MAX_RESUME_BATCH_BYTES
+    assert cache.resume_summary(path)['entities']==len(rows)
+    cache.close()
+
+
+def test_closed_writer_is_released_before_snapshot_validation(tmp_path,monkeypatch):
+    cache=_ready(tmp_path,[_row('doc:'+str(i)) for i in range(66)])
+    refs=[];closed=[]
+    real=pq.ParquetWriter;stage=module._stage_resume
+    class Writer:
+        def __init__(self,*args,**kwargs):
+            self.inner=real(*args,**kwargs);refs.append(weakref.ref(self))
+        def write_table(self,*args,**kwargs): return self.inner.write_table(*args,**kwargs)
+        def close(self):
+            self.inner.close();closed.append(True)
+    def validate(*args,**kwargs):
+        assert closed==[True] and refs[0]() is None
+        return stage(*args,**kwargs)
+    monkeypatch.setattr(pq,'ParquetWriter',Writer)
+    monkeypatch.setattr(module,'_stage_resume',validate)
+    cache.write_resume_parquet(tmp_path/'released.parquet')
+    cache.close()
+
+
+@pytest.mark.parametrize('fail',['none','schema','row'])
+def test_resume_reader_is_closed_and_released_on_success_and_validation_error(tmp_path,monkeypatch,fail):
+    cache=_ready(tmp_path);path=tmp_path/'resume.parquet';cache.write_resume_parquet(path)
+    real=pq.ParquetFile;refs=[];closed=[]
+    class Reader:
+        def __init__(self,*args,**kwargs):
+            self.inner=real(*args,**kwargs);refs.append(weakref.ref(self))
+        @property
+        def schema_arrow(self):
+            if fail=='schema': return pa.schema([])
+            return self.inner.schema_arrow
+        def __getattr__(self,name): return getattr(self.inner,name)
+        def close(self): self.inner.close();closed.append(True)
+    monkeypatch.setattr(pq,'ParquetFile',Reader)
+    if fail=='row':
+        def reject(*args,**kwargs): raise module.EntityCacheError('injected invalid row')
+        monkeypatch.setattr(module,'_validate_resume_row',reject)
+    if fail=='none': assert cache.resume_summary(path)['entities']==1
+    else:
+        with pytest.raises(module.EntityCacheError): cache.resume_summary(path)
+    assert closed==[True] and refs[0]() is None
+    cache.close()
+
+
+@pytest.mark.parametrize('failure',['write','validation','publication'])
+def test_grouped_export_failure_retains_previous_complete_snapshot_and_state(tmp_path,monkeypatch,failure):
+    cache=_ready(tmp_path,[_row('doc:'+str(i)) for i in range(130)])
+    path=tmp_path/'resume.parquet';cache.write_resume_parquet(path)
+    before=path.read_bytes();state=_state(cache)
+    class Interrupted(RuntimeError): pass
+    if failure=='write':
+        real=pq.ParquetWriter
+        class Writer:
+            def __init__(self,*args,**kwargs): self.inner=real(*args,**kwargs)
+            def write_table(self,*args,**kwargs):
+                self.inner.write_table(*args,**kwargs)
+                raise Interrupted('write interrupted')
+            def close(self): self.inner.close()
+        monkeypatch.setattr(pq,'ParquetWriter',Writer)
+    elif failure=='validation':
+        def fail(*args,**kwargs): raise Interrupted('validation interrupted')
+        monkeypatch.setattr(module,'_stage_resume',fail)
+    else:
+        def fail(*args,**kwargs): raise Interrupted('publication interrupted')
+        monkeypatch.setattr(module.os,'replace',fail)
+    with pytest.raises(Interrupted): cache.write_resume_parquet(path)
+    assert path.read_bytes()==before and _state(cache)==state
+    assert not list(tmp_path.glob('.*.tmp'))
+    cache.close()

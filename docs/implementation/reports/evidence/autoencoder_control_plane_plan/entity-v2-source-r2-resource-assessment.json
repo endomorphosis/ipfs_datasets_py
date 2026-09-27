@@ -1,0 +1,71 @@
+{
+  "admitted": false,
+  "audit_artifact": {
+    "bytes": 148443,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-full-source-20260927-r2/capture-r2/audit-receipt.json",
+    "sha256": "8e5bb8f4b005cc35aba87fb86d9a5ac28a9386be847aafedfa38242353f7970e"
+  },
+  "audit_elapsed_seconds": 630.6794679460581,
+  "child_lifetime_peak_rss_bytes": 1077260288,
+  "constitution_formalized": false,
+  "current_snapshot": {
+    "artifact": {
+      "bytes": 28899436,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-full-source-20260927-r2/capture-r2/source/snapshots/5207efbfa43f4634aba8f4c1d015b0afdcd94683804d5958184887bb0a3d826d/entity-resume-checkpoint-v2.parquet",
+      "sha256": "4f74d9972770826464f840ac99961a6df8a51428260624a6c5c6364a334fe4bc"
+    },
+    "footer_bytes": 984555,
+    "measurement": "stdlib read of terminal Parquet footer length; no metadata decoder"
+  },
+  "file_cache_state": "uncontrolled",
+  "historical_ledger_records_rewritten": false,
+  "historical_receipts_unchanged": true,
+  "hub_uploads_deferred": true,
+  "integrity_checks_passed": true,
+  "legal_ir_speed_claim": false,
+  "memory_limit_bytes": 1073741824,
+  "native_training_validation_deferred": true,
+  "over_limit_bytes": 3518464,
+  "prior_snapshot": {
+    "artifact": {
+      "bytes": 60087631,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-full-source-20260927/capture-r1/source/snapshots/5207efbfa43f4634aba8f4c1d015b0afdcd94683804d5958184887bb0a3d826d/entity-resume-checkpoint-v2.parquet",
+      "sha256": "12f27bc6a50cb015263f6e9b72825aac390ee5eabd34008ba596c80c2b216cef"
+    },
+    "footer_bytes": 15351535,
+    "measurement": "stdlib read of terminal Parquet footer length; no metadata decoder"
+  },
+  "qualification": "source integrity only; periodic RSS checks did not detect the recorded lifetime peak; strict 1 GiB qualification fails",
+  "release_artifact": {
+    "bytes": 3795,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-full-source-20260927-r2/capture-r2/resource-release.json",
+    "sha256": "94737df8f0c4a9661746c86210a2a37f4fde42538f421f80257d3bad06676515"
+  },
+  "reservation_id": "97dddca606d2428ab55e46c580d9f57f",
+  "reservation_observed_status": "released",
+  "sampled_resource_checks_passed": true,
+  "schema": "entity-v2-source-resource-assessment/v1",
+  "source_artifact": {
+    "bytes": 74560,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-full-source-20260927-r2/capture-r2/source/source-receipt.json",
+    "sha256": "1bd06cde97b3c374c59afc5fe7dac0ca274af940ae539bf570982a354550f547"
+  },
+  "strict_memory_qualification_passed": false,
+  "timings_seconds": {
+    "cache_reopen": 0.022035792004317045,
+    "cli_containment": 73.13323426304851,
+    "cli_export_with_validation": 117.27912153105717,
+    "cli_resumed_ingestion": 18.079554012045264,
+    "cli_total": 208.66460888599977,
+    "independent_original_readback": 103.02033089206088,
+    "independent_relationship_projection": 0.36136548791546375,
+    "independent_snapshot_readback": 8.969042751938105,
+    "prefix_ingestion": 0.05837296904064715,
+    "resume_summary": 22.348448971984908,
+    "self_observation": 196.77334810001776,
+    "tables_after_self_observation": 1.9925415079342201,
+    "tables_before_self_observation": 1.955747189000249,
+    "whole_child_operation": 545.0184814479435
+  },
+  "training_speed_claim": false
+}

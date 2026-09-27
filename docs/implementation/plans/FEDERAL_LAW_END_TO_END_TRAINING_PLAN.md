@@ -425,6 +425,19 @@ not a full-source validation or speed result. Bounded Parquet export and harness
 repairs precede any fresh comparison. Native training and Hub uploads remain
 deferred; the Constitution remains unformalized.
 
+The [bounded export validation](../reports/entity_cache_export_memory.md) passed
+142 focused tests plus 12 decoder checks. The subsequent source-only retry ran
+no tests and independently verified all 180,257 entities, 120,136 relationships
+and 360,516 snapshot rows. Re-importing
+the snapshot left all five reopened database tables unchanged. The raw audit
+passed periodic resource checks, but the lifetime peak exceeded 1 GiB by
+3,518,464 bytes: strict memory qualification failed. The original receipts and
+ledger remain unchanged, with a separate resource assessment. The snapshot is
+28,899,436 bytes, down from 60,087,631; export was not faster in this uncontrolled
+cache comparison. The 196.773-second snapshot self-observation is the next
+measured source-processing cost. No native training, bridge speedup, fresh-DB
+restore, Hub upload or legal admission is established by this capture.
+
 ## 1. Decision and intended outcome
 
 The latest [production-adoption audit](../reports/autoencoder_daemon_production_adoption_audit.md)
