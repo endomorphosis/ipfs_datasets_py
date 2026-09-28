@@ -46,8 +46,8 @@ def _disposition(receipt, round_number, max_rounds):
 
 def _validation(spec, policy):
     # Explicit qualification samples supplement (never silently replace) any
-    # optimizer tuning validation in a prebuilt job. CLI jobs train on their
-    # own rows and keep all qualification validation outside the optimizer.
+    # optimizer tuning validation in a prebuilt job. CLI jobs use these disjoint
+    # rows for candidate selection and qualification, never gradient updates.
     rows = [asdict(row) for row in spec.validation_samples] + policy["qualification_samples"]
     return list({inc._sha(row): row for row in rows}.values())
 
@@ -126,7 +126,7 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
         max_training_rounds=3, lake_timeout_seconds=120, producer_identity=None,
         qualification_samples=(), control_transport="quack", publication_repository=None,
         executor_factory=None, worker_function=execute_training_job, qualifier=None,
-        max_parallel_workers=None, capacity_callback=None):
+        max_parallel_workers=None, capacity_callback=None, reuse_native_workers=False):
     """Train, qualify and retry measured metric failures within fixed budgets.
 
     Validation is disjoint from gradient-training intake across the entire
@@ -138,10 +138,14 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
     optional ``capacity_callback(pending_count=..., max_workers=...)`` bound
     physical dispatch only and may change on resume. The callback returns a
     JSON-compatible capacity plan with an integer ``workers`` (including zero).
+    Native streams bind the package's Python contents in their saved policy;
+    source changes require a new stream, regardless of worker reuse settings.
     """
     import duckdb
     from .autoencoder_candidate_qualification import qualify_candidate
     native = qualifier is None and executor_factory is None and worker_function is execute_training_job
+    if type(reuse_native_workers) is not bool:
+        raise inc.IncrementalTrainingError("reuse_native_workers must be boolean")
     qualifier = qualify_candidate if qualifier is None else qualifier
     for name, value, maximum in (("machine_shard_count", machine_shard_count, 65536),
                                  ("lane_count", lane_count, 32), ("max_batches", max_batches, 100000),
@@ -169,9 +173,29 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                              for row in qualification_samples]
     if len(qualification_samples) > 32:
         raise inc.IncrementalTrainingError("qualification validation exceeds 32 rows")
+    from . import autoencoder_native_pool as pool_runtime
+    # This cycle-wide binding survives pool recycling and also covers fresh
+    # workers. Changing physical dispatch cannot establish a new source baseline.
+    cycle_manifest = pool_runtime._package_manifest() if native else None
+
+    def check_cycle_source():
+        if native and pool_runtime._package_manifest() != cycle_manifest:
+            raise inc.IncrementalTrainingError("native cycle producer source changed; start a fresh cycle")
+
+    underlying_qualifier = qualifier
+
+    def guarded_qualifier(*args, **kwargs):
+        check_cycle_source()
+        try:
+            return underlying_qualifier(*args, **kwargs)
+        finally:
+            # Check before _qualify can stage a newly generated receipt.
+            check_cycle_source()
+
     policy = {"max_training_rounds": max_training_rounds, "lake_timeout_seconds": lake_timeout_seconds,
               "required_gates": list(GATES), "min_cosine": .72, "max_reconstruction_loss": .20,
               "producer_identity": producer_identity, "qualification_samples": qualification_samples,
+              "native_producer_manifest": cycle_manifest,
               "control_transport": control_transport,
               "publication_repository": publication_repository,
               "execution_mode": "native" if native else "injected_test"}
@@ -183,6 +207,7 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
         if (directory / "progress.duckdb").exists():
             raise inc.IncrementalTrainingError("optimizer-only progress requires a new qualified stream directory")
         db = duckdb.connect(str(directory / "qualification.duckdb"))
+        native_pool = None
         try:
             db.execute("CREATE TABLE IF NOT EXISTS stream (singleton INTEGER PRIMARY KEY, binding VARCHAR NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS policies (variant_id VARCHAR PRIMARY KEY, payload VARCHAR NOT NULL)")
@@ -294,6 +319,7 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
             dispatched, reports, blocked, capacity_reports = [], [], {}, []
             capacity_deferred = False
             while True:
+                check_cycle_source()
                 selected, recovered = [], False
                 for lane, head in heads.items():
                     if lane in blocked:
@@ -318,7 +344,9 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                         run = registry.get_run(spec.run_id)
                         if run["status"] == "completed":
                             optimization = inc._completion(registry, row, spec)
-                            receipt, artifact = _qualify(registry, directory, row, spec, optimization, policy, qualifier)
+                            check_cycle_source()
+                            receipt, artifact = _qualify(registry, directory, row, spec, optimization, policy, guarded_qualifier)
+                            check_cycle_source()
                             qualified, retry, status = _disposition(receipt, row["round"], max_training_rounds)
                             tasks = list(receipt.get("repair_todos", ()))
                             publication = None
@@ -401,6 +429,7 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                     if recovered and not capacity_deferred:
                         continue
                     counts = dict(db.execute("SELECT status,count(*) FROM batches GROUP BY status").fetchall())
+                    check_cycle_source()
                     return {"schema_version": SCHEMA, "binding": binding, "dispatched_run_ids": dispatched,
                             "completed": list(completed.values()), "batch_status_counts": counts,
                             "qualified_batch_count": counts.get("qualified", 0),
@@ -409,6 +438,8 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                             "blocked": list(blocked.values()), "dispatch_reports": reports,
                             "capacity_reports": capacity_reports, "capacity_deferred": capacity_deferred,
                             "max_parallel_workers": max_parallel_workers,
+                            "reuse_native_workers": reuse_native_workers and native,
+                            "native_cycle_manifest": cycle_manifest,
                             "skipped_other_machine_templates": skipped,
                             "execution_mode": "native_training_and_qualification" if native else "injected_test",
                             "resume_granularity": "qualified_attempt", "heldout_canary": False,
@@ -416,6 +447,7 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                             "weight_control_transport": control_transport,
                             "admitted": False, "formalized": False, "promotion_performed": False,
                             "publication_performed": False}
+                check_cycle_source()
                 for row, spec in selected:
                     path = directory / (spec.run_id + ".json")
                     if path.exists() and path.read_bytes() != inc._raw(spec.to_dict()) + b"\n":
@@ -425,20 +457,34 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                     db.execute("INSERT INTO attempts(run_id,batch_id,round,job) VALUES (?,?,?,?) ON CONFLICT DO NOTHING",
                                [spec.run_id, row["batch_id"], row["round"], inc._raw(spec.to_dict()).decode()])
                     inc._register_job(registry, directory, row["variant_id"], spec)
+                from .autoencoder_native_pool import _NativeTrainingPool, MAX_RETAINED_WORKERS, MAX_POOL_JOBS
+                retain = native and reuse_native_workers and len(selected) <= MAX_RETAINED_WORKERS
+                if native_pool is not None and (not retain or native_pool.max_workers != len(selected)
+                        or native_pool.submitted_jobs + len(selected) > MAX_POOL_JOBS):
+                    native_pool.close()
+                    native_pool = None
+                if retain and native_pool is None:
+                    native_pool = _NativeTrainingPool(len(selected), expected_manifest=cycle_manifest)
+                pool_args = {"_native_pool": native_pool} if native_pool is not None else {}
+                check_cycle_source()
                 if control_transport == "quack":
                     from ...duckdb_control.autoencoder_shared_weight_control import SharedWeightRegistry
                     with SharedWeightRegistry(registry, enable_prototype=True) as shared:
                         report = coordinator.run_training_jobs(shared, [spec for _, spec in selected],
                             max_workers=len(selected), executor_factory=executor_factory,
-                            worker_function=worker_function)
+                            worker_function=worker_function, **pool_args)
                         report["weight_control"] = shared.transport_report()
                 else:
                     report = coordinator.run_training_jobs(registry, [spec for _, spec in selected],
                         max_workers=len(selected), executor_factory=executor_factory,
-                        worker_function=worker_function)
+                        worker_function=worker_function, **pool_args)
                     report["weight_control"] = {"transport": "trusted_owner_local", "native_quack": False}
                 reports.append(report)
                 report["dispatch_capacity"] = capacity_reports[-1]
                 dispatched.extend(spec.run_id for _, spec in selected)
         finally:
-            db.close()
+            try:
+                if native_pool is not None:
+                    native_pool.close()
+            finally:
+                db.close()

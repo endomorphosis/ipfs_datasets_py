@@ -236,6 +236,101 @@ def test_bad_capacity_callback_cannot_override_dispatch_budget(tmp_path, returne
             assert db.execute("SELECT count(*) FROM attempts").fetchone()[0] == 0
 
 
+@pytest.mark.parametrize("reuse", [False, True])
+def test_native_cycle_rejects_dispatch_drift_even_with_fresh_workers(tmp_path, monkeypatch, reuse):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_native_pool as pools
+    manifest = {"sha256": "original", "file_count": 1}
+    monkeypatch.setattr(pools, "_package_manifest", lambda: dict(manifest))
+    monkeypatch.setattr(qt.coordinator, "run_training_jobs", lambda *a, **k: pytest.fail("drifted dispatch"))
+
+    def capacity(**request):
+        manifest["sha256"] = "changed"
+        return {"workers": 1}
+
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        with pytest.raises(IncrementalTrainingError, match="cycle producer source changed"):
+            qt.run_qualified_incremental_training(registry, [spec], state_directory=tmp_path / "qualified",
+                lane_count=1, control_transport="owner", capacity_callback=capacity,
+                reuse_native_workers=reuse)
+        with duckdb.connect(str(tmp_path / "qualified/qualification.duckdb")) as db:
+            assert db.execute("SELECT count(*) FROM attempts").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("phase", ["before", "during"])
+def test_cycle_drift_cannot_stage_a_new_qualification(tmp_path, monkeypatch, phase):
+    """Isolated control-flow injection; no native workers or Lake are executed."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_native_pool as pools
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_candidate_qualification as qualifier
+    manifest = {"sha256": "original", "file_count": 1}
+    monkeypatch.setattr(pools, "_package_manifest", lambda: dict(manifest))
+    calls = []
+    original_dispatch = qt.coordinator.run_training_jobs
+    original_completion = qt.inc._completion
+
+    def injected_dispatch(registry, specs, **kwargs):
+        report = original_dispatch(registry, specs, max_workers=1,
+                                   executor_factory=ImmediateExecutor, worker_function=_sparse_worker)
+        assert report["execution_mode"] == "injected_test"
+        return report
+
+    def completion(*args, **kwargs):
+        result = original_completion(*args, **kwargs)
+        if phase == "before":
+            manifest["sha256"] = "changed"
+        return result
+
+    def qualify(*args, **kwargs):
+        calls.append("injected qualifier")
+        manifest["sha256"] = "changed"
+        return _pass(*args, **kwargs)
+
+    monkeypatch.setattr(qt.coordinator, "run_training_jobs", injected_dispatch)
+    monkeypatch.setattr(qt.inc, "_completion", completion)
+    monkeypatch.setattr(qualifier, "qualify_candidate", qualify)
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        with pytest.raises(IncrementalTrainingError, match="cycle producer source changed"):
+            qt.run_qualified_incremental_training(registry, [spec], state_directory=tmp_path / "qualified",
+                lane_count=1, control_transport="owner", reuse_native_workers=False)
+        assert len(calls) == int(phase == "during")
+        assert not list((tmp_path / "qualified").glob("*.qualification.json"))
+        assert not list((tmp_path / "qualified").glob("*.qualification-payload.json"))
+        with duckdb.connect(str(tmp_path / "qualified/qualification.duckdb")) as db:
+            assert db.execute("SELECT status FROM batches").fetchone()[0] == "pending"
+
+
+def test_native_manifest_binds_resume_but_fresh_worker_flag_does_not(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_native_pool as pools
+    manifest = {"sha256": "original", "file_count": 1}
+    monkeypatch.setattr(pools, "_package_manifest", lambda: dict(manifest))
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        first = qt.run_qualified_incremental_training(registry, [], state_directory=tmp_path / "qualified",
+                                                      control_transport="owner", reuse_native_workers=True)
+        second = qt.run_qualified_incremental_training(registry, [], state_directory=tmp_path / "qualified",
+                                                       control_transport="owner", reuse_native_workers=False)
+        assert first["binding"] == second["binding"]
+        assert first["native_cycle_manifest"] == second["native_cycle_manifest"] == manifest
+        assert first["binding"]["policy"]["native_producer_manifest"] == manifest
+        assert not first["dispatched_run_ids"] and not second["dispatched_run_ids"]
+        manifest["sha256"] = "changed-non-core-bridge"
+        with pytest.raises(IncrementalTrainingError, match="owner/topology/policy binding changed"):
+            qt.run_qualified_incremental_training(registry, [], state_directory=tmp_path / "qualified",
+                                                  control_transport="owner", reuse_native_workers=True)
+        with duckdb.connect(str(tmp_path / "qualified/qualification.duckdb")) as db:
+            persisted = json.loads(db.execute("SELECT binding FROM stream WHERE singleton=1").fetchone()[0])
+            assert persisted == first["binding"]
+            assert db.execute("SELECT count(*) FROM attempts").fetchone()[0] == 0
+
+
+def test_injected_runner_has_no_native_producer_manifest(tmp_path):
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        report = _run(registry, tmp_path, [])
+        assert report["binding"]["policy"]["native_producer_manifest"] is None
+        assert report["native_cycle_manifest"] is None
+        assert report["execution_mode"] == "injected_test"
+
+
 def test_legacy_optimizer_progress_requires_explicit_new_stream(tmp_path):
     (tmp_path / "qualified").mkdir()
     (tmp_path / "qualified/progress.duckdb").touch()

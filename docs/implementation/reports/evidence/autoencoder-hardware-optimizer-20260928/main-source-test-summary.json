@@ -1,0 +1,66 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "isolated-prepared-tests-incomplete-export.json": {
+      "bytes": 1206,
+      "sha256": "e767bc10bf38de49c08a5018eb4c099f7b0ddea98f56897dde90831211a557fb"
+    },
+    "isolated-prepared-tests-incomplete-export.log": {
+      "bytes": 3115,
+      "sha256": "7508a9422848175c5d8dc8e3aad0540b24d86bb3bc0c94d7960e4bf8cdc4d05b"
+    },
+    "isolated-prepared-tests-incomplete-export.xml": {
+      "bytes": 15471,
+      "sha256": "5e3550f7b3e1123d0291bdc07bc1ffd6917f9dab61e088a26f9e90f8d43985ca"
+    },
+    "isolated-prepared-tests.json": {
+      "bytes": 1861,
+      "sha256": "c0a3c36e96109e029a5a9bf28f42abc1c561673807082046c7b6f757c83e6a20"
+    },
+    "isolated-prepared-tests.log": {
+      "bytes": 1661,
+      "sha256": "acc60958ada4eca2945d10304cd84ef263197f3a51433abbd4e6929957d57979"
+    },
+    "isolated-prepared-tests.xml": {
+      "bytes": 15030,
+      "sha256": "c8d4aefb29748b54f45f66ae07904101df207b97ef30688faf1d29dd1b5e68f8"
+    }
+  },
+  "elapsed_seconds": 34.18,
+  "errors": 0,
+  "excluded_preexisting_modal_change": "Default IR parallel-worker resolution only; selective observability patch has no dependency on auto worker-budget resolution, and native CLI jobs explicitly request one IR worker.",
+  "exit_code": 0,
+  "failures": 0,
+  "groups": {
+    "family_qualification": 44,
+    "modal_observability": 18,
+    "projection_profiler": 4,
+    "target_grammar_fastpath": 12
+  },
+  "incomplete_export_harness": {
+    "failed": 1,
+    "log": "isolated-prepared-tests-incomplete-export.log",
+    "passed": 77,
+    "reason": "incomplete-export-harness: omitted repository parity policy and package data fallback; FileNotFoundError at policy_validation",
+    "source_fix": false,
+    "test_fix": false
+  },
+  "live_checkout_modified": false,
+  "live_index_modified": false,
+  "modal_sha256": "1aa457e59efd78bb1e514e24a4309e9a774d21148f37dde8adf0af8ffdad1584",
+  "origin_main_base": "84f31d112f63e71876f3b6ff89bb3ff3481efe9b",
+  "recommendation": "Focused prepared-main source suite passes. Keep native optimization and Lake evidence bound to the canonical captured workspace; do not relabel it as main-native validation.",
+  "restored_policy": {
+    "git_blob": "447876849d6247a0109da3362ac15bb577589472",
+    "path": "docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json",
+    "sha256": "9e4b1ecbc4e062d3b25eade13e28f57c92e54a5de407c8f238f590cab844b818",
+    "source": "exact prepared Git tree, no workspace substitution"
+  },
+  "schema": "prepared-main-focused-source-tests/v1",
+  "skipped": 0,
+  "source_or_test_correction_required": false,
+  "source_scope": "Isolated prepared-main Python source unit tests with exact frozen parity policy restored; not canonical pinned native qualification, Lake evidence, or admission. Git-linked repositories are not exported.",
+  "source_tree": "151ea8abf3150847530fb6b6df1112e89986a842",
+  "test_count": 78,
+  "weights_downloaded": false
+}

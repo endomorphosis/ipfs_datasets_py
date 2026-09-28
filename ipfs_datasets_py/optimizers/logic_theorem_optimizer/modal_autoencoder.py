@@ -624,9 +624,18 @@ class AutoencoderEvaluation:
     legal_ir_view_family_metrics: Dict[str, Dict[str, float]] = field(default_factory=dict)
     cross_entropy_entropy_loss: float = 0.0
     cross_entropy_excess_loss: float = 0.0
+    evaluation_profile: Dict[str, Any] = field(default_factory=dict)
+    decompiler_evidence: Dict[str, Any] = field(default_factory=lambda: {
+        "observed": False,
+        "source_decompiled_metric_sample_count": 0,
+        "compatibility_metric_sample_count": 0,
+        "structural_target_sample_count": 0,
+        "structural_formula_target_count": 0,
+        "validation_authority": False,
+    })
 
     def to_dict(self) -> Dict[str, object]:
-        return {
+        result = {
             "cosine_loss": self.cosine_loss,
             "cross_entropy_entropy_loss": self.cross_entropy_entropy_loss,
             "cross_entropy_excess_loss": self.cross_entropy_excess_loss,
@@ -653,7 +662,11 @@ class AutoencoderEvaluation:
             "sample_embedding_metrics": list(self.sample_embedding_metrics),
             "sample_count": self.sample_count,
             "symbolic_validity_penalty": self.symbolic_validity_penalty,
+            "decompiler_evidence": dict(self.decompiler_evidence),
         }
+        if self.evaluation_profile:
+            result["evaluation_profile"] = dict(self.evaluation_profile)
+        return result
 
 
 @dataclass(frozen=True)
@@ -3534,6 +3547,7 @@ class ModalAutoencoderBaseline:
             legal_ir_view_family_metrics=_weighted_view_family_metric_block(
                 family_metric_observations
             ),
+            decompiler_evidence=legal_ir_payload["decompiler_evidence"],
         )
         self.last_ontology_captures = _capture_ontology(sample_list)
         return evaluation
@@ -4038,8 +4052,10 @@ class AdaptiveModalAutoencoder:
         legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
         legal_ir_parallel_workers: Optional[int] = None,
         use_sample_memory: bool = True,
+        profile_evaluation: bool = False,
     ) -> AutoencoderEvaluation:
         """Evaluate current encoder/decoder state against legal samples."""
+        evaluation_started = time.perf_counter() if profile_evaluation else 0.0
         sample_list = list(samples)
         if not sample_list:
             return AutoencoderEvaluation(
@@ -4052,13 +4068,18 @@ class AdaptiveModalAutoencoder:
                 symbolic_validity_penalty=0.0,
                 decoded_embeddings={},
             )
+        target_observation = {} if profile_evaluation else None
+        target_payload_started = time.perf_counter() if profile_evaluation else 0.0
         legal_ir_payload = _legal_ir_target_payload(
             sample_list,
             bridge_names=legal_ir_bridge_names,
             evaluate_provers=legal_ir_evaluate_provers,
             legal_ir_targets=legal_ir_targets,
             parallel_workers=legal_ir_parallel_workers,
+            observation=target_observation,
         )
+        target_payload_seconds = time.perf_counter() - target_payload_started if profile_evaluation else 0.0
+        model_metrics_started = time.perf_counter() if profile_evaluation else 0.0
         legal_ir_target_distributions: Mapping[str, Mapping[str, float]] = legal_ir_payload[
             "target_view_distributions_by_sample"
         ]
@@ -4234,8 +4255,22 @@ class AdaptiveModalAutoencoder:
             legal_ir_view_family_metrics=_weighted_view_family_metric_block(
                 family_metric_observations
             ),
+            decompiler_evidence=legal_ir_payload["decompiler_evidence"],
         )
+        profile = {}
+        if profile_evaluation:
+            profile = {"schema_version": "autoencoder-evaluation-profile/v1",
+                       "sample_count": len(sample_list),
+                       "target_payload_seconds": target_payload_seconds,
+                       "model_metrics_seconds": time.perf_counter() - model_metrics_started,
+                       "target_observation": target_observation,
+                       "scope": "wall_time_observation_not_an_objective_or_admission"}
+        ontology_started = time.perf_counter() if profile_evaluation else 0.0
         self.last_ontology_captures = _capture_ontology(sample_list)
+        if profile_evaluation:
+            profile["ontology_capture_seconds"] = time.perf_counter() - ontology_started
+            profile["total_seconds"] = time.perf_counter() - evaluation_started
+            evaluation = replace(evaluation, evaluation_profile=profile)
         return evaluation
 
     def _cache_legal_ir_targets(
@@ -6656,6 +6691,8 @@ class AdaptiveModalAutoencoder:
             "legal_ir_parallel_workers": legal_ir_parallel_workers,
             "use_sample_memory": False,
         }
+        if profiler is not None:
+            evaluation_kwargs["profile_evaluation"] = True
         base_evaluation_kwargs: Dict[str, Any] = {
             **evaluation_kwargs,
             "legal_ir_bridge_names": (),
@@ -6696,23 +6733,30 @@ class AdaptiveModalAutoencoder:
             metric_cost_family = (
                 "kernel" if self.compute_backend.startswith("torch") else "python_loop"
             )
-            if bridge_sample_cap is None and not bridge_text_cap:
+            def measured_evaluation(
+                evaluation_rows: Sequence[LegalSample],
+                kwargs: Mapping[str, Any],
+                evaluation_stage: str,
+            ) -> AutoencoderEvaluation:
+                metadata: Dict[str, Any] = {"sample_count": len(evaluation_rows)}
                 with profile_phase(
                     metric_cost_family,
-                    stage=stage,
+                    stage=evaluation_stage,
                     legal_family="aggregate",
-                    metadata={"sample_count": len(row_list)},
+                    metadata=metadata,
                 ):
-                    return self.evaluate(row_list, **evaluation_kwargs)
+                    result = self.evaluate(evaluation_rows, **kwargs)
+                    if result.evaluation_profile:
+                        # Nested observations are not additional profile events:
+                        # adding their durations to the enclosing event double-counts.
+                        metadata["evaluation_profile"] = dict(result.evaluation_profile)
+                    return result
+
+            if bridge_sample_cap is None and not bridge_text_cap:
+                return measured_evaluation(row_list, evaluation_kwargs, stage)
             bridge_rows = projection_bridge_samples(row_list)
             if not bridge_rows:
-                with profile_phase(
-                    metric_cost_family,
-                    stage=stage,
-                    legal_family="aggregate",
-                    metadata={"sample_count": len(row_list)},
-                ):
-                    return self.evaluate(row_list, **base_evaluation_kwargs)
+                return measured_evaluation(row_list, base_evaluation_kwargs, stage)
             emit_progress(
                 f"{stage}_bridge_evaluation",
                 bridge_sample_count=len(bridge_rows),
@@ -6723,21 +6767,9 @@ class AdaptiveModalAutoencoder:
                 full_sample_count=len(row_list),
                 sample_count=len(row_list),
             )
-            with profile_phase(
-                metric_cost_family,
-                stage=f"{stage}:bridge",
-                legal_family="aggregate",
-                metadata={"sample_count": len(bridge_rows)},
-            ):
-                bridge = self.evaluate(bridge_rows, **evaluation_kwargs)
+            bridge = measured_evaluation(bridge_rows, evaluation_kwargs, f"{stage}:bridge")
             self.alias_cached_legal_ir_targets(row_list, bridge_rows)
-            with profile_phase(
-                metric_cost_family,
-                stage=f"{stage}:base",
-                legal_family="aggregate",
-                metadata={"sample_count": len(row_list)},
-            ):
-                base = self.evaluate(row_list, **base_evaluation_kwargs)
+            base = measured_evaluation(row_list, base_evaluation_kwargs, f"{stage}:base")
             return replace(
                 base,
                 legal_ir_target_count=bridge.legal_ir_target_count,
@@ -6747,6 +6779,16 @@ class AdaptiveModalAutoencoder:
                 ),
                 legal_ir_target_hashes=dict(bridge.legal_ir_target_hashes),
                 legal_ir_view_distribution=dict(bridge.legal_ir_view_distribution),
+                decompiler_evidence=dict(bridge.decompiler_evidence),
+                evaluation_profile=(
+                    {
+                        "schema_version": "autoencoder-evaluation-profile/v1",
+                        "scope": "bounded_bridge_and_full_base_evaluations",
+                        "bridge": dict(bridge.evaluation_profile),
+                        "base": dict(base.evaluation_profile),
+                    }
+                    if profiler is not None else {}
+                ),
             )
 
         def rollback_projection_transaction(
@@ -26619,14 +26661,19 @@ def _legal_ir_target_payload(
     evaluate_provers: Optional[bool] = None,
     legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
     parallel_workers: Optional[int] = None,
+    observation: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
+    target_items_started = time.perf_counter() if observation is not None else 0.0
     target_items = _legal_ir_target_items(
         samples,
         bridge_names=bridge_names,
         evaluate_provers=evaluate_provers,
         legal_ir_targets=legal_ir_targets,
         parallel_workers=parallel_workers,
+        observation=observation,
     )
+    if observation is not None:
+        observation["target_items_seconds"] = time.perf_counter() - target_items_started
     loss_values: Dict[str, List[float]] = {}
     target_losses_by_sample: Dict[str, Dict[str, float]] = {}
     view_distribution_values: Dict[str, List[float]] = {}
@@ -26639,6 +26686,7 @@ def _legal_ir_target_payload(
         str(sample.sample_id): str(getattr(sample, "text", "") or "") for sample in samples
     }
     grammar_decoder = LegalIRGrammarDecoder()
+    structural_started = time.perf_counter() if observation is not None else 0.0
 
     for sample in samples:
         if not getattr(getattr(sample, "modal_ir", None), "formulas", None):
@@ -26650,10 +26698,32 @@ def _legal_ir_target_payload(
         if structural_target.get("formula_targets"):
             decompiler_structural_targets_by_sample[str(sample.sample_id)] = structural_target
 
+    if observation is not None:
+        observation["structural_target_seconds"] = time.perf_counter() - structural_started
+    reduction_started = time.perf_counter() if observation is not None else 0.0
+    source_metric_samples: set[str] = set()
+    compatibility_metric_samples: set[str] = set()
     for sample_id, target in target_items:
         sample_losses: Dict[str, float] = {}
         for name, value in dict(getattr(target, "losses", {}) or {}).items():
             safe_value = _float_or_zero(value)
+            # Presence is separate from the historical zero-valued loss defaults.
+            # Observe only plain numeric values, without invoking extra target getters.
+            if type(value) in (int, float) and math.isfinite(safe_value):
+                try:
+                    finite = math.isfinite(value)
+                except OverflowError:
+                    finite = False
+                if finite and name in {
+                    "source_decompiled_text_embedding_cosine_loss",
+                    "source_decompiled_text_embedding_cosine_similarity",
+                    "source_decompiled_text_token_loss",
+                    "structural_text_reconstruction_loss",
+                    "round_trip_structural_reconstruction_loss",
+                }:
+                    source_metric_samples.add(str(sample_id))
+                elif finite and name in {"cosine_similarity", "raw_source_embedding_cosine_similarity"}:
+                    compatibility_metric_samples.add(str(sample_id))
             loss_values.setdefault(str(name), []).append(safe_value)
             sample_losses[str(name)] = safe_value
         grammar_validation = _legal_ir_grammar_validation_from_target(
@@ -26688,7 +26758,20 @@ def _legal_ir_target_payload(
         if sample_id and document is not None and hasattr(document, "canonical_hash"):
             target_hashes[str(sample_id)] = str(document.canonical_hash())
 
+    decompiler_evidence = {
+        "observed": bool(source_metric_samples),
+        "source_decompiled_metric_sample_count": len(source_metric_samples),
+        "compatibility_metric_sample_count": len(compatibility_metric_samples),
+        "structural_target_sample_count": len(decompiler_structural_targets_by_sample),
+        "structural_formula_target_count": sum(
+            len(value["formula_targets"]) for value in decompiler_structural_targets_by_sample.values()
+        ),
+        "validation_authority": False,
+    }
+    if observation is not None:
+        observation["target_reduction_seconds"] = time.perf_counter() - reduction_started
     return {
+        "decompiler_evidence": decompiler_evidence,
         "decompiler_structural_targets_by_sample": dict(
             sorted(decompiler_structural_targets_by_sample.items())
         ),
@@ -27130,15 +27213,67 @@ def _legal_ir_target_items(
     evaluate_provers: Optional[bool] = None,
     legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]],
     parallel_workers: Optional[int] = None,
+    observation: Optional[Dict[str, Any]] = None,
 ) -> List[tuple[str, Any]]:
+    observation_lock = threading.Lock() if observation is not None else None
+    if observation is not None:
+        with _LEGAL_IR_TARGET_CACHE_LOCK:
+            cache_entries = len(_LEGAL_IR_TARGET_CACHE)
+        observation.update({
+            "bridge_names": list(_normalise_bridge_names(bridge_names)),
+            "evaluate_provers": evaluate_provers,
+            "parallel_workers_requested": parallel_workers,
+            "parallel_workers_used": 0,
+            "disk_cache_enabled": _legal_ir_target_disk_cache_enabled(),
+            "process_target_cache_entries_at_start": cache_entries,
+            "process_target_cache_empty_at_start": cache_entries == 0,
+            "bridge_module_preloaded_at_start": "ipfs_datasets_py.logic.bridge" in sys.modules,
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "supplied_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "disk_cache_hit_count": 0,
+            "target_cache_miss_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "generated_target_count": 0,
+            "timeout_fallback_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "training_target_seconds_sum": 0.0,
+            "representation_counts": {"prepared_native": 0, "native": 0, "cached_summary": 0, "other": 0},
+        })
+
+    def count(name: str, amount: float = 1) -> None:
+        if observation is not None:
+            with observation_lock:
+                observation[name] += amount
+
+    def finish(items: List[tuple[str, Any]]) -> List[tuple[str, Any]]:
+        if observation is not None:
+            prepared_module = sys.modules.get(
+                "ipfs_datasets_py.optimizers.logic_theorem_optimizer._autoencoder_prepared_targets"
+            )
+            bridge_module = sys.modules.get("ipfs_datasets_py.logic.bridge.multiview")
+            prepared_type = getattr(prepared_module, "_PreparedNativeTarget", None)
+            native_type = getattr(bridge_module, "LegalIRTrainingTarget", None)
+            for _, target in items:
+                kind = (
+                    "prepared_native" if type(target) is prepared_type
+                    else "native" if type(target) is native_type
+                    else "cached_summary" if type(target) is _CachedLegalIRTrainingTarget
+                    else "other"
+                )
+                observation["representation_counts"][kind] += 1
+            observation["target_count"] = len(items)
+        return items
     if legal_ir_targets is not None:
         if isinstance(legal_ir_targets, Mapping):
-            return [
+            items = [
                 (sample.sample_id, target)
                 for sample in samples
                 for target in [legal_ir_targets.get(sample.sample_id)]
                 if target is not None
             ]
+            count("supplied_target_count", len(items))
+            return finish(items)
         target_items: List[tuple[str, Any]] = []
         for index, target in enumerate(legal_ir_targets):
             if target is None:
@@ -27148,11 +27283,12 @@ def _legal_ir_target_items(
             if not sample_id and index < len(samples):
                 sample_id = samples[index].sample_id
             target_items.append((sample_id, target))
-        return target_items
+        count("supplied_target_count", len(target_items))
+        return finish(target_items)
 
     names = _normalise_bridge_names(bridge_names)
     if not names:
-        return []
+        return finish([])
 
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
@@ -27165,29 +27301,43 @@ def _legal_ir_target_items(
         with _LEGAL_IR_TARGET_CACHE_LOCK:
             cached = _LEGAL_IR_TARGET_CACHE.get(cache_key)
         if cached is not None:
+            count("memory_cache_hit_count")
             return sample.sample_id, cached
         cached = _read_legal_ir_target_disk_cache(cache_key)
         if cached is not None:
+            count("disk_cache_hit_count")
             with _LEGAL_IR_TARGET_CACHE_LOCK:
                 if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
                     _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
                 _LEGAL_IR_TARGET_CACHE[cache_key] = cached
             return sample.sample_id, cached
+        count("target_cache_miss_count")
+        count("native_evaluation_attempt_count")
         timeout_seconds = _legal_ir_target_timeout_seconds()
+        native_started = time.perf_counter() if observation is not None else 0.0
         try:
-            report = _evaluate_legal_ir_multiview_with_timeout(
-                evaluate_legal_ir_multiview,
-                timeout_seconds=timeout_seconds,
-                text=sample.text,
-                bridge_names=names,
-                document_id=sample.sample_id,
-                evaluate_provers=evaluate_provers,
-                citation=sample.citation,
-                source=sample.source,
-                source_embedding=sample.embedding_vector,
-            )
+            try:
+                report = _evaluate_legal_ir_multiview_with_timeout(
+                    evaluate_legal_ir_multiview,
+                    timeout_seconds=timeout_seconds,
+                    text=sample.text,
+                    bridge_names=names,
+                    document_id=sample.sample_id,
+                    evaluate_provers=evaluate_provers,
+                    citation=sample.citation,
+                    source=sample.source,
+                    source_embedding=sample.embedding_vector,
+                )
+            finally:
+                if observation is not None:
+                    count("native_evaluation_seconds_sum", time.perf_counter() - native_started)
+            target_started = time.perf_counter() if observation is not None else 0.0
             target = report.training_target()
+            if observation is not None:
+                count("training_target_seconds_sum", time.perf_counter() - target_started)
+            count("generated_target_count")
         except _LegalIRTargetTimeout:
+            count("timeout_fallback_count")
             target = _legal_ir_timeout_training_target(
                 sample,
                 bridge_names=names,
@@ -27205,14 +27355,16 @@ def _legal_ir_target_items(
         requested=parallel_workers,
         item_count=len(samples),
     )
+    if observation is not None:
+        observation["parallel_workers_used"] = worker_count
     if worker_count <= 1:
-        return [evaluate_sample(sample) for sample in samples]
+        return finish([evaluate_sample(sample) for sample in samples])
 
     with ThreadPoolExecutor(
         max_workers=worker_count,
         thread_name_prefix="legal-ir-target",
     ) as executor:
-        return list(executor.map(evaluate_sample, samples))
+        return finish(list(executor.map(evaluate_sample, samples)))
 
 
 def _legal_ir_parallel_worker_count(

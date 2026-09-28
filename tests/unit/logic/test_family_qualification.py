@@ -221,3 +221,118 @@ def test_dcec_requires_matching_ast_shapes_not_two_boolean_parse_successes():
     assert supported["passed"] is True
     assert supported["parser_ast_parity"] is True
     assert supported["independent_parser"]["consumed_all_input"] is True
+
+
+def _parsed_frame_slots(formula):
+    """Read emitted bindings through the actual F-logic AST, not regexes."""
+    from ipfs_datasets_py.logic.parsers.flogic import parse_flogic
+    parsed = parse_flogic(formula)
+    assert parsed.ok and not parsed.diagnostics
+    statements = parsed.document.to_dict()["statements"]
+    assert len(statements) == 1
+    return {(item["method"]["name"], tuple(arg["name"] for arg in item["method"]["arguments"])):
+            tuple(value["name"] for value in item["values"])
+            for item in statements[0]["head"]["specs"]}
+
+
+def test_reordered_temporal_records_bind_quantities_to_canonical_frame_atoms():
+    rule = {**RULE, "temporal": ["20 days", "10 days"]}
+    sidecars = [{"temporal_kind": "minimum_duration", "value": "20 days", "quantity": 20},
+                {"temporal_kind": "minimum_duration", "value": "10 days", "quantity": 10}]
+    reports = [qualification.qualify_logic_families(TEXT, {**rule, "temporal_records": records})
+               for records in (sidecars, list(reversed(sidecars)))]
+    frames = [report["families"]["frame_logic"] for report in reports]
+    assert all(report["passed"] for report in reports)
+    assert frames[0]["formula"] == frames[1]["formula"]
+    slots = _parsed_frame_slots(frames[0]["formula"])
+    assert slots["temporal", ("0",)] == ("10 days",)
+    assert slots["temporal_quantity", ("0",)] == ("10",)
+    assert slots["temporal", ("1",)] == ("20 days",)
+    assert slots["temporal_quantity", ("1",)] == ("20",)
+    assert [record["canonical_temporal_index"] for record in frames[0]["export_record"]["temporal_records"]] == [1, 0]
+    assert reports[0]["rule_sha256"] == reports[1]["rule_sha256"]
+    assert reports[0]["input_rule_sha256"] != reports[1]["input_rule_sha256"]
+
+
+def test_partial_temporal_typing_keeps_untyped_atoms_and_the_typed_atom_index():
+    report = qualification.qualify_logic_families(TEXT, {
+        **RULE, "temporal": ["10 days", "20 days", "before review"],
+        "temporal_records": [{"temporal_kind": "minimum_duration", "value": "20 days", "quantity": 20}],
+    })
+    frame = report["families"]["frame_logic"]
+    slots = _parsed_frame_slots(frame["formula"])
+    assert report["passed"] is True
+    assert slots["temporal", ("0",)] == ("10 days",)
+    assert slots["temporal", ("1",)] == ("20 days",)
+    assert slots["temporal", ("2",)] == ("before review",)
+    assert slots["temporal_quantity", ("1",)] == ("20",)
+    assert ("temporal_kind", ("0",)) not in slots
+    assert ("temporal_kind", ("2",)) not in slots
+    for row in report["families"].values():
+        coverage = row["representation_coverage"]
+        assert coverage["temporal_atom_count"] == 3
+        assert coverage["typed_duration_record_count"] == 1
+        assert coverage["typed_duration_atom_indices"] == [1]
+
+
+def test_within_and_minimum_records_retain_distinct_kinds_after_sorting():
+    report = qualification.qualify_logic_families(TEXT, {
+        **RULE, "temporal": ["within 10 days", "20 days"],
+        "temporal_records": [
+            {"temporal_kind": "within_duration", "value": "10 days", "quantity": 10},
+            {"temporal_kind": "minimum_duration", "value": "20 days", "quantity": 20}],
+    })
+    slots = _parsed_frame_slots(report["families"]["frame_logic"]["formula"])
+    assert report["passed"] is True
+    assert slots["temporal", ("0",)] == ("20 days",)
+    assert slots["temporal_kind", ("0",)] == ("minimum_duration",)
+    assert slots["temporal_quantity", ("0",)] == ("20",)
+    assert slots["temporal", ("1",)] == ("within 10 days",)
+    assert slots["temporal_kind", ("1",)] == ("within_duration",)
+    assert slots["temporal_quantity", ("1",)] == ("10",)
+    assert not report["admitted"]
+
+
+def test_representation_coverage_does_not_claim_temporal_event_or_cognitive_semantics():
+    report = qualification.qualify_logic_families(TEXT, RULE)
+    for family, row in report["families"].items():
+        coverage = row["representation_coverage"]
+        assert coverage == row["export_record"]["representation_coverage"]
+        assert coverage["scope"] == "canonical_atom_syntax_projection"
+        assert coverage["temporal_atom_count"] == coverage["typed_duration_record_count"] == 0
+        assert coverage["typed_duration_atom_indices"] == []
+        assert coverage["temporal_operator_count"] == 0
+        assert coverage["event_calculus_atom_count"] == coverage["cognitive_operator_count"] == 0
+        assert coverage["semantic_equivalence_checked"] is coverage["admitted"] is False
+        if family in {"fol", "temporal_fol"}:
+            assert coverage["modality_encoding"] == "omitted"
+            assert coverage["deontic_operator_count"] == 0
+        elif family == "frame_logic":
+            assert coverage["modality_encoding"] == "frame_value"
+            assert coverage["deontic_operator_count"] == 0
+        else:
+            assert coverage["modality_encoding"] == "deontic_operator"
+            assert coverage["deontic_operator_count"] == 1
+
+
+def test_multiple_real_compiled_clauses_keep_separate_source_and_duration_bindings():
+    from ipfs_datasets_py.logic.autoformal import AutoformalSession, compile_span
+    text = ("The officer shall retain the file for at least 20 days. "
+            "The agency shall retain records for at least 30 days.")
+    session = AutoformalSession()
+    compiled = compile_span(session, text, "multiple-duration-clauses", allow_partial=False)
+    assert compiled["compiler_status"] == "compiled" and len(session.rows) == 2
+    reports = []
+    for row, expected_quantity in zip(session.rows, (20, 30)):
+        clause = session.documents.clause(row.document_id, row.clause_id)
+        report = qualification.qualify_logic_families(clause.text, row.rule, source_id=row.clause_id)
+        reports.append(report)
+        assert row.status == "roundtrip_ok" and report["passed"] is True
+        assert report["source_sha256"] == hashlib.sha256(clause.text.encode()).hexdigest()
+        slots = _parsed_frame_slots(report["families"]["frame_logic"]["formula"])
+        assert slots["source_id", ()] == (row.clause_id,)
+        assert slots["temporal", ("0",)] == (f"{expected_quantity} days",)
+        assert slots["temporal_quantity", ("0",)] == (str(expected_quantity),)
+        assert report["admitted"] is False
+    assert reports[0]["source_id"] != reports[1]["source_id"]
+    assert reports[0]["rule_sha256"] != reports[1]["rule_sha256"]

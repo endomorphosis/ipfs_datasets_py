@@ -1,0 +1,301 @@
+{
+  "admitted": false,
+  "audit": {
+    "path": "final-native-audit.json",
+    "sha256": "b36a9d46c8cbe2c288b48038a58a6dae1254b67c159d9a3f35dbf47c5383f99c"
+  },
+  "audit_check_count": 384,
+  "command": {
+    "path": "final-command.json",
+    "sha256": "b6e240703c47876fbf1c7972f757544181c753cd5f7a82f29c0891a722630967"
+  },
+  "command_returncode": 0,
+  "configuration": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "metric_disk_cache": 0,
+    "projection_update_backend": "python_sparse_batch",
+    "reuse_native_workers": false,
+    "sample_count_per_training_job": 1,
+    "use_sample_memory": false,
+    "validation_sample_count_per_job": 1
+  },
+  "constitution_formalized": false,
+  "counts": {
+    "accepted_epochs": 4,
+    "gradient_rows": 4,
+    "gradient_validation_overlap": 0,
+    "native_training_jobs": 4,
+    "qualified": 2,
+    "reparsed_family_artifacts": 48,
+    "repeated_tuning_validation_rows": 1,
+    "training_exhausted": 2,
+    "verified_lake_builds": 8
+  },
+  "formalized": false,
+  "resources": {
+    "allowance_exceeded": false,
+    "observed_max_group_process_count": 4,
+    "observed_peak_group_rss_bytes": 3339980800,
+    "peak_scope": "Polled group RSS lower bound; shared pages may be counted more than once.",
+    "process_slot_estimate_exceeded": false,
+    "reservation_released": true,
+    "reserved_child_process_slots": 6,
+    "reserved_cpu_slots": 2,
+    "reserved_memory_mb": 8192
+  },
+  "rows": [
+    {
+      "accepted_epochs": 1,
+      "first_bridge_on_evaluate": {
+        "bridge_module_preloaded_at_start": false,
+        "cache_miss_count": 1,
+        "disk_cache_hits": 0,
+        "evaluated_split": "repeated_tuning_validation",
+        "legal_ir_target_count": 1,
+        "memory_cache_hits": 0,
+        "model_metrics_seconds": 0.07620254601351917,
+        "native_target_evaluation_seconds": 4.383548350073397,
+        "ontology_capture_seconds": 0.04840323398821056,
+        "process_target_cache_entries_at_start": 0,
+        "sample_count": 1,
+        "target_payload_seconds": 4.443382614990696,
+        "total_seconds": 4.567990442970768
+      },
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": true,
+        "semantic_gate": true
+      },
+      "qualification_seconds": 6.810601267032325,
+      "qualified": true,
+      "section": "20",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 20 days.",
+      "status": "qualified",
+      "training_failure_reasons": [],
+      "training_metrics": {
+        "cosine": 1.0,
+        "reconstruction_loss": 0.0
+      },
+      "training_seconds": 7.710278670070693,
+      "validation_after": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "validation_before": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "validation_qualification": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "worker_receipt": {
+        "path": "tuning-validation/progress/outputs/qualified-00e4ea533a6a3e80d42ccf88723733a9c34871bfbdbb6c552a189792d1431915/receipt.json",
+        "sha256": "71e286af9e395bb3ce23e3c7524af8118bca64cd886f11084aaca30b70eb56b2"
+      },
+      "worker_wall_seconds": 11.316392309963703
+    },
+    {
+      "accepted_epochs": 1,
+      "first_bridge_on_evaluate": {
+        "bridge_module_preloaded_at_start": false,
+        "cache_miss_count": 1,
+        "disk_cache_hits": 0,
+        "evaluated_split": "repeated_tuning_validation",
+        "legal_ir_target_count": 1,
+        "memory_cache_hits": 0,
+        "model_metrics_seconds": 0.07627745997160673,
+        "native_target_evaluation_seconds": 4.401979234069586,
+        "ontology_capture_seconds": 0.04800370801240206,
+        "process_target_cache_entries_at_start": 0,
+        "sample_count": 1,
+        "target_payload_seconds": 4.461637113010511,
+        "total_seconds": 4.585920169018209
+      },
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": true,
+        "semantic_gate": true
+      },
+      "qualification_seconds": 6.925344313960522,
+      "qualified": true,
+      "section": "21",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 21 days.",
+      "status": "qualified",
+      "training_failure_reasons": [],
+      "training_metrics": {
+        "cosine": 1.0,
+        "reconstruction_loss": 0.0
+      },
+      "training_seconds": 7.723832913208753,
+      "validation_after": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "validation_before": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "validation_qualification": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "worker_receipt": {
+        "path": "tuning-validation/progress/outputs/qualified-34b3c5dd5ef1bce030cba4215bbec5e56cff2c38a745c4ae16bf68d3fd94d824/receipt.json",
+        "sha256": "8a24b43180a414824fd3b0f0a7cbb6ef003fdba6a6628c819e3a6e5c13393ebf"
+      },
+      "worker_wall_seconds": 11.32560355309397
+    },
+    {
+      "accepted_epochs": 1,
+      "earlier_pre_update_training_metrics": {
+        "cosine": 0.19611613513818407,
+        "reconstruction_loss": 0.37794123682465003
+      },
+      "first_bridge_on_evaluate": {
+        "bridge_module_preloaded_at_start": false,
+        "cache_miss_count": 1,
+        "disk_cache_hits": 0,
+        "evaluated_split": "repeated_tuning_validation",
+        "legal_ir_target_count": 1,
+        "memory_cache_hits": 0,
+        "model_metrics_seconds": 0.06348841008730233,
+        "native_target_evaluation_seconds": 4.2634220009204,
+        "ontology_capture_seconds": 0.04820979107171297,
+        "process_target_cache_entries_at_start": 0,
+        "sample_count": 1,
+        "target_payload_seconds": 4.323076392989606,
+        "total_seconds": 4.4347766421269625
+      },
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": false,
+        "semantic_gate": true
+      },
+      "qualification_seconds": 5.043766709044576,
+      "qualified": false,
+      "section": "22",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 22 days.",
+      "status": "training_exhausted",
+      "training_failure_reasons": [
+        "embedding_cosine_below_threshold",
+        "reconstruction_loss_above_threshold"
+      ],
+      "training_matches_earlier_baseline_exactly": true,
+      "training_metrics": {
+        "cosine": 0.19611613513818407,
+        "reconstruction_loss": 0.37794123682465003
+      },
+      "training_seconds": 7.199932145886123,
+      "validation_after": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "validation_before": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "validation_qualification": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "worker_receipt": {
+        "path": "tuning-validation/progress/outputs/qualified-870e608153c623465e1844779283925ef0b961c0a1584d98acdffd55a64a4cfd/receipt.json",
+        "sha256": "6a732388d4621fa6671ae99ce29f5ed0a70341644ef1d4274b9574007be8b12a"
+      },
+      "worker_wall_seconds": 9.160183168947697
+    },
+    {
+      "accepted_epochs": 1,
+      "earlier_pre_update_training_metrics": {
+        "cosine": 0.196116135138184,
+        "reconstruction_loss": 0.342003247738783
+      },
+      "first_bridge_on_evaluate": {
+        "bridge_module_preloaded_at_start": false,
+        "cache_miss_count": 1,
+        "disk_cache_hits": 0,
+        "evaluated_split": "repeated_tuning_validation",
+        "legal_ir_target_count": 1,
+        "memory_cache_hits": 0,
+        "model_metrics_seconds": 0.06391766294836998,
+        "native_target_evaluation_seconds": 4.317279868060723,
+        "ontology_capture_seconds": 0.048274512868374586,
+        "process_target_cache_entries_at_start": 0,
+        "sample_count": 1,
+        "target_payload_seconds": 4.376631791004911,
+        "total_seconds": 4.488825662992895
+      },
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": false,
+        "semantic_gate": true
+      },
+      "qualification_seconds": 6.7493032340426,
+      "qualified": false,
+      "section": "23",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 23 days.",
+      "status": "training_exhausted",
+      "training_failure_reasons": [
+        "embedding_cosine_below_threshold",
+        "reconstruction_loss_above_threshold"
+      ],
+      "training_matches_earlier_baseline_exactly": true,
+      "training_metrics": {
+        "cosine": 0.196116135138184,
+        "reconstruction_loss": 0.342003247738783
+      },
+      "training_seconds": 7.260944429086521,
+      "validation_after": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "validation_before": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "validation_qualification": {
+        "cosine": 0.9999999999999999,
+        "reconstruction_loss": 0.0
+      },
+      "worker_receipt": {
+        "path": "tuning-validation/progress/outputs/qualified-30c33232e9199fae711ec2cdde1b746e8cfc004e960a8b3d76a6546386c7a236/receipt.json",
+        "sha256": "d08ced375c710058a620d5b91f77386fd3676df62b3539207c49a07bcb01bd86"
+      },
+      "worker_wall_seconds": 9.234259607968852
+    }
+  ],
+  "schema_version": "final-native-tuning-validation-summary/v1",
+  "scope": {
+    "cache": "Fresh process per job; disk cache disabled; in-process target reuse may occur after first evaluation.",
+    "comparison": "Earlier run optimized/evaluated training rows; this run selects using validation. Do not compare those objectives as improvement. The two failing training metrics equal their earlier pre-update baseline exactly.",
+    "embedding_backend": "mock:stable-sha256",
+    "inputs": "Four synthetic minimum-duration fixtures; not federal corpus formalization.",
+    "proofs": "Eight existing lake build Legal receipts and source/log hashes checked; no new Lake execution. Proofs cover source-locked synthetic numeric patterns.",
+    "selection": "One disjoint 30-day validation row reused for candidate selection; repeated tuning, not an independent held-out canary.",
+    "success": "All semantic/syntax/Lake gates pass. Two candidates fail unchanged training reconstruction/cosine thresholds and remain training_exhausted."
+  },
+  "source_and_seed_unchanged": true,
+  "wall_seconds": 111.80112067284063,
+  "wall_seconds_per_training_span": 27.950280168210156
+}

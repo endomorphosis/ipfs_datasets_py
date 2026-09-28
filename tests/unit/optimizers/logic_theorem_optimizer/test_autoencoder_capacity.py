@@ -66,6 +66,43 @@ def test_reserved_envelope_does_not_double_subtract_other_scheduler_allocations(
     assert plan(cpu_budget=4, scheduler_available_cpu=0)["workers"] == 0
 
 
+def test_execution_routes_include_nested_proofs_and_owner_memory():
+    kwargs = {"max_workers": 32, "memory_budget_mb": 8192, "pending_count": 32, "probe": PROBE}
+    training = cap.execution_capacity_plan("training", **kwargs)
+    inference = cap.execution_capacity_plan("inference", **kwargs)
+    assert training["workers"] == 5
+    assert training["execution_envelope"]["estimated_memory_mb"] == 7808
+    assert training["execution_envelope"]["child_process_slots"] == 9
+    assert inference["workers"] == 4
+    assert inference["execution_envelope"]["estimated_memory_mb"] == 7680
+    assert inference["execution_envelope"]["child_process_slots"] == 14
+    assert cap.execution_envelope("training", 2)["estimated_memory_mb"] >= 2 * 1024 + 2048
+    assert cap.execution_envelope("inference", 2)["estimated_memory_mb"] > 2828
+
+
+def test_process_envelope_overhead_is_reserved_before_counting_passes():
+    kwargs = {"max_workers": 8, "memory_budget_mb": 16000, "pending_count": 8, "probe": PROBE}
+    assert cap.execution_capacity_plan("inference", scheduler_available_process_slots=4, **kwargs)["workers"] == 0
+    assert cap.execution_capacity_plan("inference", scheduler_available_process_slots=8, **kwargs)["workers"] == 2
+    assert cap.execution_capacity_plan("training", scheduler_available_process_slots=4, **kwargs)["workers"] == 0
+    assert cap.execution_capacity_plan("training", scheduler_available_process_slots=6, **kwargs)["workers"] == 2
+    # Inside a leased group, the already-reserved process budget constrains the
+    # dispatch without asking the global scheduler to charge it a second time.
+    assert cap.execution_capacity_plan("inference", process_budget=5, **kwargs)["workers"] == 1
+    assert cap.execution_capacity_plan("training", process_budget=6, **kwargs)["workers"] == 2
+
+
+def test_too_small_whole_group_cannot_hide_owner_or_lean_memory():
+    kwargs = {"max_workers": 1, "memory_budget_mb": 2048, "pending_count": 1, "probe": PROBE}
+    assert cap.execution_capacity_plan("training", **kwargs)["workers"] == 0
+    assert cap.execution_capacity_plan("inference", **kwargs)["workers"] == 0
+    assert cap.execution_envelope("training", 0)["child_process_slots"] == 0
+    with pytest.raises(ValueError, match="overridden"):
+        cap.execution_capacity_plan("training", reserve_mb=0, **kwargs)
+    with pytest.raises(ValueError, match="execution mode"):
+        cap.execution_envelope("train-and-infer", 1)
+
+
 @pytest.mark.parametrize("kwargs", [
     {"max_workers": True}, {"max_workers": 33}, {"per_worker_cpu": 0},
     {"reserve_mb": -1}, {"pending_count": -1}, {"storage_headroom_bytes": -1},

@@ -65,6 +65,12 @@ It never subtracts the parent's reservation twice. With the default 8 GiB group
 budget and a 512 MiB coordinator reserve, the current estimate allows at most
 seven 1 GiB passes, further limited by actual hardware and queued work.
 
+The later [hardware and optimizer report](AUTOENCODER_HARDWARE_OPTIMIZER_20260928.md)
+supersedes these initial sizing estimates: current reservations include Lake/Lean
+descendants and owner memory, allowing at most five training or four inference
+passes within 8 GiB before other limits. It also records disjoint optimizer
+tuning validation and keeps process reuse explicitly opt-in.
+
 This scales **independent concurrent passes**, not optimization epochs. The
 existing one-epoch/one-line-search job defaults remain; extra metric retries stay
 inside `max_training_rounds`. More hardware does not loosen qualification or

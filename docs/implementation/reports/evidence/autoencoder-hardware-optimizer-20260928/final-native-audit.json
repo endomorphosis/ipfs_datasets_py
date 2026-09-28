@@ -1,0 +1,367 @@
+{
+  "admitted": false,
+  "audit_actions": "Read sealed artifacts, replay sparse updates, reparse exact formulas, hash existing Lean sources/logs, inspect durable statuses; no new training or Lake execution.",
+  "check_count": 384,
+  "command_receipt": {
+    "bytes": 1150,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/final-command.json",
+    "sha256": "b6e240703c47876fbf1c7972f757544181c753cd5f7a82f29c0891a722630967"
+  },
+  "constitution_formalized": false,
+  "counts": {
+    "accepted_epochs": 4,
+    "gradient_rows": 4,
+    "gradient_validation_overlap": 0,
+    "native_training_jobs": 4,
+    "qualified": 2,
+    "reparsed_family_artifacts": 48,
+    "repeated_tuning_validation_rows": 1,
+    "training_exhausted": 2,
+    "verified_lake_builds": 8
+  },
+  "cycle_receipt": {
+    "bytes": 60246,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/cycles/79b02eaf408241a2825c167fb3e7f976/cycle.json",
+    "sha256": "9e04983421efab055adf49f1ca317be0f76fab384ece768245c547fdfe251a59"
+  },
+  "failures": [],
+  "final_native_binding": {
+    "bytes": 6279,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/final-native-binding.json",
+    "sha256": "efbc8f7ca664eb788895a912014c470e9c96cb74ab330aaff8a893b6e73ba535"
+  },
+  "formalized": false,
+  "formula_artifacts_sha256": "67a5c5aa84e32bfcd999b7a2d49ce98b8b2ba5f7231b7108d95bd9d1dc1c3ddf",
+  "passed": true,
+  "producer_role_counts": {
+    "core": 6,
+    "orchestration": 40,
+    "qualification": 29
+  },
+  "proofs": [
+    {
+      "log": {
+        "bytes": 178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-30c33232e9199fae711ec2cdde1b746e8cfc004e960a8b3d76a6546386c7a236/training-0/lake-0/lake.log",
+        "sha256": "68954b0f89ab9fc8f7ecd5335dd289695efff7eaa75f222d2c5fc999a84fa563"
+      },
+      "run_id": "qualified-30c33232e9199fae711ec2cdde1b746e8cfc004e960a8b3d76a6546386c7a236",
+      "source": {
+        "bytes": 169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-30c33232e9199fae711ec2cdde1b746e8cfc004e960a8b3d76a6546386c7a236/training-0/lake-0/Legal.lean",
+        "sha256": "fbde2bbc32ea46233c8b4c17e4c3a190341183eb045e956bff186e554888a10f"
+      },
+      "split": "training"
+    },
+    {
+      "log": {
+        "bytes": 178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-30c33232e9199fae711ec2cdde1b746e8cfc004e960a8b3d76a6546386c7a236/heldout-0/lake-0/lake.log",
+        "sha256": "a0a3d6d686b7f0c8b2e0337aa9a81d5235a7c20d389ac9d9f4b111fd4b86570a"
+      },
+      "run_id": "qualified-30c33232e9199fae711ec2cdde1b746e8cfc004e960a8b3d76a6546386c7a236",
+      "source": {
+        "bytes": 169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-30c33232e9199fae711ec2cdde1b746e8cfc004e960a8b3d76a6546386c7a236/heldout-0/lake-0/Legal.lean",
+        "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+      },
+      "split": "heldout"
+    },
+    {
+      "log": {
+        "bytes": 178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-870e608153c623465e1844779283925ef0b961c0a1584d98acdffd55a64a4cfd/training-0/lake-0/lake.log",
+        "sha256": "0a6100885b3bab5033b939a3c8d3d6e92203744f7600c4ac8c900af85af8e73c"
+      },
+      "run_id": "qualified-870e608153c623465e1844779283925ef0b961c0a1584d98acdffd55a64a4cfd",
+      "source": {
+        "bytes": 169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-870e608153c623465e1844779283925ef0b961c0a1584d98acdffd55a64a4cfd/training-0/lake-0/Legal.lean",
+        "sha256": "88749153e060b5e748f6d2707bfa949f04281fc70756051eed9cec67a2e44ae8"
+      },
+      "split": "training"
+    },
+    {
+      "log": {
+        "bytes": 178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-870e608153c623465e1844779283925ef0b961c0a1584d98acdffd55a64a4cfd/heldout-0/lake-0/lake.log",
+        "sha256": "d5884c47025394a817357ac3ee10ba3b52f2de94aaf7570aeb407ad43a57dd2c"
+      },
+      "run_id": "qualified-870e608153c623465e1844779283925ef0b961c0a1584d98acdffd55a64a4cfd",
+      "source": {
+        "bytes": 169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-870e608153c623465e1844779283925ef0b961c0a1584d98acdffd55a64a4cfd/heldout-0/lake-0/Legal.lean",
+        "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+      },
+      "split": "heldout"
+    },
+    {
+      "log": {
+        "bytes": 178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-34b3c5dd5ef1bce030cba4215bbec5e56cff2c38a745c4ae16bf68d3fd94d824/training-0/lake-0/lake.log",
+        "sha256": "9f697e6350934ffa6082642e0542fa2dec9d9141a079a998fc6c08325870c55b"
+      },
+      "run_id": "qualified-34b3c5dd5ef1bce030cba4215bbec5e56cff2c38a745c4ae16bf68d3fd94d824",
+      "source": {
+        "bytes": 169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-34b3c5dd5ef1bce030cba4215bbec5e56cff2c38a745c4ae16bf68d3fd94d824/training-0/lake-0/Legal.lean",
+        "sha256": "a93124de37873b0f6d8733dda83983aca20e8485f4ebefb6686dfd972c409d7e"
+      },
+      "split": "training"
+    },
+    {
+      "log": {
+        "bytes": 178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-34b3c5dd5ef1bce030cba4215bbec5e56cff2c38a745c4ae16bf68d3fd94d824/heldout-0/lake-0/lake.log",
+        "sha256": "e7debf2e7d66a3712ef256f2f8ef2118efdc3ec8663aa9a617222258de9d1eab"
+      },
+      "run_id": "qualified-34b3c5dd5ef1bce030cba4215bbec5e56cff2c38a745c4ae16bf68d3fd94d824",
+      "source": {
+        "bytes": 169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-34b3c5dd5ef1bce030cba4215bbec5e56cff2c38a745c4ae16bf68d3fd94d824/heldout-0/lake-0/Legal.lean",
+        "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+      },
+      "split": "heldout"
+    },
+    {
+      "log": {
+        "bytes": 178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-00e4ea533a6a3e80d42ccf88723733a9c34871bfbdbb6c552a189792d1431915/training-0/lake-0/lake.log",
+        "sha256": "0ff99f537d3f6be9411d8bb8268aec50cf1b1738770c8ede10a1cc769edfaa33"
+      },
+      "run_id": "qualified-00e4ea533a6a3e80d42ccf88723733a9c34871bfbdbb6c552a189792d1431915",
+      "source": {
+        "bytes": 169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-00e4ea533a6a3e80d42ccf88723733a9c34871bfbdbb6c552a189792d1431915/training-0/lake-0/Legal.lean",
+        "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+      },
+      "split": "training"
+    },
+    {
+      "log": {
+        "bytes": 178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-00e4ea533a6a3e80d42ccf88723733a9c34871bfbdbb6c552a189792d1431915/heldout-0/lake-0/lake.log",
+        "sha256": "cca70de172171bd91ff1f27f282d6161eed66c536cbdd5024863f2acd6303dea"
+      },
+      "run_id": "qualified-00e4ea533a6a3e80d42ccf88723733a9c34871bfbdbb6c552a189792d1431915",
+      "source": {
+        "bytes": 169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/progress/qualifications/qualified-00e4ea533a6a3e80d42ccf88723733a9c34871bfbdbb6c552a189792d1431915/heldout-0/lake-0/Legal.lean",
+        "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+      },
+      "split": "heldout"
+    }
+  ],
+  "rows": [
+    {
+      "accepted_epochs": 1,
+      "base": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "candidate": {
+        "bytes": 26626107,
+        "sha256": "edc12a05d2ec4aa6743cb2f74c3ecf0a6c1a4487a254f14ce87a52caa5603bcc"
+      },
+      "chain_depth": 1,
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": false,
+        "semantic_gate": true
+      },
+      "lane": 0,
+      "metric_rows": [
+        {
+          "cosine": 0.196116135138184,
+          "passed": false,
+          "reconstruction_loss": 0.342003247738783,
+          "source_text": "The officer shall retain the file for at least 23 days.",
+          "split": "training"
+        },
+        {
+          "cosine": 0.9999999999999999,
+          "passed": true,
+          "reconstruction_loss": 0.0,
+          "source_text": "The officer shall retain the file for at least 30 days.",
+          "split": "heldout"
+        }
+      ],
+      "qualification_receipt": {
+        "bytes": 186360,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/artifacts/99/9954d8505fd31c04da11792b789a5ce9f86902cdb6ce769be48d40ba7452bfc7",
+        "sha256": "9954d8505fd31c04da11792b789a5ce9f86902cdb6ce769be48d40ba7452bfc7"
+      },
+      "qualified": false,
+      "run_id": "qualified-30c33232e9199fae711ec2cdde1b746e8cfc004e960a8b3d76a6546386c7a236",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source_text": "The officer shall retain the file for at least 23 days.",
+      "status": "training_exhausted",
+      "worker_receipt": {
+        "bytes": 167110,
+        "sha256": "d08ced375c710058a620d5b91f77386fd3676df62b3539207c49a07bcb01bd86"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "base": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "candidate": {
+        "bytes": 26626107,
+        "sha256": "88885174b43d65c50479af92391cd895f48c7b31d876a738d91d0ed5467356ba"
+      },
+      "chain_depth": 1,
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": false,
+        "semantic_gate": true
+      },
+      "lane": 1,
+      "metric_rows": [
+        {
+          "cosine": 0.19611613513818407,
+          "passed": false,
+          "reconstruction_loss": 0.37794123682465003,
+          "source_text": "The officer shall retain the file for at least 22 days.",
+          "split": "training"
+        },
+        {
+          "cosine": 0.9999999999999999,
+          "passed": true,
+          "reconstruction_loss": 0.0,
+          "source_text": "The officer shall retain the file for at least 30 days.",
+          "split": "heldout"
+        }
+      ],
+      "qualification_receipt": {
+        "bytes": 186367,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/artifacts/4c/4c1763f0bc20e7d7d0bbf5e8a5a9a8f5c432ac27fde2e56dd4e8ac17f3a6295c",
+        "sha256": "4c1763f0bc20e7d7d0bbf5e8a5a9a8f5c432ac27fde2e56dd4e8ac17f3a6295c"
+      },
+      "qualified": false,
+      "run_id": "qualified-870e608153c623465e1844779283925ef0b961c0a1584d98acdffd55a64a4cfd",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source_text": "The officer shall retain the file for at least 22 days.",
+      "status": "training_exhausted",
+      "worker_receipt": {
+        "bytes": 168506,
+        "sha256": "6a732388d4621fa6671ae99ce29f5ed0a70341644ef1d4274b9574007be8b12a"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "base": {
+        "bytes": 26626107,
+        "sha256": "edc12a05d2ec4aa6743cb2f74c3ecf0a6c1a4487a254f14ce87a52caa5603bcc"
+      },
+      "candidate": {
+        "bytes": 26635677,
+        "sha256": "714a7326f29d09beeb24bda29ec448910c85f97569473b3b56bee19318b8730c"
+      },
+      "chain_depth": 2,
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": true,
+        "semantic_gate": true
+      },
+      "lane": 0,
+      "metric_rows": [
+        {
+          "cosine": 1.0,
+          "passed": true,
+          "reconstruction_loss": 0.0,
+          "source_text": "The officer shall retain the file for at least 21 days.",
+          "split": "training"
+        },
+        {
+          "cosine": 0.9999999999999999,
+          "passed": true,
+          "reconstruction_loss": 0.0,
+          "source_text": "The officer shall retain the file for at least 30 days.",
+          "split": "heldout"
+        }
+      ],
+      "qualification_receipt": {
+        "bytes": 186291,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/artifacts/7c/7cb101bf280f3f093ed459a691594a717288f1f12b62d1dd67689bb9c021aa6c",
+        "sha256": "7cb101bf280f3f093ed459a691594a717288f1f12b62d1dd67689bb9c021aa6c"
+      },
+      "qualified": true,
+      "run_id": "qualified-34b3c5dd5ef1bce030cba4215bbec5e56cff2c38a745c4ae16bf68d3fd94d824",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source_text": "The officer shall retain the file for at least 21 days.",
+      "status": "qualified",
+      "worker_receipt": {
+        "bytes": 166580,
+        "sha256": "8a24b43180a414824fd3b0f0a7cbb6ef003fdba6a6628c819e3a6e5c13393ebf"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "base": {
+        "bytes": 26626107,
+        "sha256": "88885174b43d65c50479af92391cd895f48c7b31d876a738d91d0ed5467356ba"
+      },
+      "candidate": {
+        "bytes": 26635677,
+        "sha256": "893f42789e5ef42091430121b8ab6e57b2d38028e167e2e7505d12cc713d3721"
+      },
+      "chain_depth": 2,
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": true,
+        "semantic_gate": true
+      },
+      "lane": 1,
+      "metric_rows": [
+        {
+          "cosine": 1.0,
+          "passed": true,
+          "reconstruction_loss": 0.0,
+          "source_text": "The officer shall retain the file for at least 20 days.",
+          "split": "training"
+        },
+        {
+          "cosine": 0.9999999999999999,
+          "passed": true,
+          "reconstruction_loss": 0.0,
+          "source_text": "The officer shall retain the file for at least 30 days.",
+          "split": "heldout"
+        }
+      ],
+      "qualification_receipt": {
+        "bytes": 186412,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation/artifacts/ca/cafcfa1696f1585ea107d3e2e56e3d182bce77eb4320144ecb71caf463007e8c",
+        "sha256": "cafcfa1696f1585ea107d3e2e56e3d182bce77eb4320144ecb71caf463007e8c"
+      },
+      "qualified": true,
+      "run_id": "qualified-00e4ea533a6a3e80d42ccf88723733a9c34871bfbdbb6c552a189792d1431915",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source_text": "The officer shall retain the file for at least 20 days.",
+      "status": "qualified",
+      "worker_receipt": {
+        "bytes": 166595,
+        "sha256": "71e286af9e395bb3ce23e3c7524af8118bca64cd886f11084aaca30b70eb56b2"
+      }
+    }
+  ],
+  "schema": "final-native-autoencoder-audit/v1",
+  "scope": "Synthetic minimum-duration fixtures; repeated disjoint tuning validation is not an independent canary. Six syntax projections and numeric Lean source locks do not establish full legal-rule/cognitive-event semantics."
+}

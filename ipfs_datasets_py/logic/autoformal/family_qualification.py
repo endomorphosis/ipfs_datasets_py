@@ -249,6 +249,7 @@ def export_canonical_rule_families(
     """
     contracts = _module("ipfs_datasets_py.logic.legal_ir.canonical_contracts")
     canonical = contracts.CanonicalRule.from_dict(rule).to_dict()
+    temporal_indices = {value: index for index, value in enumerate(canonical["temporal"])}
     bindings: dict[str, dict[str, str]] = {}
 
     def symbol(slot: str, value: str) -> str:
@@ -279,14 +280,15 @@ def export_canonical_rule_families(
         canonical_value = value
         if kind == "within_duration" and f"within {value}" in canonical["temporal"]:
             canonical_value = f"within {value}"
-        if canonical_value not in canonical["temporal"]:
+        if canonical_value not in temporal_indices:
             raise ValueError("temporal_sidecar_not_bound_to_canonical_atom")
         if kind not in {"minimum_duration", "within_duration"}:
             continue
         if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity < 0:
             raise ValueError("duration_quantity_missing_or_invalid")
         temporal_atoms.append(f"{kind}({action_atom},{quantity},{symbol('duration', value)})")
-        accepted_records.append({**record, "canonical_temporal_atom": canonical_value})
+        accepted_records.append({**record, "canonical_temporal_atom": canonical_value,
+                                 "canonical_temporal_index": temporal_indices[canonical_value]})
 
     def conjunction(parts: Sequence[str]) -> str:
         if not parts:
@@ -314,19 +316,40 @@ def export_canonical_rule_families(
     for name in ("conditions", "exceptions", "temporal"):
         slots.append(f"{name}_count->{len(canonical[name])}")
         slots.extend(f"{name}({index})->{quoted(value)}" for index, value in enumerate(canonical[name]))
-    for index, record in enumerate(accepted_records):
+    # CanonicalRule sorts temporal atoms independently of parser sidecar order.
+    # A typed field must use its atom's index, including when only some atoms
+    # have typed records. Sorting the fields also keeps frame bytes stable
+    # when an equivalent sidecar list arrives in another order.
+    for record in sorted(accepted_records, key=lambda item: item["canonical_temporal_index"]):
+        index = record["canonical_temporal_index"]
         slots.extend((f"temporal_kind({index})->{quoted(record['temporal_kind'])}",
                       f"temporal_quantity({index})->{record['quantity']}"))
     formulas["frame_logic"] = f"norm_{_digest(canonical)[:16]}[" + ",".join(slots) + "]."
     records = []
     for target, formula in formulas.items():
+        omitted = target in {"fol", "temporal_fol"}
+        frame = target == "frame_logic"
+        coverage = {
+            "scope": "canonical_atom_syntax_projection",
+            "modality_encoding": "omitted" if omitted else "frame_value" if frame else "deontic_operator",
+            "deontic_operator_count": int(not omitted and not frame),
+            "temporal_atom_count": len(canonical["temporal"]),
+            "typed_duration_record_count": len(accepted_records),
+            "typed_duration_atom_indices": sorted({record["canonical_temporal_index"] for record in accepted_records}),
+            "temporal_operator_count": 0,
+            "event_calculus_atom_count": 0,
+            "cognitive_operator_count": 0,
+            "semantic_equivalence_checked": False,
+            "admitted": False,
+        }
         records.append({
             "target": target, "exported_formula": formula, "source_id": source_id,
             "exporter": __name__ + ".export_canonical_rule_families",
             "export_schema": "canonical-rule-family-syntax/v1", "skipped": False,
             "canonical_rule": canonical, "canonical_rule_sha256": _digest(canonical),
             "atom_bindings": bindings, "temporal_records": accepted_records,
-            "projection_omitted_facets": ["modality"] if target in {"fol", "temporal_fol"} else [],
+            "projection_omitted_facets": ["modality"] if omitted else [],
+            "representation_coverage": coverage,
             "grammar_fragment": "frame_record" if target == "frame_logic" else "source_atom_predicates",
             "temporal_operator_added": False, "event_time_invented": False,
             "semantic_equivalence_checked": False, "admitted": False,
@@ -422,6 +445,8 @@ def qualify_logic_families(
             row["export_record"] = record
             row["exporter"] = str(record.get("exporter") or "")
             row["source_bound"] = True
+            if "representation_coverage" in record:
+                row["representation_coverage"] = record["representation_coverage"]
             if record.get("skipped") is True:
                 row.update(passed=False, syntax_valid=False)
                 row["diagnostics"].append({"code": "exporter_skipped"})

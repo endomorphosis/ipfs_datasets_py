@@ -174,6 +174,9 @@ def plan_wave(args, rows, *, campaign_reader=read_campaign, storage_reader=stora
     available = sizing.scheduler_capacity(scheduler)
     memory = 1024 if args.sync_only else 1024 + inner_memory
     cpu = 1 if args.sync_only else 2
+    # The outer control process and inner coordinator reserve independently.
+    # The inner envelope includes its model pool and serial Lake/Lean work.
+    processes = 1 if args.sync_only else 1 + sizing.execution_envelope("training", 1)["child_process_slots"]
     per_storage = args.worker_storage_bytes + (0 if args.sync_only else args.training_storage_bytes)
     limit = min(len(rows), args.max_workers or 32)
     planned = capacity(max_workers=limit, memory_budget_mb=args.memory_budget_mb,
@@ -181,11 +184,12 @@ def plan_wave(args, rows, *, campaign_reader=read_campaign, storage_reader=stora
         per_worker_memory_mb=memory, per_worker_cpu=cpu, reserve_mb=0,
         storage_headroom_bytes=storage["headroom_bytes"], per_worker_storage_bytes=per_storage,
         scheduler_available_cpu=available["cpu_slots"], scheduler_available_memory_mb=available["memory_mb"],
-        scheduler_available_process_slots=available["child_process_slots"], per_worker_process_slots=cpu)
+        scheduler_available_process_slots=available["child_process_slots"], per_worker_process_slots=processes)
     return {"schema": SCHEMA, "intent": "synchronize_weights" if args.sync_only else "train_one_span_per_worker",
             "campaign_id": rows[0]["campaign_id"], "campaign_binding_sha256": binding,
             "configured_worker_ids": [row["worker_id"] for row in rows], "capacity": planned,
-            "per_worker": {"memory_mb": memory, "cpu_slots": cpu, "storage_bytes": per_storage},
+            "per_worker": {"memory_mb": memory, "cpu_slots": cpu, "child_process_slots": processes,
+                           "storage_bytes": per_storage},
             "storage": storage, "scheduler_available": available, "owner_generation": campaigns[0]["weights"]["generation"],
             "admitted": False, "formalized": False, "reservation_acquired": False}
 

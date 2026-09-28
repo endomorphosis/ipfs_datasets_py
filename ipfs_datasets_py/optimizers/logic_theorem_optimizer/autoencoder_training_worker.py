@@ -8,6 +8,8 @@ opt-in sparse manifests reference explicitly supplied immutable dependencies.
 
 from __future__ import annotations
 
+from .autoencoder_native_pool import worker_runtime
+
 import gc
 import hashlib
 import inspect
@@ -1355,7 +1357,8 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         "effective_autoencoder_config": effective_constructor,
         "effective_projection_config": effective_projection,
         "compute_backend": model.compute_backend_metadata(),
-        "runtime": {"python": platform.python_version(), "pid": os.getpid()},
+        "runtime": {"python": platform.python_version(), "pid": os.getpid(),
+                    "native_pool": worker_runtime()},
         "tree_paths": tree_paths,
         "tree_file_sha256": tree_hashes,
         "worker_source_sha256": tree_hashes["worker"],

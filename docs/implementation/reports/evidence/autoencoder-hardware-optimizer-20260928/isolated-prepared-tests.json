@@ -1,0 +1,37 @@
+{
+  "schema": "isolated-prepared-source-tests/v1",
+  "source_tree": "151ea8abf3150847530fb6b6df1112e89986a842",
+  "origin_main_base": "84f31d112f63e71876f3b6ff89bb3ff3481efe9b",
+  "directory": "/tmp/autoencoder-prepared-main-tests-5zqnzs8f",
+  "exported_python_files_and_pytest_config": 7281,
+  "bytes": 156101117,
+  "modal_sha256": "1aa457e59efd78bb1e514e24a4309e9a774d21148f37dde8adf0af8ffdad1584",
+  "scope": "Isolated prepared-main Python source unit tests with exact frozen parity policy restored; not canonical pinned native qualification, Lake evidence, or admission. Git-linked repositories are not exported.",
+  "admitted": false,
+  "command": [
+    "python3",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/logic/test_family_qualification.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_observability.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_target_grammar_fastpath.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_projection_profiler.py",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/isolated-prepared-tests.xml"
+  ],
+  "restored_policy": {
+    "path": "docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json",
+    "sha256": "9e4b1ecbc4e062d3b25eade13e28f57c92e54a5de407c8f238f590cab844b818",
+    "git_blob": "447876849d6247a0109da3362ac15bb577589472",
+    "source": "exact prepared Git tree, no workspace substitution"
+  },
+  "prior_failure": {
+    "reason": "incomplete-export-harness: omitted repository parity policy and package data fallback; FileNotFoundError at policy_validation",
+    "passed": 77,
+    "failed": 1,
+    "log": "isolated-prepared-tests-incomplete-export.log",
+    "source_fix": false,
+    "test_fix": false
+  },
+  "exit_code": 0
+}

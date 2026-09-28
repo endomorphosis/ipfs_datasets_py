@@ -234,11 +234,12 @@ class DaemonResourceReservation:
     The owner is responsible for stopping it on a limit error.
     """
 
-    def __init__(self, ledger_path, *, roots, storage_bytes, memory_mb, cpu_slots=1,
+    def __init__(self, ledger_path, *, roots, storage_bytes, memory_mb, cpu_slots=1, child_process_slots=1,
                  timeout_seconds=0, ledger_lock_timeout_seconds=None):
         self.storage_bytes = _integer(storage_bytes, "storage_bytes", maximum=MAX_STORAGE_BYTES)
         self.memory_mb = _integer(memory_mb, "memory_mb")
         self.cpu_slots = _integer(cpu_slots, "cpu_slots")
+        self.child_process_slots = _integer(child_process_slots, "child_process_slots")
         if type(timeout_seconds) not in (int, float) or not math.isfinite(timeout_seconds) or timeout_seconds < 0:
             raise DaemonResourceError("invalid timeout_seconds")
         self.timeout_seconds = float(timeout_seconds)
@@ -337,6 +338,8 @@ class DaemonResourceReservation:
                 raise DaemonResourceError("invalid disk reservation record")
             _integer(record.get("storage_bytes"), "ledger storage_bytes", maximum=MAX_STORAGE_BYTES)
             _integer(record.get("owner_pid"), "ledger owner_pid")
+            if "child_process_slots" in record:
+                _integer(record["child_process_slots"], "ledger child_process_slots")
             _external_charges(record)
         return value
 
@@ -391,6 +394,7 @@ class DaemonResourceReservation:
             record = {"reservation_id": self.reservation_id, "status": "reserved",
                       "owner_pid": self._owner_pid, "storage_bytes": self.storage_bytes,
                       "memory_mb": self.memory_mb, "cpu_slots": self.cpu_slots,
+                      "child_process_slots": self.child_process_slots,
                       "scheduler_lane": SCHEDULER_LANE.value, "workload": SCHEDULER_WORKLOAD,
                       "created_at": time.time(), "attempt_directory": None, "child": None,
                       "prior_children": [], "external_charges": {},
@@ -402,7 +406,7 @@ class DaemonResourceReservation:
         try:
             self._lease = get_global_resource_scheduler().acquire(
                 SCHEDULER_LANE, cpu_slots=self.cpu_slots, memory_mb=self.memory_mb,
-                child_process_slots=1, requires_gpu=False, timeout=self.timeout_seconds,
+                child_process_slots=self.child_process_slots, requires_gpu=False, timeout=self.timeout_seconds,
                 request_id="daemon:" + self.reservation_id)
             self._update(status="active")
         except BaseException:
@@ -510,6 +514,8 @@ class DaemonResourceReservation:
                          external_charged_bytes=external_bytes,
                          total_attempt_charged_bytes=attempt_bytes + external_bytes,
                          group_rss=group, memory_limit_bytes=self.memory_mb * 1024 * 1024,
+                         reserved_child_process_slots=self.child_process_slots,
+                         process_slot_estimate_exceeded=group["live_processes"] > self.child_process_slots,
                          checked_at=time.time())
             row["last_usage"] = usage
             self._write(ledger)

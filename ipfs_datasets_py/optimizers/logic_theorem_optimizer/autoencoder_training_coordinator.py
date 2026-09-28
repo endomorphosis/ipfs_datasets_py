@@ -810,7 +810,8 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
                       clock: Callable[[], float] = time.time,
                       defer_target_hydration_gc: bool = False,
                       reduce_native_targets: bool = False,
-                      sparse_checkpoint_policy: SparseCheckpointPolicy = SparseCheckpointPolicy()) -> dict[str, Any]:
+                      sparse_checkpoint_policy: SparseCheckpointPolicy = SparseCheckpointPolicy(),
+                      _native_pool: Any = None) -> dict[str, Any]:
     """Dispatch registered jobs with the existing spawned-worker defaults.
 
     Injected executor/worker hooks remain test evidence. Persistent prepared
@@ -821,7 +822,8 @@ def run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_wo
         poll_seconds=poll_seconds, worker_id_prefix=worker_id_prefix,
         executor_factory=executor_factory, worker_function=worker_function, clock=clock,
         defer_target_hydration_gc=defer_target_hydration_gc,
-        reduce_native_targets=reduce_native_targets, sparse_checkpoint_policy=sparse_checkpoint_policy)
+        reduce_native_targets=reduce_native_targets, sparse_checkpoint_policy=sparse_checkpoint_policy,
+        native_pool=_native_pool)
 
 
 def _run_owned_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *,
@@ -895,7 +897,7 @@ def _run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_w
                       before_prepare: Callable[[TrainingJobSpec, Mapping[str, Any]], None] | None = None,
                       before_submit: Callable[..., None] | None = None,
                       after_terminal: Callable[..., None] | None = None,
-                      timeout_seconds: float | None = None) -> dict[str, Any]:
+                      timeout_seconds: float | None = None, native_pool: Any = None) -> dict[str, Any]:
     """Dispatch precreated runs, stage results, and durably record completion.
 
     Native execution uses ``spawn``. Test injection is always marked as such in
@@ -932,6 +934,11 @@ def _run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_w
     owned = operation_journal is not None
     native = (owned_supervisor is not None if owned else
               executor_factory is None and worker_function is execute_training_job)
+    if native_pool is not None:
+        from .autoencoder_native_pool import _NativeTrainingPool
+        if (type(native_pool) is not _NativeTrainingPool or not native or owned
+                or defer_target_hydration_gc or reduce_native_targets):
+            raise TrainingCoordinationError("native retained pool cannot carry injected or owned runtime hooks")
     owned_deadline = time.monotonic() + timeout_seconds if owned else None
     if defer_target_hydration_gc and not native:
         raise TrainingCoordinationError("GC deferral requires the native spawned worker executor")
@@ -946,6 +953,8 @@ def _run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_w
     if not isinstance(worker_id_prefix, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:@+-]{0,127}", worker_id_prefix):
         raise TrainingCoordinationError("worker_id_prefix must be a bounded identifier")
     spec_list = list(specs)
+    if native_pool is not None:
+        native_pool.validate_dispatch(max_workers, len(spec_list))
     if owned and not 1 <= len(spec_list) <= 64:
         raise TrainingCoordinationError("owned dispatch requires between 1 and 64 fresh jobs")
     for spec in spec_list:
@@ -1110,7 +1119,8 @@ def _run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_w
                 item["quarantined"] = True
 
     factory = executor_factory or ProcessPoolExecutor
-    executor = (owned_supervisor if owned_supervisor is not None else
+    executor = (native_pool if native_pool is not None else
+                owned_supervisor if owned_supervisor is not None else
                 factory(max_workers=max_workers, mp_context=multiprocessing.get_context("spawn")))
     preparation_pool = None
     try:
@@ -1151,7 +1161,9 @@ def _run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_w
                         job_ref = registry.verify_artifact(
                             registry.get_run(spec.run_id)["spec"]["job_spec_artifact"])
                         job_artifact = {**job_ref, "path": str(registry.artifact_path(job_ref))}
-                    if owned_supervisor is not None:
+                    if native_pool is not None:
+                        future = executor.submit(spec)
+                    elif owned_supervisor is not None:
                         future = executor.submit(spec, lease=lease, job_artifact=job_artifact)
                     else:
                         if owned:
@@ -1231,7 +1243,10 @@ def _run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_w
             if preparation_pool is not None:
                 preparation_pool.shutdown(wait=True, cancel_futures=True)
         finally:
-            if owned_supervisor is not None:
+            if native_pool is not None:
+                # The enclosing qualified cycle owns shutdown, including failures.
+                pass
+            elif owned_supervisor is not None:
                 executor.close()
             else:
                 executor.shutdown(wait=True, cancel_futures=True)
@@ -1240,6 +1255,7 @@ def _run_training_jobs(registry: Any, specs: Sequence[TrainingJobSpec], *, max_w
             "execution_mode": "native_training" if native else "injected_test",
             "defer_target_hydration_gc": defer_target_hydration_gc,
             "reduce_native_targets": reduce_native_targets,
+            "native_pool": native_pool.observation() if native_pool is not None else {"enabled": False},
             "max_workers": max_workers, "run_count": len(spec_list),
             "lease_seconds": lease_seconds, "elapsed_seconds": time.perf_counter() - started,
             "mutation_retry_count": mutation_retries, "resolved_operation_count": resolved_operations,

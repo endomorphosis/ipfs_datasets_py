@@ -1,0 +1,23 @@
+{
+  "schema": "isolated-prepared-source-tests/v1",
+  "source_tree": "151ea8abf3150847530fb6b6df1112e89986a842",
+  "origin_main_base": "84f31d112f63e71876f3b6ff89bb3ff3481efe9b",
+  "directory": "/tmp/autoencoder-prepared-main-tests-5zqnzs8f",
+  "exported_python_files_and_pytest_config": 7281,
+  "bytes": 156101117,
+  "modal_sha256": "1aa457e59efd78bb1e514e24a4309e9a774d21148f37dde8adf0af8ffdad1584",
+  "scope": "Isolated prepared-main source unit tests; not canonical pinned native qualification, Lake evidence, or admission. Git-linked repositories and non-Python data are not exported.",
+  "admitted": false,
+  "exit_code": 1,
+  "command": [
+    "python3",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/logic/test_family_qualification.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_observability.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_target_grammar_fastpath.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_projection_profiler.py",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/isolated-prepared-tests.xml"
+  ]
+}

@@ -223,6 +223,7 @@ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=No
                   storage_headroom_bytes=None, per_worker_storage_bytes=0,
                   scheduler_available_cpu=None, scheduler_available_memory_mb=None,
                   scheduler_available_process_slots=None, per_worker_process_slots=1,
+                  process_budget=None, reserve_process_slots=0,
                   probe=None):
     """Bound parallel passes by hardware, the caller's envelope, and headroom.
 
@@ -235,6 +236,7 @@ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=No
             ("memory_budget_mb", memory_budget_mb, 0), ("pending_count", pending_count, 0),
             ("per_worker_memory_mb", per_worker_memory_mb, 1), ("per_worker_cpu", per_worker_cpu, 1),
             ("reserve_mb", reserve_mb, 0), ("per_worker_storage_bytes", per_worker_storage_bytes, 0),
+            ("reserve_process_slots", reserve_process_slots, 0),
             ("per_worker_process_slots", per_worker_process_slots, 1)):
         _integer(value, name, minimum)
     if max_workers > 32:
@@ -242,6 +244,7 @@ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=No
     for name, value in (("cpu_budget", cpu_budget), ("storage_headroom_bytes", storage_headroom_bytes),
             ("scheduler_available_cpu", scheduler_available_cpu),
             ("scheduler_available_memory_mb", scheduler_available_memory_mb),
+            ("process_budget", process_budget),
             ("scheduler_available_process_slots", scheduler_available_process_slots)):
         if value is not None:
             _integer(value, name)
@@ -274,9 +277,12 @@ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=No
     for name, value, cost in (("reservation_cpu", cpu_budget, per_worker_cpu),
             ("scheduler_cpu", scheduler_available_cpu, per_worker_cpu),
             ("scheduler_memory", scheduler_available_memory_mb, per_worker_memory_mb),
+            ("reservation_process_slots", process_budget, per_worker_process_slots),
             ("scheduler_process_slots", scheduler_available_process_slots, per_worker_process_slots)):
         if value is not None:
-            limits[name] = max(0, value - (reserve_mb if name == "scheduler_memory" else 0)) // cost
+            overhead = (reserve_mb if name == "scheduler_memory" else reserve_process_slots
+                        if name in {"scheduler_process_slots", "reservation_process_slots"} else 0)
+            limits[name] = max(0, value - overhead) // cost
     if per_worker_storage_bytes:
         limits["storage_headroom"] = 0 if storage_headroom_bytes is None else storage_headroom_bytes // per_worker_storage_bytes
         if storage_headroom_bytes is None:
@@ -289,3 +295,46 @@ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=No
     return {"schema_version": "autoencoder-dispatch-capacity/v1", "workers": workers,
             "limits": limits, "telemetry": observed, "reasons": sorted(set(reasons)),
             "scope": "concurrent_independent_passes", "admitted": False}
+
+
+def execution_resource_policy(execution_mode):
+    """Declared conservative estimates, not measured hard process maxima.
+
+    The 2026-09-28 smoke sampled ~997 MiB per training worker and ~1,106
+    MiB for owner qualification. Inference workers used ~890 MiB each while
+    concurrent Lake descendants added ~444--551 MiB per pass. Estimates add
+    headroom and retain owner/Lake space while up to two training workers stay
+    resident. Receipts retain these assumptions; RSS remains polled separately.
+    """
+    if execution_mode == "training":
+        return {"per_worker_memory_mb": 1152, "reserve_mb": 2048,
+                "per_worker_process_slots": 1, "reserve_process_slots": 4,
+                "scope": "resident_optimizer_workers_plus_owner_tracker_lake_lean"}
+    if execution_mode == "inference":
+        return {"per_worker_memory_mb": 1792, "reserve_mb": 512,
+                "per_worker_process_slots": 3, "reserve_process_slots": 2,
+                "scope": "parallel_model_lake_lean_plus_coordinator_tracker"}
+    raise ValueError("unknown autoencoder execution mode")
+
+
+def execution_envelope(execution_mode, workers):
+    _integer(workers, "workers")
+    if workers > 32:
+        raise ValueError("workers exceeds 32")
+    policy = execution_resource_policy(execution_mode)
+    return {"execution_mode": execution_mode, "workers": workers,
+            "estimated_memory_mb": policy["reserve_mb"] + workers * policy["per_worker_memory_mb"] if workers else 0,
+            "cpu_slots": workers,
+            "child_process_slots": policy["reserve_process_slots"] + workers * policy["per_worker_process_slots"] if workers else 0,
+            "estimate_policy": policy, "scope": "cooperative_resource_estimate_not_kernel_quota"}
+
+
+def execution_capacity_plan(execution_mode, **kwargs):
+    """Plan a complete inference/training group, including nested proof work."""
+    policy = execution_resource_policy(execution_mode)
+    costs = {name: value for name, value in policy.items() if name != "scope"}
+    if any(name in kwargs for name in costs):
+        raise ValueError("execution resource estimates cannot be overridden implicitly")
+    plan = capacity_plan(**kwargs, **costs)
+    plan["execution_envelope"] = execution_envelope(execution_mode, plan["workers"])
+    return plan

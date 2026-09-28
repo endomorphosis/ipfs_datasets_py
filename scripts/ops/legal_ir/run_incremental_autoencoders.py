@@ -55,6 +55,7 @@ def orchestration_hashes():
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paths.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
              ROOT / "ipfs_datasets_py/duckdb_control/autoencoder_registry.py"]
     paths.extend(ROOT / "ipfs_datasets_py" / relative for relative in QUALIFICATION_DEPENDENCIES)
@@ -139,7 +140,12 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
                    max_seconds=180.0, source_language="en", model_variant="incremental-modal",
                    arrow_feature_weights=None, shared_targets=None, target_snapshot_id=None,
                    validation_records=()):
-    """Create immutable one-span templates; the runner supplies actual lane parents."""
+    """Create one-span gradient jobs with disjoint tuning rows for selection.
+
+    The same validation rows also undergo final qualification. Repeated use
+    for candidate selection does not establish an independent held-out canary.
+    The runner supplies actual lane parents and enforces source disjointness.
+    """
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker import TrainingJobSpec
     state_directory = Path(state_directory)
     checkpoint = Path(checkpoint)
@@ -185,7 +191,7 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
             "output_directory": str(state_directory / "template-outputs" / record_id),
             "code_identity": code_identity, "expected_source_sha256": source_hashes,
             "dataset_snapshot_id": record_id, "split_snapshot_id": split_identity,
-            "samples": [record["sample"]], "validation_samples": [], "variant": variant,
+            "samples": [record["sample"]], "validation_samples": validation_samples, "variant": variant,
             "autoencoder_config": {"compute_device": "python"},
             "training_config": {"max_seconds": max_seconds, "profile_projection": True,
                                 "projection_max_update_families": 5},
@@ -210,7 +216,7 @@ def run_cycle(config):
     orchestration = orchestration_hashes()
     from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_qualified_training import run_qualified_incremental_training
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import capacity_plan
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan
     state = Path(config["state_directory"])
     records = local_records(config["input_jsonl"]) if config.get("input_jsonl") else []
     validation = local_records(config["validation_jsonl"]) if config.get("validation_jsonl") else []
@@ -255,9 +261,11 @@ def run_cycle(config):
                 machine_shard_count=config["shard_count"], machine_shard_index=config["shard_index"],
                 lane_count=config["workers"], max_batches=config["max_batches"],
                 max_parallel_workers=config.get("max_parallel_workers", config["workers"]),
-                capacity_callback=lambda **limits: capacity_plan(**limits,
+                capacity_callback=lambda **limits: execution_capacity_plan("training", **limits,
                         memory_budget_mb=config["memory_mb"],
-                        cpu_budget=config.get("max_parallel_workers", config["workers"])),
+                        cpu_budget=config.get("max_parallel_workers", config["workers"]),
+                        process_budget=config.get("reserved_child_process_slots")),
+                reuse_native_workers=not config.get("fresh_training_workers", True),
                 max_training_rounds=config.get("max_training_rounds", 3),
                 lake_timeout_seconds=config.get("lake_timeout_seconds", 120),
                 producer_identity=orchestration,
@@ -293,6 +301,7 @@ def run_cycle(config):
                "formalized": False, "heldout_canary": False, "temperature": 0,
                "validation_sample_count": len(validation),
                "validation_role": "tuning_validation_repeated_candidate_selection",
+               "optimizer_validation_role": "repeated_selection_tuning" if validation else "in_sample_no_validation",
                "weight_publications": publications,
                "publication_repository": config.get("publish_repository"),
                "model_weights_downloaded": False, "source_hashes": source_hashes,
@@ -357,12 +366,13 @@ def _group_observation(group_pid):
 
 def supervised_cycle(config):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import DaemonResourceReservation
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import capacity_plan, scheduler_capacity
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan, scheduler_capacity
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import get_global_resource_scheduler
     if config.get("execution_mode", "training") not in {"inference", "training"}:
         raise ValueError("unknown autoencoder execution gate")
     available = scheduler_capacity(get_global_resource_scheduler().snapshot())
-    plan = capacity_plan(max_workers=config["workers"], memory_budget_mb=config["memory_mb"],
+    plan = execution_capacity_plan(config.get("execution_mode", "training"),
+        max_workers=config["workers"], memory_budget_mb=config["memory_mb"],
         pending_count=config["max_batches"], scheduler_available_cpu=available["cpu_slots"],
         scheduler_available_memory_mb=available["memory_mb"],
         scheduler_available_process_slots=available["child_process_slots"])
@@ -385,10 +395,12 @@ def supervised_cycle(config):
     receipt_directory = state / "cycles" / cycle_id
     receipt_directory.mkdir(parents=True)
     child_config = {**config, "max_parallel_workers": plan["workers"],
+                    "reserved_child_process_slots": plan["execution_envelope"]["child_process_slots"],
                     "capacity_plan": plan, "cycle_receipt": str(receipt_directory / "cycle.json")}
     reservation = DaemonResourceReservation(
         ledger, roots=roots, storage_bytes=config["storage_bytes"], memory_mb=config["memory_mb"],
         cpu_slots=plan["workers"], timeout_seconds=0, ledger_lock_timeout_seconds=60,
+        child_process_slots=plan["execution_envelope"]["child_process_slots"],
     )
     started = time.monotonic()
     process = None
@@ -406,8 +418,11 @@ def supervised_cycle(config):
                 reservation.check_usage(attempt_directory=state, child_pid=process.pid)
                 process.stdin.write((_json(child_config) + "\n").encode())
                 process.stdin.close()
-                next_check = time.monotonic()
-                next_observation = next_check
+                # The just-completed check already recorded the isolated child
+                # and allowance before stdin release. Avoid an immediate second
+                # full shared-root inventory; retain the 15-second cadence.
+                next_observation = time.monotonic()
+                next_check = next_observation + 15
                 while process.poll() is None:
                     if time.monotonic() - started > config["cycle_timeout"]:
                         raise TimeoutError("incremental training cycle exceeded its process deadline")
@@ -449,17 +464,23 @@ def parser():
                    help="Inference only evaluates immutable local weights; training may create private candidates")
     p.add_argument("--checkpoint", type=Path, default=PINNED)
     p.add_argument("--arrow-feature-weights", type=Path, help="Optional local baseline-bound Arrow IPC weights")
-    p.add_argument("--shared-targets", type=Path, help="Optional local verified target artifact covering all input rows")
+    p.add_argument("--shared-targets", type=Path,
+                   help="Optional local verified target artifact covering all training and validation rows")
     p.add_argument("--target-snapshot-id", help="Exact snapshot identity, required with --shared-targets")
     p.add_argument("--input-jsonl", type=Path)
     p.add_argument("--validation-jsonl", type=Path,
-                   help="Disjoint tuning validation (max 32 rows); missing validation fails qualification")
+                   help="Disjoint optimizer selection and qualification rows (max 32); repeated tuning, not an independent canary")
     p.add_argument("--repository-id", help="Optional census exchange dataset to poll")
     p.add_argument("--publish-repository", choices=["justicedao/uscode-autoformal-span-cache"],
                    help="Upload qualified sparse updates and proof evidence through the durable registry outbox")
     p.add_argument("--revision", default="main")
     p.add_argument("--workers", type=int, default=0,
                    help="Stable lane ceiling (1..32). 0 uses 32 logical lanes; actual concurrent passes adapt to hardware")
+    workers = p.add_mutually_exclusive_group()
+    workers.add_argument("--fresh-training-workers", dest="fresh_training_workers", action="store_true", default=True,
+                         help="Use fresh native worker processes for each wave (default)")
+    workers.add_argument("--reuse-training-workers", dest="fresh_training_workers", action="store_false",
+                         help="Opt in to bounded native process reuse; model settings and qualification gates are unchanged")
     p.add_argument("--shard-count", type=int, default=1)
     p.add_argument("--shard-index", type=int, default=0)
     p.add_argument("--max-batches", type=int, default=4, help="Optimizer attempts per cycle, including qualification retries")

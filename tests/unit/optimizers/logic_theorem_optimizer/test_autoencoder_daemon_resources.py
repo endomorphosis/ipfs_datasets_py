@@ -9,7 +9,7 @@ import pytest
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
-    GlobalResourceScheduler, ResourceLane, ResourceSchedulerConfig, ResourceUnavailableError,
+    GlobalResourceScheduler, ResourceLane, ResourceSchedulerConfig, ResourceUnavailableError, LeaseTimeoutError,
 )
 
 
@@ -47,6 +47,33 @@ def test_production_storage_cap_is_eighty_gb_without_admission(tmp_path):
     assert reservation.to_dict()["resource_lease"] is None
     assert not ledger.exists()
     assert not reservation.lock_path.exists()
+
+
+def test_declared_process_envelope_is_reserved_and_recorded(setup):
+    factory, roots, ledger, scheduler = setup
+    with factory(child_process_slots=3) as reservation:
+        assert scheduler.snapshot()["allocated_child_process_slots"] == 3
+        assert reservation.to_dict()["resource_lease"]["child_process_slots"] == 3
+        record = json.loads(ledger.read_bytes())["reservations"][reservation.reservation_id]
+        assert record["child_process_slots"] == 3
+        usage = reservation.check_usage(roots[0])
+        assert usage["reserved_child_process_slots"] == 3
+        assert usage["process_slot_estimate_exceeded"] is False
+        with factory() as other:
+            assert scheduler.snapshot()["allocated_child_process_slots"] == 4
+            assert other.to_dict()["resource_lease"]["child_process_slots"] == 1
+            other.release(artifacts_durable=True)
+        reservation.release(artifacts_durable=True)
+    assert scheduler.snapshot()["allocated_child_process_slots"] == 0
+
+
+def test_process_envelope_cannot_exceed_authoritative_scheduler_slots(setup):
+    factory, roots, ledger, scheduler = setup
+    with factory(child_process_slots=4) as active:
+        with pytest.raises(LeaseTimeoutError):
+            factory(child_process_slots=1).__enter__()
+        assert scheduler.snapshot()["allocated_child_process_slots"] == 4
+        active.release(artifacts_durable=True)
 
 
 @pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000],
@@ -269,6 +296,7 @@ def test_ledger_scope_is_ordered_and_immutable(setup):
 
 @pytest.mark.parametrize("field,value", [("storage_bytes",0),("storage_bytes",True),("storage_bytes",100_001),
     ("memory_mb",0),("memory_mb",True),("cpu_slots",0),("cpu_slots",False),
+    ("child_process_slots",0),("child_process_slots",False),("child_process_slots",1.5),
     ("timeout_seconds",-1),("timeout_seconds",True),("timeout_seconds",float("nan"))])
 def test_invalid_requests_fail_before_ledger_mutation(setup, field, value):
     factory, _, ledger, _ = setup

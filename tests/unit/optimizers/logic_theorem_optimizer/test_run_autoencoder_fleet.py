@@ -66,7 +66,7 @@ def test_readonly_plan_has_no_fleet_files_reservations_or_processes(tmp_path):
         wave_runner=lambda *a: pytest.fail("plan launched a child"))
     assert result["plan_only"] is True
     assert result["capacity"]["workers"] == 3
-    assert result["per_worker"] == {"memory_mb": 9216, "cpu_slots": 2, "storage_bytes": 1_500_000_000}
+    assert result["per_worker"] == {"memory_mb": 9216, "cpu_slots": 2, "child_process_slots": 6, "storage_bytes": 1_500_000_000}
     assert result["reservation_acquired"] is False
     assert not args.state_directory.exists()
     assert before == {str(p): p.read_bytes() for p in tmp_path.iterdir() if p.is_file()}
@@ -77,7 +77,9 @@ def test_capacity_respects_shared_storage_process_slots_and_explicit_pending(tmp
     args, rows = setup(tmp_path, count=5)
     assert planned(args, rows, storage_reader=lambda *_: {"headroom_bytes": 3_000_000_000})["capacity"]["workers"] == 2
     assert planned(args, rows, scheduler_reader=lambda: {"available": {"cpu_slots": 20,
-        "memory_mb": 128000, "child_process_slots": 3}, "lanes": {}})["capacity"]["workers"] == 1
+        "memory_mb": 128000, "child_process_slots": 3}, "lanes": {}})["capacity"]["workers"] == 0
+    assert planned(args, rows, scheduler_reader=lambda: {"available": {"cpu_slots": 20,
+        "memory_mb": 128000, "child_process_slots": 12}, "lanes": {}})["capacity"]["workers"] == 2
     args.pending_jobs = 0
     assert planned(args, rows)["capacity"]["workers"] == 0
     args.pending_jobs, args.max_workers = 20, 1
@@ -92,7 +94,7 @@ def test_sync_only_budgets_no_training_and_owner_policy_cannot_be_understated(tm
     args.sync_only, args.pending_jobs = True, 0
     result = planned(args, rows, campaign_reader=larger)
     assert result["intent"] == "synchronize_weights"
-    assert result["per_worker"] == {"memory_mb": 1024, "cpu_slots": 1, "storage_bytes": 750_000_000}
+    assert result["per_worker"] == {"memory_mb": 1024, "cpu_slots": 1, "child_process_slots": 1, "storage_bytes": 750_000_000}
     assert result["capacity"]["workers"] == 3
 
 

@@ -63,10 +63,14 @@ def test_templates_bind_validation_split_and_operator_requires_qualification(tmp
         opts = dict(state_directory=tmp_path, checkpoint=base,
                     source_hashes={key: "0" * 64 for key in ("compiler", "decompiler", "parser", "autoencoder", "samples", "worker")})
         template = cli.make_templates(registry, [train], validation_records=[validation], **opts)[0]
-        assert template.validation_samples == ()
+        assert [row.text for row in template.samples] == [train["sample"]["text"]]
+        assert [row.text for row in template.validation_samples] == [validation["sample"]["text"]]
+        assert not {row.text for row in template.samples} & {row.text for row in template.validation_samples}
         assert template.split_snapshot_id.startswith("qualification-validation-")
         no_validation = cli.make_templates(registry, [train], **opts)[0]
         assert template.split_snapshot_id != no_validation.split_snapshot_id
+        assert template.canonical_sha256 != no_validation.canonical_sha256
+        assert template.samples == no_validation.samples
     args = cli.parser().parse_args(["--state-directory", str(tmp_path), "--input-jsonl", "input"])
     assert args.max_training_rounds == 3 and args.lake_timeout_seconds == 120
     assert not hasattr(args, "disable_qualification")
@@ -185,3 +189,115 @@ def test_insufficient_group_memory_defers_before_creating_cycle_or_reservation(t
         "memory_mb": 8192, "max_batches": 4, "state_directory": str(state)})
     assert result["deferred"] and result["training_executed"] is False
     assert not state.exists()
+
+
+def test_reused_workers_require_explicit_opt_in_without_changing_logical_lanes(tmp_path, monkeypatch):
+    monkeypatch.setattr(cli, "_pin", lambda **_: {})
+    captured = []
+    monkeypatch.setattr(cli, "supervised_cycle", lambda config: captured.append(config) or {"deferred": True})
+    for extra, expected in (([], True), (["--fresh-training-workers"], True), (["--reuse-training-workers"], False)):
+        assert cli.main(["--state-directory", str(tmp_path / str(expected)), "--input-jsonl", "source", *extra]) == 0
+        assert captured[-1]["fresh_training_workers"] is expected
+        assert captured[-1]["workers"] == 32
+    with pytest.raises(SystemExit):
+        cli.parser().parse_args(["--state-directory", str(tmp_path),
+                                 "--fresh-training-workers", "--reuse-training-workers"])
+
+
+def _selection_cycle_config(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import ModalAutoencoderTrainingState
+    base = tmp_path / "base.json"
+    base.write_text(ModalAutoencoderTrainingState().to_json())
+    training = tmp_path / "training.jsonl"
+    validation = tmp_path / "validation.jsonl"
+    training.write_text(json.dumps({"title": "5", "section": "1", "text": "The officer shall retain records for at least 22 days."}) + "\n")
+    validation.write_text(json.dumps({"title": "5", "section": "2", "text": "The officer shall retain records for at least 30 days."}) + "\n")
+    source_hashes = {key: "0" * 64 for key in ("compiler", "decompiler", "parser", "autoencoder", "samples", "worker")}
+    monkeypatch.setattr(cli, "_pin", lambda **_: source_hashes)
+    monkeypatch.setattr(cli, "orchestration_hashes", lambda: {})
+    return {"state_directory": str(tmp_path / "state"), "checkpoint": str(base),
+            "input_jsonl": str(training), "validation_jsonl": str(validation),
+            "max_seconds": 20, "source_language": "en", "model_variant": "selection-test",
+            "shard_count": 1, "shard_index": 0, "workers": 2, "max_batches": 2,
+            "memory_mb": 8192, "cycle_receipt": str(tmp_path / "cycle.json")}
+
+
+@pytest.mark.parametrize("fresh", [None, True, False])
+def test_cycle_uses_same_disjoint_tuning_rows_for_selection_and_qualification(tmp_path, monkeypatch, fresh):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+    config = _selection_cycle_config(tmp_path, monkeypatch)
+    if fresh is not None:
+        config["fresh_training_workers"] = fresh
+    calls = []
+    def capture(_registry, templates, **kwargs):
+        calls.append(kwargs)
+        assert len(templates) == 1
+        template = templates[0]
+        assert [sample.text for sample in template.samples] == ["The officer shall retain records for at least 22 days."]
+        assert [sample.text for sample in template.validation_samples] == ["The officer shall retain records for at least 30 days."]
+        assert [sample.text for sample in template.validation_samples] == [sample["text"] for sample in kwargs["qualification_samples"]]
+        assert kwargs["reuse_native_workers"] is (fresh is False)
+        # This boundary stub verifies dispatch inputs only; it never claims a
+        # measured optimization, qualification, or Lean admission.
+        return {"dispatched_run_ids": []}
+    monkeypatch.setattr(qualified, "run_qualified_incremental_training", capture)
+    receipt = cli.run_cycle(config)
+    assert len(calls) == 1
+    assert receipt["optimizer_validation_role"] == "repeated_selection_tuning"
+    assert receipt["validation_sample_count"] == 1
+    assert receipt["heldout_canary"] is receipt["training_executed"] is receipt["admitted"] is False
+
+
+def test_cycle_rejects_normalized_training_validation_overlap_before_dispatch(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+    config = _selection_cycle_config(tmp_path, monkeypatch)
+    Path(config["validation_jsonl"]).write_text(json.dumps({"title": "6", "section": "3",
+        "text": "  THE officer shall retain  records for at least 22 days. "}) + "\n")
+    monkeypatch.setattr(qualified.coordinator, "run_training_jobs", lambda *_args, **_kwargs: pytest.fail("overlap reached optimizer dispatch"))
+    with pytest.raises(qualified.inc.IncrementalTrainingError, match="training/validation source overlap"):
+        cli.run_cycle(config)
+    assert not Path(config["cycle_receipt"]).exists()
+
+
+def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicate_inventory(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as scheduler
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
+    from types import SimpleNamespace
+    clock, checks, admitted = [0.0], [], []
+    monkeypatch.setattr(scheduler, "get_global_resource_scheduler", lambda: SimpleNamespace(snapshot=lambda: {}))
+    monkeypatch.setattr(capacity, "scheduler_capacity", lambda _: {"cpu_slots": 8, "memory_mb": 50000, "child_process_slots": 64})
+    monkeypatch.setattr(capacity, "hardware_probe", lambda: {"hardware_cpu_count": 20,
+        "affinity_cpu_count": 20, "available_memory_mb": 50000})
+    class Reservation:
+        def __init__(self, *args, **kwargs): admitted.append(kwargs)
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def check_usage(self, **kwargs): checks.append(clock[0])
+        def release(self, **kwargs): return {"status": "released"}
+    class Input:
+        def write(self, raw):
+            config = json.loads(raw)
+            assert config["reserved_child_process_slots"] == 6
+            Path(config["cycle_receipt"]).write_text(json.dumps({"input_count": 2,
+                "training": {}, "training_executed": False, "weight_publications": []}))
+        def close(self): pass
+    class Process:
+        pid, returncode, stdin = 12345, 0, Input()
+        def __init__(self): self.calls = 0
+        def poll(self):
+            self.calls += 1
+            return None if self.calls == 1 else 0
+    monkeypatch.setattr(resources, "DaemonResourceReservation", Reservation)
+    monkeypatch.setattr(cli.subprocess, "Popen", lambda *args, **kwargs: Process())
+    monkeypatch.setattr(cli, "_stop_group", lambda *args: None)
+    monkeypatch.setattr(cli, "_group_observation", lambda *args: {"processes": []})
+    monkeypatch.setattr(cli.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(cli.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
+    result = cli.supervised_cycle({"execution_mode": "training", "workers": 32,
+        "memory_mb": 8192, "max_batches": 2, "state_directory": str(tmp_path / "state"),
+        "resource_ledger": str(tmp_path / "ledger.json"), "resource_roots": [],
+        "storage_bytes": 1000000, "cycle_timeout": 120})
+    assert admitted[0]["cpu_slots"] == 2 and admitted[0]["child_process_slots"] == 6
+    assert checks == [0.0, 0.5]  # Initial admission check and final durable check.
+    assert result["capacity_plan"]["execution_envelope"]["estimated_memory_mb"] == 4352

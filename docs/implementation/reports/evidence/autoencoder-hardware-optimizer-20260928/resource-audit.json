@@ -1,0 +1,48 @@
+{
+  "added_reservations": {
+    "9233b09cde944fc4af587dcb44812a21": {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67635794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/tuning-validation"
+      },
+      "child_process_slots": 6,
+      "cpu_slots": 2,
+      "memory_mb": 8192,
+      "status": "released",
+      "storage_bytes": 500000000
+    },
+    "bc589e91df28424399eea991553ad538": {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67635166,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/fresh"
+      },
+      "child_process_slots": 6,
+      "cpu_slots": 2,
+      "memory_mb": 8192,
+      "status": "released",
+      "storage_bytes": 500000000
+    },
+    "d3cc15e9aeb148b588d671336b5f56c7": {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67635479,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/reused"
+      },
+      "child_process_slots": 6,
+      "cpu_slots": 2,
+      "memory_mb": 8192,
+      "status": "released",
+      "storage_bytes": 500000000
+    }
+  },
+  "admitted": false,
+  "cap_after": 80000000000,
+  "cap_before": 80000000000,
+  "historical_record_count": 150,
+  "historical_records_unchanged": true,
+  "historical_retained_count": 61,
+  "historical_retained_unchanged": true,
+  "protected_seed_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+}

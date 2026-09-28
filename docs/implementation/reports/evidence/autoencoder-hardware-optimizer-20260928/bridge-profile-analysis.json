@@ -1,0 +1,2210 @@
+{
+  "admitted": false,
+  "checkpoint": {
+    "bytes": 25895338,
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "conclusion": {
+    "coordinator_dispatch_wall_change_seconds": -1.6912972971331328,
+    "end_to_end_improved": false,
+    "fresh_vs_reused_wall_change_fraction": 0.033253139954557254,
+    "measured_bottleneck": "Cold first bridge evaluation is dominated by native target construction. Warm reused processes reduce it while rebuilding targets; model metrics remain small. Dispatch saves less than individual optimizer time because verified sparse replay, startup/source guards and coordinator completion are included.",
+    "qualification_wall_change_seconds": -0.31392186717130244,
+    "recommendation": "Keep process reuse opt-in until repeated full-route measurements demonstrate net benefit. Profile completion replays, source guard calls and resource wrapper inventories separately before optimizing those boundaries; preserve their checks.",
+    "unallocated_wall_change_seconds": 6.0142885353416204,
+    "unmeasured_cause_note": "The extra residual seconds cannot be assigned to a specific function from current receipts. Source inspection identifies repeated owner completion replay and package manifest scans as candidates for finer profiling, not proven causes."
+  },
+  "configuration": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "epochs": 1,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "max_line_search_attempts": 1,
+    "max_seconds": 120.0,
+    "metric_disk_cache": 0,
+    "projection_max_update_families": 5,
+    "projection_update_backend": "python_sparse_batch",
+    "sample_count_per_job": 1,
+    "use_sample_memory": false
+  },
+  "executed_commands": {
+    "bytes": 2478,
+    "path": "executed-commands.json",
+    "sha256": "31579251b51835b8f51882d50e2b54aef16b5f3ba9bafcd853a4f53d162fec54"
+  },
+  "per_span_equality": [
+    {
+      "accepted_epochs_equal": true,
+      "after_losses_equal": true,
+      "base_state_identity_equal": true,
+      "before_losses_equal": true,
+      "candidate_materialized_checkpoint_equal": true,
+      "candidate_state_identity_equal": true,
+      "evaluated_objective_equal": true,
+      "input_samples_equal": true,
+      "section": "20"
+    },
+    {
+      "accepted_epochs_equal": true,
+      "after_losses_equal": true,
+      "base_state_identity_equal": true,
+      "before_losses_equal": true,
+      "candidate_materialized_checkpoint_equal": true,
+      "candidate_state_identity_equal": true,
+      "evaluated_objective_equal": true,
+      "input_samples_equal": true,
+      "section": "21"
+    },
+    {
+      "accepted_epochs_equal": true,
+      "after_losses_equal": true,
+      "base_state_identity_equal": true,
+      "before_losses_equal": true,
+      "candidate_materialized_checkpoint_equal": true,
+      "candidate_state_identity_equal": true,
+      "evaluated_objective_equal": true,
+      "input_samples_equal": true,
+      "section": "22"
+    },
+    {
+      "accepted_epochs_equal": true,
+      "after_losses_equal": true,
+      "base_state_identity_equal": true,
+      "before_losses_equal": true,
+      "candidate_materialized_checkpoint_equal": true,
+      "candidate_state_identity_equal": true,
+      "evaluated_objective_equal": true,
+      "input_samples_equal": true,
+      "section": "23"
+    }
+  ],
+  "producer_manifest": {
+    "file_count": 7832,
+    "sha256": "92f753383e786cf987af5e31f91e5b1c9bde66693124486aa5f257de0f4a85bb"
+  },
+  "routes": {
+    "fresh": {
+      "all_workers": {
+        "elapsed_seconds": {
+          "max": 11.477146131917834,
+          "mean": 9.62565334176179,
+          "min": 8.236577067058533
+        },
+        "first_bridge_on_evaluate_seconds": {
+          "max": 4.604355538962409,
+          "mean": 4.5281287744874135,
+          "min": 4.364338380983099
+        },
+        "model_metrics_seconds": {
+          "max": 0.07825611997395754,
+          "mean": 0.06910151022020727,
+          "min": 0.06248149392195046
+        },
+        "native_target_evaluation_seconds": {
+          "max": 4.437255091033876,
+          "mean": 4.354547772789374,
+          "min": 4.182674732990563
+        },
+        "ontology_capture_seconds": {
+          "max": 0.046878180000931025,
+          "mean": 0.045989496051333845,
+          "min": 0.045516434125602245
+        },
+        "target_payload_seconds": {
+          "max": 4.496356250951067,
+          "mean": 4.413036288227886,
+          "min": 4.240228031063452
+        },
+        "training_seconds": {
+          "max": 6.8589888049755245,
+          "mean": 6.557945634471253,
+          "min": 6.239203616045415
+        }
+      },
+      "command_wall_seconds": 120.56212966702878,
+      "command_wall_seconds_per_span": 30.140532416757196,
+      "fresh_processes": {
+        "elapsed_seconds": {
+          "max": 11.477146131917834,
+          "mean": 9.62565334176179,
+          "min": 8.236577067058533
+        },
+        "first_bridge_on_evaluate_seconds": {
+          "max": 4.604355538962409,
+          "mean": 4.5281287744874135,
+          "min": 4.364338380983099
+        },
+        "model_metrics_seconds": {
+          "max": 0.07825611997395754,
+          "mean": 0.06910151022020727,
+          "min": 0.06248149392195046
+        },
+        "native_target_evaluation_seconds": {
+          "max": 4.437255091033876,
+          "mean": 4.354547772789374,
+          "min": 4.182674732990563
+        },
+        "ontology_capture_seconds": {
+          "max": 0.046878180000931025,
+          "mean": 0.045989496051333845,
+          "min": 0.045516434125602245
+        },
+        "target_payload_seconds": {
+          "max": 4.496356250951067,
+          "mean": 4.413036288227886,
+          "min": 4.240228031063452
+        },
+        "training_seconds": {
+          "max": 6.8589888049755245,
+          "mean": 6.557945634471253,
+          "min": 6.239203616045415
+        }
+      },
+      "pipeline_breakdown": {
+        "batch_status_counts": {
+          "qualified": 3,
+          "training_exhausted": 1
+        },
+        "coordinator_dispatch_wall_seconds_total": 36.76946752821095,
+        "coordinator_dispatch_wave_seconds": [
+          14.895220708101988,
+          21.874246820108965
+        ],
+        "cycle_receipt": {
+          "bytes": 60025,
+          "path": "fresh/cycles/98a48e555d9f4f56a9ce87df4d709ae6/cycle.json",
+          "sha256": "040870f87bd41137de2fe2f382b6ff14f1a88e35393b99fa119176e738ac20a1"
+        },
+        "owner_acceptance_sparse_replay_seconds_total": 15.386186654912308,
+        "pool_pre_job_guard_seconds_total": 0,
+        "pool_pre_job_guard_timing_scope": "Nested inside dispatch; not additional wall time. No comparable explicit guard field for fresh workers.",
+        "qualification_receipts": [
+          {
+            "elapsed_seconds": 7.519388927146792,
+            "gate_results": {
+              "family_syntax_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "heldout_gate": {
+                "passed": true,
+                "reason": "",
+                "sample_count": 1
+              },
+              "lake_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "metric_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "semantic_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              }
+            },
+            "metric_evaluation": {
+              "bridge_names": [],
+              "cache_enabled": false,
+              "legal_ir_evaluate_provers": false,
+              "legal_ir_parallel_workers": 1,
+              "legal_ir_target_count": 0,
+              "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+              "use_sample_memory": false
+            },
+            "model_evaluation_seconds": 0.21331175020895898,
+            "other_inside_qualification_seconds": 6.119206740986556,
+            "qualified": true,
+            "receipt": {
+              "bytes": 186363,
+              "path": "fresh/progress/qualifications/qualified-2902e6ec2dff321eb17ea8a763287fc0d1cfb7293919131e03bc4b98c0a46a1f/qualification.json",
+              "sha256": "949b3da2ab3711ac9ea34aaae64baddae43fb24b782f893a64b8ddf50a11addd"
+            },
+            "section": "20",
+            "structural_seconds": 1.1868704359512776
+          },
+          {
+            "elapsed_seconds": 5.317673907848075,
+            "gate_results": {
+              "family_syntax_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "heldout_gate": {
+                "passed": true,
+                "reason": "",
+                "sample_count": 1
+              },
+              "lake_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "metric_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "semantic_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              }
+            },
+            "metric_evaluation": {
+              "bridge_names": [],
+              "cache_enabled": false,
+              "legal_ir_evaluate_provers": false,
+              "legal_ir_parallel_workers": 1,
+              "legal_ir_target_count": 0,
+              "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+              "use_sample_memory": false
+            },
+            "model_evaluation_seconds": 0.21031408081762493,
+            "other_inside_qualification_seconds": 3.962879392085597,
+            "qualified": true,
+            "receipt": {
+              "bytes": 186058,
+              "path": "fresh/progress/qualifications/qualified-b19f4f674472299b4819219d1e86417a4482fa878d5097a12c089a09ec27030f/qualification.json",
+              "sha256": "6619b015fce8ba81935c4ca089d5f0e3026d21d153826a42cdc781e5671a1454"
+            },
+            "section": "21",
+            "structural_seconds": 1.1444804349448532
+          },
+          {
+            "elapsed_seconds": 8.69999318011105,
+            "gate_results": {
+              "family_syntax_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "heldout_gate": {
+                "passed": true,
+                "reason": "",
+                "sample_count": 1
+              },
+              "lake_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "metric_gate": {
+                "failed_sample_ids": [
+                  "us-code-qualification-fixture-30-763799b0a9e96617"
+                ],
+                "passed": false
+              },
+              "semantic_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              }
+            },
+            "metric_evaluation": {
+              "bridge_names": [],
+              "cache_enabled": false,
+              "legal_ir_evaluate_provers": false,
+              "legal_ir_parallel_workers": 1,
+              "legal_ir_target_count": 0,
+              "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+              "use_sample_memory": false
+            },
+            "model_evaluation_seconds": 0.21645676903426647,
+            "other_inside_qualification_seconds": 7.349840984912589,
+            "qualified": false,
+            "receipt": {
+              "bytes": 186605,
+              "path": "fresh/progress/qualifications/qualified-330fd8c258e7ec62ccced65b84b41551601cbbbe87c02a3aa98281b96fa9e839/qualification.json",
+              "sha256": "addcd1da56c8fb280cd559cc22c49c2b04d623bb49d1d8251556e5dd0b11b0a4"
+            },
+            "section": "22",
+            "structural_seconds": 1.133695426164195
+          },
+          {
+            "elapsed_seconds": 7.647308890009299,
+            "gate_results": {
+              "family_syntax_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "heldout_gate": {
+                "passed": true,
+                "reason": "",
+                "sample_count": 1
+              },
+              "lake_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "metric_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "semantic_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              }
+            },
+            "metric_evaluation": {
+              "bridge_names": [],
+              "cache_enabled": false,
+              "legal_ir_evaluate_provers": false,
+              "legal_ir_parallel_workers": 1,
+              "legal_ir_target_count": 0,
+              "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+              "use_sample_memory": false
+            },
+            "model_evaluation_seconds": 2.386029426706955,
+            "other_inside_qualification_seconds": 4.10401672613807,
+            "qualified": true,
+            "receipt": {
+              "bytes": 186057,
+              "path": "fresh/progress/qualifications/qualified-84faec0189fc96f9e70401bc59a8384b016c589e33c690203b0bd67d8bb0a694/qualification.json",
+              "sha256": "c0cb04ae420828c777a22f379a6a6cbe38f4fe66229db7ab0365654a6a402449"
+            },
+            "section": "23",
+            "structural_seconds": 1.1572627371642739
+          }
+        ],
+        "qualification_wall_seconds_total": 29.184364905115217,
+        "qualified_batch_count": 3,
+        "replay_timing_scope": "Owner acceptance replay is already inside dispatch; subsequent completion replay and candidate qualification loading are separate and not separately timed.",
+        "unallocated_command_wall_seconds": 54.608297233702615,
+        "unallocated_scope": "Residual, not directly measured attribution: CLI/resource wrapper and storage inventories, source guards, repeated completion verification/replay, registry/progress work and teardown outside the dispatch and qualification timers."
+      },
+      "resources": {
+        "all_observed_pids_last_cumulative_cpu_seconds_sum": 126.37,
+        "attempt_exceeded_reservation": false,
+        "memory_note": "Sampled group RSS is a lower bound on the true peak and double-counts shared pages; worker max_rss is cumulative process lifetime, not per-job peak. Reused workers retain imported runtime/allocator state, not a trusted model state.",
+        "observation_count": 48,
+        "observation_duration_seconds": 106.07494640350342,
+        "observed_max_group_process_count": 4,
+        "observed_max_group_rss_bytes": 3362611200,
+        "owner_last_observed_cumulative_cpu_seconds": 85.8,
+        "process_observations": {
+          "bytes": 13210,
+          "path": "fresh/cycles/98a48e555d9f4f56a9ce87df4d709ae6/process-observations.json",
+          "sha256": "4009e8af9e5565e7b3fafed693682419365925b62f0fafb4b403425ccfa34004"
+        },
+        "process_slot_estimate_exceeded": false,
+        "receipt": {
+          "bytes": 3110,
+          "path": "fresh/cycles/98a48e555d9f4f56a9ce87df4d709ae6/resources.json",
+          "sha256": "2ec83f8dcdb52537e9bca30903abed3c66219d7d0fda9db6170eee4bd6421cc8"
+        },
+        "reservation_lifetime_seconds": 113.75291419029236,
+        "reservation_released": true,
+        "scheduler_wait_seconds": 4.1606836020946503e-07
+      },
+      "rows": [
+        {
+          "base_checkpoint_chain_depth": 1,
+          "base_checkpoint_load_seconds": 2.509521547006443,
+          "base_materialized_checkpoint": {
+            "bytes": 26626107,
+            "sha256": "66aa8d5dfe164292759bed7944bd99819290258230290d99d04e94431d1ab273"
+          },
+          "base_state_identity": {
+            "digest": "826d2a1ebecfd62a6a1523b9c562ae01e87dcf2f4e9c4e3c83029ed614a68d24",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 0,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "base_version_id": "sha256:ea68a81d5876e8c6c2e8a637f7137b6df9be7469dad2ec9b2c1a3ae51c0069de",
+          "candidate_materialized_checkpoint": {
+            "bytes": 26635677,
+            "sha256": "359717de18b7ec78dc52e97d9d5d216bab4dc1baf147a3d05756ee31a9ffd3f6"
+          },
+          "candidate_serialization_seconds": 0.4551878711208701,
+          "candidate_state_identity": {
+            "digest": "e5ebbff6885c24a3eb264c7ce57589d0ebad277255fe145f66e29823b2d640b9",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 13012,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "candidate_storage": "sparse",
+          "decompiler_evidence_after": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "decompiler_evidence_before": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "elapsed_seconds": 9.949339624959975,
+          "first_bridge_on_evaluate_seconds": 4.540825865929946,
+          "first_evaluate_profile": {
+            "model_metrics_seconds": 0.07201413298025727,
+            "ontology_capture_seconds": 0.04571074014529586,
+            "sample_count": 1,
+            "schema_version": "autoencoder-evaluation-profile/v1",
+            "scope": "wall_time_observation_not_an_objective_or_admission",
+            "target_observation": {
+              "bridge_module_preloaded_at_start": false,
+              "bridge_names": [
+                "modal_frame_logic",
+                "deontic_norms",
+                "fol_tdfol",
+                "cec_dcec",
+                "external_prover_router"
+              ],
+              "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+              "disk_cache_enabled": false,
+              "disk_cache_hit_count": 0,
+              "evaluate_provers": false,
+              "generated_target_count": 1,
+              "memory_cache_hit_count": 0,
+              "native_evaluation_attempt_count": 1,
+              "native_evaluation_seconds_sum": 4.365320251090452,
+              "parallel_workers_requested": 1,
+              "parallel_workers_used": 1,
+              "process_target_cache_empty_at_start": true,
+              "process_target_cache_entries_at_start": 0,
+              "representation_counts": {
+                "cached_summary": 0,
+                "native": 1,
+                "other": 0,
+                "prepared_native": 0
+              },
+              "structural_target_seconds": 0.0007670181803405285,
+              "supplied_target_count": 0,
+              "target_cache_miss_count": 1,
+              "target_count": 1,
+              "target_items_seconds": 4.411751112900674,
+              "target_reduction_seconds": 0.010535964975133538,
+              "timeout_fallback_count": 0,
+              "training_target_seconds_sum": 0.0010014541912823915
+            },
+            "target_payload_seconds": 4.423099488951266,
+            "total_seconds": 4.540825865929946
+          },
+          "job_id": "qualified-2902e6ec2dff321eb17ea8a763287fc0d1cfb7293919131e03bc4b98c0a46a1f",
+          "line_search_evaluations": {
+            "count": 5,
+            "evaluate_seconds_total": 0.5421484268736094,
+            "memory_cache_hit_count": 5,
+            "native_evaluation_attempt_count": 0
+          },
+          "memory_after_training_before_serialization": {
+            "major_faults": 0,
+            "max_rss_kib": 1194752,
+            "minor_faults": 262828,
+            "private_clean_kib": 32,
+            "private_dirty_kib": 683064,
+            "pss_kib": 780382,
+            "rss_kib": 996160,
+            "shared_clean_kib": 313056,
+            "shared_dirty_kib": 8
+          },
+          "memory_before_training": {
+            "major_faults": 0,
+            "max_rss_kib": 1194752,
+            "minor_faults": 95891,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 182668,
+            "pss_kib": 183011,
+            "rss_kib": 192692,
+            "shared_clean_kib": 10016,
+            "shared_dirty_kib": 8
+          },
+          "model_metrics_seconds": 0.07201413298025727,
+          "native_pool": null,
+          "native_target_evaluation_seconds": 4.365320251090452,
+          "native_target_fraction_of_first_evaluate": 0.9613494064689153,
+          "ontology_capture_seconds": 0.04571074014529586,
+          "optimizer_accepted_epochs": 1,
+          "owner_acceptance_sparse_replay_seconds": 4.485158551018685,
+          "pid": 3300126,
+          "process_start_observation": "fresh_process",
+          "projection_profile_by_stage": {
+            "before_holdout_evaluation": {
+              "count": 1.0,
+              "seconds": 4.540860202163458
+            },
+            "hard_example_selection": {
+              "count": 1.0,
+              "seconds": 1.7757993191480637e-06
+            },
+            "line_search_evaluation": {
+              "count": 5.0,
+              "seconds": 0.5423019968438894
+            },
+            "projection_update_batch": {
+              "count": 5.0,
+              "seconds": 0.5268473590258509
+            },
+            "projection_update_head": {
+              "count": 7.0,
+              "seconds": 0.526757501764223
+            }
+          },
+          "receipt": {
+            "bytes": 160336,
+            "path": "fresh/progress/outputs/qualified-2902e6ec2dff321eb17ea8a763287fc0d1cfb7293919131e03bc4b98c0a46a1f/receipt.json",
+            "sha256": "8614fd49e3732ce34320bd7c222b6a47d5a53338c2423c89f39e4864dad87474"
+          },
+          "sample": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "20",
+            "text": "The officer shall retain the file for at least 20 days.",
+            "title": "qualification-fixture"
+          },
+          "sample_count": 1,
+          "shared_target_count": 0,
+          "sparse_patch_bytes": 1418058,
+          "target_payload_seconds": 4.423099488951266,
+          "training_seconds": 6.300696455873549,
+          "weight_load_seconds_after_json_parse": 1.216074451804161e-06,
+          "weight_storage": "private_json"
+        },
+        {
+          "base_checkpoint_chain_depth": 0,
+          "base_checkpoint_load_seconds": 0.20075768395327032,
+          "base_materialized_checkpoint": {
+            "bytes": 25895338,
+            "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+          },
+          "base_state_identity": {
+            "digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 0,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "base_version_id": "sha256:19b7f2115520de91f32023c9b5b520f269e648cf502f70e2a721480d81a361d3",
+          "candidate_materialized_checkpoint": {
+            "bytes": 26626107,
+            "sha256": "66aa8d5dfe164292759bed7944bd99819290258230290d99d04e94431d1ab273"
+          },
+          "candidate_serialization_seconds": 0.5091446340084076,
+          "candidate_state_identity": {
+            "digest": "826d2a1ebecfd62a6a1523b9c562ae01e87dcf2f4e9c4e3c83029ed614a68d24",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 15154,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "candidate_storage": "sparse",
+          "decompiler_evidence_after": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "decompiler_evidence_before": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "elapsed_seconds": 8.236577067058533,
+          "first_bridge_on_evaluate_seconds": 4.602995312074199,
+          "first_evaluate_profile": {
+            "model_metrics_seconds": 0.06365429400466383,
+            "ontology_capture_seconds": 0.046878180000931025,
+            "sample_count": 1,
+            "schema_version": "autoencoder-evaluation-profile/v1",
+            "scope": "wall_time_observation_not_an_objective_or_admission",
+            "target_observation": {
+              "bridge_module_preloaded_at_start": false,
+              "bridge_names": [
+                "modal_frame_logic",
+                "deontic_norms",
+                "fol_tdfol",
+                "cec_dcec",
+                "external_prover_router"
+              ],
+              "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+              "disk_cache_enabled": false,
+              "disk_cache_hit_count": 0,
+              "evaluate_provers": false,
+              "generated_target_count": 1,
+              "memory_cache_hit_count": 0,
+              "native_evaluation_attempt_count": 1,
+              "native_evaluation_seconds_sum": 4.432941016042605,
+              "parallel_workers_requested": 1,
+              "parallel_workers_used": 1,
+              "process_target_cache_empty_at_start": true,
+              "process_target_cache_entries_at_start": 0,
+              "representation_counts": {
+                "cached_summary": 0,
+                "native": 1,
+                "other": 0,
+                "prepared_native": 0
+              },
+              "structural_target_seconds": 0.0008534030057489872,
+              "supplied_target_count": 0,
+              "target_cache_miss_count": 1,
+              "target_count": 1,
+              "target_items_seconds": 4.480581015115604,
+              "target_reduction_seconds": 0.010965842986479402,
+              "timeout_fallback_count": 0,
+              "training_target_seconds_sum": 0.00103506981395185
+            },
+            "target_payload_seconds": 4.492461381945759,
+            "total_seconds": 4.602995312074199
+          },
+          "job_id": "qualified-b19f4f674472299b4819219d1e86417a4482fa878d5097a12c089a09ec27030f",
+          "line_search_evaluations": {
+            "count": 5,
+            "evaluate_seconds_total": 0.535918032284826,
+            "memory_cache_hit_count": 5,
+            "native_evaluation_attempt_count": 0
+          },
+          "memory_after_training_before_serialization": {
+            "major_faults": 0,
+            "max_rss_kib": 1005516,
+            "minor_faults": 231252,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 684852,
+            "pss_kib": 825114,
+            "rss_kib": 997948,
+            "shared_clean_kib": 313088,
+            "shared_dirty_kib": 8
+          },
+          "memory_before_training": {
+            "major_faults": 0,
+            "max_rss_kib": 288212,
+            "minor_faults": 60669,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 170944,
+            "pss_kib": 171321,
+            "rss_kib": 180968,
+            "shared_clean_kib": 10016,
+            "shared_dirty_kib": 8
+          },
+          "model_metrics_seconds": 0.06365429400466383,
+          "native_pool": null,
+          "native_target_evaluation_seconds": 4.432941016042605,
+          "native_target_fraction_of_first_evaluate": 0.9630557312136465,
+          "ontology_capture_seconds": 0.046878180000931025,
+          "optimizer_accepted_epochs": 1,
+          "owner_acceptance_sparse_replay_seconds": 2.036275712074712,
+          "pid": 3288235,
+          "process_start_observation": "fresh_process",
+          "projection_profile_by_stage": {
+            "before_holdout_evaluation": {
+              "count": 1.0,
+              "seconds": 4.603028560988605
+            },
+            "hard_example_selection": {
+              "count": 1.0,
+              "seconds": 1.7280690371990204e-06
+            },
+            "line_search_evaluation": {
+              "count": 5.0,
+              "seconds": 0.5361586115323007
+            },
+            "projection_update_batch": {
+              "count": 5.0,
+              "seconds": 0.3763369640801102
+            },
+            "projection_update_head": {
+              "count": 7.0,
+              "seconds": 0.37623200309462845
+            }
+          },
+          "receipt": {
+            "bytes": 158693,
+            "path": "fresh/progress/outputs/qualified-b19f4f674472299b4819219d1e86417a4482fa878d5097a12c089a09ec27030f/receipt.json",
+            "sha256": "76bd544b722d2c69e18d2aa490a2a0baf8555cdbcc0f6eaefb0d7f87bdfb289d"
+          },
+          "sample": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "21",
+            "text": "The officer shall retain the file for at least 21 days.",
+            "title": "qualification-fixture"
+          },
+          "sample_count": 1,
+          "shared_target_count": 0,
+          "sparse_patch_bytes": 1420206,
+          "target_payload_seconds": 4.492461381945759,
+          "training_seconds": 6.239203616045415,
+          "weight_load_seconds_after_json_parse": 0.6304259728640318,
+          "weight_storage": "private_json"
+        },
+        {
+          "base_checkpoint_chain_depth": 1,
+          "base_checkpoint_load_seconds": 3.4473535460419953,
+          "base_materialized_checkpoint": {
+            "bytes": 28198038,
+            "sha256": "778d79d34536e6c44f17837e6b582af3e5d0dbdd48ead4c216fcd6a4e8e86c1b"
+          },
+          "base_state_identity": {
+            "digest": "8e74147062a3391821d4d8b17691ed0764edf634ad3c40e4126a119d935ad63a",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 0,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "base_version_id": "sha256:12b278ace3f018a6ca133491f663172d5c637c5adbe7105f75efda7a708935ad",
+          "candidate_materialized_checkpoint": {
+            "bytes": 28206303,
+            "sha256": "d6b00db3e331e79d909dcce7b9da0c3d36c30976ceff269bc749764c6eddc58d"
+          },
+          "candidate_serialization_seconds": 0.493787236046046,
+          "candidate_state_identity": {
+            "digest": "cfa67354b14006cdf8665ed74542a15a667d8bc918d49dab1b1e3f6db14623a9",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 4590,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "candidate_storage": "sparse",
+          "decompiler_evidence_after": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "decompiler_evidence_before": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "elapsed_seconds": 11.477146131917834,
+          "first_bridge_on_evaluate_seconds": 4.364338380983099,
+          "first_evaluate_profile": {
+            "model_metrics_seconds": 0.07825611997395754,
+            "ontology_capture_seconds": 0.04585262993350625,
+            "sample_count": 1,
+            "schema_version": "autoencoder-evaluation-profile/v1",
+            "scope": "wall_time_observation_not_an_objective_or_admission",
+            "target_observation": {
+              "bridge_module_preloaded_at_start": false,
+              "bridge_names": [
+                "modal_frame_logic",
+                "deontic_norms",
+                "fol_tdfol",
+                "cec_dcec",
+                "external_prover_router"
+              ],
+              "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+              "disk_cache_enabled": false,
+              "disk_cache_hit_count": 0,
+              "evaluate_provers": false,
+              "generated_target_count": 1,
+              "memory_cache_hit_count": 0,
+              "native_evaluation_attempt_count": 1,
+              "native_evaluation_seconds_sum": 4.182674732990563,
+              "parallel_workers_requested": 1,
+              "parallel_workers_used": 1,
+              "process_target_cache_empty_at_start": true,
+              "process_target_cache_entries_at_start": 0,
+              "representation_counts": {
+                "cached_summary": 0,
+                "native": 1,
+                "other": 0,
+                "prepared_native": 0
+              },
+              "structural_target_seconds": 0.0007701229769736528,
+              "supplied_target_count": 0,
+              "target_cache_miss_count": 1,
+              "target_count": 1,
+              "target_items_seconds": 4.22876955778338,
+              "target_reduction_seconds": 0.010642301989719272,
+              "timeout_fallback_count": 0,
+              "training_target_seconds_sum": 0.0010037091560661793
+            },
+            "target_payload_seconds": 4.240228031063452,
+            "total_seconds": 4.364338380983099
+          },
+          "job_id": "qualified-330fd8c258e7ec62ccced65b84b41551601cbbbe87c02a3aa98281b96fa9e839",
+          "line_search_evaluations": {
+            "count": 5,
+            "evaluate_seconds_total": 0.5717354491353035,
+            "memory_cache_hit_count": 5,
+            "native_evaluation_attempt_count": 0
+          },
+          "memory_after_training_before_serialization": {
+            "major_faults": 0,
+            "max_rss_kib": 1194752,
+            "minor_faults": 272789,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 702492,
+            "pss_kib": 799777,
+            "rss_kib": 1015556,
+            "shared_clean_kib": 313056,
+            "shared_dirty_kib": 8
+          },
+          "memory_before_training": {
+            "major_faults": 0,
+            "max_rss_kib": 1194752,
+            "minor_faults": 102958,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 200724,
+            "pss_kib": 201067,
+            "rss_kib": 210748,
+            "shared_clean_kib": 10016,
+            "shared_dirty_kib": 8
+          },
+          "model_metrics_seconds": 0.07825611997395754,
+          "native_pool": null,
+          "native_target_evaluation_seconds": 4.182674732990563,
+          "native_target_fraction_of_first_evaluate": 0.958375443850984,
+          "ontology_capture_seconds": 0.04585262993350625,
+          "optimizer_accepted_epochs": 1,
+          "owner_acceptance_sparse_replay_seconds": 5.940968656912446,
+          "pid": 3299762,
+          "process_start_observation": "fresh_process",
+          "projection_profile_by_stage": {
+            "before_holdout_evaluation": {
+              "count": 1.0,
+              "seconds": 4.364374141907319
+            },
+            "hard_example_selection": {
+              "count": 1.0,
+              "seconds": 2.1760351955890656e-06
+            },
+            "line_search_evaluation": {
+              "count": 5.0,
+              "seconds": 0.5719070816412568
+            },
+            "projection_update_batch": {
+              "count": 5.0,
+              "seconds": 0.5096535601187497
+            },
+            "projection_update_head": {
+              "count": 7.0,
+              "seconds": 0.509556983364746
+            }
+          },
+          "receipt": {
+            "bytes": 160591,
+            "path": "fresh/progress/outputs/qualified-330fd8c258e7ec62ccced65b84b41551601cbbbe87c02a3aa98281b96fa9e839/receipt.json",
+            "sha256": "838d73c18f9bca46a33f9c627491de197265ff1a510038249eb5bd46e27cebdf"
+          },
+          "sample": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "22",
+            "text": "The officer shall retain the file for at least 22 days.",
+            "title": "qualification-fixture"
+          },
+          "sample_count": 1,
+          "shared_target_count": 0,
+          "sparse_patch_bytes": 2597537,
+          "target_payload_seconds": 4.240228031063452,
+          "training_seconds": 6.832893660990521,
+          "weight_load_seconds_after_json_parse": 7.359776645898819e-07,
+          "weight_storage": "private_json"
+        },
+        {
+          "base_checkpoint_chain_depth": 0,
+          "base_checkpoint_load_seconds": 0.20599549915641546,
+          "base_materialized_checkpoint": {
+            "bytes": 25895338,
+            "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+          },
+          "base_state_identity": {
+            "digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 0,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "base_version_id": "sha256:19b7f2115520de91f32023c9b5b520f269e648cf502f70e2a721480d81a361d3",
+          "candidate_materialized_checkpoint": {
+            "bytes": 28198038,
+            "sha256": "778d79d34536e6c44f17837e6b582af3e5d0dbdd48ead4c216fcd6a4e8e86c1b"
+          },
+          "candidate_serialization_seconds": 0.4996044901199639,
+          "candidate_state_identity": {
+            "digest": "8e74147062a3391821d4d8b17691ed0764edf634ad3c40e4126a119d935ad63a",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 35781,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "candidate_storage": "sparse",
+          "decompiler_evidence_after": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "decompiler_evidence_before": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "elapsed_seconds": 8.839550543110818,
+          "first_bridge_on_evaluate_seconds": 4.604355538962409,
+          "first_evaluate_profile": {
+            "model_metrics_seconds": 0.06248149392195046,
+            "ontology_capture_seconds": 0.045516434125602245,
+            "sample_count": 1,
+            "schema_version": "autoencoder-evaluation-profile/v1",
+            "scope": "wall_time_observation_not_an_objective_or_admission",
+            "target_observation": {
+              "bridge_module_preloaded_at_start": false,
+              "bridge_names": [
+                "modal_frame_logic",
+                "deontic_norms",
+                "fol_tdfol",
+                "cec_dcec",
+                "external_prover_router"
+              ],
+              "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+              "disk_cache_enabled": false,
+              "disk_cache_hit_count": 0,
+              "evaluate_provers": false,
+              "generated_target_count": 1,
+              "memory_cache_hit_count": 0,
+              "native_evaluation_attempt_count": 1,
+              "native_evaluation_seconds_sum": 4.437255091033876,
+              "parallel_workers_requested": 1,
+              "parallel_workers_used": 1,
+              "process_target_cache_empty_at_start": true,
+              "process_target_cache_entries_at_start": 0,
+              "representation_counts": {
+                "cached_summary": 0,
+                "native": 1,
+                "other": 0,
+                "prepared_native": 0
+              },
+              "structural_target_seconds": 0.000751962186768651,
+              "supplied_target_count": 0,
+              "target_cache_miss_count": 1,
+              "target_count": 1,
+              "target_items_seconds": 4.484923409996554,
+              "target_reduction_seconds": 0.010634222067892551,
+              "timeout_fallback_count": 0,
+              "training_target_seconds_sum": 0.001008734107017517
+            },
+            "target_payload_seconds": 4.496356250951067,
+            "total_seconds": 4.604355538962409
+          },
+          "job_id": "qualified-84faec0189fc96f9e70401bc59a8384b016c589e33c690203b0bd67d8bb0a694",
+          "line_search_evaluations": {
+            "count": 5,
+            "evaluate_seconds_total": 0.5092069883830845,
+            "memory_cache_hit_count": 5,
+            "native_evaluation_attempt_count": 0
+          },
+          "memory_after_training_before_serialization": {
+            "major_faults": 0,
+            "max_rss_kib": 1015456,
+            "minor_faults": 236989,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 702732,
+            "pss_kib": 842993,
+            "rss_kib": 1015828,
+            "shared_clean_kib": 313088,
+            "shared_dirty_kib": 8
+          },
+          "memory_before_training": {
+            "major_faults": 0,
+            "max_rss_kib": 288212,
+            "minor_faults": 60661,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 170912,
+            "pss_kib": 171287,
+            "rss_kib": 180936,
+            "shared_clean_kib": 10016,
+            "shared_dirty_kib": 8
+          },
+          "model_metrics_seconds": 0.06248149392195046,
+          "native_pool": null,
+          "native_target_evaluation_seconds": 4.437255091033876,
+          "native_target_fraction_of_first_evaluate": 0.9637081788071064,
+          "ontology_capture_seconds": 0.045516434125602245,
+          "optimizer_accepted_epochs": 1,
+          "owner_acceptance_sparse_replay_seconds": 2.923783734906465,
+          "pid": 3288002,
+          "process_start_observation": "fresh_process",
+          "projection_profile_by_stage": {
+            "before_holdout_evaluation": {
+              "count": 1.0,
+              "seconds": 4.604379491880536
+            },
+            "hard_example_selection": {
+              "count": 1.0,
+              "seconds": 1.4239922165870667e-06
+            },
+            "line_search_evaluation": {
+              "count": 5.0,
+              "seconds": 0.5093822840135545
+            },
+            "projection_update_batch": {
+              "count": 5.0,
+              "seconds": 0.36781889759004116
+            },
+            "projection_update_head": {
+              "count": 7.0,
+              "seconds": 0.36773556913249195
+            }
+          },
+          "receipt": {
+            "bytes": 164298,
+            "path": "fresh/progress/outputs/qualified-84faec0189fc96f9e70401bc59a8384b016c589e33c690203b0bd67d8bb0a694/receipt.json",
+            "sha256": "f6372180eaa3342e349fe3da641a1f8933d60334a67b7627690d18f358d27dad"
+          },
+          "sample": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "23",
+            "text": "The officer shall retain the file for at least 23 days.",
+            "title": "qualification-fixture"
+          },
+          "sample_count": 1,
+          "shared_target_count": 0,
+          "sparse_patch_bytes": 4933536,
+          "target_payload_seconds": 4.496356250951067,
+          "training_seconds": 6.8589888049755245,
+          "weight_load_seconds_after_json_parse": 0.6255843080580235,
+          "weight_storage": "private_json"
+        }
+      ],
+      "sample_count": 4,
+      "unique_worker_pid_count": 4
+    },
+    "reused": {
+      "all_workers": {
+        "elapsed_seconds": {
+          "max": 9.124659761087969,
+          "mean": 8.264349603501614,
+          "min": 7.219090630067512
+        },
+        "first_bridge_on_evaluate_seconds": {
+          "max": 4.579989178106189,
+          "mean": 2.8566317487857305,
+          "min": 1.2058729059062898
+        },
+        "model_metrics_seconds": {
+          "max": 0.08401520177721977,
+          "mean": 0.07175602269126102,
+          "min": 0.06263944506645203
+        },
+        "native_target_evaluation_seconds": {
+          "max": 4.414815003052354,
+          "mean": 2.6913073159521446,
+          "min": 1.0407385078724474
+        },
+        "ontology_capture_seconds": {
+          "max": 0.047904351027682424,
+          "mean": 0.04663805098971352,
+          "min": 0.045472640078514814
+        },
+        "target_payload_seconds": {
+          "max": 4.471555633004755,
+          "mean": 2.7382359789917246,
+          "min": 1.0773340370506048
+        },
+        "training_seconds": {
+          "max": 6.865666083991528,
+          "mean": 5.01179477974074,
+          "min": 3.2695460519753397
+        }
+      },
+      "command_wall_seconds": 124.57119903806597,
+      "command_wall_seconds_per_span": 31.142799759516492,
+      "fresh_processes": {
+        "elapsed_seconds": {
+          "max": 8.80601047188975,
+          "mean": 8.356824011425488,
+          "min": 7.907637550961226
+        },
+        "first_bridge_on_evaluate_seconds": {
+          "max": 4.579989178106189,
+          "mean": 4.505897819646634,
+          "min": 4.4318064611870795
+        },
+        "model_metrics_seconds": {
+          "max": 0.06276415078900754,
+          "mean": 0.06270179792772979,
+          "min": 0.06263944506645203
+        },
+        "native_target_evaluation_seconds": {
+          "max": 4.414815003052354,
+          "mean": 4.3404254644410685,
+          "min": 4.266035925829783
+        },
+        "ontology_capture_seconds": {
+          "max": 0.0456677780020982,
+          "mean": 0.04557020904030651,
+          "min": 0.045472640078514814
+        },
+        "target_payload_seconds": {
+          "max": 4.471555633004755,
+          "mean": 4.397624164470471,
+          "min": 4.323692695936188
+        },
+        "training_seconds": {
+          "max": 6.865666083991528,
+          "mean": 6.418672492494807,
+          "min": 5.971678900998086
+        }
+      },
+      "pipeline_breakdown": {
+        "batch_status_counts": {
+          "qualified": 3,
+          "training_exhausted": 1
+        },
+        "coordinator_dispatch_wall_seconds_total": 35.07817023107782,
+        "coordinator_dispatch_wave_seconds": [
+          15.075497952988371,
+          20.00267227808945
+        ],
+        "cycle_receipt": {
+          "bytes": 60431,
+          "path": "reused/cycles/8a03c1c9a9684bc8b3938f5a495f9ad9/cycle.json",
+          "sha256": "aa256e1ebaa81447cc6fcadabaa1a1a7e5c8ca36c613a0e1e3d1392dd7f69bf8"
+        },
+        "owner_acceptance_sparse_replay_seconds_total": 15.73054819367826,
+        "pool_pre_job_guard_seconds_total": 2.6959497700445354,
+        "pool_pre_job_guard_timing_scope": "Nested inside dispatch; not additional wall time. No comparable explicit guard field for fresh workers.",
+        "qualification_receipts": [
+          {
+            "elapsed_seconds": 7.369409532984719,
+            "gate_results": {
+              "family_syntax_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "heldout_gate": {
+                "passed": true,
+                "reason": "",
+                "sample_count": 1
+              },
+              "lake_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "metric_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "semantic_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              }
+            },
+            "metric_evaluation": {
+              "bridge_names": [],
+              "cache_enabled": false,
+              "legal_ir_evaluate_provers": false,
+              "legal_ir_parallel_workers": 1,
+              "legal_ir_target_count": 0,
+              "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+              "use_sample_memory": false
+            },
+            "model_evaluation_seconds": 0.20980777591466904,
+            "other_inside_qualification_seconds": 6.046430534217507,
+            "qualified": true,
+            "receipt": {
+              "bytes": 186368,
+              "path": "reused/progress/qualifications/qualified-0a5144ee22174e98ef9f3017b8fb47294ec117a6aed1397c0598d599b8e16f22/qualification.json",
+              "sha256": "01e3cbc61b599b07e248358e22a4c1fec330c07bae3d5787b131e42a87980320"
+            },
+            "section": "20",
+            "structural_seconds": 1.113171222852543
+          },
+          {
+            "elapsed_seconds": 4.93980837916024,
+            "gate_results": {
+              "family_syntax_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "heldout_gate": {
+                "passed": true,
+                "reason": "",
+                "sample_count": 1
+              },
+              "lake_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "metric_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "semantic_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              }
+            },
+            "metric_evaluation": {
+              "bridge_names": [],
+              "cache_enabled": false,
+              "legal_ir_evaluate_provers": false,
+              "legal_ir_parallel_workers": 1,
+              "legal_ir_target_count": 0,
+              "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+              "use_sample_memory": false
+            },
+            "model_evaluation_seconds": 0.20394478901289403,
+            "other_inside_qualification_seconds": 3.617051412118599,
+            "qualified": true,
+            "receipt": {
+              "bytes": 186061,
+              "path": "reused/progress/qualifications/qualified-813b12185bfb6017ba53b526728b0a7bf5ae1fd35612b85e281a25743098299e/qualification.json",
+              "sha256": "e8d899dd9161277248313363c1f55eed268459a20a91612967165507d1df87ae"
+            },
+            "section": "21",
+            "structural_seconds": 1.1188121780287474
+          },
+          {
+            "elapsed_seconds": 8.702957283938304,
+            "gate_results": {
+              "family_syntax_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "heldout_gate": {
+                "passed": true,
+                "reason": "",
+                "sample_count": 1
+              },
+              "lake_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "metric_gate": {
+                "failed_sample_ids": [
+                  "us-code-qualification-fixture-30-763799b0a9e96617"
+                ],
+                "passed": false
+              },
+              "semantic_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              }
+            },
+            "metric_evaluation": {
+              "bridge_names": [],
+              "cache_enabled": false,
+              "legal_ir_evaluate_provers": false,
+              "legal_ir_parallel_workers": 1,
+              "legal_ir_target_count": 0,
+              "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+              "use_sample_memory": false
+            },
+            "model_evaluation_seconds": 0.2070622358005494,
+            "other_inside_qualification_seconds": 7.35364040825516,
+            "qualified": false,
+            "receipt": {
+              "bytes": 186607,
+              "path": "reused/progress/qualifications/qualified-99e83de131f8ec7d87c2795f09e817472a62d13f36f10b23b99d7c74e8f96ca8/qualification.json",
+              "sha256": "5aa81b37c8cb618719c3fa9af20f9092fe31abb784833528ae497588960981cb"
+            },
+            "section": "22",
+            "structural_seconds": 1.1422546398825943
+          },
+          {
+            "elapsed_seconds": 7.858267841860652,
+            "gate_results": {
+              "family_syntax_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "heldout_gate": {
+                "passed": true,
+                "reason": "",
+                "sample_count": 1
+              },
+              "lake_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "metric_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              },
+              "semantic_gate": {
+                "failed_sample_ids": [],
+                "passed": true
+              }
+            },
+            "metric_evaluation": {
+              "bridge_names": [],
+              "cache_enabled": false,
+              "legal_ir_evaluate_provers": false,
+              "legal_ir_parallel_workers": 1,
+              "legal_ir_target_count": 0,
+              "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+              "use_sample_memory": false
+            },
+            "model_evaluation_seconds": 2.4540585200302303,
+            "other_inside_qualification_seconds": 4.1902794057969,
+            "qualified": true,
+            "receipt": {
+              "bytes": 186061,
+              "path": "reused/progress/qualifications/qualified-854c0d866afff55681562b7abaabe1f0f2a0e4e2b9e16a08490287d6354b950c/qualification.json",
+              "sha256": "f99ee25dc46bb9d1d08a3c6912bca38c0db3daddb687fe5dc1a83c2544a207ce"
+            },
+            "section": "23",
+            "structural_seconds": 1.2139299160335213
+          }
+        ],
+        "qualification_wall_seconds_total": 28.870443037943915,
+        "qualified_batch_count": 3,
+        "replay_timing_scope": "Owner acceptance replay is already inside dispatch; subsequent completion replay and candidate qualification loading are separate and not separately timed.",
+        "unallocated_command_wall_seconds": 60.622585769044235,
+        "unallocated_scope": "Residual, not directly measured attribution: CLI/resource wrapper and storage inventories, source guards, repeated completion verification/replay, registry/progress work and teardown outside the dispatch and qualification timers."
+      },
+      "resources": {
+        "all_observed_pids_last_cumulative_cpu_seconds_sum": 128.75,
+        "attempt_exceeded_reservation": false,
+        "memory_note": "Sampled group RSS is a lower bound on the true peak and double-counts shared pages; worker max_rss is cumulative process lifetime, not per-job peak. Reused workers retain imported runtime/allocator state, not a trusted model state.",
+        "observation_count": 49,
+        "observation_duration_seconds": 110.59393000602722,
+        "observed_max_group_process_count": 6,
+        "observed_max_group_rss_bytes": 4240089088,
+        "owner_last_observed_cumulative_cpu_seconds": 88.33,
+        "process_observations": {
+          "bytes": 18506,
+          "path": "reused/cycles/8a03c1c9a9684bc8b3938f5a495f9ad9/process-observations.json",
+          "sha256": "7904724dc14b95a8c531e5539815405f67882a2a03db5968307e859d067fc6c2"
+        },
+        "process_slot_estimate_exceeded": false,
+        "receipt": {
+          "bytes": 3109,
+          "path": "reused/cycles/8a03c1c9a9684bc8b3938f5a495f9ad9/resources.json",
+          "sha256": "13ab77248144d665fcc3466c6467444d738949077e74c0ecf917f908e113e68c"
+        },
+        "reservation_lifetime_seconds": 117.7885274887085,
+        "reservation_released": true,
+        "scheduler_wait_seconds": 3.520399332046509e-07
+      },
+      "reused_processes": {
+        "elapsed_seconds": {
+          "max": 9.124659761087969,
+          "mean": 8.17187519557774,
+          "min": 7.219090630067512
+        },
+        "first_bridge_on_evaluate_seconds": {
+          "max": 1.2088584499433637,
+          "mean": 1.2073656779248267,
+          "min": 1.2058729059062898
+        },
+        "model_metrics_seconds": {
+          "max": 0.08401520177721977,
+          "mean": 0.08081024745479226,
+          "min": 0.07760529313236475
+        },
+        "native_target_evaluation_seconds": {
+          "max": 1.043639827053994,
+          "mean": 1.0421891674632207,
+          "min": 1.0407385078724474
+        },
+        "ontology_capture_seconds": {
+          "max": 0.047904351027682424,
+          "mean": 0.04770589293912053,
+          "min": 0.04750743485055864
+        },
+        "target_payload_seconds": {
+          "max": 1.0803615499753505,
+          "mean": 1.0788477935129777,
+          "min": 1.0773340370506048
+        },
+        "training_seconds": {
+          "max": 3.9402880819980055,
+          "mean": 3.6049170669866726,
+          "min": 3.2695460519753397
+        }
+      },
+      "rows": [
+        {
+          "base_checkpoint_chain_depth": 1,
+          "base_checkpoint_load_seconds": 3.127937539946288,
+          "base_materialized_checkpoint": {
+            "bytes": 26626107,
+            "sha256": "66aa8d5dfe164292759bed7944bd99819290258230290d99d04e94431d1ab273"
+          },
+          "base_state_identity": {
+            "digest": "826d2a1ebecfd62a6a1523b9c562ae01e87dcf2f4e9c4e3c83029ed614a68d24",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 0,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "base_version_id": "sha256:c2f0013d8212bc3bea3e48f65fcc1ef4672eeacdd94c45ba5b874c0eeafc7331",
+          "candidate_materialized_checkpoint": {
+            "bytes": 26635677,
+            "sha256": "359717de18b7ec78dc52e97d9d5d216bab4dc1baf147a3d05756ee31a9ffd3f6"
+          },
+          "candidate_serialization_seconds": 0.3228015599306673,
+          "candidate_state_identity": {
+            "digest": "e5ebbff6885c24a3eb264c7ce57589d0ebad277255fe145f66e29823b2d640b9",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 13012,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "candidate_storage": "sparse",
+          "decompiler_evidence_after": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "decompiler_evidence_before": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "elapsed_seconds": 7.219090630067512,
+          "first_bridge_on_evaluate_seconds": 1.2058729059062898,
+          "first_evaluate_profile": {
+            "model_metrics_seconds": 0.07760529313236475,
+            "ontology_capture_seconds": 0.047904351027682424,
+            "sample_count": 1,
+            "schema_version": "autoencoder-evaluation-profile/v1",
+            "scope": "wall_time_observation_not_an_objective_or_admission",
+            "target_observation": {
+              "bridge_module_preloaded_at_start": true,
+              "bridge_names": [
+                "modal_frame_logic",
+                "deontic_norms",
+                "fol_tdfol",
+                "cec_dcec",
+                "external_prover_router"
+              ],
+              "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+              "disk_cache_enabled": false,
+              "disk_cache_hit_count": 0,
+              "evaluate_provers": false,
+              "generated_target_count": 1,
+              "memory_cache_hit_count": 0,
+              "native_evaluation_attempt_count": 1,
+              "native_evaluation_seconds_sum": 1.043639827053994,
+              "parallel_workers_requested": 1,
+              "parallel_workers_used": 1,
+              "process_target_cache_empty_at_start": true,
+              "process_target_cache_entries_at_start": 0,
+              "representation_counts": {
+                "cached_summary": 0,
+                "native": 1,
+                "other": 0,
+                "prepared_native": 0
+              },
+              "structural_target_seconds": 0.0002962760627269745,
+              "supplied_target_count": 0,
+              "target_cache_miss_count": 1,
+              "target_count": 1,
+              "target_items_seconds": 1.068303229054436,
+              "target_reduction_seconds": 0.011710556922480464,
+              "timeout_fallback_count": 0,
+              "training_target_seconds_sum": 0.00100390100851655
+            },
+            "target_payload_seconds": 1.0803615499753505,
+            "total_seconds": 1.2058729059062898
+          },
+          "job_id": "qualified-0a5144ee22174e98ef9f3017b8fb47294ec117a6aed1397c0598d599b8e16f22",
+          "line_search_evaluations": {
+            "count": 5,
+            "evaluate_seconds_total": 0.5872975073289126,
+            "memory_cache_hit_count": 5,
+            "native_evaluation_attempt_count": 0
+          },
+          "memory_after_training_before_serialization": {
+            "major_faults": 0,
+            "max_rss_kib": 1108308,
+            "minor_faults": 288943,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 752160,
+            "pss_kib": 849446,
+            "rss_kib": 1065204,
+            "shared_clean_kib": 313032,
+            "shared_dirty_kib": 12
+          },
+          "memory_before_training": {
+            "major_faults": 0,
+            "max_rss_kib": 1108308,
+            "minor_faults": 288935,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 791600,
+            "pss_kib": 888866,
+            "rss_kib": 1104644,
+            "shared_clean_kib": 313032,
+            "shared_dirty_kib": 12
+          },
+          "model_metrics_seconds": 0.07760529313236475,
+          "native_pool": {
+            "pid": 3321122,
+            "pre_job_guard_seconds": 0.709826986072585,
+            "process_job_index": 1,
+            "process_reused": true,
+            "producer_manifest": {
+              "file_count": 7832,
+              "sha256": "92f753383e786cf987af5e31f91e5b1c9bde66693124486aa5f257de0f4a85bb"
+            },
+            "retained_model_state": false,
+            "schema_version": "native-training-pool-observation/v1",
+            "source_scope": "package Python contents before/after every job; preloaded bytecode not attested",
+            "target_cache_cleared_entries": 0
+          },
+          "native_target_evaluation_seconds": 1.043639827053994,
+          "native_target_fraction_of_first_evaluate": 0.8654641977129692,
+          "ontology_capture_seconds": 0.047904351027682424,
+          "optimizer_accepted_epochs": 1,
+          "owner_acceptance_sparse_replay_seconds": 4.616800440941006,
+          "pid": 3321122,
+          "process_start_observation": "reused_process",
+          "projection_profile_by_stage": {
+            "before_holdout_evaluation": {
+              "count": 1.0,
+              "seconds": 1.2059223630931228
+            },
+            "hard_example_selection": {
+              "count": 1.0,
+              "seconds": 1.648208126425743e-06
+            },
+            "line_search_evaluation": {
+              "count": 5.0,
+              "seconds": 0.5875211916863918
+            },
+            "projection_update_batch": {
+              "count": 5.0,
+              "seconds": 0.40835798205807805
+            },
+            "projection_update_head": {
+              "count": 7.0,
+              "seconds": 0.4082544289994985
+            }
+          },
+          "receipt": {
+            "bytes": 160791,
+            "path": "reused/progress/outputs/qualified-0a5144ee22174e98ef9f3017b8fb47294ec117a6aed1397c0598d599b8e16f22/receipt.json",
+            "sha256": "8562bfaf2922e55701221c0dbe6acb4d281754336d964a63405ee6be61a98ed0"
+          },
+          "sample": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "20",
+            "text": "The officer shall retain the file for at least 20 days.",
+            "title": "qualification-fixture"
+          },
+          "sample_count": 1,
+          "shared_target_count": 0,
+          "sparse_patch_bytes": 1418058,
+          "target_payload_seconds": 1.0803615499753505,
+          "training_seconds": 3.2695460519753397,
+          "weight_load_seconds_after_json_parse": 1.0719522833824158e-06,
+          "weight_storage": "private_json"
+        },
+        {
+          "base_checkpoint_chain_depth": 0,
+          "base_checkpoint_load_seconds": 0.22615486290305853,
+          "base_materialized_checkpoint": {
+            "bytes": 25895338,
+            "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+          },
+          "base_state_identity": {
+            "digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 0,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "base_version_id": "sha256:19b7f2115520de91f32023c9b5b520f269e648cf502f70e2a721480d81a361d3",
+          "candidate_materialized_checkpoint": {
+            "bytes": 26626107,
+            "sha256": "66aa8d5dfe164292759bed7944bd99819290258230290d99d04e94431d1ab273"
+          },
+          "candidate_serialization_seconds": 0.47727994807064533,
+          "candidate_state_identity": {
+            "digest": "826d2a1ebecfd62a6a1523b9c562ae01e87dcf2f4e9c4e3c83029ed614a68d24",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 15154,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "candidate_storage": "sparse",
+          "decompiler_evidence_after": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "decompiler_evidence_before": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "elapsed_seconds": 7.907637550961226,
+          "first_bridge_on_evaluate_seconds": 4.4318064611870795,
+          "first_evaluate_profile": {
+            "model_metrics_seconds": 0.06263944506645203,
+            "ontology_capture_seconds": 0.045472640078514814,
+            "sample_count": 1,
+            "schema_version": "autoencoder-evaluation-profile/v1",
+            "scope": "wall_time_observation_not_an_objective_or_admission",
+            "target_observation": {
+              "bridge_module_preloaded_at_start": false,
+              "bridge_names": [
+                "modal_frame_logic",
+                "deontic_norms",
+                "fol_tdfol",
+                "cec_dcec",
+                "external_prover_router"
+              ],
+              "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+              "disk_cache_enabled": false,
+              "disk_cache_hit_count": 0,
+              "evaluate_provers": false,
+              "generated_target_count": 1,
+              "memory_cache_hit_count": 0,
+              "native_evaluation_attempt_count": 1,
+              "native_evaluation_seconds_sum": 4.266035925829783,
+              "parallel_workers_requested": 1,
+              "parallel_workers_used": 1,
+              "process_target_cache_empty_at_start": true,
+              "process_target_cache_entries_at_start": 0,
+              "representation_counts": {
+                "cached_summary": 0,
+                "native": 1,
+                "other": 0,
+                "prepared_native": 0
+              },
+              "structural_target_seconds": 0.000765274977311492,
+              "supplied_target_count": 0,
+              "target_cache_miss_count": 1,
+              "target_count": 1,
+              "target_items_seconds": 4.31225945497863,
+              "target_reduction_seconds": 0.01062369393184781,
+              "timeout_fallback_count": 0,
+              "training_target_seconds_sum": 0.0009937568102031946
+            },
+            "target_payload_seconds": 4.323692695936188,
+            "total_seconds": 4.4318064611870795
+          },
+          "job_id": "qualified-813b12185bfb6017ba53b526728b0a7bf5ae1fd35612b85e281a25743098299e",
+          "line_search_evaluations": {
+            "count": 5,
+            "evaluate_seconds_total": 0.5068362627644092,
+            "memory_cache_hit_count": 5,
+            "native_evaluation_attempt_count": 0
+          },
+          "memory_after_training_before_serialization": {
+            "major_faults": 0,
+            "max_rss_kib": 996380,
+            "minor_faults": 230825,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 678288,
+            "pss_kib": 818439,
+            "rss_kib": 991388,
+            "shared_clean_kib": 313092,
+            "shared_dirty_kib": 8
+          },
+          "memory_before_training": {
+            "major_faults": 0,
+            "max_rss_kib": 286680,
+            "minor_faults": 62866,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 170416,
+            "pss_kib": 170743,
+            "rss_kib": 180440,
+            "shared_clean_kib": 10016,
+            "shared_dirty_kib": 8
+          },
+          "model_metrics_seconds": 0.06263944506645203,
+          "native_pool": {
+            "pid": 3321495,
+            "pre_job_guard_seconds": 0.6410774819087237,
+            "process_job_index": 0,
+            "process_reused": false,
+            "producer_manifest": {
+              "file_count": 7832,
+              "sha256": "92f753383e786cf987af5e31f91e5b1c9bde66693124486aa5f257de0f4a85bb"
+            },
+            "retained_model_state": false,
+            "schema_version": "native-training-pool-observation/v1",
+            "source_scope": "package Python contents before/after every job; preloaded bytecode not attested",
+            "target_cache_cleared_entries": 0
+          },
+          "native_target_evaluation_seconds": 4.266035925829783,
+          "native_target_fraction_of_first_evaluate": 0.9625952674582965,
+          "ontology_capture_seconds": 0.045472640078514814,
+          "optimizer_accepted_epochs": 1,
+          "owner_acceptance_sparse_replay_seconds": 2.0283568408340216,
+          "pid": 3321495,
+          "process_start_observation": "fresh_process",
+          "projection_profile_by_stage": {
+            "before_holdout_evaluation": {
+              "count": 1.0,
+              "seconds": 4.4318362849298865
+            },
+            "hard_example_selection": {
+              "count": 1.0,
+              "seconds": 1.903856173157692e-06
+            },
+            "line_search_evaluation": {
+              "count": 5.0,
+              "seconds": 0.506981817772612
+            },
+            "projection_update_batch": {
+              "count": 5.0,
+              "seconds": 0.5006637966725975
+            },
+            "projection_update_head": {
+              "count": 7.0,
+              "seconds": 0.500574610196054
+            }
+          },
+          "receipt": {
+            "bytes": 159116,
+            "path": "reused/progress/outputs/qualified-813b12185bfb6017ba53b526728b0a7bf5ae1fd35612b85e281a25743098299e/receipt.json",
+            "sha256": "a52058a35b46327f4e42986dfeaf277cb3d9083dcc9d2e6bf709049e1ea4d618"
+          },
+          "sample": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "21",
+            "text": "The officer shall retain the file for at least 21 days.",
+            "title": "qualification-fixture"
+          },
+          "sample_count": 1,
+          "shared_target_count": 0,
+          "sparse_patch_bytes": 1420206,
+          "target_payload_seconds": 4.323692695936188,
+          "training_seconds": 5.971678900998086,
+          "weight_load_seconds_after_json_parse": 0.635155115975067,
+          "weight_storage": "private_json"
+        },
+        {
+          "base_checkpoint_chain_depth": 1,
+          "base_checkpoint_load_seconds": 4.123259106883779,
+          "base_materialized_checkpoint": {
+            "bytes": 28198038,
+            "sha256": "778d79d34536e6c44f17837e6b582af3e5d0dbdd48ead4c216fcd6a4e8e86c1b"
+          },
+          "base_state_identity": {
+            "digest": "8e74147062a3391821d4d8b17691ed0764edf634ad3c40e4126a119d935ad63a",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 0,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "base_version_id": "sha256:ac4b7591ba4a1c839c82ad6f5576416debcd7cbb2eb998302c7179061ada717a",
+          "candidate_materialized_checkpoint": {
+            "bytes": 28206303,
+            "sha256": "d6b00db3e331e79d909dcce7b9da0c3d36c30976ceff269bc749764c6eddc58d"
+          },
+          "candidate_serialization_seconds": 0.3538705501705408,
+          "candidate_state_identity": {
+            "digest": "cfa67354b14006cdf8665ed74542a15a667d8bc918d49dab1b1e3f6db14623a9",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 4590,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "candidate_storage": "sparse",
+          "decompiler_evidence_after": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "decompiler_evidence_before": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "elapsed_seconds": 9.124659761087969,
+          "first_bridge_on_evaluate_seconds": 1.2088584499433637,
+          "first_evaluate_profile": {
+            "model_metrics_seconds": 0.08401520177721977,
+            "ontology_capture_seconds": 0.04750743485055864,
+            "sample_count": 1,
+            "schema_version": "autoencoder-evaluation-profile/v1",
+            "scope": "wall_time_observation_not_an_objective_or_admission",
+            "target_observation": {
+              "bridge_module_preloaded_at_start": true,
+              "bridge_names": [
+                "modal_frame_logic",
+                "deontic_norms",
+                "fol_tdfol",
+                "cec_dcec",
+                "external_prover_router"
+              ],
+              "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+              "disk_cache_enabled": false,
+              "disk_cache_hit_count": 0,
+              "evaluate_provers": false,
+              "generated_target_count": 1,
+              "memory_cache_hit_count": 0,
+              "native_evaluation_attempt_count": 1,
+              "native_evaluation_seconds_sum": 1.0407385078724474,
+              "parallel_workers_requested": 1,
+              "parallel_workers_used": 1,
+              "process_target_cache_empty_at_start": true,
+              "process_target_cache_entries_at_start": 0,
+              "representation_counts": {
+                "cached_summary": 0,
+                "native": 1,
+                "other": 0,
+                "prepared_native": 0
+              },
+              "structural_target_seconds": 0.00030918908305466175,
+              "supplied_target_count": 0,
+              "target_cache_miss_count": 1,
+              "target_count": 1,
+              "target_items_seconds": 1.0653425969649106,
+              "target_reduction_seconds": 0.011627707164734602,
+              "timeout_fallback_count": 0,
+              "training_target_seconds_sum": 0.0010239819530397654
+            },
+            "target_payload_seconds": 1.0773340370506048,
+            "total_seconds": 1.2088584499433637
+          },
+          "job_id": "qualified-99e83de131f8ec7d87c2795f09e817472a62d13f36f10b23b99d7c74e8f96ca8",
+          "line_search_evaluations": {
+            "count": 5,
+            "evaluate_seconds_total": 0.6086850725114346,
+            "memory_cache_hit_count": 5,
+            "native_evaluation_attempt_count": 0
+          },
+          "memory_after_training_before_serialization": {
+            "major_faults": 0,
+            "max_rss_kib": 1119816,
+            "minor_faults": 299918,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 746036,
+            "pss_kib": 843307,
+            "rss_kib": 1059080,
+            "shared_clean_kib": 313032,
+            "shared_dirty_kib": 12
+          },
+          "memory_before_training": {
+            "major_faults": 0,
+            "max_rss_kib": 1119816,
+            "minor_faults": 299152,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 747036,
+            "pss_kib": 844302,
+            "rss_kib": 1060080,
+            "shared_clean_kib": 313032,
+            "shared_dirty_kib": 12
+          },
+          "model_metrics_seconds": 0.08401520177721977,
+          "native_pool": {
+            "pid": 3321495,
+            "pre_job_guard_seconds": 0.7041184930130839,
+            "process_job_index": 1,
+            "process_reused": true,
+            "producer_manifest": {
+              "file_count": 7832,
+              "sha256": "92f753383e786cf987af5e31f91e5b1c9bde66693124486aa5f257de0f4a85bb"
+            },
+            "retained_model_state": false,
+            "schema_version": "native-training-pool-observation/v1",
+            "source_scope": "package Python contents before/after every job; preloaded bytecode not attested",
+            "target_cache_cleared_entries": 0
+          },
+          "native_target_evaluation_seconds": 1.0407385078724474,
+          "native_target_fraction_of_first_evaluate": 0.8609266932130947,
+          "ontology_capture_seconds": 0.04750743485055864,
+          "optimizer_accepted_epochs": 1,
+          "owner_acceptance_sparse_replay_seconds": 6.0584102619905025,
+          "pid": 3321495,
+          "process_start_observation": "reused_process",
+          "projection_profile_by_stage": {
+            "before_holdout_evaluation": {
+              "count": 1.0,
+              "seconds": 1.2089070910587907
+            },
+            "hard_example_selection": {
+              "count": 1.0,
+              "seconds": 1.8081627786159515e-06
+            },
+            "line_search_evaluation": {
+              "count": 5.0,
+              "seconds": 0.6089094122871757
+            },
+            "projection_update_batch": {
+              "count": 5.0,
+              "seconds": 0.3850752704311162
+            },
+            "projection_update_head": {
+              "count": 7.0,
+              "seconds": 0.38497765315696597
+            }
+          },
+          "receipt": {
+            "bytes": 161071,
+            "path": "reused/progress/outputs/qualified-99e83de131f8ec7d87c2795f09e817472a62d13f36f10b23b99d7c74e8f96ca8/receipt.json",
+            "sha256": "f4da322ca1a18f05deed5602788515ddc54cb0f71303dfd3b808eb815d8e1b8c"
+          },
+          "sample": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "22",
+            "text": "The officer shall retain the file for at least 22 days.",
+            "title": "qualification-fixture"
+          },
+          "sample_count": 1,
+          "shared_target_count": 0,
+          "sparse_patch_bytes": 2597537,
+          "target_payload_seconds": 1.0773340370506048,
+          "training_seconds": 3.9402880819980055,
+          "weight_load_seconds_after_json_parse": 1.0239891707897186e-06,
+          "weight_storage": "private_json"
+        },
+        {
+          "base_checkpoint_chain_depth": 0,
+          "base_checkpoint_load_seconds": 0.21718468004837632,
+          "base_materialized_checkpoint": {
+            "bytes": 25895338,
+            "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+          },
+          "base_state_identity": {
+            "digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 0,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "base_version_id": "sha256:19b7f2115520de91f32023c9b5b520f269e648cf502f70e2a721480d81a361d3",
+          "candidate_materialized_checkpoint": {
+            "bytes": 28198038,
+            "sha256": "778d79d34536e6c44f17837e6b582af3e5d0dbdd48ead4c216fcd6a4e8e86c1b"
+          },
+          "candidate_serialization_seconds": 0.49464227608405054,
+          "candidate_state_identity": {
+            "digest": "8e74147062a3391821d4d8b17691ed0764edf634ad3c40e4126a119d935ad63a",
+            "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+            "revision": 35781,
+            "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+            "state_schema_version": "modal-autoencoder-state-v1"
+          },
+          "candidate_storage": "sparse",
+          "decompiler_evidence_after": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "decompiler_evidence_before": {
+            "compatibility_metric_sample_count": 0,
+            "observed": true,
+            "source_decompiled_metric_sample_count": 1,
+            "structural_formula_target_count": 1,
+            "structural_target_sample_count": 1,
+            "validation_authority": false
+          },
+          "elapsed_seconds": 8.80601047188975,
+          "first_bridge_on_evaluate_seconds": 4.579989178106189,
+          "first_evaluate_profile": {
+            "model_metrics_seconds": 0.06276415078900754,
+            "ontology_capture_seconds": 0.0456677780020982,
+            "sample_count": 1,
+            "schema_version": "autoencoder-evaluation-profile/v1",
+            "scope": "wall_time_observation_not_an_objective_or_admission",
+            "target_observation": {
+              "bridge_module_preloaded_at_start": false,
+              "bridge_names": [
+                "modal_frame_logic",
+                "deontic_norms",
+                "fol_tdfol",
+                "cec_dcec",
+                "external_prover_router"
+              ],
+              "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+              "disk_cache_enabled": false,
+              "disk_cache_hit_count": 0,
+              "evaluate_provers": false,
+              "generated_target_count": 1,
+              "memory_cache_hit_count": 0,
+              "native_evaluation_attempt_count": 1,
+              "native_evaluation_seconds_sum": 4.414815003052354,
+              "parallel_workers_requested": 1,
+              "parallel_workers_used": 1,
+              "process_target_cache_empty_at_start": true,
+              "process_target_cache_entries_at_start": 0,
+              "representation_counts": {
+                "cached_summary": 0,
+                "native": 1,
+                "other": 0,
+                "prepared_native": 0
+              },
+              "structural_target_seconds": 0.0007604418788105249,
+              "supplied_target_count": 0,
+              "target_cache_miss_count": 1,
+              "target_count": 1,
+              "target_items_seconds": 4.460182345006615,
+              "target_reduction_seconds": 0.010570589918643236,
+              "timeout_fallback_count": 0,
+              "training_target_seconds_sum": 0.0009868291672319174
+            },
+            "target_payload_seconds": 4.471555633004755,
+            "total_seconds": 4.579989178106189
+          },
+          "job_id": "qualified-854c0d866afff55681562b7abaabe1f0f2a0e4e2b9e16a08490287d6354b950c",
+          "line_search_evaluations": {
+            "count": 5,
+            "evaluate_seconds_total": 0.5093215119559318,
+            "memory_cache_hit_count": 5,
+            "native_evaluation_attempt_count": 0
+          },
+          "memory_after_training_before_serialization": {
+            "major_faults": 0,
+            "max_rss_kib": 1015204,
+            "minor_faults": 241003,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 702624,
+            "pss_kib": 842774,
+            "rss_kib": 1015724,
+            "shared_clean_kib": 313092,
+            "shared_dirty_kib": 8
+          },
+          "memory_before_training": {
+            "major_faults": 0,
+            "max_rss_kib": 286680,
+            "minor_faults": 62854,
+            "private_clean_kib": 0,
+            "private_dirty_kib": 170368,
+            "pss_kib": 170745,
+            "rss_kib": 180392,
+            "shared_clean_kib": 10016,
+            "shared_dirty_kib": 8
+          },
+          "model_metrics_seconds": 0.06276415078900754,
+          "native_pool": {
+            "pid": 3321122,
+            "pre_job_guard_seconds": 0.6409268090501428,
+            "process_job_index": 0,
+            "process_reused": false,
+            "producer_manifest": {
+              "file_count": 7832,
+              "sha256": "92f753383e786cf987af5e31f91e5b1c9bde66693124486aa5f257de0f4a85bb"
+            },
+            "retained_model_state": false,
+            "schema_version": "native-training-pool-observation/v1",
+            "source_scope": "package Python contents before/after every job; preloaded bytecode not attested",
+            "target_cache_cleared_entries": 0
+          },
+          "native_target_evaluation_seconds": 4.414815003052354,
+          "native_target_fraction_of_first_evaluate": 0.9639356844240112,
+          "ontology_capture_seconds": 0.0456677780020982,
+          "optimizer_accepted_epochs": 1,
+          "owner_acceptance_sparse_replay_seconds": 3.02698064991273,
+          "pid": 3321122,
+          "process_start_observation": "fresh_process",
+          "projection_profile_by_stage": {
+            "before_holdout_evaluation": {
+              "count": 1.0,
+              "seconds": 4.580031178891659
+            },
+            "hard_example_selection": {
+              "count": 1.0,
+              "seconds": 1.6810372471809387e-06
+            },
+            "line_search_evaluation": {
+              "count": 5.0,
+              "seconds": 0.5094850808382034
+            },
+            "projection_update_batch": {
+              "count": 5.0,
+              "seconds": 0.5021252073347569
+            },
+            "projection_update_head": {
+              "count": 7.0,
+              "seconds": 0.5020404390525073
+            }
+          },
+          "receipt": {
+            "bytes": 164718,
+            "path": "reused/progress/outputs/qualified-854c0d866afff55681562b7abaabe1f0f2a0e4e2b9e16a08490287d6354b950c/receipt.json",
+            "sha256": "167cdfa2a622bcac9143334aa52d3fda600429aa59a5887fcd787845b2d9edb8"
+          },
+          "sample": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "23",
+            "text": "The officer shall retain the file for at least 23 days.",
+            "title": "qualification-fixture"
+          },
+          "sample_count": 1,
+          "shared_target_count": 0,
+          "sparse_patch_bytes": 4933536,
+          "target_payload_seconds": 4.471555633004755,
+          "training_seconds": 6.865666083991528,
+          "weight_load_seconds_after_json_parse": 0.6329168931115419,
+          "weight_storage": "private_json"
+        }
+      ],
+      "sample_count": 4,
+      "unique_worker_pid_count": 2
+    }
+  },
+  "schema_version": "native-bridge-profile-comparison/v1",
+  "scope": {
+    "cache_note": "Disk metric cache disabled. Target cache clears between resident jobs, but imported modules and other process state remain warm. Line-search evaluations reuse targets within each job.",
+    "cross_historical_speedup_claim": false,
+    "embedding_backend": "mock:stable-sha256",
+    "four_synthetic_numeric_fixtures_per_route": true,
+    "native_evaluation_note": "native_target_evaluation_seconds measures evaluate_legal_ir_multiview_with_timeout wall time, nested inside target_payload and first bridge-on evaluate.",
+    "qualified_corpus_or_Constitution_claim": false,
+    "same_code_same_inputs_two_lanes_two_waves": true,
+    "timed_training_validation_mode": "in_sample; separate strict qualification remains outside these optimizer receipts",
+    "timing_note": "Individual worker wall/training seconds overlap across lanes and must not be summed as campaign wall time. Enclosing profile events include their nested timing observations."
+  },
+  "single_comparison": {
+    "controlled_benchmark_generalization": false,
+    "fresh_wall_seconds": 120.56212966702878,
+    "repeat_count": 1,
+    "reused_wall_seconds": 124.57119903806597,
+    "wall_reduction_fraction": -0.033253139954557254
+  },
+  "source_binding": {
+    "bytes": 7414,
+    "path": "native-binding.json",
+    "sha256": "abb030fec225cc7886c8fa696944ccfbeb54b36c67b3c6aff9c69f16ae12d85f"
+  }
+}
