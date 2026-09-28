@@ -105,7 +105,28 @@ def frozen_decompiler_config() -> dict[str, str]:
 def _readable_atom(atom: str) -> str:
     """Apply the frozen ``underscore_to_space_v1`` atom surface."""
 
+    comparison = _comparison_condition_surface(atom)
+    if comparison is not None:
+        return comparison
     return " ".join(atom.replace("_", " ").split())
+
+
+def _comparison_condition_surface(atom: str) -> str | None:
+    """Render a comparison qualifier as ``when compared``, never ``if compared``."""
+
+    text = " ".join(str(atom or "").replace("_", " ").split())
+    if not text:
+        return None
+    folded = text.casefold()
+    if folded in {"if_compared", "if compared"}:
+        return "when compared"
+    if folded.startswith("if compared "):
+        return "when" + text[2:]
+    if folded.startswith("when compared"):
+        return text
+    if folded == "compared" or folded.startswith("compared "):
+        return "when " + text
+    return None
 
 
 def _join_atoms(atoms: tuple[str, ...], conjunction: str) -> str:
@@ -124,16 +145,20 @@ def _phrase_in_text(text: str, phrase: str) -> bool:
 
 
 def _temporal_not_already_in_object(rule: CanonicalRule) -> tuple[str, ...]:
-    """Drop a temporal atom whose surface is already in the object.
+    """Drop a temporal atom whose surface is already in the action or object.
 
-    This does not add a numeral. An atom that is not already in the object
-    is still rendered.
+    This does not add a numeral. An atom that is not already in the action
+    or object is still rendered.
     """
 
-    rendered_object = _readable_atom(rule.object)
+    rendered_prior = " ".join(
+        part
+        for part in (_readable_atom(rule.action), _readable_atom(rule.object))
+        if part
+    )
     pending: list[str] = []
     for atom in rule.temporal:
-        if _phrase_in_text(rendered_object, _readable_atom(atom)):
+        if _phrase_in_text(rendered_prior, _readable_atom(atom)):
             continue
         pending.append(atom)
     return tuple(pending)
@@ -151,15 +176,26 @@ def decompile_rule(rule: CanonicalRule) -> str:
         _readable_atom(rule.action),
     ]
     if rule.object:
-        parts.append(_readable_atom(rule.object))
+        object_text = _readable_atom(rule.object)
+        if not _phrase_in_text(_readable_atom(rule.action), object_text):
+            parts.append(object_text)
 
     sentence = " ".join(parts)
     temporal = _temporal_not_already_in_object(rule)
     if temporal:
         sentence += " " + _join_atoms(temporal, "and")
-    if rule.conditions:
+    other_conditions: list[str] = []
+    for atom in rule.conditions:
+        surface = _comparison_condition_surface(atom)
+        if surface is None:
+            other_conditions.append(atom)
+            continue
+        if _phrase_in_text(sentence, surface):
+            continue
+        sentence += " " + surface
+    if other_conditions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} " + _join_atoms(
-            rule.conditions, "and"
+            tuple(other_conditions), "and"
         )
     if rule.exceptions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['exception_connector']} " + _join_atoms(

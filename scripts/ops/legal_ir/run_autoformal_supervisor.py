@@ -136,6 +136,23 @@ def validated_task_id(value: str) -> str:
     return value
 
 
+def task_alias_shard_index(alias: str, shard_count: int) -> int:
+    """Match the database daemon's alias hash lane.
+
+    The key is the alias, or the final colon segment when the alias is a
+    namespaced id. The same function decides which parallel repair process
+    may preflight the task.
+    """
+
+    if isinstance(shard_count, bool) or not isinstance(shard_count, int) or shard_count < 1:
+        raise ValueError("task_shard_count must be a positive integer")
+    key = str(alias or "")
+    if ":" in key:
+        key = key.rsplit(":", 1)[-1]
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+    return int(digest[:8], 16) % shard_count
+
+
 def native_task_binding(report: dict) -> list[str]:
     """Bind one live invocation to the preflighted immutable task, never a fallback."""
     if report.get("eligible") is not True or report.get("passed") is not True:
@@ -181,6 +198,19 @@ def preflight_next_repair(source, repository: Path, *, probe=None, task_id: str 
         selected = []
     elif not task_id:
         selected = [record for record in selected if str(record.task_cid) not in parked][:1]
+    elif not selected:
+        # The daemon resumes a running attempt before it claims ready work.
+        # An explicit alias still names that attempt; it does not fall back.
+        list_tasks = getattr(source, "list_tasks", None)
+        if callable(list_tasks):
+            inflight = [
+                record
+                for record in list_tasks(status="in_progress", limit=20).tasks
+                if record.task_alias == task_id and str(record.task_cid) not in parked
+            ]
+            if len(inflight) > 1:
+                raise RepairQueueError("requested in-progress task alias is ambiguous")
+            selected = inflight
     blocked_reason = "goals_inconclusive" if (requested_parked or (not selected and parked)) else ""
     report = {"schema": "uscode-autoformal-launch-preflight/v1", "queue_revision": before,
               "eligible": bool(selected), "passed": None, "tasks_claimed": False,
@@ -625,6 +655,8 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--model-identity", default="sha256:loop-census-unbound")
     run.add_argument("--interval", type=float, default=30)
     run.add_argument("--implementation-timeout", type=float, default=1800)
+    run.add_argument("--task-shard-count", type=int, default=1)
+    run.add_argument("--task-shard-index", type=int, default=0)
     run.add_argument("--merge-target-branch", default="")
     run.add_argument("--repository-root", type=Path, default=ROOT,
                      help="Clean, operator-prepared repository receiving native repair branches.")
@@ -646,6 +678,10 @@ def main(argv: list[str] | None = None) -> int:
         raise ValueError("autoformal-loop does not claim or implement compiler patches")
     if autoformal_supervise and not args.once:
         raise ValueError("autoformal-loop requires --once")
+    shard_count = int(getattr(args, "task_shard_count", 1) or 1)
+    shard_index = int(getattr(args, "task_shard_index", 0) or 0)
+    if shard_count < 1 or shard_index < 0 or shard_index >= shard_count:
+        raise ValueError("task shard index must be in range [0, task_shard_count)")
     if args.command == "supervise" and args.implement and not args.once:
         # The diagnostic is bound to one task and candidate revision. The
         # coordinator regenerates it between native passes; reusing it in a
@@ -855,8 +891,11 @@ def main(argv: list[str] | None = None) -> int:
     native_args = [
         "--todo-path", str(database), "--state-dir", str(runtime / "state"),
         "--task-prefix", "AFTD-", "--board-namespace", NAMESPACE,
-        "--state-prefix", "autoformal", "--task-source-kind", "duckdb",
-        "--authority-mode", "embedded", "--state-store-id", "autoformal-" + hashlib.sha256(str(database).encode()).hexdigest()[:16],
+        "--state-prefix", "autoformal" if shard_count == 1 else f"autoformal-s{shard_index}",
+        "--task-source-kind", "duckdb",
+        "--authority-mode", "embedded",
+        "--state-store-id", "autoformal-" + hashlib.sha256(str(database).encode()).hexdigest()[:16]
+        + ("" if shard_count == 1 else f"-s{shard_index}"),
         "--state-failover-policy", "fail_closed",
         "--worktree-root", str(runtime / "worktrees"),
         "--merge-queue-dir", str(runtime / "merge-queue"),
@@ -866,6 +905,12 @@ def main(argv: list[str] | None = None) -> int:
         "--merged-worktree-cleanup-max", "0",
         "--retain-worktree-artifacts",
     ]
+    if shard_count > 1:
+        native_args += [
+            "--task-shard-count", str(shard_count),
+            "--task-shard-index", str(shard_index),
+            "--strict-task-sharding",
+        ]
     if args.merge_target_branch:
         native_args += ["--merge-target-branch", args.merge_target_branch]
     from ipfs_datasets_py.logic.autoformal.validator_profile import DEPLOYMENT_PROTECTED
@@ -896,10 +941,41 @@ def main(argv: list[str] | None = None) -> int:
         actual = repository / path
         if actual.is_symlink() or not actual.is_file() or actual.read_bytes() != expected.read_bytes():
             raise ValueError("repair repository lacks current protected evaluator: " + path)
+    if not args.merge_target_branch:
+        # Repair worktrees are seeded from this branch. A snapshot's main ref
+        # is the pre-overlay source, so the checked-out candidate must be the
+        # base or the provider edits a different compiler than the census.
+        current_branch = subprocess.check_output(
+            ["git", "branch", "--show-current"], cwd=repository, text=True,
+        ).strip()
+        if current_branch:
+            native_args += ["--merge-target-branch", current_branch]
     with DatabaseTaskSource(database, install_schema=False) as source:
         for record in source.list_tasks(status="ready", limit=100).tasks:
             if record.body.get("board_namespace") == NAMESPACE and not record.outputs:
                 raise ValueError("ready repair lacks native output declarations; run explicit migration first")
+        if not args.task_id:
+            inflight = [
+                task
+                for task in source.list_tasks(status="in_progress", limit=100).tasks
+                if task.body.get("board_namespace") == NAMESPACE
+                and (
+                    shard_count == 1
+                    or task_alias_shard_index(task.task_alias, shard_count) == shard_index
+                )
+            ]
+            if len(inflight) > 1:
+                raise ValueError("more than one in-progress repair is open in this shard")
+            if len(inflight) == 1:
+                args.task_id = inflight[0].task_alias
+            elif shard_count > 1:
+                ready = [
+                    task for task in source.ready_tasks(limit=1000).tasks
+                    if task.body.get("board_namespace") == NAMESPACE
+                    and task_alias_shard_index(task.task_alias, shard_count) == shard_index
+                ]
+                if ready:
+                    args.task_id = ready[0].task_alias
         report = preflight_next_repair(source, repository, task_id=args.task_id)
         require_validation_preflight(report)
         if not report["eligible"]:
@@ -919,6 +995,8 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("repair context returned an invalid task binding")
         native_args += ["--operator-repair-note", note["path"],
                         "--operator-repair-note-sha256", note["sha256"]]
+    for child in ("state", "worktrees", "merge-queue", "repair-context"):
+        (runtime / child).mkdir(parents=True, exist_ok=True)
     run_configured_portal_implementation_daemon(
         native_args, repo_root=repository, logger=logging.getLogger("autoformal.supervisor"),
     )

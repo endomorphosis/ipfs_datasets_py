@@ -82,6 +82,10 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("in the case of", "in_the_case_of"),
     ("in the event that", "in_the_event_that"),
     ("in connection with", "in_connection_with"),
+    ("in coordination with", "in_coordination_with"),
+    ("in consultation with", "in_consultation_with"),
+    ("in conjunction with", "in_conjunction_with"),
+    ("in concert with", "in_concert_with"),
     ("in order to", "in_order_to"),
     ("notwithstanding", "notwithstanding"),
     ("for the purposes of", "for_the_purposes_of"),
@@ -104,6 +108,10 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("no later than", "no_later_than"),
     ("only after", "only_after"),
     ("thereafter", "thereafter"),
+    ("when compared with", "when_compared_with"),
+    ("when compared to", "when_compared_to"),
+    ("when compared against", "when_compared_against"),
+    ("when compared", "when_compared"),
     ("if", "if"),
     ("when", "when"),
     ("until", "until"),
@@ -2849,6 +2857,11 @@ _TEMPORAL_BRIDGE_CONTEXT_PHRASES: tuple[tuple[str, str], ...] = (
     ("for each year thereafter", "year_thereafter"),
 )
 _TEMPORAL_BRIDGE_YEAR_RE = re.compile(r"(?<!\d)(?:18|19|20)\d{2}(?!\d)")
+_TEMPORAL_ON_CALENDAR_DATE_RE = re.compile(
+    r"(?<!\w)on\s+(?:january|february|march|april|may|june|july|august|september|"
+    r"october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?",
+    re.IGNORECASE,
+)
 _TEMPORAL_ORIGIN_FROM_RE = re.compile(
     r"(?<!\w)from\s+(?:"
     r"(?:the\s+)?(?:date|effective\s+date|date\s+of\s+enactment|"
@@ -21718,6 +21731,11 @@ def _temporal_transition_context_cues_from_text(text: str) -> List[str]:
             cues.append("year")
         if "edition" in token_set and "edition_year" not in cues:
             cues.append("edition_year")
+    if _TEMPORAL_ON_CALENDAR_DATE_RE.search(normalized_text):
+        if "date" not in cues:
+            cues.append("date")
+        if "deadline" not in cues:
+            cues.append("deadline")
     for cue in _temporal_origin_cues_from_text(normalized_text):
         if cue not in cues:
             cues.append(cue)

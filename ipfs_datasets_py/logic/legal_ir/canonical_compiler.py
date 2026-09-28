@@ -183,10 +183,20 @@ def _tokens(value: object) -> tuple[str, ...]:
     return tuple(normalized)
 
 
+_SLOT_TEXT_KEYS: Final = ("value", "normalized_text", "text", "raw_text")
+
+
 def _flatten_strings(value: object) -> list[str]:
     if isinstance(value, str):
         return [value]
     if isinstance(value, Mapping):
+        preferred: list[str] = []
+        for key in _SLOT_TEXT_KEYS:
+            item = value.get(key)
+            if isinstance(item, str) and item.strip():
+                preferred.append(item)
+        if preferred:
+            return preferred
         result: list[str] = []
         for key, item in value.items():
             result.append(str(key))
@@ -232,7 +242,7 @@ def _best_atom(
             )
             for candidate in candidates
         ),
-        key=lambda item: (-item[0], item[1]),
+        key=lambda item: (-item[0], -len(_tokens(item[1])), item[1]),
     )
     if not scored or scored[0][0] < threshold:
         return ""
@@ -263,6 +273,109 @@ def _has_semantic_value(value: object) -> bool:
         return False
     if isinstance(value, (Mapping, Sequence)) and not isinstance(value, (str, bytes, bytearray)):
         return bool(value)
+    return True
+
+
+def _token_span_in_text(phrase: str, text: str) -> bool:
+    """True when ``phrase`` is already a whole-token span of ``text``."""
+
+    if not phrase or not text:
+        return False
+    return bool(re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", text))
+
+
+def _citation_item_surfaces(item: object) -> list[str]:
+    """Build citation phrases that can already live on a projected v1 atom."""
+
+    if isinstance(item, Mapping):
+        kind = " ".join(str(item.get("type") or "").split()).casefold()
+        values: list[str] = []
+        for key in _SLOT_TEXT_KEYS:
+            raw = item.get(key)
+            if isinstance(raw, str) and raw.strip():
+                values.append(" ".join(raw.split()).casefold())
+        surfaces: list[str] = []
+        seen: set[str] = set()
+
+        def add(surface: str) -> None:
+            if surface and surface not in seen:
+                seen.add(surface)
+                surfaces.append(surface)
+
+        for value in values:
+            if kind and not value.startswith(f"{kind} ") and not value.startswith(f"{kind}("):
+                add(f"{kind} ({value})")
+                add(f"{kind} {value}")
+            if len(value) >= 3:
+                add(value)
+        return surfaces
+    return [
+        " ".join(text.split()).casefold()
+        for text in _flatten_strings(item)
+        if len(" ".join(text.split())) >= 3
+    ]
+
+
+def _core_projection_haystack(data: Mapping[str, object]) -> str:
+    return " ".join(
+        text
+        for key in ("actor", "action", "action_object", "action_verb")
+        for text in _flatten_strings(data.get(key))
+    ).casefold()
+
+
+def _comparison_qualifier_already_in_core(data: Mapping[str, object], item: object) -> bool:
+    """True when ``when compared`` already lives on the projected action/object."""
+
+    text = " ".join(_flatten_strings(item)).casefold()
+    if not re.search(r"\bcompared\b", text):
+        return False
+    haystack = _core_projection_haystack(data)
+    if not haystack.strip():
+        return False
+    surfaces = [
+        " ".join(piece.split()).casefold()
+        for piece in _flatten_strings(item)
+        if len(" ".join(piece.split())) >= 3
+    ]
+    return bool(surfaces) and any(_token_span_in_text(surface, haystack) for surface in surfaces)
+
+
+def _qualifiers_not_already_in_core(data: Mapping[str, object], field_name: str) -> list[object]:
+    return [
+        item
+        for item in _many_values(data.get(field_name) or ())
+        if not _comparison_qualifier_already_in_core(data, item)
+    ]
+
+
+def _facet_already_in_projected_surface(data: Mapping[str, object], field_name: str) -> bool:
+    """True when a citation facet is already kept on a projected v1 atom."""
+
+    if field_name not in {"cross_references", "resolved_cross_references"}:
+        return False
+    haystack = " ".join(
+        text
+        for key in (
+            "actor",
+            "action",
+            "action_object",
+            "action_verb",
+            "conditions",
+            "exceptions",
+            "temporal_constraints",
+        )
+        for text in _flatten_strings(data.get(key))
+    ).casefold()
+    if not haystack.strip():
+        return False
+    items = _many_values(data.get(field_name))
+    if not items:
+        return False
+    for item in items:
+        surfaces = _citation_item_surfaces(item)
+        if not surfaces or not any(_token_span_in_text(surface, haystack) for surface in surfaces):
+            return False
     return True
 
 
@@ -345,6 +458,8 @@ def _project_legal_norms(
         for field_name in _UNREPRESENTED_SEMANTIC_FIELDS:
             if not _has_semantic_value(data.get(field_name)):
                 continue
+            if _facet_already_in_projected_surface(data, field_name):
+                continue
             unsupported.append(
                 _UnsupportedProjection(
                     code=f"typed_deontic.unrepresented_{field_name}",
@@ -414,10 +529,13 @@ def _project_legal_norms(
                 )
             )
 
+        condition_values = _qualifiers_not_already_in_core(data, "conditions")
+        exception_values = _many_values(data.get("exceptions") or ())
+        temporal_values = _qualifiers_not_already_in_core(data, "temporal_constraints")
         qualifier_inputs = {
-            "condition": data.get("conditions") or (),
-            "exception": data.get("exceptions") or (),
-            "temporal": data.get("temporal_constraints") or (),
+            "condition": condition_values,
+            "exception": exception_values,
+            "temporal": temporal_values,
         }
         for facet, values in qualifier_inputs.items():
             unmapped_count = _unmapped_qualifier_count(
@@ -447,15 +565,15 @@ def _project_legal_norms(
                     action=action,
                     object=object_atom,
                     conditions=_map_many(
-                        data.get("conditions") or (),
+                        condition_values,
                         vocabulary.qualifiers,
                     ),
                     exceptions=_map_many(
-                        data.get("exceptions") or (),
+                        exception_values,
                         vocabulary.qualifiers,
                     ),
                     temporal=_map_many(
-                        data.get("temporal_constraints") or (),
+                        temporal_values,
                         vocabulary.qualifiers,
                     ),
                 ),

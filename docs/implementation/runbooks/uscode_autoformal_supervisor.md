@@ -405,6 +405,46 @@ multi-task calls are refused. Keep one owner for this local topology. Live worke
 must establish that isolated worktrees contain the intended current compiler and
 protected validators; a dirty/untracked source tree is not captured by HEAD alone.
 
+## Census handoff and landed repairs
+
+The producer writes the autoencoder-versus-compiler census and the supervisor
+goals to `justicedao/uscode-autoformal-span-cache`. It does not append those
+goals to a local supervisor database. The bundle layout, publication command,
+and later import command are in
+`docs/implementation/reports/SPAN_CENSUS_DATASET_HANDOFF_20260928.md`.
+`admitted` and `formalized` stay false. A repeated fingerprint is not uploaded
+again. `sealed-spans.parquet` and `resume-checkpoint.parquet` are not replaced.
+
+A later machine imports that bundle into its own supervisor. Import creates
+review records. It does not run the repair commands or admit the statute.
+
+On 2026-09-28 two parallel lanes finished repairs that the sealed validation
+launcher could previously not start. Validation ran
+`scripts/ops/legal_ir/validate_autoformal_repair.py`. Both receipts passed the
+gate `source_replay_not_legal_equivalence` with `admitted` false and
+`formalized` false.
+
+- `AFTD-817b9bac3966fbc1e819` keeps a comparative "when compared with" phrase
+  on the duty. The parser, formula builder, compiler, and both decompilers
+  changed, with `tests/unit/logic/autoformal_repairs/test_817b9bac3966fbc1e819.py`.
+- `AFTD-e3b018a00ef13c0c927c` changes the same five sources for its
+  strict-roundtrip failure, with
+  `tests/unit/logic/autoformal_repairs/test_e3b018a00ef13c0c927c.py`.
+  Its regression suite was 133 tests.
+
+Those edits were validated in an isolated snapshot and are the copies on this
+tree. They are not a `lake build Legal` admit of either statute. The parenthetical
+sunset repair remains covered by
+`tests/unit/logic/autoformal_repairs/test_d662f265f37447dd4b36.py`.
+
+`scripts/ops/legal_ir/run_autoformal_supervisor.py` can run one task per strict
+shard. `--task-id` belongs before the `supervise` subcommand. Shard flags belong
+after it. A rearmed failure is status `retrying` and is preferred over a fresh
+ready task. The sealed Python launcher fix is accelerate commit `7adfbfc54`.
+Portal repairs also keep the operator note bound to the DuckDB task cid, attach
+a Docker `create` container before reading its output, and treat the exact
+autoformal validator command as dependency-neutral.
+
 Use the read-only task preflight before another implementation attempt. It
 generates the full receipt on disk instead of printing it in the conversation:
 

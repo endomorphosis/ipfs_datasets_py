@@ -164,6 +164,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_mental_state(
         _action_without_procedure_trigger_tail(_formula_action_text(norm), norm.procedure)
     )
+    action_text = _normalize_copular_passive_action(action_text)
     action_text = _normalize_duty_assignment_gerund_action(action_text)
     operator = _formula_operator(norm, action_text)
     if _is_failure_prohibition(norm, action_text):
@@ -2357,12 +2358,14 @@ def _action_without_structured_notice_recipient(norm: LegalNormIR, action_text: 
 
 
 def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) -> str:
-    """Remove a duration tail already represented in temporal IR slots.
+    """Remove a duration or calendar-date tail already stored in temporal slots.
 
     Record-retention clauses often parse as actions such as ``retain records for
-    three years`` while also carrying a structured temporal duration. The unary
-    consequent should remain the operative act, and the duration should appear
-    as a temporal antecedent rather than being baked into the action predicate.
+    three years`` while also carrying a structured temporal duration. Sunset
+    clauses do the same with ``terminate on March 15, 2031``. The unary
+    consequent should remain the operative act, and the date or duration should
+    appear as a temporal antecedent rather than being baked into the action
+    predicate.
     """
 
     text = str(action_text or "").strip()
@@ -2370,6 +2373,26 @@ def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) 
         return text
 
     tail_match = re.search(r"\s+for\s+(.+)$", text, re.IGNORECASE)
+    calendar_date_tail = re.search(
+        r"\s+on\s+((?:january|february|march|april|may|june|july|august|"
+        r"september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?"
+        r"(?:,?\s+\d{4})?)$",
+        text,
+        re.IGNORECASE,
+    )
+    if not tail_match and not calendar_date_tail:
+        return text
+
+    duration_values = _temporal_duration_slot_values(norm.temporal_constraints)
+    if calendar_date_tail:
+        date_tail = calendar_date_tail.group(1).strip()
+        if any(
+            _same_formula_slot_text(date_tail, duration)
+            or _same_formula_slot_text(f"on {date_tail}", duration)
+            for duration in duration_values
+        ):
+            head = text[: calendar_date_tail.start()].strip()
+            return head or text
     if not tail_match:
         return text
 
@@ -2377,7 +2400,6 @@ def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) 
     if not tail:
         return text
 
-    duration_values = _temporal_duration_slot_values(norm.temporal_constraints)
     if not any(_same_formula_slot_text(tail, duration) for duration in duration_values):
         return text
 
@@ -2538,6 +2560,93 @@ def build_prover_syntax_records_from_ir(
     from .prover_syntax import validate_ir_with_provers
 
     return [target.to_dict() for target in validate_ir_with_provers(norm, targets).targets]
+
+
+_COPULA_STATUS_COMPLEMENTS = frozenset(
+    {
+        "able",
+        "applicable",
+        "available",
+        "binding",
+        "effective",
+        "eligible",
+        "entitled",
+        "essential",
+        "final",
+        "inoperative",
+        "insufficient",
+        "invalid",
+        "lawful",
+        "liable",
+        "necessary",
+        "null",
+        "operative",
+        "responsible",
+        "subject",
+        "sufficient",
+        "unlawful",
+        "valid",
+        "void",
+    }
+)
+_COPULA_PASSIVE_ACTION_RE = re.compile(
+    r"^(?:be|been|being)\s+"
+    r"(?P<head>[A-Za-z][A-Za-z0-9'’\-]*)"
+    r"(?:\s+(?P<particle>out|off|up|down|through|into|away|over|along|forth))?"
+    r"(?P<rest>\b.*)?$",
+    re.IGNORECASE,
+)
+_IRREGULAR_PARTICIPLES = frozenset(
+    {
+        "bound",
+        "built",
+        "done",
+        "drawn",
+        "found",
+        "given",
+        "held",
+        "kept",
+        "known",
+        "made",
+        "paid",
+        "seen",
+        "sent",
+        "shown",
+        "taken",
+        "written",
+    }
+)
+
+
+def _looks_like_past_participle(word: str) -> bool:
+    token = str(word or "").lower()
+    if not token or token in _COPULA_STATUS_COMPLEMENTS:
+        return False
+    if token in _IRREGULAR_PARTICIPLES:
+        return True
+    return len(token) > 4 and token.endswith(("ed", "en"))
+
+
+def _normalize_copular_passive_action(action_text: str) -> str:
+    """Keep the participle as the operative head of a copular passive."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+    match = _COPULA_PASSIVE_ACTION_RE.match(text)
+    if not match:
+        return text
+    head = match.group("head").lower()
+    if not _looks_like_past_participle(head):
+        return text
+    particle = str(match.group("particle") or "").strip().lower()
+    rest = str(match.group("rest") or "").strip()
+    parts = [head]
+    if particle:
+        parts.append(particle)
+    if rest:
+        parts.append(rest)
+    return " ".join(parts)
 
 
 def _formula_action_text(norm: LegalNormIR) -> str:
@@ -3482,6 +3591,16 @@ def _formula_exception_texts(norm: LegalNormIR) -> List[str]:
     return texts
 
 
+def _is_comparative_when_condition(item: Mapping[str, Any], text: str) -> bool:
+    """``when compared with`` qualifies the action. It is not an ``if`` antecedent."""
+
+    folded = str(text or "").strip().casefold()
+    if folded.startswith("when compared") or folded.startswith("compared "):
+        return True
+    clause = str(item.get("clause_type") or "").casefold()
+    return clause == "when" and bool(re.match(r"(?:when\s+)?compared\b", folded))
+
+
 def _formula_condition_texts(norm: LegalNormIR) -> List[str]:
     """Return condition phrases that are substantive formula antecedents.
 
@@ -3498,6 +3617,8 @@ def _formula_condition_texts(norm: LegalNormIR) -> List[str]:
         + _slot_texts(norm.overrides)
         if str(value).strip()
     }
+    action = str(norm.action or "").casefold()
+    action_object = str(norm.action_object or "").casefold()
 
     texts: List[str] = []
     for item in norm.conditions:
@@ -3509,6 +3630,14 @@ def _formula_condition_texts(norm: LegalNormIR) -> List[str]:
         text = str(value).strip()
         if not text or _is_reference_condition(item, text, reference_values):
             continue
+        if _is_comparative_when_condition(item, text):
+            folded = text.casefold()
+            if folded in action or folded in action_object:
+                continue
+            if f"when {folded}" in action or f"when {folded}" in action_object:
+                continue
+            if not folded.startswith("when "):
+                text = f"when {text}"
         texts.append(text)
     return texts
 
