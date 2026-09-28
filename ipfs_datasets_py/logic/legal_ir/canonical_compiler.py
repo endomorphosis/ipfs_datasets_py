@@ -137,6 +137,10 @@ TYPED_DEONTIC_COMPILER_CONFIG_CID: Final = cid_for_dag_json(_CONFIG_PAYLOAD)
 del _CONFIG_PAYLOAD
 
 _TOKEN_RE: Final = re.compile(r"[a-z0-9]+")
+_COMPARISON_QUALIFIER_RE: Final = re.compile(
+    r"^(?:when\s+)?compared\s+(?:with|to|against)\b",
+    re.IGNORECASE,
+)
 _ALLOWED_REQUEST_CONFIG: Final = frozenset({"document_type"})
 _SUPPORTED_NORM_TYPES: Final = frozenset({"", "obligation", "duty", "permission", "prohibition"})
 _UNREPRESENTED_SEMANTIC_FIELDS: Final = (
@@ -314,6 +318,59 @@ def _citation_item_surfaces(item: object) -> list[str]:
         for text in _flatten_strings(item)
         if len(" ".join(text.split())) >= 3
     ]
+
+
+def _qualifier_primary_text(value: object) -> str:
+    """Return one comparison/condition surface, not every duplicate slot string."""
+
+    if isinstance(value, Mapping):
+        for key in _SLOT_TEXT_KEYS:
+            raw = value.get(key)
+            if isinstance(raw, str) and raw.strip():
+                return " ".join(raw.split())
+    text = " ".join(_flatten_strings(value)).strip()
+    return " ".join(text.split()) if text else ""
+
+
+def _is_comparison_qualifier(value: object) -> bool:
+    """True when a qualifier is a comparison, not a governing if-condition."""
+
+    text = _qualifier_primary_text(value)
+    if not text:
+        return False
+    return bool(_COMPARISON_QUALIFIER_RE.match(text))
+
+
+def _comparison_already_on_action(data: Mapping[str, object], item: object) -> bool:
+    """True when ``when compared with`` already lives on the action or object."""
+
+    haystack = " ".join(
+        text
+        for key in ("action", "action_object", "action_verb")
+        for text in _flatten_strings(data.get(key))
+    ).casefold()
+    if not haystack.strip():
+        return False
+    lowered = _qualifier_primary_text(item).casefold()
+    if not lowered:
+        return False
+    surfaces = [lowered]
+    if lowered.startswith("compared "):
+        surfaces.append("when " + lowered)
+    if lowered.startswith("when compared "):
+        surfaces.append(lowered[len("when ") :].lstrip())
+    return any(_token_span_in_text(surface, haystack) for surface in surfaces if surface)
+
+
+def _projected_condition_values(data: Mapping[str, object]) -> tuple[object, ...]:
+    """Keep comparison on the action. Do not project it as a second if-condition."""
+
+    pending: list[object] = []
+    for item in _many_values(data.get("conditions") or ()):
+        if _is_comparison_qualifier(item) and _comparison_already_on_action(data, item):
+            continue
+        pending.append(item)
+    return tuple(pending)
 
 
 def _facet_already_in_projected_surface(data: Mapping[str, object], field_name: str) -> bool:
@@ -496,8 +553,9 @@ def _project_legal_norms(
                 )
             )
 
+        projected_conditions = _projected_condition_values(data)
         qualifier_inputs = {
-            "condition": data.get("conditions") or (),
+            "condition": projected_conditions,
             "exception": data.get("exceptions") or (),
             "temporal": data.get("temporal_constraints") or (),
         }
@@ -529,7 +587,7 @@ def _project_legal_norms(
                     action=action,
                     object=object_atom,
                     conditions=_map_many(
-                        data.get("conditions") or (),
+                        projected_conditions,
                         vocabulary.qualifiers,
                     ),
                     exceptions=_map_many(

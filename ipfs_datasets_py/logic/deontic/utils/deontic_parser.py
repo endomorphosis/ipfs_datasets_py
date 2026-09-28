@@ -232,7 +232,7 @@ _MODAL_RE = re.compile(
     )
     \s*,?\s+
     (?P<action>.+?)
-    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
+    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when(?!\s+compared\b)|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
     + _ACTION_TEMPORAL_CUT
     + r"""|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|(?:,\s+(?:the\s+)?(?!which\b|who\b|that\b|or\b|and\b|nor\b|but\b)[A-Za-z][A-Za-z'’\-]*(?:\s+(?!which\b|who\b|that\b)[A-Za-z'’\-]+){0,6}\s+shall\b)|[.]|(?:\:(?!\s*[\"“—]))|$)
     """,
@@ -264,7 +264,7 @@ _IMPLICIT_MODAL_RE = re.compile(
     )
     \s+
     (?P<action>.+?)
-    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
+    (?=(?:\s+(?:and|or)\s+(?!which\b|who\b|that\b)(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when(?!\s+compared\b)|where|provided\s+that|unless|except|except\s+that|without|absent\s+(?:a|an|the|any|such|this)|"""
     + _ACTION_TEMPORAL_CUT
     + r"""|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|(?:,\s+(?:the\s+)?(?!which\b|who\b|that\b|or\b|and\b|nor\b|but\b)[A-Za-z][A-Za-z'’\-]*(?:\s+(?!which\b|who\b|that\b)[A-Za-z'’\-]+){0,6}\s+shall\b)|[.]|(?:\:(?!\s*[\"“—]))|$)
     """,
@@ -279,7 +279,7 @@ _IMPERSONAL_NORM_RE = re.compile(
         |
         (?P<duty>(?:a|an|the)\s+duty\s+is\s+imposed\s+on\s+(?P<duty_subject>.+?)\s+to\s+(?P<duty_action>.+?))
     )
-    (?=(?:\s+(?:if|when|where|provided\s+that|unless|except|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
+    (?=(?:\s+(?:if|when(?!\s+compared\b)|where|provided\s+that|unless|except|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
@@ -407,7 +407,7 @@ _CONDITION_PATTERNS = [
     ("when", r"\bwhen\s+(.+?),\s+(?:the\s+)?(?-i:[A-Z])[^,;]{0,80}?\s+shall\b"),
     # "when the right to vote ... is denied, the basis ... shall be reduced"
     ("when", r"\bwhen\s+(.+?),\s+the\s+[^,;]{0,80}?\s+shall\b"),
-    ("when", rf"\bwhen\s+(.+?){_CLAUSE_END_RE}"),
+    ("when", rf"\bwhen\s+(?!compared\b)(.+?){_CLAUSE_END_RE}"),
     ("where", rf"\bwhere\s+(.+?){_CLAUSE_END_RE}"),
     # "Provided that no Amendment shall affect" is a prohibition, not a proviso condition.
     ("provided_that", rf"\bprovided that\s+(?!no\b)(.+?){_CLAUSE_END_RE}"),
@@ -555,6 +555,14 @@ _UNQUOTED_DEFINED_TERM_RE = re.compile(
     re.IGNORECASE,
 )
 _LEADING_DETERMINERS_RE = re.compile(r"^(?:the|a|an|any|each|every|such|no)\s+", re.IGNORECASE)
+_COMPARISON_WHEN_TAIL_RE = re.compile(
+    r"\b(when\s+compared(?:\s+(?:with|to|against))?\b[^.]*)",
+    re.IGNORECASE,
+)
+_COMPARISON_QUALIFIER_RE = re.compile(
+    r"^(?:when\s+)?compared\s+(?:with|to|against)\b",
+    re.IGNORECASE,
+)
 _TRAILING_NOISE_RE = re.compile(
     r"\s+(?:in accordance with|pursuant to|as provided in|except as provided in)\s+.+$"
     r"|\s+under\s+(?:section|title|chapter|paragraph|subsection|part)\b.+$",
@@ -563,7 +571,7 @@ _TRAILING_NOISE_RE = re.compile(
 _PASSIVE_BY_RE = re.compile(r"^be\s+([A-Za-z][A-Za-z0-9'’\-]*)\s+by\s+(.+)$", re.IGNORECASE)
 _PASSIVE_BENEFIT_RECIPIENT_RE = re.compile(
     r"^be\s+(?:given|granted|provided|awarded|allocated|distributed|paid|issued|made)\s+"
-    r"(?:to|for)\s+(.+?)(?=(?:\s+(?:if|when|where|provided\s+that|unless|except|within|before|after)\b)|[.;:]|$)",
+    r"(?:to|for)\s+(.+?)(?=(?:\s+(?:if|when(?!\s+compared\b)|where|provided\s+that|unless|except|within|before|after)\b)|[.;:]|$)",
     re.IGNORECASE,
 )
 _PAST_PARTICIPLE_BASE = {
@@ -3097,6 +3105,10 @@ def _build_element(
     if enumerated_items and re.match(r"^\([A-Za-z0-9]+\)\s+", action_text or ""):
         action_text = enumerated_items[0]["text"]
     field_spans = dict(field_spans or {})
+    action_text = _keep_comparison_when(sentence, action_text)
+    restored_action_span = _find_span(sentence, action_text)
+    if len(restored_action_span) == 2:
+        field_spans["action"] = restored_action_span
     complex_mental_state = ""
     original_action_text = action_text
     complex_split = _split_leading_complex_mental_state(action_text)
@@ -5352,6 +5364,20 @@ def _keep_inhabitant_clause(sentence: str, action_text: str) -> str:
     return action_text.rstrip(", ") + ", " + rest
 
 
+def _keep_comparison_when(sentence: str, action_text: str) -> str:
+    """``when compared with`` stays on the description. It is not a second if-condition."""
+
+    match = _COMPARISON_WHEN_TAIL_RE.search(sentence or "")
+    if not match:
+        return action_text
+    rest = " ".join(match.group(1).split()).rstrip(" ,;:")
+    if not rest:
+        return action_text
+    if rest.lower() in (action_text or "").lower():
+        return action_text
+    return (action_text or "").rstrip(" ,;:") + " " + rest
+
+
 def _coordinated_no_head(sentence: str, match: re.Match[str]) -> str:
     """``No Capitation, or other direct, Tax`` is one negated subject, not ``Tax``."""
 
@@ -5939,9 +5965,31 @@ def _is_qualification_when(sentence: str, item: Dict[str, Any]) -> bool:
     )
 
 
+def _is_comparison_when(sentence: str, item: Dict[str, Any]) -> bool:
+    """``when compared with`` qualifies the description. It is not ``if compared``."""
+
+    if str(item.get("clause_type") or "") != "when":
+        return False
+    raw = " ".join(
+        str(item.get("raw_text") or item.get("normalized_text") or "").split()
+    )
+    if _COMPARISON_QUALIFIER_RE.match(raw):
+        return True
+    span = item.get("clause_span") or item.get("span") or []
+    if not isinstance(span, (list, tuple)) or len(span) != 2:
+        return False
+    start = int(span[0])
+    return bool(re.match(r"when\s+compared\b", sentence[start:], flags=re.IGNORECASE))
+
+
 def extract_condition_details(sentence: str) -> List[Dict[str, Any]]:
     details = _extract_clause_details(sentence, _CONDITION_PATTERNS, "condition")
-    return [item for item in details if not _is_qualification_when(sentence, item)]
+    return [
+        item
+        for item in details
+        if not _is_qualification_when(sentence, item)
+        and not _is_comparison_when(sentence, item)
+    ]
 
 
 def extract_override_clauses(sentence: str) -> List[str]:

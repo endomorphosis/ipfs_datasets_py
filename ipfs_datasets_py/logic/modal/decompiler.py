@@ -3884,6 +3884,32 @@ def _fallback_section_heading_tail_phrases(
     return phrases
 
 
+def _is_comparison_qualifier_text(text: str) -> bool:
+    """True when a phrase is ``when compared with``, not a governing if-condition."""
+
+    normalized = _clean_text(text).lower()
+    if not normalized:
+        return False
+    return bool(re.match(r"^(?:when\s+)?compared(?:\s+(?:with|to|against)\b|$)", normalized))
+
+
+def _governing_condition_values(values: Sequence[str]) -> List[str]:
+    """Drop comparison qualifiers so they are not rebuilt as ``if compared``."""
+
+    return [value for value in values if not _is_comparison_qualifier_text(value)]
+
+
+def _text_when_is_only_comparison(text: str) -> bool:
+    """True when every ``when`` in ``text`` is ``when compared``, not a trigger."""
+
+    found_when = False
+    for match in re.finditer(r"(?<!\w)when(?!\w)", text or "", flags=re.IGNORECASE):
+        found_when = True
+        if not re.match(r"\s+compared\b", text[match.end() :], flags=re.IGNORECASE):
+            return False
+    return found_when
+
+
 def _inferred_condition_values_from_source_span(
     *,
     document: ModalIRDocument,
@@ -3934,6 +3960,12 @@ def _inferred_condition_values_from_source_span(
                 continue
             _, parsed_prefix_key, scoped_value = parsed_clause
             if not scoped_value or parsed_prefix_key != prefix_key:
+                continue
+            if parsed_prefix_key == "when" and _clean_text(scoped_value).lower().startswith(
+                "compared"
+            ):
+                continue
+            if _is_comparison_qualifier_text(clause):
                 continue
             clause_lower = clause.lower()
             if clause_lower in inferred_lower:
@@ -4210,7 +4242,8 @@ def _typed_ir_reconstruction_phrases(
             targets.append(guided_target)
     if family == "temporal" and "temporal" not in targets:
         targets.append("temporal")
-    if (condition_values or exception_values) and "conditional_normative" not in targets:
+    governing_conditions = _governing_condition_values(condition_values)
+    if (governing_conditions or exception_values) and "conditional_normative" not in targets:
         targets.append("conditional_normative")
     if family == "frame" and semantic_atoms:
         for status_target in _typed_decompiler_status_atom_target_families(semantic_atoms):
@@ -5532,7 +5565,10 @@ def _typed_ir_target_view_semantic_clause_text(
 
     if target == "conditional_normative":
         first_condition = _clean_text(condition_values[0]).lower() if condition_values else ""
-        if not first_condition.startswith(
+        if _is_comparison_qualifier_text(first_condition):
+            if not first_condition.startswith("when "):
+                add("when")
+        elif not first_condition.startswith(
             ("if ", "unless ", "except ", "provided ", "subject to ")
         ):
             add("if")
@@ -19362,18 +19398,24 @@ def _typed_decompiler_condition_cues(
             cues.append(normalized)
 
     for clause in (*condition_values, *exception_values):
+        if _is_comparison_qualifier_text(clause):
+            continue
         parsed_clause = _typed_clause_slot(clause, slot="condition")
         if parsed_clause is None:
             parsed_clause = _typed_clause_slot(clause, slot="exception")
         if parsed_clause is None:
             continue
         _slot, prefix_key, _value = parsed_clause
+        if prefix_key == "when" and _clean_text(_value).lower().startswith("compared"):
+            continue
         add(prefix_key)
     normalized_text = _clean_text(text).replace("_", " ").lower()
     if re.search(r"(?<!\w)with\s+(?:their\s+)?consent(?!\w)", normalized_text):
         add("with_consent")
     for prefix, prefix_key in (*_CONDITION_PREFIXES, *_EXCEPTION_PREFIXES):
         if prefix_key == "under":
+            continue
+        if prefix_key == "when" and _text_when_is_only_comparison(normalized_text):
             continue
         if _text_contains_cue_term(normalized_text, prefix):
             add(prefix_key)

@@ -110,6 +110,22 @@ def _readable_atom(atom: str) -> str:
     return " ".join(atom.replace("_", " ").split())
 
 
+def _comparison_surface(atom: str) -> str | None:
+    """Return the ``when compared`` surface for a comparison qualifier atom."""
+
+    if atom == "if_compared":
+        return "when compared"
+    readable = _readable_atom(atom)
+    lowered = readable.casefold()
+    if lowered.startswith("when compared"):
+        return readable
+    if lowered.startswith("if compared"):
+        return "when" + readable[2:]
+    if lowered == "compared" or lowered.startswith("compared "):
+        return "when " + readable
+    return None
+
+
 def _join_atoms(atoms: tuple[str, ...], conjunction: str) -> str:
     return f" {conjunction} ".join(_readable_atom(atom) for atom in atoms)
 
@@ -125,6 +141,14 @@ def _phrase_in_text(text: str, phrase: str) -> bool:
     return f" {phrase.casefold()} " in f" {text.casefold()} "
 
 
+def _prior_rule_surface(rule: CanonicalRule) -> str:
+    return " ".join(
+        part
+        for part in (_readable_atom(rule.action), _readable_atom(rule.object))
+        if part
+    )
+
+
 def _temporal_not_already_in_object(rule: CanonicalRule) -> tuple[str, ...]:
     """Drop a temporal atom whose surface is already in the action or object.
 
@@ -132,15 +156,31 @@ def _temporal_not_already_in_object(rule: CanonicalRule) -> tuple[str, ...]:
     or object is still rendered.
     """
 
-    rendered_prior = " ".join(
-        part
-        for part in (_readable_atom(rule.action), _readable_atom(rule.object))
-        if part
-    )
+    rendered_prior = _prior_rule_surface(rule)
     pending: list[str] = []
     for atom in rule.temporal:
         if _phrase_in_text(rendered_prior, _readable_atom(atom)):
             continue
+        pending.append(atom)
+    return tuple(pending)
+
+
+def _conditions_not_already_in_object(rule: CanonicalRule) -> tuple[str, ...]:
+    """Drop a condition whose surface is already in the action or object."""
+
+    rendered_prior = _prior_rule_surface(rule)
+    pending: list[str] = []
+    for atom in rule.conditions:
+        readable = _readable_atom(atom)
+        comparison = _comparison_surface(atom)
+        if _phrase_in_text(rendered_prior, readable):
+            continue
+        if comparison and _phrase_in_text(rendered_prior, comparison):
+            continue
+        if comparison and comparison.casefold().startswith("when "):
+            without_when = comparison[5:].lstrip()
+            if without_when and _phrase_in_text(rendered_prior, without_when):
+                continue
         pending.append(atom)
     return tuple(pending)
 
@@ -163,9 +203,20 @@ def decompile_rule(rule: CanonicalRule) -> str:
     temporal = _temporal_not_already_in_object(rule)
     if temporal:
         sentence += " " + _join_atoms(temporal, "and")
-    if rule.conditions:
+    remaining_conditions = _conditions_not_already_in_object(rule)
+    comparison_parts: list[str] = []
+    ordinary_conditions: list[str] = []
+    for atom in remaining_conditions:
+        comparison = _comparison_surface(atom)
+        if comparison is not None:
+            comparison_parts.append(comparison)
+        else:
+            ordinary_conditions.append(atom)
+    if comparison_parts:
+        sentence += " " + " and ".join(comparison_parts)
+    if ordinary_conditions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} " + _join_atoms(
-            rule.conditions, "and"
+            tuple(ordinary_conditions), "and"
         )
     if rule.exceptions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['exception_connector']} " + _join_atoms(

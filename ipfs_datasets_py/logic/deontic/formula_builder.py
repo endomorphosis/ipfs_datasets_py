@@ -164,6 +164,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_mental_state(
         _action_without_procedure_trigger_tail(_formula_action_text(norm), norm.procedure)
     )
+    action_text = _action_with_comparison_qualifiers(norm, action_text)
     action_text = _normalize_duty_assignment_gerund_action(action_text)
     operator = _formula_operator(norm, action_text)
     if _is_failure_prohibition(norm, action_text):
@@ -3530,6 +3531,8 @@ def _formula_condition_texts(norm: LegalNormIR) -> List[str]:
         text = str(value).strip()
         if not text or _is_reference_condition(item, text, reference_values):
             continue
+        if _is_comparison_qualifier_text(text):
+            continue
         texts.append(text)
     return texts
 
@@ -3691,6 +3694,40 @@ def _field_span(norm: LegalNormIR, keys: Iterable[str]) -> List[int]:
         ):
             return list(value["span"])
     return []
+
+
+def _is_comparison_qualifier_text(text: str) -> bool:
+    """True when a phrase is a comparison qualifier, not a governing if-condition."""
+
+    normalized = " ".join(str(text or "").split()).strip().lower()
+    return bool(re.match(r"^(?:when\s+)?compared\s+(?:with|to|against)\b", normalized))
+
+
+def _comparison_qualifier_texts(norm: LegalNormIR) -> List[str]:
+    texts: List[str] = []
+    for item in norm.conditions:
+        if not isinstance(item, dict):
+            continue
+        value = _slot_primary_text(item)
+        if _is_comparison_qualifier_text(value):
+            texts.append(str(value).strip())
+    return texts
+
+
+def _action_with_comparison_qualifiers(norm: LegalNormIR, action_text: str) -> str:
+    """Keep ``when compared with`` on the action atom. It is not an antecedent."""
+
+    text = str(action_text or "").strip()
+    lowered = text.lower()
+    for raw in _comparison_qualifier_texts(norm):
+        phrase = raw
+        if not re.match(r"when\s+compared\b", phrase, flags=re.IGNORECASE):
+            phrase = f"when {phrase}"
+        if phrase.lower() in lowered or raw.lower() in lowered:
+            continue
+        text = f"{text} {phrase}".strip()
+        lowered = text.lower()
+    return text
 
 
 def _is_reference_condition(
