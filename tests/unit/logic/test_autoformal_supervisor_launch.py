@@ -29,6 +29,19 @@ def launcher():
     return module
 
 
+def test_task_alias_shard_index_matches_daemon_lane_hash():
+    module = launcher()
+    assert module.task_alias_shard_index("AFTD-" + "ab" * 10, 1) == 0
+    first = module.task_alias_shard_index("AFTD-" + "ab" * 10, 4)
+    assert module.task_alias_shard_index("AFTD-" + "ab" * 10, 4) == first
+    assert 0 <= first < 4
+    indexes = {
+        module.task_alias_shard_index(f"AFTD-{index:020x}", 3)
+        for index in range(30)
+    }
+    assert indexes == {0, 1, 2}
+
+
 def test_receipt_argument_mismatch_stops_before_calling_native_transition():
     class Incompatible:
         def cas_task_status(self, *, task_cid, expected_revision, new_status,
@@ -304,6 +317,33 @@ def test_status_change_requires_the_stored_control_receipt(tmp_path):
     assert moved.task.status == "retrying"
     with DatabaseTaskSource(tmp_path / "control.duckdb", install_schema=False) as source:
         assert source.get(task.task_cid).status == "retrying"
+
+
+def test_explicit_in_progress_task_is_preflighted_for_resume(tmp_path):
+    from ipfs_accelerate_py.agent_supervisor.task_sources.database_task_source import DatabaseTaskSource
+    first, target = selected_queue(tmp_path)
+    seen = []
+
+    def probe(_repo, _commands, *, task_authority):
+        seen.append(task_authority["canonical_task_cid"])
+        return {"passed": True}
+
+    module = launcher()
+    with DatabaseTaskSource(tmp_path / "control.duckdb", install_schema=False) as source:
+        source.compare_and_set_status(
+            target.task_cid, target.revision, "in_progress",
+            receipt={"operation": "database_claim"},
+        )
+        report = module.preflight_next_repair(
+            source, tmp_path, probe=probe, task_id=target.task_alias,
+        )
+        assert source.ready_tasks(limit=1).tasks[0].task_cid == first.task_cid
+    assert seen == [target.task_cid]
+    assert report["eligible"] is True and report["passed"] is True
+    assert report["task_cid"] == target.task_cid
+    assert module.native_task_binding(report) == [
+        "--execution-slice-task-cid", target.task_cid,
+    ]
 
 
 def test_selected_blocked_task_never_falls_back_to_other_ready_work(tmp_path):

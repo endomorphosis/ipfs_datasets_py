@@ -121,6 +121,30 @@ def render_norm(pattern: Mapping[str, Any], *, suffix: str = "") -> str:
     )
 
 
+def render_logic_batch(rules: Sequence[Mapping[str, Any]]) -> tuple[str, int]:
+    """Render norm fingerprints and stitch fixtures. A fixture is not a duty."""
+
+    pieces: list[str] = []
+    count = 0
+    size = 0
+    for rule in rules:
+        norm = pattern_from_rule(rule)
+        fixture = None if norm is not None else pattern_from_fixture(rule)
+        if norm is not None:
+            piece = render_norm(norm, suffix=str(count))
+        elif fixture is not None:
+            piece = render_fixture(fixture, suffix=str(count))
+        else:
+            continue
+        encoded = len(piece.encode("utf-8"))
+        if size + encoded > MAX_SOURCE:
+            break
+        pieces.append(piece)
+        size += encoded
+        count += 1
+    return "".join(pieces), count
+
+
 def render_norm_batch(rules: Sequence[Mapping[str, Any]]) -> tuple[str, int]:
     pieces: list[str] = []
     count = 0

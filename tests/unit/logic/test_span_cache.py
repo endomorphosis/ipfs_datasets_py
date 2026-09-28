@@ -40,6 +40,39 @@ def _gap(span_id: str = "g1") -> dict:
     }
 
 
+def test_sparse_progress_uploads_only_new_sealed_or_gap_rows(tmp_path: Path) -> None:
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    cache.enqueue(
+        [{"source_span_id": "pending", "text": "The clerk shall keep a journal.", "legal_id": "usc:us:1:1"}]
+    )
+    cache.claim_batch("compile-a", limit=1)
+    assert cache.sparse_progress_delta()["delta_count"] == 0
+    cache.apply_census(
+        {"rows": [_agreed("s1"), _gap("g1")]},
+        code_identity="sha256:test",
+    )
+    delta = cache.sparse_progress_delta()
+    assert delta["delta_count"] == 2
+    assert {row["source_span_id"] for row in delta["rows"]} == {"s1", "g1"}
+    assert all("claim_token" not in row for row in delta["rows"])
+    path = tmp_path / "compile-a-sparse.parquet"
+    written = cache.write_sparse_progress_parquet(
+        path, delta["rows"], agent_id="compile-a", update_id="sparse-1"
+    )
+    assert written["jsonl_written"] is False
+    assert written["admitted"] is False
+    cache.mark_progress_published(delta["fingerprints"])
+    assert cache.sparse_progress_delta()["delta_count"] == 0
+    with pytest.raises(Exception, match="full resume checkpoint"):
+        cache.write_sparse_progress_parquet(
+            tmp_path / "resume-checkpoint.parquet",
+            delta["rows"],
+            agent_id="compile-a",
+            update_id="sparse-1",
+        )
+    cache.close()
+
+
 def test_resume_parquet_carries_board_seals_and_agent(tmp_path: Path) -> None:
     cache = SpanCache(tmp_path / "cache.duckdb")
     cache.save_checkpoint(documents=12, parquet="/data/laws.parquet")

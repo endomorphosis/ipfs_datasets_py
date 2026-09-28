@@ -267,6 +267,10 @@ def test_cli_source_bypasses_demo_and_retains_observed_commit(cli, tmp_path, mon
         if verification_fails: raise ValueError("verification failed")
         return {"verified": True, "commit_sha": publication["commit_sha"]}
     monkeypatch.setattr(cli, "verify_published_batch", verify)
+    monkeypatch.setattr(cli, "_publish_telemetry", lambda *args, **kwargs: {
+        "uploaded": True, "dry_run": False, "admitted": False, "formalized": False,
+        "path_in_repo": kwargs.get("path_in_repo"), "repository_id": "justicedao/uscode-autoformal-span-cache",
+    })
     args = ["--input-parquet", str(input_path), "--compile-source", "--output", str(output),
             "--batch-id", "tiny-1", "--lake-limit", "0", "--lake-successes", "0", "--upload",
             "--audited-parent-commit", "a" * 40]

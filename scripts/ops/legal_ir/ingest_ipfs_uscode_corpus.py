@@ -63,23 +63,56 @@ def _parse_document(document: dict) -> list[dict]:
     return list(ledger.get("spans") or [])
 
 
-def _flush_checkpoint(cache, destination: Path, *, upload: bool, agent_id: str) -> dict:
-    """Write the resume checkpoint as parquet and, when asked, publish it."""
+def _checkpoint_agent_id(cache) -> str:
+    """One stable id per cache so two machines do not publish over each other."""
 
-    destination.mkdir(parents=True, exist_ok=True)
-    path = destination / "resume-checkpoint.parquet"
-    cache.register_agent(agent_id, dataset_id="justicedao/ipfs_uscode", role="compile")
-    written = cache.write_progress_parquet(path)
+    import socket
+
+    meta = getattr(cache, "_meta", None)
+    existing = meta("agent_id") if callable(meta) else ""
+    if existing:
+        return str(existing)
+    host = socket.gethostname().split(".")[0]
+    safe = "".join(char if char.isalnum() or char in "-_" else "-" for char in host)[:32] or "machine"
+    agent_id = "compile-" + safe
+    setter = getattr(cache, "_set_meta", None)
+    if callable(setter):
+        setter("agent_id", agent_id)
+    return agent_id
+
+
+def _flush_checkpoint(cache, destination: Path, *, upload: bool, agent_id: str) -> dict:
+    """Upload one sparse delta. A document tick or claim heartbeat is not uploaded."""
+
+    import hashlib
+
+    delta = cache.sparse_progress_delta()
     receipt = {
         "admitted": False,
+        "delta_count": int(delta.get("delta_count") or 0),
         "formalized": False,
+        "full_checkpoint_uploaded": False,
         "jsonl_written": False,
-        "local_path": str(path),
-        "task_count": written.get("task_count"),
         "uploaded": False,
     }
+    if not delta.get("rows"):
+        receipt["skipped"] = "no_durable_change"
+        return receipt
+    fingerprints = dict(delta.get("fingerprints") or {})
+    update_id = "sparse-" + hashlib.sha256(
+        json.dumps(fingerprints, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    safe_agent = "".join(char if char.isalnum() or char in "-_" else "-" for char in agent_id)[:48]
+    destination.mkdir(parents=True, exist_ok=True)
+    path = destination / f"{safe_agent}-{update_id}.parquet"
+    if path.name == "resume-checkpoint.parquet":
+        raise ValueError("sparse checkpoint must not replace the full resume checkpoint")
+    written = cache.write_sparse_progress_parquet(path, delta["rows"], agent_id=agent_id, update_id=update_id)
+    receipt["local_path"] = written["path"]
+    receipt["update_id"] = update_id
     if not upload:
         return receipt
+    repo_path = f"autoformal/uscode/checkpoints/{safe_agent}/{update_id}.parquet"
     try:
         from huggingface_hub import HfApi
 
@@ -88,20 +121,15 @@ def _flush_checkpoint(cache, destination: Path, *, upload: bool, agent_id: str) 
         api.create_repo(repo_id, repo_type="dataset", exist_ok=True)
         api.upload_file(
             path_or_fileobj=str(path),
-            path_in_repo="autoformal/uscode/resume-checkpoint.parquet",
+            path_in_repo=repo_path,
             repo_id=repo_id,
             repo_type="dataset",
-            commit_message="autoformal uscode resume checkpoint",
+            commit_message=f"autoformal sparse checkpoint {update_id}",
         )
+        cache.mark_progress_published(fingerprints)
         receipt["uploaded"] = True
         receipt["repo_id"] = repo_id
-        info = api.get_paths_info(
-            repo_id,
-            ["autoformal/uscode/resume-checkpoint.parquet"],
-            repo_type="dataset",
-        )
-        if info:
-            cache._set_meta("remote_checkpoint_oid", str(getattr(info[0], "blob_id", "") or ""))
+        receipt["path_in_repo"] = repo_path
     except Exception as exc:
         receipt["error"] = type(exc).__name__
         print(f"HF upload deferred error={type(exc).__name__}", flush=True)
@@ -109,24 +137,38 @@ def _flush_checkpoint(cache, destination: Path, *, upload: bool, agent_id: str) 
 
 
 def _poll_remote_checkpoint(cache, *, agent_id: str) -> dict:
-    """Download another writer's parquet checkpoint and upsert it."""
+    """Download other machines' sparse deltas. Do not pull the full checkpoint."""
 
     from huggingface_hub import HfApi, hf_hub_download
 
     repo_id = "justicedao/uscode-autoformal-span-cache"
-    repo_path = "autoformal/uscode/resume-checkpoint.parquet"
+    prefix = "autoformal/uscode/checkpoints/"
+    own = prefix + "".join(char if char.isalnum() or char in "-_" else "-" for char in agent_id)[:48] + "/"
     try:
         api = HfApi()
-        info = api.get_paths_info(repo_id, [repo_path], repo_type="dataset")
-        oid = str(getattr(info[0], "blob_id", "") or "") if info else ""
-        if oid and oid == cache._meta("remote_checkpoint_oid"):
-            return {"changed": False, "admitted": False, "formalized": False}
-        local = hf_hub_download(repo_id, repo_path, repo_type="dataset")
-        merged = cache.upsert_remote_resume(local, agent_id=agent_id)
-        if oid:
-            cache._set_meta("remote_checkpoint_oid", oid)
-        merged["changed"] = True
-        return merged
+        files = [
+            path for path in api.list_repo_files(repo_id, repo_type="dataset")
+            if path.startswith(prefix) and path.endswith(".parquet") and not path.startswith(own)
+            and path.rsplit("/", 1)[-1] != "resume-checkpoint.parquet"
+        ]
+        applied = set(cache.applied_sparse_checkpoints())
+        fresh = [path for path in files if path not in applied][:16]
+        if not fresh:
+            return {"admitted": False, "changed": False, "delta_count": 0, "formalized": False}
+        merged_agents = 0
+        for repo_path in fresh:
+            local = hf_hub_download(repo_id, repo_path, repo_type="dataset")
+            merged = cache.upsert_remote_resume(local, agent_id=agent_id)
+            cache.remember_sparse_checkpoint(repo_path)
+            merged_agents += int(merged.get("agents_imported") or 0)
+        return {
+            "admitted": False,
+            "agents_imported": merged_agents,
+            "changed": True,
+            "delta_count": len(fresh),
+            "formalized": False,
+            "full_checkpoint_downloaded": False,
+        }
     except Exception as exc:
         print(f"HF poll deferred error={type(exc).__name__}", flush=True)
         return {"changed": False, "error": type(exc).__name__, "admitted": False, "formalized": False}
@@ -155,7 +197,7 @@ def enqueue_corpus(
         f"RESUME documents={skip} parquet={parquet} admitted=false formalized=false",
         flush=True,
     )
-    polled = _poll_remote_checkpoint(cache, agent_id="control-plane")
+    polled = _poll_remote_checkpoint(cache, agent_id=_checkpoint_agent_id(cache))
     print(
         f"HF poll changed={str(bool(polled.get('changed'))).lower()} "
         f"sealed={polled.get('sealed', 0)} gaps={polled.get('gaps', 0)} "
@@ -202,14 +244,14 @@ def enqueue_corpus(
                     f"cache={cache.stats()}",
                     flush=True,
                 )
-                polled = _poll_remote_checkpoint(cache, agent_id="control-plane")
+                polled = _poll_remote_checkpoint(cache, agent_id=_checkpoint_agent_id(cache))
                 print(
                     f"HF poll changed={str(bool(polled.get('changed'))).lower()} "
                     f"sealed={polled.get('sealed', 0)} gaps={polled.get('gaps', 0)} "
                     f"claimed={polled.get('claimed', 0)} error={polled.get('error') or 'none'}",
                     flush=True,
                 )
-                flushed = _flush_checkpoint(cache, upload_dir, upload=upload, agent_id="control-plane")
+                flushed = _flush_checkpoint(cache, upload_dir, upload=upload, agent_id=_checkpoint_agent_id(cache))
                 print(
                     f"HF checkpoint documents={documents} uploaded={str(flushed.get('uploaded')).lower()} "
                     f"error={flushed.get('error') or 'none'}",
@@ -448,14 +490,14 @@ def drain(
                     flush=True,
                 )
             if totals["processed"] % 256 == 0:
-                polled = _poll_remote_checkpoint(cache, agent_id="control-plane")
+                polled = _poll_remote_checkpoint(cache, agent_id=_checkpoint_agent_id(cache))
                 print(
                     f"HF poll changed={str(bool(polled.get('changed'))).lower()} "
                     f"sealed={polled.get('sealed', 0)} gaps={polled.get('gaps', 0)} "
                     f"claimed={polled.get('claimed', 0)} error={polled.get('error') or 'none'}",
                     flush=True,
                 )
-                flushed = _flush_checkpoint(cache, upload_dir, upload=upload, agent_id="control-plane")
+                flushed = _flush_checkpoint(cache, upload_dir, upload=upload, agent_id=_checkpoint_agent_id(cache))
                 print(
                     f"HF checkpoint processed={totals['processed']} "
                     f"uploaded={str(flushed.get('uploaded')).lower()} "

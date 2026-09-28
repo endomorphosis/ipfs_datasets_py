@@ -182,6 +182,14 @@ def test_verified_row_objects_normalize() -> None:
     assert document["canonical_citation"] == "18 U.S.C. 1001"
 
 
+def test_a_duty_is_formal_logic_and_a_date_heading_is_not() -> None:
+    from ipfs_datasets_py.logic.autoformal.uscode_ingest import is_formal_logic
+
+    assert is_formal_logic("Each agency shall make records available.")
+    assert is_formal_logic("No person may withhold a public record unless exempt.")
+    assert not is_formal_logic("Title 5. Government Organization and Employees.")
+
+
 def test_census_names_gaps_and_does_not_mark_formalized() -> None:
     ledger = inventory_uscode_documents(
         [{"title": "5", "section": "552", "text": "Each agency shall make records available."}]

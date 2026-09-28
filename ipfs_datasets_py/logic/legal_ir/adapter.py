@@ -45,6 +45,7 @@ from ipfs_datasets_py.logic.formalization.views import (
     SymbolTable,
     ViewRegistry,
 )
+from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
 from ipfs_datasets_py.logic.ir_core.diagnostics import (
     Diagnostic,
     DiagnosticCode,
@@ -1012,6 +1013,8 @@ class LegalIRFormalizationAdapter:
 
         frame_formula_ids: list[str] = []
         frame_logic = _as_mapping(modal.get("frame_logic", {}), "modal_ir.frame_logic")
+        # Every triple retains the full graph; share its recursively immutable context.
+        frozen_frame_logic = FrozenMap(frame_logic)
         for index, raw_triple in enumerate(frame_logic.get("triples") or ()):
             triple = _as_mapping(raw_triple, f"frame_logic.triples[{index}]")
             frame_formula_id = _shared_id(
@@ -1035,7 +1038,7 @@ class LegalIRFormalizationAdapter:
                     or legal_document.get("selected_frame")
                     or "unselected_frame"
                 ),
-                "legal_frame_logic": frame_logic,
+                "legal_frame_logic": frozen_frame_logic,
                 "object": triple.get("object"),
                 "predicate": triple.get("predicate"),
                 "provenance_ids": [source_ref_id, whole_span_id],

@@ -136,7 +136,7 @@ def test_partial_bridge_report_telemetry_preserves_target_bytes(context, monkeyp
             snapshot.close()
 
 
-def test_real_timeout_handler_caught_by_multiview_retains_ready_failure(context, monkeypatch, tmp_path):
+def test_real_timeout_handler_reaches_owner_and_records_timeout(context, monkeypatch, tmp_path):
     import signal
     from ipfs_datasets_py.logic.bridge import multiview
 
@@ -147,9 +147,9 @@ def test_real_timeout_handler_caught_by_multiview_retains_ready_failure(context,
     calls = []
 
     def interrupted_adapter(*args, **kwargs):
-        # Invoke the real installed handler deterministically. Multiview's real
-        # adapter catch must retain this failure rather than propagate it into
-        # preparation's outer-timeout fallback. No sleep or timer race is used.
+        # Invoke the real installed handler deterministically. Owned cancellation
+        # must cross the adapter's ordinary Exception handler and reach the
+        # preparation owner. No sleep or timer race is used.
         handler = signal.getsignal(signal.SIGALRM)
         assert callable(handler) and handler is not original_handler
         calls.append(kwargs)
@@ -162,22 +162,22 @@ def test_real_timeout_handler_caught_by_multiview_retains_ready_failure(context,
     assert len(calls) == 1 and calls[0]["evaluate_provers"] is False
     assert signal.getsignal(signal.SIGALRM) is original_handler
     sample_id, status = next(iter(receipt["statuses"].items()))
-    assert status == "ready" and receipt["admitted"] is False
+    assert status == "timeout" and receipt["admitted"] is False
     telemetry = receipt["bridge_report_telemetry"][sample_id]
-    assert telemetry["report_received"] is True and telemetry["report_accepted"] is False
-    assert telemetry["outer_timeout"] is None
-    assert telemetry["attempted_bridge_count"] == telemetry["failed_bridge_count"] == 1
-    assert telemetry["implemented_bridge_count"] == telemetry["accepted_bridge_count"] == 0
-    assert telemetry["failed_bridge_names"] == ["modal_frame_logic"]
-    assert telemetry["failures"] == {
-        "modal_frame_logic": "_LegalIRTargetTimeout: LegalIR target construction exceeded 15.000s"
+    assert telemetry["report_received"] is False and telemetry["report_accepted"] is None
+    assert telemetry["outer_timeout"] == {
+        "exception_type": "_LegalIRTargetTimeout",
+        "message": "LegalIR target construction exceeded 15.000s",
     }
+    assert telemetry["failures"] == {}
+    for kind in ("attempted", "implemented", "failed", "accepted"):
+        assert telemetry[f"{kind}_bridge_count"] is None
+        assert telemetry[f"{kind}_bridge_names"] is None
     snapshot = load_target_snapshot(receipt["artifact"]["path"], expected_sha256=receipt["artifact"]["sha256"])
     sample = build_us_code_sample(**_records()[0].__dict__)
     target = snapshot.targets_for([sample], config=snapshot.config)[sample_id]
     assert target.accepted is False
-    assert target.adapter_losses["modal_frame_logic"]["bridge_evaluation_failure_loss"] == 1.0
-    assert "legal_ir_target_timeout_loss" not in target.losses
+    assert target.losses["legal_ir_target_timeout_loss"] == 1.0
 
 
 @pytest.mark.parametrize("change", ["contents", "dependency", "environment"])

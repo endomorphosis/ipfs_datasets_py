@@ -349,8 +349,12 @@ class _CachedLegalIRTrainingTarget:
         return float(self.losses.get("legal_ir_multiview_total_loss", 0.0))
 
 
-class _LegalIRTargetTimeout(RuntimeError):
-    """Raised when LegalIR metric target construction exceeds its budget."""
+class _LegalIRTargetTimeout(BaseException):
+    """Owner-caught cancellation when LegalIR target construction exceeds budget.
+
+    Adapter ``except Exception`` handlers must not turn this deadline into a
+    partial successful target; the target owner records its explicit fallback.
+    """
 
 
 _AUTOENCODER_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {

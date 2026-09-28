@@ -150,9 +150,14 @@ _SPELLED_SMALL = (
 _DURATION_UNIT = r"(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?|hours?)"
 _SPELLED_DURATION = rf"(?:{_SPELLED_SMALL})\s+{_DURATION_UNIT}"
 _DIGIT_DURATION = rf"\d+\s+{_DURATION_UNIT}"
+_CALENDAR_MONTH = (
+    r"january|february|march|april|may|june|july|august|september|october|november|december"
+)
+_PARENTHETICAL_LABEL = r"(?:\s*\([A-Za-z0-9]+\))*"
 _ACTION_TEMPORAL_CUT = (
-    r"before\s+(?:january|february|march|april|may|june|july|august|september|october|november|december|\d)"
-    r"|after\s+(?:january|february|march|april|may|june|july|august|september|october|november|december|\d|notice|consultation)"
+    rf"before\s+(?:{_CALENDAR_MONTH}|\d)"
+    rf"|after\s+(?:{_CALENDAR_MONTH}|\d|notice|consultation)"
+    rf"|on\s+(?:{_CALENDAR_MONTH})\s+\d{{1,2}}"
     rf"|within\s+(?:{_DIGIT_DURATION}|every\s+subsequent\s+term\s+of\s+{_SPELLED_DURATION}|{_SPELLED_DURATION})"
 )
 _MODAL_RE = re.compile(
@@ -160,8 +165,14 @@ _MODAL_RE = re.compile(
     (?P<subject>
         (?:the\s+)?
         [A-Za-z][A-Za-z0-9'’\-]*
+        """
+    + _PARENTHETICAL_LABEL
+    + r"""
         (?:\s+(?!shall\b|must\b|may\b|cannot\b|can\b|is\b|are\b|will\b|should\b)
-            [A-Za-z][A-Za-z0-9'’\-]*){0,10}
+            [A-Za-z][A-Za-z0-9'’\-]*
+            """
+    + _PARENTHETICAL_LABEL
+    + r"""){0,10}
     )
     \s+
     (?P<modal>
@@ -215,7 +226,7 @@ _MODAL_RE = re.compile(
         is\s+designated\s+to|are\s+designated\s+to|
         is\s+appointed\s+to|are\s+appointed\s+to|
         is\s+empowered\s+to|are\s+empowered\s+to|
-        may|is\s+authorized\s+to|are\s+authorized\s+to|
+        may(?!\s+\d{1,2}(?:st|nd|rd|th)?(?:,\s*|\s+)\d{4}\b)|is\s+authorized\s+to|are\s+authorized\s+to|
         is\s+permitted\s+to|are\s+permitted\s+to|
         is\s+entitled\s+to|are\s+entitled\s+to
     )
@@ -440,6 +451,11 @@ _TEMPORAL_PATTERNS = [
         "deadline",
         "by_date",
         r"\bby\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)",
+    ),
+    (
+        "deadline",
+        "on_date",
+        rf"\bon\s+((?:{_CALENDAR_MONTH})\s+\d{{1,2}}(?:st|nd|rd|th)?(?:,?\s+\d{{4}})?)",
     ),
     ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}/\d{1,2}/\d{2,4})"),
     ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}-\d{1,2}-\d{2,4})"),
@@ -1658,8 +1674,38 @@ def _looks_like_section_header(line: str, match: re.Match[str]) -> bool:
     )
 
 
+_CITATION_PARENTHETICAL_PREFIX_RE = re.compile(
+    r"\b(?:subsections?|subsecs?\.?|paragraphs?|paras?\.?|subparagraphs?|"
+    r"clauses?|sections?|secs?\.?|items?)\s*$",
+    re.IGNORECASE,
+)
+_CITATION_LABEL_TRAILER_RE = re.compile(r"(?:\s*\([A-Za-z0-9]+\))+\s*$")
+_CITATION_SERIES_TRAILER_RE = re.compile(
+    r"(?:\s*,)?\s*(?:and|or|through|to)\s+$|\s*,\s*$",
+    re.IGNORECASE,
+)
+
+
+def _is_citation_parenthetical(line: str, match: re.Match[str]) -> bool:
+    """True for unit cites such as ``subsection (a)``, including series and nests."""
+
+    prefix = line[: match.start()]
+    while prefix:
+        trimmed = _CITATION_LABEL_TRAILER_RE.sub("", prefix)
+        if trimmed == prefix:
+            trimmed = _CITATION_SERIES_TRAILER_RE.sub("", prefix)
+        if trimmed == prefix:
+            break
+        prefix = trimmed
+    return bool(_CITATION_PARENTHETICAL_PREFIX_RE.search(prefix))
+
+
 def _split_segment_fragments(line: str) -> List[tuple[int, int, str, List[str]]]:
-    matches = list(_ENUM_LABEL_RE.finditer(line))
+    matches = [
+        match
+        for match in _ENUM_LABEL_RE.finditer(line)
+        if not _is_citation_parenthetical(line, match)
+    ]
     if not matches:
         return [(0, len(line), line, [])]
 
@@ -5223,7 +5269,29 @@ def _skip_subject(subject: str) -> bool:
     """Relative and continuation words are not the duty-bearer."""
 
     key = " ".join(str(subject or "").split()).lower()
-    if key in {"and", "or", "nor", "but", "which", "who", "that", "or which", "and which"}:
+    if key in {
+        "and",
+        "or",
+        "nor",
+        "but",
+        "which",
+        "who",
+        "that",
+        "or which",
+        "and which",
+        "on",
+        "in",
+        "at",
+        "from",
+        "after",
+        "before",
+        "by",
+        "of",
+        "for",
+        "under",
+        "during",
+        "to",
+    }:
         return True
     if key.startswith(("to which ", "to whom ", "in which ", "for which ", "of which ")):
         return True
@@ -5987,6 +6055,8 @@ def extract_temporal_constraint_details(sentence: str) -> List[Dict[str, Any]]:
             display = value
             if temporal_kind == "within_duration" and not display.startswith("within "):
                 display = f"within {display}"
+            elif temporal_kind == "on_date" and not display.startswith("on "):
+                display = f"on {display}"
             key = (constraint_type, display, match.start(), match.end())
             if key in seen:
                 continue
