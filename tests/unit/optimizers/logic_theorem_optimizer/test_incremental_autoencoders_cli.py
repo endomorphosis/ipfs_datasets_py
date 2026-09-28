@@ -119,11 +119,69 @@ def test_completed_group_cleanup_kills_lingering_workers(monkeypatch):
     assert (123, cli.signal.SIGKILL) in calls
 
 
+def test_omitted_workers_follow_the_machine_budget(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.autoformal.worker_budget.worker_budget",
+        lambda **_kwargs: 5,
+    )
+    from ipfs_datasets_py.logic.autoformal.worker_budget import resolve_worker_count
+
+    assert cli.parser().get_default("workers") == 0
+    assert resolve_worker_count(cli.parser().get_default("workers"), maximum=32) == 5
+
+
 @pytest.mark.parametrize("extra", [
-    ["--workers", "0"], ["--shard-count", "2", "--shard-index", "2"],
+    ["--workers", "33"], ["--shard-count", "2", "--shard-index", "2"],
     ["--max-seconds", "nan"], ["--storage-bytes", "50000000001"],
 ])
 def test_bad_resource_or_topology_config_fails_before_work(tmp_path, extra):
     with pytest.raises(SystemExit) as error:
         cli.main(["--state-directory", str(tmp_path), "--input-jsonl", str(tmp_path / "input"), *extra])
     assert error.value.code == 2
+
+
+def test_execution_route_rejects_unknown_mode_before_intake(monkeypatch):
+    monkeypatch.setattr(cli, "_pin", lambda **_: pytest.fail("unknown mode touched model sources"))
+    with pytest.raises(ValueError, match="execution gate"):
+        cli.run_cycle({"execution_mode": "evaluate-and-train"})
+
+
+def test_inference_cli_rejects_publication_before_state_creation(tmp_path):
+    state = tmp_path / "forbidden"
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(state), "--execution-mode", "inference",
+                  "--input-jsonl", "source", "--validation-jsonl", "validation",
+                  "--publish-repository", "justicedao/uscode-autoformal-span-cache"])
+    assert not state.exists()
+
+
+def test_auto_lanes_are_stable_while_dispatch_changes(tmp_path, monkeypatch):
+    monkeypatch.setattr(cli, "_pin", lambda **_: {})
+    configs = []
+    def cycle(config):
+        configs.append(dict(config))
+        return {"deferred": True, "training_executed": False}
+    monkeypatch.setattr(cli, "supervised_cycle", cycle)
+    args = ["--state-directory", str(tmp_path / "auto"), "--input-jsonl", "source"]
+    assert cli.main(args) == 0
+    assert cli.main(args) == 0
+    assert [config["workers"] for config in configs] == [32, 32]
+    with pytest.raises(SystemExit):
+        cli.main([*args, "--execution-mode", "inference", "--validation-jsonl", "validation"])
+
+
+def test_insufficient_group_memory_defers_before_creating_cycle_or_reservation(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as scheduler
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
+    class Scheduler:
+        def snapshot(self): return {}
+    monkeypatch.setattr(scheduler, "get_global_resource_scheduler", lambda: Scheduler())
+    monkeypatch.setattr(capacity, "scheduler_capacity", lambda _: {"cpu_slots": 8, "memory_mb": 1024, "child_process_slots": 8})
+    monkeypatch.setattr(capacity, "capacity_plan", lambda **_: {"workers": 1})
+    monkeypatch.setattr(resources, "DaemonResourceReservation", lambda **_: pytest.fail("unavailable reservation attempted"))
+    state = tmp_path / "no-work"
+    result = cli.supervised_cycle({"execution_mode": "training", "workers": 32,
+        "memory_mb": 8192, "max_batches": 4, "state_directory": str(state)})
+    assert result["deferred"] and result["training_executed"] is False
+    assert not state.exists()

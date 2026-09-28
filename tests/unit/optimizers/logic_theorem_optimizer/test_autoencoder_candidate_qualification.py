@@ -123,6 +123,28 @@ def test_native_evaluation_binds_checkpoint_and_missing_validation(tmp_path, mon
     assert result["metric_evaluation"]["legal_ir_target_count"] == 0
     assert result["rows"][0]["decoded_embedding"] is not None
     assert result["rows"][0]["model_generated_text"] is None
+    assert result["execution_path"] == "inference" and result["training_executed"] is False
+    assert result["execution_gate_applied"] is True
+
+
+def test_qualifier_uses_inference_gate_and_never_enters_training(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_paths as paths
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
+    original = paths.gated_evaluate
+    calls = []
+    def gated(model, samples, **kwargs):
+        calls.append(kwargs)
+        return original(model, samples, **kwargs)
+    def forbidden(*args, **kwargs):
+        pytest.fail("qualification entered projection training")
+    monkeypatch.setattr(paths, "gated_evaluate", gated)
+    monkeypatch.setattr(AdaptiveModalAutoencoder, "train_generalizable_projection", forbidden)
+    monkeypatch.setattr(q, "_structural_gates", _failed_structure)
+    result = q.qualify_candidate(_candidate(tmp_path), "version", [_sample()], tmp_path / "qualification",
+                                model_config={"compute_device": "python"})
+    assert len(calls) == 1 and calls[0]["execution_mode"] == paths.INFERENCE_PATH
+    assert result["execution_path"] == paths.INFERENCE_PATH
+    assert "dependency:optimizers/logic_theorem_optimizer/autoencoder_paths.py" in result["source_sha256"]
     receipt = result.pop("receipt_artifact")
     raw = Path(receipt["path"]).read_bytes()
     assert receipt["sha256"] == hashlib.sha256(raw).hexdigest()

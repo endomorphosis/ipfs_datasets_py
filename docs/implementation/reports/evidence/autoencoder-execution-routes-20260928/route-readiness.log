@@ -1,0 +1,32 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 409 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_paths.py . [  0%]
+....................................................                     [ 12%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_candidate_qualification.py . [ 13%]
+........................................                                 [ 22%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py . [ 23%]
+........................................................................ [ 40%]
+........................................................................ [ 58%]
+...                                                                      [ 59%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_capacity.py . [ 59%]
+........................                                                 [ 65%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py . [ 65%]
+...........................                                              [ 72%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_training.py . [ 72%]
+.........................................................                [ 86%]
+tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py . [ 86%]
+..............                                                           [ 89%]
+tests/unit/huggingface/test_autoencoder_span_attempts.py ............... [ 93%]
+.....                                                                    [ 94%]
+tests/unit/duckdb_control/test_autoencoder_span_campaign.py ............ [ 97%]
+.........                                                                [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-execution-routes-20260928/route-readiness.xml -
+============================= 409 passed in 37.89s =============================

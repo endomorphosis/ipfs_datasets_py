@@ -1,0 +1,12 @@
+[
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paths.py",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_training.py",
+  "scripts/ops/legal_ir/run_incremental_autoencoders.py",
+  "scripts/ops/legal_ir/run_distributed_autoencoders.py",
+  "scripts/ops/legal_ir/run_autoencoder_fleet.py"
+]

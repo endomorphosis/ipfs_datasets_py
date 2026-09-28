@@ -125,7 +125,8 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
         machine_shard_count=1, machine_shard_index=0, lane_count=2, max_batches=16,
         max_training_rounds=3, lake_timeout_seconds=120, producer_identity=None,
         qualification_samples=(), control_transport="quack", publication_repository=None,
-        executor_factory=None, worker_function=execute_training_job, qualifier=None):
+        executor_factory=None, worker_function=execute_training_job, qualifier=None,
+        max_parallel_workers=None, capacity_callback=None):
     """Train, qualify and retry measured metric failures within fixed budgets.
 
     Validation is disjoint from gradient-training intake across the entire
@@ -133,6 +134,10 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
     is tuning validation, not an independent generalization canary. Structural
     failures create repair tasks; additional SGD cannot itself repair a parser.
     A new state directory is required for migration from optimizer-only v1.
+    ``lane_count`` is persistent topology. ``max_parallel_workers`` and the
+    optional ``capacity_callback(pending_count=..., max_workers=...)`` bound
+    physical dispatch only and may change on resume. The callback returns a
+    JSON-compatible capacity plan with an integer ``workers`` (including zero).
     """
     import duckdb
     from .autoencoder_candidate_qualification import qualify_candidate
@@ -146,6 +151,12 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
             raise inc.IncrementalTrainingError("invalid " + name)
     if type(machine_shard_index) is not int or not 0 <= machine_shard_index < machine_shard_count:
         raise inc.IncrementalTrainingError("invalid machine shard index")
+    if max_parallel_workers is None:
+        max_parallel_workers = lane_count
+    if type(max_parallel_workers) is not int or not 1 <= max_parallel_workers <= 32:
+        raise inc.IncrementalTrainingError("invalid max parallel workers")
+    if capacity_callback is not None and not callable(capacity_callback):
+        raise inc.IncrementalTrainingError("invalid capacity callback")
     if control_transport not in {"quack", "owner"}:
         raise inc.IncrementalTrainingError("invalid weight control transport")
     if publication_repository not in (None, "justicedao/uscode-autoformal-span-cache"):
@@ -280,7 +291,8 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
             (directory / "outputs").mkdir(exist_ok=True)
             (directory / "qualifications").mkdir(exist_ok=True)
             (directory / "repair-outbox").mkdir(exist_ok=True)
-            dispatched, reports, blocked = [], [], {}
+            dispatched, reports, blocked, capacity_reports = [], [], {}, []
+            capacity_deferred = False
             while True:
                 selected, recovered = [], False
                 for lane, head in heads.items():
@@ -371,8 +383,22 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                             continue
                     if len(dispatched) + len(selected) < max_batches and len(selected) < lane_count:
                         selected.append((row, spec))
+                if selected:
+                    maximum = min(max_parallel_workers, lane_count)
+                    plan = ({"workers": min(maximum, len(selected)), "scope": "concurrent_independent_passes"}
+                            if capacity_callback is None else
+                            capacity_callback(pending_count=len(selected), max_workers=maximum))
+                    if type(plan) is not dict or type(plan.get("workers")) is not int or not 0 <= plan["workers"] <= min(maximum, len(selected)):
+                        raise inc.IncrementalTrainingError("capacity callback returned an invalid dispatch limit")
+                    try:
+                        plan = json.loads(json.dumps(plan, allow_nan=False))
+                    except (TypeError, ValueError) as exc:
+                        raise inc.IncrementalTrainingError("capacity telemetry is not finite JSON") from exc
+                    capacity_reports.append(plan)
+                    capacity_deferred = plan["workers"] == 0
+                    selected = selected[:plan["workers"]]
                 if not selected:
-                    if recovered:
+                    if recovered and not capacity_deferred:
                         continue
                     counts = dict(db.execute("SELECT status,count(*) FROM batches GROUP BY status").fetchall())
                     return {"schema_version": SCHEMA, "binding": binding, "dispatched_run_ids": dispatched,
@@ -381,6 +407,8 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                             "pending_batch_count": counts.get("pending", 0),
                             "completed_batch_count": sum(counts.values()) - counts.get("pending", 0),
                             "blocked": list(blocked.values()), "dispatch_reports": reports,
+                            "capacity_reports": capacity_reports, "capacity_deferred": capacity_deferred,
+                            "max_parallel_workers": max_parallel_workers,
                             "skipped_other_machine_templates": skipped,
                             "execution_mode": "native_training_and_qualification" if native else "injected_test",
                             "resume_granularity": "qualified_attempt", "heldout_canary": False,
@@ -401,15 +429,16 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                     from ...duckdb_control.autoencoder_shared_weight_control import SharedWeightRegistry
                     with SharedWeightRegistry(registry, enable_prototype=True) as shared:
                         report = coordinator.run_training_jobs(shared, [spec for _, spec in selected],
-                            max_workers=min(lane_count, len(selected)), executor_factory=executor_factory,
+                            max_workers=len(selected), executor_factory=executor_factory,
                             worker_function=worker_function)
                         report["weight_control"] = shared.transport_report()
                 else:
                     report = coordinator.run_training_jobs(registry, [spec for _, spec in selected],
-                        max_workers=min(lane_count, len(selected)), executor_factory=executor_factory,
+                        max_workers=len(selected), executor_factory=executor_factory,
                         worker_function=worker_function)
                     report["weight_control"] = {"transport": "trusted_owner_local", "native_quack": False}
                 reports.append(report)
+                report["dispatch_capacity"] = capacity_reports[-1]
                 dispatched.extend(spec.run_id for _, spec in selected)
         finally:
             db.close()

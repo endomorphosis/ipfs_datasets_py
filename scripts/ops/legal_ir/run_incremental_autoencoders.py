@@ -53,6 +53,9 @@ def orchestration_hashes():
              ROOT / "ipfs_datasets_py/huggingface/autoencoder_incremental.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paths.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
              ROOT / "ipfs_datasets_py/duckdb_control/autoencoder_registry.py"]
     paths.extend(ROOT / "ipfs_datasets_py" / relative for relative in QUALIFICATION_DEPENDENCIES)
     paths.extend([ROOT / "ipfs_datasets_py/logic/autoformal/__init__.py",
@@ -70,6 +73,20 @@ def _write(path, value):
         stream.write(_json(value) + "\n")
         stream.flush()
         os.fsync(stream.fileno())
+
+
+def bind_execution_mode(state, mode):
+    if mode not in {"inference", "training"}:
+        raise ValueError("unknown autoencoder execution gate")
+    state = Path(state)
+    path = state / "execution-mode.json"
+    binding = {"execution_mode": mode}
+    if path.exists() and json.loads(path.read_bytes()) != binding:
+        raise ValueError("state directory belongs to another execution mode")
+    if mode == "inference" and any((state / name).exists() for name in ("control.duckdb", "progress")):
+        raise ValueError("training state cannot be reused as inference state")
+    if not path.exists():
+        _write(path, binding)
 
 
 def _pin(*, dataset_network=False):
@@ -180,10 +197,20 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
 
 def run_cycle(config):
     """Execute one bounded poll/dispatch page, in an isolated child process."""
+    mode = config.get("execution_mode", "training")
+    if mode not in {"inference", "training"}:
+        raise ValueError("unknown autoencoder execution gate")
+    bind_execution_mode(config["state_directory"], mode)
+    if mode == "inference":
+        from types import SimpleNamespace
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_inference import run_inference_cycle
+        return run_inference_cycle(config, SimpleNamespace(_pin=_pin, orchestration_hashes=orchestration_hashes,
+            local_records=local_records, PINNED=PINNED, PINNED_SHA=PINNED_SHA, _sha=_sha, _write=_write))
     source_hashes = _pin(dataset_network=bool(config.get("repository_id") or config.get("publish_repository")))
     orchestration = orchestration_hashes()
     from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_qualified_training import run_qualified_incremental_training
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import capacity_plan
     state = Path(config["state_directory"])
     records = local_records(config["input_jsonl"]) if config.get("input_jsonl") else []
     validation = local_records(config["validation_jsonl"]) if config.get("validation_jsonl") else []
@@ -227,6 +254,10 @@ def run_cycle(config):
                 registry, templates, state_directory=state / "progress",
                 machine_shard_count=config["shard_count"], machine_shard_index=config["shard_index"],
                 lane_count=config["workers"], max_batches=config["max_batches"],
+                max_parallel_workers=config.get("max_parallel_workers", config["workers"]),
+                capacity_callback=lambda **limits: capacity_plan(**limits,
+                        memory_budget_mb=config["memory_mb"],
+                        cpu_budget=config.get("max_parallel_workers", config["workers"])),
                 max_training_rounds=config.get("max_training_rounds", 3),
                 lake_timeout_seconds=config.get("lake_timeout_seconds", 120),
                 producer_identity=orchestration,
@@ -256,6 +287,7 @@ def run_cycle(config):
     if orchestration_hashes() != orchestration:
         raise RuntimeError("orchestration source changed during cycle; retained registry work requires replay")
     receipt = {"schema": "incremental-autoencoder-cycle/v2", "feed": feed_report,
+               "execution_path": "training", "training_executed": bool(report["dispatched_run_ids"]),
                "training": report, "input_count": len(records), "admitted": False,
                "eligible_input_count": len(eligible), "skipped_inputs": skipped,
                "formalized": False, "heldout_canary": False, "temperature": 0,
@@ -325,6 +357,21 @@ def _group_observation(group_pid):
 
 def supervised_cycle(config):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import DaemonResourceReservation
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import capacity_plan, scheduler_capacity
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import get_global_resource_scheduler
+    if config.get("execution_mode", "training") not in {"inference", "training"}:
+        raise ValueError("unknown autoencoder execution gate")
+    available = scheduler_capacity(get_global_resource_scheduler().snapshot())
+    plan = capacity_plan(max_workers=config["workers"], memory_budget_mb=config["memory_mb"],
+        pending_count=config["max_batches"], scheduler_available_cpu=available["cpu_slots"],
+        scheduler_available_memory_mb=available["memory_mb"],
+        scheduler_available_process_slots=available["child_process_slots"])
+    # The whole group memory envelope must fit, even if fewer workers fit it.
+    if available["memory_mb"] < config["memory_mb"] or plan["workers"] == 0:
+        return {"execution_path": config.get("execution_mode", "training"), "deferred": True,
+                "reason": "resource_capacity_unavailable", "capacity_plan": plan,
+                "training_executed": False, "input_count": 0, "training": None,
+                "weight_publications": [], "admitted": False}
     state = Path(config["state_directory"])
     ledger = Path(config["resource_ledger"])
     ledger.parent.mkdir(parents=True, exist_ok=True)
@@ -337,10 +384,11 @@ def supervised_cycle(config):
     cycle_id = uuid.uuid4().hex
     receipt_directory = state / "cycles" / cycle_id
     receipt_directory.mkdir(parents=True)
-    child_config = {**config, "cycle_receipt": str(receipt_directory / "cycle.json")}
+    child_config = {**config, "max_parallel_workers": plan["workers"],
+                    "capacity_plan": plan, "cycle_receipt": str(receipt_directory / "cycle.json")}
     reservation = DaemonResourceReservation(
         ledger, roots=roots, storage_bytes=config["storage_bytes"], memory_mb=config["memory_mb"],
-        cpu_slots=config["workers"], timeout_seconds=0, ledger_lock_timeout_seconds=60,
+        cpu_slots=plan["workers"], timeout_seconds=0, ledger_lock_timeout_seconds=60,
     )
     started = time.monotonic()
     process = None
@@ -380,6 +428,9 @@ def supervised_cycle(config):
             resource = reservation.release(artifacts_durable=True)
             _write(receipt_directory / "resources.json", resource)
             return {"receipt": child_config["cycle_receipt"], "elapsed_seconds": time.monotonic() - started,
+                    "execution_path": receipt.get("execution_path", "training"),
+                    "training_executed": receipt.get("training_executed", False), "capacity_plan": plan,
+                    "inference": receipt.get("inference"),
                     "input_count": receipt["input_count"], "training": receipt["training"],
                     "weight_publications": receipt["weight_publications"], "admitted": False}
         except BaseException:
@@ -394,6 +445,8 @@ def supervised_cycle(config):
 def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--state-directory", type=Path, required=True)
+    p.add_argument("--execution-mode", choices=["inference", "training"], default="training",
+                   help="Inference only evaluates immutable local weights; training may create private candidates")
     p.add_argument("--checkpoint", type=Path, default=PINNED)
     p.add_argument("--arrow-feature-weights", type=Path, help="Optional local baseline-bound Arrow IPC weights")
     p.add_argument("--shared-targets", type=Path, help="Optional local verified target artifact covering all input rows")
@@ -405,7 +458,8 @@ def parser():
     p.add_argument("--publish-repository", choices=["justicedao/uscode-autoformal-span-cache"],
                    help="Upload qualified sparse updates and proof evidence through the durable registry outbox")
     p.add_argument("--revision", default="main")
-    p.add_argument("--workers", type=int, default=2)
+    p.add_argument("--workers", type=int, default=0,
+                   help="Stable lane ceiling (1..32). 0 uses 32 logical lanes; actual concurrent passes adapt to hardware")
     p.add_argument("--shard-count", type=int, default=1)
     p.add_argument("--shard-index", type=int, default=0)
     p.add_argument("--max-batches", type=int, default=4, help="Optimizer attempts per cycle, including qualification retries")
@@ -438,7 +492,13 @@ def main(argv=None):
         p.error("supply --input-jsonl and/or --repository-id")
     if bool(args.shared_targets) != bool(args.target_snapshot_id):
         p.error("--shared-targets and --target-snapshot-id must be supplied together")
-    if not 1 <= args.workers <= 8 or not 1 <= args.shard_count <= 1024 or not 0 <= args.shard_index < args.shard_count:
+    if type(args.workers) is not int or args.workers < 0 or args.workers > 32:
+        p.error("invalid worker count or machine shard assignment")
+    args.workers = args.workers or 32
+    if args.execution_mode == "inference" and (not args.input_jsonl or not args.validation_jsonl or any(
+            (args.repository_id, args.publish_repository, args.arrow_feature_weights, args.shared_targets))):
+        p.error("inference requires local input and validation; network publication and training artifacts are forbidden")
+    if not 1 <= args.shard_count <= 1024 or not 0 <= args.shard_index < args.shard_count:
         p.error("invalid worker count or machine shard assignment")
     if not 1 <= args.max_batches <= 128 or not 1 <= args.max_bundles <= 128 or args.polls < 0:
         p.error("invalid bounded dispatch/poll count")
@@ -461,6 +521,10 @@ def main(argv=None):
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             p.error("another incremental runner owns this state directory")
+        try:
+            bind_execution_mode(state, args.execution_mode)
+        except ValueError as exc:
+            p.error(str(exc))
         cycle = 0
         while args.polls == 0 or cycle < args.polls:
             report = supervised_cycle(config)

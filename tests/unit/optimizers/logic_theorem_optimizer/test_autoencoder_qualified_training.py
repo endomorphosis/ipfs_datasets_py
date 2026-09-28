@@ -163,6 +163,79 @@ def test_two_lanes_dispatch_before_qualification(tmp_path):
         assert result["qualified_batch_count"] == 2
 
 
+def _lane_templates(spec, count):
+    selected = {}
+    for index in range(200):
+        candidate = replace(spec, dataset_snapshot_id="capacity-" + str(index))
+        selected.setdefault(assignment(candidate, 1, count)["lane_index"], candidate)
+        if len(selected) == count:
+            return list(selected.values())
+    raise AssertionError("unable to fill test lanes")
+
+
+def test_dispatch_capacity_recomputed_at_boundaries_keeps_logical_lane_bindings(tmp_path):
+    decisions, dispatched_widths = [], []
+    capacities = iter((1, 2))
+    def capacity(**request):
+        decisions.append(request)
+        return {"workers": next(capacities), "reason": "injected resource envelope"}
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        templates = _lane_templates(spec, 3)
+        result = _run(registry, tmp_path, templates, lane_count=3, capacity_callback=capacity)
+        assert [plan["workers"] for plan in result["capacity_reports"]] == [1, 2]
+        assert decisions == [{"pending_count": 3, "max_workers": 3},
+                             {"pending_count": 2, "max_workers": 3}]
+        assert result["qualified_batch_count"] == 3
+        assert result["binding"]["lane_count"] == 3
+        assert {row["lane_index"] for row in result["completed"]} == {0, 1, 2}
+        assert "capacity_callback" not in result["binding"]
+
+
+def test_zero_capacity_defers_without_registering_attempt_and_resume_can_scale_up(tmp_path):
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        templates = _lane_templates(spec, 3)
+        paused = _run(registry, tmp_path, templates, lane_count=3, max_parallel_workers=1,
+                      capacity_callback=lambda **request: {"workers": 0, "reason": "memory"})
+        assert paused["capacity_deferred"] is True
+        assert paused["pending_batch_count"] == 3
+        assert paused["dispatched_run_ids"] == []
+        with duckdb.connect(str(tmp_path / "qualified/qualification.duckdb")) as db:
+            assert db.execute("SELECT count(*) FROM attempts").fetchone()[0] == 0
+        resumed = _run(registry, tmp_path, [], lane_count=3, max_parallel_workers=2)
+        assert resumed["binding"] == paused["binding"]
+        assert [plan["workers"] for plan in resumed["capacity_reports"]] == [2, 1]
+        assert resumed["qualified_batch_count"] == 3
+
+
+def test_completed_attempt_recovers_even_when_capacity_is_now_zero(tmp_path, monkeypatch):
+    original = qt.coordinator.run_training_jobs
+    def lost(*args, **kwargs):
+        original(*args, **kwargs)
+        raise RuntimeError("lost response")
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        monkeypatch.setattr(qt.coordinator, "run_training_jobs", lost)
+        with pytest.raises(RuntimeError, match="lost response"):
+            _run(registry, tmp_path, [spec])
+        monkeypatch.setattr(qt.coordinator, "run_training_jobs", lambda *args, **kwargs: pytest.fail("duplicate training"))
+        resumed = _run(registry, tmp_path, [], capacity_callback=lambda **request: {"workers": 0})
+        assert resumed["qualified_batch_count"] == 1
+        assert not resumed["dispatched_run_ids"]
+
+
+@pytest.mark.parametrize("returned", [{"workers": -1}, {"workers": 2}, {"workers": True},
+                                      {"workers": 1, "pressure": float("nan")}, 1])
+def test_bad_capacity_callback_cannot_override_dispatch_budget(tmp_path, returned):
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        with pytest.raises(IncrementalTrainingError, match="capacity"):
+            _run(registry, tmp_path, [spec], capacity_callback=lambda **request: returned)
+        with duckdb.connect(str(tmp_path / "qualified/qualification.duckdb")) as db:
+            assert db.execute("SELECT count(*) FROM attempts").fetchone()[0] == 0
+
+
 def test_legacy_optimizer_progress_requires_explicit_new_stream(tmp_path):
     (tmp_path / "qualified").mkdir()
     (tmp_path / "qualified/progress.duckdb").touch()

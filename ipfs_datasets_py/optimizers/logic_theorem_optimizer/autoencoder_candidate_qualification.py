@@ -38,6 +38,7 @@ QUALIFICATION_DEPENDENCIES = (
     "logic/deontic/ir.py", "logic/deontic/formula_builder.py",
     "logic/deontic/decoder.py", "logic/legal_ir/canonical_contracts.py",
     "logic/legal_ir/canonical_roundtrip.py",
+    "optimizers/logic_theorem_optimizer/autoencoder_paths.py",
 )
 
 
@@ -273,6 +274,7 @@ def qualify_candidate(candidate_artifact: Mapping[str, Any], candidate_version_i
     """
     from ...logic.autoformal.tree_pin import require_workspace_logic_tree
     from . import legal_samples, modal_autoencoder
+    from .autoencoder_paths import INFERENCE_PATH, gated_evaluate
     from .autoencoder_training_worker import (SampleRecord, _effective_constructor_config,
                                                _worker_environment)
 
@@ -332,7 +334,8 @@ def qualify_candidate(candidate_artifact: Mapping[str, Any], candidate_version_i
                 row_directory.mkdir()
                 metric_started = time.monotonic()
                 try:
-                    evaluation = model.evaluate([sample], legal_ir_bridge_names=(),
+                    evaluation = gated_evaluate(model, [sample], execution_mode=INFERENCE_PATH,
+                        legal_ir_bridge_names=(),
                         legal_ir_evaluate_provers=False, legal_ir_parallel_workers=1,
                         use_sample_memory=False).to_dict()
                 except Exception as exc:
@@ -406,6 +409,8 @@ def qualify_candidate(candidate_artifact: Mapping[str, Any], candidate_version_i
                    "elapsed_seconds": time.monotonic() - started,
                    "admitted": False, "formalized": False, "promotion_performed": False,
                    "execution_mode": "native_candidate_qualification",
+                   "execution_path": INFERENCE_PATH, "training_executed": False,
+                   "execution_gate_applied": True,
                    "qualification_scope": "embedding_model_and_deterministic_source_compiler_pipeline",
                    "model_emits_text_or_formulas": False,
                    "metric_evaluation": {"bridge_names": [], "legal_ir_target_count": 0,

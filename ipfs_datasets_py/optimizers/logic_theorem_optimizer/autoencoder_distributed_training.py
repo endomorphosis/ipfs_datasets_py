@@ -31,6 +31,10 @@ class DistributedTrainingError(ValueError):
     pass
 
 
+class CapacityDeferred(DistributedTrainingError):
+    """A resource estimate declined work; no optimizer attempt was committed."""
+
+
 def local_cli():
     path = ROOT / 'scripts/ops/legal_ir/run_incremental_autoencoders.py'
     spec = importlib.util.spec_from_file_location('_qualified_campaign_cli', path)
@@ -219,15 +223,22 @@ def execute_assignment(assignment, policy, installed, directory, *, execute_cycl
         result = _read(state)
     else:
         result = (execute_cycle or local_cli().supervised_cycle)(config)
-        _write(state, result)
+        if result.get('deferred'):
+            raise CapacityDeferred('training capacity is currently unavailable')
     cycle = _read(result['receipt'])
     completed = cycle['training']['completed']
+    if not completed and cycle['training'].get('capacity_deferred'):
+        raise CapacityDeferred('training dispatch capacity is currently unavailable')
     if len(cycle['training']['batch_status_counts']) != 1 or not completed:
         raise DistributedTrainingError('assignment did not produce exactly one span disposition')
     attempt = max(completed, key=lambda row: row['round'])
     disposition = attempt['qualification_status']
+    if disposition == 'pending' and cycle['training'].get('capacity_deferred'):
+        raise CapacityDeferred('metric retry is waiting for training capacity')
     if disposition not in {'qualified', 'needs_repair', 'training_exhausted'}:
         raise DistributedTrainingError('unfinished local training requires another bounded cycle')
+    if not state.exists():
+        _write(state, result)
     if identity() != policy['source_identity']:
         raise DistributedTrainingError('worker producer changed before publishing result')
     weight_reference = None
@@ -242,6 +253,8 @@ def execute_assignment(assignment, policy, installed, directory, *, execute_cycl
                           'incremental publication requires a sparse candidate, never a full checkpoint')
         if not found and not full_candidate:
             retried = (execute_cycle or local_cli().supervised_cycle)(config)
+            if retried.get('deferred'):
+                raise CapacityDeferred('publication replay capacity is currently unavailable')
             retry_cycle = _read(retried['receipt'])
             found = [row for row in retry_cycle['weight_publications']
                      if row.get('version_id') == attempt['optimizer']['candidate_version_id'] and row.get('acknowledged')]

@@ -1,5 +1,7 @@
 # Distributed autoencoder readiness follow-up
 
+Next follow-up: [separate inference/training routes and adaptive parallel passes](AUTOENCODER_EXECUTION_ROUTES_20260928.md).
+
 The campaign storage limit is now 80,000,000,000 bytes, as explicitly authorized.
 The per-process CLI ceiling remains 50 GB. The existing ledger was migrated
 under its exclusive lock with an atomic, durable replacement: only `limit_bytes`

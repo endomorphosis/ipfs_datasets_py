@@ -976,3 +976,22 @@ def test_sparse_install_rechecks_full_hash_of_external_owner_anchor(
         assert installed["materialized_checkpoint"] == raw_ref(candidate)
         assert installed["full_weights_verified"] is True
     assert requests == [parent["artifact"]]
+
+
+@pytest.mark.parametrize('defer_phase', ['reservation', 'dispatch', 'retry'])
+def test_capacity_deferral_does_not_cache_incomplete_training_result(tmp_path, monkeypatch, defer_phase):
+    monkeypatch.setattr(work, 'identity', lambda: {'fixture': 'source'})
+    monkeypatch.setattr(work, 'training_config', lambda *args: {'fixture': True})
+    policy = {'source_identity': {'fixture': 'source'}, 'validation_samples': []}
+    assignment = {'record': {'sample': {'text': 'Bounded transport fixture'}}}
+    def execute(config):
+        if defer_phase == 'reservation':
+            return {'deferred': True}
+        receipt = tmp_path / 'cycle.json'
+        receipt.write_text(json.dumps({'training': {'completed': ([{'round': 1, 'qualification_status': 'pending'}] if defer_phase == 'retry' else []), 'batch_status_counts': {'pending': 1}, 'capacity_deferred': True}}))
+        return {'receipt': str(receipt)}
+    job = tmp_path / 'job'
+    with pytest.raises(work.CapacityDeferred):
+        work.execute_assignment(assignment, policy, {'checkpoint_path': 'fixture'}, job, execute_cycle=execute)
+    assert not (job / 'training-result.json').exists()
+    assert not (job / 'result.json').exists()

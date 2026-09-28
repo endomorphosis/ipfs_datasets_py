@@ -67,7 +67,8 @@ def _reserve(args):
     if not any(state == Path(root) or Path(root) in state.parents for root in roots):
         raise work.DistributedTrainingError('state is outside resource ledger roots')
     return DaemonResourceReservation(ledger, roots=roots, storage_bytes=args.storage_bytes,
-        memory_mb=8192, cpu_slots=1, timeout_seconds=0, ledger_lock_timeout_seconds=60)
+        memory_mb=8192 if args.mode == 'owner' else 1024,
+        cpu_slots=1, timeout_seconds=0, ledger_lock_timeout_seconds=60)
 
 
 def owner(args):
@@ -207,10 +208,20 @@ def worker(args):
                         pending_path.unlink()
                         continue
                     installed = work.install_generation(claim['weights'],state/'weights',advertise_current=False)
-                    with work.renewable_assignment(client,claim,job/'heartbeat.json',lease_seconds=args.lease_seconds) as heartbeat:
-                        result_path = job/'result.json'
-                        result = work._read(result_path) if result_path.exists() else work.execute_assignment(
-                            assignment,policy,installed,job,resource_ledger=args.resource_ledger)
+                    try:
+                        with work.renewable_assignment(client,claim,job/'heartbeat.json',lease_seconds=args.lease_seconds) as heartbeat:
+                            result_path = job/'result.json'
+                            result = work._read(result_path) if result_path.exists() else work.execute_assignment(
+                                assignment,policy,installed,job,resource_ledger=args.resource_ledger)
+                    except work.CapacityDeferred:
+                        resources.check_usage(attempt_directory=state)
+                        work._write(state/'worker-status.json', {'generation': weights['generation'],
+                            'artifact': weights['artifact'], 'full_weights_verified': True,
+                            'processed_jobs_this_invocation': processed, 'deferred': True,
+                            'reason': 'resource_capacity_unavailable', 'admitted': False})
+                        if args.polls == 0 or ordinal+1 < args.polls:
+                            time.sleep(args.sync_interval)
+                        continue
                     submitted = client.request(['report',assignment['run_id'],claim['lease']['fence']], 'ReportSpan',
                         {'lease':heartbeat['lease'],'report_descriptor':result['report_reference']})
                     work._write(job/'submitted.json',submitted)

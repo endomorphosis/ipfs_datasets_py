@@ -1266,7 +1266,9 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         "target_snapshot_id": spec.target_snapshot_id,
     }) as ontology_observation:
         if trainer is None:
-            report = model.train_generalizable_projection(samples, validation_samples=validation, **training_kwargs)
+            from .autoencoder_paths import TRAINING_PATH, gated_projection_training
+            report = gated_projection_training(model, samples, execution_mode=TRAINING_PATH,
+                                               validation_samples=validation, **training_kwargs)
         else:
             report = trainer(model, samples, validation_samples=validation, **training_kwargs)
     training_seconds = time.perf_counter() - train_started
@@ -1306,6 +1308,7 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         "admitted": False, "promotion_performed": False,
         "optimizer_accepted_epochs": int(report.get("accepted_epochs", 0)),
         "execution_mode": "injected_test" if trainer is not None else "native_training",
+        "execution_path": "training", "execution_gate_applied": trainer is None,
         "training_report": report, "training_seconds": training_seconds,
         "elapsed_seconds": time.perf_counter() - started,
         "sample_count": len(samples), "validation_sample_count": len(validation),

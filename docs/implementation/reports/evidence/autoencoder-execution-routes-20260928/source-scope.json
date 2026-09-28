@@ -1,0 +1,455 @@
+{
+  "admitted": false,
+  "native_scope": "captured pinned workspace; unrelated concurrent semantic edits excluded from scoped publication",
+  "origin_main_base": "778ae19543e32944457e16297cb7216f5591b153",
+  "rows": [
+    {
+      "captured_native_sha256": "1ed4dec6feca91f5e944f7cb3d85f556a1545070abdbc6fa03d96ad8f9212af2",
+      "current_workspace_sha256": "1ed4dec6feca91f5e944f7cb3d85f556a1545070abdbc6fa03d96ad8f9212af2",
+      "key": "autoencoder",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+      "section": "native",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "current_workspace_sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "key": "compiler",
+      "package_path": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+      "section": "native",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "current_workspace_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "key": "decompiler",
+      "package_path": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+      "section": "native",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+      "current_workspace_sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+      "key": "parser",
+      "package_path": "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+      "section": "native",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+      "current_workspace_sha256": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+      "key": "samples",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+      "section": "native",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "0654da8b5f1ef8bbd4c1e69f61d36255cd2db77b8602c78525f7e5aa9a151624",
+      "current_workspace_sha256": "0654da8b5f1ef8bbd4c1e69f61d36255cd2db77b8602c78525f7e5aa9a151624",
+      "key": "worker",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "0654da8b5f1ef8bbd4c1e69f61d36255cd2db77b8602c78525f7e5aa9a151624",
+      "section": "native",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+      "current_workspace_sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+      "key": "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "fe4890f7390ebdfb4e7f55db1e5709f581583d4d6ab6f87e7330bb43ef608df9",
+      "current_workspace_sha256": "fe4890f7390ebdfb4e7f55db1e5709f581583d4d6ab6f87e7330bb43ef608df9",
+      "key": "ipfs_datasets_py/duckdb_control/autoencoder_quack.py",
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_quack.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "fe4890f7390ebdfb4e7f55db1e5709f581583d4d6ab6f87e7330bb43ef608df9",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "603ffe64394b6d1824296dc3704947e08d93283b6513cb65eb609de33c1bbad3",
+      "current_workspace_sha256": "603ffe64394b6d1824296dc3704947e08d93283b6513cb65eb609de33c1bbad3",
+      "key": "ipfs_datasets_py/duckdb_control/autoencoder_quack_wire.py",
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_quack_wire.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "603ffe64394b6d1824296dc3704947e08d93283b6513cb65eb609de33c1bbad3",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+      "current_workspace_sha256": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+      "key": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "fd1b034799e8213d222d7ea6b0c552774bd80d475b44204c14f8bf717927ed34",
+      "current_workspace_sha256": "fd1b034799e8213d222d7ea6b0c552774bd80d475b44204c14f8bf717927ed34",
+      "key": "ipfs_datasets_py/duckdb_control/autoencoder_shared_weight_control.py",
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_shared_weight_control.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "fd1b034799e8213d222d7ea6b0c552774bd80d475b44204c14f8bf717927ed34",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "1241fa56b741b802d1c615b318db6cb703e20ea7ec5e8e5aaa8c85edaf8ab06d",
+      "current_workspace_sha256": "1241fa56b741b802d1c615b318db6cb703e20ea7ec5e8e5aaa8c85edaf8ab06d",
+      "key": "ipfs_datasets_py/huggingface/autoencoder_incremental.py",
+      "package_path": "ipfs_datasets_py/huggingface/autoencoder_incremental.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "1241fa56b741b802d1c615b318db6cb703e20ea7ec5e8e5aaa8c85edaf8ab06d",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "current_workspace_sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "key": "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+      "package_path": "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "current_workspace_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "key": "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+      "package_path": "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30",
+      "current_workspace_sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30",
+      "key": "ipfs_datasets_py/logic/autoformal/__init__.py",
+      "package_path": "ipfs_datasets_py/logic/autoformal/__init__.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "fa524d6eece64e8cdbe98bd3e86c3671f63ad8d695d8dda52000ee7fa57c6b96",
+      "current_workspace_sha256": "fa524d6eece64e8cdbe98bd3e86c3671f63ad8d695d8dda52000ee7fa57c6b96",
+      "key": "ipfs_datasets_py/logic/autoformal/family_qualification.py",
+      "package_path": "ipfs_datasets_py/logic/autoformal/family_qualification.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "fa524d6eece64e8cdbe98bd3e86c3671f63ad8d695d8dda52000ee7fa57c6b96",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "157e063c0b8a8a90e3d89919a7ac8072fc880af96bfd720894a487c22939771e",
+      "current_workspace_sha256": "157e063c0b8a8a90e3d89919a7ac8072fc880af96bfd720894a487c22939771e",
+      "key": "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
+      "package_path": "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "157e063c0b8a8a90e3d89919a7ac8072fc880af96bfd720894a487c22939771e",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+      "current_workspace_sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+      "key": "ipfs_datasets_py/logic/autoformal/tree_pin.py",
+      "package_path": "ipfs_datasets_py/logic/autoformal/tree_pin.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+      "current_workspace_sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+      "key": "ipfs_datasets_py/logic/backends/results.py",
+      "package_path": "ipfs_datasets_py/logic/backends/results.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "1f5ffbf35e9171b77474da7fb7a1eeb91579a3d09fc0f99d480abfd49aaaf3e0",
+      "current_workspace_sha256": "1f5ffbf35e9171b77474da7fb7a1eeb91579a3d09fc0f99d480abfd49aaaf3e0",
+      "key": "ipfs_datasets_py/logic/backends/toolchain_roles.py",
+      "package_path": "ipfs_datasets_py/logic/backends/toolchain_roles.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "1f5ffbf35e9171b77474da7fb7a1eeb91579a3d09fc0f99d480abfd49aaaf3e0",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+      "current_workspace_sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+      "key": "ipfs_datasets_py/logic/deontic/decoder.py",
+      "package_path": "ipfs_datasets_py/logic/deontic/decoder.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "6a220bf20aa8bdb24dd14d8b3467554d674cfadd0b44e88f3d019ce0b02afb2a",
+      "current_workspace_sha256": "6a220bf20aa8bdb24dd14d8b3467554d674cfadd0b44e88f3d019ce0b02afb2a",
+      "key": "ipfs_datasets_py/logic/deontic/formula_builder.py",
+      "package_path": "ipfs_datasets_py/logic/deontic/formula_builder.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "dc53e7c4875a2afa98e100177c0d70e224e1945048f18993333f72c313529109",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+      "current_workspace_sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+      "key": "ipfs_datasets_py/logic/deontic/ir.py",
+      "package_path": "ipfs_datasets_py/logic/deontic/ir.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+      "current_workspace_sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+      "key": "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+      "package_path": "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+      "current_workspace_sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+      "key": "ipfs_datasets_py/logic/ir_core/claims.py",
+      "package_path": "ipfs_datasets_py/logic/ir_core/claims.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "current_workspace_sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "key": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "package_path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+      "current_workspace_sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+      "key": "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py",
+      "package_path": "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "daddb94ed2170b1d4be5011c6294e024f705b6d75b2f5c853066b24d3271d929",
+      "current_workspace_sha256": "daddb94ed2170b1d4be5011c6294e024f705b6d75b2f5c853066b24d3271d929",
+      "key": "ipfs_datasets_py/logic/modal/decompiler.py",
+      "package_path": "ipfs_datasets_py/logic/modal/decompiler.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "04959738f30dd88243f5f54b6b4d42957ba21d8e97e000e96c4121daee86dbce",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390",
+      "current_workspace_sha256": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390",
+      "key": "ipfs_datasets_py/logic/parsers/event_calculus.py",
+      "package_path": "ipfs_datasets_py/logic/parsers/event_calculus.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "85ac4353d2bd15fee7cfcf345a4f7afe33d27baca49b1b273f08a217298d1bb7",
+      "current_workspace_sha256": "85ac4353d2bd15fee7cfcf345a4f7afe33d27baca49b1b273f08a217298d1bb7",
+      "key": "ipfs_datasets_py/logic/parsers/flogic.py",
+      "package_path": "ipfs_datasets_py/logic/parsers/flogic.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "85ac4353d2bd15fee7cfcf345a4f7afe33d27baca49b1b273f08a217298d1bb7",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+      "current_workspace_sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+      "key": "ipfs_datasets_py/logic/parsers/legacy_modal.py",
+      "package_path": "ipfs_datasets_py/logic/parsers/legacy_modal.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942",
+      "current_workspace_sha256": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942",
+      "key": "ipfs_datasets_py/logic/parsers/modal.py",
+      "package_path": "ipfs_datasets_py/logic/parsers/modal.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+      "current_workspace_sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+      "key": "ipfs_datasets_py/logic/syntax_core/algebra.py",
+      "package_path": "ipfs_datasets_py/logic/syntax_core/algebra.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+      "current_workspace_sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+      "key": "ipfs_datasets_py/logic/syntax_core/ast.py",
+      "package_path": "ipfs_datasets_py/logic/syntax_core/ast.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+      "current_workspace_sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+      "key": "ipfs_datasets_py/logic/syntax_core/contracts.py",
+      "package_path": "ipfs_datasets_py/logic/syntax_core/contracts.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+      "current_workspace_sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+      "key": "ipfs_datasets_py/logic/syntax_core/signatures.py",
+      "package_path": "ipfs_datasets_py/logic/syntax_core/signatures.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "2037a625ddb663cc8c0e444428f33b8d24308d7c55a9d78174b43387a1ece777",
+      "current_workspace_sha256": "2037a625ddb663cc8c0e444428f33b8d24308d7c55a9d78174b43387a1ece777",
+      "key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "2037a625ddb663cc8c0e444428f33b8d24308d7c55a9d78174b43387a1ece777",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "9324b6810718bc3712bb7da206a6782341e31991c31407ef4730878e75149c18",
+      "current_workspace_sha256": "9324b6810718bc3712bb7da206a6782341e31991c31407ef4730878e75149c18",
+      "key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "9324b6810718bc3712bb7da206a6782341e31991c31407ef4730878e75149c18",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "a6dda2199b41a4dc223f4c0232db0821da7ac05dc111b4bc8934e78e94959688",
+      "current_workspace_sha256": "a6dda2199b41a4dc223f4c0232db0821da7ac05dc111b4bc8934e78e94959688",
+      "key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "a6dda2199b41a4dc223f4c0232db0821da7ac05dc111b4bc8934e78e94959688",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3",
+      "current_workspace_sha256": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3",
+      "key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "fc605434e457eeb9f00c7d3c84f0f10147613e45503b9ea006bc69f0a44f0b84",
+      "current_workspace_sha256": "fc605434e457eeb9f00c7d3c84f0f10147613e45503b9ea006bc69f0a44f0b84",
+      "key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "fc605434e457eeb9f00c7d3c84f0f10147613e45503b9ea006bc69f0a44f0b84",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "63a68be07b1d015f92d8d5c3888517846bdf987aa2a1db4b45aa58559fcd8e8a",
+      "current_workspace_sha256": "63a68be07b1d015f92d8d5c3888517846bdf987aa2a1db4b45aa58559fcd8e8a",
+      "key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paths.py",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paths.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "63a68be07b1d015f92d8d5c3888517846bdf987aa2a1db4b45aa58559fcd8e8a",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "2a9896b200b1cf4f9d3fd2ff8a83369f25e5545ae67fa5125127ffb7fd871659",
+      "current_workspace_sha256": "2a9896b200b1cf4f9d3fd2ff8a83369f25e5545ae67fa5125127ffb7fd871659",
+      "key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "2a9896b200b1cf4f9d3fd2ff8a83369f25e5545ae67fa5125127ffb7fd871659",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447",
+      "current_workspace_sha256": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447",
+      "key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    },
+    {
+      "captured_native_sha256": "533aad6e2f2a6ec02494f782c95f44002c0efe5970aa563249e0ed16433ae247",
+      "current_workspace_sha256": "533aad6e2f2a6ec02494f782c95f44002c0efe5970aa563249e0ed16433ae247",
+      "key": "scripts/ops/legal_ir/run_incremental_autoencoders.py",
+      "package_path": "scripts/ops/legal_ir/run_incremental_autoencoders.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "533aad6e2f2a6ec02494f782c95f44002c0efe5970aa563249e0ed16433ae247",
+      "section": "orchestration",
+      "workspace_matches_native": true
+    }
+  ],
+  "schema": "execution-route-source-publication-scope/v1"
+}

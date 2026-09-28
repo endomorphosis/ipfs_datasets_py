@@ -1,0 +1,1012 @@
+{
+  "admitted": false,
+  "algorithm_limits": {
+    "backend": "python_sparse_batch",
+    "context_increased": false,
+    "cuda_automatic_switch": false,
+    "epochs": 1,
+    "line_search_attempts": 1,
+    "projection_update_families": 5,
+    "temperature": 0
+  },
+  "concurrency": {
+    "inference_group_cpu_progress_intervals": [
+      {
+        "cpu_progress": [
+          {
+            "cpu_ticks_delta": 137,
+            "pid": 2731241
+          },
+          {
+            "cpu_ticks_delta": 129,
+            "pid": 2731244
+          }
+        ],
+        "end": 1790635515.6873424,
+        "start": 1790635513.6681588
+      }
+    ],
+    "overlap_seconds_of_observation_windows": 1.9901673793792725,
+    "overlapping_sampled_cpu_progress_intervals": [
+      {
+        "end": 1790635515.6873424,
+        "inference_group_cpu_progress": [
+          {
+            "cpu_ticks_delta": 137,
+            "pid": 2731241
+          },
+          {
+            "cpu_ticks_delta": 129,
+            "pid": 2731244
+          }
+        ],
+        "seconds": 1.9901673793792725,
+        "start": 1790635513.697175,
+        "training_worker_cpu_progress": [
+          {
+            "cpu_ticks_delta": 40,
+            "pid": 2730270
+          },
+          {
+            "cpu_ticks_delta": 40,
+            "pid": 2730641
+          }
+        ]
+      }
+    ],
+    "scope_limit": "Sampled process groups and worker PIDs made CPU progress during overlapping observation intervals. No per-kernel timestamps were collected; simultaneous optimizer math and inference kernels are not established.",
+    "training_worker_cpu_progress_intervals": [
+      {
+        "cpu_progress": [
+          {
+            "cpu_ticks_delta": 200,
+            "pid": 2730270
+          },
+          {
+            "cpu_ticks_delta": 200,
+            "pid": 2730641
+          }
+        ],
+        "end": 1790635505.645614,
+        "start": 1790635503.635468
+      },
+      {
+        "cpu_progress": [
+          {
+            "cpu_ticks_delta": 135,
+            "pid": 2730270
+          },
+          {
+            "cpu_ticks_delta": 150,
+            "pid": 2730641
+          }
+        ],
+        "end": 1790635507.6558824,
+        "start": 1790635505.645614
+      },
+      {
+        "cpu_progress": [
+          {
+            "cpu_ticks_delta": 201,
+            "pid": 2730270
+          },
+          {
+            "cpu_ticks_delta": 201,
+            "pid": 2730641
+          }
+        ],
+        "end": 1790635509.6660178,
+        "start": 1790635507.6558824
+      },
+      {
+        "cpu_progress": [
+          {
+            "cpu_ticks_delta": 120,
+            "pid": 2730270
+          },
+          {
+            "cpu_ticks_delta": 120,
+            "pid": 2730641
+          }
+        ],
+        "end": 1790635511.676619,
+        "start": 1790635509.6660178
+      },
+      {
+        "cpu_progress": [
+          {
+            "cpu_ticks_delta": 40,
+            "pid": 2730270
+          },
+          {
+            "cpu_ticks_delta": 40,
+            "pid": 2730641
+          }
+        ],
+        "end": 1790635515.7175577,
+        "start": 1790635513.697175
+      }
+    ],
+    "training_worker_pids": [
+      2730270,
+      2730641
+    ]
+  },
+  "constitution_formalized": false,
+  "date_utc": "2026-09-28",
+  "exact_commands": "exact-commands.json",
+  "formalized": false,
+  "hardware_resizing_claim": "Requested logical ceiling32; initial actual dispatch2; exact-state resume under one CPU affinity planned1 and repeated zero completed passes. This validates capacity-independent resume, not a measured throughput speedup.",
+  "heldout_canary": false,
+  "inference": {
+    "amortized_route_wall_seconds_per_input_span": 15.315559268579818,
+    "capacity_plan": {
+      "admitted": false,
+      "limits": {
+        "affinity_cpu_count": 20,
+        "available_memory_mb": 44,
+        "hardware_cpu_count": 20,
+        "pending_passes": 2,
+        "requested_workers": 32,
+        "reservation_memory": 7,
+        "scheduler_cpu": 8,
+        "scheduler_memory": 96,
+        "scheduler_process_slots": 64
+      },
+      "reasons": [],
+      "schema_version": "autoencoder-dispatch-capacity/v1",
+      "scope": "concurrent_independent_passes",
+      "telemetry": {
+        "affinity_cpu_count": 20,
+        "available_memory_mb": 46529,
+        "cgroup_cpu_count": null,
+        "cgroup_memory_remaining_mb": null,
+        "hardware_cpu_count": 20,
+        "load_average": 10.619140625,
+        "probe_errors": []
+      },
+      "workers": 2
+    },
+    "dispatch_capacity_plans": [
+      {
+        "admitted": false,
+        "limits": {
+          "affinity_cpu_count": 20,
+          "available_memory_mb": 43,
+          "hardware_cpu_count": 20,
+          "pending_passes": 2,
+          "requested_workers": 2,
+          "reservation_cpu": 2,
+          "reservation_memory": 7
+        },
+        "reasons": [],
+        "schema_version": "autoencoder-dispatch-capacity/v1",
+        "scope": "concurrent_independent_passes",
+        "telemetry": {
+          "affinity_cpu_count": 20,
+          "available_memory_mb": 45106,
+          "cgroup_cpu_count": null,
+          "cgroup_memory_remaining_mb": null,
+          "hardware_cpu_count": 20,
+          "load_average": 10.818359375,
+          "probe_errors": []
+        },
+        "workers": 2
+      }
+    ],
+    "elapsed_seconds": 30.631118537159637,
+    "execution_gate_applied": true,
+    "input_count": 2,
+    "native_pass_count": 2,
+    "optimizer_pass_count": 0,
+    "qualified_count": 2,
+    "registry_files": [],
+    "speed_scope": "full route startup, weight loading, two inputs and repeated qualification validation; embedding evaluate has bridge_names=[] and target_count=0, not legal-IR speed",
+    "weight_outputs": [],
+    "weight_publications": []
+  },
+  "lake_evidence": {
+    "boundaries": [
+      20,
+      25,
+      30
+    ],
+    "command": [
+      "lake",
+      "build",
+      "Legal"
+    ],
+    "qualification_validation_role": "tuning validation used for repeated candidate selection, not an independent held-out canary",
+    "scope": "source_locked_numeric_pattern",
+    "scope_limit": "Lean proves arithmetic threshold boundaries rendered from the compiled fixture. It does not prove federal law meaning, whole-text equivalence, or formula generation by the autoencoder.",
+    "successful_builds": 8
+  },
+  "protected_checkpoint": {
+    "bytes": 25895338,
+    "expected_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "unchanged": true
+  },
+  "qualification_receipts": [
+    {
+      "admitted": false,
+      "candidate_artifact": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "candidate_version_id": "inference-1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "elapsed_seconds": 5.309725467814133,
+      "formalized": false,
+      "gate_results": {
+        "family_syntax_gate": {
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true
+        },
+        "lake_gate": {
+          "passed": true
+        },
+        "metric_gate": {
+          "passed": true
+        },
+        "semantic_gate": {
+          "passed": true
+        }
+      },
+      "model_metric_evaluation": {
+        "bridge_names": [],
+        "cache_enabled": false,
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "legal_ir_target_count": 0,
+        "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+        "use_sample_memory": false
+      },
+      "receipt": "native-inference/inference/passes/0abbef6e98ce9356109790b3c95a30119adf581e31eac8a22d74f1a3c2e8f9ba/qualification.json",
+      "rows": [
+        {
+          "all_required_gates_passed": true,
+          "embedding_cosine_similarity": 1.0,
+          "embedding_cosine_similarity_raw": 1.0000000000000002,
+          "lake_command": [
+            "lake",
+            "build",
+            "Legal"
+          ],
+          "lake_elapsed_seconds": 0.5242446749471128,
+          "lake_pattern": {
+            "fail": 24,
+            "kind": "threshold",
+            "meet": 25
+          },
+          "lake_scope": "source_locked_numeric_pattern",
+          "lake_source_sha256": "c4eb5b4bc33a4f35724354fdbc108a8ea7d97946ea0909bf8e9217a33229ac53",
+          "model_evaluation_elapsed_seconds": 2.6318767978809774,
+          "reconstruction_loss": 0.0,
+          "source": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "25",
+            "text": "The officer shall retain the file for at least 25 days.",
+            "title": "qualification-fixture"
+          },
+          "source_sha256": "e926796cf379e18399ffec108f80c937c425364e8904f7f83da99dce8dbddf3b",
+          "split": "training",
+          "structural_elapsed_seconds": 0.6228599569294602
+        },
+        {
+          "all_required_gates_passed": true,
+          "embedding_cosine_similarity": 1.0,
+          "embedding_cosine_similarity_raw": 1.0,
+          "lake_command": [
+            "lake",
+            "build",
+            "Legal"
+          ],
+          "lake_elapsed_seconds": 0.5353539239149541,
+          "lake_pattern": {
+            "fail": 29,
+            "kind": "threshold",
+            "meet": 30
+          },
+          "lake_scope": "source_locked_numeric_pattern",
+          "lake_source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+          "model_evaluation_elapsed_seconds": 0.07496520108543336,
+          "reconstruction_loss": 0.0,
+          "source": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "validation",
+            "text": "The agency shall retain records for at least 30 days.",
+            "title": "qualification-fixture"
+          },
+          "source_sha256": "766911410594fc2c4afabf5155166e9d6db81430c69c4fdb8e5a8af7b3ba0928",
+          "split": "heldout",
+          "structural_elapsed_seconds": 0.5911309369839728
+        }
+      ]
+    },
+    {
+      "admitted": false,
+      "candidate_artifact": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "candidate_version_id": "inference-1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "elapsed_seconds": 5.206833481090143,
+      "formalized": false,
+      "gate_results": {
+        "family_syntax_gate": {
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true
+        },
+        "lake_gate": {
+          "passed": true
+        },
+        "metric_gate": {
+          "passed": true
+        },
+        "semantic_gate": {
+          "passed": true
+        }
+      },
+      "model_metric_evaluation": {
+        "bridge_names": [],
+        "cache_enabled": false,
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "legal_ir_target_count": 0,
+        "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+        "use_sample_memory": false
+      },
+      "receipt": "native-inference/inference/passes/c419980648571170c7fe77668d7f66d86d891b2653ec20323df04c02577cacaa/qualification.json",
+      "rows": [
+        {
+          "all_required_gates_passed": true,
+          "embedding_cosine_similarity": 1.0,
+          "embedding_cosine_similarity_raw": 1.0000000000000002,
+          "lake_command": [
+            "lake",
+            "build",
+            "Legal"
+          ],
+          "lake_elapsed_seconds": 0.5037832229863852,
+          "lake_pattern": {
+            "fail": 19,
+            "kind": "threshold",
+            "meet": 20
+          },
+          "lake_scope": "source_locked_numeric_pattern",
+          "lake_source_sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d",
+          "model_evaluation_elapsed_seconds": 2.5514287650585175,
+          "reconstruction_loss": 0.0,
+          "source": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "20",
+            "text": "The officer shall retain the file for at least 20 days.",
+            "title": "qualification-fixture"
+          },
+          "source_sha256": "ac822605c0d4189d986f5f742ed687a187bccba62ecfe2c4e181823284ecaf69",
+          "split": "training",
+          "structural_elapsed_seconds": 0.6008735760115087
+        },
+        {
+          "all_required_gates_passed": true,
+          "embedding_cosine_similarity": 1.0,
+          "embedding_cosine_similarity_raw": 1.0,
+          "lake_command": [
+            "lake",
+            "build",
+            "Legal"
+          ],
+          "lake_elapsed_seconds": 0.5367743400856853,
+          "lake_pattern": {
+            "fail": 29,
+            "kind": "threshold",
+            "meet": 30
+          },
+          "lake_scope": "source_locked_numeric_pattern",
+          "lake_source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+          "model_evaluation_elapsed_seconds": 0.07729762885719538,
+          "reconstruction_loss": 0.0,
+          "source": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "validation",
+            "text": "The agency shall retain records for at least 30 days.",
+            "title": "qualification-fixture"
+          },
+          "source_sha256": "766911410594fc2c4afabf5155166e9d6db81430c69c4fdb8e5a8af7b3ba0928",
+          "split": "heldout",
+          "structural_elapsed_seconds": 0.5942944439593703
+        }
+      ]
+    },
+    {
+      "admitted": false,
+      "candidate_artifact": {
+        "bytes": 1035,
+        "sha256": "ba6a0ff03eaa5b43acacc300feae9822f41bf1956cb22a265ad752c85fa6b0bb"
+      },
+      "candidate_version_id": "sha256:391a324b3b38df7c0ba50151de46f2622138434410f078b9af37000a1efa2288",
+      "elapsed_seconds": 6.904301089933142,
+      "formalized": false,
+      "gate_results": {
+        "family_syntax_gate": {
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true
+        },
+        "lake_gate": {
+          "passed": true
+        },
+        "metric_gate": {
+          "passed": true
+        },
+        "semantic_gate": {
+          "passed": true
+        }
+      },
+      "model_metric_evaluation": {
+        "bridge_names": [],
+        "cache_enabled": false,
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "legal_ir_target_count": 0,
+        "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+        "use_sample_memory": false
+      },
+      "receipt": "native-training/progress/qualifications/qualified-333b064d5aa193c95beee856fd9274dd124ab5d8e13137641d69d10f813bd60d/qualification.json",
+      "rows": [
+        {
+          "all_required_gates_passed": true,
+          "embedding_cosine_similarity": 1.0,
+          "embedding_cosine_similarity_raw": 1.0000000000000002,
+          "lake_command": [
+            "lake",
+            "build",
+            "Legal"
+          ],
+          "lake_elapsed_seconds": 0.5535361492075026,
+          "lake_pattern": {
+            "fail": 24,
+            "kind": "threshold",
+            "meet": 25
+          },
+          "lake_scope": "source_locked_numeric_pattern",
+          "lake_source_sha256": "c4eb5b4bc33a4f35724354fdbc108a8ea7d97946ea0909bf8e9217a33229ac53",
+          "model_evaluation_elapsed_seconds": 2.4081407350022346,
+          "reconstruction_loss": 0.0,
+          "source": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "25",
+            "text": "The officer shall retain the file for at least 25 days.",
+            "title": "qualification-fixture"
+          },
+          "source_sha256": "e926796cf379e18399ffec108f80c937c425364e8904f7f83da99dce8dbddf3b",
+          "split": "training",
+          "structural_elapsed_seconds": 0.6616781041957438
+        },
+        {
+          "all_required_gates_passed": true,
+          "embedding_cosine_similarity": 1.0,
+          "embedding_cosine_similarity_raw": 1.0,
+          "lake_command": [
+            "lake",
+            "build",
+            "Legal"
+          ],
+          "lake_elapsed_seconds": 0.5219802169594914,
+          "lake_pattern": {
+            "fail": 29,
+            "kind": "threshold",
+            "meet": 30
+          },
+          "lake_scope": "source_locked_numeric_pattern",
+          "lake_source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+          "model_evaluation_elapsed_seconds": 0.08683481300249696,
+          "reconstruction_loss": 0.0,
+          "source": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "validation",
+            "text": "The agency shall retain records for at least 30 days.",
+            "title": "qualification-fixture"
+          },
+          "source_sha256": "766911410594fc2c4afabf5155166e9d6db81430c69c4fdb8e5a8af7b3ba0928",
+          "split": "heldout",
+          "structural_elapsed_seconds": 0.5796557168941945
+        }
+      ]
+    },
+    {
+      "admitted": false,
+      "candidate_artifact": {
+        "bytes": 1035,
+        "sha256": "c030479281d07d06b78b0c80c24be45732377bd9cbab75fc50e084566afead8c"
+      },
+      "candidate_version_id": "sha256:045377d75c6dec8834c396bb8114b2bd7d80ca15f188897ca3a04dab458e593b",
+      "elapsed_seconds": 4.880145183997229,
+      "formalized": false,
+      "gate_results": {
+        "family_syntax_gate": {
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true
+        },
+        "lake_gate": {
+          "passed": true
+        },
+        "metric_gate": {
+          "passed": true
+        },
+        "semantic_gate": {
+          "passed": true
+        }
+      },
+      "model_metric_evaluation": {
+        "bridge_names": [],
+        "cache_enabled": false,
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "legal_ir_target_count": 0,
+        "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+        "use_sample_memory": false
+      },
+      "receipt": "native-training/progress/qualifications/qualified-e934723143428796dafb186a8fdb0542f27f4beb310c10a476a9485e6af02c7b/qualification.json",
+      "rows": [
+        {
+          "all_required_gates_passed": true,
+          "embedding_cosine_similarity": 1.0,
+          "embedding_cosine_similarity_raw": 1.0000000000000002,
+          "lake_command": [
+            "lake",
+            "build",
+            "Legal"
+          ],
+          "lake_elapsed_seconds": 0.49280152190476656,
+          "lake_pattern": {
+            "fail": 19,
+            "kind": "threshold",
+            "meet": 20
+          },
+          "lake_scope": "source_locked_numeric_pattern",
+          "lake_source_sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d",
+          "model_evaluation_elapsed_seconds": 0.11140308412723243,
+          "reconstruction_loss": 0.0,
+          "source": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "20",
+            "text": "The officer shall retain the file for at least 20 days.",
+            "title": "qualification-fixture"
+          },
+          "source_sha256": "ac822605c0d4189d986f5f742ed687a187bccba62ecfe2c4e181823284ecaf69",
+          "split": "training",
+          "structural_elapsed_seconds": 0.5466664019040763
+        },
+        {
+          "all_required_gates_passed": true,
+          "embedding_cosine_similarity": 1.0,
+          "embedding_cosine_similarity_raw": 1.0,
+          "lake_command": [
+            "lake",
+            "build",
+            "Legal"
+          ],
+          "lake_elapsed_seconds": 0.504180806921795,
+          "lake_pattern": {
+            "fail": 29,
+            "kind": "threshold",
+            "meet": 30
+          },
+          "lake_scope": "source_locked_numeric_pattern",
+          "lake_source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+          "model_evaluation_elapsed_seconds": 0.08055115793831646,
+          "reconstruction_loss": 0.0,
+          "source": {
+            "citation": null,
+            "embedding_model": "mock:stable-sha256",
+            "embedding_vector": null,
+            "section": "validation",
+            "text": "The agency shall retain records for at least 30 days.",
+            "title": "qualification-fixture"
+          },
+          "source_sha256": "766911410594fc2c4afabf5155166e9d6db81430c69c4fdb8e5a8af7b3ba0928",
+          "split": "heldout",
+          "structural_elapsed_seconds": 0.5586554540786892
+        }
+      ]
+    }
+  ],
+  "qualification_thresholds": {
+    "max_reconstruction_loss": 0.2,
+    "min_embedding_cosine": 0.72,
+    "unchanged": true
+  },
+  "resource_audit": "resource-audit.json",
+  "resume": {
+    "native-inference": {
+      "capacity_plan": {
+        "admitted": false,
+        "limits": {
+          "affinity_cpu_count": 1,
+          "available_memory_mb": 44,
+          "hardware_cpu_count": 20,
+          "pending_passes": 2,
+          "requested_workers": 32,
+          "reservation_memory": 7,
+          "scheduler_cpu": 8,
+          "scheduler_memory": 96,
+          "scheduler_process_slots": 64
+        },
+        "reasons": [],
+        "schema_version": "autoencoder-dispatch-capacity/v1",
+        "scope": "concurrent_independent_passes",
+        "telemetry": {
+          "affinity_cpu_count": 1,
+          "available_memory_mb": 46400,
+          "cgroup_cpu_count": null,
+          "cgroup_memory_remaining_mb": null,
+          "hardware_cpu_count": 20,
+          "load_average": 11.03662109375,
+          "probe_errors": []
+        },
+        "workers": 1
+      },
+      "dispatched_pass_count": 0,
+      "elapsed_seconds": 112.79257997102104,
+      "new_lake_builds": 0,
+      "same_state_and_semantic_binding": true,
+      "timing_scope": "Reduced-capacity resume and evidence verification; both resume processes share one CPU. Not a throughput benchmark.",
+      "training_executed": false
+    },
+    "native-training": {
+      "capacity_plan": {
+        "admitted": false,
+        "limits": {
+          "affinity_cpu_count": 1,
+          "available_memory_mb": 44,
+          "hardware_cpu_count": 20,
+          "pending_passes": 2,
+          "requested_workers": 32,
+          "reservation_memory": 7,
+          "scheduler_cpu": 8,
+          "scheduler_memory": 96,
+          "scheduler_process_slots": 64
+        },
+        "reasons": [],
+        "schema_version": "autoencoder-dispatch-capacity/v1",
+        "scope": "concurrent_independent_passes",
+        "telemetry": {
+          "affinity_cpu_count": 1,
+          "available_memory_mb": 46421,
+          "cgroup_cpu_count": null,
+          "cgroup_memory_remaining_mb": null,
+          "hardware_cpu_count": 20,
+          "load_average": 11.03662109375,
+          "probe_errors": []
+        },
+        "workers": 1
+      },
+      "dispatched_pass_count": 0,
+      "elapsed_seconds": 125.86755380500108,
+      "new_lake_builds": 0,
+      "same_state_and_semantic_binding": true,
+      "timing_scope": "Reduced-capacity resume and evidence verification; both resume processes share one CPU. Not a throughput benchmark.",
+      "training_executed": false
+    }
+  },
+  "schema": "native-autoencoder-execution-routes-smoke/v1",
+  "scope": "controlled qualification fixtures on one host",
+  "source_samples": {
+    "actual_uscode_spans": 0,
+    "constitution_spans": 0,
+    "input": [
+      {
+        "section": "20",
+        "text": "The officer shall retain the file for at least 20 days.",
+        "title": "qualification-fixture"
+      },
+      {
+        "section": "25",
+        "text": "The officer shall retain the file for at least 25 days.",
+        "title": "qualification-fixture"
+      }
+    ],
+    "qualification_validation": [
+      {
+        "section": "validation",
+        "text": "The agency shall retain records for at least 30 days.",
+        "title": "qualification-fixture"
+      }
+    ]
+  },
+  "source_scope": "Native receipts bind source hashes. Later regression tests, if copied, are separate checks; no code changes are retroactively covered.",
+  "test_runs": [
+    {
+      "artifact": "route-readiness.xml",
+      "errors": 0,
+      "failures": 0,
+      "tests": 409
+    },
+    {
+      "artifact": "final-integration.xml",
+      "errors": 0,
+      "failures": 0,
+      "tests": 121
+    }
+  ],
+  "training": {
+    "accepted_epochs": 2,
+    "amortized_route_wall_seconds_per_input_span": 24.032843339955434,
+    "capacity_plan": {
+      "admitted": false,
+      "limits": {
+        "affinity_cpu_count": 20,
+        "available_memory_mb": 44,
+        "hardware_cpu_count": 20,
+        "pending_passes": 2,
+        "requested_workers": 32,
+        "reservation_memory": 7,
+        "scheduler_cpu": 8,
+        "scheduler_memory": 96,
+        "scheduler_process_slots": 64
+      },
+      "reasons": [],
+      "schema_version": "autoencoder-dispatch-capacity/v1",
+      "scope": "concurrent_independent_passes",
+      "telemetry": {
+        "affinity_cpu_count": 20,
+        "available_memory_mb": 46530,
+        "cgroup_cpu_count": null,
+        "cgroup_memory_remaining_mb": null,
+        "hardware_cpu_count": 20,
+        "load_average": 10.619140625,
+        "probe_errors": []
+      },
+      "workers": 2
+    },
+    "dispatch_capacity_plans": [
+      {
+        "admitted": false,
+        "limits": {
+          "affinity_cpu_count": 20,
+          "available_memory_mb": 45,
+          "hardware_cpu_count": 20,
+          "pending_passes": 2,
+          "requested_workers": 2,
+          "reservation_cpu": 2,
+          "reservation_memory": 7
+        },
+        "reasons": [],
+        "schema_version": "autoencoder-dispatch-capacity/v1",
+        "scope": "concurrent_independent_passes",
+        "telemetry": {
+          "affinity_cpu_count": 20,
+          "available_memory_mb": 46641,
+          "cgroup_cpu_count": null,
+          "cgroup_memory_remaining_mb": null,
+          "hardware_cpu_count": 20,
+          "load_average": 10.5234375,
+          "probe_errors": []
+        },
+        "workers": 2
+      }
+    ],
+    "elapsed_seconds": 48.06568667991087,
+    "input_count": 2,
+    "logical_lane_count": 32,
+    "native_optimizer_pass_count": 2,
+    "optimizers": [
+      {
+        "accepted_epochs": 1,
+        "admitted": false,
+        "after": {
+          "embedding_cosine_similarity": 1.0000000000000002,
+          "legal_ir_view_cross_entropy_loss": 1.78958951026235,
+          "reconstruction_loss": 0.0
+        },
+        "base_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+        "before": {
+          "embedding_cosine_similarity": 1.0000000000000002,
+          "legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+          "reconstruction_loss": 0.0
+        },
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "candidate": {
+          "bytes": 1035,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-execution-routes-20260928/native-training/progress/outputs/qualified-333b064d5aa193c95beee856fd9274dd124ab5d8e13137641d69d10f813bd60d/candidate.manifest.json",
+          "sha256": "ba6a0ff03eaa5b43acacc300feae9822f41bf1956cb22a265ad752c85fa6b0bb"
+        },
+        "candidate_materialized_checkpoint": {
+          "bytes": 26626107,
+          "sha256": "9e936c50a82bb202c61a53c4d11af4164ec7b08c34859d0214225818c7e9d921"
+        },
+        "cold_initial_evaluate": {
+          "count": 1.0,
+          "disk_cache_disabled": true,
+          "evaluation_sample_role": "same single training row; optimizer has no separate validation rows",
+          "legal_ir_target_count": 1,
+          "process_cache_initially_empty": true,
+          "profile_stage": "before_holdout_evaluation",
+          "sample_count": 1,
+          "seconds_per_evaluate": 5.430767367826775
+        },
+        "formalized": false,
+        "metric_disk_cache": 0,
+        "objective_validation_role": "in-sample; separate 30-day qualification validation is repeated-selection tuning validation",
+        "optimizer_wall_seconds_per_span": 6.995341399917379,
+        "parallel_bridge_workers": 1,
+        "pid": 2730270,
+        "provers": false,
+        "receipt": "native-training/progress/outputs/qualified-333b064d5aa193c95beee856fd9274dd124ab5d8e13137641d69d10f813bd60d/receipt.json",
+        "run_id": "qualified-333b064d5aa193c95beee856fd9274dd124ab5d8e13137641d69d10f813bd60d",
+        "sample_count": 1,
+        "selected_update": "legal_ir_view_logits",
+        "source": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "25",
+          "text": "The officer shall retain the file for at least 25 days.",
+          "title": "qualification-fixture"
+        },
+        "use_sample_memory": false,
+        "warm_line_search_evaluates": {
+          "count": 5.0,
+          "disk_cache_disabled": true,
+          "mean_seconds_per_evaluate": 0.10293192844837903,
+          "process_cache_warmed_within_job": true,
+          "seconds_total": 0.5146596422418952
+        },
+        "worker_wall_seconds_per_span": 9.016730940202251
+      },
+      {
+        "accepted_epochs": 1,
+        "admitted": false,
+        "after": {
+          "embedding_cosine_similarity": 1.0000000000000002,
+          "legal_ir_view_cross_entropy_loss": 1.78958951026235,
+          "reconstruction_loss": 0.0
+        },
+        "base_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+        "before": {
+          "embedding_cosine_similarity": 1.0000000000000002,
+          "legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+          "reconstruction_loss": 0.0
+        },
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "candidate": {
+          "bytes": 1035,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-execution-routes-20260928/native-training/progress/outputs/qualified-e934723143428796dafb186a8fdb0542f27f4beb310c10a476a9485e6af02c7b/candidate.manifest.json",
+          "sha256": "c030479281d07d06b78b0c80c24be45732377bd9cbab75fc50e084566afead8c"
+        },
+        "candidate_materialized_checkpoint": {
+          "bytes": 26626107,
+          "sha256": "cd5bc2b3c65cdd5c8d0b8d5ac8f4abb9de28593ca489a35eac567557c82e5304"
+        },
+        "cold_initial_evaluate": {
+          "count": 1.0,
+          "disk_cache_disabled": true,
+          "evaluation_sample_role": "same single training row; optimizer has no separate validation rows",
+          "legal_ir_target_count": 1,
+          "process_cache_initially_empty": true,
+          "profile_stage": "before_holdout_evaluation",
+          "sample_count": 1,
+          "seconds_per_evaluate": 5.167964759049937
+        },
+        "formalized": false,
+        "metric_disk_cache": 0,
+        "objective_validation_role": "in-sample; separate 30-day qualification validation is repeated-selection tuning validation",
+        "optimizer_wall_seconds_per_span": 6.738789041060954,
+        "parallel_bridge_workers": 1,
+        "pid": 2730641,
+        "provers": false,
+        "receipt": "native-training/progress/outputs/qualified-e934723143428796dafb186a8fdb0542f27f4beb310c10a476a9485e6af02c7b/receipt.json",
+        "run_id": "qualified-e934723143428796dafb186a8fdb0542f27f4beb310c10a476a9485e6af02c7b",
+        "sample_count": 1,
+        "selected_update": "legal_ir_view_logits",
+        "source": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "20",
+          "text": "The officer shall retain the file for at least 20 days.",
+          "title": "qualification-fixture"
+        },
+        "use_sample_memory": false,
+        "warm_line_search_evaluates": {
+          "count": 5.0,
+          "disk_cache_disabled": true,
+          "mean_seconds_per_evaluate": 0.1029774684458971,
+          "process_cache_warmed_within_job": true,
+          "seconds_total": 0.5148873422294855
+        },
+        "worker_wall_seconds_per_span": 8.774589147185907
+      }
+    ],
+    "qualified_candidates": 2,
+    "speed_scope": "full route includes two parallel jobs and owner qualifications; separate one-sample cold/warm bridge evaluate timings are reported per job",
+    "weight_control": {
+      "admitted": false,
+      "automatic_branch_merge": false,
+      "capabilities": [
+        {
+          "autoload": false,
+          "duckdb_version": "1.5.5",
+          "extension_sha256": {
+            "httpfs": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9",
+            "quack": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08"
+          },
+          "native_quack": true,
+          "network_install": false,
+          "platform": "linux_arm64"
+        },
+        {
+          "autoload": false,
+          "duckdb_version": "1.5.5",
+          "extension_sha256": {
+            "httpfs": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9",
+            "quack": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08"
+          },
+          "native_quack": true,
+          "network_install": false,
+          "platform": "linux_arm64"
+        }
+      ],
+      "command_counts": {
+        "ClaimRun": 2,
+        "CompleteRun": 2,
+        "ReadRun": 2,
+        "ReadVersion": 4,
+        "RenewLease": 4
+      },
+      "cross_host_execution_qualified": false,
+      "database_writer_count": 1,
+      "failure_recording": "trusted_owner_local",
+      "formalized": false,
+      "historical_replay": "trusted_owner_local",
+      "owner_verified_completion_required": true,
+      "production_activation": false,
+      "promotion_performed": false,
+      "remote_artifact_transfer": false,
+      "schema_version": "autoencoder-shared-weight-control/v1",
+      "scoped_run_count": 2,
+      "shared_artifact_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-execution-routes-20260928/native-training/artifacts",
+      "shared_database_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-execution-routes-20260928/native-training/control.duckdb",
+      "transport": "native_scoped_quack_prototype",
+      "weights_downloaded": false,
+      "worker_weight_storage": "private_state_and_immutable_sparse_registry_artifacts",
+      "workers_open_database": false
+    },
+    "weight_publications": []
+  }
+}

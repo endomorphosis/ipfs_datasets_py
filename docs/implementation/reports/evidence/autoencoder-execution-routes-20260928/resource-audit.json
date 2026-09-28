@@ -1,0 +1,113 @@
+{
+  "admitted": false,
+  "all_reservation_count": 150,
+  "artifacts_deleted": false,
+  "claims_released_by_this_audit": false,
+  "historical_records_all_exactly_unchanged": true,
+  "historical_reservation_count": 133,
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "ledger_sha256": "4feb3e934bc86eef153fe31e1959fd36177ae41abb9fa51fd65d5ebabf1d2467",
+  "limit_bytes": 80000000000,
+  "observed_at_utc": "2026-09-28T22:52:09.160401+00:00",
+  "owned_route_reservations": [
+    {
+      "cpu_slots": 2,
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 77532628142,
+        "inventory": {
+          "apparent_bytes": 48267628142,
+          "entry_count": 226054,
+          "special_file_count": 21,
+          "symlink_count": 3948
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 220940353536,
+        "observed_apparent_bytes": 48267628142,
+        "outstanding_full_reservations_bytes": 29265000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "final_attempt_bytes": 972804,
+      "memory_mb": 8192,
+      "record_status": "released",
+      "reservation_id": "91c086745eae4524a76abd20318748a7",
+      "status": "released",
+      "storage_bytes": 500000000
+    },
+    {
+      "cpu_slots": 2,
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 77106672488,
+        "inventory": {
+          "apparent_bytes": 48341672488,
+          "entry_count": 226179,
+          "special_file_count": 21,
+          "symlink_count": 3950
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 220861632512,
+        "observed_apparent_bytes": 48341672488,
+        "outstanding_full_reservations_bytes": 28765000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "final_attempt_bytes": 42321810,
+      "memory_mb": 8192,
+      "record_status": "released",
+      "reservation_id": "1cb9a4e6bdd04a23ac9f75894aba6f01",
+      "status": "released",
+      "storage_bytes": 500000000
+    },
+    {
+      "cpu_slots": 1,
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 77592622892,
+        "inventory": {
+          "apparent_bytes": 48327622892,
+          "entry_count": 221687,
+          "special_file_count": 21,
+          "symlink_count": 3813
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 220578209792,
+        "observed_apparent_bytes": 48327622892,
+        "outstanding_full_reservations_bytes": 29265000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "final_attempt_bytes": 984509,
+      "memory_mb": 8192,
+      "record_status": "released",
+      "reservation_id": "f969d18b3cab4174a7d4b2b7aa9824b6",
+      "status": "released",
+      "storage_bytes": 500000000
+    },
+    {
+      "cpu_slots": 1,
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 77092629766,
+        "inventory": {
+          "apparent_bytes": 48327629766,
+          "entry_count": 221689,
+          "special_file_count": 21,
+          "symlink_count": 3813
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 220578562048,
+        "observed_apparent_bytes": 48327629766,
+        "outstanding_full_reservations_bytes": 28765000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "final_attempt_bytes": 43659182,
+      "memory_mb": 8192,
+      "record_status": "released",
+      "reservation_id": "6783bc30da944b63b31fda750a3fffce",
+      "status": "released",
+      "storage_bytes": 500000000
+    }
+  ],
+  "prior_record_canonical_sha256": "bc7fbba07ba8f55052bc52894e1486f3e8af8ddb509f6cdf28927e78ddfaea91",
+  "retained_reservation_count": 61,
+  "schema": "execution-routes-resource-audit/v1"
+}

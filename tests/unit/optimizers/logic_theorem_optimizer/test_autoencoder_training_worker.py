@@ -89,6 +89,29 @@ def test_worker_writes_private_candidate_and_complete_receipt(tmp_path, monkeypa
     assert "roundtrip_ok" not in receipt
 
 
+def test_native_worker_enters_explicit_training_gate_without_changing_job_policy(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_paths as paths
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
+    original_gate = paths.gated_projection_training
+    calls = []
+    def gate(model, samples, **kwargs):
+        calls.append(dict(kwargs))
+        return original_gate(model, samples, **kwargs)
+    @wraps(AdaptiveModalAutoencoder.train_generalizable_projection)
+    def projection(model, samples, **kwargs):
+        return _trainer(model, samples, **kwargs)
+    monkeypatch.setattr(paths, "gated_projection_training", gate)
+    monkeypatch.setattr(AdaptiveModalAutoencoder, "train_generalizable_projection", projection)
+    spec = worker.TrainingJobSpec.from_dict(_job(tmp_path))
+    receipt = worker.execute_training_job(spec)
+    assert len(calls) == 1 and calls[0]["execution_mode"] == paths.TRAINING_PATH
+    for name, value in spec.training_config.projection_kwargs().items():
+        assert calls[0][name] == value
+    assert receipt["execution_path"] == "training" and receipt["execution_gate_applied"] is True
+    assert receipt["training_report"]["stopped_reason"] == "synthetic_fixture"
+    assert receipt["admitted"] is False and receipt["promotion_performed"] is False
+
+
 def test_worker_ontology_observation_preserves_discarded_batch_recovery_and_training_result(tmp_path, monkeypatch):
     from ipfs_datasets_py.logic.autoformal import ontology_capture, procedure_slot, recipient_reference
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_autoencoder as modal
