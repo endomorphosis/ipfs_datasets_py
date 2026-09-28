@@ -306,6 +306,33 @@ def test_status_change_requires_the_stored_control_receipt(tmp_path):
         assert source.get(task.task_cid).status == "retrying"
 
 
+def test_explicit_in_progress_task_is_preflighted_for_resume(tmp_path):
+    from ipfs_accelerate_py.agent_supervisor.task_sources.database_task_source import DatabaseTaskSource
+    first, target = selected_queue(tmp_path)
+    seen = []
+
+    def probe(_repo, _commands, *, task_authority):
+        seen.append(task_authority["canonical_task_cid"])
+        return {"passed": True}
+
+    module = launcher()
+    with DatabaseTaskSource(tmp_path / "control.duckdb", install_schema=False) as source:
+        source.compare_and_set_status(
+            target.task_cid, target.revision, "in_progress",
+            receipt={"operation": "database_claim"},
+        )
+        report = module.preflight_next_repair(
+            source, tmp_path, probe=probe, task_id=target.task_alias,
+        )
+        assert source.ready_tasks(limit=1).tasks[0].task_cid == first.task_cid
+    assert seen == [target.task_cid]
+    assert report["eligible"] is True and report["passed"] is True
+    assert report["task_cid"] == target.task_cid
+    assert module.native_task_binding(report) == [
+        "--execution-slice-task-cid", target.task_cid,
+    ]
+
+
 def test_selected_blocked_task_never_falls_back_to_other_ready_work(tmp_path):
     from ipfs_accelerate_py.agent_supervisor.task_sources.database_task_source import DatabaseTaskSource
     _, target = selected_queue(tmp_path)

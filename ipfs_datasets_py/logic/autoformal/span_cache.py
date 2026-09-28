@@ -162,6 +162,20 @@ def compiler_identity(path_hashes: Mapping[str, str]) -> str:
     return "sha256:" + hashlib.sha256(canonical_bytes(dict(path_hashes))).hexdigest()
 
 
+def progress_fingerprint(
+    *,
+    source_sha256: str,
+    status: str,
+    sealed: bool,
+    reason: str,
+    code_identity: str,
+) -> str:
+    """Identity of a durable span outcome. Claims and heartbeats are not part of it."""
+
+    payload = "\n".join((source_sha256, status, "1" if sealed else "0", reason, code_identity))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 class SpanCache:
     """File-backed DuckDB queue of pending, sealed, and unsealed spans."""
 
@@ -366,6 +380,158 @@ class SpanCache:
             "jsonl_written": False,
             "path": str(destination),
             "task_count": self._db.execute("SELECT count(*) FROM task_board").fetchone()[0],
+        }
+
+    def published_progress_fingerprints(self) -> dict[str, str]:
+        """Fingerprints already uploaded. A missing catalog is an empty baseline."""
+
+        try:
+            loaded = json.loads(self._meta("published_progress_fingerprints") or "{}")
+        except json.JSONDecodeError:
+            return {}
+        if not isinstance(loaded, dict):
+            return {}
+        return {str(key): str(value) for key, value in loaded.items() if key and value}
+
+    def applied_sparse_checkpoints(self) -> list[str]:
+        try:
+            loaded = json.loads(self._meta("applied_sparse_checkpoints") or "[]")
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(loaded, list):
+            return []
+        return [str(item) for item in loaded if str(item)]
+
+    def remember_sparse_checkpoint(self, path_in_repo: str) -> None:
+        applied = self.applied_sparse_checkpoints()
+        if path_in_repo and path_in_repo not in applied:
+            applied.append(path_in_repo)
+        self._set_meta("applied_sparse_checkpoints", _json(applied[-4000:]))
+
+    def durable_progress_rows(self) -> list[dict[str, Any]]:
+        """Sealed and gap rows only. Pending claims and heartbeats stay local."""
+
+        rows = self._db.execute(
+            """
+            SELECT source_span_id, coalesce(legal_id, ''), source_sha256, status,
+                   sealed, coalesce(reason, ''), coalesce(code_identity, '')
+            FROM span_cache
+            WHERE sealed = TRUE OR status = 'gap'
+            ORDER BY source_span_id
+            """
+        ).fetchall()
+        found: list[dict[str, Any]] = []
+        for row in rows:
+            sealed = bool(row[4])
+            found.append(
+                {
+                    "code_identity": str(row[6] or ""),
+                    "fingerprint": progress_fingerprint(
+                        source_sha256=str(row[2] or ""),
+                        status=str(row[3] or ""),
+                        sealed=sealed,
+                        reason=str(row[5] or ""),
+                        code_identity=str(row[6] or ""),
+                    ),
+                    "legal_id": str(row[1] or ""),
+                    "reason": str(row[5] or ""),
+                    "sealed": sealed,
+                    "source_sha256": str(row[2] or ""),
+                    "source_span_id": str(row[0] or ""),
+                    "status": str(row[3] or ""),
+                }
+            )
+        return found
+
+    def sparse_progress_delta(self) -> dict[str, Any]:
+        """Rows whose durable outcome changed since the last uploaded delta."""
+
+        previous = self.published_progress_fingerprints()
+        changed = [row for row in self.durable_progress_rows() if previous.get(row["source_span_id"]) != row["fingerprint"]]
+        return {
+            "admitted": False,
+            "delta_count": len(changed),
+            "fingerprints": {row["source_span_id"]: row["fingerprint"] for row in changed},
+            "formalized": False,
+            "rows": changed,
+        }
+
+    def mark_progress_published(self, fingerprints: Mapping[str, str]) -> None:
+        published = self.published_progress_fingerprints()
+        published.update({str(key): str(value) for key, value in fingerprints.items() if key and value})
+        self._set_meta("published_progress_fingerprints", _json(published))
+
+    def write_sparse_progress_parquet(
+        self,
+        path: str | Path,
+        rows: Sequence[Mapping[str, Any]],
+        *,
+        agent_id: str,
+        update_id: str,
+    ) -> dict[str, Any]:
+        """Write one machine's changed spans. This is not the full resume checkpoint."""
+
+        destination = Path(path)
+        if destination.name == "resume-checkpoint.parquet":
+            raise SpanCacheError("sparse checkpoint must not replace the full resume checkpoint")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        dataset_id = self._meta("dataset_id") or "ipfs_uscode"
+        documents = int(self._meta("enqueue_documents") or 0)
+        self._db.execute(
+            """
+            CREATE TEMPORARY TABLE sparse_progress (
+                record_kind VARCHAR, dataset_id VARCHAR, agent_id VARCHAR, role VARCHAR,
+                heartbeat VARCHAR, documents BIGINT, source_parquet VARCHAR,
+                source_span_id VARCHAR, legal_id VARCHAR, status VARCHAR, sealed BOOLEAN,
+                claim_worker VARCHAR, claim_token VARCHAR, source_sha256 VARCHAR,
+                reason VARCHAR, code_identity VARCHAR, term_id VARCHAR, term_kind VARCHAR,
+                term_value VARCHAR, task_id VARCHAR, failure_mode VARCHAR, work_kind VARCHAR,
+                owner_agent VARCHAR, sealed_count BIGINT, gap_count BIGINT, pending_count BIGINT,
+                admitted BOOLEAN, formalized BOOLEAN
+            )
+            """
+        )
+        try:
+            self._db.execute(
+                """
+                INSERT INTO sparse_progress VALUES (
+                    'meta', ?, ?, 'compile', '', ?, '', '', '', 'sparse', FALSE,
+                    '', '', '', '', '', '', '', '', '', '', '', '', 0, 0, 0, FALSE, FALSE
+                )
+                """,
+                [dataset_id, agent_id, documents],
+            )
+            for row in rows:
+                self._db.execute(
+                    """
+                    INSERT INTO sparse_progress VALUES (
+                        'span', ?, ?, '', '', 0, '', ?, ?, ?, ?,
+                        '', '', ?, ?, ?, '', '', '', '', '', '', '', 0, 0, 0, FALSE, FALSE
+                    )
+                    """,
+                    [
+                        dataset_id,
+                        agent_id,
+                        str(row.get("source_span_id") or ""),
+                        str(row.get("legal_id") or ""),
+                        str(row.get("status") or ""),
+                        bool(row.get("sealed")),
+                        str(row.get("source_sha256") or ""),
+                        str(row.get("reason") or ""),
+                        str(row.get("code_identity") or ""),
+                    ],
+                )
+            target = str(destination).replace("'", "''")
+            self._db.execute(f"COPY sparse_progress TO '{target}' (FORMAT PARQUET)")
+        finally:
+            self._db.execute("DROP TABLE IF EXISTS sparse_progress")
+        return {
+            "admitted": False,
+            "delta_count": len(list(rows)),
+            "formalized": False,
+            "jsonl_written": False,
+            "path": str(destination),
+            "update_id": update_id,
         }
 
     def write_progress_parquet(self, path: str | Path) -> dict[str, Any]:

@@ -105,6 +105,8 @@ def frozen_decompiler_config() -> dict[str, str]:
 def _readable_atom(atom: str) -> str:
     """Apply the frozen ``underscore_to_space_v1`` atom surface."""
 
+    if atom == "if_compared":
+        return "when compared"
     return " ".join(atom.replace("_", " ").split())
 
 

@@ -6,6 +6,107 @@ import importlib.util
 from pathlib import Path
 
 
+def test_sparse_flush_skips_claims_and_does_not_upload_the_full_checkpoint(tmp_path, monkeypatch):
+    script = (
+        Path(__file__).resolve().parents[3]
+        / "scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py"
+    )
+    spec = importlib.util.spec_from_file_location("uscode_sparse_checkpoint_under_test", script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    from ipfs_datasets_py.logic.autoformal.span_cache import SpanCache
+
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    cache.enqueue([{"source_span_id": "pending", "text": "The clerk shall keep a journal.", "legal_id": "usc:us:1:1"}])
+    cache.claim_batch("compile-a", limit=1)
+    calls = []
+
+    class Api:
+        def create_repo(self, *args, **kwargs):
+            calls.append("create")
+
+        def upload_file(self, **kwargs):
+            calls.append(kwargs["path_in_repo"])
+
+    monkeypatch.setattr("huggingface_hub.HfApi", lambda: Api())
+    skipped = module._flush_checkpoint(cache, tmp_path / "out", upload=True, agent_id="compile-a")
+    assert skipped["uploaded"] is False
+    assert skipped["skipped"] == "no_durable_change"
+    assert skipped["full_checkpoint_uploaded"] is False
+    assert calls == []
+    cache.apply_census(
+        {"rows": [{
+            "agrees": True, "decompiled": "Agency must make records available.",
+            "legal_id": "usc:us:5:552", "source_span_id": "s1",
+            "text": "Each agency shall make records available.",
+        }]},
+        code_identity="sha256:test",
+    )
+    uploaded = module._flush_checkpoint(cache, tmp_path / "out", upload=True, agent_id="compile-a")
+    assert uploaded["uploaded"] is True
+    assert uploaded["delta_count"] == 1
+    assert uploaded["full_checkpoint_uploaded"] is False
+    assert calls[1].startswith("autoformal/uscode/checkpoints/compile-a/sparse-")
+    assert "resume-checkpoint.parquet" not in calls[1]
+    again = module._flush_checkpoint(cache, tmp_path / "out", upload=True, agent_id="compile-a")
+    assert again["skipped"] == "no_durable_change"
+    assert len(calls) == 2
+    cache.close()
+
+
+def test_poll_reads_other_machines_deltas_once(tmp_path, monkeypatch):
+    script = (
+        Path(__file__).resolve().parents[3]
+        / "scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py"
+    )
+    spec = importlib.util.spec_from_file_location("uscode_sparse_poll_under_test", script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    from ipfs_datasets_py.logic.autoformal.span_cache import SpanCache
+
+    writer = SpanCache(tmp_path / "writer.duckdb")
+    writer._set_meta("dataset_id", "justicedao/ipfs_uscode")
+    writer.apply_census(
+        {"rows": [{
+            "agrees": False, "legal_id": "usc:us:18:1001", "reason": "compiler_abstain:penalty",
+            "source_span_id": "g1", "text": "Whoever shall be imprisoned.",
+        }]},
+        code_identity="sha256:test",
+    )
+    delta = writer.sparse_progress_delta()
+    remote = tmp_path / "remote.parquet"
+    writer.write_sparse_progress_parquet(remote, delta["rows"], agent_id="compile-b", update_id="sparse-b")
+    reader = SpanCache(tmp_path / "reader.duckdb")
+    reader._set_meta("dataset_id", "justicedao/ipfs_uscode")
+    reader.register_agent("compile-a", dataset_id="justicedao/ipfs_uscode")
+    downloaded = []
+
+    class Api:
+        def list_repo_files(self, repo_id, repo_type):
+            assert repo_id == "justicedao/uscode-autoformal-span-cache"
+            return [
+                "autoformal/uscode/resume-checkpoint.parquet",
+                "autoformal/uscode/checkpoints/compile-a/sparse-own.parquet",
+                "autoformal/uscode/checkpoints/compile-b/sparse-b.parquet",
+            ]
+
+    def download(repo_id, filename, repo_type):
+        downloaded.append(filename)
+        return str(remote)
+
+    monkeypatch.setattr("huggingface_hub.HfApi", lambda: Api())
+    monkeypatch.setattr("huggingface_hub.hf_hub_download", download)
+    first = module._poll_remote_checkpoint(reader, agent_id="compile-a")
+    assert first["changed"] is True
+    assert first["full_checkpoint_downloaded"] is False
+    assert downloaded == ["autoformal/uscode/checkpoints/compile-b/sparse-b.parquet"]
+    second = module._poll_remote_checkpoint(reader, agent_id="compile-a")
+    assert second["changed"] is False
+    assert downloaded == ["autoformal/uscode/checkpoints/compile-b/sparse-b.parquet"]
+    writer.close()
+    reader.close()
+
+
 def test_enqueue_pool_capacity_respects_worker_budget_and_preserves_resume(
     tmp_path: Path, monkeypatch, capsys
 ) -> None:
@@ -66,7 +167,7 @@ def test_enqueue_pool_capacity_respects_worker_budget_and_preserves_resume(
 
     def flush_checkpoint(cache, destination, *, upload, agent_id):
         assert isinstance(cache, FakeCache)
-        assert agent_id == "control-plane"
+        assert agent_id.startswith("compile-")
         flushed.append((destination, upload))
         return {"uploaded": False}
 

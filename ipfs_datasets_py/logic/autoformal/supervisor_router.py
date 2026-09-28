@@ -262,25 +262,53 @@ def _parser_rejected(source: str) -> str:
     return ""
 
 
+def _json_object(raw: str) -> dict[str, Any] | None:
+    """Read a JSON object from a router reply. Fences and leading prose are ignored."""
+
+    text = str(raw or "").strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1]
+        fence = text.rfind("```")
+        if fence >= 0:
+            text = text[:fence]
+    start, end = text.find("{"), text.rfind("}")
+    if start < 0 or end <= start:
+        return None
+    try:
+        payload = json.loads(text[start : end + 1])
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _clean_source(source: str) -> str:
+    text = str(source or "").strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1]
+        fence = text.rfind("```")
+        if fence >= 0:
+            text = text[:fence]
+    return text.strip()
+
+
 def _scoped_proposal(raw: str, kinds: set[str]) -> tuple[dict[str, str], str]:
     from ipfs_datasets_py.logic.autoformal.autoencoder_router import _source_rejected
 
-    try:
-        payload = json.loads(raw or "")
-    except json.JSONDecodeError:
-        return {}, "router_output_unreadable"
-    if not isinstance(payload, dict):
+    payload = _json_object(raw)
+    if payload is None:
         return {}, "router_output_unreadable"
     proposal: dict[str, str] = {}
+    dropped = ""
     for key in ("compiler", "decompiler", "parser"):
-        text = str(payload.get(key) or "").strip()
+        text = _clean_source(str(payload.get(key) or ""))
         if not text:
             continue
         if key not in kinds:
-            return {}, f"{key}_not_in_scope"
+            dropped = dropped or f"{key}_not_in_scope"
+            continue
         proposal[key] = text
     if not proposal:
-        return {}, "missing_scoped_edit"
+        return {}, dropped or "missing_scoped_edit"
     checks = {
         "compiler": lambda source: _source_rejected(source, "compile"),
         "decompiler": lambda source: _source_rejected(source, "decompile"),
@@ -291,6 +319,103 @@ def _scoped_proposal(raw: str, kinds: set[str]) -> tuple[dict[str, str], str]:
         if reason:
             return {}, reason
     return proposal, ""
+
+
+def repair_and_recensus(
+    row: Mapping[str, Any],
+    *,
+    generate: Callable[..., str],
+    scratch: Path,
+    autoencoder_output: str,
+) -> dict[str, Any]:
+    """Ask llm_router for a scoped repair, run it, and census the result.
+
+    The proposal is written only under ``scratch``. The installed compiler and
+    decompiler are not replaced. A later agreement is not an admit.
+    """
+
+    receipt = {
+        "admitted": False,
+        "agrees_with_autoencoder": False,
+        "applied": False,
+        "census_rerun": False,
+        "formalized": False,
+        "imported": False,
+        "proposal_keys": [],
+        "proposal_sha256": "",
+        "reason": "",
+        "router_called": False,
+        "wrote_compiler": False,
+    }
+    kinds = _edit_kinds(row.get("allowed_edit_paths"))
+    if not kinds:
+        receipt["reason"] = "no_approved_edit_path"
+        return receipt
+    try:
+        raw = str(generate(router_prompt(row), temperature=0, task_kind="legal") or "")
+    except Exception as exc:
+        receipt["router_called"] = True
+        receipt["reason"] = f"router_failed:{type(exc).__name__}"
+        return receipt
+    proposal, reason = _scoped_proposal(raw, kinds)
+    receipt["router_called"] = True
+    if reason:
+        receipt["reason"] = reason
+        return receipt
+    digest = hashlib.sha256(json.dumps(proposal, sort_keys=True).encode("utf-8")).hexdigest()
+    receipt["proposal_keys"] = sorted(proposal)
+    receipt["proposal_sha256"] = digest
+    scratch.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "compiler": scratch / "compiler_repair.py",
+        "decompiler": scratch / "decompiler_repair.py",
+        "parser": scratch / "parser_repair.py",
+    }
+    for key, source in proposal.items():
+        paths[key].write_text(source, encoding="utf-8")
+    receipt["applied"] = True
+    produced = _repair_output(paths, str(row.get("text") or ""))
+    receipt["census_rerun"] = True
+    if produced is None:
+        receipt["reason"] = "repair_raised"
+        return receipt
+    from ipfs_datasets_py.logic.autoformal.family_supervision import project_span_families
+
+    repaired = project_span_families(produced, str(row.get("source_span_id") or "span") + ":repaired")
+    autoencoded = project_span_families(str(autoencoder_output or ""), str(row.get("source_span_id") or "span") + ":autoencoder")
+    agrees = (
+        repaired["selected_families"] == autoencoded["selected_families"]
+        and repaired["stitch"]["open_slots"] == autoencoded["stitch"]["open_slots"]
+    )
+    receipt["agrees_with_autoencoder"] = agrees
+    receipt["reason"] = "" if agrees else "census_still_disagrees"
+    return receipt
+
+
+def _repair_output(paths: Mapping[str, Path], source_text: str) -> str | None:
+    """Run the scoped repair. A crash is a failed census, not an installed compiler."""
+
+    import importlib.util
+
+    order = (
+        ("decompiler_repair", paths.get("decompiler"), "decompile"),
+        ("compiler_repair", paths.get("compiler"), "compile"),
+    )
+    for module_name, path, function_name in order:
+        if path is None or not path.is_file():
+            continue
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+            function = getattr(module, function_name)
+            produced = function(source_text)
+        except Exception:
+            return None
+        return str(produced or "")
+    return None
 
 
 def _router_receipt(

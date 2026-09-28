@@ -181,6 +181,19 @@ def preflight_next_repair(source, repository: Path, *, probe=None, task_id: str 
         selected = []
     elif not task_id:
         selected = [record for record in selected if str(record.task_cid) not in parked][:1]
+    elif not selected:
+        # The daemon resumes a running attempt before it claims ready work.
+        # An explicit alias still names that attempt; it does not fall back.
+        list_tasks = getattr(source, "list_tasks", None)
+        if callable(list_tasks):
+            inflight = [
+                record
+                for record in list_tasks(status="in_progress", limit=20).tasks
+                if record.task_alias == task_id and str(record.task_cid) not in parked
+            ]
+            if len(inflight) > 1:
+                raise RepairQueueError("requested in-progress task alias is ambiguous")
+            selected = inflight
     blocked_reason = "goals_inconclusive" if (requested_parked or (not selected and parked)) else ""
     report = {"schema": "uscode-autoformal-launch-preflight/v1", "queue_revision": before,
               "eligible": bool(selected), "passed": None, "tasks_claimed": False,
@@ -896,10 +909,29 @@ def main(argv: list[str] | None = None) -> int:
         actual = repository / path
         if actual.is_symlink() or not actual.is_file() or actual.read_bytes() != expected.read_bytes():
             raise ValueError("repair repository lacks current protected evaluator: " + path)
+    if not args.merge_target_branch:
+        # Repair worktrees are seeded from this branch. A snapshot's main ref
+        # is the pre-overlay source, so the checked-out candidate must be the
+        # base or the provider edits a different compiler than the census.
+        current_branch = subprocess.check_output(
+            ["git", "branch", "--show-current"], cwd=repository, text=True,
+        ).strip()
+        if current_branch:
+            native_args += ["--merge-target-branch", current_branch]
     with DatabaseTaskSource(database, install_schema=False) as source:
         for record in source.list_tasks(status="ready", limit=100).tasks:
             if record.body.get("board_namespace") == NAMESPACE and not record.outputs:
                 raise ValueError("ready repair lacks native output declarations; run explicit migration first")
+        if not args.task_id:
+            inflight = [
+                task
+                for task in source.list_tasks(status="in_progress", limit=20).tasks
+                if task.body.get("board_namespace") == NAMESPACE
+            ]
+            if len(inflight) > 1:
+                raise ValueError("more than one in-progress repair is open")
+            if len(inflight) == 1:
+                args.task_id = inflight[0].task_alias
         report = preflight_next_repair(source, repository, task_id=args.task_id)
         require_validation_preflight(report)
         if not report["eligible"]:
@@ -919,6 +951,8 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("repair context returned an invalid task binding")
         native_args += ["--operator-repair-note", note["path"],
                         "--operator-repair-note-sha256", note["sha256"]]
+    for child in ("state", "worktrees", "merge-queue", "repair-context"):
+        (runtime / child).mkdir(parents=True, exist_ok=True)
     run_configured_portal_implementation_daemon(
         native_args, repo_root=repository, logger=logging.getLogger("autoformal.supervisor"),
     )

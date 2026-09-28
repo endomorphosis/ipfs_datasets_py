@@ -23,6 +23,33 @@ MIN_LEARNING_RATE = 0.05
 MAX_LEARNING_RATE = 0.35
 
 
+def threshold_at_round(round_index: int) -> dict[str, float]:
+    """Tighten the holdout gate as training proceeds. Round 0 is the loose gate."""
+
+    step = max(0, min(int(round_index), 8))
+    return {
+        "cosine_similarity": min(MIN_COSINE_SIMILARITY, 0.40 + 0.04 * step),
+        "cross_entropy_loss": max(2.4, 3.2 - 0.10 * step),
+        "reconstruction_loss": max(MAX_RECONSTRUCTION_LOSS, 0.60 - 0.05 * step),
+    }
+
+
+def metric_misses(scores: Mapping[str, Any], threshold: Mapping[str, float]) -> list[str]:
+    """Names of measured scores that miss this round's gate. Unmeasured scores are not misses."""
+
+    misses: list[str] = []
+    similarity = _loss(scores.get("cosine_similarity"))
+    reconstruction = _loss(scores.get("reconstruction_loss"))
+    cross_entropy = _loss(scores.get("cross_entropy_loss"))
+    if similarity is not None and similarity < float(threshold["cosine_similarity"]):
+        misses.append("cosine_similarity")
+    if reconstruction is not None and reconstruction > float(threshold["reconstruction_loss"]):
+        misses.append("reconstruction_loss")
+    if cross_entropy is not None and cross_entropy > float(threshold["cross_entropy_loss"]):
+        misses.append("cross_entropy_loss")
+    return misses
+
+
 def _scores_need_training(scores: Mapping[str, Any]) -> bool:
     """True when cosine similarity, reconstruction, or IR compression misses its gate."""
 
@@ -502,6 +529,7 @@ def train_until_canary_improves(
 
         if model is None:
             model = AdaptiveModalAutoencoder()
+        from ipfs_datasets_py.logic.autoformal.family_supervision import TRAINING_BRIDGE_NAMES
 
         def samples(texts: Sequence[str]) -> list[Any]:
             return [build_us_code_sample(title="18", section="1", text=text) for text in texts]
@@ -509,7 +537,7 @@ def train_until_canary_improves(
         def measure() -> dict[str, float]:
             evaluation = model.evaluate(
                 samples(holdout_texts),
-                legal_ir_bridge_names=(),
+                legal_ir_bridge_names=TRAINING_BRIDGE_NAMES,
                 legal_ir_evaluate_provers=False,
                 use_sample_memory=False,
             )
@@ -541,10 +569,11 @@ def train_until_canary_improves(
             model.train_generalizable_projection(
                 samples(train_texts),
                 validation_samples=(),
-                legal_ir_bridge_names=(),
+                legal_ir_bridge_names=TRAINING_BRIDGE_NAMES,
                 legal_ir_evaluate_provers=False,
                 epochs=1,
                 learning_rate=rate,
+                projection_max_update_families=len(TRAINING_BRIDGE_NAMES),
             )
 
     before = measure()
@@ -552,7 +581,18 @@ def train_until_canary_improves(
     trained_rounds = 0
     after = dict(before)
     rate = schedule.rate
-    history = [{"learning_rate": rate, "scores": dict(before)}]
+
+    def _scored(scores: Mapping[str, Any], round_index: int, learning_rate: float, *, movement: str = "") -> dict[str, Any]:
+        threshold = threshold_at_round(round_index)
+        return {
+            "below_threshold": metric_misses(scores, threshold),
+            "learning_rate": learning_rate,
+            "movement": movement,
+            "scores": dict(scores),
+            "threshold": threshold,
+        }
+
+    history = [_scored(before, 0, rate)]
     if _scores_need_training(before):
         for _ in range(max(1, int(rounds))):
             fit(rate)
@@ -560,7 +600,7 @@ def train_until_canary_improves(
             previous = dict(after)
             after = measure()
             movement = _movement(previous, after)
-            history.append({"learning_rate": rate, "movement": movement, "scores": dict(after)})
+            history.append(_scored(after, trained_rounds, rate, movement=movement))
             improved = movement == "better" or (
                 movement != "worse"
                 and (
@@ -582,10 +622,14 @@ def train_until_canary_improves(
             weight_update = publish_model_update(model, improved=improved)
         except Exception:
             weight_update = {"delta_count": 0, "uploaded": False, "admitted": False, "error": "store_failed"}
+    from ipfs_datasets_py.logic.autoformal.family_supervision import FAMILY_NAMES, TRAINING_BRIDGE_NAMES
+
+    final_threshold = threshold_at_round(trained_rounds)
     return {
         "admitted": False,
         "after": after,
         "before": before,
+        "below_threshold": metric_misses(after, final_threshold),
         "formalized": False,
         "history": history,
         "holdout_ids": holdout_ids,
@@ -593,7 +637,10 @@ def train_until_canary_improves(
         "learning_rates": list(schedule.history),
         "rounds": trained_rounds,
         "seed": int(seed),
+        "threshold": final_threshold,
         "train_ids": train_ids,
         "trained": trained_rounds > 0,
+        "training_bridges": list(TRAINING_BRIDGE_NAMES),
+        "training_families": list(FAMILY_NAMES),
         "weight_update": weight_update,
     }

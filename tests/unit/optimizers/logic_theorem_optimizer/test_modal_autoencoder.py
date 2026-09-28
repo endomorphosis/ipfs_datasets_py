@@ -251,9 +251,15 @@ def test_legal_ir_target_timeout_becomes_loss(monkeypatch) -> None:
         text="The agency shall publish a uniquely slow timeout fixture notice.",
     )
 
+    target_elapsed = []
+
     def slow_multiview(**kwargs):
-        time.sleep(1.0)
-        raise AssertionError("timeout should interrupt this fake bridge")
+        started = time.monotonic()
+        try:
+            time.sleep(1.0)
+            raise AssertionError("timeout should interrupt this fake bridge")
+        finally:
+            target_elapsed.append(time.monotonic() - started)
 
     monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS", "0.01")
     monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "0")
@@ -263,14 +269,15 @@ def test_legal_ir_target_timeout_becomes_loss(monkeypatch) -> None:
         slow_multiview,
     )
 
-    started = time.monotonic()
     evaluation = AdaptiveModalAutoencoder().evaluate(
         [sample],
         legal_ir_bridge_names=("deontic_norms",),
         legal_ir_evaluate_provers=False,
     )
 
-    assert time.monotonic() - started < 0.9
+    # The target deadline excludes model setup and downstream feature work.
+    assert len(target_elapsed) == 1
+    assert target_elapsed[0] < 0.9
     assert evaluation.legal_ir_target_count == 1
     assert evaluation.legal_ir_losses["legal_ir_target_timeout_loss"] == pytest.approx(1.0)
     assert 0.0 < evaluation.legal_ir_losses["legal_ir_multiview_total_loss"] < 1.0
