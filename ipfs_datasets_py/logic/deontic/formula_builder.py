@@ -3503,6 +3503,16 @@ def _formula_exception_texts(norm: LegalNormIR) -> List[str]:
     return texts
 
 
+def _is_comparative_when_condition(item: Mapping[str, Any], text: str) -> bool:
+    """``when compared with`` qualifies the action. It is not an ``if`` antecedent."""
+
+    folded = str(text or "").strip().casefold()
+    if folded.startswith("when compared") or folded.startswith("compared "):
+        return True
+    clause = str(item.get("clause_type") or "").casefold()
+    return clause == "when" and bool(re.match(r"(?:when\s+)?compared\b", folded))
+
+
 def _formula_condition_texts(norm: LegalNormIR) -> List[str]:
     """Return condition phrases that are substantive formula antecedents.
 
@@ -3519,6 +3529,8 @@ def _formula_condition_texts(norm: LegalNormIR) -> List[str]:
         + _slot_texts(norm.overrides)
         if str(value).strip()
     }
+    action = str(norm.action or "").casefold()
+    action_object = str(norm.action_object or "").casefold()
 
     texts: List[str] = []
     for item in norm.conditions:
@@ -3530,6 +3542,14 @@ def _formula_condition_texts(norm: LegalNormIR) -> List[str]:
         text = str(value).strip()
         if not text or _is_reference_condition(item, text, reference_values):
             continue
+        if _is_comparative_when_condition(item, text):
+            folded = text.casefold()
+            if folded in action or folded in action_object:
+                continue
+            if f"when {folded}" in action or f"when {folded}" in action_object:
+                continue
+            if not folded.startswith("when "):
+                text = f"when {text}"
         texts.append(text)
     return texts
 
