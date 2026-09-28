@@ -316,6 +316,39 @@ def _citation_item_surfaces(item: object) -> list[str]:
     ]
 
 
+def _core_projection_haystack(data: Mapping[str, object]) -> str:
+    return " ".join(
+        text
+        for key in ("actor", "action", "action_object", "action_verb")
+        for text in _flatten_strings(data.get(key))
+    ).casefold()
+
+
+def _comparison_qualifier_already_in_core(data: Mapping[str, object], item: object) -> bool:
+    """True when ``when compared`` already lives on the projected action/object."""
+
+    text = " ".join(_flatten_strings(item)).casefold()
+    if not re.search(r"\bcompared\b", text):
+        return False
+    haystack = _core_projection_haystack(data)
+    if not haystack.strip():
+        return False
+    surfaces = [
+        " ".join(piece.split()).casefold()
+        for piece in _flatten_strings(item)
+        if len(" ".join(piece.split())) >= 3
+    ]
+    return bool(surfaces) and any(_token_span_in_text(surface, haystack) for surface in surfaces)
+
+
+def _qualifiers_not_already_in_core(data: Mapping[str, object], field_name: str) -> list[object]:
+    return [
+        item
+        for item in _many_values(data.get(field_name) or ())
+        if not _comparison_qualifier_already_in_core(data, item)
+    ]
+
+
 def _facet_already_in_projected_surface(data: Mapping[str, object], field_name: str) -> bool:
     """True when a citation facet is already kept on a projected v1 atom."""
 
@@ -496,10 +529,13 @@ def _project_legal_norms(
                 )
             )
 
+        condition_values = _qualifiers_not_already_in_core(data, "conditions")
+        exception_values = _many_values(data.get("exceptions") or ())
+        temporal_values = _qualifiers_not_already_in_core(data, "temporal_constraints")
         qualifier_inputs = {
-            "condition": data.get("conditions") or (),
-            "exception": data.get("exceptions") or (),
-            "temporal": data.get("temporal_constraints") or (),
+            "condition": condition_values,
+            "exception": exception_values,
+            "temporal": temporal_values,
         }
         for facet, values in qualifier_inputs.items():
             unmapped_count = _unmapped_qualifier_count(
@@ -529,15 +565,15 @@ def _project_legal_norms(
                     action=action,
                     object=object_atom,
                     conditions=_map_many(
-                        data.get("conditions") or (),
+                        condition_values,
                         vocabulary.qualifiers,
                     ),
                     exceptions=_map_many(
-                        data.get("exceptions") or (),
+                        exception_values,
                         vocabulary.qualifiers,
                     ),
                     temporal=_map_many(
-                        data.get("temporal_constraints") or (),
+                        temporal_values,
                         vocabulary.qualifiers,
                     ),
                 ),
