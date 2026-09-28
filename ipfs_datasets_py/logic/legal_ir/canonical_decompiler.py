@@ -145,6 +145,17 @@ def _temporal_not_already_in_object(rule: CanonicalRule) -> tuple[str, ...]:
     return tuple(pending)
 
 
+def _object_not_already_in_action(rule: CanonicalRule) -> str:
+    """Drop an object whose surface is already in the copular or content action."""
+
+    object_text = _readable_atom(rule.object)
+    if not object_text:
+        return ""
+    if _phrase_in_text(_readable_atom(rule.action), object_text):
+        return ""
+    return object_text
+
+
 def decompile_rule(rule: CanonicalRule) -> str:
     """Render every v1 rule facet using the frozen polarity-safe grammar."""
 
@@ -156,8 +167,9 @@ def decompile_rule(rule: CanonicalRule) -> str:
         _MODAL_PHRASES[rule.modality],
         _readable_atom(rule.action),
     ]
-    if rule.object:
-        parts.append(_readable_atom(rule.object))
+    object_text = _object_not_already_in_action(rule)
+    if object_text:
+        parts.append(object_text)
 
     sentence = " ".join(parts)
     temporal = _temporal_not_already_in_object(rule)

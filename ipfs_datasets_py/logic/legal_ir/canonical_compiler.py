@@ -137,6 +137,7 @@ TYPED_DEONTIC_COMPILER_CONFIG_CID: Final = cid_for_dag_json(_CONFIG_PAYLOAD)
 del _CONFIG_PAYLOAD
 
 _TOKEN_RE: Final = re.compile(r"[a-z0-9]+")
+_COPULA_ACTION_ATOMS: Final = frozenset({"be", "been", "being", "is", "are", "was", "were"})
 _ALLOWED_REQUEST_CONFIG: Final = frozenset({"document_type"})
 _SUPPORTED_NORM_TYPES: Final = frozenset({"", "obligation", "duty", "permission", "prohibition"})
 _UNREPRESENTED_SEMANTIC_FIELDS: Final = (
@@ -219,6 +220,24 @@ def _jaccard(left: object, right: object) -> float:
     if not left_tokens or not right_tokens:
         return 0.0
     return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+
+
+def _action_atom(data: Mapping[str, object], candidates: Sequence[str]) -> str:
+    """Map the operative action, not a copula left behind by a passive clause."""
+
+    action = _best_atom(
+        [data.get("action"), data.get("action_verb")],
+        candidates,
+    )
+    if action.lower() not in _COPULA_ACTION_ATOMS:
+        return action
+    fuller = _best_atom(data.get("action"), candidates)
+    if fuller and fuller.lower() not in _COPULA_ACTION_ATOMS:
+        return fuller
+    verb = _best_atom(data.get("action_verb"), candidates)
+    if verb and verb.lower() not in _COPULA_ACTION_ATOMS:
+        return verb
+    return action
 
 
 def _best_atom(
@@ -456,10 +475,7 @@ def _project_legal_norms(
             continue
 
         actor = _best_atom(data.get("actor"), vocabulary.actors)
-        action = _best_atom(
-            [data.get("action"), data.get("action_verb")],
-            vocabulary.actions,
-        )
+        action = _action_atom(data, vocabulary.actions)
         object_atom = _best_atom(
             data.get("action_object"),
             vocabulary.objects,

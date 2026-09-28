@@ -561,6 +561,29 @@ _TRAILING_NOISE_RE = re.compile(
     re.IGNORECASE,
 )
 _PASSIVE_BY_RE = re.compile(r"^be\s+([A-Za-z][A-Za-z0-9'’\-]*)\s+by\s+(.+)$", re.IGNORECASE)
+_COPULA_ACTION_VERBS = frozenset({"be", "been", "being", "is", "are", "was", "were"})
+_COPULA_COMPLEMENT_DETERMINERS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "any",
+        "each",
+        "every",
+        "such",
+        "no",
+        "all",
+        "this",
+        "that",
+        "these",
+        "those",
+        "its",
+        "their",
+        "his",
+        "her",
+    }
+)
+_HIERARCHICAL_PAREN_CITE_RE = re.compile(r"\((?:[A-Za-z0-9]+)\)(?:\([A-Za-z0-9]+\))+")
 _PASSIVE_BENEFIT_RECIPIENT_RE = re.compile(
     r"^be\s+(?:given|granted|provided|awarded|allocated|distributed|paid|issued|made)\s+"
     r"(?:to|for)\s+(.+?)(?=(?:\s+(?:if|when|where|provided\s+that|unless|except|within|before|after)\b)|[.;:]|$)",
@@ -5638,8 +5661,22 @@ def _clean_action(value: str) -> str:
     return text
 
 
+def _copular_content_head(words: List[str]) -> bool:
+    """True when a copula is followed by the operative participle or adjective."""
+
+    if len(words) < 2:
+        return False
+    return (
+        words[0].lower() in _COPULA_ACTION_VERBS
+        and words[1].lower() not in _COPULA_COMPLEMENT_DETERMINERS
+        and words[1].lower() not in _COPULA_ACTION_VERBS
+    )
+
+
 def _first_verb(action: str) -> str:
     words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", _action_without_mental_state(action) or "")
+    if _copular_content_head(words):
+        return f"{words[0].lower()} {words[1].lower()}"
     return words[0].lower() if words else ""
 
 
@@ -5656,7 +5693,23 @@ _OBJECT_TOKEN_RE = re.compile(
 
 def _action_object(action: str) -> str:
     words = _OBJECT_TOKEN_RE.findall(_action_without_mental_state(action) or "")
+    if _copular_content_head(words):
+        return " ".join(words[2:]).strip()
     return " ".join(words[1:]).strip() if len(words) > 1 else ""
+
+
+def _hierarchical_citation_value(ref_type: str, value: str) -> str:
+    """Keep a nested parenthetical path; a single ``(a)`` stays the inner label."""
+
+    text = str(value or "").strip()
+    if ref_type not in {"subsection", "paragraph"}:
+        return text.lower()
+    single = re.fullmatch(r"\(([A-Za-z0-9]+)\)", text)
+    if single:
+        return single.group(1).lower()
+    if _HIERARCHICAL_PAREN_CITE_RE.fullmatch(text):
+        return text.lower()
+    return text.lower()
 
 
 def _mental_state(action: str) -> str:
@@ -5966,12 +6019,12 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
             "section_range",
             r"\bsections?\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\s+(?:through|thru|to|-)\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)",
         ),
-        ("section", r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
-        ("section", r"§\s*([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
+        ("section", r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([A-Za-z0-9]+\))*)"),
+        ("section", r"§\s*([0-9][0-9A-Za-z.\-]*(?:\([A-Za-z0-9]+\))*)"),
         ("section", r"\b(this\s+section)\b"),
-        ("subsection", r"\bsubsection\s+\(([a-z0-9]+)\)"),
+        ("subsection", r"\bsubsection\s+((?:\([A-Za-z0-9]+\))+)"),
         ("subsection", r"\b(this\s+subsection)\b"),
-        ("paragraph", r"\bparagraph\s+\(([a-z0-9]+)\)"),
+        ("paragraph", r"\bparagraph\s+((?:\([A-Za-z0-9]+\))+)"),
         ("paragraph", r"\b(this\s+paragraph)\b"),
         ("chapter", r"\bchapter\s+([0-9A-Za-z][0-9A-Za-z.\-]*)"),
         ("chapter", r"\b(this\s+chapter)\b"),
@@ -5992,6 +6045,7 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
                 value = " ".join(part for part in match.groups() if part).strip().lower()
             else:
                 value = str(match.group(1) or "").strip().lower()
+            value = _hierarchical_citation_value(ref_type, value)
             if not value:
                 continue
             key = (ref_type, value)

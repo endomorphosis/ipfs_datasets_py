@@ -25,15 +25,19 @@ _MENTAL_STATE_TERMS = {
 }
 _LEGAL_REFERENCE_TEXT_RE = re.compile(
     r"(?:\b(?:section|subsection|chapter|title|article|part)\s+|§\s*)"
-    r"([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\b",
+    r"([0-9][0-9A-Za-z.\-]*(?:\([A-Za-z0-9]+\))*)\b",
+    re.IGNORECASE,
+)
+_HIERARCHICAL_PAREN_REFERENCE_RE = re.compile(
+    r"\b(?:subsection|paragraph)\s+(\([A-Za-z0-9]+\)(?:\([A-Za-z0-9]+\))+)",
     re.IGNORECASE,
 )
 _LEGAL_REFERENCE_LIST_TEXT_RE = re.compile(
-    r"(?:\bsections\s+)([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*(?:\s*(?:,|and|or)\s*[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)+)",
+    r"(?:\bsections\s+)([0-9][0-9A-Za-z.\-]*(?:\([A-Za-z0-9]+\))*(?:\s*(?:,|and|or)\s*[0-9][0-9A-Za-z.\-]*(?:\([A-Za-z0-9]+\))*)+)",
     re.IGNORECASE,
 )
 _US_CODE_REFERENCE_RE = re.compile(
-    r"\b\d+\s+u\.?\s*s\.?\s*c\.?\s*(?:§\s*)?([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\.?",
+    r"\b\d+\s+u\.?\s*s\.?\s*c\.?\s*(?:§\s*)?([0-9][0-9A-Za-z.\-]*(?:\([A-Za-z0-9]+\))*)\.?",
     re.IGNORECASE,
 )
 _US_CODE_SOURCE_ID_RE = re.compile(
@@ -2561,6 +2565,9 @@ def build_prover_syntax_records_from_ir(
     return [target.to_dict() for target in validate_ir_with_provers(norm, targets).targets]
 
 
+_COPULA_ACTION_VERBS = frozenset({"be", "been", "being", "is", "are", "was", "were"})
+
+
 def _formula_action_text(norm: LegalNormIR) -> str:
     action = str(norm.action or "").strip()
     if action:
@@ -2570,8 +2577,11 @@ def _formula_action_text(norm: LegalNormIR) -> str:
     action_object = str(norm.action_object or "").strip()
     if verb and action_object:
         lowered_object = action_object.lower()
-        if lowered_object.startswith(verb.lower() + " "):
+        lowered_verb = verb.lower()
+        if lowered_object.startswith(lowered_verb + " "):
             return action_object
+        if lowered_verb in _COPULA_ACTION_VERBS and not lowered_object.startswith(lowered_verb + " "):
+            return f"{verb} {action_object}"
         return f"{verb} {action_object}"
     if verb:
         recipient = str(norm.recipient or "").strip()
@@ -2740,6 +2750,9 @@ def _reference_section_citations(reference: Mapping[str, Any]) -> List[str]:
 
 
 def _canonical_section_citation(text: str) -> str:
+    hierarchical = _HIERARCHICAL_PAREN_REFERENCE_RE.search(str(text or ""))
+    if hierarchical:
+        return hierarchical.group(0).strip().lower()
     match = _LEGAL_REFERENCE_TEXT_RE.search(str(text or ""))
     if not match:
         return ""
@@ -2757,6 +2770,10 @@ def _section_citations_from_text(text: str) -> List[str]:
             token = part.strip().lower()
             if token:
                 citations.append(f"section {token}")
+    for match in _HIERARCHICAL_PAREN_REFERENCE_RE.finditer(source):
+        citation = match.group(0).strip().lower()
+        if citation and citation not in citations:
+            citations.append(citation)
     for match in _LEGAL_REFERENCE_TEXT_RE.finditer(source):
         citation = f"section {match.group(1).lower()}"
         if citation not in citations:
