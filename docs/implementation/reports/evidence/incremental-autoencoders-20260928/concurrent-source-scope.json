@@ -1,0 +1,29 @@
+{
+  "origin_main": "d4d69e8940437b0c4a2c19a2602bb5ae9e70b706",
+  "files": [
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "origin_main_sha256": "f19ede6f735f20309745802b96038ae2a6443a52d486182bc4584000b96abc7a",
+      "workspace_sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "included_in_parallel_publication": false
+    },
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "origin_main_sha256": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2",
+      "workspace_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "included_in_parallel_publication": false
+    },
+    {
+      "path": "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "origin_main_sha256": "9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1",
+      "workspace_sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+      "included_in_parallel_publication": false
+    },
+    {
+      "path": "ipfs_datasets_py/logic/deontic/formula_builder.py",
+      "origin_main_sha256": "156261487326b214c8e9c59f70a87e3faa4dfc20c3c4a4be575555f0ee6fb1ba",
+      "workspace_sha256": "6a220bf20aa8bdb24dd14d8b3467554d674cfadd0b44e88f3d019ce0b02afb2a",
+      "included_in_parallel_publication": false
+    }
+  ]
+}

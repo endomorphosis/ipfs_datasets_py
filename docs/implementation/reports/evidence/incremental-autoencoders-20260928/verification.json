@@ -1,0 +1,248 @@
+{
+  "admitted": false,
+  "arrow_used_by_native_smoke": false,
+  "baseline_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "baseline_checkpoint_unchanged": true,
+  "both_overlapping_workers_consumed_cpu": true,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "bridge_workers": 1,
+  "cache_scope": "fresh worker process and metric disk cache disabled; line search uses warm in-process targets; OS cache uncontrolled",
+  "completed_counts": [
+    2,
+    3,
+    3
+  ],
+  "cross_host_native_training_tested": false,
+  "cycles": [
+    {
+      "dispatched_batches": 2,
+      "outer_cycle_wall_seconds": 34.61911189719103,
+      "receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/incremental-autoencoders-20260928/native-hub-final/cycles/bf2e4f927310428c8e2d8b64766aaa3b/cycle.json"
+    },
+    {
+      "dispatched_batches": 1,
+      "outer_cycle_wall_seconds": 35.61228084098548,
+      "receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/incremental-autoencoders-20260928/native-hub-final/cycles/de8be1dbabb746bfa3d357e344eddd5a/cycle.json"
+    },
+    {
+      "dispatched_batches": 0,
+      "outer_cycle_wall_seconds": 19.889446042943746,
+      "receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/incremental-autoencoders-20260928/native-hub-final/cycles/098779eb23f348f5b4184b3003f9f2eb/cycle.json"
+    }
+  ],
+  "dispatch_counts": [
+    2,
+    1,
+    0
+  ],
+  "duplicate_training_on_replay": 0,
+  "formalized": false,
+  "heldout_canary": false,
+  "hub_commit": "e537edd812e6fb714647fbaef2134df7606cd3d2",
+  "live_worker_overlap_observations": 6,
+  "metric_disk_cache": 0,
+  "native_process_scope": "two concurrent native training processes on one host; third batch after owner restart",
+  "orchestration_hashes": {
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+    "ipfs_datasets_py/logic/autoformal/span_cache_feed.py": "01ec81fa2beb0d97339fdd3dee26573c8a8864e651cf740677f6ada38e242a69",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "d02a72945f559ed92d94062b92cb4ec0bbe6f3948aec34a337b4daa7e99f05d8",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447",
+    "scripts/ops/legal_ir/run_incremental_autoencoders.py": "894408c3ae37505c5351ddcbed602fba32a9b71dabeb6967511d3b79689e31fe"
+  },
+  "passed": true,
+  "peak_observed_group_rss_bytes": 2386743296,
+  "private_checkpoint_continuation_verified": true,
+  "provers": false,
+  "repository_id": "justicedao/uscode-autoformal-span-cache",
+  "resource_reservations_released": true,
+  "rows": [
+    {
+      "after_deontic": {
+        "autoencoder_cosine_similarity": 0.1961161351381841,
+        "autoencoder_cosine_similarity_observation_count": 1.0,
+        "autoencoder_cross_entropy_loss": 2.1972245773362196,
+        "autoencoder_cross_entropy_loss_observation_count": 1.0,
+        "ir_cosine_similarity": 0.9954491122463274,
+        "ir_cosine_similarity_observation_count": 1.0,
+        "ir_cross_entropy_loss": 0.5589457418003443,
+        "ir_cross_entropy_loss_observation_count": 1.0,
+        "sample_count": 1.0,
+        "sample_weight": 0.23517094023169494,
+        "symbolic_validity_success_rate": 1.0,
+        "symbolic_validity_success_rate_observation_count": 1.0
+      },
+      "base_checkpoint_chain_depth": 1,
+      "base_version_id": "sha256:8e5eaac37d5f564a18d2bea1df237cdee149fc88e259ca5b1e366ab5098dee17",
+      "before_deontic": {
+        "autoencoder_cosine_similarity": 0.1961161351381841,
+        "autoencoder_cosine_similarity_observation_count": 1.0,
+        "autoencoder_cross_entropy_loss": 2.1972245773362196,
+        "autoencoder_cross_entropy_loss_observation_count": 1.0,
+        "ir_cosine_similarity": 0.9951848868098832,
+        "ir_cosine_similarity_observation_count": 1.0,
+        "ir_cross_entropy_loss": 0.5598595917709528,
+        "ir_cross_entropy_loss_observation_count": 1.0,
+        "sample_count": 1.0,
+        "sample_weight": 0.23517094023169494,
+        "symbolic_validity_success_rate": 1.0,
+        "symbolic_validity_success_rate_observation_count": 1.0
+      },
+      "candidate_storage": "sparse",
+      "initial_bridge_on_evaluate_seconds": 5.204265136970207,
+      "legal_ir_target_count": 1,
+      "optimizer_accepted_epochs": 1,
+      "optimizer_wall_seconds": 5.430049139074981,
+      "pid": 2669664,
+      "receipt_sha256": "a7fec55910d621c5ac08b760dbb33724d8d905aa2f3d8300e227ca26893750d2",
+      "run_id": "incremental-46c6cc4f071c3452431a065cee87f35dd5dbdbf7957a7332eeeb37b6a5f6eb73",
+      "sample": {
+        "citation": "usc:us:5:8410",
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "8410",
+        "text": "Notwithstanding any other provision of this chapter, an employee or Member must complete at least 5 years of civilian service creditable under section 8411 in order to be eligible for an annuity under this subchapter.",
+        "title": "5"
+      },
+      "sample_count": 1,
+      "sparse_patch_bytes": 2496,
+      "warm_line_search_bridge_on_evaluate_seconds": 0.2082935539074242,
+      "weight_storage": "private_json",
+      "worker_wall_seconds_per_span": 8.92111395788379
+    },
+    {
+      "after_deontic": {
+        "autoencoder_cosine_similarity": 0.19611613513818404,
+        "autoencoder_cosine_similarity_observation_count": 1.0,
+        "autoencoder_cross_entropy_loss": 2.197224577336219,
+        "autoencoder_cross_entropy_loss_observation_count": 1.0,
+        "ir_cosine_similarity": 0.995351847807724,
+        "ir_cosine_similarity_observation_count": 1.0,
+        "ir_cross_entropy_loss": 0.5581027821690164,
+        "ir_cross_entropy_loss_observation_count": 1.0,
+        "sample_count": 1.0,
+        "sample_weight": 0.2340696950921401,
+        "symbolic_validity_success_rate": 1.0,
+        "symbolic_validity_success_rate_observation_count": 1.0
+      },
+      "base_checkpoint_chain_depth": 0,
+      "base_version_id": "sha256:19b7f2115520de91f32023c9b5b520f269e648cf502f70e2a721480d81a361d3",
+      "before_deontic": {
+        "autoencoder_cosine_similarity": 0.19611613513818404,
+        "autoencoder_cosine_similarity_observation_count": 1.0,
+        "autoencoder_cross_entropy_loss": 2.197224577336219,
+        "autoencoder_cross_entropy_loss_observation_count": 1.0,
+        "ir_cosine_similarity": 0.9950844501722034,
+        "ir_cosine_similarity_observation_count": 1.0,
+        "ir_cross_entropy_loss": 0.559042198227135,
+        "ir_cross_entropy_loss_observation_count": 1.0,
+        "sample_count": 1.0,
+        "sample_weight": 0.2340696950921401,
+        "symbolic_validity_success_rate": 1.0,
+        "symbolic_validity_success_rate_observation_count": 1.0
+      },
+      "candidate_storage": "sparse",
+      "initial_bridge_on_evaluate_seconds": 6.180259980959818,
+      "legal_ir_target_count": 1,
+      "optimizer_accepted_epochs": 1,
+      "optimizer_wall_seconds": 6.413300775922835,
+      "pid": 2635093,
+      "receipt_sha256": "925e73627571839b81c3b9d8f41d0aa72275950210745375add9701464a530c2",
+      "run_id": "incremental-69a239a063fa1b92d72d2d2ec16db2f3c60987d342922982088bd3fa2866229f",
+      "sample": {
+        "citation": "usc:us:7:2006d",
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "2006d",
+        "text": "The Secretary shall establish a market placement program for qualified beginning farmers and ranchers and other borrowers of farmer program loans that the Secretary believes have a reasonable chance of qualifying for commercial credit with a guarantee provided under this chapter.",
+        "title": "7"
+      },
+      "sample_count": 1,
+      "sparse_patch_bytes": 2502,
+      "warm_line_search_bridge_on_evaluate_seconds": 0.22315898607484996,
+      "weight_storage": "private_json",
+      "worker_wall_seconds_per_span": 8.366954181110486
+    },
+    {
+      "after_deontic": {
+        "autoencoder_cosine_similarity": 1.0,
+        "autoencoder_cosine_similarity_observation_count": 1.0,
+        "autoencoder_cross_entropy_loss": 2.197224577336219,
+        "autoencoder_cross_entropy_loss_observation_count": 1.0,
+        "ir_cosine_similarity": 0.9970782478755381,
+        "ir_cosine_similarity_observation_count": 1.0,
+        "ir_cross_entropy_loss": 0.5369982187344202,
+        "ir_cross_entropy_loss_observation_count": 1.0,
+        "sample_count": 1.0,
+        "sample_weight": 0.2207487138143914,
+        "symbolic_validity_success_rate": 1.0,
+        "symbolic_validity_success_rate_observation_count": 1.0
+      },
+      "base_checkpoint_chain_depth": 0,
+      "base_version_id": "sha256:19b7f2115520de91f32023c9b5b520f269e648cf502f70e2a721480d81a361d3",
+      "before_deontic": {
+        "autoencoder_cosine_similarity": 1.0,
+        "autoencoder_cosine_similarity_observation_count": 1.0,
+        "autoencoder_cross_entropy_loss": 2.197224577336219,
+        "autoencoder_cross_entropy_loss_observation_count": 1.0,
+        "ir_cosine_similarity": 0.9969082937513829,
+        "ir_cosine_similarity_observation_count": 1.0,
+        "ir_cross_entropy_loss": 0.5376029059279013,
+        "ir_cross_entropy_loss_observation_count": 1.0,
+        "sample_count": 1.0,
+        "sample_weight": 0.2207487138143914,
+        "symbolic_validity_success_rate": 1.0,
+        "symbolic_validity_success_rate_observation_count": 1.0
+      },
+      "candidate_storage": "sparse",
+      "initial_bridge_on_evaluate_seconds": 5.541501272004098,
+      "legal_ir_target_count": 1,
+      "optimizer_accepted_epochs": 1,
+      "optimizer_wall_seconds": 5.73418411007151,
+      "pid": 2635097,
+      "receipt_sha256": "d666ced4ce85cc7c89b4c2a7f374b449d1443d11b05e375bbc2db6b035f15c1f",
+      "run_id": "incremental-7994b03c3dd04ba94dc9fdd018c5ae021348f3aa7dafdbe70e53ad77dfd2eb22",
+      "sample": {
+        "citation": "usc:us:16:6809",
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "6809",
+        "text": "The authority of the Secretary to carry out this chapter shall terminate September 30, 2031 .",
+        "title": "16"
+      },
+      "sample_count": 1,
+      "sparse_patch_bytes": 2502,
+      "warm_line_search_bridge_on_evaluate_seconds": 0.18298900593072176,
+      "weight_storage": "private_json",
+      "worker_wall_seconds_per_span": 7.709954462945461
+    }
+  ],
+  "sample_memory": false,
+  "schema": "incremental-native-parallel-verification/v1",
+  "source_hashes": {
+    "autoencoder": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+    "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "worker": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156"
+  },
+  "temperature": 0,
+  "tests": {
+    "errors": "0",
+    "failures": "0",
+    "hostname": "spark-b271",
+    "name": "pytest",
+    "skipped": "0",
+    "tests": "372",
+    "time": "47.392",
+    "timestamp": "2026-09-28T18:03:36.992663+00:00"
+  },
+  "training_workers": 2
+}
