@@ -1,0 +1,146 @@
+{
+  "accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 76065750786,
+    "inventory": {
+      "apparent_bytes": 47300750786,
+      "entry_count": 227282,
+      "special_file_count": 23,
+      "symlink_count": 3997
+    },
+    "limit_bytes": 80000000000,
+    "minimum_filesystem_free_bytes": 221967622144,
+    "observed_apparent_bytes": 47300750786,
+    "outstanding_full_reservations_bytes": 28765000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "admitted": false,
+  "all_new_reservations_released": true,
+  "artifacts_deleted": false,
+  "constitution_formalized": false,
+  "current_reservation_count": 146,
+  "current_status_counts": {
+    "released": 85,
+    "retained": 61
+  },
+  "headroom_bytes": 3934249214,
+  "historical_changed_reservation_ids": [],
+  "historical_reservation_count": 133,
+  "historical_reservations_unchanged": true,
+  "ledger_mutated": false,
+  "ledger_path": "workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "ledger_sha256": "9f581550dd3ab15e2e8b9c09959fad887effd367b54cfdac29306f268141013b",
+  "ledger_unchanged_during_audit": true,
+  "limit_bytes": 80000000000,
+  "new_reservation_count": 13,
+  "new_reservations": [
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b",
+      "created_at": 1790633068.259897,
+      "released_at": 1790633161.7921617,
+      "reservation_id": "0dccdf4ca6474ca8a360cd7e96a1ef6a",
+      "status": "released",
+      "storage_bytes": 600000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner",
+      "created_at": 1790632823.6227536,
+      "released_at": 1790633334.6756306,
+      "reservation_id": "1b0b8376dbe24d65a8dbf96a4b38319c",
+      "status": "released",
+      "storage_bytes": 500000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner",
+      "created_at": 1790633359.9946675,
+      "released_at": 1790633476.271708,
+      "reservation_id": "219104cbba4b4de28ce6684e5ae5270d",
+      "status": "released",
+      "storage_bytes": 500000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b",
+      "created_at": 1790633396.2088563,
+      "released_at": 1790633403.1172621,
+      "reservation_id": "3460b61e92c340ffadd5e639d670e8d9",
+      "status": "released",
+      "storage_bytes": 600000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1",
+      "created_at": 1790633071.536532,
+      "released_at": 1790633112.2702072,
+      "reservation_id": "3b029b6b50a242a68d6db579167a4fc2",
+      "status": "released",
+      "storage_bytes": 250000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a",
+      "created_at": 1790632995.0704622,
+      "released_at": 1790633003.997982,
+      "reservation_id": "534b6219dd3d46638732450faeaa0935",
+      "status": "released",
+      "storage_bytes": 600000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a",
+      "created_at": 1790633064.8991172,
+      "released_at": 1790633193.5337307,
+      "reservation_id": "53e9623166ee449fb0c5e03e161fb570",
+      "status": "released",
+      "storage_bytes": 600000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b",
+      "created_at": 1790632850.1134722,
+      "released_at": 1790632957.8729901,
+      "reservation_id": "63ed6d08885a4bacafaddf8c4dd8f684",
+      "status": "released",
+      "storage_bytes": 600000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a",
+      "created_at": 1790633392.8600085,
+      "released_at": 1790633413.3154027,
+      "reservation_id": "c3ff2df234734bec89b0d59fed36af62",
+      "status": "released",
+      "storage_bytes": 600000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a",
+      "created_at": 1790632843.4528792,
+      "released_at": 1790632944.32153,
+      "reservation_id": "ed5d16833f7f402cbdcd5383211042e6",
+      "status": "released",
+      "storage_bytes": 600000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1",
+      "created_at": 1790632871.818657,
+      "released_at": 1790632915.9631817,
+      "reservation_id": "f28cdb21281848edabd74481a1c3e2cf",
+      "status": "released",
+      "storage_bytes": 250000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b-fresh",
+      "created_at": 1790633214.898155,
+      "released_at": 1790633236.1135676,
+      "reservation_id": "f7ac81bdb8b445fc81ff217890f15443",
+      "status": "released",
+      "storage_bytes": 250000000
+    },
+    {
+      "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1",
+      "created_at": 1790632858.5986695,
+      "released_at": 1790632899.4010782,
+      "reservation_id": "fe9c63e176ce44cd826bad6f79332ba8",
+      "status": "released",
+      "storage_bytes": 250000000
+    }
+  ],
+  "note": "Named-root apparent bytes plus every outstanding full reservation. This point-in-time inventory precedes writing this small audit record.",
+  "observed_at": "2026-09-28T22:19:39.425381+00:00",
+  "reservations_released_by_audit": 0,
+  "schema": "post-native-resource-accounting-v1"
+}

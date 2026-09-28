@@ -1,0 +1,93 @@
+{
+  "admitted": false,
+  "bundle_count": 3,
+  "formalized": false,
+  "new_work_from_reingestion": 0,
+  "rows": [
+    {
+      "counts_after_reingestion": {
+        "queued": 1
+      },
+      "counts_before_reingestion": {
+        "queued": 1
+      },
+      "goal_legal_ids": [],
+      "legal_id": null,
+      "manifest_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/span-publication/exchange-a269a78ae270b96376118e2193371e7a0eebef0c17c5e374e775b1caeb783c92.manifest.json",
+      "manifest_sha256": "5318a5ea0efe1a9a81770700e74d973da597f7b69b00c5fee2be234cd9827a68",
+      "optional_document_id_presence_preserved": true,
+      "optional_legal_id_presence_preserved": true,
+      "original_sample_exact": true,
+      "published_report_reference": {
+        "bytes": 201524,
+        "commit_sha": "f135fa4dbcd1c4af07f17d93e167139c2312e920",
+        "path_in_repo": "autoformal/uscode/attempts/report-7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972.json",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "sha256": "7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972"
+      },
+      "record_id": "6fcf2f51fc2063843e7ea6278b3b88f4cdcc35f2d11da724fa270791da186a30",
+      "same_work_id": true,
+      "source_span_id": "qualification-fixture:minimum"
+    },
+    {
+      "counts_after_reingestion": {
+        "queued": 2
+      },
+      "counts_before_reingestion": {
+        "queued": 2
+      },
+      "goal_legal_ids": [
+        "usc:us:5:8410",
+        "usc:us:5:8410",
+        "usc:us:5:8410"
+      ],
+      "legal_id": "usc:us:5:8410",
+      "manifest_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/span-publication/exchange-4c5b00645f4cc229873d627d5c2950bcd05e7fa573ff0c46fba9b7d094a8c950.manifest.json",
+      "manifest_sha256": "e744bccf84c2874760a80c513dc78385d7d135dd3bf010ee011973eabfb997d4",
+      "optional_document_id_presence_preserved": true,
+      "optional_legal_id_presence_preserved": true,
+      "original_sample_exact": true,
+      "published_report_reference": {
+        "bytes": 112947,
+        "commit_sha": "8e1101c3a023f85b35f54fdc96a77fdf7b0726fc",
+        "path_in_repo": "autoformal/uscode/attempts/report-1cc965086dd79e7e17206de107282e559012cf606838b5984f8cc3ee7c186385.json",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "sha256": "1cc965086dd79e7e17206de107282e559012cf606838b5984f8cc3ee7c186385"
+      },
+      "record_id": "b555780bea95aeb9ec8e08607d89c0fd4c02d7dcf2c870bfe1ff8854fafa63ef",
+      "same_work_id": true,
+      "source_span_id": "usc:us:5:8410:operative-clause"
+    },
+    {
+      "counts_after_reingestion": {
+        "queued": 3
+      },
+      "counts_before_reingestion": {
+        "queued": 3
+      },
+      "goal_legal_ids": [],
+      "legal_id": null,
+      "manifest_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/span-publication/exchange-5fbfa49e2dedebd4b794af2904923860bd5f7d1975ef7de586c0aa16c7e9602d.manifest.json",
+      "manifest_sha256": "13960026c0a9dc726de1b6283900d6f453c92c636e20985b1af0b4f8802fc851",
+      "optional_document_id_presence_preserved": true,
+      "optional_legal_id_presence_preserved": true,
+      "original_sample_exact": true,
+      "published_report_reference": {
+        "bytes": 200871,
+        "commit_sha": "652bf39ee65d789d0e1ffcfe5894c8e2532184c5",
+        "path_in_repo": "autoformal/uscode/attempts/report-6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00.json",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "sha256": "6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00"
+      },
+      "record_id": "8cdf58061175488abb438f17dcc5f4e645352165eac4c21eac4cc8f562743d05",
+      "same_work_id": true,
+      "source_span_id": "qualification-fixture:minimum"
+    }
+  ],
+  "schema": "native-attempt-feed-identity-regression/v1",
+  "scope": "Actual native immutable census and goals; real isolated DuckDB campaign registration with synthetic control seed; no new training, source repair, Lake invocation or Hub call",
+  "source_file": "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
+  "source_sha256": "157e063c0b8a8a90e3d89919a7ac8072fc880af96bfd720894a487c22939771e",
+  "synthetic_seed_control_only": true,
+  "temporary_validation_database_removed": true
+}

@@ -504,8 +504,20 @@ def test_canonical_selector_reaches_native_boundary_only_after_complete_consiste
     assert selection.promotions[0][1]["expected_generation"] == 1
 
 
+def remote_producer_fixture():
+    paths, hashes, identity = {}, {}, {}
+    for role, relative in work._remote_producer_paths().items():
+        paths[role] = ('/remote/lift_coding/' if role == 'statement_lock'
+                       else '/remote/lift_coding/external/ipfs_datasets/') + relative
+        hashes[role] = hashlib.sha256(role.encode()).hexdigest()
+        key = 'native:' + role if role in {'compiler','decompiler','parser','autoencoder','samples'} else relative
+        identity[key] = hashes[role]
+    return paths, hashes, identity
+
+
+@pytest.mark.parametrize('partial_attempt', [False, 'directory', 'truncated'])
 def test_owner_requalifies_remote_success_and_retains_independent_failure(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, partial_attempt
 ):
     from ipfs_datasets_py.huggingface import autoencoder_span_attempts as transport
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
@@ -537,8 +549,9 @@ def test_owner_requalifies_remote_success_and_retains_independent_failure(
             "variant_id": "test-variant",
             "record": {"record_id": "revision-1", "sample": sample},
         }
+        producer_paths, producer_hashes, producer_identity = remote_producer_fixture()
         policy = {
-            "source_identity": {"fixture": "same-pinned-code"},
+            "source_identity": producer_identity,
             "validation_samples": [validation],
             "lake_timeout_seconds": 1,
         }
@@ -556,6 +569,9 @@ def test_owner_requalifies_remote_success_and_retains_independent_failure(
                 "source_identity": policy["source_identity"],
             },
             "qualification": {
+                'source_files': producer_paths, 'source_sha256': producer_hashes,
+                'sample_set_sha256': work.inc._sha({'training':[sample], 'heldout':[validation]}),
+                'requested_model_config': {'compute_device':'python'},
                 "rows": [
                     {"split": "training", "source": sample},
                     {"split": "heldout", "source": validation},
@@ -593,10 +609,31 @@ def test_owner_requalifies_remote_success_and_retains_independent_failure(
         monkeypatch.setattr(qualification, "qualify_candidate", requalify)
         descriptor = {"sha256": "b" * 64, "bytes": 123}
         verifier = work.owner_verifier(registry, policy, tmp_path / "verify")
+        if partial_attempt:
+            partial = tmp_path / 'verify' / descriptor['sha256'] / 'owner-qualification'
+            partial.mkdir(parents=True)
+            (partial / 'partial-proof.log').write_text('Interrupted, not a qualification.')
+            if partial_attempt == 'truncated':
+                (partial / 'qualification.json').write_text('{"candidate_version_id":')
         result = verifier(assignment, descriptor)
         assert result["result"]["qualified"] is False
         assert result["result"]["span_disposition"] == "needs_repair"
         assert len(evaluations) == 1 and len(producer_checks) == 1
+        if partial_attempt:
+            retained_partial = list((tmp_path/'verify'/descriptor['sha256']).glob('owner-qualification-incomplete-*'))
+            assert len(retained_partial) == 1
+            assert (retained_partial[0]/'partial-proof.log').read_text() == 'Interrupted, not a qualification.'
+            if partial_attempt == 'truncated':
+                assert (retained_partial[0]/'qualification.json').read_text() == '{"candidate_version_id":'
+        # Failed remote results receive the same producer/model/sample binding
+        # before the early return; transport fixtures never become admissions.
+        report['disposition'] = 'needs_repair'
+        assert verifier(assignment, descriptor)['result']['span_disposition'] == 'needs_repair'
+        report['qualification']['source_sha256']['parser'] = '0' * 64
+        with pytest.raises(work.DistributedTrainingError, match='producer hash'):
+            verifier(assignment, descriptor)
+        report['qualification']['source_sha256']['parser'] = producer_identity['native:parser']
+        report['disposition'] = 'qualified'
         retained = (
             tmp_path
             / "verify"
@@ -628,6 +665,72 @@ def test_changed_heartbeat_fence_is_rejected_before_thread_or_network(tmp_path):
             control, {"lease": {"run_id": "run-1", "fence": 2}}, path
         ):
             pytest.fail("stale heartbeat must not yield assignment")
+
+
+def test_heartbeat_replays_lost_renewal_before_cached_result_can_report(tmp_path):
+    original = {'run_id':'run-1','attempt':1,'fence':1,'owner_generation':1,
+                'worker_id':'worker','expires_at':100.0}
+    renewed = {**original, 'expires_at':400.0}
+    class LostRenewal:
+        def __init__(self):
+            self.committed, self.calls = {}, []
+        def request(self, command, payload, operation_id, timeout):
+            self.calls.append((command, deepcopy(payload), operation_id))
+            assert command == 'RenewSpan' and payload['lease'] == original
+            if operation_id not in self.committed:
+                self.committed[operation_id] = {'lease': renewed}
+                raise TimeoutError('renewal committed before reply was lost')
+            return self.committed[operation_id]
+    transport = LostRenewal()
+    client = work.DurableCampaignClient(transport, tmp_path/'journal')
+    slot = ['renew','run-1',1,1]
+    with pytest.raises(TimeoutError):
+        client.request(slot, 'RenewSpan', {'lease':original,'lease_seconds':300})
+    heartbeat_path = tmp_path/'heartbeat.json'
+    work._write(heartbeat_path, {'lease':original,'renewal':0})
+    with work.renewable_assignment(client, {'lease':original}, heartbeat_path) as heartbeat:
+        # An already finished local result can now report immediately without
+        # waiting for the periodic heartbeat to repair an obsolete lease.
+        assert heartbeat['lease'] == renewed and heartbeat['renewal'] == 1
+        assert work._read(heartbeat_path)['lease'] == renewed
+    assert len(transport.calls) == 2 and transport.calls[0] == transport.calls[1]
+    assert len(transport.committed) == 1
+
+
+@pytest.mark.parametrize('corruption', ['missing','extra','hash','suffix','tree','statement','sample','model'])
+def test_portable_remote_qualification_binding_fails_closed(corruption):
+    paths, hashes, identity = remote_producer_fixture()
+    sample = {'title':'5','section':'1','text':'Fixture only.'}
+    policy = {'source_identity':identity,'validation_samples':[]}
+    receipt = {'source_files':paths,'source_sha256':hashes,
+               'sample_set_sha256':work.inc._sha({'training':[sample],'heldout':[]}),
+               'requested_model_config':{'compute_device':'python'}}
+    work._remote_qualification_binding(receipt, policy, [sample])
+    if corruption == 'missing': paths.pop('parser')
+    elif corruption == 'extra': paths['worker'] = '/remote/worker.py'
+    elif corruption == 'hash': hashes['parser'] = '0' * 64
+    elif corruption == 'suffix': paths['parser'] = '/foreign/wrong-parser.py'
+    elif corruption == 'tree': paths['parser'] = paths['parser'].replace('/remote/', '/other/')
+    elif corruption == 'statement': paths['statement_lock'] = paths['statement_lock'].replace('/remote/', '/other/')
+    elif corruption == 'sample': receipt['sample_set_sha256'] = '0' * 64
+    else: receipt['requested_model_config'] = {'compute_device':'cuda'}
+    with pytest.raises(work.DistributedTrainingError):
+        work._remote_qualification_binding(receipt, policy, [sample])
+
+
+def test_explicit_source_metadata_and_exact_usc_citation_are_retained(tmp_path):
+    sample = {'title':'5','section':'8410','text':'Fixture text only.','citation':'usc:us:5:8410'}
+    source = tmp_path/'source.jsonl'
+    source.write_text(json.dumps({'source_span_id':'source-a','sample':sample,
+                                  'legal_id':'explicit-legal-id','document_id':'document-a'})+'\n')
+    explicit = work.records_from_jsonl(source)[0]
+    assert explicit['legal_id'] == 'explicit-legal-id' and explicit['document_id'] == 'document-a'
+    source.write_text(json.dumps({'source_span_id':'source-a','sample':sample})+'\n')
+    inferred = work.records_from_jsonl(source)[0]
+    assert inferred['legal_id'] == sample['citation']
+    assert inferred['record_id'] == explicit['record_id']
+    source.write_text(json.dumps({**sample,'citation':'5 U.S.C. section 8410'})+'\n')
+    assert 'legal_id' not in work.records_from_jsonl(source)[0]
 
 
 def test_provided_embedding_samples_remain_identical_across_json_and_quack_boundaries(

@@ -110,12 +110,60 @@ class HubExchangeClient:
         return path
 
 
+_SOURCE_FIELDS = ("record_id", "sample", "source_span_id", "text", "source_text_sha256", "legal_id", "document_id")
+
+
+def _stable_source(record):
+    return {key: record[key] for key in _SOURCE_FIELDS if key in record}
+
+
+def _attempt_source(row, payload):
+    """Restore validated source metadata; a remote report confers no authority."""
+    if "qualification_attempt" not in payload:
+        return None
+    try:
+        from ...huggingface.autoencoder_span_attempts import _validate
+        from ...optimizers.logic_theorem_optimizer.autoencoder_training_worker import SampleRecord
+        report = payload["qualification_attempt"]
+        if not isinstance(report, dict):
+            raise ValueError("attempt report must be an object")
+        _validate(report)
+        source = report["source_provenance"]["source_record"]
+        record_id = source["record_id"]
+        if not isinstance(record_id, str) or not re.fullmatch(r"(?:sha256:)?[0-9a-f]{64}", record_id):
+            raise ValueError("attempt source identity must be a full SHA-256")
+        SampleRecord.from_dict(source["sample"])
+        if (source["source_span_id"] != row["source_span_id"]
+                or source["text"] != row["source_text"]
+                or source["source_text_sha256"] != row["source_text_sha256"]
+                or source.get("legal_id", "") != row["legal_id"]
+                or hashlib.sha256(source["text"].encode()).hexdigest() != row["source_text_sha256"]):
+            raise ValueError("attempt source differs from census text, span or citation")
+        for key in ("legal_id", "document_id"):
+            if key in source and (not isinstance(source[key], str) or len(source[key]) > 2048):
+                raise ValueError("attempt source metadata must be a bounded string")
+        return _stable_source(source)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise FeedError("invalid qualification attempt source: " + str(exc)) from exc
+
+
+def _merge_source(records, record):
+    previous = records.get(record["record_id"])
+    if previous is None:
+        records[record["record_id"]] = record
+    else:
+        if _stable_source(previous) != _stable_source(record):
+            raise FeedError("stable source fields changed under an existing record identity")
+        previous["observations"].extend(record["observations"])
+
+
 def source_records(bundle, *, repository_id, revision, manifest_in_repo, shard_count=1, shard_index=0):
     """Return source records with complete evidence, without upgrading authority.
 
-    Identity omits observation/model/release so repeated observations of the same
-    source span and text retain one stable training-input identity. A changed
-    source text gets a new identity. Frozen source splits remain caller policy.
+    Qualified-attempt transports preserve their original source identity and
+    sample metadata, including failed attempts. Older census rows use a content
+    identity that omits observation/model/release. Frozen splits remain caller
+    policy; observations never authenticate or admit their source.
     """
     _positive(shard_count, "shard_count")
     if type(shard_index) is not int or not 0 <= shard_index < shard_count:
@@ -124,23 +172,26 @@ def source_records(bundle, *, repository_id, revision, manifest_in_repo, shard_c
     for row in bundle["census_rows"]:
         identity = {"repository_id": repository_id, "source_span_id": row["source_span_id"],
                     "legal_id": row["legal_id"], "source_text_sha256": row["source_text_sha256"]}
-        digest = _sha(_json(identity).encode())
+        payload = json.loads(row["input_json"])
+        source = _attempt_source(row, payload)
+        digest = source["record_id"].removeprefix("sha256:") if source is not None else _sha(_json(identity).encode())
         if int(digest, 16) % shard_count != shard_index:
             continue
         observation = {"repository_id": repository_id, "revision": revision,
                        "manifest_in_repo": manifest_in_repo, "fingerprint": bundle["fingerprint"],
                        "manifest_sha256": bundle["manifest_sha256"], "census_sha256": row["census_sha256"],
-                       "census_row": row, "input": json.loads(row["input_json"])}
-        record = records.setdefault(digest, {"record_id": "sha256:" + digest, **identity,
-            "text": row["source_text"], "observations": [], "admitted": False, "formalized": False,
-            "source_authority_authenticated": False})
-        record["observations"].append(observation)
-        legal = re.fullmatch(r"usc:(?:us:)?(\d+):(.+)", row["legal_id"])
-        record["sample"] = {"title": legal.group(1) if legal else row["legal_id"] or "unclassified",
-                            "section": legal.group(2) if legal else row["source_span_id"],
-                            "text": row["source_text"], "citation": row["legal_id"] or row["source_span_id"]}
+                       "census_row": row, "input": payload}
+        if source is None:
+            legal = re.fullmatch(r"usc:(?:us:)?(\d+):(.+)", row["legal_id"])
+            source = {"record_id": "sha256:" + digest, **identity, "text": row["source_text"],
+                      "sample": {"title": legal.group(1) if legal else row["legal_id"] or "unclassified",
+                                 "section": legal.group(2) if legal else row["source_span_id"],
+                                 "text": row["source_text"], "citation": row["legal_id"] or row["source_span_id"]}}
+        record = {**source, "repository_id": repository_id, "observations": [observation],
+                  "admitted": False, "formalized": False, "source_authority_authenticated": False}
         record["provenance"] = {"source_identity": identity, "observations": record["observations"],
                                 "source_authority_authenticated": False}
+        _merge_source(records, record)
     return [records[key] for key in sorted(records)]
 
 
@@ -340,9 +391,11 @@ class SpanCacheFeed:
                 records = source_records(loaded, repository_id=self.repository_id, revision=revision,
                     manifest_in_repo=path, shard_count=self.shard_count, shard_index=self.shard_index)
                 for record in records:
-                    previous = merged_records.setdefault(record["record_id"], record)
-                    if previous is not record:
-                        previous["observations"].extend(record["observations"])
+                    previous = merged_records.get(record["record_id"])
+                    if previous is not None and _stable_source(previous) != _stable_source(record):
+                        raise FeedError("stable source fields changed under an existing record identity")
+                for record in records:
+                    _merge_source(merged_records, record)
                 ready.append({"manifest_path": str(manifest), "manifest_in_repo": path, "revision": revision,
                               "fingerprint": loaded["fingerprint"], "census_row_count": len(loaded["census_rows"]),
                               "goal_count": len(loaded["goal_rows"]), "record_ids": [r["record_id"] for r in records]})

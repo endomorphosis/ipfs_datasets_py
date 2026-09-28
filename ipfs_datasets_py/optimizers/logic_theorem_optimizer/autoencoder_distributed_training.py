@@ -13,7 +13,8 @@ import hashlib
 import importlib.util
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+import re
 import threading
 import time
 import uuid
@@ -150,9 +151,19 @@ def records_from_jsonl(path):
         source_id = supplied.get('source_span_id') if 'sample' in supplied else None
         source_id = source_id or 'local-content:' + inc._sha(sample)
         revision = inc._sha({'source_span_id': source_id, 'sample': sample})
-        records.append({'record_id': revision, 'source_span_id': source_id, 'sample': sample,
-                        'provenance': {'kind': 'explicit_local_source' if 'sample' in supplied else 'local_content',
-                                       'source_text_sha256': hashlib.sha256(sample['text'].encode()).hexdigest()}})
+        record = {'record_id': revision, 'source_span_id': source_id, 'sample': sample,
+                  'provenance': {'kind': 'explicit_local_source' if 'sample' in supplied else 'local_content',
+                                 'source_text_sha256': hashlib.sha256(sample['text'].encode()).hexdigest()}}
+        for key in ('legal_id', 'document_id'):
+            if key in supplied:
+                if not isinstance(supplied[key], str) or not supplied[key].strip() or len(supplied[key]) > 2048:
+                    raise DistributedTrainingError('source ' + key + ' must be a bounded nonempty string')
+                record[key] = supplied[key]
+        citation = sample.get('citation')
+        if ('legal_id' not in record and isinstance(citation, str)
+                and re.fullmatch(r'usc:(?:us:)?[0-9]+:[^\s:]+', citation)):
+            record['legal_id'] = citation
+        records.append(record)
     return records
 
 
@@ -320,6 +331,7 @@ def owner_verifier(registry, policy, directory):
         validation = [row['source'] for row in receipt['rows'] if row['split'] == 'heldout']
         if training != [assignment['record']['sample']] or validation != policy['validation_samples']:
             raise DistributedTrainingError('remote qualification changed the assigned sample set')
+        _remote_qualification_binding(receipt, policy, training)
         result = {'admitted': False, 'formalized': False, 'owner_verified': True,
                   'qualified': False, 'span_disposition': report['disposition'],
                   'report_artifact': {key: descriptor[key] for key in ('sha256','bytes')},
@@ -340,11 +352,34 @@ def owner_verifier(registry, policy, directory):
             artifact, metadata={'scope':'downloaded_snapshot_pending_qualification','remote_report':descriptor},
             parent_version_id=assignment['base_version_id'])['version_id']
         qualification_file = root/'owner-qualification'/'qualification.json'
+        needs_qualification = not qualification_file.exists()
         if qualification_file.exists():
-            qualified = _read(qualification_file)
-            if qualified['candidate_version_id'] != provisional or qualified['candidate_artifact'] != artifact:
-                raise DistributedTrainingError('retained owner qualification differs from downloaded candidate')
-        else:
+            try:
+                qualified = _read(qualification_file)
+            except json.JSONDecodeError:
+                # Exclusive qualification output can be interrupted mid-write.
+                # Keep the original bytes but never interpret them as evidence.
+                needs_qualification = True
+            else:
+                if (not isinstance(qualified, dict) or qualified.get('candidate_version_id') != provisional
+                        or qualified.get('candidate_artifact') != artifact):
+                    raise DistributedTrainingError('retained owner qualification differs from downloaded candidate')
+        if needs_qualification:
+            incomplete = qualification_file.parent
+            if incomplete.exists() or incomplete.is_symlink():
+                if incomplete.is_symlink() or not incomplete.is_dir():
+                    raise DistributedTrainingError('unfinished owner qualification is not an owned directory')
+                # No final receipt grants authority to this interrupted attempt.
+                # Preserve every partial artifact, then use the original path
+                # for a fresh exclusive qualifier invocation. Decodable but
+                # altered retained receipts take the strict branch above.
+                quarantine = root / ('owner-qualification-incomplete-' + uuid.uuid4().hex)
+                incomplete.rename(quarantine)
+                descriptor = os.open(root, os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
             qualified = qualify_candidate({**artifact,'path':str(registry.artifact_path(artifact))}, provisional,
                 training, root/'owner-qualification', model_config={'compute_device':'python'},
                 heldout_samples=policy['validation_samples'], lake_timeout_seconds=policy['lake_timeout_seconds'])
@@ -371,6 +406,61 @@ def owner_verifier(registry, policy, directory):
             qualification_scope=qualified['qualification_scope'])
         return {'artifact': artifact, 'result': result}
     return verify
+
+
+def _remote_producer_paths():
+    from .autoencoder_candidate_qualification import QUALIFICATION_DEPENDENCIES
+    paths = {
+        'compiler': 'ipfs_datasets_py/logic/legal_ir/canonical_compiler.py',
+        'decompiler': 'ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py',
+        'parser': 'ipfs_datasets_py/logic/deontic/utils/deontic_parser.py',
+        'autoencoder': 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py',
+        'samples': 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py',
+        'qualification': 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py',
+        'autoformal': 'ipfs_datasets_py/logic/autoformal/__init__.py',
+        'family_syntax': 'ipfs_datasets_py/logic/autoformal/family_qualification.py',
+        'statement_lock': 'JevOps/jevops/statement_lock.py',
+    }
+    paths.update({'dependency:' + relative: 'ipfs_datasets_py/' + relative for relative in QUALIFICATION_DEPENDENCIES})
+    return paths
+
+
+def _remote_qualification_binding(receipt, policy, training):
+    """Bind all remote dispositions to the campaign without reading remote paths."""
+    expected_paths = _remote_producer_paths()
+    paths, hashes = receipt.get('source_files'), receipt.get('source_sha256')
+    if (type(paths) is not dict or type(hashes) is not dict
+            or set(paths) != set(expected_paths) or set(hashes) != set(expected_paths)):
+        raise DistributedTrainingError('remote qualification producer roles differ from campaign')
+    native_roles = {'compiler', 'decompiler', 'parser', 'autoencoder', 'samples'}
+    package_root = None
+    for role, relative in expected_paths.items():
+        source = paths[role]
+        if not isinstance(source, str) or '\\' in source:
+            raise DistributedTrainingError('remote qualification source path is invalid')
+        path, suffix = PurePosixPath(source), PurePosixPath(relative)
+        if (not path.is_absolute() or '..' in path.parts
+                or path.parts[-len(suffix.parts):] != suffix.parts):
+            raise DistributedTrainingError('remote qualification source path differs from canonical suffix')
+        if role != 'statement_lock':
+            root = PurePosixPath(*path.parts[:-len(suffix.parts)])
+            if package_root is None:
+                package_root = root
+            elif root != package_root:
+                raise DistributedTrainingError('remote qualification producers use different package trees')
+        key = 'native:' + role if role in native_roles else relative
+        expected = policy['source_identity'].get(key)
+        if (not isinstance(expected, str) or len(expected) != 64
+                or hashes[role] != expected):
+            raise DistributedTrainingError('remote qualification producer hash differs from campaign')
+    if (package_root is None or len(package_root.parents) < 2
+            or PurePosixPath(paths['statement_lock']) != package_root.parents[1] / expected_paths['statement_lock']):
+        raise DistributedTrainingError('remote statement lock is outside the canonical sibling checkout')
+    expected_samples = inc._sha({'training': training, 'heldout': policy['validation_samples']})
+    if receipt.get('sample_set_sha256') != expected_samples:
+        raise DistributedTrainingError('remote qualification sample-set identity differs from campaign')
+    if receipt.get('requested_model_config') != {'compute_device': 'python'}:
+        raise DistributedTrainingError('remote qualification model configuration differs from campaign')
 
 
 def _owner_producer_binding(receipt, policy):
@@ -466,14 +556,20 @@ def renewable_assignment(client, claim, path, *, lease_seconds=300):
     stop = threading.Event()
     errors = []
     guard = threading.RLock()
+    def renew_once():
+        with guard:
+            slot = ['renew',saved['lease']['run_id'],saved['lease']['fence'],saved['renewal']+1]
+            result = client.request(slot,'RenewSpan',{'lease':saved['lease'],'lease_seconds':lease_seconds})
+            saved.update(lease=result['lease'],renewal=saved['renewal']+1)
+            _write(path,saved)
+    # Replays a remotely committed renewal whose reply/local heartbeat write
+    # was interrupted. A cached result may be submitted immediately, before
+    # the periodic timer would otherwise run, so refresh before yielding.
+    renew_once()
     def renew():
         while not stop.wait(min(30, lease_seconds / 4)):
             try:
-                with guard:
-                    slot = ['renew',saved['lease']['run_id'],saved['lease']['fence'],saved['renewal']+1]
-                    result = client.request(slot,'RenewSpan',{'lease':saved['lease'],'lease_seconds':lease_seconds})
-                    saved.update(lease=result['lease'],renewal=saved['renewal']+1)
-                    _write(path,saved)
+                renew_once()
             except Exception as exc:
                 errors.append(type(exc).__name__)
                 stop.set()

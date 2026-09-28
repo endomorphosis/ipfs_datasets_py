@@ -1,0 +1,429 @@
+{
+  "admitted": false,
+  "origin_main_base": "721773d2733ddbe8e55d4d9e76111606f715980f",
+  "rows": [
+    {
+      "captured_native_sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+      "current_workspace_sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+      "matches_captured_native": true,
+      "policy_key": "JevOps/jevops/statement_lock.py",
+      "published_parent_tree_comparison": "not_performed_for_sibling_JevOps"
+    },
+    {
+      "captured_native_sha256": "fe4890f7390ebdfb4e7f55db1e5709f581583d4d6ab6f87e7330bb43ef608df9",
+      "current_workspace_sha256": "fe4890f7390ebdfb4e7f55db1e5709f581583d4d6ab6f87e7330bb43ef608df9",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_quack.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "fe4890f7390ebdfb4e7f55db1e5709f581583d4d6ab6f87e7330bb43ef608df9",
+      "policy_key": "ipfs_datasets_py/duckdb_control/autoencoder_quack.py"
+    },
+    {
+      "captured_native_sha256": "603ffe64394b6d1824296dc3704947e08d93283b6513cb65eb609de33c1bbad3",
+      "current_workspace_sha256": "603ffe64394b6d1824296dc3704947e08d93283b6513cb65eb609de33c1bbad3",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_quack_wire.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "603ffe64394b6d1824296dc3704947e08d93283b6513cb65eb609de33c1bbad3",
+      "policy_key": "ipfs_datasets_py/duckdb_control/autoencoder_quack_wire.py"
+    },
+    {
+      "captured_native_sha256": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+      "current_workspace_sha256": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+      "policy_key": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py"
+    },
+    {
+      "captured_native_sha256": "fd1b034799e8213d222d7ea6b0c552774bd80d475b44204c14f8bf717927ed34",
+      "current_workspace_sha256": "fd1b034799e8213d222d7ea6b0c552774bd80d475b44204c14f8bf717927ed34",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_shared_weight_control.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "fd1b034799e8213d222d7ea6b0c552774bd80d475b44204c14f8bf717927ed34",
+      "policy_key": "ipfs_datasets_py/duckdb_control/autoencoder_shared_weight_control.py"
+    },
+    {
+      "captured_native_sha256": "cd6192e7d88ee4bdd13af9bd1438abae441e86c9cce269cd0b8c483d800241b0",
+      "current_workspace_sha256": "cd6192e7d88ee4bdd13af9bd1438abae441e86c9cce269cd0b8c483d800241b0",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/duckdb_control/autoencoder_span_campaign.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "cd6192e7d88ee4bdd13af9bd1438abae441e86c9cce269cd0b8c483d800241b0",
+      "policy_key": "ipfs_datasets_py/duckdb_control/autoencoder_span_campaign.py"
+    },
+    {
+      "captured_native_sha256": "1241fa56b741b802d1c615b318db6cb703e20ea7ec5e8e5aaa8c85edaf8ab06d",
+      "current_workspace_sha256": "1241fa56b741b802d1c615b318db6cb703e20ea7ec5e8e5aaa8c85edaf8ab06d",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/huggingface/autoencoder_incremental.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "1241fa56b741b802d1c615b318db6cb703e20ea7ec5e8e5aaa8c85edaf8ab06d",
+      "policy_key": "ipfs_datasets_py/huggingface/autoencoder_incremental.py"
+    },
+    {
+      "captured_native_sha256": "fba4cffaecf26ba008b39f7dbc24bde70bd96220eaa827e6d60a8521fa596be5",
+      "current_workspace_sha256": "fba4cffaecf26ba008b39f7dbc24bde70bd96220eaa827e6d60a8521fa596be5",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/huggingface/autoencoder_incremental_download.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "fba4cffaecf26ba008b39f7dbc24bde70bd96220eaa827e6d60a8521fa596be5",
+      "policy_key": "ipfs_datasets_py/huggingface/autoencoder_incremental_download.py"
+    },
+    {
+      "captured_native_sha256": "ef1fb9f245279e92de0c4e46a4ef01993fe7dffde0b64e05d31630372a8f562c",
+      "current_workspace_sha256": "ef1fb9f245279e92de0c4e46a4ef01993fe7dffde0b64e05d31630372a8f562c",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/huggingface/autoencoder_span_attempts.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "ef1fb9f245279e92de0c4e46a4ef01993fe7dffde0b64e05d31630372a8f562c",
+      "policy_key": "ipfs_datasets_py/huggingface/autoencoder_span_attempts.py"
+    },
+    {
+      "captured_native_sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "current_workspace_sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "policy_key": "ipfs_datasets_py/logic/TDFOL/tdfol_core.py"
+    },
+    {
+      "captured_native_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "current_workspace_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "policy_key": "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py"
+    },
+    {
+      "captured_native_sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30",
+      "current_workspace_sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/autoformal/__init__.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30",
+      "policy_key": "ipfs_datasets_py/logic/autoformal/__init__.py"
+    },
+    {
+      "captured_native_sha256": "fa524d6eece64e8cdbe98bd3e86c3671f63ad8d695d8dda52000ee7fa57c6b96",
+      "current_workspace_sha256": "fa524d6eece64e8cdbe98bd3e86c3671f63ad8d695d8dda52000ee7fa57c6b96",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/autoformal/family_qualification.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "fa524d6eece64e8cdbe98bd3e86c3671f63ad8d695d8dda52000ee7fa57c6b96",
+      "policy_key": "ipfs_datasets_py/logic/autoformal/family_qualification.py"
+    },
+    {
+      "captured_native_sha256": "01ec81fa2beb0d97339fdd3dee26573c8a8864e651cf740677f6ada38e242a69",
+      "current_workspace_sha256": "157e063c0b8a8a90e3d89919a7ac8072fc880af96bfd720894a487c22939771e",
+      "matches_captured_native": false,
+      "package_path": "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "157e063c0b8a8a90e3d89919a7ac8072fc880af96bfd720894a487c22939771e",
+      "policy_key": "ipfs_datasets_py/logic/autoformal/span_cache_feed.py"
+    },
+    {
+      "captured_native_sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+      "current_workspace_sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/autoformal/tree_pin.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+      "policy_key": "ipfs_datasets_py/logic/autoformal/tree_pin.py"
+    },
+    {
+      "captured_native_sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+      "current_workspace_sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/backends/results.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+      "policy_key": "ipfs_datasets_py/logic/backends/results.py"
+    },
+    {
+      "captured_native_sha256": "1f5ffbf35e9171b77474da7fb7a1eeb91579a3d09fc0f99d480abfd49aaaf3e0",
+      "current_workspace_sha256": "1f5ffbf35e9171b77474da7fb7a1eeb91579a3d09fc0f99d480abfd49aaaf3e0",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/backends/toolchain_roles.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "1f5ffbf35e9171b77474da7fb7a1eeb91579a3d09fc0f99d480abfd49aaaf3e0",
+      "policy_key": "ipfs_datasets_py/logic/backends/toolchain_roles.py"
+    },
+    {
+      "captured_native_sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+      "current_workspace_sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/deontic/decoder.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+      "policy_key": "ipfs_datasets_py/logic/deontic/decoder.py"
+    },
+    {
+      "captured_native_sha256": "6a220bf20aa8bdb24dd14d8b3467554d674cfadd0b44e88f3d019ce0b02afb2a",
+      "current_workspace_sha256": "6a220bf20aa8bdb24dd14d8b3467554d674cfadd0b44e88f3d019ce0b02afb2a",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/deontic/formula_builder.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "dc53e7c4875a2afa98e100177c0d70e224e1945048f18993333f72c313529109",
+      "policy_key": "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    },
+    {
+      "captured_native_sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+      "current_workspace_sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/deontic/ir.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+      "policy_key": "ipfs_datasets_py/logic/deontic/ir.py"
+    },
+    {
+      "captured_native_sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+      "current_workspace_sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+      "policy_key": "ipfs_datasets_py/logic/deontic/prover_syntax.py"
+    },
+    {
+      "captured_native_sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+      "current_workspace_sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/ir_core/claims.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+      "policy_key": "ipfs_datasets_py/logic/ir_core/claims.py"
+    },
+    {
+      "captured_native_sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "current_workspace_sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "policy_key": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py"
+    },
+    {
+      "captured_native_sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+      "current_workspace_sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+      "policy_key": "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py"
+    },
+    {
+      "captured_native_sha256": "daddb94ed2170b1d4be5011c6294e024f705b6d75b2f5c853066b24d3271d929",
+      "current_workspace_sha256": "daddb94ed2170b1d4be5011c6294e024f705b6d75b2f5c853066b24d3271d929",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/modal/decompiler.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "04959738f30dd88243f5f54b6b4d42957ba21d8e97e000e96c4121daee86dbce",
+      "policy_key": "ipfs_datasets_py/logic/modal/decompiler.py"
+    },
+    {
+      "captured_native_sha256": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390",
+      "current_workspace_sha256": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/parsers/event_calculus.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390",
+      "policy_key": "ipfs_datasets_py/logic/parsers/event_calculus.py"
+    },
+    {
+      "captured_native_sha256": "85ac4353d2bd15fee7cfcf345a4f7afe33d27baca49b1b273f08a217298d1bb7",
+      "current_workspace_sha256": "85ac4353d2bd15fee7cfcf345a4f7afe33d27baca49b1b273f08a217298d1bb7",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/parsers/flogic.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "85ac4353d2bd15fee7cfcf345a4f7afe33d27baca49b1b273f08a217298d1bb7",
+      "policy_key": "ipfs_datasets_py/logic/parsers/flogic.py"
+    },
+    {
+      "captured_native_sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+      "current_workspace_sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/parsers/legacy_modal.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+      "policy_key": "ipfs_datasets_py/logic/parsers/legacy_modal.py"
+    },
+    {
+      "captured_native_sha256": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942",
+      "current_workspace_sha256": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/parsers/modal.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942",
+      "policy_key": "ipfs_datasets_py/logic/parsers/modal.py"
+    },
+    {
+      "captured_native_sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+      "current_workspace_sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/syntax_core/algebra.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+      "policy_key": "ipfs_datasets_py/logic/syntax_core/algebra.py"
+    },
+    {
+      "captured_native_sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+      "current_workspace_sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/syntax_core/ast.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+      "policy_key": "ipfs_datasets_py/logic/syntax_core/ast.py"
+    },
+    {
+      "captured_native_sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+      "current_workspace_sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/syntax_core/contracts.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+      "policy_key": "ipfs_datasets_py/logic/syntax_core/contracts.py"
+    },
+    {
+      "captured_native_sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+      "current_workspace_sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/syntax_core/signatures.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+      "policy_key": "ipfs_datasets_py/logic/syntax_core/signatures.py"
+    },
+    {
+      "captured_native_sha256": "42bfa3098cbcf0b3c0de1a2343a45fba568d3561d4dfe42724b1c58e91b09a4d",
+      "current_workspace_sha256": "42bfa3098cbcf0b3c0de1a2343a45fba568d3561d4dfe42724b1c58e91b09a4d",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "42bfa3098cbcf0b3c0de1a2343a45fba568d3561d4dfe42724b1c58e91b09a4d",
+      "policy_key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py"
+    },
+    {
+      "captured_native_sha256": "a6dda2199b41a4dc223f4c0232db0821da7ac05dc111b4bc8934e78e94959688",
+      "current_workspace_sha256": "a6dda2199b41a4dc223f4c0232db0821da7ac05dc111b4bc8934e78e94959688",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "a6dda2199b41a4dc223f4c0232db0821da7ac05dc111b4bc8934e78e94959688",
+      "policy_key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"
+    },
+    {
+      "captured_native_sha256": "00ce6920544c98059064892fcb0d059f45a7bb35b3da16c070da44151391eb7e",
+      "current_workspace_sha256": "00ce6920544c98059064892fcb0d059f45a7bb35b3da16c070da44151391eb7e",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_training.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "00ce6920544c98059064892fcb0d059f45a7bb35b3da16c070da44151391eb7e",
+      "policy_key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_training.py"
+    },
+    {
+      "captured_native_sha256": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3",
+      "current_workspace_sha256": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3",
+      "policy_key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py"
+    },
+    {
+      "captured_native_sha256": "ec2e44f89b69936a939ed2f808b40fbf2004016d7d9b8cefafdf00722f8db809",
+      "current_workspace_sha256": "ec2e44f89b69936a939ed2f808b40fbf2004016d7d9b8cefafdf00722f8db809",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "ec2e44f89b69936a939ed2f808b40fbf2004016d7d9b8cefafdf00722f8db809",
+      "policy_key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py"
+    },
+    {
+      "captured_native_sha256": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447",
+      "current_workspace_sha256": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447",
+      "policy_key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py"
+    },
+    {
+      "captured_native_sha256": "1ed4dec6feca91f5e944f7cb3d85f556a1545070abdbc6fa03d96ad8f9212af2",
+      "current_workspace_sha256": "1ed4dec6feca91f5e944f7cb3d85f556a1545070abdbc6fa03d96ad8f9212af2",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+      "policy_key": "native:autoencoder"
+    },
+    {
+      "captured_native_sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "current_workspace_sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+      "policy_key": "native:compiler"
+    },
+    {
+      "captured_native_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "current_workspace_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+      "policy_key": "native:decompiler"
+    },
+    {
+      "captured_native_sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+      "current_workspace_sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+      "policy_key": "native:parser"
+    },
+    {
+      "captured_native_sha256": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+      "current_workspace_sha256": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+      "policy_key": "native:samples"
+    },
+    {
+      "captured_native_sha256": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156",
+      "current_workspace_sha256": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156",
+      "matches_captured_native": true,
+      "package_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156",
+      "policy_key": "native:worker"
+    },
+    {
+      "captured_native_sha256": "edf6028cfe13d175539140f937908153e2dd531c3c5dc2178012ef7cfd519e64",
+      "current_workspace_sha256": "edf6028cfe13d175539140f937908153e2dd531c3c5dc2178012ef7cfd519e64",
+      "matches_captured_native": true,
+      "package_path": "scripts/ops/legal_ir/run_distributed_autoencoders.py",
+      "planned_published_matches_native": true,
+      "planned_published_sha256": "edf6028cfe13d175539140f937908153e2dd531c3c5dc2178012ef7cfd519e64",
+      "policy_key": "scripts/ops/legal_ir/run_distributed_autoencoders.py"
+    },
+    {
+      "captured_native_sha256": "fb49f701b661af343ee3d76e6b4b1b8dd94640fb187bb8ad9b976dc4002526de",
+      "current_workspace_sha256": "fb49f701b661af343ee3d76e6b4b1b8dd94640fb187bb8ad9b976dc4002526de",
+      "matches_captured_native": true,
+      "package_path": "scripts/ops/legal_ir/run_incremental_autoencoders.py",
+      "planned_published_matches_native": false,
+      "planned_published_sha256": "7f6abaa51e8d30037bf3cd0e5a11a365f90d477dd5bce95af3b003cd7852da71",
+      "policy_key": "scripts/ops/legal_ir/run_incremental_autoencoders.py"
+    }
+  ],
+  "schema": "native-versus-publication-source-scope/v1",
+  "scope": "Read-only comparison; native full run was on captured workspace; final feed-only regression is separate. Publishing explicitly scoped files does not publish unrelated concurrent semantic edits."
+}

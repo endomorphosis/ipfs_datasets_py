@@ -1,0 +1,670 @@
+{
+  "actual_lake_project_count": 9,
+  "admitted": false,
+  "constitution_formalized": false,
+  "copied_bytes": 1832680,
+  "copied_file_count": 77,
+  "created_at": "2026-09-28T22:18:08.654601+00:00",
+  "credential_scan": {
+    "known_campaign_or_environment_secret_value_count": 2,
+    "matches": 0,
+    "pattern_count": 5,
+    "scanned_file_count": 81,
+    "scope": "all published files including parent summaries and source-scope; raw bytes and decompressed Parquet cells"
+  },
+  "derived_artifacts": [
+    {
+      "bytes": 1895,
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/README.md",
+      "scope": "curation documentation",
+      "sha256": "63c1c7d8803be656fa122ddc00bc299ec2adeeb87a4a270d6379343656d76048"
+    },
+    {
+      "bytes": 6795,
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/resource-headroom-audit.json",
+      "scope": "read-only resource ledger accounting; no ledger copy",
+      "sha256": "b8ca18caab14c11661ad667b3f8473d52422315c6336eabeca3cb8eb0f981533"
+    },
+    {
+      "bytes": 26448,
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/source-scope.json",
+      "scope": "parent-curated native versus current and planned-main source scope",
+      "sha256": "4bf277447e3cc0638b03a803039ce340d2934da410c839da348163b63c94fd0c"
+    }
+  ],
+  "excluded_categories": [
+    "weights_and_sparse_payloads",
+    "tokens_and_connections",
+    "full_resource_ledger_backup",
+    "compiled_lean_and_caches"
+  ],
+  "files": [
+    {
+      "bytes": 2778,
+      "category": "cap_or_test_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/cap-migration.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/cap-migration.json",
+      "sha256": "7dd7ff812c706db76e444b70bbe63687eaa1e247bf1c3d633e11f6c174dd148b"
+    },
+    {
+      "bytes": 1781,
+      "category": "post_feed_identity_regression",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/feed-integration-tests.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/feed-integration-tests.log",
+      "sha256": "96ca2ce5dff6d1de869af1f6de82e37144444aff84819616c146157bfff0bbae"
+    },
+    {
+      "bytes": 24953,
+      "category": "post_feed_identity_regression",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/feed-integration-tests.xml",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/feed-integration-tests.xml",
+      "sha256": "9b495c6f9d7c873913d8e2491c71b433187176b8efab103678998fa504a4e4e7"
+    },
+    {
+      "bytes": 4740,
+      "category": "parent_curated_native_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native-feed-reingestion.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native-feed-reingestion.json",
+      "sha256": "9a35f4553b0e37cd0bfb4288cf0e4c411b87fda73e70827367d02eec3dd6492f"
+    },
+    {
+      "bytes": 236466,
+      "category": "parent_curated_native_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native-validation-summary.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native-validation-summary.json",
+      "sha256": "9d163e12201fad6ce48e9e2e433898b3dbf2c6cd58d795991e0515ac5af5bc13"
+    },
+    {
+      "bytes": 17420,
+      "category": "native_control_or_source_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/before-restart.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/before-restart.json",
+      "sha256": "c210f42a9dad4daafcf2dc226794791b3fa709f994e6065b8545252295539ea8"
+    },
+    {
+      "bytes": 10197,
+      "category": "native_control_or_source_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/generation2-convergence.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/generation2-convergence.json",
+      "sha256": "f5ab5f7a862735a7ecf088623d1b40542e4b2a01bf482203cea00cdbf73cd1e2"
+    },
+    {
+      "bytes": 11013,
+      "category": "native_control_or_source_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/generation3-convergence.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/generation3-convergence.json",
+      "sha256": "0946b991179c380e61c31b386b47fdd6ef42b872f81e8c04f24e4edfc61c0106"
+    },
+    {
+      "bytes": 148823,
+      "category": "native_optimizer_receipt",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/outputs/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/receipt.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/outputs/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/receipt.json",
+      "sha256": "2f33f49d82d5bd7579ace6ddceab0e9c5eaefd7a8c7850140e302535c484bb48"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/Legal.lean",
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/lake.log",
+      "sha256": "7e8f56f4ddd02521429e052c483106362fa878c800bdabf68544de89404539f0"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/heldout-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 177256,
+      "category": "worker_qualification",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/qualification.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/qualification.json",
+      "sha256": "352086306ba6cd66552acf5da92a2059d4dfdb7d98ab32d5ec23b7a4e061bafc"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/Legal.lean",
+      "sha256": "c4eb5b4bc33a4f35724354fdbc108a8ea7d97946ea0909bf8e9217a33229ac53"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/lake.log",
+      "sha256": "dae70e0ac4dd6d942eadc2e3cd0e11f3bb4cdc58987e3ff567e9c83e3dafe0dd"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/progress/qualifications/qualified-787560b78e3506c3dd10751a72a7ef0c9b736d2043c0e61d5310f82cf709f8c2/training-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 65377,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/span-publication/census-a269a78ae270b96376118e2193371e7a0eebef0c17c5e374e775b1caeb783c92.parquet",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/span-publication/census-a269a78ae270b96376118e2193371e7a0eebef0c17c5e374e775b1caeb783c92.parquet",
+      "sha256": "bd3fd318347e7f19b148dc29aeb858ed9358dd9267b9014e1dc044a065fc81ca"
+    },
+    {
+      "bytes": 1075,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/span-publication/exchange-a269a78ae270b96376118e2193371e7a0eebef0c17c5e374e775b1caeb783c92.manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/span-publication/exchange-a269a78ae270b96376118e2193371e7a0eebef0c17c5e374e775b1caeb783c92.manifest.json",
+      "sha256": "5318a5ea0efe1a9a81770700e74d973da597f7b69b00c5fee2be234cd9827a68"
+    },
+    {
+      "bytes": 3502,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/span-publication/goals-a269a78ae270b96376118e2193371e7a0eebef0c17c5e374e775b1caeb783c92.parquet",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-6fc4cab7c1ee601e1d924c2cf9ada095680d1974053769789af27b36c78c1d32/attempt-1/span-publication/goals-a269a78ae270b96376118e2193371e7a0eebef0c17c5e374e775b1caeb783c92.parquet",
+      "sha256": "eb538849a62e12ac8d72418e6a5da2321eb332bdf677f34f56b94602d3f272cd"
+    },
+    {
+      "bytes": 149194,
+      "category": "native_optimizer_receipt",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/outputs/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/receipt.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/outputs/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/receipt.json",
+      "sha256": "81d444f65a713ef092587451f505cc62af39639c4ffbd5de02806db6722510bf"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/Legal.lean",
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/lake.log",
+      "sha256": "9d840ae6d5dfbccfc859280824f29c1ba9ad02ea650891eeae535f5987a48f8c"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/heldout-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 101937,
+      "category": "worker_qualification",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/qualification.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/progress/qualifications/qualified-6d85535ebb06d665648e14b736081b4556f10108eaa2ca78cf11eaa101dc5826/qualification.json",
+      "sha256": "f83280e86611ac4b4a325a277990aaff67e5fd1b921c8ad454f4bc5602194572"
+    },
+    {
+      "bytes": 46001,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/span-publication/census-4c5b00645f4cc229873d627d5c2950bcd05e7fa573ff0c46fba9b7d094a8c950.parquet",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/span-publication/census-4c5b00645f4cc229873d627d5c2950bcd05e7fa573ff0c46fba9b7d094a8c950.parquet",
+      "sha256": "c0d6bca39b9b2cd0ec873966bc7cf2794e30c270d2e36bd098818c048f63b347"
+    },
+    {
+      "bytes": 1076,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/span-publication/exchange-4c5b00645f4cc229873d627d5c2950bcd05e7fa573ff0c46fba9b7d094a8c950.manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/span-publication/exchange-4c5b00645f4cc229873d627d5c2950bcd05e7fa573ff0c46fba9b7d094a8c950.manifest.json",
+      "sha256": "e744bccf84c2874760a80c513dc78385d7d135dd3bf010ee011973eabfb997d4"
+    },
+    {
+      "bytes": 18166,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/span-publication/goals-4c5b00645f4cc229873d627d5c2950bcd05e7fa573ff0c46fba9b7d094a8c950.parquet",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-a/jobs/span-attempt-8f4e00aac3d3412eb65d3ca48b2194b1d3aebf440a46017a3f1f4d44b41d52f7/attempt-1/span-publication/goals-4c5b00645f4cc229873d627d5c2950bcd05e7fa573ff0c46fba9b7d094a8c950.parquet",
+      "sha256": "710009d45a75028783f312e0345517fa9e55d13b23aa964d298116f7cbd3d0c1"
+    },
+    {
+      "bytes": 148850,
+      "category": "native_optimizer_receipt",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/outputs/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/receipt.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/outputs/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/receipt.json",
+      "sha256": "a547d32cb949e8c52037c4b3900faced185c994252e78bb929d52b507a7a4514"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/Legal.lean",
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/lake.log",
+      "sha256": "68954b0f89ab9fc8f7ecd5335dd289695efff7eaa75f222d2c5fc999a84fa563"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/heldout-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 177257,
+      "category": "worker_qualification",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/qualification.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/qualification.json",
+      "sha256": "32c5aaba85b8fc89769f366bb49031487a756d0e015de630222a08b7ef4638b1"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/Legal.lean",
+      "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/lake.log",
+      "sha256": "01f582c4a09207509a0ffa0c53b29c35eafaa7a4e0e5ff87caf0403ff2265127"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/progress/qualifications/qualified-d0211cfe755e4c8f53232fd946ff9d7f7919136fb3d0c48dc11bd9aa77d96fb2/training-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 64987,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/span-publication/census-5fbfa49e2dedebd4b794af2904923860bd5f7d1975ef7de586c0aa16c7e9602d.parquet",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/span-publication/census-5fbfa49e2dedebd4b794af2904923860bd5f7d1975ef7de586c0aa16c7e9602d.parquet",
+      "sha256": "ae1f50f091722b1ce23410aef6870d924576b7cb2853ad7674159bcfc3686f89"
+    },
+    {
+      "bytes": 1075,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/span-publication/exchange-5fbfa49e2dedebd4b794af2904923860bd5f7d1975ef7de586c0aa16c7e9602d.manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/span-publication/exchange-5fbfa49e2dedebd4b794af2904923860bd5f7d1975ef7de586c0aa16c7e9602d.manifest.json",
+      "sha256": "13960026c0a9dc726de1b6283900d6f453c92c636e20985b1af0b4f8802fc851"
+    },
+    {
+      "bytes": 3502,
+      "category": "actual_published_span_exchange",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/span-publication/goals-5fbfa49e2dedebd4b794af2904923860bd5f7d1975ef7de586c0aa16c7e9602d.parquet",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/node-b/jobs/span-attempt-a7825538bbd685d2d7036626a54180f3d2c40f30eb206cb8017ce91845c39878/attempt-1/span-publication/goals-5fbfa49e2dedebd4b794af2904923860bd5f7d1975ef7de586c0aa16c7e9602d.parquet",
+      "sha256": "eb538849a62e12ac8d72418e6a5da2321eb332bdf677f34f56b94602d3f272cd"
+    },
+    {
+      "bytes": 504,
+      "category": "native_control_or_source_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/observed-parallel-training.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/observed-parallel-training.json",
+      "sha256": "b97d984b6a2f688b1aa806463b60f66bc8b4b350cd383fd22a392193c12605f2"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/Legal.lean",
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/lake.log",
+      "sha256": "cbeaeef14c3d39a9fc6ccae32e65582576998720e45eb16d264e97153a86c641"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/heldout-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 176696,
+      "category": "owner_requalification",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/qualification.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/qualification.json",
+      "sha256": "24fba9f11b88e2eef55d358928ba9101212bdcc58e668e58c961b3caaa082a9b"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/Legal.lean",
+      "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/lake.log",
+      "sha256": "d7e2cca4933fa22236fa57d53636c7fc6927fa1ccebf09c9fd468095cd84c0c7"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00/owner-qualification/training-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/Legal.lean",
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/lake.log",
+      "sha256": "58c9dc0d1f4f90693c567d5d89da6dafe6cb8e0bf9e5d58b918352eda706c994"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/heldout-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 176696,
+      "category": "owner_requalification",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/qualification.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/qualification.json",
+      "sha256": "50ef7bfd179380b8b06263aeb3320f7be9a9588190a91e95f9f4d4e1d43c1fa3"
+    },
+    {
+      "bytes": 169,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/Legal.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/Legal.lean",
+      "sha256": "c4eb5b4bc33a4f35724354fdbc108a8ea7d97946ea0909bf8e9217a33229ac53"
+    },
+    {
+      "bytes": 111,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/lake-manifest.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/lake-manifest.json",
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868"
+    },
+    {
+      "bytes": 178,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/lake.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/lake.log",
+      "sha256": "049b5c1d419be5c9091b2fe99a07f86ffc0046a3711f94162afc2acb38d173e2"
+    },
+    {
+      "bytes": 77,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/lakefile.lean",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/lakefile.lean",
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614"
+    },
+    {
+      "bytes": 25,
+      "category": "actual_lake_source_or_log",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/lean-toolchain",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/owner/verification/7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972/owner-qualification/training-0/lake-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    {
+      "bytes": 11502,
+      "category": "native_control_or_source_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/restart-resume.json",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/restart-resume.json",
+      "sha256": "f8d0b00498293046fbf6dece2f6ab067e8a6fca8522846c7c71a84ac6fa94fcd"
+    },
+    {
+      "bytes": 655,
+      "category": "native_control_or_source_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/training-revision1.jsonl",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/training-revision1.jsonl",
+      "sha256": "80fe59632fefb5beb0797d8e22a2384533bdae5126b9baea675658f3fac1092f"
+    },
+    {
+      "bytes": 655,
+      "category": "source_revision_two",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/training.jsonl",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/training-revision2.jsonl",
+      "sha256": "3213286630924ac791056d7f000a050e8911a258403f0061903e4d5dbc220c6c"
+    },
+    {
+      "bytes": 125,
+      "category": "native_control_or_source_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/native/validation.jsonl",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/native/validation.jsonl",
+      "sha256": "8da95839d320c2e886d25df202725ea613e3ad59e0a85ddc27510b5b5be0e6f7"
+    },
+    {
+      "bytes": 2200,
+      "category": "cap_or_test_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/readiness-tests.log",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/readiness-tests.log",
+      "sha256": "6eb1e9ac2518bfbaf36b4b1f8b0531319119c74b119aaedcdbacfa70f37844ce"
+    },
+    {
+      "bytes": 41181,
+      "category": "cap_or_test_evidence",
+      "copied_byte_for_byte": true,
+      "original_path": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/readiness-tests.xml",
+      "published_path": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928/readiness-tests.xml",
+      "sha256": "09b7d217c36769fc7de30ab668ca9d746c17cc590213ccf2bc499c8f21bed187"
+    }
+  ],
+  "native_span_exchange_count": 3,
+  "notes": [
+    "Native summary and feed reingestion evidence were curated by the parent task; their source copies are included unchanged.",
+    "README, resource-headroom-audit.json, and source-scope.json are derived evidence.",
+    "The later feed identity fix is covered by feed-integration-tests, not retroactively by the earlier native run."
+  ],
+  "proof_scope": "Actual lake build Legal of source-locked numeric boundary theorems only; no corpus formalization or model-generated code proof.",
+  "published_root": "docs/implementation/reports/evidence/distributed-autoencoders-80gb-20260928",
+  "schema": "distributed-autoencoder-curated-evidence-v1",
+  "source_qualification_count": 5,
+  "source_root": "workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928"
+}

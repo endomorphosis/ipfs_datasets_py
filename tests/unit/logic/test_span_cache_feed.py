@@ -14,6 +14,124 @@ from ipfs_datasets_py.logic.autoformal.span_cache_feed import FeedError, SpanCac
 A, B = "a" * 40, "b" * 40
 
 
+def attempt_bundle(tmp_path, label="attempt", *, legal=False):
+    """Synthetic transport evidence: no training, parser or Lake claims."""
+    from copy import deepcopy
+    from ipfs_datasets_py.huggingface import autoencoder_span_attempts as attempts
+    from ipfs_datasets_py.logic.autoformal.span_cache_exchange import load_exchange_bundle
+
+    sample = {"title": "5" if legal else "qualification-fixture", "section": "8410" if legal else "minimum",
+              "text": "The officer shall retain the file for at least 20 days.",
+              "citation": "usc:us:5:8410" if legal else None,
+              "embedding_model": "provided:transport-fixture", "embedding_vector": [0.125, 0.25]}
+    source = {"record_id": hashlib.sha256(b"original-local-revision").hexdigest(),
+              "source_span_id": "original-span", "sample": deepcopy(sample), "text": sample["text"],
+              "source_text_sha256": hashlib.sha256(sample["text"].encode()).hexdigest(),
+              "document_id": "original-document"}
+    if legal:
+        source["legal_id"] = sample["citation"]
+    gates = {name: {"passed": False} for name in attempts.GATES}
+    artifact = {"sha256": "a" * 64, "bytes": 1}
+    receipt = {"schema_version": "autoencoder-candidate-qualification/v1", "execution_mode": "native_candidate_qualification",
+               "unit_test_transport_only": True, "candidate_version_id": "fixture-candidate", "candidate_artifact": artifact,
+               "materialized_checkpoint": artifact, "sample_count": 1, "heldout_sample_count": 0,
+               "gate_results": gates, **gates, "qualified": False, "admitted": False, "formalized": False,
+               "repair_todos": [], "source_sha256": {"fixture": "b" * 64}, "sample_set_sha256": "c" * 64,
+               "qualification_scope": "embedding_model_and_deterministic_source_compiler_pipeline",
+               "model_emits_text_or_formulas": False,
+               "rows": [{"sample_id": "transport-fixture", "split": "training", "source": deepcopy(sample),
+                         "source_sha256": source["source_text_sha256"], "qualified": False,
+                         "admitted": False, "formalized": False, **{k: v for k, v in gates.items() if k != "heldout_gate"}}]}
+    report = {"schema": attempts.SCHEMA, "repository_id": attempts.REPOSITORY,
+              "work_id": "fixture-work", "span_revision": source["record_id"], "sample_id": "transport-fixture",
+              "candidate_version_id": "fixture-candidate", "candidate_artifact": artifact, "attempt_index": 1,
+              "disposition": "needs_repair", "qualification": receipt,
+              "qualification_artifact": attempts._ref(attempts._json(receipt)),
+              "source_provenance": {"source_record": source, "canonical_generation": 1,
+                                    "canonical_version_id": "fixture-base", "canonical_artifact": artifact},
+              "source_sha256": source["source_text_sha256"], "repair_todos": [], "weight_publication": None,
+              "weight_manifest": None, "admitted": False, "formalized": False,
+              "promotion_performed": False, "supervisor_execution_authorized": False}
+    attempts._validate(report)
+    published = publish_compiled_exchange([{"source_span_id": source["source_span_id"],
+        "legal_id": source.get("legal_id", ""), "text": source["text"], "qualification_attempt": report,
+        "agrees": False}], tmp_path / label, upload=False, agent_id=label, code_identity="synthetic:test")
+    path = Path(published["manifest"]["path"])
+    return load_exchange_bundle(path), report
+
+
+def attempt_records(bundle, **kwargs):
+    return source_records(bundle, repository_id="justicedao/uscode-autoformal-span-cache", revision=A,
+                          manifest_in_repo=bundle["manifest"]["path_in_repo"], **kwargs)
+
+
+@pytest.mark.parametrize("legal", [False, True])
+def test_attempt_restores_original_identity_sample_vectors_and_optional_metadata(tmp_path, legal):
+    bundle, report = attempt_bundle(tmp_path, legal=legal)
+    record = attempt_records(bundle)[0]
+    original = report["source_provenance"]["source_record"]
+    for key, value in original.items():
+        assert record[key] == value
+    assert ("legal_id" in record) is legal
+    assert record["sample"]["embedding_vector"] == [0.125, 0.25]
+    assert record["sample"]["title"] == ("5" if legal else "qualification-fixture")
+    assert record["admitted"] is record["formalized"] is record["source_authority_authenticated"] is False
+    assert record["observations"][0]["input"]["qualification_attempt"] == report
+    assigned = [r for i in range(3) for r in attempt_records(bundle, shard_count=3, shard_index=i)]
+    assert [r["record_id"] for r in assigned] == [original["record_id"]]
+
+
+@pytest.mark.parametrize("corruption", ["text", "text_hash", "span", "legal_id", "revision", "invalid_digest", "malformed", "unknown_schema", "census_hash"])
+def test_present_attempt_cannot_fall_back_when_original_binding_is_invalid(tmp_path, corruption):
+    bundle, report = attempt_bundle(tmp_path, legal=True)
+    source = report["source_provenance"]["source_record"]
+    if corruption == "text": source["text"] += " Changed."
+    elif corruption == "text_hash": source["source_text_sha256"] = "0" * 64
+    elif corruption == "span": source["source_span_id"] = "other-span"
+    elif corruption == "legal_id": source["legal_id"] = "usc:us:5:9999"
+    elif corruption == "revision": source["record_id"] = "f" * 64
+    elif corruption == "invalid_digest": source["record_id"] = report["span_revision"] = "bad-digest"
+    elif corruption == "malformed": report = None
+    elif corruption == "unknown_schema": report["schema"] = "unknown-attempt/v9"
+    else: bundle["census_rows"][0]["source_text_sha256"] = "0" * 64
+    payload = json.loads(bundle["census_rows"][0]["input_json"])
+    payload["qualification_attempt"] = report
+    bundle["census_rows"][0]["input_json"] = json.dumps(payload)
+    with pytest.raises(FeedError, match="invalid qualification attempt source"):
+        attempt_records(bundle)
+
+
+def test_reingested_attempt_registers_no_new_source_work(tmp_path):
+    from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
+    from tests.unit.duckdb_control.test_autoencoder_span_campaign import campaign
+    bundle, report = attempt_bundle(tmp_path)
+    original = report["source_provenance"]["source_record"]
+    restored = attempt_records(bundle)[0]
+    with AutoencoderRegistry(tmp_path / "dedup.duckdb", tmp_path / "dedup-artifacts") as registry:
+        control = campaign(registry, tmp_path)
+        first = control.register_records([original])
+        assert control.register_records([restored]) == first
+        assert control.status()["counts"] == {"queued": 1}
+        assert registry.get_run(first[0])["spec"]["record"] == original
+
+
+def test_conflicting_sample_metadata_under_restored_identity_is_rejected(tmp_path):
+    from copy import deepcopy
+    from ipfs_datasets_py.huggingface import autoencoder_span_attempts as attempts
+    bundle, report = attempt_bundle(tmp_path)
+    changed = deepcopy(report)
+    changed["source_provenance"]["source_record"]["sample"]["embedding_vector"] = [0.5, 0.75]
+    changed["qualification"]["rows"][0]["source"]["embedding_vector"] = [0.5, 0.75]
+    changed["qualification_artifact"] = attempts._ref(attempts._json(changed["qualification"]))
+    second = deepcopy(bundle["census_rows"][0])
+    payload = json.loads(second["input_json"])
+    payload["qualification_attempt"] = changed
+    second["input_json"] = json.dumps(payload)
+    bundle["census_rows"].append(second)
+    with pytest.raises(FeedError, match="stable source fields changed"):
+        attempt_records(bundle)
+
+
 def make_bundle(tmp_path, label="one", *, text="The agency shall retain records.", span="source-1"):
     receipt = publish_compiled_exchange([{
         "source_span_id": span, "legal_id": "usc:us:5:8410", "text": text,

@@ -1,0 +1,58 @@
+{
+  "admitted": false,
+  "all_prior_records_and_roots_unchanged": true,
+  "all_prior_reservation_records_sha256": "bc7fbba07ba8f55052bc52894e1486f3e8af8ddb509f6cdf28927e78ddfaea91",
+  "artifacts_deleted": false,
+  "authorization": "User explicitly authorized increasing the campaign cap from75GB to80GB and preserving all retained claims; delegated by root on2026-09-28.",
+  "backup_bytes": 238754,
+  "backup_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-80gb-20260928/disk-reservations.before-80gb.json",
+  "backup_sha256": "8af5e5675f004bcf31bc3fe3fa811b47429880eadd53c263b10a7169f9054669",
+  "byte_suffix_preserved": true,
+  "changed_json_paths": [
+    "/limit_bytes"
+  ],
+  "completed_at": "2026-09-28T21:54:45.762994+00:00",
+  "constitution_formalized": false,
+  "headroom_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 74755441171,
+    "inventory": {
+      "apparent_bytes": 45990441171,
+      "entry_count": 220578,
+      "special_file_count": 23,
+      "symlink_count": 3820
+    },
+    "limit_bytes": 80000000000,
+    "minimum_filesystem_free_bytes": 223371599872,
+    "observed_apparent_bytes": 45990441171,
+    "outstanding_full_reservations_bytes": 28765000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "headroom_bytes": 5244558829,
+  "hub_calls_performed": false,
+  "ledger_after_sha256": "3271bcd84913963c69043205661e4f7646dba5823a5f52642a0a1fe8f78cb114",
+  "ledger_before_sha256": "8af5e5675f004bcf31bc3fe3fa811b47429880eadd53c263b10a7169f9054669",
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "lock_mode": "existing fcntl.flock exclusive; atomic fsync write and directory fsync",
+  "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json.lock",
+  "new_limit_bytes": 80000000000,
+  "old_limit_bytes": 75000000000,
+  "only_top_level_limit_changed": true,
+  "reservation_count": 133,
+  "reservation_counts": {
+    "released": 72,
+    "retained": 61
+  },
+  "reservation_releases_performed": 0,
+  "reservations_added": 0,
+  "resource_source_sha256": "a6dda2199b41a4dc223f4c0232db0821da7ac05dc111b4bc8934e78e94959688",
+  "retained_records_sha256": "b28a79a5ff39fc857c2d40af9d000f6c5c6e4212142a7fbc166e9ae403698965",
+  "retained_reservation_count": 61,
+  "schema": "campaign-storage-cap-migration-v1",
+  "test_validation": {
+    "command": "python3 -m pytest -q tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+    "elapsed_seconds": 3.37,
+    "passed": 58
+  },
+  "training_performed": false
+}

@@ -1,0 +1,21 @@
+{
+  "observed_at": 1790632884.035901,
+  "processes": [
+    {
+      "pid": 2041999,
+      "command": [
+        "/usr/bin/python3",
+        "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_incremental_autoencoders.py",
+        "--_cycle"
+      ]
+    },
+    {
+      "pid": 2045806,
+      "command": [
+        "/usr/bin/python3",
+        "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_incremental_autoencoders.py",
+        "--_cycle"
+      ]
+    }
+  ]
+}

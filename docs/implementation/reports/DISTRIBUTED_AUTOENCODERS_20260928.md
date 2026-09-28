@@ -1,5 +1,8 @@
 # Distributed span training and complete-weight synchronization
 
+Follow-up: [80 GB cap, completed publication/convergence and restart validation](DISTRIBUTED_AUTOENCODERS_80GB_20260928.md).
+The status below records the earlier 75 GB run.
+
 Status: the combined focused suite passed 148 tests; the final downloader suite
 passed 34 tests, including one subsequently added regression. A two-worker native exercise verified complete
 seed downloads, simultaneous training and actual qualification, then stopped at
