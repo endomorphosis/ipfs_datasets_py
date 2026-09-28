@@ -157,7 +157,9 @@ def decompile_rule(rule: CanonicalRule) -> str:
         _readable_atom(rule.action),
     ]
     if rule.object:
-        parts.append(_readable_atom(rule.object))
+        object_text = _readable_atom(rule.object)
+        if not _phrase_in_text(_readable_atom(rule.action), object_text):
+            parts.append(object_text)
 
     sentence = " ".join(parts)
     temporal = _temporal_not_already_in_object(rule)

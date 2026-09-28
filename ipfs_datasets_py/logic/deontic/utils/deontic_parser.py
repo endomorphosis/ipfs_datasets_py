@@ -569,13 +569,110 @@ _PASSIVE_BENEFIT_RECIPIENT_RE = re.compile(
 _PAST_PARTICIPLE_BASE = {
     "adopted": "adopt",
     "awarded": "award",
+    "carried": "carry",
+    "completed": "complete",
     "filed": "file",
+    "fulfilled": "fulfill",
+    "implemented": "implement",
     "issued": "issue",
     "maintained": "maintain",
     "prepared": "prepare",
     "provided": "provide",
     "submitted": "submit",
 }
+_COPULA_STATUS_COMPLEMENTS = frozenset(
+    {
+        "able",
+        "applicable",
+        "available",
+        "binding",
+        "effective",
+        "eligible",
+        "entitled",
+        "essential",
+        "final",
+        "inoperative",
+        "insufficient",
+        "invalid",
+        "lawful",
+        "liable",
+        "necessary",
+        "null",
+        "operative",
+        "responsible",
+        "subject",
+        "sufficient",
+        "unlawful",
+        "valid",
+        "void",
+    }
+)
+_IRREGULAR_PARTICIPLES = frozenset(
+    {
+        "begun",
+        "bound",
+        "brought",
+        "built",
+        "bought",
+        "caught",
+        "chosen",
+        "cut",
+        "done",
+        "drawn",
+        "driven",
+        "eaten",
+        "fallen",
+        "flown",
+        "forgotten",
+        "found",
+        "frozen",
+        "given",
+        "grown",
+        "held",
+        "hidden",
+        "hit",
+        "hurt",
+        "kept",
+        "known",
+        "led",
+        "left",
+        "lost",
+        "made",
+        "met",
+        "paid",
+        "put",
+        "read",
+        "ridden",
+        "risen",
+        "seen",
+        "sent",
+        "set",
+        "shown",
+        "sold",
+        "sought",
+        "spoken",
+        "spent",
+        "spread",
+        "stolen",
+        "sworn",
+        "taken",
+        "taught",
+        "thought",
+        "thrown",
+        "told",
+        "torn",
+        "won",
+        "worn",
+        "written",
+    }
+)
+_COPULA_PASSIVE_RE = re.compile(
+    r"^(?:be|been|being)\s+"
+    r"(?P<head>[A-Za-z][A-Za-z0-9'’\-]*)"
+    r"(?:\s+(?P<particle>out|off|up|down|through|into|away|over|along|forth))?"
+    r"\b",
+    re.IGNORECASE,
+)
 _MENTAL_STATE_TERMS = {
     "intentionally",
     "knowingly",
@@ -685,11 +782,24 @@ _ORGANIZATION_ACTORS = {
 _LEGAL_INSTRUMENT_ENTITIES = {
     "approval",
     "certificate",
+    "clause",
+    "compact",
+    "constitution",
     "easement",
     "franchise",
+    "instrument",
     "license",
+    "ordinance",
+    "paragraph",
     "permit",
+    "proclamation",
     "registration",
+    "regulation",
+    "resolution",
+    "statute",
+    "subparagraph",
+    "subsection",
+    "treaty",
     "variance",
 }
 _LEGAL_EVENT_ENTITIES = {
@@ -5366,10 +5476,11 @@ def _coordinated_no_head(sentence: str, match: re.Match[str]) -> str:
 
 
 def _manner_phrase(sentence: str, match: re.Match[str]) -> str:
-    """``in such Manner as they shall direct`` stays on the duty. It is not a second shall."""
+    """Keep manner adjuncts on the duty. They are not a second shall."""
 
     found = re.search(
-        r"\bin such manner\b[^.;]*",
+        r"\bin such manner\b[^.;]*"
+        r"|\bin (?:coordination|consultation|conjunction|concert) with\b[^.;]*",
         sentence[match.end() :],
         flags=re.IGNORECASE,
     )
@@ -5638,7 +5749,34 @@ def _clean_action(value: str) -> str:
     return text
 
 
+def _looks_like_past_participle(word: str) -> bool:
+    """True for verbal participles. Status adjectives stay copular complements."""
+
+    token = str(word or "").lower()
+    if not token or token in _COPULA_STATUS_COMPLEMENTS:
+        return False
+    if token in _PAST_PARTICIPLE_BASE or token in _IRREGULAR_PARTICIPLES:
+        return True
+    return len(token) > 4 and token.endswith(("ed", "en"))
+
+
+def _copular_passive_verb(action: str) -> str:
+    """Return ``be {participle}`` for copular passives such as ``be fulfilled``."""
+
+    match = _COPULA_PASSIVE_RE.match(_action_without_mental_state(action) or "")
+    if not match:
+        return ""
+    head = match.group("head").lower()
+    if not _looks_like_past_participle(head):
+        return ""
+    particle = str(match.group("particle") or "").lower()
+    return f"be {head} {particle}".strip() if particle else f"be {head}"
+
+
 def _first_verb(action: str) -> str:
+    copular = _copular_passive_verb(action)
+    if copular:
+        return copular
     words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", _action_without_mental_state(action) or "")
     return words[0].lower() if words else ""
 
@@ -5656,7 +5794,13 @@ _OBJECT_TOKEN_RE = re.compile(
 
 def _action_object(action: str) -> str:
     words = _OBJECT_TOKEN_RE.findall(_action_without_mental_state(action) or "")
-    return " ".join(words[1:]).strip() if len(words) > 1 else ""
+    verb_words = _OBJECT_TOKEN_RE.findall(_first_verb(action) or "")
+    skip = len(verb_words)
+    if skip and [word.lower() for word in words[:skip]] != [word.lower() for word in verb_words]:
+        skip = 1 if words else 0
+    elif not skip:
+        skip = 1 if words else 0
+    return " ".join(words[skip:]).strip() if len(words) > skip else ""
 
 
 def _mental_state(action: str) -> str:
@@ -5969,10 +6113,12 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
         ("section", r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"§\s*([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"\b(this\s+section)\b"),
-        ("subsection", r"\bsubsection\s+\(([a-z0-9]+)\)"),
+        ("subsection", r"\bsubsection\s+((?:\([A-Za-z0-9]+\))+)"),
         ("subsection", r"\b(this\s+subsection)\b"),
-        ("paragraph", r"\bparagraph\s+\(([a-z0-9]+)\)"),
+        ("paragraph", r"\bparagraph\s+((?:\([A-Za-z0-9]+\))+)"),
         ("paragraph", r"\b(this\s+paragraph)\b"),
+        ("subparagraph", r"\bsubparagraph\s+((?:\([A-Za-z0-9]+\))+)") ,
+        ("clause", r"\bclause\s+((?:\([A-Za-z0-9]+\))+)"),
         ("chapter", r"\bchapter\s+([0-9A-Za-z][0-9A-Za-z.\-]*)"),
         ("chapter", r"\b(this\s+chapter)\b"),
         ("title", r"\btitle\s+([0-9A-Za-z]+)"),
@@ -5992,6 +6138,8 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
                 value = " ".join(part for part in match.groups() if part).strip().lower()
             else:
                 value = str(match.group(1) or "").strip().lower()
+            if re.fullmatch(r"\([a-z0-9]+\)", value):
+                value = value[1:-1]
             if not value:
                 continue
             key = (ref_type, value)

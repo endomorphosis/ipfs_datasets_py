@@ -164,6 +164,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_mental_state(
         _action_without_procedure_trigger_tail(_formula_action_text(norm), norm.procedure)
     )
+    action_text = _normalize_copular_passive_action(action_text)
     action_text = _normalize_duty_assignment_gerund_action(action_text)
     operator = _formula_operator(norm, action_text)
     if _is_failure_prohibition(norm, action_text):
@@ -2559,6 +2560,93 @@ def build_prover_syntax_records_from_ir(
     from .prover_syntax import validate_ir_with_provers
 
     return [target.to_dict() for target in validate_ir_with_provers(norm, targets).targets]
+
+
+_COPULA_STATUS_COMPLEMENTS = frozenset(
+    {
+        "able",
+        "applicable",
+        "available",
+        "binding",
+        "effective",
+        "eligible",
+        "entitled",
+        "essential",
+        "final",
+        "inoperative",
+        "insufficient",
+        "invalid",
+        "lawful",
+        "liable",
+        "necessary",
+        "null",
+        "operative",
+        "responsible",
+        "subject",
+        "sufficient",
+        "unlawful",
+        "valid",
+        "void",
+    }
+)
+_COPULA_PASSIVE_ACTION_RE = re.compile(
+    r"^(?:be|been|being)\s+"
+    r"(?P<head>[A-Za-z][A-Za-z0-9'’\-]*)"
+    r"(?:\s+(?P<particle>out|off|up|down|through|into|away|over|along|forth))?"
+    r"(?P<rest>\b.*)?$",
+    re.IGNORECASE,
+)
+_IRREGULAR_PARTICIPLES = frozenset(
+    {
+        "bound",
+        "built",
+        "done",
+        "drawn",
+        "found",
+        "given",
+        "held",
+        "kept",
+        "known",
+        "made",
+        "paid",
+        "seen",
+        "sent",
+        "shown",
+        "taken",
+        "written",
+    }
+)
+
+
+def _looks_like_past_participle(word: str) -> bool:
+    token = str(word or "").lower()
+    if not token or token in _COPULA_STATUS_COMPLEMENTS:
+        return False
+    if token in _IRREGULAR_PARTICIPLES:
+        return True
+    return len(token) > 4 and token.endswith(("ed", "en"))
+
+
+def _normalize_copular_passive_action(action_text: str) -> str:
+    """Keep the participle as the operative head of a copular passive."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+    match = _COPULA_PASSIVE_ACTION_RE.match(text)
+    if not match:
+        return text
+    head = match.group("head").lower()
+    if not _looks_like_past_participle(head):
+        return text
+    particle = str(match.group("particle") or "").strip().lower()
+    rest = str(match.group("rest") or "").strip()
+    parts = [head]
+    if particle:
+        parts.append(particle)
+    if rest:
+        parts.append(rest)
+    return " ".join(parts)
 
 
 def _formula_action_text(norm: LegalNormIR) -> str:

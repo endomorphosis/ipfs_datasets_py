@@ -242,7 +242,7 @@ def _best_atom(
             )
             for candidate in candidates
         ),
-        key=lambda item: (-item[0], item[1]),
+        key=lambda item: (-item[0], -len(_tokens(item[1])), item[1]),
     )
     if not scored or scored[0][0] < threshold:
         return ""
