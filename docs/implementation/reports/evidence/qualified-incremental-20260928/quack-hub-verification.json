@@ -1,0 +1,453 @@
+{
+  "admitted": false,
+  "anchor_checkpoint": {
+    "bytes": 25895338,
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "attempts": [
+    {
+      "candidate_version_id": "sha256:709d2946ad6e61d92775829cde6bcd5eba709c55b313fa27edda2305d177984e",
+      "cold_bridge_on_evaluate_seconds": [
+        5.238050088985
+      ],
+      "compiler_pipeline_seconds_per_span": 0.027401278959587216,
+      "cosine_after": 1.0000000000000002,
+      "cosine_before": 0.1961161351381841,
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [
+            "us-code-5-8410-d17ff34d56ccc150"
+          ],
+          "passed": false
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-5-8410-d17ff34d56ccc150"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [
+            "us-code-5-8410-d17ff34d56ccc150"
+          ],
+          "passed": false
+        }
+      },
+      "legal_ir_target_count": 1,
+      "loss_after": 0.0,
+      "loss_before": 0.2970290190914057,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": true,
+        "diagnostics": [
+          {
+            "code": "cosine_roundoff_clamped",
+            "raw": 1.0000000000000002,
+            "tolerance": 1.7763568394002505e-15,
+            "used": 1.0
+          }
+        ],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0000000000000002,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "qualification_seconds_train_and_validation": 3.287214951822534,
+      "qualified": false,
+      "run_id": "qualified-bc96f118c844275988676abcc2a8f6de22304b085c4e7a8f2e88e1893097582f",
+      "selected_updates": [
+        "combined"
+      ],
+      "source": {
+        "citation": "usc:us:5:8410",
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "8410",
+        "text": "Notwithstanding any other provision of this chapter, an employee or Member must complete at least 5 years of civilian service creditable under section 8411 in order to be eligible for an annuity under this subchapter.",
+        "title": "5"
+      },
+      "worker_wall_seconds_per_span": 17.26695127109997
+    },
+    {
+      "candidate_version_id": "sha256:7b2894dec30ea9b541e516ed5ff5f7d75bed0166d43db8eb4bd857632149a940",
+      "cold_bridge_on_evaluate_seconds": [
+        4.377974019153
+      ],
+      "compiler_pipeline_seconds_per_span": 0.6148720409255475,
+      "cosine_after": 1.0000000000000002,
+      "cosine_before": 1.0000000000000002,
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "legal_ir_target_count": 1,
+      "loss_after": 0.0,
+      "loss_before": 0.0,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": true,
+        "diagnostics": [
+          {
+            "code": "cosine_roundoff_clamped",
+            "raw": 1.0000000000000002,
+            "tolerance": 1.7763568394002505e-15,
+            "used": 1.0
+          }
+        ],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0000000000000002,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "qualification_seconds_train_and_validation": 8.606430185958743,
+      "qualified": true,
+      "run_id": "qualified-f4b52498e3ac189706f57fa6600a06b3b74eaab08059365567499ffc1bc1fcd8",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source": {
+        "citation": null,
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "minimum",
+        "text": "The officer shall retain the file for at least 20 days.",
+        "title": "qualification-fixture"
+      },
+      "worker_wall_seconds_per_span": 10.9931919160299
+    },
+    {
+      "candidate_version_id": "sha256:8f6db8ee3b71face0441dfdc998ae8bee4ccdf3ce5e3cb5d0c8602e8f98ed63c",
+      "cold_bridge_on_evaluate_seconds": [
+        4.532661888981
+      ],
+      "compiler_pipeline_seconds_per_span": 0.09803603496402502,
+      "cosine_after": 1.0,
+      "cosine_before": 0.1961161351381841,
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-prohibit-db005b0a192cb2e9"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "legal_ir_target_count": 1,
+      "loss_after": 0.0,
+      "loss_before": 0.5033102321280591,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "qualification_seconds_train_and_validation": 7.6592198219150305,
+      "qualified": false,
+      "run_id": "qualified-d1904a335b112c09c74533b09845f1e23cffda12709527533728f923800bf6f7",
+      "selected_updates": [
+        "combined"
+      ],
+      "source": {
+        "citation": null,
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "prohibit",
+        "text": "The agency shall not disclose records.",
+        "title": "qualification-fixture"
+      },
+      "worker_wall_seconds_per_span": 9.048630079021677
+    },
+    {
+      "candidate_version_id": "sha256:d960f2b11810f2acf42f7c9f482b8282c925d470d0fae1465d97b8777d70741b",
+      "cold_bridge_on_evaluate_seconds": [
+        5.864211709006
+      ],
+      "compiler_pipeline_seconds_per_span": 0.05500561883673072,
+      "cosine_after": 0.19611613513818404,
+      "cosine_before": 0.19611613513818404,
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-deadline-4d427191989bb79b"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-deadline-4d427191989bb79b"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "legal_ir_target_count": 1,
+      "loss_after": 0.3119916373764521,
+      "loss_before": 0.3119916373764521,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.3119916373764521,
+        "text_roundtrip_equivalence": false
+      },
+      "qualification_seconds_train_and_validation": 4.779803381068632,
+      "qualified": false,
+      "run_id": "qualified-13c8edd0adf78b63c8e461281da497f22f4da620cc6b8022271ced116cb036f2",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source": {
+        "citation": null,
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "deadline",
+        "text": "Company A shall submit backup report within 10 days unless emergency.",
+        "title": "qualification-fixture"
+      },
+      "worker_wall_seconds_per_span": 11.879973084898666
+    }
+  ],
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "cross_host_execution_qualified": false,
+  "cycle_dispatch_counts": [
+    4,
+    0
+  ],
+  "database_writer_count": 1,
+  "final_batch_status_counts": {
+    "needs_repair": 2,
+    "qualified": 1,
+    "training_exhausted": 1
+  },
+  "formalized": false,
+  "full_corpus_qualified": false,
+  "heldout_canary": false,
+  "initial_target_cache_cold": true,
+  "lake_builds": [
+    {
+      "log_sha256": "cca70de172171bd91ff1f27f282d6161eed66c536cbdd5024863f2acd6303dea",
+      "run_id": "qualified-bc96f118c844275988676abcc2a8f6de22304b085c4e7a8f2e88e1893097582f",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "log_sha256": "79fa6aed2da781a51f81ae3f9e7ddcc3a827fc0ffd4fe83246b1f1390088483f",
+      "run_id": "qualified-f4b52498e3ac189706f57fa6600a06b3b74eaab08059365567499ffc1bc1fcd8",
+      "section": "minimum",
+      "source_sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+    },
+    {
+      "log_sha256": "0089cec41f2ecb2d8e865bc16736f4a28bae9150ad58b8ecc1e86b3a6dc80023",
+      "run_id": "qualified-f4b52498e3ac189706f57fa6600a06b3b74eaab08059365567499ffc1bc1fcd8",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "log_sha256": "5330fe19ad8e68efb0b545d3a4c66c24b7550c50adee1c8d21023b1dcf9d811e",
+      "run_id": "qualified-d1904a335b112c09c74533b09845f1e23cffda12709527533728f923800bf6f7",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "log_sha256": "68954b0f89ab9fc8f7ecd5335dd289695efff7eaa75f222d2c5fc999a84fa563",
+      "run_id": "qualified-13c8edd0adf78b63c8e461281da497f22f4da620cc6b8022271ced116cb036f2",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    }
+  ],
+  "later_line_search_targets_warm": true,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "manifest_artifact": {
+    "bytes": 19436,
+    "sha256": "3411d1fa8e8bf5f879f70e415376b85d118f72d09567b4cee3f93bc92ae3df97"
+  },
+  "manifest_path": "autoformal/uscode/autoencoders/en/0f4d60eb4bde2f29df9018476f35f4f12b4f515ef85f06afedeb5708d21473ab/lanes/shard-0-lane-0/versions/7b2894dec30ea9b541e516ed5ff5f7d75bed0166d43db8eb4bd857632149a940/e0d3185b099a933a0bb9a176be478c3ad403f9aee2b0910231d1634315020e6e/update.json",
+  "materialized_checkpoint": {
+    "bytes": 29307781,
+    "sha256": "d5998453ca06cdb1f4e37185e330e7c6763d3857d144c5fb4c1afb6fabf4d3cb"
+  },
+  "metric_disk_cache": 0,
+  "model_embedding_kind": "mock:stable-sha256",
+  "model_weights_downloaded": false,
+  "parallel_worker_cpu_overlap": [
+    {
+      "wall_time": 1790625659.107459,
+      "worker_pids": [
+        172875,
+        173115
+      ]
+    },
+    {
+      "wall_time": 1790625661.1176388,
+      "worker_pids": [
+        172875,
+        173115
+      ]
+    },
+    {
+      "wall_time": 1790625663.1279018,
+      "worker_pids": [
+        172875,
+        173115
+      ]
+    },
+    {
+      "wall_time": 1790625665.1380968,
+      "worker_pids": [
+        172875,
+        173115
+      ]
+    },
+    {
+      "wall_time": 1790625671.169804,
+      "worker_pids": [
+        172875,
+        173115
+      ]
+    }
+  ],
+  "protected_checkpoint_unchanged": true,
+  "publication": {
+    "acknowledged": true,
+    "admitted": false,
+    "base_preseed_required": true,
+    "commit_sha": "95d61d0df697090f2100aa4b8e543e2ba20d046a",
+    "dry_run": false,
+    "event_id": "sha256:9d2b2dd18593b1fa96bbcfed02c97a361598a6f54ce4a72ea254218b8dc08ff9",
+    "full_checkpoint_uploaded": false,
+    "lane_promoted": false,
+    "manifest_artifact": {
+      "bytes": 19436,
+      "sha256": "3411d1fa8e8bf5f879f70e415376b85d118f72d09567b4cee3f93bc92ae3df97"
+    },
+    "parent_commit": "e537edd812e6fb714647fbaef2134df7606cd3d2",
+    "receipt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/publication-deliveries/3411d1fa8e8bf5f879f70e415376b85d118f72d09567b4cee3f93bc92ae3df97/deliveries/d7c51d8690b872cb7ff1bd3b088d1158a264154cee6c8feae497b9d884bd1634.json",
+    "remote_already_present": false,
+    "repository_id": "justicedao/uscode-autoformal-span-cache",
+    "schema": "autoencoder-incremental-qualified-publication/v1",
+    "uploaded": true,
+    "version_id": "sha256:7b2894dec30ea9b541e516ed5ff5f7d75bed0166d43db8eb4bd857632149a940"
+  },
+  "published_file_count": 12,
+  "published_payload_bytes": 7885282,
+  "quack_capabilities": {
+    "autoload": false,
+    "duckdb_version": "1.5.5",
+    "extension_sha256": {
+      "httpfs": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9",
+      "quack": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08"
+    },
+    "native_quack": true,
+    "network_install": false,
+    "platform": "linux_arm64"
+  },
+  "quack_command_counts": {
+    "ClaimRun": 4,
+    "CompleteRun": 4,
+    "ReadRun": 4,
+    "ReadVersion": 8,
+    "RenewLease": 8
+  },
+  "qualification_scope": "synthetic minimum-duration fixture; not an entire statutory rule",
+  "sample_count": 4,
+  "sample_count_per_bridge_on_evaluate": 1,
+  "schema": "qualified-quack-hub-native-verification/v1",
+  "second_poll_uploads": 0,
+  "state_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native",
+  "temperature": 0,
+  "use_sample_memory": false,
+  "validation_sample_count": 1,
+  "worker_count": 2,
+  "workers_open_database": false
+}

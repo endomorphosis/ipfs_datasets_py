@@ -39,13 +39,28 @@ def _sha(path):
 
 
 def orchestration_hashes():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_candidate_qualification import QUALIFICATION_DEPENDENCIES
     paths = [Path(__file__).resolve(),
              ROOT / "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+             ROOT / "ipfs_datasets_py/logic/autoformal/family_qualification.py",
+             ROOT / "ipfs_datasets_py/logic/modal/decompiler.py",
+             ROOT / "ipfs_datasets_py/duckdb_control/autoencoder_shared_weight_control.py",
+             ROOT / "ipfs_datasets_py/duckdb_control/autoencoder_quack.py",
+             ROOT / "ipfs_datasets_py/duckdb_control/autoencoder_quack_wire.py",
+             ROOT / "ipfs_datasets_py/huggingface/autoencoder_incremental.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
              ROOT / "ipfs_datasets_py/duckdb_control/autoencoder_registry.py"]
-    return {str(path.relative_to(ROOT)): _sha(path) for path in paths}
+    paths.extend(ROOT / "ipfs_datasets_py" / relative for relative in QUALIFICATION_DEPENDENCIES)
+    paths.extend([ROOT / "ipfs_datasets_py/logic/autoformal/__init__.py",
+                  ROOT / "ipfs_datasets_py/logic/autoformal/tree_pin.py"])
+    result = {str(path.relative_to(ROOT)): _sha(path) for path in paths}
+    lock = ROOT.parents[1] / "JevOps/jevops/statement_lock.py"
+    result[str(lock)] = _sha(lock)
+    return result
 
 
 def _write(path, value):
@@ -105,7 +120,8 @@ def local_records(path):
 
 def make_templates(registry, records, *, state_directory, checkpoint, source_hashes,
                    max_seconds=180.0, source_language="en", model_variant="incremental-modal",
-                   arrow_feature_weights=None, shared_targets=None, target_snapshot_id=None):
+                   arrow_feature_weights=None, shared_targets=None, target_snapshot_id=None,
+                   validation_records=()):
     """Create immutable one-span templates; the runner supplies actual lane parents."""
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker import TrainingJobSpec
     state_directory = Path(state_directory)
@@ -129,6 +145,8 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
     if shared_targets:
         shared["target_snapshot_id"] = target_snapshot_id
     result = []
+    validation_samples = [record["sample"] for record in validation_records]
+    split_identity = "qualification-validation-" + hashlib.sha256(_json(validation_samples).encode()).hexdigest()
     for record in records:
         record_id = record["record_id"].removeprefix("sha256:")
         if len(record_id) != 64 or any(char not in "0123456789abcdef" for char in record_id):
@@ -149,10 +167,11 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
                 **artifact, "path": str(registry.artifact_path(artifact))},
             "output_directory": str(state_directory / "template-outputs" / record_id),
             "code_identity": code_identity, "expected_source_sha256": source_hashes,
-            "dataset_snapshot_id": record_id, "split_snapshot_id": "incremental-in-sample-v1",
+            "dataset_snapshot_id": record_id, "split_snapshot_id": split_identity,
             "samples": [record["sample"]], "validation_samples": [], "variant": variant,
             "autoencoder_config": {"compute_device": "python"},
-            "training_config": {"max_seconds": max_seconds, "profile_projection": True},
+            "training_config": {"max_seconds": max_seconds, "profile_projection": True,
+                                "projection_max_update_families": 5},
             "capture_sparse_patches": True, "candidate_storage": "sparse",
             **shared,
         }))
@@ -161,15 +180,19 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
 
 def run_cycle(config):
     """Execute one bounded poll/dispatch page, in an isolated child process."""
+    source_hashes = _pin(dataset_network=bool(config.get("repository_id") or config.get("publish_repository")))
     orchestration = orchestration_hashes()
-    source_hashes = _pin(dataset_network=bool(config.get("repository_id")))
     from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_incremental_training import run_incremental_training
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_qualified_training import run_qualified_incremental_training
     state = Path(config["state_directory"])
     records = local_records(config["input_jsonl"]) if config.get("input_jsonl") else []
+    validation = local_records(config["validation_jsonl"]) if config.get("validation_jsonl") else []
+    if len(validation) > 32:
+        raise ValueError("qualification validation is bounded to 32 rows per cycle")
     feed_report = None
     feed = None
     skipped = []
+    publications = []
     try:
         if config.get("repository_id"):
             from ipfs_datasets_py.logic.autoformal.span_cache_feed import SpanCacheFeed
@@ -198,12 +221,23 @@ def run_cycle(config):
                 source_language=config["source_language"], model_variant=config["model_variant"],
                 arrow_feature_weights=config.get("arrow_feature_weights"),
                 shared_targets=config.get("shared_targets"), target_snapshot_id=config.get("target_snapshot_id"),
+                validation_records=validation,
             )
-            report = run_incremental_training(
+            report = run_qualified_incremental_training(
                 registry, templates, state_directory=state / "progress",
                 machine_shard_count=config["shard_count"], machine_shard_index=config["shard_index"],
                 lane_count=config["workers"], max_batches=config["max_batches"],
+                max_training_rounds=config.get("max_training_rounds", 3),
+                lake_timeout_seconds=config.get("lake_timeout_seconds", 120),
+                producer_identity=orchestration,
+                qualification_samples=[record["sample"] for record in validation],
+                control_transport="quack",
+                publication_repository=config.get("publish_repository"),
             )
+            if config.get("publish_repository"):
+                if orchestration_hashes() != orchestration:
+                    raise RuntimeError("orchestration source changed before publication; retained outbox requires replay")
+                publications = deliver_pending_updates(registry, state)
             # Successful return guarantees durable intake, including deferred
             # work. A crash before this acknowledgement repeats only intake;
             # the runner reconciles already-registered/completed batches.
@@ -221,15 +255,37 @@ def run_cycle(config):
         ]
     if orchestration_hashes() != orchestration:
         raise RuntimeError("orchestration source changed during cycle; retained registry work requires replay")
-    receipt = {"schema": "incremental-autoencoder-cycle/v1", "feed": feed_report,
+    receipt = {"schema": "incremental-autoencoder-cycle/v2", "feed": feed_report,
                "training": report, "input_count": len(records), "admitted": False,
                "eligible_input_count": len(eligible), "skipped_inputs": skipped,
                "formalized": False, "heldout_canary": False, "temperature": 0,
+               "validation_sample_count": len(validation),
+               "validation_role": "tuning_validation_repeated_candidate_selection",
+               "weight_publications": publications,
+               "publication_repository": config.get("publish_repository"),
                "model_weights_downloaded": False, "source_hashes": source_hashes,
                "orchestration_hashes": orchestration,
                "source_verification_scope": "pinned file contents before/after; not preloaded bytecode attestation"}
     _write(config["cycle_receipt"], receipt)
     return receipt
+
+
+def deliver_pending_updates(registry, state):
+    """Retry durable delivery even when a poll dispatches no new training."""
+    from ipfs_datasets_py.huggingface.autoencoder_incremental import deliver_sparse_update
+    publications = []
+    for event in registry.pending_outbox("huggingface", limit=16):
+        try:
+            publications.append(deliver_sparse_update(registry, event["event_id"], upload=True,
+                state_directory=Path(state) / "publication-deliveries"))
+        except Exception as exc:
+            # Avoid copying HTTP response bodies or credentials into telemetry.
+            # The durable lease/event remains available to the next owner poll.
+            publications.append({"event_id": event["event_id"], "uploaded": False,
+                "retry_pending": True, "error_type": type(exc).__name__,
+                "http_status": getattr(getattr(exc, "response", None), "status_code", None),
+                "admitted": False})
+    return publications
 
 
 def _stop_group(process):
@@ -324,7 +380,8 @@ def supervised_cycle(config):
             resource = reservation.release(artifacts_durable=True)
             _write(receipt_directory / "resources.json", resource)
             return {"receipt": child_config["cycle_receipt"], "elapsed_seconds": time.monotonic() - started,
-                    "input_count": receipt["input_count"], "training": receipt["training"], "admitted": False}
+                    "input_count": receipt["input_count"], "training": receipt["training"],
+                    "weight_publications": receipt["weight_publications"], "admitted": False}
         except BaseException:
             if process is not None:
                 _stop_group(process)
@@ -342,12 +399,18 @@ def parser():
     p.add_argument("--shared-targets", type=Path, help="Optional local verified target artifact covering all input rows")
     p.add_argument("--target-snapshot-id", help="Exact snapshot identity, required with --shared-targets")
     p.add_argument("--input-jsonl", type=Path)
+    p.add_argument("--validation-jsonl", type=Path,
+                   help="Disjoint tuning validation (max 32 rows); missing validation fails qualification")
     p.add_argument("--repository-id", help="Optional census exchange dataset to poll")
+    p.add_argument("--publish-repository", choices=["justicedao/uscode-autoformal-span-cache"],
+                   help="Upload qualified sparse updates and proof evidence through the durable registry outbox")
     p.add_argument("--revision", default="main")
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--shard-count", type=int, default=1)
     p.add_argument("--shard-index", type=int, default=0)
-    p.add_argument("--max-batches", type=int, default=4, help="New one-span training batches per cycle")
+    p.add_argument("--max-batches", type=int, default=4, help="Optimizer attempts per cycle, including qualification retries")
+    p.add_argument("--max-training-rounds", type=int, default=3, help="Maximum attempts per span before durable repair work")
+    p.add_argument("--lake-timeout-seconds", type=int, default=120)
     p.add_argument("--max-bundles", type=int, default=4)
     p.add_argument("--max-seconds", type=float, default=180)
     p.add_argument("--polls", type=int, default=1, help="0 runs until interrupted")
@@ -379,6 +442,8 @@ def main(argv=None):
         p.error("invalid worker count or machine shard assignment")
     if not 1 <= args.max_batches <= 128 or not 1 <= args.max_bundles <= 128 or args.polls < 0:
         p.error("invalid bounded dispatch/poll count")
+    if not 1 <= args.max_training_rounds <= 100 or not 1 <= args.lake_timeout_seconds <= 600:
+        p.error("training rounds must be 1..100 and Lake timeout 1..600 seconds")
     for name in ("max_seconds", "cycle_timeout", "sync_interval"):
         if not math.isfinite(getattr(args, name)) or getattr(args, name) <= 0:
             p.error(f"{name} must be finite and positive")
@@ -387,7 +452,7 @@ def main(argv=None):
     state = args.state_directory.absolute()
     state.mkdir(parents=True, exist_ok=True)
     config = vars(args).copy()
-    for name in ("state_directory", "checkpoint", "input_jsonl", "resource_ledger", "arrow_feature_weights", "shared_targets"):
+    for name in ("state_directory", "checkpoint", "input_jsonl", "validation_jsonl", "resource_ledger", "arrow_feature_weights", "shared_targets"):
         config[name] = str(Path(config[name]).absolute()) if config[name] is not None else None
     config["resource_roots"] = [str(path.absolute()) for path in config.pop("resource_root")]
     _pin()

@@ -1,0 +1,568 @@
+{
+  "admitted": false,
+  "attempts": [
+    {
+      "candidate_artifact": {
+        "bytes": 1035,
+        "sha256": "cb2a6a864324cab59f946ce2ffdec074d0f03147edbb3424f62045d75a84c649"
+      },
+      "candidate_version_id": "sha256:1b8671402c68c0dec251ad4420763bbf2685e3f84edd23c759799bb412d23523",
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-deadline-4d427191989bb79b"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-deadline-4d427191989bb79b"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "initial_cold_bridge_on_evaluate_seconds": [
+        5.823249899084
+      ],
+      "legal_ir_target_count": 1,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.3119916373764521,
+        "text_roundtrip_equivalence": false
+      },
+      "optimizer_accepted_epochs": 1,
+      "optimizer_seconds_per_span": 9.82546092919074,
+      "qualification_wall_seconds_train_and_validation": 4.756415194133297,
+      "qualified": false,
+      "run_id": "qualified-50b89204e36b775469a57b4afe730ab6341d7e877e648894d83304b0cfe37eb2",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source": {
+        "citation": null,
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "deadline",
+        "text": "Company A shall submit backup report within 10 days unless emergency.",
+        "title": "qualification-fixture"
+      },
+      "source_pipeline_seconds_per_span": 0.05582088604569435,
+      "warm_bridge_on_evaluate_seconds": [
+        0.215712854872,
+        0.231205682037,
+        0.22342644399,
+        0.226575935027,
+        0.243891070131
+      ],
+      "worker_pid": 3989186,
+      "worker_wall_seconds_per_span": 11.748419565847144
+    },
+    {
+      "candidate_artifact": {
+        "bytes": 1031,
+        "sha256": "bd129c7acf7713f1f031261821bf6d192272ac1f9d4e10fa586332af8b99f55f"
+      },
+      "candidate_version_id": "sha256:361d1c6dccb38f11c737ecd6edae9f8046c59761ab443265d1dfeacf4ff2f4ee",
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "initial_cold_bridge_on_evaluate_seconds": [
+        4.276626021834
+      ],
+      "legal_ir_target_count": 1,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": true,
+        "diagnostics": [
+          {
+            "code": "cosine_roundoff_clamped",
+            "raw": 1.0000000000000002,
+            "tolerance": 1.7763568394002505e-15,
+            "used": 1.0
+          }
+        ],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0000000000000002,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "optimizer_accepted_epochs": 1,
+      "optimizer_seconds_per_span": 6.322643341962248,
+      "qualification_wall_seconds_train_and_validation": 8.683757609920576,
+      "qualified": true,
+      "run_id": "qualified-44a135d2c64fc6e39066e837e9823866df4ea1e39eca4363490f8215167584f7",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source": {
+        "citation": null,
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "minimum",
+        "text": "The officer shall retain the file for at least 20 days.",
+        "title": "qualification-fixture"
+      },
+      "source_pipeline_seconds_per_span": 0.5744204490911216,
+      "warm_bridge_on_evaluate_seconds": [
+        0.106093470007,
+        0.109248880995,
+        0.109053391032,
+        0.114747548942,
+        0.118907851167
+      ],
+      "worker_pid": 3997747,
+      "worker_wall_seconds_per_span": 10.995366494869813
+    },
+    {
+      "candidate_artifact": {
+        "bytes": 35466713,
+        "sha256": "03c11e3134c8e424fb4189fe7332cd22270144ad4b0533bc9e5eedef14347b33"
+      },
+      "candidate_version_id": "sha256:fdb801b53b81099e28bf77d396a3dcccc89b2a31474f85d5db86c4ef1616ad15",
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [
+            "us-code-5-8410-d17ff34d56ccc150"
+          ],
+          "passed": false
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-5-8410-d17ff34d56ccc150"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [
+            "us-code-5-8410-d17ff34d56ccc150"
+          ],
+          "passed": false
+        }
+      },
+      "initial_cold_bridge_on_evaluate_seconds": [
+        5.213495105039
+      ],
+      "legal_ir_target_count": 1,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": true,
+        "diagnostics": [
+          {
+            "code": "cosine_roundoff_clamped",
+            "raw": 1.0000000000000002,
+            "tolerance": 1.7763568394002505e-15,
+            "used": 1.0
+          }
+        ],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0000000000000002,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "optimizer_accepted_epochs": 1,
+      "optimizer_seconds_per_span": 10.272261881036684,
+      "qualification_wall_seconds_train_and_validation": 5.111569822998717,
+      "qualified": false,
+      "run_id": "qualified-91550adb739800b487fe64179924db7f69365a8a64e6f2bf13ebd2f43d083c27",
+      "selected_updates": [
+        "combined"
+      ],
+      "source": {
+        "citation": "usc:us:5:8410",
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "8410",
+        "text": "Notwithstanding any other provision of this chapter, an employee or Member must complete at least 5 years of civilian service creditable under section 8411 in order to be eligible for an annuity under this subchapter.",
+        "title": "5"
+      },
+      "source_pipeline_seconds_per_span": 0.0279921458568424,
+      "warm_bridge_on_evaluate_seconds": [
+        0.200252929004,
+        0.212956523988,
+        0.205590283964,
+        0.208561083069,
+        0.230523037026
+      ],
+      "worker_pid": 4018969,
+      "worker_wall_seconds_per_span": 17.210821032058448
+    },
+    {
+      "candidate_artifact": {
+        "bytes": 1031,
+        "sha256": "e75dcd83e529d2bef59bc46c57cfc84972e579a4195dd240139b637f178049c0"
+      },
+      "candidate_version_id": "sha256:532873688a414a7b4316ad373973da6a4ea25d611aa8be8602b4e0ce1c2cfe33",
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-deadline-4d427191989bb79b"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-deadline-4d427191989bb79b"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "initial_cold_bridge_on_evaluate_seconds": [
+        5.708578675054
+      ],
+      "legal_ir_target_count": 1,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.3119916373764521,
+        "text_roundtrip_equivalence": false
+      },
+      "optimizer_accepted_epochs": 1,
+      "optimizer_seconds_per_span": 10.42300648917444,
+      "qualification_wall_seconds_train_and_validation": 7.045739786000922,
+      "qualified": false,
+      "run_id": "qualified-709733caca3f46c2429e9eab75cd4689b0d0e9746e1bb4b903e6dad025263e24",
+      "selected_updates": [
+        "legal_ir_view_logits"
+      ],
+      "source": {
+        "citation": null,
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "deadline",
+        "text": "Company A shall submit backup report within 10 days unless emergency.",
+        "title": "qualification-fixture"
+      },
+      "source_pipeline_seconds_per_span": 0.05453592701815069,
+      "warm_bridge_on_evaluate_seconds": [
+        0.240232687909,
+        0.244734929875,
+        0.25126269809,
+        0.405388871208,
+        0.253363040043
+      ],
+      "worker_pid": 3997750,
+      "worker_wall_seconds_per_span": 14.138181435177103
+    },
+    {
+      "candidate_artifact": {
+        "bytes": 1035,
+        "sha256": "dabe500ef6128045a6e19b5f16e8cef6cdb2dea10d7e14c4071e5f8c4cfeff32"
+      },
+      "candidate_version_id": "sha256:22068fa33151940f4b140db958651d18c28efde121f689ce56e5732f86988564",
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-prohibit-db005b0a192cb2e9"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "initial_cold_bridge_on_evaluate_seconds": [
+        4.476121014915
+      ],
+      "legal_ir_target_count": 1,
+      "metrics": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "optimizer_accepted_epochs": 1,
+      "optimizer_seconds_per_span": 7.114644568180665,
+      "qualification_wall_seconds_train_and_validation": 7.700789731927216,
+      "qualified": false,
+      "run_id": "qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa",
+      "selected_updates": [
+        "combined"
+      ],
+      "source": {
+        "citation": null,
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "prohibit",
+        "text": "The agency shall not disclose records.",
+        "title": "qualification-fixture"
+      },
+      "source_pipeline_seconds_per_span": 0.09672343195416033,
+      "warm_bridge_on_evaluate_seconds": [
+        0.099144420121,
+        0.109476804966,
+        0.10240304796,
+        0.104644193081,
+        0.117915187031
+      ],
+      "worker_pid": 3989183,
+      "worker_wall_seconds_per_span": 9.11489768885076
+    }
+  ],
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "cold_scope": "initial process target cache empty; later line search uses warm in-process targets",
+  "cycle_dispatch_counts": [
+    0,
+    1,
+    4
+  ],
+  "final_batch_status_counts": {
+    "needs_repair": 2,
+    "qualified": 1,
+    "training_exhausted": 1
+  },
+  "formalized": false,
+  "heldout_canary": false,
+  "lake_build_successes": [
+    {
+      "log_sha256": "79fa6aed2da781a51f81ae3f9e7ddcc3a827fc0ffd4fe83246b1f1390088483f",
+      "run_id": "qualified-50b89204e36b775469a57b4afe730ab6341d7e877e648894d83304b0cfe37eb2",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "log_sha256": "942f19c5dc9c78c8b5fe6b4c1d7d07c54fbb0da090be4de98849cfa82c7f0ca4",
+      "run_id": "qualified-44a135d2c64fc6e39066e837e9823866df4ea1e39eca4363490f8215167584f7",
+      "section": "minimum",
+      "source_sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+    },
+    {
+      "log_sha256": "1f110ae0412b8d3df9a0bba097a41e8d4a4cb848e9b18d2a8b7be6ed4dd3ea53",
+      "run_id": "qualified-44a135d2c64fc6e39066e837e9823866df4ea1e39eca4363490f8215167584f7",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "log_sha256": "5330fe19ad8e68efb0b545d3a4c66c24b7550c50adee1c8d21023b1dcf9d811e",
+      "run_id": "qualified-91550adb739800b487fe64179924db7f69365a8a64e6f2bf13ebd2f43d083c27",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "log_sha256": "d5a2e6af2ddf9f8aa602760ff3ed24bb27daf719683ebf5738d3c85613ebcc8e",
+      "run_id": "qualified-709733caca3f46c2429e9eab75cd4689b0d0e9746e1bb4b903e6dad025263e24",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    },
+    {
+      "log_sha256": "6c3e69fc14bad0ab089da988b8ab908be3696c873f231d25cdcee0e29cf7b9d0",
+      "run_id": "qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa",
+      "section": "validation",
+      "source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf"
+    }
+  ],
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "metric_disk_cache": 0,
+  "model_embedding_kind": "mock:stable-sha256",
+  "native_attempt_count": 5,
+  "parallel_cpu_overlap_observations": [
+    {
+      "wall_time": 1790624179.6505435,
+      "worker_pids": [
+        3989183,
+        3989186
+      ]
+    },
+    {
+      "wall_time": 1790624181.6603763,
+      "worker_pids": [
+        3989183,
+        3989186
+      ]
+    },
+    {
+      "wall_time": 1790624183.6700478,
+      "worker_pids": [
+        3989183,
+        3989186
+      ]
+    },
+    {
+      "wall_time": 1790624185.6883233,
+      "worker_pids": [
+        3989183,
+        3989186
+      ]
+    },
+    {
+      "wall_time": 1790624216.473662,
+      "worker_pids": [
+        3997747,
+        3997750
+      ]
+    },
+    {
+      "wall_time": 1790624218.4912877,
+      "worker_pids": [
+        3997747,
+        3997750
+      ]
+    },
+    {
+      "wall_time": 1790624220.5065463,
+      "worker_pids": [
+        3997747,
+        3997750
+      ]
+    },
+    {
+      "wall_time": 1790624222.5163226,
+      "worker_pids": [
+        3997747,
+        3997750
+      ]
+    },
+    {
+      "wall_time": 1790624224.5350976,
+      "worker_pids": [
+        3997747,
+        3997750
+      ]
+    }
+  ],
+  "promotion_performed": false,
+  "protected_checkpoint_unchanged": true,
+  "qualification_validation_count": 1,
+  "reconstruction_improvements": [
+    {
+      "cosine_after": 1.0000000000000002,
+      "cosine_before": 0.1961161351381841,
+      "loss_after": 0.0,
+      "loss_before": 0.2970290190914057,
+      "run_id": "qualified-91550adb739800b487fe64179924db7f69365a8a64e6f2bf13ebd2f43d083c27",
+      "section": "8410"
+    },
+    {
+      "cosine_after": 1.0,
+      "cosine_before": 0.1961161351381841,
+      "loss_after": 0.0,
+      "loss_before": 0.5033102321280591,
+      "run_id": "qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa",
+      "section": "prohibit"
+    }
+  ],
+  "sample_count_per_bridge_on_evaluate": 1,
+  "schema": "qualified-incremental-native-verification/v1",
+  "scope": "exact candidate per-span gates; no whole-corpus or independent-heldout qualification",
+  "state_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/native-complete",
+  "temperature": 0,
+  "unique_training_span_count": 4,
+  "use_sample_memory": false,
+  "worker_count": 2
+}

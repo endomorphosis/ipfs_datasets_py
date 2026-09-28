@@ -1,0 +1,233 @@
+{
+  "admitted": false,
+  "formalized": false,
+  "model_weights_downloaded": false,
+  "orchestration_hashes": {
+    "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+    "ipfs_datasets_py/duckdb_control/autoencoder_quack.py": "fe4890f7390ebdfb4e7f55db1e5709f581583d4d6ab6f87e7330bb43ef608df9",
+    "ipfs_datasets_py/duckdb_control/autoencoder_quack_wire.py": "603ffe64394b6d1824296dc3704947e08d93283b6513cb65eb609de33c1bbad3",
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+    "ipfs_datasets_py/duckdb_control/autoencoder_shared_weight_control.py": "fd1b034799e8213d222d7ea6b0c552774bd80d475b44204c14f8bf717927ed34",
+    "ipfs_datasets_py/huggingface/autoencoder_incremental.py": "1241fa56b741b802d1c615b318db6cb703e20ea7ec5e8e5aaa8c85edaf8ab06d",
+    "ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+    "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+    "ipfs_datasets_py/logic/autoformal/__init__.py": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30",
+    "ipfs_datasets_py/logic/autoformal/family_qualification.py": "fa524d6eece64e8cdbe98bd3e86c3671f63ad8d695d8dda52000ee7fa57c6b96",
+    "ipfs_datasets_py/logic/autoformal/span_cache_feed.py": "01ec81fa2beb0d97339fdd3dee26573c8a8864e651cf740677f6ada38e242a69",
+    "ipfs_datasets_py/logic/autoformal/tree_pin.py": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+    "ipfs_datasets_py/logic/backends/results.py": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+    "ipfs_datasets_py/logic/backends/toolchain_roles.py": "1f5ffbf35e9171b77474da7fb7a1eeb91579a3d09fc0f99d480abfd49aaaf3e0",
+    "ipfs_datasets_py/logic/deontic/decoder.py": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+    "ipfs_datasets_py/logic/deontic/formula_builder.py": "6a220bf20aa8bdb24dd14d8b3467554d674cfadd0b44e88f3d019ce0b02afb2a",
+    "ipfs_datasets_py/logic/deontic/ir.py": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+    "ipfs_datasets_py/logic/deontic/prover_syntax.py": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+    "ipfs_datasets_py/logic/ir_core/claims.py": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+    "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+    "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+    "ipfs_datasets_py/logic/parsers/event_calculus.py": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390",
+    "ipfs_datasets_py/logic/parsers/flogic.py": "85ac4353d2bd15fee7cfcf345a4f7afe33d27baca49b1b273f08a217298d1bb7",
+    "ipfs_datasets_py/logic/parsers/legacy_modal.py": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+    "ipfs_datasets_py/logic/parsers/modal.py": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942",
+    "ipfs_datasets_py/logic/syntax_core/algebra.py": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+    "ipfs_datasets_py/logic/syntax_core/ast.py": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+    "ipfs_datasets_py/logic/syntax_core/contracts.py": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+    "ipfs_datasets_py/logic/syntax_core/signatures.py": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py": "42bfa3098cbcf0b3c0de1a2343a45fba568d3561d4dfe42724b1c58e91b09a4d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "d02a72945f559ed92d94062b92cb4ec0bbe6f3948aec34a337b4daa7e99f05d8",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py": "ec2e44f89b69936a939ed2f808b40fbf2004016d7d9b8cefafdf00722f8db809",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": "94523a95314972987ef0b8a70bbff2c773c8d98d3cf313defaf6904bd5dcd447",
+    "scripts/ops/legal_ir/run_incremental_autoencoders.py": "11eba5b406883d6850d916d1bdda89c55885079dcce06ec7a47b1902e17d2c22"
+  },
+  "original_cycle_artifact": {
+    "bytes": 56829,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/cycles/f2b3a41b9a52478c9715aa77edd92189/cycle.json",
+    "sha256": "3a5c3d7b6d51e7f1dcac427e9d0f137086c58fb42b83c77ddac7fbbe113266bc"
+  },
+  "publication_repository": "justicedao/uscode-autoformal-span-cache",
+  "quack": [
+    {
+      "admitted": false,
+      "automatic_branch_merge": false,
+      "capabilities": [
+        {
+          "autoload": false,
+          "duckdb_version": "1.5.5",
+          "extension_sha256": {
+            "httpfs": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9",
+            "quack": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08"
+          },
+          "native_quack": true,
+          "network_install": false,
+          "platform": "linux_arm64"
+        },
+        {
+          "autoload": false,
+          "duckdb_version": "1.5.5",
+          "extension_sha256": {
+            "httpfs": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9",
+            "quack": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08"
+          },
+          "native_quack": true,
+          "network_install": false,
+          "platform": "linux_arm64"
+        }
+      ],
+      "command_counts": {
+        "ClaimRun": 2,
+        "CompleteRun": 2,
+        "ReadRun": 2,
+        "ReadVersion": 4,
+        "RenewLease": 4
+      },
+      "cross_host_execution_qualified": false,
+      "database_writer_count": 1,
+      "failure_recording": "trusted_owner_local",
+      "formalized": false,
+      "historical_replay": "trusted_owner_local",
+      "owner_verified_completion_required": true,
+      "production_activation": false,
+      "promotion_performed": false,
+      "remote_artifact_transfer": false,
+      "schema_version": "autoencoder-shared-weight-control/v1",
+      "scoped_run_count": 2,
+      "shared_artifact_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/artifacts",
+      "shared_database_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/control.duckdb",
+      "transport": "native_scoped_quack_prototype",
+      "weights_downloaded": false,
+      "worker_weight_storage": "private_state_and_immutable_sparse_registry_artifacts",
+      "workers_open_database": false
+    },
+    {
+      "admitted": false,
+      "automatic_branch_merge": false,
+      "capabilities": [
+        {
+          "autoload": false,
+          "duckdb_version": "1.5.5",
+          "extension_sha256": {
+            "httpfs": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9",
+            "quack": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08"
+          },
+          "native_quack": true,
+          "network_install": false,
+          "platform": "linux_arm64"
+        }
+      ],
+      "command_counts": {
+        "ClaimRun": 1,
+        "CompleteRun": 1,
+        "ReadRun": 1,
+        "ReadVersion": 2,
+        "RenewLease": 2
+      },
+      "cross_host_execution_qualified": false,
+      "database_writer_count": 1,
+      "failure_recording": "trusted_owner_local",
+      "formalized": false,
+      "historical_replay": "trusted_owner_local",
+      "owner_verified_completion_required": true,
+      "production_activation": false,
+      "promotion_performed": false,
+      "remote_artifact_transfer": false,
+      "schema_version": "autoencoder-shared-weight-control/v1",
+      "scoped_run_count": 1,
+      "shared_artifact_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/artifacts",
+      "shared_database_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/control.duckdb",
+      "transport": "native_scoped_quack_prototype",
+      "weights_downloaded": false,
+      "worker_weight_storage": "private_state_and_immutable_sparse_registry_artifacts",
+      "workers_open_database": false
+    },
+    {
+      "admitted": false,
+      "automatic_branch_merge": false,
+      "capabilities": [
+        {
+          "autoload": false,
+          "duckdb_version": "1.5.5",
+          "extension_sha256": {
+            "httpfs": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9",
+            "quack": "41b2b9292bfb860c5ca8c5f818f9dd7a2c6bc24f9c750cffbc3169286fe59f08"
+          },
+          "native_quack": true,
+          "network_install": false,
+          "platform": "linux_arm64"
+        }
+      ],
+      "command_counts": {
+        "ClaimRun": 1,
+        "CompleteRun": 1,
+        "ReadRun": 1,
+        "ReadVersion": 2,
+        "RenewLease": 2
+      },
+      "cross_host_execution_qualified": false,
+      "database_writer_count": 1,
+      "failure_recording": "trusted_owner_local",
+      "formalized": false,
+      "historical_replay": "trusted_owner_local",
+      "owner_verified_completion_required": true,
+      "production_activation": false,
+      "promotion_performed": false,
+      "remote_artifact_transfer": false,
+      "schema_version": "autoencoder-shared-weight-control/v1",
+      "scoped_run_count": 1,
+      "shared_artifact_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/artifacts",
+      "shared_database_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/control.duckdb",
+      "transport": "native_scoped_quack_prototype",
+      "weights_downloaded": false,
+      "worker_weight_storage": "private_state_and_immutable_sparse_registry_artifacts",
+      "workers_open_database": false
+    }
+  ],
+  "source_hashes": {
+    "autoencoder": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+    "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "worker": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156"
+  },
+  "source_verification_scope": "pinned file contents before/after; not preloaded bytecode attestation",
+  "training": {
+    "batch_status_counts": {
+      "needs_repair": 2,
+      "qualified": 1,
+      "training_exhausted": 1
+    },
+    "blocked": [],
+    "dispatched_run_ids": [
+      "qualified-d1904a335b112c09c74533b09845f1e23cffda12709527533728f923800bf6f7",
+      "qualified-13c8edd0adf78b63c8e461281da497f22f4da620cc6b8022271ced116cb036f2",
+      "qualified-f4b52498e3ac189706f57fa6600a06b3b74eaab08059365567499ffc1bc1fcd8",
+      "qualified-bc96f118c844275988676abcc2a8f6de22304b085c4e7a8f2e88e1893097582f"
+    ],
+    "pending_batch_count": 0,
+    "qualified_batch_count": 1,
+    "weight_control_transport": "quack"
+  },
+  "weight_publications": [
+    {
+      "acknowledged": true,
+      "admitted": false,
+      "base_preseed_required": true,
+      "commit_sha": "95d61d0df697090f2100aa4b8e543e2ba20d046a",
+      "dry_run": false,
+      "event_id": "sha256:9d2b2dd18593b1fa96bbcfed02c97a361598a6f54ce4a72ea254218b8dc08ff9",
+      "full_checkpoint_uploaded": false,
+      "lane_promoted": false,
+      "manifest_artifact": {
+        "bytes": 19436,
+        "sha256": "3411d1fa8e8bf5f879f70e415376b85d118f72d09567b4cee3f93bc92ae3df97"
+      },
+      "parent_commit": "e537edd812e6fb714647fbaef2134df7606cd3d2",
+      "receipt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/quack-hub-native/publication-deliveries/3411d1fa8e8bf5f879f70e415376b85d118f72d09567b4cee3f93bc92ae3df97/deliveries/d7c51d8690b872cb7ff1bd3b088d1158a264154cee6c8feae497b9d884bd1634.json",
+      "remote_already_present": false,
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "schema": "autoencoder-incremental-qualified-publication/v1",
+      "uploaded": true,
+      "version_id": "sha256:7b2894dec30ea9b541e516ed5ff5f7d75bed0166d43db8eb4bd857632149a940"
+    }
+  ]
+}

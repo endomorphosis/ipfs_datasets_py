@@ -1,0 +1,42 @@
+{
+  "admitted": false,
+  "full_source_provenance": {
+    "bytes": 7286316,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/source-provenance.json",
+    "sha256": "82095abea5734950f3785d412e819fbe3ff1ec9afd9f523baa61222ec3055a1a"
+  },
+  "kind": "prior_verified_hub_census_and_three_named_synthetic_gates",
+  "observations": [
+    {
+      "census_sha256": "d3027902457e23ea4863dfe76759ad2153283c57591dfc8f1d11c1827be1e473",
+      "fingerprint": "1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b",
+      "manifest_in_repo": "autoformal/uscode/exchanges/retained-census-20260928/exchange-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.manifest.json",
+      "manifest_sha256": "4c1fb20ae635d74343dc6ad41ac72fc55a9fdfe25369fb11de5795c571ba532b",
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "revision": "e537edd812e6fb714647fbaef2134df7606cd3d2"
+    }
+  ],
+  "retained_uscode_record": {
+    "admitted": false,
+    "formalized": false,
+    "legal_id": "usc:us:5:8410",
+    "record_id": "sha256:514042c4546530279c91f38075fa183c738325c15ae86e0d55c421937f0b1a7c",
+    "repository_id": "justicedao/uscode-autoformal-span-cache",
+    "sample": {
+      "citation": "usc:us:5:8410",
+      "section": "8410",
+      "text": "Notwithstanding any other provision of this chapter, an employee or Member must complete at least 5 years of civilian service creditable under section 8411 in order to be eligible for an annuity under this subchapter.",
+      "title": "5"
+    },
+    "source_authority_authenticated": false,
+    "source_span_id": "uscode-span-011cc5288c8740a1106ef812d248c5f6f4340f1564a713d7e3746fbdcb8b8349",
+    "source_text_sha256": "e3eaf61f663e88012c4f4b9a0e2ba7422a525bf7d63108eec543ffe5664dd120",
+    "text": "Notwithstanding any other provision of this chapter, an employee or Member must complete at least 5 years of civilian service creditable under section 8411 in order to be eligible for an annuity under this subchapter."
+  },
+  "synthetic_sections": [
+    "minimum",
+    "deadline",
+    "prohibit"
+  ],
+  "validation_role": "synthetic_disjoint_tuning_validation"
+}

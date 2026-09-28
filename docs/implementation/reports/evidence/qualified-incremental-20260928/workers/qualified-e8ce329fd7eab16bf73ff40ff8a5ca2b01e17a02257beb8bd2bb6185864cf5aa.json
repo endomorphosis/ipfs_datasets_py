@@ -1,0 +1,904 @@
+{
+  "admitted": false,
+  "base_checkpoint": {
+    "bytes": 25895338,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/native-complete/artifacts/14/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "base_version_id": "sha256:19b7f2115520de91f32023c9b5b520f269e648cf502f70e2a721480d81a361d3",
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "candidate": {
+    "bytes": 1035,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/native-complete/progress/outputs/qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa/candidate.manifest.json",
+    "sha256": "dabe500ef6128045a6e19b5f16e8cef6cdb2dea10d7e14c4071e5f8c4cfeff32"
+  },
+  "candidate_materialized_checkpoint": {
+    "bytes": 28950528,
+    "sha256": "96b3686b8337d70995a173b7d6c33039c24a8a98b7a1b6537adfb4cff6143708"
+  },
+  "candidate_storage": "sparse",
+  "elapsed_seconds": 9.11489768885076,
+  "epochs": [
+    {
+      "acceptance_source": "strict",
+      "accepted": true,
+      "cosine_similarity_delta": 0.8038838648618158,
+      "cross_entropy_delta": 0.0,
+      "epoch": 1,
+      "legal_ir_view_cross_entropy_delta": 0.001499277810320221,
+      "objective_delta": 1.714366143175829,
+      "reconstruction_delta": 0.5033102321280591,
+      "update": "combined"
+    }
+  ],
+  "evidence_scope": "selected exact fields; complete worker receipt retained at bound workspace path",
+  "job_spec": {
+    "arrow_feature_weights_artifact": null,
+    "autoencoder_config": {
+      "compute_device": "python"
+    },
+    "base_checkpoint": {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/native-complete/artifacts/14/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    "base_checkpoint_dependencies": [],
+    "base_version_id": "sha256:19b7f2115520de91f32023c9b5b520f269e648cf502f70e2a721480d81a361d3",
+    "candidate_storage": "sparse",
+    "capture_sparse_patches": true,
+    "code_identity": "b602ae01404684f2e53196fa05135936ff54e52c5f363e81f44e25b7a8727af9",
+    "dataset_snapshot_id": "4d8b464bce267bdcb564ff80cbb4ec45c30f85c4a8495af6f78176201dc93c04",
+    "expected_source_sha256": {
+      "autoencoder": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+      "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+      "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+      "worker": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156"
+    },
+    "job_id": "qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa",
+    "output_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/native-complete/progress/outputs/qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa",
+    "run_id": "qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa",
+    "samples": [
+      {
+        "citation": null,
+        "embedding_model": "mock:stable-sha256",
+        "embedding_vector": null,
+        "section": "prohibit",
+        "text": "The agency shall not disclose records.",
+        "title": "qualification-fixture"
+      }
+    ],
+    "schema_version": "autoencoder-training-job-v3",
+    "split_snapshot_id": "qualification-validation-b6f935e415207003eff6ac0393377335a40c5703630c9ddad222748806bac293",
+    "target_snapshot_artifact": null,
+    "target_snapshot_id": "",
+    "training_config": {
+      "epochs": 1,
+      "hard_example_fraction": 1.0,
+      "l2_regularization": 0.0,
+      "learning_rate": 0.35,
+      "legal_ir_bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "legal_ir_evaluate_provers": false,
+      "legal_ir_parallel_workers": 1,
+      "max_cosine_regression": 0.01,
+      "max_cross_entropy_regression": 0.0,
+      "max_legal_ir_loss_regression": 0.02,
+      "max_line_search_attempts": 1,
+      "max_reconstruction_regression": 0.02,
+      "max_seconds": 120.0,
+      "metric_disk_cache": 0,
+      "objective_cosine_gap_weight": 1.5,
+      "objective_cross_entropy_weight": 1.0,
+      "objective_legal_ir_weight": 1.0,
+      "objective_reconstruction_weight": 1.0,
+      "profile_projection": true,
+      "projection_max_update_families": 5,
+      "projection_update_backend": "python_sparse_batch",
+      "use_sample_memory": false
+    },
+    "validation_samples": [],
+    "variant": {
+      "jurisdiction": "us",
+      "model_variant": "incremental-modal",
+      "source_language": "en",
+      "target_formal_language": "typed_deontic_ir"
+    }
+  },
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "metric_disk_cache": 0,
+  "optimizer_accepted_epochs": 1,
+  "process_cache_initially_empty": true,
+  "promotion_performed": false,
+  "run_id": "qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa",
+  "runtime": {
+    "pid": 3989183,
+    "python": "3.12.3"
+  },
+  "sample_count": 1,
+  "source_worker_receipt": {
+    "bytes": 153732,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/qualified-incremental-20260928/native-complete/progress/outputs/qualified-e8ce329fd7eab16bf73ff40ff8a5ca2b01e17a02257beb8bd2bb6185864cf5aa/receipt.json",
+    "sha256": "a5f8e99c6929d1f34afdb3491f3085a34e50763d6fcf1a5eb2b87b24cd18b07d"
+  },
+  "training_report": {
+    "after": {
+      "cosine_loss": 0.0,
+      "cross_entropy_entropy_loss": 0.0,
+      "cross_entropy_excess_loss": 2.1972245773362196,
+      "cross_entropy_loss": 2.1972245773362196,
+      "decoded_embeddings": {
+        "us-code-qualification-fixture-prohibit-db005b0a192cb2e9": [
+          -0.894812,
+          -0.417005,
+          -0.758904,
+          -0.828844,
+          -0.867695,
+          -0.976218,
+          -0.416269,
+          -0.180626
+        ]
+      },
+      "embedding_cosine_similarity": 1.0,
+      "frame_ranking_loss": 0.0,
+      "legal_ir_grammar_rejection_reasons": {},
+      "legal_ir_losses": {
+        "legal_ir_multiview_acceptance_loss": 0.0,
+        "legal_ir_multiview_cosine_loss": 0.10431779751745936,
+        "legal_ir_multiview_cross_entropy_loss": 0.06320700510604815,
+        "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+        "legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir_multiview_reconstruction_loss": 0.02607944242935,
+        "legal_ir_multiview_text_reconstruction_loss": 0.0,
+        "legal_ir_multiview_total_loss": 0.45271067107111795,
+        "legal_ir_multiview_view_coverage_loss": 0.0,
+        "legal_ir_view_cross_entropy_excess_loss": 0.02588275968439424,
+        "legal_ir_view_cross_entropy_loss": 1.7902601914177345,
+        "legal_ir_view_entropy_loss": 1.7643774317333403,
+        "legal_ir_view_family_cec_cosine_gap_loss": 5.547229692537403e-05,
+        "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.00020267219939190673,
+        "legal_ir_view_family_cec_cross_entropy_loss": 0.46303963713958884,
+        "legal_ir_view_family_cosine_gap_loss": 0.02522695868925462,
+        "legal_ir_view_family_cross_entropy_excess_loss": 0.025882759684393797,
+        "legal_ir_view_family_cross_entropy_loss": 1.7902601914177345,
+        "legal_ir_view_family_deontic_cosine_gap_loss": 0.005092073006623177,
+        "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.015164970052954585,
+        "legal_ir_view_family_deontic_cross_entropy_loss": 0.5626592422170786,
+        "legal_ir_view_family_entropy_loss": 1.7643774317333407,
+        "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0016455434169585503,
+        "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007319888327655233,
+        "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3786321456327553,
+        "legal_ir_view_family_frame_logic_cosine_gap_loss": 6.323397368168671e-06,
+        "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 2.352616718426237e-05,
+        "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.45479352189364913,
+        "legal_ir_view_family_kg_cosine_gap_loss": 0.001805767237563205,
+        "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.008105404813804562,
+        "legal_ir_view_family_kg_cross_entropy_loss": 0.3750303960865142,
+        "legal_ir_view_family_prover_cosine_gap_loss": 0.0016455434169585503,
+        "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007319888327655233,
+        "legal_ir_view_family_prover_cross_entropy_loss": 0.3786321456327553,
+        "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00010172731566893134,
+        "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.0003681386981898016,
+        "legal_ir_view_family_tdfol_cross_entropy_loss": 0.4674126728380605,
+        "source_decompiled_text_embedding_cosine_loss": 0.10431779751745936,
+        "source_decompiled_text_token_loss": 0.1724138
+      },
+      "legal_ir_predicted_view_distribution": {
+        "CEC.native": 0.16687552823517202,
+        "TDFOL.prover": 0.16695009669001343,
+        "deontic.ir": 0.1685950272602115,
+        "external_provers.router": 0.16545214086407065,
+        "knowledge_graphs.neo4j_compat": 0.16539206653776498,
+        "modal.frame_logic": 0.1667351404127674
+      },
+      "legal_ir_target_count": 1,
+      "legal_ir_target_hashes": {
+        "us-code-qualification-fixture-prohibit-db005b0a192cb2e9": "587fc9fb033f0e2d873f421fe9ffcec5ca5989baa9683d6d8155c523bb23de21"
+      },
+      "legal_ir_view_distribution": {
+        "CEC.native": 0.17442710001968567,
+        "TDFOL.prover": 0.17715017399798894,
+        "deontic.ir": 0.23691203020427462,
+        "external_provers.router": 0.12221355000984283,
+        "knowledge_graphs.neo4j_compat": 0.12,
+        "modal.frame_logic": 0.16929714576820798
+      },
+      "legal_ir_view_family_metrics": {
+        "cec": {
+          "autoencoder_cosine_similarity": 1.0,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9999445277030745,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.4630396371395888,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.17442710001968567,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "decompiler": {
+          "autoencoder_cosine_similarity": 1.0,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 1.0,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "deontic": {
+          "autoencoder_cosine_similarity": 1.0,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9949079269933768,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.5626592422170786,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.23691203020427462,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "external_provers": {
+          "autoencoder_cosine_similarity": 1.0,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9983544565830414,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.3786321456327553,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.12221355000984283,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "frame_logic": {
+          "autoencoder_cosine_similarity": 1.0,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9999936766026319,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.4547935218936491,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.16929714576820798,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "kg": {
+          "autoencoder_cosine_similarity": 1.0,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9981942327624368,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.3750303960865142,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.12,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "tdfol": {
+          "autoencoder_cosine_similarity": 1.0,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9998982726843312,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.4674126728380605,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.17715017399798894,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        }
+      },
+      "reconstruction_loss": 0.0,
+      "sample_count": 1,
+      "sample_embedding_metrics": [
+        {
+          "citation": "qualification-fixture U.S.C. prohibit",
+          "cosine_loss": 0.0,
+          "cosine_similarity": 1.0,
+          "reconstruction_loss": 0.0,
+          "sample_id": "us-code-qualification-fixture-prohibit-db005b0a192cb2e9",
+          "text_shape": "agency|not|disclose|records"
+        }
+      ],
+      "symbolic_validity_penalty": 0.0
+    },
+    "before": {
+      "cosine_loss": 0.8038838648618158,
+      "cross_entropy_entropy_loss": 0.0,
+      "cross_entropy_excess_loss": 2.1972245773362196,
+      "cross_entropy_loss": 2.1972245773362196,
+      "decoded_embeddings": {
+        "us-code-qualification-fixture-prohibit-db005b0a192cb2e9": [
+          -0.05959674,
+          0.08114110000000001,
+          -0.09806248000000001,
+          0.05931352000000001,
+          -0.11497570000000001,
+          0.06724514,
+          -0.026387980000000002,
+          0.03801438
+        ]
+      },
+      "embedding_cosine_similarity": 0.1961161351381841,
+      "frame_ranking_loss": 0.0,
+      "legal_ir_grammar_rejection_reasons": {},
+      "legal_ir_losses": {
+        "legal_ir_multiview_acceptance_loss": 0.0,
+        "legal_ir_multiview_cosine_loss": 0.10431779751745936,
+        "legal_ir_multiview_cross_entropy_loss": 0.06320700510604815,
+        "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+        "legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir_multiview_reconstruction_loss": 0.02607944242935,
+        "legal_ir_multiview_text_reconstruction_loss": 0.0,
+        "legal_ir_multiview_total_loss": 0.45271067107111795,
+        "legal_ir_multiview_view_coverage_loss": 0.0,
+        "legal_ir_view_cross_entropy_excess_loss": 0.027382037494714462,
+        "legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+        "legal_ir_view_entropy_loss": 1.7643774317333403,
+        "legal_ir_view_family_cec_cosine_gap_loss": 5.8560748190883416e-05,
+        "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.00021417958137465165,
+        "legal_ir_view_family_cec_cross_entropy_loss": 0.4630511445215716,
+        "legal_ir_view_family_cosine_gap_loss": 0.026688227914204443,
+        "legal_ir_view_family_cross_entropy_excess_loss": 0.02738203749471424,
+        "legal_ir_view_family_cross_entropy_loss": 1.791759469228055,
+        "legal_ir_view_family_deontic_cosine_gap_loss": 0.005365218664220239,
+        "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.01612248795232274,
+        "legal_ir_view_family_deontic_cross_entropy_loss": 0.5636167601164468,
+        "legal_ir_view_family_entropy_loss": 1.7643774317333407,
+        "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017432770328699165,
+        "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.0077044202878564505,
+        "legal_ir_view_family_external_provers_cross_entropy_loss": 0.37901667759295654,
+        "legal_ir_view_family_frame_logic_cosine_gap_loss": 6.665078904122268e-06,
+        "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 2.4805933725946527e-05,
+        "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.4547948016601908,
+        "legal_ir_view_family_kg_cosine_gap_loss": 0.0019132048057416418,
+        "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.00852911501333703,
+        "legal_ir_view_family_kg_cross_entropy_loss": 0.37545410628604664,
+        "legal_ir_view_family_prover_cosine_gap_loss": 0.0017432770328699165,
+        "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.0077044202878564505,
+        "legal_ir_view_family_prover_cross_entropy_loss": 0.37901667759295654,
+        "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00010740336476944279,
+        "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00038922888074488515,
+        "legal_ir_view_family_tdfol_cross_entropy_loss": 0.46743376302061557,
+        "source_decompiled_text_embedding_cosine_loss": 0.10431779751745936,
+        "source_decompiled_text_token_loss": 0.1724138
+      },
+      "legal_ir_predicted_view_distribution": {
+        "CEC.native": 0.16666666666666666,
+        "TDFOL.prover": 0.16666666666666666,
+        "deontic.ir": 0.16666666666666666,
+        "external_provers.router": 0.16666666666666666,
+        "knowledge_graphs.neo4j_compat": 0.16666666666666666,
+        "modal.frame_logic": 0.16666666666666666
+      },
+      "legal_ir_target_count": 1,
+      "legal_ir_target_hashes": {
+        "us-code-qualification-fixture-prohibit-db005b0a192cb2e9": "587fc9fb033f0e2d873f421fe9ffcec5ca5989baa9683d6d8155c523bb23de21"
+      },
+      "legal_ir_view_distribution": {
+        "CEC.native": 0.17442710001968567,
+        "TDFOL.prover": 0.17715017399798894,
+        "deontic.ir": 0.23691203020427462,
+        "external_provers.router": 0.12221355000984283,
+        "knowledge_graphs.neo4j_compat": 0.12,
+        "modal.frame_logic": 0.16929714576820798
+      },
+      "legal_ir_view_family_metrics": {
+        "cec": {
+          "autoencoder_cosine_similarity": 0.1961161351381841,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9999414392518091,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.4630511445215716,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.17442710001968567,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "decompiler": {
+          "autoencoder_cosine_similarity": 0.1961161351381841,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 1.0,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "deontic": {
+          "autoencoder_cosine_similarity": 0.1961161351381841,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9946347813357798,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.5636167601164468,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.23691203020427462,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "external_provers": {
+          "autoencoder_cosine_similarity": 0.1961161351381841,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9982567229671301,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.37901667759295654,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.12221355000984283,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "frame_logic": {
+          "autoencoder_cosine_similarity": 0.1961161351381841,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9999933349210959,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.4547948016601909,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.16929714576820798,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "kg": {
+          "autoencoder_cosine_similarity": 0.1961161351381841,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9980867951942584,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.37545410628604664,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.12,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        },
+        "tdfol": {
+          "autoencoder_cosine_similarity": 0.1961161351381841,
+          "autoencoder_cosine_similarity_observation_count": 1.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 1.0,
+          "ir_cosine_similarity": 0.9998925966352306,
+          "ir_cosine_similarity_observation_count": 1.0,
+          "ir_cross_entropy_loss": 0.46743376302061557,
+          "ir_cross_entropy_loss_observation_count": 1.0,
+          "sample_count": 1.0,
+          "sample_weight": 0.17715017399798894,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 1.0
+        }
+      },
+      "reconstruction_loss": 0.5033102321280591,
+      "sample_count": 1,
+      "sample_embedding_metrics": [
+        {
+          "citation": "qualification-fixture U.S.C. prohibit",
+          "cosine_loss": 0.803883865,
+          "cosine_similarity": 0.196116135,
+          "reconstruction_loss": 0.503310232,
+          "sample_id": "us-code-qualification-fixture-prohibit-db005b0a192cb2e9",
+          "text_shape": "agency|not|disclose|records"
+        }
+      ],
+      "symbolic_validity_penalty": 0.0
+    },
+    "candidate_update_order": [
+      "legal_ir_view_global_logits",
+      "legal_ir_view_logits",
+      "family_logits",
+      "decoded_embedding",
+      "combined"
+    ],
+    "effective_max_line_search_attempts": 1,
+    "projection_profile": {
+      "by_cost_family": {
+        "feature_head": {
+          "count": 7.0,
+          "max_seconds": 0.12800731300376356,
+          "p50_seconds": 0.06344738695770502,
+          "p95_seconds": 0.12735087217297406,
+          "seconds": 0.4372030198574066
+        },
+        "host_device_transfer": {
+          "count": 0.0,
+          "max_seconds": 0.0,
+          "p50_seconds": 0.0,
+          "p95_seconds": 0.0,
+          "seconds": 0
+        },
+        "kernel": {
+          "count": 0.0,
+          "max_seconds": 0.0,
+          "p50_seconds": 0.0,
+          "p95_seconds": 0.0,
+          "seconds": 0
+        },
+        "optimizer": {
+          "count": 5.0,
+          "max_seconds": 0.21991109405644238,
+          "p50_seconds": 0.06346237915568054,
+          "p95_seconds": 0.20109598101116716,
+          "seconds": 0.4373117908835411
+        },
+        "python_loop": {
+          "count": 7.0,
+          "max_seconds": 4.476121014915407,
+          "p50_seconds": 0.10464419308118522,
+          "p95_seconds": 3.168659266550091,
+          "seconds": 5.009706492070109
+        },
+        "synchronization": {
+          "count": 0.0,
+          "max_seconds": 0.0,
+          "p50_seconds": 0.0,
+          "p95_seconds": 0.0,
+          "seconds": 0
+        }
+      },
+      "by_feature_head": {
+        "decoded_embedding": {
+          "count": 3.0,
+          "max_seconds": 0.12800731300376356,
+          "p50_seconds": 0.12583552883006632,
+          "p95_seconds": 0.12779013458639382,
+          "seconds": 0.37966201873496175
+        },
+        "family_logits": {
+          "count": 3.0,
+          "max_seconds": 0.027122202096506953,
+          "p50_seconds": 0.026264993008226156,
+          "p95_seconds": 0.027036481187678874,
+          "seconds": 0.07963562803342938
+        },
+        "family_logits+decoded_embedding+legal_ir_view_logits": {
+          "count": 1.0,
+          "max_seconds": 0.21991109405644238,
+          "p50_seconds": 0.21991109405644238,
+          "p95_seconds": 0.21991109405644238,
+          "seconds": 0.21991109405644238
+        },
+        "legal_ir_view_global_logits": {
+          "count": 2.0,
+          "max_seconds": 0.0018377958331257105,
+          "p50_seconds": 0.0018315399065613747,
+          "p95_seconds": 0.0018371702404692768,
+          "seconds": 0.0036630798131227493
+        },
+        "legal_ir_view_logits": {
+          "count": 3.0,
+          "max_seconds": 0.0647332239896059,
+          "p50_seconds": 0.06346237915568054,
+          "p95_seconds": 0.06460613950621337,
+          "seconds": 0.19164299010299146
+        }
+      },
+      "by_legal_family": {
+        "aggregate": {
+          "count": 12.0,
+          "max_seconds": 4.476121014915407,
+          "p50_seconds": 0.1035236205207184,
+          "p95_seconds": 2.135205558442973,
+          "seconds": 5.44701828295365
+        },
+        "deontic": {
+          "count": 7.0,
+          "max_seconds": 0.12800731300376356,
+          "p50_seconds": 0.06344738695770502,
+          "p95_seconds": 0.12735087217297406,
+          "seconds": 0.4372030198574066
+        }
+      },
+      "by_stage": {
+        "before_holdout_evaluation": {
+          "count": 1.0,
+          "max_seconds": 4.476121014915407,
+          "p50_seconds": 4.476121014915407,
+          "p95_seconds": 4.476121014915407,
+          "seconds": 4.476121014915407
+        },
+        "hard_example_selection": {
+          "count": 1.0,
+          "max_seconds": 1.8239952623844147e-06,
+          "p50_seconds": 1.8239952623844147e-06,
+          "p95_seconds": 1.8239952623844147e-06,
+          "seconds": 1.8239952623844147e-06
+        },
+        "line_search_evaluation": {
+          "count": 5.0,
+          "max_seconds": 0.11791518703103065,
+          "p50_seconds": 0.10464419308118522,
+          "p95_seconds": 0.11622751061804593,
+          "seconds": 0.5335836531594396
+        },
+        "projection_update_batch": {
+          "count": 5.0,
+          "max_seconds": 0.21991109405644238,
+          "p50_seconds": 0.06346237915568054,
+          "p95_seconds": 0.20109598101116716,
+          "seconds": 0.4373117908835411
+        },
+        "projection_update_head": {
+          "count": 7.0,
+          "max_seconds": 0.12800731300376356,
+          "p50_seconds": 0.06344738695770502,
+          "p95_seconds": 0.12735087217297406,
+          "seconds": 0.4372030198574066
+        }
+      },
+      "cost_families": [
+        "host_device_transfer",
+        "kernel",
+        "synchronization",
+        "python_loop",
+        "optimizer",
+        "feature_head"
+      ],
+      "counters": {
+        "projection_update_batch_count": 5,
+        "projection_update_head_count": 7,
+        "projection_update_sample_count": 5
+      },
+      "event_count": 19,
+      "events": [
+        {
+          "cost_family": "python_loop",
+          "feature_head": "",
+          "legal_family": "aggregate",
+          "metadata": {
+            "sample_count": 1
+          },
+          "seconds": 4.476121014915,
+          "stage": "before_holdout_evaluation"
+        },
+        {
+          "cost_family": "python_loop",
+          "feature_head": "",
+          "legal_family": "aggregate",
+          "metadata": {
+            "sample_count": 1
+          },
+          "seconds": 1.823995e-06,
+          "stage": "hard_example_selection"
+        },
+        {
+          "cost_family": "feature_head",
+          "feature_head": "legal_ir_view_global_logits",
+          "legal_family": "deontic",
+          "metadata": {},
+          "seconds": 0.00182528398,
+          "stage": "projection_update_head"
+        },
+        {
+          "cost_family": "optimizer",
+          "feature_head": "legal_ir_view_global_logits",
+          "legal_family": "aggregate",
+          "metadata": {
+            "learning_rate": 0.175,
+            "sample_count": 1,
+            "update_backend": "python_sparse_batch",
+            "update_targets": [
+              "legal_ir_view_global_logits"
+            ]
+          },
+          "seconds": 0.001837795833,
+          "stage": "projection_update_batch"
+        },
+        {
+          "cost_family": "python_loop",
+          "feature_head": "",
+          "legal_family": "aggregate",
+          "metadata": {
+            "sample_count": 1
+          },
+          "seconds": 0.099144420121,
+          "stage": "line_search_evaluation"
+        },
+        {
+          "cost_family": "feature_head",
+          "feature_head": "legal_ir_view_logits",
+          "legal_family": "deontic",
+          "metadata": {},
+          "seconds": 0.063447386958,
+          "stage": "projection_update_head"
+        },
+        {
+          "cost_family": "optimizer",
+          "feature_head": "legal_ir_view_logits",
+          "legal_family": "aggregate",
+          "metadata": {
+            "learning_rate": 0.175,
+            "sample_count": 1,
+            "update_backend": "python_sparse_batch",
+            "update_targets": [
+              "legal_ir_view_logits"
+            ]
+          },
+          "seconds": 0.063462379156,
+          "stage": "projection_update_batch"
+        },
+        {
+          "cost_family": "python_loop",
+          "feature_head": "",
+          "legal_family": "aggregate",
+          "metadata": {
+            "sample_count": 1
+          },
+          "seconds": 0.109476804966,
+          "stage": "line_search_evaluation"
+        },
+        {
+          "cost_family": "feature_head",
+          "feature_head": "family_logits",
+          "legal_family": "deontic",
+          "metadata": {},
+          "seconds": 0.026248432929,
+          "stage": "projection_update_head"
+        },
+        {
+          "cost_family": "optimizer",
+          "feature_head": "family_logits",
+          "legal_family": "aggregate",
+          "metadata": {
+            "learning_rate": 0.35,
+            "sample_count": 1,
+            "update_backend": "python_sparse_batch",
+            "update_targets": [
+              "family_logits"
+            ]
+          },
+          "seconds": 0.026264993008,
+          "stage": "projection_update_batch"
+        },
+        {
+          "cost_family": "python_loop",
+          "feature_head": "",
+          "legal_family": "aggregate",
+          "metadata": {
+            "sample_count": 1
+          },
+          "seconds": 0.10240304796,
+          "stage": "line_search_evaluation"
+        },
+        {
+          "cost_family": "feature_head",
+          "feature_head": "decoded_embedding",
+          "legal_family": "deontic",
+          "metadata": {},
+          "seconds": 0.125819176901,
+          "stage": "projection_update_head"
+        },
+        {
+          "cost_family": "optimizer",
+          "feature_head": "decoded_embedding",
+          "legal_family": "aggregate",
+          "metadata": {
+            "learning_rate": 0.175,
+            "sample_count": 1,
+            "update_backend": "python_sparse_batch",
+            "update_targets": [
+              "decoded_embedding"
+            ]
+          },
+          "seconds": 0.12583552883,
+          "stage": "projection_update_batch"
+        },
+        {
+          "cost_family": "python_loop",
+          "feature_head": "",
+          "legal_family": "aggregate",
+          "metadata": {
+            "sample_count": 1
+          },
+          "seconds": 0.104644193081,
+          "stage": "line_search_evaluation"
+        },
+        {
+          "cost_family": "feature_head",
+          "feature_head": "family_logits",
+          "legal_family": "deontic",
+          "metadata": {},
+          "seconds": 0.027122202097,
+          "stage": "projection_update_head"
+        },
+        {
+          "cost_family": "feature_head",
+          "feature_head": "decoded_embedding",
+          "legal_family": "deontic",
+          "metadata": {},
+          "seconds": 0.128007313004,
+          "stage": "projection_update_head"
+        },
+        {
+          "cost_family": "feature_head",
+          "feature_head": "legal_ir_view_logits",
+          "legal_family": "deontic",
+          "metadata": {},
+          "seconds": 0.06473322399,
+          "stage": "projection_update_head"
+        },
+        {
+          "cost_family": "optimizer",
+          "feature_head": "family_logits+decoded_embedding+legal_ir_view_logits",
+          "legal_family": "aggregate",
+          "metadata": {
+            "learning_rate": 0.12249999999999998,
+            "sample_count": 1,
+            "update_backend": "python_sparse_batch",
+            "update_targets": [
+              "family_logits",
+              "decoded_embedding",
+              "legal_ir_view_logits"
+            ]
+          },
+          "seconds": 0.219911094056,
+          "stage": "projection_update_batch"
+        },
+        {
+          "cost_family": "python_loop",
+          "feature_head": "",
+          "legal_family": "aggregate",
+          "metadata": {
+            "sample_count": 1
+          },
+          "seconds": 0.117915187031,
+          "stage": "line_search_evaluation"
+        }
+      ],
+      "schema_version": "legal-ir-projection-profile-v1",
+      "total_seconds": 5.884221302811,
+      "warm_p95_projection_seconds": 0.328446853184
+    },
+    "projection_update_backend": "python_sparse_batch",
+    "stopped_reason": null
+  },
+  "training_seconds": 7.114644568180665,
+  "tree_file_sha256": {
+    "autoencoder": "06ceca1ecda6d9c525e37e7c63e197027cd02a64b94cc66395895a96ece603d9",
+    "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "worker": "cb9a5ecf87c309d72a3e9cef34e44b62cab08583c84315ec3050525c57170156"
+  },
+  "use_sample_memory": false,
+  "validation_mode": "in_sample",
+  "validation_sample_count": 0,
+  "weight_storage": "private_json"
+}

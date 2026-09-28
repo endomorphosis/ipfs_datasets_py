@@ -1,5 +1,10 @@
 # Incremental parallel autoencoder streams
 
+The operator CLI has since gained mandatory qualification and bounded retry
+handling; see [qualification gates](QUALIFIED_PARALLEL_AUTOENCODERS_20260928.md).
+The optimizer-only behavior and native results below describe the earlier
+version and are not retroactively qualified.
+
 The new operator entry point is
 [`run_incremental_autoencoders.py`](../../../scripts/ops/legal_ir/run_incremental_autoencoders.py).
 It connects verified Hugging Face census exchanges to the existing native
