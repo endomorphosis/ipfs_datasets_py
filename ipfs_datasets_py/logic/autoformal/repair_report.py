@@ -208,13 +208,21 @@ def repair_report(
 _CODEC: Any = None
 
 
-def codec_capture(text: str) -> dict[str, Any]:
-    """Run the modal codec. Returns formulas and reconstructed text."""
+def codec_capture(text: str, *, include_full_evidence: bool = False) -> dict[str, Any]:
+    """Run the modal codec, optionally retaining complete outputs for dataset export."""
 
     global _CODEC
     source = str(text or "").strip()
     if not source:
-        return {"decoded_text": "", "formulas": [], "structural": ""}
+        result = {"decoded_text": "", "formulas": [], "structural": ""}
+        if include_full_evidence:
+            result["codec_observation"] = {
+                "codec_kind": "DeterministicModalLogicCodec", "learned_autoencoder_execution": False,
+                "status": "not_run_empty_input", "codec_input_text": source,
+                "source_text_sha256": hashlib.sha256(source.encode()).hexdigest(),
+                "input_normalization": "strip",
+            }
+        return result
     if _CODEC is None:
         from ipfs_datasets_py.logic.modal.codec import DeterministicModalLogicCodec
 
@@ -222,8 +230,16 @@ def codec_capture(text: str) -> dict[str, Any]:
     document_id = "repair-" + hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
     try:
         encoded = _CODEC.encode(source, document_id=document_id)
-    except Exception:
-        return {"decoded_text": "", "formulas": [], "structural": ""}
+    except Exception as exc:
+        result = {"decoded_text": "", "formulas": [], "structural": ""}
+        if include_full_evidence:
+            result["codec_observation"] = {
+                "codec_kind": "DeterministicModalLogicCodec", "learned_autoencoder_execution": False,
+                "status": "error", "error_type": type(exc).__name__,
+                "source_text_sha256": hashlib.sha256(source.encode()).hexdigest(),
+                "codec_input_text": source, "input_normalization": "strip",
+            }
+        return result
     formulas = []
     for formula in list(getattr(encoded.modal_ir, "formulas", []) or [])[:6]:
         operator = formula.operator.to_dict()
@@ -245,7 +261,7 @@ def codec_capture(text: str) -> dict[str, Any]:
     from ipfs_datasets_py.logic.modal.ir_symbol_catalog import bluebook_symbols
 
     citations = bluebook_symbols(source)
-    return {
+    result = {
         "cosine_loss": float(losses.get("source_decompiled_text_embedding_cosine_loss") or 0.0),
         "cosine_similarity": float(losses.get("source_decompiled_text_embedding_cosine_similarity") or 0.0),
         "cross_entropy_loss": losses.get("cross_entropy_loss"),
@@ -259,3 +275,17 @@ def codec_capture(text: str) -> dict[str, Any]:
         "structural": " ".join(str((encoded.metadata or {}).get("modal_decompiler_structural_text") or "").split())[:180],
         "token_loss": float(losses.get("source_decompiled_text_token_loss") or 0.0),
     }
+    if include_full_evidence:
+        metadata = dict(getattr(encoded, "metadata", {}) or {})
+        result["codec_observation"] = {
+            "codec_kind": "DeterministicModalLogicCodec", "learned_autoencoder_execution": False,
+            "status": "captured", "source_text_sha256": hashlib.sha256(source.encode()).hexdigest(),
+            "codec_input_text": source, "input_normalization": "strip",
+            "full_decoded_text": str(getattr(encoded, "decoded_text", "") or ""),
+            "full_structural_text": metadata.get("modal_decompiler_structural_text"),
+            "modal_ir": encoded.modal_ir.to_dict(), "raw_losses": losses,
+            "parser_backend": metadata.get("parser_backend"),
+            "spacy_model_name": metadata.get("spacy_model_name"),
+            "spacy_used_fallback_model": metadata.get("spacy_used_fallback_model"),
+        }
+    return result

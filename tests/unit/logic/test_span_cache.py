@@ -40,6 +40,139 @@ def _gap(span_id: str = "g1") -> dict:
     }
 
 
+def test_sparse_progress_uploads_only_new_sealed_or_gap_rows(tmp_path: Path) -> None:
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    cache.enqueue(
+        [{"source_span_id": "pending", "text": "The clerk shall keep a journal.", "legal_id": "usc:us:1:1"}]
+    )
+    cache.claim_batch("compile-a", limit=1)
+    assert cache.sparse_progress_delta()["delta_count"] == 0
+    cache.apply_census(
+        {"rows": [_agreed("s1"), _gap("g1")]},
+        code_identity="sha256:test",
+    )
+    delta = cache.sparse_progress_delta()
+    assert delta["delta_count"] == 2
+    assert {row["source_span_id"] for row in delta["rows"]} == {"s1", "g1"}
+    assert all("claim_token" not in row for row in delta["rows"])
+    path = tmp_path / "compile-a-sparse.parquet"
+    written = cache.write_sparse_progress_parquet(
+        path, delta["rows"], agent_id="compile-a", update_id="sparse-1"
+    )
+    assert written["jsonl_written"] is False
+    assert written["admitted"] is False
+    cache.mark_progress_published(delta["fingerprints"])
+    assert cache.sparse_progress_delta()["delta_count"] == 0
+    with pytest.raises(Exception, match="full resume checkpoint"):
+        cache.write_sparse_progress_parquet(
+            tmp_path / "resume-checkpoint.parquet",
+            delta["rows"],
+            agent_id="compile-a",
+            update_id="sparse-1",
+        )
+    cache.close()
+
+
+def test_sparse_observation_history_survives_4000_shards_and_restart(tmp_path):
+    import json
+
+    database = tmp_path / "cache.duckdb"
+    cache = SpanCache(database)
+    legacy = [f"autoformal/uscode/checkpoints/agent/sparse-{i:05}.parquet" for i in range(4000)]
+    # Simulate the persisted pre-migration catalog, then open it with the new schema.
+    cache._set_meta("applied_sparse_checkpoints", json.dumps(legacy))
+    cache._set_meta("sparse_checkpoint_paths_migrated", "0")
+    cache.close()
+    cache = SpanCache(database)
+    next_path = "autoformal/uscode/checkpoints/agent/sparse-04000.parquet"
+    cache.remember_sparse_checkpoint(next_path)
+    cache.remember_sparse_checkpoint(next_path)
+    cache.close()
+    cache = SpanCache(database)
+    try:
+        unseen = [f"later-{i}" for i in range(32)]
+        assert len(cache.applied_sparse_checkpoints()) == 4001
+        assert cache.unapplied_sparse_checkpoints([*legacy, next_path, *unseen], limit=16) == unseen[:16]
+        assert cache.unapplied_sparse_checkpoints([unseen[0], unseen[0]], limit=16) == unseen[:1]
+    finally:
+        cache.close()
+
+
+def test_sparse_status_file_retry_is_immutable_across_enqueue_ticks(tmp_path):
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    try:
+        cache.apply_census({"rows": [_gap()]}, code_identity="test-code")
+        rows = cache.sparse_progress_delta()["rows"]
+        path = tmp_path / "sparse.parquet"
+        cache.write_sparse_progress_parquet(path, rows, agent_id="machine", update_id="stable")
+        before = path.read_bytes()
+        inode = path.stat().st_ino
+        cache.save_checkpoint(documents=1000, parquet="laws.parquet")
+        cache.write_sparse_progress_parquet(path, rows, agent_id="machine", update_id="stable")
+        assert path.read_bytes() == before and path.stat().st_ino == inode
+        changed = [{**rows[0], "reason": "different observation"}]
+        with pytest.raises(Exception, match="immutable sparse checkpoint conflicts"):
+            cache.write_sparse_progress_parquet(path, changed, agent_id="machine", update_id="stable")
+        assert path.read_bytes() == before and path.stat().st_ino == inode
+        assert not list(tmp_path.glob(".sparse-progress-*"))
+    finally:
+        cache.close()
+
+
+def test_sparse_history_migration_rolls_back_partial_insert_and_retries(tmp_path, monkeypatch):
+    import duckdb
+    import json
+
+    path = tmp_path / "cache.duckdb"
+    cache = SpanCache(path)
+    cache._set_meta("applied_sparse_checkpoints", json.dumps(["one.parquet", "two.parquet"]))
+    cache._set_meta("sparse_checkpoint_paths_migrated", "0")
+    cache.close()
+    connection = duckdb.connect(str(path))
+
+    class InterruptedMigration:
+        def __getattr__(self, name):
+            return getattr(connection, name)
+
+        def executemany(self, statement, values):
+            assert "applied_sparse_checkpoint" in statement
+            connection.execute(statement, values[0])
+            raise OSError("migration interrupted")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(duckdb, "connect", lambda *args, **kwargs: InterruptedMigration())
+        with pytest.raises(OSError, match="migration interrupted"):
+            SpanCache(path)
+    try:
+        assert connection.execute("SELECT count(*) FROM applied_sparse_checkpoint").fetchone()[0] == 0
+        assert connection.execute("SELECT value FROM cache_meta WHERE key='sparse_checkpoint_paths_migrated'").fetchone()[0] == "0"
+    finally:
+        connection.close()
+    cache = SpanCache(path)
+    try:
+        assert cache.applied_sparse_checkpoints() == ["one.parquet", "two.parquet"]
+        assert cache._meta("sparse_checkpoint_paths_migrated") == "1"
+    finally:
+        cache.close()
+
+
+def test_sparse_quarantine_is_bound_to_expected_dataset_and_never_means_applied(tmp_path):
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    try:
+        cache.register_agent("reader", dataset_id="dataset-a")
+        cache.quarantine_sparse_checkpoint("foreign.parquet", expected_dataset_id="dataset-a",
+                                           reason="dataset_mismatch", evidence={"content_sha256": "abc"})
+        assert cache.applied_sparse_checkpoints() == []
+        assert cache.unapplied_sparse_checkpoints(["foreign.parquet"]) == []
+        assert cache.quarantined_sparse_checkpoint_count() == 1
+        cache.register_agent("reader", dataset_id="dataset-b")
+        assert cache.unapplied_sparse_checkpoints(["foreign.parquet"]) == ["foreign.parquet"]
+        assert cache.quarantined_sparse_checkpoint_count() == 0
+        assert cache.applied_sparse_checkpoints() == []
+    finally:
+        cache.close()
+
+
 def test_resume_parquet_carries_board_seals_and_agent(tmp_path: Path) -> None:
     cache = SpanCache(tmp_path / "cache.duckdb")
     cache.save_checkpoint(documents=12, parquet="/data/laws.parquet")

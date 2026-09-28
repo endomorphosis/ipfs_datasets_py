@@ -1,0 +1,46 @@
+{
+  "first": {
+    "inserted": [
+      {
+        "task_cid": "span-exchange-task-repair_packet:52d3fcaff31aed0fa461e8b6127012310d379bd648dabc88420862ead309fe44",
+        "status": "blocked",
+        "revision": 1
+      }
+    ],
+    "existing": [],
+    "inserted_count": 1,
+    "existing_count": 0,
+    "executed": false,
+    "claimed": false,
+    "admitted": false,
+    "formalized": false,
+    "wrote_compiler": false,
+    "materialized": true,
+    "native_authority": "ipfs_accelerate_py.DatabaseTaskSource"
+  },
+  "replay": {
+    "inserted": [],
+    "existing": [
+      {
+        "task_cid": "span-exchange-task-repair_packet:52d3fcaff31aed0fa461e8b6127012310d379bd648dabc88420862ead309fe44",
+        "status": "blocked",
+        "revision": 1
+      }
+    ],
+    "inserted_count": 0,
+    "existing_count": 1,
+    "executed": false,
+    "claimed": false,
+    "admitted": false,
+    "formalized": false,
+    "wrote_compiler": false,
+    "materialized": true,
+    "native_authority": "ipfs_accelerate_py.DatabaseTaskSource"
+  },
+  "ordinary_ready_count": 0,
+  "automatic_ready_count": 0,
+  "unchanged_task_and_goal": true,
+  "event_watermark_unchanged": true,
+  "path": "/tmp/span-exchange-native-import-9qa6ots0",
+  "status": "blocked"
+}

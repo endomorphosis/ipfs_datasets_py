@@ -1,0 +1,64 @@
+{
+  "accelerate_binding": {
+    "accelerate_module": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source/ipfs_accelerate_py/__init__.py",
+    "accelerate_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-dependency-20260927/capture-r3/published-source"
+  },
+  "admitted": false,
+  "claimed": false,
+  "database": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/span-cache-exchange-20260928/consumer-1/supervisor.duckdb",
+  "dependency_components": 4,
+  "dry_run": false,
+  "executed": false,
+  "existing": [],
+  "existing_count": 0,
+  "formalized": false,
+  "inserted": [
+    {
+      "revision": 1,
+      "status": "blocked",
+      "task_cid": "span-exchange-task-repair_packet:a41dd2d0e8dc01dd1a6553be7b16d8b92f5c4766cd1e9f930d5018b08c560bb3"
+    }
+  ],
+  "inserted_count": 1,
+  "logic_tree": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "materialized": true,
+  "native_authority": "ipfs_accelerate_py.DatabaseTaskSource",
+  "origin": {
+    "evidence_bundle": {
+      "census": {
+        "bytes": 517335,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/span-cache-exchange-20260928/consumer-1/evidence/f93f1f216657467ccf165df1d85280c3143a1de7973d77135dedfeaf09fa775b.parquet",
+        "sha256": "f93f1f216657467ccf165df1d85280c3143a1de7973d77135dedfeaf09fa775b"
+      },
+      "goals": {
+        "bytes": 37412,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/span-cache-exchange-20260928/consumer-1/evidence/4e30d6d29b5fb80ac9c84c31275767b3543505e865ba14ebb71994fccc70b933.parquet",
+        "sha256": "4e30d6d29b5fb80ac9c84c31275767b3543505e865ba14ebb71994fccc70b933"
+      },
+      "manifest": {
+        "bytes": 1131,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/span-cache-exchange-20260928/consumer-1/evidence/4c1fb20ae635d74343dc6ad41ac72fc55a9fdfe25369fb11de5795c571ba532b.json",
+        "sha256": "4c1fb20ae635d74343dc6ad41ac72fc55a9fdfe25369fb11de5795c571ba532b"
+      }
+    },
+    "fingerprint": "1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b",
+    "manifest_in_repo": "autoformal/uscode/exchanges/retained-census-20260928/exchange-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.manifest.json",
+    "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/span-cache-exchange-20260928/consumer-1/evidence/4c1fb20ae635d74343dc6ad41ac72fc55a9fdfe25369fb11de5795c571ba532b.json",
+    "manifest_sha256": "4c1fb20ae635d74343dc6ad41ac72fc55a9fdfe25369fb11de5795c571ba532b",
+    "repository_id": "justicedao/uscode-autoformal-span-cache",
+    "revision": "e537edd812e6fb714647fbaef2134df7606cd3d2"
+  },
+  "schema": "uscode-autoformal-supervisor-exchange-import/v1",
+  "selected_tasks": 1,
+  "shard_count": 3,
+  "shard_index": 1,
+  "task_cids": [
+    "span-exchange-task-repair_packet:a41dd2d0e8dc01dd1a6553be7b16d8b92f5c4766cd1e9f930d5018b08c560bb3"
+  ],
+  "total_tasks": 4,
+  "wrote_compiler": false
+}

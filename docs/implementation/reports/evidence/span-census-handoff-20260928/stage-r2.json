@@ -1,0 +1,61 @@
+{
+  "admitted": false,
+  "bundles": [
+    {
+      "admitted": false,
+      "census": {
+        "bytes": 517335,
+        "filename": "census-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.parquet",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/span-cache-exchange-20260928/outbox-r2/census-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.parquet",
+        "row_count": 3,
+        "sha256": "f93f1f216657467ccf165df1d85280c3143a1de7973d77135dedfeaf09fa775b"
+      },
+      "census_path_in_repo": "autoformal/uscode/census/retained-census-20260928/census-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.parquet",
+      "census_rows": 3,
+      "dry_run": true,
+      "enqueued": false,
+      "fingerprint": "1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b",
+      "formalized": false,
+      "full_checkpoint_uploaded": false,
+      "goal_rows": 4,
+      "goals": {
+        "bytes": 37412,
+        "filename": "goals-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.parquet",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/span-cache-exchange-20260928/outbox-r2/goals-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.parquet",
+        "row_count": 4,
+        "sha256": "4e30d6d29b5fb80ac9c84c31275767b3543505e865ba14ebb71994fccc70b933"
+      },
+      "goals_path_in_repo": "autoformal/uscode/goals/retained-census-20260928/goals-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.parquet",
+      "jsonl_written": false,
+      "manifest": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/span-cache-exchange-20260928/outbox-r2/exchange-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.manifest.json",
+        "path_in_repo": "autoformal/uscode/exchanges/retained-census-20260928/exchange-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.manifest.json",
+        "sha256": "4c1fb20ae635d74343dc6ad41ac72fc55a9fdfe25369fb11de5795c571ba532b"
+      },
+      "repair_packets": 3,
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "training_goals": 1,
+      "uploaded": false,
+      "wrote_compiler": false
+    }
+  ],
+  "enqueued": false,
+  "error": null,
+  "formalized": false,
+  "passed": true,
+  "retained_producer_binding": {
+    "codec_rerun": false,
+    "evidence_sha256": "f5c927fc2e57df3c2241944abad2635c03a21a409ca1f010320806998283c8b2",
+    "historical_producer": true,
+    "provenance_sha256": "686c8c1100f00554226c7f899083b5e6faa45c529d207c1913065351ade8bcc5",
+    "training_executed": false
+  },
+  "schema": "uscode-census-exchange-publication/v1",
+  "training_executed": false,
+  "tree_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "upload_requested": false
+}

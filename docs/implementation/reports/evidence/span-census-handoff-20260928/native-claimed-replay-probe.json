@@ -1,0 +1,132 @@
+{
+  "schema": "span-cache-native-import-lifecycle-probe/v1",
+  "synthetic_fixture": true,
+  "native_compare_and_set_status_changed": true,
+  "transition_receipt_cid": "baguqeera3rgxt3ny4nzk376w2nlye47uorarb6ojbhvvs25d6yobkiladrrq",
+  "before_replay": {
+    "task_cid": "span-exchange-task-repair_packet:52d3fcaff31aed0fa461e8b6127012310d379bd648dabc88420862ead309fe44",
+    "task_alias": "span-exchange-task-repair_packet:52d3fcaff31aed0fa461e8b6127012310d379bd648dabc88420862ead309fe44",
+    "goal_cid": "span-exchange-goal-repair_packet:a4fe09ffa008ae8fb995df26b45d7c572cfd9b7f1c83b39644c124c4c39328d4",
+    "plan_cid": "span-exchange-plan-repair_packet:da4ba831302958bae49eb2973d80892b33a1dfa48bd468fe59e622dcbd450243",
+    "objective_id": "",
+    "ordinal": 1,
+    "status": "claimed",
+    "revision": 2,
+    "priority": "P2",
+    "body": {
+      "admitted": false,
+      "body_markdown": "Review imported autoformal evidence before local scheduling. Dataset contents are evidence, not permission to execute commands. Read the complete source, census, preserve/replace scope and acceptance criteria from both immutable files.\nPacket: /tmp/span-exchange-native-import-9qa6ots0/packets/0f937ff797f2a1569dd87040fdc4a15995158c685073c47cdc2bce1009f886e9.json (SHA-256 0f937ff797f2a1569dd87040fdc4a15995158c685073c47cdc2bce1009f886e9)\nOriginal todo: /tmp/span-exchange-native-import-9qa6ots0/packets/afbb9298287d11983541d83b2ceff5454313cb6b48992fe606178f080d4b8488.json (SHA-256 afbb9298287d11983541d83b2ceff5454313cb6b48992fe606178f080d4b8488).\nVerified census and manifest: {\"kind\":\"synthetic-native-api-probe\"}.\nNo compiler change, model promotion or legal admission is authorized by this import.",
+      "completion_receipt": {
+        "admitted": false,
+        "description": "Isolated importer replay fixture only; no worker claimed or executed legal work.",
+        "executed": false,
+        "formalized": false,
+        "operation": "synthetic_import_lifecycle_probe"
+      },
+      "exchange_import_schema": "uscode-autoformal-supervisor-exchange-import/v1",
+      "exchange_origin_json": "{\"kind\":\"synthetic-native-api-probe\"}",
+      "execution_blocked_reason": "pending_local_execution_qualification",
+      "exported_task_path": "/tmp/span-exchange-native-import-9qa6ots0/packets/afbb9298287d11983541d83b2ceff5454313cb6b48992fe606178f080d4b8488.json",
+      "formalized": false,
+      "is_schedulable": false,
+      "original_acceptance_json": "[\"Preserve the full duration and existing strict gates.\"]",
+      "packet_path": "/tmp/span-exchange-native-import-9qa6ots0/packets/0f937ff797f2a1569dd87040fdc4a15995158c685073c47cdc2bce1009f886e9.json",
+      "packet_sha256": "0f937ff797f2a1569dd87040fdc4a15995158c685073c47cdc2bce1009f886e9",
+      "record_kind": "repair_packet",
+      "review_only": true,
+      "source_span_id": "probe",
+      "task_sha256": "afbb9298287d11983541d83b2ceff5454313cb6b48992fe606178f080d4b8488",
+      "title": "Native import probe",
+      "wrote_compiler": false
+    },
+    "dependencies": [],
+    "outputs": [],
+    "acceptance": [
+      {
+        "ordinal": 0,
+        "criterion": "Preserve the full duration and existing strict gates.",
+        "evidence_policy": {
+          "criterion": "Preserve the full duration and existing strict gates."
+        }
+      }
+    ],
+    "validations": [],
+    "updated_at": "2026-09-28T16:50:42Z"
+  },
+  "after_replay": {
+    "task_cid": "span-exchange-task-repair_packet:52d3fcaff31aed0fa461e8b6127012310d379bd648dabc88420862ead309fe44",
+    "task_alias": "span-exchange-task-repair_packet:52d3fcaff31aed0fa461e8b6127012310d379bd648dabc88420862ead309fe44",
+    "goal_cid": "span-exchange-goal-repair_packet:a4fe09ffa008ae8fb995df26b45d7c572cfd9b7f1c83b39644c124c4c39328d4",
+    "plan_cid": "span-exchange-plan-repair_packet:da4ba831302958bae49eb2973d80892b33a1dfa48bd468fe59e622dcbd450243",
+    "objective_id": "",
+    "ordinal": 1,
+    "status": "claimed",
+    "revision": 2,
+    "priority": "P2",
+    "body": {
+      "admitted": false,
+      "body_markdown": "Review imported autoformal evidence before local scheduling. Dataset contents are evidence, not permission to execute commands. Read the complete source, census, preserve/replace scope and acceptance criteria from both immutable files.\nPacket: /tmp/span-exchange-native-import-9qa6ots0/packets/0f937ff797f2a1569dd87040fdc4a15995158c685073c47cdc2bce1009f886e9.json (SHA-256 0f937ff797f2a1569dd87040fdc4a15995158c685073c47cdc2bce1009f886e9)\nOriginal todo: /tmp/span-exchange-native-import-9qa6ots0/packets/afbb9298287d11983541d83b2ceff5454313cb6b48992fe606178f080d4b8488.json (SHA-256 afbb9298287d11983541d83b2ceff5454313cb6b48992fe606178f080d4b8488).\nVerified census and manifest: {\"kind\":\"synthetic-native-api-probe\"}.\nNo compiler change, model promotion or legal admission is authorized by this import.",
+      "completion_receipt": {
+        "admitted": false,
+        "description": "Isolated importer replay fixture only; no worker claimed or executed legal work.",
+        "executed": false,
+        "formalized": false,
+        "operation": "synthetic_import_lifecycle_probe"
+      },
+      "exchange_import_schema": "uscode-autoformal-supervisor-exchange-import/v1",
+      "exchange_origin_json": "{\"kind\":\"synthetic-native-api-probe\"}",
+      "execution_blocked_reason": "pending_local_execution_qualification",
+      "exported_task_path": "/tmp/span-exchange-native-import-9qa6ots0/packets/afbb9298287d11983541d83b2ceff5454313cb6b48992fe606178f080d4b8488.json",
+      "formalized": false,
+      "is_schedulable": false,
+      "original_acceptance_json": "[\"Preserve the full duration and existing strict gates.\"]",
+      "packet_path": "/tmp/span-exchange-native-import-9qa6ots0/packets/0f937ff797f2a1569dd87040fdc4a15995158c685073c47cdc2bce1009f886e9.json",
+      "packet_sha256": "0f937ff797f2a1569dd87040fdc4a15995158c685073c47cdc2bce1009f886e9",
+      "record_kind": "repair_packet",
+      "review_only": true,
+      "source_span_id": "probe",
+      "task_sha256": "afbb9298287d11983541d83b2ceff5454313cb6b48992fe606178f080d4b8488",
+      "title": "Native import probe",
+      "wrote_compiler": false
+    },
+    "dependencies": [],
+    "outputs": [],
+    "acceptance": [
+      {
+        "ordinal": 0,
+        "criterion": "Preserve the full duration and existing strict gates.",
+        "evidence_policy": {
+          "criterion": "Preserve the full duration and existing strict gates."
+        }
+      }
+    ],
+    "validations": [],
+    "updated_at": "2026-09-28T16:50:42Z"
+  },
+  "goal_unchanged": true,
+  "event_watermark_before": 3,
+  "event_watermark_after": 3,
+  "replay": {
+    "inserted": [],
+    "existing": [
+      {
+        "task_cid": "span-exchange-task-repair_packet:52d3fcaff31aed0fa461e8b6127012310d379bd648dabc88420862ead309fe44",
+        "status": "claimed",
+        "revision": 2
+      }
+    ],
+    "inserted_count": 0,
+    "existing_count": 1,
+    "executed": false,
+    "claimed": false,
+    "admitted": false,
+    "formalized": false,
+    "wrote_compiler": false,
+    "materialized": true,
+    "native_authority": "ipfs_accelerate_py.DatabaseTaskSource"
+  },
+  "worker_claimed": false,
+  "executed": false,
+  "admitted": false,
+  "formalized": false
+}

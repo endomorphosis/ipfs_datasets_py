@@ -1,0 +1,52 @@
+{
+  "admitted": false,
+  "census_rows": 3,
+  "codec_kind": "DeterministicModalLogicCodec",
+  "commit_sha": "e537edd812e6fb714647fbaef2134df7606cd3d2",
+  "consumer_processes_run_in_parallel": true,
+  "consumer_scope": "three separate native databases on one host",
+  "consumers": [
+    {
+      "inserted": 1,
+      "replay_existing": 1,
+      "replay_inserted": 0,
+      "shard": 0,
+      "task_goal_plan_and_events_unchanged": true
+    },
+    {
+      "inserted": 1,
+      "replay_existing": 1,
+      "replay_inserted": 0,
+      "shard": 1,
+      "task_goal_plan_and_events_unchanged": true
+    },
+    {
+      "inserted": 2,
+      "replay_existing": 2,
+      "replay_inserted": 0,
+      "shard": 2,
+      "task_goal_plan_and_events_unchanged": true
+    }
+  ],
+  "disjoint_complete_shards": true,
+  "fingerprint": "1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b",
+  "formalized": false,
+  "historical_full_captures_preserved": true,
+  "learned_autoencoder_execution": false,
+  "manifest_in_repo": "autoformal/uscode/exchanges/retained-census-20260928/exchange-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.manifest.json",
+  "new_hub_files": [
+    "autoformal/uscode/census/retained-census-20260928/census-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.parquet",
+    "autoformal/uscode/exchanges/retained-census-20260928/exchange-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.manifest.json",
+    "autoformal/uscode/goals/retained-census-20260928/goals-1134f171e6273eb20eeb9e0c5a8feb3d007be70a6b5d246b053541a7e8317a9b.parquet"
+  ],
+  "parent_commit": "1960818abd1083c152ab3ba30f872d6677dcd154",
+  "passed": true,
+  "prior_hub_files_unchanged": true,
+  "protected_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "repair_goals": 3,
+  "repository_id": "justicedao/uscode-autoformal-span-cache",
+  "schema": "span-cache-hub-native-handoff-verification/v1",
+  "selective_downloads_verified": true,
+  "training_executed": false,
+  "training_goals": 1
+}

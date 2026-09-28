@@ -267,6 +267,16 @@ def test_cli_source_bypasses_demo_and_retains_observed_commit(cli, tmp_path, mon
         if verification_fails: raise ValueError("verification failed")
         return {"verified": True, "commit_sha": publication["commit_sha"]}
     monkeypatch.setattr(cli, "verify_published_batch", verify)
+    monkeypatch.setattr(cli, "_publish_telemetry", lambda *args, **kwargs: {
+        "uploaded": True, "dry_run": False, "admitted": False, "formalized": False,
+        "path_in_repo": kwargs.get("path_in_repo"), "repository_id": "justicedao/uscode-autoformal-span-cache",
+    })
+    monkeypatch.setattr(cli, "_publish_exchange", lambda *args, **kwargs: {
+        "uploaded": True, "dry_run": False, "admitted": False, "formalized": False,
+        "enqueued": False, "census_path_in_repo": kwargs.get("census_path_in_repo"),
+        "goals_path_in_repo": kwargs.get("goals_path_in_repo"),
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+    })
     args = ["--input-parquet", str(input_path), "--compile-source", "--output", str(output),
             "--batch-id", "tiny-1", "--lake-limit", "0", "--lake-successes", "0", "--upload",
             "--audited-parent-commit", "a" * 40]
@@ -274,8 +284,18 @@ def test_cli_source_bypasses_demo_and_retains_observed_commit(cli, tmp_path, mon
         with pytest.raises(ValueError, match="verification failed"): cli.main(args)
     else:
         assert cli.main(args) == 0
-    assert calls == ["pin", "pin"]
+    # Census capture now also pins its producer before and after projection.
+    assert calls == ["pin"] * 6
     assert json.loads(output.with_suffix(".publication.json").read_bytes())["commit_sha"] == "b" * 40
     proof = json.loads(output.with_suffix(".provenance.json").read_bytes())
     assert proof["source_backed"] is True and proof["input_artifact"]["row_count"] == 1
     assert output.with_suffix(".receipt.json").exists() is (not verification_fails)
+    if not verification_fails:
+        receipt = json.loads(output.with_suffix(".receipt.json").read_bytes())
+        assert receipt["exchange"]["enqueued"] is False
+        assert receipt["exchange"]["admitted"] is False
+        assert receipt["exchange"]["formalized"] is False
+        assert receipt["exchange"]["census_rows"] == 1
+        assert receipt["exchange_publication"]["enqueued"] is False
+        assert output.with_name("output.ae-compiler-census.parquet").is_file()
+        assert output.with_name("output.supervisor-goals.parquet").is_file()

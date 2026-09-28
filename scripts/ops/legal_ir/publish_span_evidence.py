@@ -26,6 +26,45 @@ def _sha(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _publish_telemetry(path: Path, **kwargs):
+    from ipfs_datasets_py.logic.autoformal.conversion_telemetry import publish_conversion_telemetry
+
+    return publish_conversion_telemetry(path, **kwargs)
+
+
+def _publish_exchange(census_path: Path, goals_path: Path, **kwargs):
+    from ipfs_datasets_py.logic.autoformal.span_cache_exchange import upload_exchange_files
+
+    return upload_exchange_files(census_path, goals_path, upload=True, **kwargs)
+
+
+def _exchange_inputs(rows, execution, path_hashes):
+    """Carry complete captured outputs into the portable census, without rerunning a model."""
+    from ipfs_datasets_py.logic.autoformal.span_cache_exchange import compiled_rows_from_evidence
+
+    compiler = {row["source_span_id"]: row for row in execution["compiler_inputs"]}
+    codec = {row["source_span_id"]: row for row in execution["codec_observations"]}
+    result = []
+    for item in compiled_rows_from_evidence(rows):
+        span_id = item["source_span_id"]
+        observation = codec[span_id]
+        item.update(
+            autoencoder_text=observation["full_decoded_text"],
+            autoencoder_capture=observation,
+            compiler_observation=compiler[span_id],
+            compiler_result=compiler[span_id]["compiler_result"],
+            compiler_input=compiler[span_id]["compiler_input"],
+            compiler_input_mode=execution["compiler_input_mode"],
+            compiler_path_hashes=dict(path_hashes),
+            source_provenance_json=compiler[span_id].get("source_provenance_json"),
+            codec_kind=execution["codec_kind"],
+            learned_autoencoder_execution=execution["learned_autoencoder_execution"],
+            model_identity="deterministic-modal-codec:no-learned-checkpoint",
+        )
+        result.append(item)
+    return result
+
+
 def _save(path: Path, value: Any) -> dict:
     raw = (json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode()
     if len(raw) > 8 * 1024 * 1024:
@@ -280,7 +319,14 @@ def main(argv=None) -> int:
     proof_path = output.with_suffix(".provenance.json")
     receipt_path = output.with_suffix(".receipt.json")
     publication_path = output.with_suffix(".publication.json")
-    if any(p.exists() or p.is_symlink() for p in (output, proof_path, receipt_path, publication_path)):
+    exchange_publication_path = output.with_suffix(".exchange-publication.json")
+    telemetry_path = output.with_name(output.stem + ".conversion-telemetry.parquet")
+    census_path = output.with_name(output.stem + ".ae-compiler-census.parquet")
+    goals_path = output.with_name(output.stem + ".supervisor-goals.parquet")
+    if any(p.exists() or p.is_symlink() for p in (
+        output, proof_path, receipt_path, publication_path, exchange_publication_path,
+        telemetry_path, census_path, goals_path,
+    )):
         parser.error("output and receipt paths must be new")
     if args.input_parquet:
         spans, source = read_source_spans(args.input_parquet)
@@ -302,25 +348,69 @@ def main(argv=None) -> int:
         raise ValueError("compiler runtime origin changed during generation")
     if paths != compiler_path_hashes(ROOT):
         raise ValueError("compiler source identity changed during generation")
+    from ipfs_datasets_py.logic.autoformal.conversion_telemetry import conversion_telemetry_rows, write_conversion_telemetry
+
     output.parent.mkdir(parents=True, exist_ok=True)
     written = write_span_evidence_parquet(rows, output, exclusive=True)
     batch_id = args.batch_id or "source-" + written["sha256"][:24]
+    census_remote = f"autoformal/uscode/batches/{batch_id}/ae-compiler-census.parquet"
+    goals_remote = f"autoformal/uscode/batches/{batch_id}/supervisor-goals.parquet"
+    telemetry_rows = conversion_telemetry_rows(
+        rows,
+        hyperparameters={
+            "bridge_names": list(execution.get("bridge_names") or []),
+            "epochs": 0 if execution.get("native_model_training") is False else 1,
+            "rounds": 0,
+            "seed": args.seed,
+        },
+    )
+    telemetry_written = write_conversion_telemetry(telemetry_rows, telemetry_path)
+    from ipfs_datasets_py.logic.autoformal.span_cache_exchange import (
+        write_exchange_pair,
+    )
+
+    exchange_written = write_exchange_pair(
+        _exchange_inputs(rows, execution, paths),
+        census_path,
+        goals_path,
+        agent_id="publish-span-evidence",
+        code_identity=str(compiler_identity(paths)),
+        release_id=batch_id,
+        model_identity="deterministic-modal-codec:no-learned-checkpoint",
+        census_path_in_repo=census_remote,
+        goals_path_in_repo=goals_remote,
+    )
     proof = {"schema_version": BATCH_PROVENANCE_SCHEMA, "batch_id": batch_id,
              "input_artifact": source, "source_backed": source is not None,
              "parquet": {key: written[key] for key in ("sha256", "bytes", "row_count")},
              "compiler_path_hashes": paths, "logic_tree_pin": tree_pin, **execution}
     proof_ref = _save(proof_path, proof)
     publication = None
+    telemetry_publication = None
+    exchange_publication = None
     verification = None
     if args.upload:
         publication = publish_span_evidence_batch(output, proof_path, batch_id=batch_id,
                                                   audited_parent_commit=args.audited_parent_commit, upload=True)
-        # Persist the observed commit before verification so response/download
-        # failure cannot erase evidence of a completed remote mutation.
+        # Later telemetry/exchange failure must not erase the successful source-batch commit.
         _save(publication_path, publication)
+        telemetry_publication = _publish_telemetry(
+            telemetry_path,
+            upload=True,
+            path_in_repo=f"autoformal/uscode/batches/{batch_id}/conversion-telemetry.parquet",
+        )
+        exchange_publication = _publish_exchange(
+            census_path,
+            goals_path,
+            census_path_in_repo=census_remote,
+            goals_path_in_repo=goals_remote,
+        )
+        _save(exchange_publication_path, exchange_publication)
         verification = verify_published_batch(publication, rows, proof_path.read_bytes())
     receipt = {"schema_version": "uscode-autoformal-span-batch-execution/v1",
                "batch_id": batch_id, "parquet": proof["parquet"], "provenance": proof_ref,
+               "telemetry": telemetry_written, "telemetry_publication": telemetry_publication,
+               "exchange": exchange_written, "exchange_publication": exchange_publication,
                "source_backed": source is not None, "publication": publication, "verification": verification,
                "admitted": False, "formalized": False, "native_model_training": False}
     _save(receipt_path, receipt)
