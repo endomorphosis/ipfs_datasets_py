@@ -1,0 +1,65 @@
+{
+  "admitted": false,
+  "binding": {
+    "artifact": {
+      "bytes": 25895338,
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    "generation": 1,
+    "version_id": "sha256:a4a137e4e7d160e7b780b733b50139f5855aec0bccd87a1b0c73b68d2bac55e8",
+    "weight_reference": {
+      "bytes": 25895338,
+      "commit_sha": "16ee0931888173934ad1863cc6058d6a48723fcb",
+      "kind": "anchor",
+      "materialized_checkpoint": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "path_in_repo": "autoformal/uscode/autoencoders/anchors/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd.state.json",
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    }
+  },
+  "checkpoint_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/node-b/weights/1/anchors/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd.state.json",
+  "download_receipt": {
+    "admitted": false,
+    "anchor_checkpoint": {
+      "bytes": 25895338,
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    "anchor_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/node-b/weights/1/anchors/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd.state.json",
+    "campaign_reference_depth": 0,
+    "checkpoint_parsed": true,
+    "commit_sha": "16ee0931888173934ad1863cc6058d6a48723fcb",
+    "downloaded_bytes": 25895338,
+    "downloaded_files": 1,
+    "downloaded_weight_files": 1,
+    "formalized": false,
+    "hash_verified": true,
+    "locally_qualified": false,
+    "materialized_checkpoint": {
+      "bytes": 25895338,
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    "materialized_checkpoint_artifact": {
+      "bytes": 25895338,
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    "materialized_checkpoint_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/node-b/weights/1/anchors/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd.state.json",
+    "promotion_performed": false,
+    "registration_performed": false,
+    "repository_id": "justicedao/uscode-autoformal-span-cache",
+    "reused_files": 0,
+    "schema": "autoencoder-campaign-download/v1",
+    "state_identity": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+    "transport_baseline_only": true,
+    "weights_downloaded": true
+  },
+  "formalized": false,
+  "full_weights_verified": true,
+  "materialized_checkpoint": {
+    "bytes": 25895338,
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "schema": "autoencoder-distributed-worker/v1"
+}

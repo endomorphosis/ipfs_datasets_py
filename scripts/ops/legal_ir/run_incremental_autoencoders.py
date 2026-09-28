@@ -340,7 +340,7 @@ def supervised_cycle(config):
     child_config = {**config, "cycle_receipt": str(receipt_directory / "cycle.json")}
     reservation = DaemonResourceReservation(
         ledger, roots=roots, storage_bytes=config["storage_bytes"], memory_mb=config["memory_mb"],
-        cpu_slots=config["workers"], timeout_seconds=0, ledger_lock_timeout_seconds=5,
+        cpu_slots=config["workers"], timeout_seconds=0, ledger_lock_timeout_seconds=60,
     )
     started = time.monotonic()
     process = None
