@@ -1,0 +1,73 @@
+{
+  "admitted": false,
+  "after": {
+    "accepted_epochs": 0,
+    "after_loss_finite": true,
+    "candidate_acceptance_source": "nonfinite_validation_metric",
+    "candidate_objective_delta": null,
+    "nonfinite_validation_metrics": [
+      "legal_ir_losses.legal_ir_multiview_total_loss"
+    ],
+    "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "source_sha256": "474646fac68afc3f598e7184769399a0babd32b18d481af5ecd8ff9c6ca9971a",
+    "state_unchanged": true,
+    "transaction_closed": true,
+    "update_call_count": 1,
+    "weight_after": 0.0,
+    "weight_before": 0.0
+  },
+  "before": {
+    "accepted_epochs": 1,
+    "after_loss_finite": false,
+    "candidate_acceptance_source": "strict",
+    "candidate_objective_delta": 0.5,
+    "nonfinite_validation_metrics": [],
+    "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "source_sha256": "53e7db399dab42ac6fe90b737b5c71b8d8013b5e05e4f9009182ddd480e048d0",
+    "state_unchanged": false,
+    "transaction_closed": true,
+    "update_call_count": 1,
+    "weight_after": 1.0,
+    "weight_before": 0.0
+  },
+  "checks": {
+    "after_preserved_finite_baseline": true,
+    "after_rejected_and_rolled_back": true,
+    "before_reproduced_invalid_acceptance": true,
+    "both_transactions_closed": true,
+    "finite_fixed_candidate_parity": true
+  },
+  "finite_fixed_after": {
+    "accepted_epochs": 1,
+    "after_loss_finite": true,
+    "candidate_acceptance_source": "strict",
+    "candidate_objective_delta": 0.09999999999999998,
+    "nonfinite_validation_metrics": [],
+    "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "source_sha256": "474646fac68afc3f598e7184769399a0babd32b18d481af5ecd8ff9c6ca9971a",
+    "state_unchanged": false,
+    "transaction_closed": true,
+    "update_call_count": 1,
+    "weight_after": 1.0,
+    "weight_before": 0.0
+  },
+  "finite_fixed_before": {
+    "accepted_epochs": 1,
+    "after_loss_finite": true,
+    "candidate_acceptance_source": "strict",
+    "candidate_objective_delta": 0.09999999999999998,
+    "nonfinite_validation_metrics": [],
+    "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "source_sha256": "53e7db399dab42ac6fe90b737b5c71b8d8013b5e05e4f9009182ddd480e048d0",
+    "state_unchanged": false,
+    "transaction_closed": true,
+    "update_call_count": 1,
+    "weight_after": 1.0,
+    "weight_before": 0.0
+  },
+  "formalized": false,
+  "lake_build_ran": false,
+  "passed": true,
+  "schema_version": "controlled-nonfinite-projection-guard/v1",
+  "scope": "mocked metrics and sparse nudge, no native training"
+}

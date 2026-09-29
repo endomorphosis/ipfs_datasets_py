@@ -1,0 +1,18 @@
+{
+  "scope": "Primary-source context; our sparse guarded nudge optimizer does not satisfy a smooth global-gradient convergence theorem by assumption. No global-optimality guarantee inferred.",
+  "sources": [
+    {
+      "url": "https://proceedings.mlr.press/v119/malitsky20a.html",
+      "claim": "Adaptive step-size convergence guarantees in this paper rely on convexity and smoothness assumptions."
+    },
+    {
+      "url": "https://proceedings.mlr.press/v70/jin17a.html",
+      "claim": "General nonconvex analysis targets second-order stationarity; global convergence is established for specific structured examples."
+    },
+    {
+      "url": "https://www.jmlr.org/papers/v17/16-157.html",
+      "claim": "Momentum benefits depend on optimization regime; larger effective steps can explain the gains under the stated assumptions."
+    }
+  ],
+  "algorithm_implemented_from_papers": false
+}

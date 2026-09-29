@@ -227,6 +227,8 @@ class TrainingConfig:
     hard_example_fraction: float = 1.0
     profile_projection: bool = False
     projection_max_composed_refinement_attempts: int = 0
+    projection_optimizer_mode: str = "fixed"
+    projection_momentum: float = 0.0
 
     def __post_init__(self) -> None:
         if not isinstance(self.legal_ir_bridge_names, (list, tuple)):
@@ -262,6 +264,22 @@ class TrainingConfig:
             _number(getattr(self, name), name)
         if self.projection_max_composed_refinement_attempts and self.l2_regularization != 0.0:
             raise TrainingJobValidationError("composed refinement currently requires zero l2_regularization")
+        if (type(self.projection_optimizer_mode) is not str
+                or self.projection_optimizer_mode not in {"fixed", "guarded_adaptive"}):
+            raise TrainingJobValidationError("projection_optimizer_mode must be fixed or guarded_adaptive")
+        _number(self.projection_momentum, "projection_momentum")
+        if self.projection_momentum > 0.9:
+            raise TrainingJobValidationError("projection_momentum must be within 0..0.9")
+        if self.projection_momentum and (self.projection_optimizer_mode != "guarded_adaptive"
+                                         or self.max_line_search_attempts < 2):
+            raise TrainingJobValidationError("projection_momentum requires guarded_adaptive and at least two line search attempts")
+        if self.projection_optimizer_mode == "guarded_adaptive":
+            if self.l2_regularization != 0.0:
+                raise TrainingJobValidationError("guarded_adaptive currently requires zero l2_regularization")
+            if self.epochs > 32 or self.max_line_search_attempts > 10 or self.learning_rate > 1:
+                raise TrainingJobValidationError("guarded_adaptive requires epochs <= 32, attempts <= 10 and learning_rate <= 1")
+            if self.max_seconds > 300:
+                raise TrainingJobValidationError("guarded_adaptive requires max_seconds <= 300")
 
     def projection_kwargs(self) -> dict[str, Any]:
         return {key: value for key, value in self.to_dict().items()
@@ -273,6 +291,9 @@ class TrainingConfig:
         # opt-in is disabled. Enabled budgets must be bound into both.
         if self.projection_max_composed_refinement_attempts == 0:
             result.pop("projection_max_composed_refinement_attempts")
+        if self.projection_optimizer_mode == "fixed" and self.projection_momentum == 0.0:
+            result.pop("projection_optimizer_mode")
+            result.pop("projection_momentum")
         return result
 
     @classmethod
@@ -445,6 +466,11 @@ class TrainingJobSpec:
             validation_texts = {" ".join(row.text.casefold().split()) for row in self.validation_samples}
             if not validation_texts or training_texts & validation_texts:
                 raise TrainingJobValidationError("composed refinement requires nonempty disjoint validation_samples")
+        if self.training_config.projection_optimizer_mode == "guarded_adaptive":
+            training_texts = {" ".join(row.text.casefold().split()) for row in self.samples}
+            validation_texts = {" ".join(row.text.casefold().split()) for row in self.validation_samples}
+            if not validation_texts or training_texts & validation_texts:
+                raise TrainingJobValidationError("guarded_adaptive requires nonempty disjoint validation_samples")
         if self.schema_version in {CAMPAIGN_SCHEMA_VERSION, INDEXED_SCHEMA_VERSION, PRODUCED_SCHEMA_VERSION, ARROW_INPUT_SCHEMA_VERSION} and not self.validation_samples:
             # The native optimizer otherwise uses training rows for line search.
             # Indexed jobs must bind every validation row to the validation split.
@@ -1401,6 +1427,9 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         "sparse_patch_segments": segments,
         "sparse_patch_bytes": sum(segment["bytes"] for segment in segments),
     }
+    if spec.training_config.projection_optimizer_mode == "guarded_adaptive":
+        receipt["projection_optimizer_scope"] = "job_local_reset_per_training_call"
+        receipt["optimizer_history_persisted"] = False
     if spec.schema_version in {CAMPAIGN_SCHEMA_VERSION, ARROW_INPUT_SCHEMA_VERSION, PRODUCED_SCHEMA_VERSION, INDEXED_SCHEMA_VERSION, SCHEMA_VERSION, SPARSE_SCHEMA_VERSION}:
         receipt.update(
             candidate_storage=spec.candidate_storage,

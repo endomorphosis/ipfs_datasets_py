@@ -1,0 +1,134 @@
+{
+  "admitted": false,
+  "audit": {
+    "passed": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-audit.json",
+    "sha256": "ba48bbd96877412dafcb79584fc2b532cd11ad9cc9de9ea3b8f6d4daf1f62e49"
+  },
+  "comparison": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-three-arm-retry/comparison.json",
+    "sha256": "5ab17e626e48fa72d9d39b4c51d9cca92cc289e0870b92d36ce953e2cbcb49bb"
+  },
+  "global_minimum_claim": false,
+  "matplotlib_version": "3.10.8",
+  "observed_thresholds": [
+    {
+      "arm": "fixed",
+      "first_observed_epoch": 5,
+      "first_observed_training_seconds": 51.47815660410561,
+      "threshold": 2.602203489862423
+    },
+    {
+      "arm": "adaptive_lr",
+      "first_observed_epoch": 4,
+      "first_observed_training_seconds": 34.6374027999118,
+      "threshold": 2.602203489862423
+    },
+    {
+      "arm": "adaptive_momentum",
+      "first_observed_epoch": 4,
+      "first_observed_training_seconds": 34.30841612094082,
+      "threshold": 2.602203489862423
+    }
+  ],
+  "output": {
+    "format": "svg",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/convergence-curves.svg",
+    "sha256": "fca68749cba55a1f4f7ccce8bfe254d7ccf9b380ff74a9a7a64f20ce924adbc3"
+  },
+  "plot_script": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/plot_convergence.py",
+    "sha256": "415ce625857d8b66f53c8e52a98e4eaa80d75f9cfcd852c6d7ff73d24015a959"
+  },
+  "plotted_values": {
+    "adaptive_lr": {
+      "candidate_tuning_evaluations": [
+        0,
+        7,
+        14,
+        21,
+        28,
+        35
+      ],
+      "committed_tuning_objective": [
+        2.694956319408122,
+        2.6484994054726307,
+        2.620287880631912,
+        2.6062739185882973,
+        2.6006945148722957,
+        2.5989237444320805
+      ],
+      "epochs": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "adaptive_momentum": {
+      "candidate_tuning_evaluations": [
+        0,
+        7,
+        14,
+        21,
+        28,
+        35
+      ],
+      "committed_tuning_objective": [
+        2.694956319408122,
+        2.6484994054726307,
+        2.620287880631912,
+        2.605414248068013,
+        2.6001849214599324,
+        2.5987463955181416
+      ],
+      "epochs": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "fixed": {
+      "candidate_tuning_evaluations": [
+        0,
+        10,
+        20,
+        30,
+        40,
+        50
+      ],
+      "committed_tuning_objective": [
+        2.694956319408122,
+        2.6484994054726307,
+        2.6243072555395974,
+        2.6118805920755497,
+        2.605504215041711,
+        2.602203489862423
+      ],
+      "epochs": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    }
+  },
+  "producer_manifest": {
+    "file_count": 7834,
+    "sha256": "16e552b4c54c78a7e3775a9db15b502075c94443f56c35356c63e90f86d37017"
+  },
+  "same_parent": true,
+  "sample_counts": {
+    "training": 8,
+    "tuning": 1
+  },
+  "schema_version": "autoencoder-convergence-plot/v1",
+  "scope": "One synthetic run per treatment; curves contain committed epoch-end observations. Threshold times include training setup and exclude upstream loading/final qualification."
+}

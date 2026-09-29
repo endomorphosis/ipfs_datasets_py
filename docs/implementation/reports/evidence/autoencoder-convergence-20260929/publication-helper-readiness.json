@@ -1,0 +1,44 @@
+{
+  "change_manifest_sha256": "fbbba25b557bc191145367b9f1660a6e29a07a626f424bb1b2dcc61afd904046",
+  "datasets_origin_main_read_only_verified": "ea8213e48cf1d12d01dc7f583fcde7f962fd793d",
+  "helpers": {
+    "prepare_publication.py": "b2ab8c3decd424d5f39bdd2b019340999c5cb31d5fe76b8cfc8bac7c1ce5282e",
+    "push_publication.py": "9c5d3537deaa902839d3c9e3c523c9e90a387eab657cf58822a3144ebe3028d2",
+    "test_prepared_main.py": "c936763c035c133948430f6c3f12089cdd92815583dbcb49786b4152bba08ca3"
+  },
+  "index_mutated": false,
+  "native_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-three-arm-retry",
+  "outstanding": [
+    "finish three-arm native run/audit",
+    "finish report and curate evidence",
+    "finalize publication-files.json",
+    "run prepare_publication.py --audit-only and review source-scope",
+    "copy reviewed scope into evidence and regenerate artifact manifest",
+    "prepare exact main tree",
+    "freeze all listed workspace files while test_prepared_main.py runs",
+    "recurate test artifacts and allow only docs changes after tested tree",
+    "review final tree then invoke push_publication.py"
+  ],
+  "parent_origin_main_read_only_verified": "9263b1eeb4e46ed9fa39f72640199efe09560ff0",
+  "preserved_failed_attempt": "native-three-arm: external producer merkle.py edit invalidated source guard; never relabel as passed",
+  "pushed": false,
+  "refs_mutated": false,
+  "report_path": "docs/implementation/reports/AUTOENCODER_CONVERGENCE_20260929.md",
+  "schema": "convergence-publication-helper-preparation/v1",
+  "source_and_test_changes": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+    "scripts/ops/legal_ir/run_incremental_autoencoders.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py"
+  ],
+  "source_edits_performed": false,
+  "standalone_helpers_only": true,
+  "syntax_and_help_checks_only": true,
+  "tests_executed": false,
+  "tests_scope": "Previous 26-file prepared-main suite plus new adaptive optimizer tests; exact test count determined by future execution.",
+  "tree_prepared": false
+}

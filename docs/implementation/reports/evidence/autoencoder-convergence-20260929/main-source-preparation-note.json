@@ -1,0 +1,9 @@
+{
+  "schema": "publication-generated-svg-whitespace/v1",
+  "initial_tree": "a84407051600b9e5d3aa97e104135d8519f0c03c",
+  "failed_check": "git diff --check",
+  "only_file": "docs/implementation/reports/evidence/autoencoder-convergence-20260929/convergence-curves.svg",
+  "issue_count": 1035,
+  "resolution": "Preserve exact matplotlib output and exclude only this generated SVG from whitespace checks, alongside immutable patch context. Product source, tests, prose and other evidence stay checked.",
+  "native_changed": false
+}

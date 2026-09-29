@@ -1,0 +1,9 @@
+{
+  "harness_sha256": "02456674f1e90bf4d2ffe5cb756aa5b940c36e567ffe6b2828c801b9af3403e2",
+  "harness_bytes": 34558,
+  "prepared_only": true,
+  "native_launched": false,
+  "command": "PYTHONPATH=. /home/barberb/.local/bin/python workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/run_convergence_benchmark.py --output workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-three-arm --memory-mb 8192 --storage-bytes 750000000 --cycle-timeout 900",
+  "cwd": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "admitted": false
+}

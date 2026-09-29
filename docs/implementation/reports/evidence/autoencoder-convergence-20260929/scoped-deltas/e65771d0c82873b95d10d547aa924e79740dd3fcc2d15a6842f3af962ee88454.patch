@@ -1,0 +1,87 @@
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py
+@@ -1529,3 +1529,84 @@
+     spec = worker.TrainingJobSpec.from_dict(_job(tmp_path, training_config={"profile_projection": True}))
+     receipt = worker.execute_training_job(spec, trainer=profiled)
+     assert receipt["profile_projection"] is True
++
++
++def test_adaptive_optimizer_opt_in_preserves_archived_default_job_identity(tmp_path):
++    original = worker.TrainingJobSpec.from_dict(_job(tmp_path))
++    archived = original.to_dict()
++    assert "projection_optimizer_mode" not in archived["training_config"]
++    assert "projection_momentum" not in archived["training_config"]
++    explicit = {**archived, "training_config": {**archived["training_config"],
++        "projection_optimizer_mode": "fixed", "projection_momentum": 0.0}}
++    restored = worker.TrainingJobSpec.from_dict(explicit)
++    assert restored.canonical_sha256 == original.canonical_sha256
++    assert restored.training_config.projection_kwargs() == original.training_config.projection_kwargs()
++    with_validation = worker.TrainingJobSpec.from_dict({**archived, "validation_samples": [
++        {"title": "5", "section": "2", "text": "The officer shall file reports."}]})
++    adaptive = worker.TrainingJobSpec.from_dict({**with_validation.to_dict(), "training_config": {
++        **archived["training_config"], "projection_optimizer_mode": "guarded_adaptive",
++        "projection_momentum": 0.5, "epochs": 3, "max_line_search_attempts": 2}})
++    assert adaptive.canonical_sha256 != with_validation.canonical_sha256
++    assert adaptive.training_config.projection_kwargs()["projection_optimizer_mode"] == "guarded_adaptive"
++    assert adaptive.training_config.projection_kwargs()["projection_momentum"] == 0.5
++    assert worker.TrainingJobSpec.from_dict(adaptive.to_dict()).canonical_sha256 == adaptive.canonical_sha256
++
++
++@pytest.mark.parametrize("updates,reason", [
++    ({"projection_optimizer_mode": "adam"}, "optimizer_mode"),
++    ({"projection_optimizer_mode": True}, "optimizer_mode"),
++    ({"projection_momentum": True}, "numeric"),
++    ({"projection_momentum": -0.1}, "finite"),
++    ({"projection_momentum": 1.0}, "within"),
++    ({"projection_momentum": float("nan")}, "finite"),
++    ({"projection_momentum": float("inf")}, "finite"),
++    ({"projection_momentum": 0.5}, "requires guarded_adaptive"),
++    ({"projection_optimizer_mode": "guarded_adaptive", "projection_momentum": 0.5}, "two line search"),
++    ({"projection_optimizer_mode": "guarded_adaptive", "l2_regularization": 0.1}, "zero l2"),
++    ({"projection_optimizer_mode": "guarded_adaptive", "max_seconds": 301}, "max_seconds"),
++    ({"projection_optimizer_mode": "guarded_adaptive", "epochs": 33}, "epochs"),
++    ({"projection_optimizer_mode": "guarded_adaptive", "max_line_search_attempts": 11}, "attempts"),
++    ({"projection_optimizer_mode": "guarded_adaptive", "learning_rate": 1.1}, "learning_rate"),
++])
++def test_adaptive_optimizer_worker_configuration_bounds(updates, reason):
++    with pytest.raises(worker.TrainingJobValidationError, match=reason):
++        worker.TrainingConfig(**updates)
++
++
++def test_new_adaptive_bounds_do_not_reinterpret_archived_fixed_mode():
++    config = worker.TrainingConfig(epochs=40, max_line_search_attempts=12, learning_rate=1.2, max_seconds=400)
++    assert config.projection_optimizer_mode == "fixed"
++    assert config.to_dict()["epochs"] == 40
++    assert "projection_optimizer_mode" not in config.to_dict()
++
++
++@pytest.mark.parametrize("validation", [[], [{"title": "6", "section": "2", "text": " THE AGENCY SHALL   RETAIN RECORDS. "}]])
++def test_adaptive_optimizer_requires_disjoint_validation_before_worker(tmp_path, validation):
++    with pytest.raises(worker.TrainingJobValidationError, match="disjoint"):
++        worker.TrainingJobSpec.from_dict(_job(tmp_path, validation_samples=validation,
++            training_config={"projection_optimizer_mode": "guarded_adaptive"}))
++
++
++def test_worker_forwards_job_local_adaptive_settings_without_optimizer_checkpoint_state(tmp_path):
++    calls = []
++    def trainer(model, samples, *, validation_samples, **kwargs):
++        calls.append(kwargs)
++        assert kwargs["epochs"] == 3
++        assert kwargs["learning_rate"] == 0.25
++        assert kwargs["max_line_search_attempts"] == 2
++        assert kwargs["projection_optimizer_mode"] == "guarded_adaptive"
++        assert kwargs["projection_momentum"] == 0.5
++        return {"accepted_epochs": 0, "stopped_reason": "injected configuration test"}
++    spec = worker.TrainingJobSpec.from_dict(_job(tmp_path, validation_samples=[
++        {"title": "5", "section": "2", "text": "The officer shall file reports."}],
++        training_config={"epochs": 3, "learning_rate": 0.25, "max_line_search_attempts": 2,
++            "projection_optimizer_mode": "guarded_adaptive", "projection_momentum": 0.5}))
++    original = Path(spec.base_checkpoint.path).read_bytes()
++    receipt = worker.execute_training_job(spec, trainer=trainer)
++    assert len(calls) == 1
++    assert receipt["projection_optimizer_scope"] == "job_local_reset_per_training_call"
++    assert receipt["optimizer_history_persisted"] is False
++    assert receipt["optimizer_accepted_epochs"] == 0
++    assert Path(spec.base_checkpoint.path).read_bytes() == original
++    candidate = json.loads(Path(receipt["candidate"]["path"]).read_bytes())
++    assert not any("momentum" in key or "optimizer" in key for key in candidate)

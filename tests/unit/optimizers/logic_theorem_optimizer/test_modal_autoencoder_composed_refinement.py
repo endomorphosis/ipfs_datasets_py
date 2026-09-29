@@ -21,6 +21,7 @@ def _controlled(monkeypatch, *, validation="same", training="improve", clock_sta
     clock = {"now": 0.0}
     calls = {"updates": [], "evaluations": []}
     monkeypatch.setattr(ma.time, "time", lambda: clock["now"])
+    monkeypatch.setattr(ma.time, "perf_counter", lambda: clock["now"])
     monkeypatch.setattr(model, "_select_hard_examples_for_projection", lambda rows, **_: list(rows))
     monkeypatch.setattr(state, "copy", lambda: pytest.fail("whole-state copy"))
 

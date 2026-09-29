@@ -1,0 +1,35 @@
+{
+  "admitted": false,
+  "after_manifest": {
+    "file_count": 7834,
+    "sha256": "16e552b4c54c78a7e3775a9db15b502075c94443f56c35356c63e90f86d37017"
+  },
+  "before_manifest": {
+    "file_count": 7834,
+    "sha256": "6a30dcd4bc622d2e92578f2885917cfaeddc9cf7a5c74df4af28adf1013c5701"
+  },
+  "changed_package_paths": {
+    "logic/software_contracts/semantic_state/merkle.py": {
+      "after": "19dd777247961794b2e56f0763344ef69334ab6bce4d472b29ff4d9dbbe5eca9",
+      "before": "41e7ffb908a69940de2e847aeb066aa39db659bf2d5ebbe3934b7341c5bfc83c"
+    }
+  },
+  "failure": {
+    "bytes": 437,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-three-arm/failure.json",
+    "sha256": "48790a7a55ba3cef4943541a42b75f1432af6116d0772089168a50544a1f6be5"
+  },
+  "guard": {
+    "bytes": 245,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-three-arm/native-guard.json",
+    "sha256": "5327b68c4c15a9206c77538408f0427c425b6969cfa7843676846aceea86e879"
+  },
+  "matched_comparison_eligible": false,
+  "retained_resource_snapshot": {
+    "bytes": 2557,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-three-arm/retained-resources.json",
+    "sha256": "67af24477f61baf733110f557e62f3d30d108e34304e2eeefe438f768102f6b3"
+  },
+  "schema": "native-convergence-source-failure/v1",
+  "scope": "Failed first attempt retained unchanged. Fixed/LR arm observations are not a completed matched three-arm experiment. No source-provenance waiver. Snapshot resource status active preceded context-manager transition to retained."
+}

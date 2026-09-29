@@ -1,0 +1,66 @@
+{
+  "admitted": false,
+  "algorithm": {
+    "adaptive_rates": "Each head starts at learning_rate times its historical scale. Each fully guarded positive head candidate ends that head search and sets its next warm start to min(1,accepted_rate*1.25). A head with no positive candidate backs off by 0.5 with a per-head floor that never exceeds its seed. Both selected and unselected positive head candidates may grow the next rate.",
+    "commit_boundary": "Only the best accepted selected patch is committed per epoch; candidate-local acceptances are not weight commits. Each candidate is compared against the same committed epoch baseline.",
+    "contract": "Adaptive requires1..32epochs, explicit1..10attempts, finite max_seconds in(0,300], learning_rate in(0,1] with no scaled-rate underflow, zeroL2, disjoint train/tuning rows and prescreen/deadband off. Beta in[0,.9], beta>0 needs at least2attempts. Fixed0 remains compatible with historical job identity.",
+    "fixed_default": "Historical fixed multipliers/search/update mathematics remain default. Added epoch timing/objective/evaluation-count diagnostics and fail-closed raw finite-metric guards.",
+    "momentum": "Optional job-local momentum uses the last selected committed head only, never a bank of simultaneous head velocities. Existing finite numeric coordinates must be touched by the current fresh proposal and have an exact matching prior postimage. The previous accepted parameter delta is the direction; no autograd/Adam claim.",
+    "momentum_guards": [
+      "At most8192 stored coordinates total; deterministic traversal truncation",
+      "Sample memories, metadata, proof auxiliary rows, component replacements, inserted rows/coordinates excluded",
+      "No carry on a flat direction, stale postimage or nonpositive alignment",
+      "Carry norm is at most beta times the matching fresh-direction norm; current logit clip respected without reclipping an already-outside fresh proposal",
+      "A rejected momentum candidate clears history; same-rate plain fallback consumes the next existing bounded attempt",
+      "Only the selected committed patch establishes the next history; exceptions/rollback do not persist history across calls"
+    ],
+    "plateau": "At most one additional backed-off sweep after an empty accepted sweep; then search_stalled. Neither this stop reason nor zero observed improvement is a convergence/global-optimum certificate."
+  },
+  "native_comparison_limits": [
+    "Three treatments share one protected parent, model configuration, source producer, ordered data split and budget; source/provenance audits must pass before comparing.",
+    "Per-head acceptance/search policy differs intentionally; compare quality reached and evaluation/wall cost, not equal requested epochs as if equal work.",
+    "Selection uses minimum final tuning objective among qualified arms, or diagnostic fallback if none qualify; it is not a fastest-time selection rule.",
+    "Fixed-arm final objective is a descriptive threshold determined by this experiment. Reaching it earlier does not establish convergence or qualification at that epoch; final qualification alone is measured.",
+    "One sequential observation per treatment does not establish statistical runtime superiority or globally fastest/global-minimum behavior.",
+    "Eight synthetic nearby-duration training rows, one tuning row and two canaries are disjoint within this experiment; seed pretraining exclusion is unknown. They do not establish generalization across federal laws.",
+    "Family CE is constant under the fixed inactive family-logit scales in this native configuration. An unchanged family metric does not prove an optimizer bug or a zero irreducible floor.",
+    "Bridge-on evaluations retain five bridge names, proversfalse, diskcacheoff, workers1 and no sample memory. Initial process cache is cold; later target reuse is warm and must stay visible.",
+    "Only successful lake build Legal admits its generated supported lemma. Family syntax artifacts, objectives, sparse state replay and database rows are not admits. The Constitution remains unformalized."
+  ],
+  "native_results_included": false,
+  "schema_version": "guarded-projection-optimizer-rationale/v1",
+  "source_binding": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "after_sha256": "474646fac68afc3f598e7184769399a0babd32b18d481af5ecd8ff9c6ca9971a",
+      "before_sha256": "53e7db399dab42ac6fe90b737b5c71b8d8013b5e05e4f9009182ddd480e048d0",
+      "bytes": 1395187,
+      "new_file": false
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "after_sha256": "eafb53a8b88f62f0c8798942455ad3c8cf03cf858bafc2e950e5cb6fb1cc1ee9",
+      "before_sha256": null,
+      "bytes": 13789,
+      "new_file": true
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py": {
+      "after_sha256": "b23f8cedef84e2cde6fe7af3479d0b71622b239e98cd3b7fc185d0df336203bd",
+      "before_sha256": null,
+      "bytes": 20508,
+      "new_file": true
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py": {
+      "after_sha256": "ef0d45c60a7a8d0c02659afa41393bbab3a43ecae802bb6c64d9c032ba04e910",
+      "before_sha256": "483d1d64924308cabd8c4ab1062928308025a2eaf330f27c74655f15a1858b48",
+      "bytes": 18808,
+      "new_file": false
+    }
+  },
+  "telemetry_interpretation": {
+    "candidate_counts": "Head accepted_attempts are full guarded positive trials; accepted_candidates_not_selected counts losing head candidates, not every losing accepted line-search trial. accepted_epochs and sparse patch segments represent committed updates.",
+    "epoch_objective": "objective_before/after are the unchanged aggregate guarded objective evaluated on tuning rows. Accepted deltas replay committed progress. Do not sum counterfactual candidate deltas across heads/trials.",
+    "evaluation_counts": "Epoch candidate_holdout_evaluation_count counts actual model evaluation calls for ordinary/refinement validation. Training-first skipped refinements do not count. With a bounded bridge/base split a logical candidate can generate two model calls; this native experiment uses unsplit calls.",
+    "learning_rate": "effective_learning_rate and adaptive_optimizer.actual_learning_rate are actual per-head inputs, bounded by1; no fictitious growth above the nudge clamp.",
+    "parameter_norms": "Existing gradient/update fields describe the ordinary fresh nudge and can duplicate per-head/aggregate presentations. They are not independently differentiated full-objective gradients. For momentum use adaptive_optimizer.parameter_delta_norm and momentum_carry_norm; the parameter norm intentionally excludes unknown initialization baselines for inserted coordinates.",
+    "time": "Monotonic epoch and cumulative training elapsed fields include training setup, target priming and sparse sink commits. They exclude upstream worker checkpoint-loading and downstream qualification. Threshold first observed time is epoch-end observation, not an exact within-epoch crossing time."
+  }
+}

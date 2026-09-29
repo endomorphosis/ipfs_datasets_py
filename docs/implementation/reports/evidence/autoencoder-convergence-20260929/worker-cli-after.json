@@ -1,0 +1,6 @@
+{
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "df04a734bbd96633e594df7f0665e96eafdc9e4f2a6899086209cd98e278f652",
+  "scripts/ops/legal_ir/run_incremental_autoencoders.py": "497c8e8daf8fbc24d450402cc9b19ba2e4608cebddcf408e66386c5b8905a9c2",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "605ed10f531ad493fb4d1a1d9cff286971841ec6935d16f631ecf8503050f963",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py": "d222b0b67ea5c6a4fe99cda9a15f90f1ed5f6e5ffdaf35460acea22a1d4c5c6c"
+}

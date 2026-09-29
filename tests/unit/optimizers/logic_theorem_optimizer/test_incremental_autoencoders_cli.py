@@ -96,6 +96,7 @@ def test_orchestration_binds_native_grammar_and_statement_lock():
     assert "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py" in hashes
     assert "ipfs_datasets_py/logic/parsers/legacy_modal.py" in hashes
     assert "ipfs_datasets_py/logic/modal/decompiler.py" in hashes
+    assert "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py" in hashes
     assert any(path.endswith("JevOps/jevops/statement_lock.py") for path in hashes)
 
 
@@ -416,3 +417,74 @@ def test_explicit_parallel_qualification_setting_is_training_only(tmp_path):
                   "--input-jsonl", str(tmp_path / "input"), "--validation-jsonl", str(tmp_path / "validation"),
                   "--parallel-qualification-workers", "2"])
     assert not (tmp_path / "unused").exists()
+
+
+@pytest.mark.parametrize("flag,value", [
+    ("--epochs", "0"), ("--epochs", "33"), ("--line-search-attempts", "0"),
+    ("--line-search-attempts", "11"), ("--learning-rate", "0"), ("--learning-rate", "1.1"),
+    ("--learning-rate", "nan"), ("--learning-rate", "inf"),
+    ("--projection-momentum", "-0.1"), ("--projection-momentum", "1"),
+    ("--projection-momentum", "nan"), ("--projection-momentum", "inf"),
+])
+def test_optimizer_cli_bounds_reject_before_state_creation(tmp_path, flag, value):
+    output = tmp_path / "uncreated"
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(output), "--input-jsonl", "input", flag, value])
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("options", [
+    ["--projection-optimizer-mode", "guarded_adaptive"],
+    ["--projection-momentum", "0.5"],
+    ["--projection-optimizer-mode", "guarded_adaptive", "--projection-momentum", "0.5", "--validation-jsonl", "validation"],
+])
+def test_adaptive_cli_requires_training_validation_and_momentum_budget(tmp_path, options):
+    output = tmp_path / "uncreated"
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(output), "--input-jsonl", "input", *options])
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("flag,value,key,typed", [
+    ("--epochs", "2", "epochs", 2),
+    ("--learning-rate", "0.2", "learning_rate", 0.2),
+    ("--line-search-attempts", "2", "line_search_attempts", 2),
+    ("--projection-optimizer-mode", "guarded_adaptive", "projection_optimizer_mode", "guarded_adaptive"),
+])
+def test_inference_rejects_nondefault_optimizer_cli_and_direct_route(tmp_path, flag, value, key, typed):
+    output = tmp_path / "uncreated"
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(output), "--input-jsonl", "input", "--validation-jsonl", "validation",
+                  "--execution-mode", "inference", flag, value])
+    with pytest.raises(ValueError, match="training execution mode"):
+        cli.run_cycle({"state_directory": str(output), "execution_mode": "inference", key: typed})
+    assert not output.exists()
+
+
+def test_optimizer_parser_defaults_preserve_existing_job_policy(tmp_path):
+    args = cli.parser().parse_args(["--state-directory", str(tmp_path), "--input-jsonl", "input"])
+    assert (args.epochs, args.learning_rate, args.line_search_attempts) == (1, 0.35, 1)
+    assert args.projection_optimizer_mode == "fixed" and args.projection_momentum == 0
+    assert cli._nondefault_optimizer_settings(vars(args)) is False
+
+
+def test_cycle_binds_nondefault_epoch_optimizer_settings_into_job_and_policy(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_incremental_training as incremental
+    config = {**_selection_cycle_config(tmp_path, monkeypatch), "epochs": 3, "learning_rate": 0.25,
+        "line_search_attempts": 2, "projection_optimizer_mode": "guarded_adaptive", "projection_momentum": 0.5}
+    seen = []
+    def capture(registry, templates, **kwargs):
+        template = templates[0]
+        options = template.to_dict()["training_config"]
+        assert options["epochs"] == 3 and options["learning_rate"] == 0.25
+        assert options["max_line_search_attempts"] == 2
+        assert options["projection_optimizer_mode"] == "guarded_adaptive" and options["projection_momentum"] == 0.5
+        assert incremental._policy(registry, template)["training_config"] == options
+        assert template.validation_samples and template.samples != template.validation_samples
+        seen.append(template.canonical_sha256)
+        return {"dispatched_run_ids": []}
+    monkeypatch.setattr(qualified, "run_qualified_incremental_training", capture)
+    receipt = cli.run_cycle(config)
+    assert len(seen) == 1
+    assert receipt["heldout_canary"] is receipt["admitted"] is False

@@ -1,0 +1,1219 @@
+--- a/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py
+@@ -47,6 +47,12 @@
+     StateTransactionConflictError,
+ )
+ from .projection_profiler import ProjectionProfiler
++from .modal_autoencoder_adaptive_optimizer import (
++    GuardedAdaptiveProjection,
++    nonfinite_evaluation_fields,
++    parameter_step_report,
++    validate_optimizer_options,
++)
+ 
+ _LEGAL_IR_TARGET_CACHE_MAX = 2048
+ _LEGAL_IR_TARGET_CACHE_LOCK = threading.Lock()
+@@ -6576,6 +6582,8 @@
+         projection_periodic_full_search_every_n_cycles: int = 0,
+         projection_max_update_families: Optional[int] = None,
+         projection_max_composed_refinement_attempts: int = 0,
++        projection_optimizer_mode: str = "fixed",
++        projection_momentum: float = 0.0,
+         projection_cycle: Optional[int] = None,
+         precomputed_holdout_evaluation: Optional[AutoencoderEvaluation] = None,
+         precomputed_training_evaluation: Optional[AutoencoderEvaluation] = None,
+@@ -6601,10 +6609,19 @@
+         the full state, and the no-sink path performs no additional hashing.
+         """
+         started_at = time.time()
++        monotonic_started_at = time.perf_counter()
++        candidate_holdout_evaluation_count = 0
+         self._cuda_residency_reports = []
+         sample_list = list(samples)
+         validation_list = list(validation_samples or [])
+         target_samples = validation_list or sample_list
++        optimizer_mode = validate_optimizer_options(
++            mode=projection_optimizer_mode, momentum=projection_momentum,
++            epochs=epochs, learning_rate=learning_rate, max_seconds=max_seconds,
++            max_attempts=max_line_search_attempts, l2=l2_regularization,
++            prescreen=projection_prescreen_mode, deadband=projection_deadband_mode,
++            training=sample_list, validation=validation_list,
++        )
+         refinement_limit = projection_max_composed_refinement_attempts
+         if type(refinement_limit) is not int or not 0 <= refinement_limit <= 3:
+             raise ValueError("projection_max_composed_refinement_attempts must be an integer from 0 to 3")
+@@ -6628,7 +6645,10 @@
+             return (
+                 max_seconds is not None
+                 and float(max_seconds) > 0.0
+-                and elapsed_seconds() >= float(max_seconds)
++                and (
++                    max(0.0, time.perf_counter() - monotonic_started_at)
++                    if optimizer_mode == "guarded_adaptive" else elapsed_seconds()
++                ) >= float(max_seconds)
+             )
+ 
+         def emit_progress(stage: str, **payload: Any) -> None:
+@@ -6757,6 +6777,7 @@
+                 kwargs: Mapping[str, Any],
+                 evaluation_stage: str,
+             ) -> AutoencoderEvaluation:
++                nonlocal candidate_holdout_evaluation_count
+                 metadata: Dict[str, Any] = {"sample_count": len(evaluation_rows)}
+                 with profile_phase(
+                     metric_cost_family,
+@@ -6765,6 +6786,8 @@
+                     metadata=metadata,
+                 ):
+                     result = self.evaluate(evaluation_rows, **kwargs)
++                    if evaluation_stage.startswith(("line_search_evaluation", "composed_refinement_validation")):
++                        candidate_holdout_evaluation_count += 1
+                     if result.evaluation_profile:
+                         # Nested observations are not additional profile events:
+                         # adding their durations to the enclosing event double-counts.
+@@ -6870,6 +6893,9 @@
+                 "before_holdout_evaluation_reused",
+                 sample_count=len(target_samples),
+             )
++        invalid_baseline_metrics = nonfinite_evaluation_fields(before)
++        if invalid_baseline_metrics:
++            raise ValueError("nonfinite projection baseline metrics: " + ", ".join(invalid_baseline_metrics))
+         if sample_list and validation_list:
+             # Prime LegalIR target caches for training samples before feature-level
+             # nudges.  Validation-only evaluation intentionally does not touch
+@@ -6880,11 +6906,15 @@
+                 validation_sample_count=len(target_samples),
+             )
+             if precomputed_training_evaluation is None:
+-                evaluate_projection_rows(
++                primed_training = evaluate_projection_rows(
+                     sample_list,
+                     stage="training_cache_prime",
+                 )
++                if nonfinite_evaluation_fields(primed_training):
++                    raise ValueError("nonfinite projection training baseline metrics")
+             else:
++                if nonfinite_evaluation_fields(precomputed_training_evaluation):
++                    raise ValueError("nonfinite projection training baseline metrics")
+                 emit_progress(
+                     "training_cache_prime_reused",
+                     sample_count=len(sample_list),
+@@ -6900,6 +6930,8 @@
+             "cosine_gap": max(0.0, float(objective_cosine_gap_weight)),
+             "legal_ir": max(0.0, float(objective_legal_ir_weight)),
+         }
++        if not math.isfinite(_evaluation_objective_for_training(before, **objective_weights)):
++            raise ValueError("nonfinite projection baseline objective")
+         hard_fraction = max(0.0, min(1.0, float(hard_example_fraction)))
+         deadband_mode = _projection_deadband_mode(projection_deadband_mode)
+         deadband_ce = max(0.0, float(projection_max_ce_deadband or 0.0))
+@@ -6964,6 +6996,35 @@
+             "legal_ir_view_logits": 0.5,
+             "combined": 0.35,
+         }
++        adaptive_optimizer = (
++            GuardedAdaptiveProjection(learning_rate, head_learning_rate_scales, projection_momentum)
++            if optimizer_mode == "guarded_adaptive" else None
++        )
++
++        def append_epoch_report(report: Dict[str, Any]) -> None:
++            now = time.perf_counter()
++            report.update({
++                "objective_before": epoch_objective_before,
++                "objective_after": _evaluation_objective_for_training(best, **objective_weights),
++                "epoch_elapsed_seconds": max(0.0, now - epoch_started_at),
++                "cumulative_training_elapsed_seconds": max(0.0, now - monotonic_started_at),
++                "candidate_holdout_evaluation_count": (
++                    candidate_holdout_evaluation_count - epoch_evaluation_count_before
++                ),
++            })
++            if adaptive_optimizer is not None:
++                report["adaptive_phase_counts"] = {
++                    key: value - epoch_phase_counts_before.get(key, 0)
++                    for key, value in sorted(adaptive_optimizer.phase_counts.items())
++                    if value != epoch_phase_counts_before.get(key, 0)
++                }
++                report["momentum_reset_reasons"] = {
++                    key: value - epoch_reset_counts_before.get(key, 0)
++                    for key, value in sorted(adaptive_optimizer.reset_reasons.items())
++                    if value != epoch_reset_counts_before.get(key, 0)
++                }
++            epoch_reports.append(report)
++
+         line_search_multipliers = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
+         line_search_refinement_multipliers = (
+             0.015625,
+@@ -6986,6 +7047,11 @@
+             line_search_attempt_policy = "unbounded_small_state"
+ 
+         for epoch in range(1, max(0, int(epochs)) + 1):
++            epoch_started_at = time.perf_counter()
++            epoch_objective_before = _evaluation_objective_for_training(best, **objective_weights)
++            epoch_evaluation_count_before = candidate_holdout_evaluation_count
++            epoch_phase_counts_before = dict(adaptive_optimizer.phase_counts) if adaptive_optimizer is not None else {}
++            epoch_reset_counts_before = dict(adaptive_optimizer.reset_reasons) if adaptive_optimizer is not None else {}
+             if timed_out():
+                 projection_stopped_reason = "projection_timeout"
+                 break
+@@ -7086,7 +7152,12 @@
+                         ModalAutoencoderStatePatch,
+                     ]
+                 ] = []
+-                multipliers_to_try = list(line_search_multipliers)
++                multipliers_to_try = (
++                    [1.0] * effective_max_line_search_attempts
++                    if adaptive_optimizer is not None else list(line_search_multipliers)
++                )
++                adaptive_rate = adaptive_optimizer.rates[update_name] if adaptive_optimizer is not None else 0.0
++                plain_fallback = False
+                 refinement_added = False
+ 
+                 def finalize_attempt_report(
+@@ -7122,6 +7193,19 @@
+                     finally:
+                         if evaluation_transaction.active:
+                             rollback_projection_transaction(evaluation_transaction)
++                    invalid_metrics = nonfinite_evaluation_fields(after)
++                    if invalid_metrics:
++                        attempt_report.update({
++                            "accepted": False, "strict_accepted": False,
++                            "acceptance_source": "nonfinite_validation_metric",
++                            "holdout_evaluated": True, "finite_validation": False,
++                            "nonfinite_validation_metrics": invalid_metrics,
++                            "objective_delta": None, "pareto_regressions": {},
++                            "projection_deadband": {},
++                        })
++                        # Negative infinity is an internal ordering sentinel only;
++                        # no invalid metric or fabricated zero enters the receipt.
++                        return (float("-inf"), attempt_report, after, candidate_state)
+                     regressions = _evaluation_regressions_for_training(
+                         best,
+                         after,
+@@ -7137,6 +7221,16 @@
+                         after,
+                         **objective_weights,
+                     )
++                    if not math.isfinite(objective_delta):
++                        attempt_report.update({
++                            "accepted": False, "strict_accepted": False,
++                            "acceptance_source": "nonfinite_validation_objective",
++                            "holdout_evaluated": True, "finite_validation": False,
++                            "nonfinite_validation_metrics": ["objective"],
++                            "objective_delta": None, "pareto_regressions": {},
++                            "projection_deadband": {},
++                        })
++                        return (float("-inf"), attempt_report, after, candidate_state)
+                     strict_improved = bool(not regressions and objective_delta > 0.0)
+                     deadband_decision = _projection_deadband_decision(
+                         regressions,
+@@ -7279,8 +7373,12 @@
+                         float(line_search_multiplier) in line_search_refinement_multipliers
+                     )
+                     effective_learning_rate = (
++                        adaptive_rate if adaptive_optimizer is not None else
+                         learning_rate * head_scale * float(line_search_multiplier)
+                     )
++                    if adaptive_optimizer is not None:
++                        line_search_multiplier = effective_learning_rate / (learning_rate * head_scale)
++                        is_refinement_attempt = False
+                     emit_progress(
+                         "line_search_attempt",
+                         effective_learning_rate=effective_learning_rate,
+@@ -7305,6 +7403,13 @@
+                             profiler=profiler,
+                             update_backend=normalized_update_backend,
+                         )
++                        adaptive_step_report: Dict[str, Any] = {}
++                        if adaptive_optimizer is not None:
++                            adaptive_step_report = adaptive_optimizer.prepare(
++                                self.state, attempt_transaction.capture_patch(), head=update_name,
++                                allow_momentum=not attempt_reports and not plain_fallback,
++                                logit_clip=self.feature_logit_clip,
++                            )
+                         prescreen_report: Dict[str, Any] = {
+                             "effective_mode": effective_prescreen_mode,
+                             "enabled": effective_prescreen_mode != "off",
+@@ -7363,6 +7468,8 @@
+                                 }
+                             )
+                         candidate_state = attempt_transaction.capture_patch()
++                        if adaptive_optimizer is not None:
++                            adaptive_step_report.update(parameter_step_report(candidate_state))
+                     finally:
+                         if attempt_transaction.active:
+                             rollback_projection_transaction(attempt_transaction)
+@@ -7402,6 +7509,29 @@
+                         "update_norms_by_family": update_norm_report["update_norms_by_family"],
+                         "update_norms_by_head": update_norm_report["update_norms_by_head"],
+                     }
++                    if adaptive_optimizer is not None:
++                        phase = (
++                            "momentum" if adaptive_step_report.get("momentum_applied") else
++                            "plain_fallback" if plain_fallback else
++                            "warm_start" if not attempt_reports else "backoff"
++                        )
++                        adaptive_optimizer.phase_counts[phase] += 1
++                        attempt_report["adaptive_optimizer"] = {
++                            **adaptive_step_report, "phase": phase,
++                            "actual_learning_rate": effective_learning_rate,
++                        }
++                        if timed_out():
++                            projection_stopped_reason = "projection_timeout"
++                            if adaptive_optimizer.history_head == update_name:
++                                adaptive_optimizer.reset("projection_timeout")
++                            attempt_report.update({
++                                "acceptance_source": "projection_timeout",
++                                "objective_delta": None,
++                                "validation_evaluation_skipped_reason": "projection_timeout",
++                            })
++                            attempt_reports.append(attempt_report)
++                            attempt_tuples.append((float("-inf"), attempt_report, best, candidate_state))
++                            break
+                     if defer_holdout_evaluation:
+                         attempt_reports.append(attempt_report)
+                         attempt_tuples.append(
+@@ -7426,8 +7556,19 @@
+                         best_improved_attempt is None or objective_delta > best_improved_attempt[0]
+                     ):
+                         best_improved_attempt = attempt_tuple
++                    if adaptive_optimizer is not None:
++                        if attempt_report.get("strict_accepted"):
++                            # A complete guarded positive result is sufficient;
++                            # the next epoch warm-starts this head at a higher rate.
++                            break
++                        if adaptive_optimizer.history_head == update_name:
++                            adaptive_optimizer.reset("candidate_rejected")
++                        plain_fallback = bool(adaptive_step_report.get("momentum_applied"))
++                        if not plain_fallback:
++                            adaptive_rate = adaptive_optimizer.backoff(update_name, effective_learning_rate)
+                     if (
+-                        not refinement_added
++                        adaptive_optimizer is None
++                        and not refinement_added
+                         and best_improved_attempt is None
+                         and len(attempt_reports) == len(line_search_multipliers)
+                         and (
+@@ -7497,6 +7638,13 @@
+                         default=None,
+                     )
+                 chosen = best_improved_attempt or best_attempt
++                if adaptive_optimizer is not None and attempt_reports:
++                    positive = best_improved_attempt is not None
++                    chosen_rate = (
++                        float(best_improved_attempt[1]["effective_learning_rate"])
++                        if positive else float(attempt_reports[-1]["effective_learning_rate"])
++                    )
++                    adaptive_optimizer.finish_head(update_name, chosen_rate, positive)
+                 if chosen is None:
+                     if attempt_tuples:
+                         _score, candidate_report, _after, _candidate_state = max(
+@@ -7672,71 +7820,70 @@
+                                         target_samples, stage="composed_refinement_validation",
+                                     )
+                                     refinement_report["holdout_evaluated"] = True
+-                                    regressions = _evaluation_regressions_for_training(
+-                                        best, refinement_validation,
+-                                        max_cosine_regression=max_cosine_regression,
+-                                        max_reconstruction_regression=max_reconstruction_regression,
+-                                        max_cross_entropy_regression=max_cross_entropy_regression,
+-                                        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+-                                    )
+-                                    seed_regressions = _evaluation_regressions_for_training(
+-                                        seed_validation, refinement_validation,
+-                                        max_cosine_regression=max_cosine_regression,
+-                                        max_reconstruction_regression=max_reconstruction_regression,
+-                                        max_cross_entropy_regression=max_cross_entropy_regression,
+-                                        max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+-                                    )
+-                                    refinement_delta = _evaluation_objective_for_training(
+-                                        best, **objective_weights,
+-                                    ) - _evaluation_objective_for_training(
+-                                        refinement_validation, **objective_weights,
+-                                    )
+-                                    refinement_report.update({
+-                                        "objective_delta": refinement_delta if math.isfinite(refinement_delta) else None,
+-                                        "pareto_regressions": finite_metric_payload(regressions),
+-                                        "selected_candidate_regressions": finite_metric_payload(seed_regressions),
+-                                        "validation_after": finite_metric_payload(refinement_validation.to_dict()),
+-                                        "cosine_similarity_delta": refinement_validation.embedding_cosine_similarity - best.embedding_cosine_similarity,
+-                                        "reconstruction_delta": best.reconstruction_loss - refinement_validation.reconstruction_loss,
+-                                    })
+-                                    refinement_report["cross_entropy_delta"] = best.cross_entropy_loss - refinement_validation.cross_entropy_loss
+-                                    refinement_report["cross_entropy_excess_delta"] = best.cross_entropy_excess_loss - refinement_validation.cross_entropy_excess_loss
+-                                    for loss_name in (
+-                                        "legal_ir_view_cross_entropy", "legal_ir_view_cross_entropy_excess",
+-                                        "legal_ir_view_family_cross_entropy", "legal_ir_view_family_cross_entropy_excess",
+-                                        "legal_ir_view_family_cosine_gap",
+-                                    ):
+-                                        refinement_report[f"{loss_name}_delta"] = (
+-                                            float(best.legal_ir_losses.get(f"{loss_name}_loss", 0.0))
+-                                            - float(refinement_validation.legal_ir_losses.get(f"{loss_name}_loss", 0.0))
++                                    invalid_metrics = nonfinite_evaluation_fields(refinement_validation)
++                                    if invalid_metrics:
++                                        refinement_report.update({
++                                            "finite_validation": False,
++                                            "nonfinite_validation_metrics": invalid_metrics,
++                                        })
++                                        reasons.append("nonfinite_validation_metric")
++                                    else:
++                                        regressions = _evaluation_regressions_for_training(
++                                            best, refinement_validation,
++                                            max_cosine_regression=max_cosine_regression,
++                                            max_reconstruction_regression=max_reconstruction_regression,
++                                            max_cross_entropy_regression=max_cross_entropy_regression,
++                                            max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+                                         )
+-                                    reasons = refinement_report["rejection_reasons"]
+-                                    finite_validation_values = (
+-                                        refinement_validation.embedding_cosine_similarity,
+-                                        refinement_validation.reconstruction_loss,
+-                                        refinement_validation.cross_entropy_loss,
+-                                        refinement_validation.cross_entropy_excess_loss,
+-                                        *refinement_validation.legal_ir_losses.values(),
+-                                    )
+-                                    if not all(math.isfinite(float(value)) for value in finite_validation_values):
+-                                        reasons.append("nonfinite_validation_metric")
+-                                    if regressions or seed_regressions:
+-                                        reasons.append("validation_guardrail_regression")
+-                                    if not math.isfinite(refinement_delta) or not (refinement_delta >= seed_delta and refinement_delta > 0.0):
+-                                        reasons.append("validation_objective_not_preserved")
+-                                    if timed_out():
+-                                        reasons.append("projection_timeout")
+-                                    if not reasons:
++                                        seed_regressions = _evaluation_regressions_for_training(
++                                            seed_validation, refinement_validation,
++                                            max_cosine_regression=max_cosine_regression,
++                                            max_reconstruction_regression=max_reconstruction_regression,
++                                            max_cross_entropy_regression=max_cross_entropy_regression,
++                                            max_legal_ir_loss_regression=max_legal_ir_loss_regression,
++                                        )
++                                        refinement_delta = _evaluation_objective_for_training(
++                                            best, **objective_weights,
++                                        ) - _evaluation_objective_for_training(
++                                            refinement_validation, **objective_weights,
++                                        )
+                                         refinement_report.update({
+-                                            "accepted": True, "strict_accepted": True,
+-                                            "acceptance_source": "strict_composed_refinement",
++                                            "objective_delta": refinement_delta if math.isfinite(refinement_delta) else None,
++                                            "pareto_regressions": finite_metric_payload(regressions),
++                                            "selected_candidate_regressions": finite_metric_payload(seed_regressions),
++                                            "validation_after": finite_metric_payload(refinement_validation.to_dict()),
++                                            "cosine_similarity_delta": refinement_validation.embedding_cosine_similarity - best.embedding_cosine_similarity,
++                                            "reconstruction_delta": best.reconstruction_loss - refinement_validation.reconstruction_loss,
+                                         })
+-                                        if (refinement_delta, training_delta) > (selected[0], selected_training_delta):
+-                                            selected = (
+-                                                refinement_delta, refinement_validation,
+-                                                trial_transaction.capture_patch(), refinement_name,
++                                        refinement_report["cross_entropy_delta"] = best.cross_entropy_loss - refinement_validation.cross_entropy_loss
++                                        refinement_report["cross_entropy_excess_delta"] = best.cross_entropy_excess_loss - refinement_validation.cross_entropy_excess_loss
++                                        for loss_name in (
++                                            "legal_ir_view_cross_entropy", "legal_ir_view_cross_entropy_excess",
++                                            "legal_ir_view_family_cross_entropy", "legal_ir_view_family_cross_entropy_excess",
++                                            "legal_ir_view_family_cosine_gap",
++                                        ):
++                                            refinement_report[f"{loss_name}_delta"] = (
++                                                float(best.legal_ir_losses.get(f"{loss_name}_loss", 0.0))
++                                                - float(refinement_validation.legal_ir_losses.get(f"{loss_name}_loss", 0.0))
+                                             )
+-                                            selected_training_delta = training_delta
++                                        reasons = refinement_report["rejection_reasons"]
++                                        if regressions or seed_regressions:
++                                            reasons.append("validation_guardrail_regression")
++                                        if not math.isfinite(refinement_delta) or not (refinement_delta >= seed_delta and refinement_delta > 0.0):
++                                            reasons.append("validation_objective_not_preserved")
++                                        if timed_out():
++                                            reasons.append("projection_timeout")
++                                        if not reasons:
++                                            refinement_report.update({
++                                                "accepted": True, "strict_accepted": True,
++                                                "acceptance_source": "strict_composed_refinement",
++                                            })
++                                            if (refinement_delta, training_delta) > (selected[0], selected_training_delta):
++                                                selected = (
++                                                    refinement_delta, refinement_validation,
++                                                    trial_transaction.capture_patch(), refinement_name,
++                                                )
++                                                selected_training_delta = training_delta
+                         finally:
+                             if trial_transaction.active:
+                                 rollback_projection_transaction(trial_transaction)
+@@ -7749,7 +7896,7 @@
+ 
+             if projection_stopped_reason:
+                 if selected is None:
+-                    epoch_reports.append(
++                    append_epoch_report(
+                         {
+                             "accepted": False,
+                             "candidate_reports": candidate_reports,
+@@ -7758,6 +7905,7 @@
+                                 (
+                                     float(report.get("objective_delta", 0.0))
+                                     for report in candidate_reports
++                                    if report.get("objective_delta") is not None
+                                 ),
+                                 default=0.0,
+                             ),
+@@ -7771,12 +7919,14 @@
+                     selected_state,
+                     label=f"projection-commit:{epoch}:{update_name}",
+                 )
++                if adaptive_optimizer is not None:
++                    adaptive_optimizer.committed(update_name, selected_state)
+                 best = after
+                 accepted_epochs += 1
+                 selected_report = next(
+                     report for report in candidate_reports if report["update"] == update_name
+                 )
+-                epoch_reports.append(
++                append_epoch_report(
+                     {
+                         **selected_report,
+                         "accepted": True,
+@@ -7789,7 +7939,10 @@
+                 )
+                 break
+             if selected is None:
+-                epoch_reports.append(
++                allow_plateau_recovery = (
++                    adaptive_optimizer.recover_plateau() if adaptive_optimizer is not None else False
++                )
++                append_epoch_report(
+                     {
+                         "accepted": False,
+                         "candidate_reports": candidate_reports,
+@@ -7798,12 +7951,19 @@
+                             (
+                                 float(report.get("objective_delta", 0.0))
+                                 for report in candidate_reports
++                                if report.get("objective_delta") is not None
+                             ),
+                             default=0.0,
+                         ),
+                         "selected_update": None,
+                     }
+                 )
++                if adaptive_optimizer is not None:
++                    if allow_plateau_recovery and epoch < int(epochs):
++                        epoch_reports[-1]["adaptive_phase"] = "plateau_recovery"
++                        continue
++                    projection_stopped_reason = "search_stalled"
++                    epoch_reports[-1]["stopped_reason"] = projection_stopped_reason
+                 break
+ 
+             objective_delta, after, selected_state, update_name = selected
+@@ -7811,12 +7971,14 @@
+                 selected_state,
+                 label=f"projection-commit:{epoch}:{update_name}",
+             )
++            if adaptive_optimizer is not None:
++                adaptive_optimizer.committed(update_name, selected_state)
+             best = after
+             accepted_epochs += 1
+             selected_report = next(
+                 report for report in candidate_reports if report["update"] == update_name
+             )
+-            epoch_reports.append(
++            append_epoch_report(
+                 {
+                     **selected_report,
+                     "accepted": True,
+@@ -7879,6 +8041,7 @@
+             "state_entry_count": state_entry_count,
+             "stopped_reason": projection_stopped_reason,
+             "validation_sample_count": len(target_samples),
++            **(adaptive_optimizer.report() if adaptive_optimizer is not None else {}),
+         }
+ 
+     def _apply_projection_update_batch(
+@@ -31143,7 +31306,7 @@
+                 # A training-screen or prescreen rejection has no measured
+                 # validation objective. Keep its rejection count, but do not
+                 # turn missing telemetry into a zero-valued ranked result.
+-                if attempt.get("holdout_evaluated") is False:
++                if attempt.get("holdout_evaluated") is False or attempt.get("finite_validation") is False:
+                     continue
+                 if best_rejected is None or objective_delta > _float_or_zero(
+                     best_rejected.get("objective_delta")
+--- /dev/null
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py
+@@ -0,0 +1,283 @@
++"""Bounded, job-local search policy for guarded sparse projection updates.
++
++This is accepted-parameter-step momentum, not an autograd/Adam optimizer. It
++never sees validation rows, writes a weight schema, or retains state across jobs.
++"""
++from __future__ import annotations
++
++from collections import Counter
++import math
++from typing import Any, Iterable, Mapping
++
++
++OPTIMIZER_SCOPE = "job_local_reset_per_training_call"
++MAX_MOMENTUM_COORDINATES = 8192
++# Only reusable heads used by projection. Sample memories and proof metadata
++# are intentionally absent, including when supplied in an otherwise valid patch.
++MOMENTUM_COMPONENTS = frozenset({
++    "compiler_quality_embedding_weights", "compiler_quality_family_logits",
++    "logic_signature_embedding_weights", "logic_signature_family_logits",
++    "logic_signature_legal_ir_view_logits", "round_trip_signal_embedding_weights",
++    "round_trip_signal_family_logits", "round_trip_signal_legal_ir_view_logits",
++    "decompiler_plan_embedding_weights", "decompiler_plan_family_logits",
++    "decompiler_plan_legal_ir_view_logits", "predicate_argument_embedding_weights",
++    "predicate_argument_family_logits", "predicate_argument_legal_ir_view_logits",
++    "feature_embedding_weights", "family_embedding_weights",
++    "family_semantic_slot_embedding_weights", "family_semantic_slot_legal_ir_view_embedding_weights",
++    "family_legal_ir_view_embedding_weights", "semantic_slot_embedding_weights",
++    "feature_family_logits", "semantic_slot_family_logits", "legal_ir_view_logits",
++    "legal_ir_view_embedding_weights", "legal_ir_view_family_logits",
++    "feature_legal_ir_view_logits", "family_semantic_slot_legal_ir_view_logits",
++    "semantic_slot_legal_ir_view_embedding_weights", "semantic_slot_legal_ir_view_family_logits",
++    "semantic_slot_legal_ir_view_logits",
++})
++
++
++def nonfinite_evaluation_fields(evaluation: Any) -> list[str]:
++    """Inspect raw metrics before objective normalizers can conceal NaN."""
++    values = {
++        name: getattr(evaluation, name, 0.0)
++        for name in (
++            "embedding_cosine_similarity", "cosine_loss", "reconstruction_loss",
++            "cross_entropy_loss", "cross_entropy_excess_loss", "cross_entropy_entropy_loss",
++            "frame_ranking_loss", "symbolic_validity_penalty",
++        )
++    }
++    values.update({f"legal_ir_losses.{name}": value
++                   for name, value in evaluation.legal_ir_losses.items()})
++    for family, metrics in evaluation.legal_ir_view_family_metrics.items():
++        values.update({f"legal_ir_view_family_metrics.{family}.{name}": value
++                       for name, value in metrics.items()})
++    invalid = []
++    for name, value in values.items():
++        try:
++            finite = math.isfinite(float(value))
++        except (TypeError, ValueError, OverflowError):
++            finite = False
++        if not finite:
++            invalid.append(name)
++    return sorted(invalid)
++
++
++def validate_optimizer_options(*, mode: str, momentum: float, epochs: int,
++                               learning_rate: float, max_seconds: float | None,
++                               max_attempts: int | None, l2: float,
++                               prescreen: str, deadband: str,
++                               training: list[Any], validation: list[Any]) -> str:
++    if not isinstance(mode, str) or mode not in {"fixed", "guarded_adaptive"}:
++        raise ValueError("projection_optimizer_mode must be fixed or guarded_adaptive")
++    if isinstance(momentum, bool):
++        raise ValueError("projection_momentum must be a number, not bool")
++    beta = float(momentum)
++    if not math.isfinite(beta) or not 0.0 <= beta <= 0.9:
++        raise ValueError("projection_momentum must be finite and between 0 and 0.9")
++    if mode == "fixed":
++        if beta:
++            raise ValueError("positive projection_momentum requires guarded_adaptive")
++        return mode
++    if type(epochs) is not int or not 1 <= epochs <= 32:
++        raise ValueError("guarded_adaptive requires integer epochs from 1 to 32")
++    if not math.isfinite(float(learning_rate)) or not 0.0 < float(learning_rate) <= 1.0:
++        raise ValueError("guarded_adaptive requires learning_rate in (0, 1]")
++    if float(learning_rate) * 0.35 == 0.0:
++        raise ValueError("guarded_adaptive learning_rate underflows a projection head rate")
++    if max_seconds is None or not math.isfinite(float(max_seconds)) or not 0.0 < float(max_seconds) <= 300.0:
++        raise ValueError("guarded_adaptive requires finite max_seconds in (0, 300]")
++    if type(max_attempts) is not int or not 1 <= max_attempts <= 10:
++        raise ValueError("guarded_adaptive requires explicit max_line_search_attempts from 1 to 10")
++    if beta and max_attempts < 2:
++        raise ValueError("positive projection_momentum requires at least two line-search attempts")
++    if float(l2) != 0.0:
++        raise ValueError("guarded_adaptive requires zero l2_regularization")
++    if prescreen != "off" or deadband != "off":
++        raise ValueError("guarded_adaptive requires prescreen and deadband off")
++    if not training or not validation:
++        raise ValueError("guarded_adaptive requires training and disjoint validation samples")
++    for attribute in ("sample_id", "normalized_text"):
++        train_keys = {str(getattr(row, attribute, "") or "") for row in training} - {""}
++        validation_keys = {str(getattr(row, attribute, "") or "") for row in validation} - {""}
++        if train_keys & validation_keys:
++            raise ValueError("guarded_adaptive requires disjoint validation samples")
++    return mode
++
++
++def _numeric(value: Any) -> bool:
++    return isinstance(value, (int, float)) and not isinstance(value, bool)
++
++
++def _pairs(before: Any, after: Any, path: tuple = ()) -> Iterable[tuple[tuple, float, float]]:
++    if _numeric(before) and _numeric(after):
++        a, b = float(before), float(after)
++        if math.isfinite(a) and math.isfinite(b):
++            yield path, a, b
++    elif isinstance(before, Mapping) and isinstance(after, Mapping):
++        for key in before:
++            if key in after:
++                yield from _pairs(before[key], after[key], (*path, key))
++    elif isinstance(before, (list, tuple)) and isinstance(after, (list, tuple)) and len(before) == len(after):
++        for index, (a, b) in enumerate(zip(before, after)):
++            yield from _pairs(a, b, (*path, index))
++
++
++def _patch_coordinates(patch: Any) -> Iterable[tuple[tuple, float, float]]:
++    # Whole-component replacements, inserted rows and inserted coordinates do
++    # not establish a known initialization baseline and cannot carry momentum.
++    for row in patch.rows:
++        if row.component in MOMENTUM_COMPONENTS and row.before_exists and row.after_exists:
++            for path, before, after in _pairs(row.before_value, row.after_value):
++                if before != after:
++                    yield (row.component, row.key, path), before, after
++
++
++def parameter_step_report(patch: Any) -> dict[str, Any]:
++    norm = 0.0
++    count = 0
++    for _key, before, after in _patch_coordinates(patch):
++        norm = math.hypot(norm, after - before)
++        count += 1
++    return {
++        "parameter_delta_norm": norm,
++        "parameter_delta_coordinate_count": count,
++        "parameter_delta_scope": "existing_numeric_trainable_coordinates_only",
++        "inserted_rows_excluded": sum(row.component in MOMENTUM_COMPONENTS and not row.before_exists
++                                      for row in patch.rows),
++        "autograd_gradient": False,
++    }
++
++
++def _set_coordinate(state: Any, key: tuple, value: float) -> None:
++    component, row_key, path = key
++    table = getattr(state, component)
++    if not path:
++        table[row_key] = value
++        return
++    node = table[row_key]
++    for item in path[:-1]:
++        node = node[item]
++    node[path[-1]] = value
++
++
++class GuardedAdaptiveProjection:
++    """At most five per-head rates and one bounded accepted sparse direction."""
++
++    def __init__(self, learning_rate: float, scales: Mapping[str, float], momentum: float):
++        self.rates = {head: min(1.0, float(learning_rate) * scale) for head, scale in scales.items()}
++        self.floors = {head: min(rate, max(1.0e-12, rate / 1024.0)) for head, rate in self.rates.items()}
++        self.momentum = float(momentum)
++        self.history: dict[tuple, tuple[float, float]] = {}
++        self.history_head: str | None = None
++        self.phase_counts: Counter = Counter()
++        self.reset_reasons: Counter = Counter()
++        self.plateau_count = 0
++        self.truncated_histories = 0
++
++    def reset(self, reason: str) -> None:
++        if self.history:
++            self.reset_reasons[reason] += 1
++        self.history.clear()
++        self.history_head = None
++
++    def backoff(self, head: str, rate: float) -> float:
++        return max(self.floors[head], min(1.0, rate * 0.5))
++
++    def finish_head(self, head: str, rate: float, accepted: bool) -> None:
++        self.rates[head] = min(1.0, rate * 1.25) if accepted else self.backoff(head, rate)
++        self.phase_counts["guarded_positive" if accepted else "head_rejected"] += 1
++
++    def prepare(self, state: Any, patch: Any, *, head: str, allow_momentum: bool,
++                logit_clip: float) -> dict[str, Any]:
++        report = parameter_step_report(patch)
++        report.update({"momentum_applied": False, "momentum_carry_norm": 0.0,
++                       "momentum_coordinate_count": 0, "momentum_restart_reason": None})
++        if not allow_momentum or not self.momentum or self.history_head != head or not self.history:
++            return report
++        matches = []
++        fresh_norm = previous_norm = alignment = 0.0
++        for key, before, after in _patch_coordinates(patch):
++            previous = self.history.get(key)
++            if previous is None or before != previous[1]:
++                continue
++            fresh = after - before
++            previous_delta = previous[0]
++            if not math.isfinite(fresh) or not math.isfinite(previous_delta):
++                continue
++            # Stored logits can exceed the reader's clipping interval. Leave
++            # such a fresh proposal unchanged rather than applying a new clip.
++            if "logits" in key[0] and logit_clip > 0 and abs(after) > logit_clip:
++                continue
++            matches.append((key, after, previous_delta))
++            fresh_norm = math.hypot(fresh_norm, fresh)
++            previous_norm = math.hypot(previous_norm, previous_delta)
++            alignment += fresh * previous_delta
++        reason = None
++        if not matches or fresh_norm == 0.0 or previous_norm == 0.0:
++            reason = "no_current_direction_intersection"
++        elif not math.isfinite(alignment) or alignment <= 0.0:
++            reason = "nonpositive_direction_alignment"
++        if reason:
++            self.reset(reason)
++            report["momentum_restart_reason"] = reason
++            return report
++        # Carry is no greater than beta times this proposal's fresh norm.
++        scale = self.momentum * min(1.0, fresh_norm / previous_norm)
++        carry_norm = 0.0
++        count = 0
++        for key, after, delta in matches:
++            value = after + scale * delta
++            if "logits" in key[0] and logit_clip > 0.0:
++                value = max(-logit_clip, min(logit_clip, value))
++            if not math.isfinite(value):
++                self.reset("nonfinite_carry")
++                raise ValueError("nonfinite sparse momentum carry")
++            if value != after:
++                _set_coordinate(state, key, value)
++                carry_norm = math.hypot(carry_norm, value - after)
++                count += 1
++        report.update({"momentum_applied": bool(count), "momentum_carry_norm": carry_norm,
++                       "momentum_coordinate_count": count})
++        return report
++
++    def committed(self, head: str, patch: Any) -> None:
++        self.plateau_count = 0
++        self.reset("selected_patch_replaces_history")
++        if not self.momentum:
++            return
++        # A composed update has another objective/step schedule: start its next
++        # search from a plain update instead of attributing that step to a head.
++        if head not in self.rates:
++            self.reset_reasons["composed_update"] += 1
++            return
++        self.history_head = head
++        for key, before, after in _patch_coordinates(patch):
++            delta = after - before
++            if not math.isfinite(delta):
++                continue
++            if len(self.history) >= MAX_MOMENTUM_COORDINATES:
++                self.truncated_histories += 1
++                break
++            self.history[key] = (delta, after)
++
++    def recover_plateau(self) -> bool:
++        self.reset("plateau")
++        self.plateau_count += 1
++        self.phase_counts["plateau_sweep"] += 1
++        return self.plateau_count <= 1
++
++    def report(self) -> dict[str, Any]:
++        return {
++            "projection_optimizer_mode": "guarded_adaptive",
++            "projection_optimizer_scope": OPTIMIZER_SCOPE,
++            "projection_momentum": self.momentum,
++            "optimizer_history_persisted": False,
++            "projection_optimizer": {
++                "learning_rates": dict(sorted(self.rates.items())),
++                "phase_counts": dict(sorted(self.phase_counts.items())),
++                "momentum_reset_reasons": dict(sorted(self.reset_reasons.items())),
++                "momentum_history_coordinate_limit": MAX_MOMENTUM_COORDINATES,
++                "momentum_history_coordinate_count": len(self.history),
++                "momentum_history_truncation_count": self.truncated_histories,
++                "momentum_direction": "selected_committed_parameter_delta",
++                "validation_gradients_used": False,
++                "global_minimum_claimed": False,
++            },
++        }
+--- /dev/null
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py
+@@ -0,0 +1,381 @@
++"""Controlled search and sparse-state tests; these make no native/proof claim."""
++from dataclasses import replace
++import json
++import math
++from types import SimpleNamespace
++
++import pytest
++
++from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_autoencoder as ma
++from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_autoencoder_adaptive_optimizer as policy
++from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_patch_codec import encode_patch, replay_patch
++
++
++def _fixture(monkeypatch, *, loss=None, update=None, baseline_invalid=None):
++    state = ma.ModalAutoencoderTrainingState(legal_ir_view_logits={"x": 0.0})
++    model = ma.AdaptiveModalAutoencoder(state=state, compute_device="python")
++    train = [SimpleNamespace(sample_id="train", normalized_text="training text", embedding_vector=[1.0])]
++    validation = [SimpleNamespace(sample_id="validation", normalized_text="validation text", embedding_vector=[-1.0])]
++    calls = {"rates": [], "evaluations": [], "updates": [], "now": 0.0}
++    monkeypatch.setattr(ma.time, "time", lambda: calls["now"])
++    monkeypatch.setattr(ma.time, "perf_counter", lambda: calls["now"])
++    monkeypatch.setattr(model, "_select_hard_examples_for_projection", lambda rows, **kw: list(rows))
++    monkeypatch.setattr(state, "copy", lambda: pytest.fail("whole-state copy is forbidden"))
++
++    def evaluate(rows, **kwargs):
++        assert kwargs["use_sample_memory"] is False
++        ids = [row.sample_id for row in rows]
++        calls["evaluations"].append(ids)
++        x = state.legal_ir_view_logits["x"]
++        value = loss(x, calls) if loss else (1.0 - x) ** 2
++        result = ma.AutoencoderEvaluation(len(rows), 1.0, 0.0, value, 1.0, 0.0, 0.0, {},
++                                         cross_entropy_excess_loss=1.0)
++        if baseline_invalid is not None and not calls["updates"]:
++            result = replace(result, legal_ir_losses={"legal_ir_multiview_total_loss": baseline_invalid})
++        calls["now"] += 0.01
++        return result
++
++    def nudge(rows, *, update_targets, learning_rate, **kwargs):
++        assert [row.sample_id for row in rows] == ["train"]
++        calls["rates"].append(learning_rate)
++        calls["updates"].append(tuple(update_targets))
++        if update:
++            update(state, learning_rate, calls)
++        else:
++            state.legal_ir_view_logits["x"] += learning_rate
++        calls["now"] += 0.01
++        return {key: {} for key in ("gradient_norms_by_family", "gradient_norms_by_head",
++                "head_family_gradient_norms", "head_family_update_norms", "update_norms_by_family", "update_norms_by_head")}
++
++    monkeypatch.setattr(model, "evaluate", evaluate)
++    monkeypatch.setattr(model, "_apply_projection_update_batch", nudge)
++    return model, train, validation, calls
++
++
++def _run(fixture, **kwargs):
++    model, train, validation, calls = fixture
++    options = dict(validation_samples=validation, legal_ir_bridge_names=("deontic_norms",),
++                   legal_ir_evaluate_provers=False, epochs=3, max_seconds=60, max_line_search_attempts=2,
++                   projection_max_update_families=1, projection_update_backend="python_sparse_batch",
++                   projection_optimizer_mode="guarded_adaptive")
++    options.update(kwargs)
++    return model.train_generalizable_projection(train, **options)
++
++
++def _attempts(report):
++    return [attempt for epoch in report["epoch_reports"] for candidate in epoch["candidate_reports"]
++            for attempt in candidate.get("attempt_reports", [candidate])]
++
++
++def test_fixed_explicit_default_parity_and_honest_epoch_timing(monkeypatch):
++    left = _fixture(monkeypatch)
++    first = left[0].train_generalizable_projection(
++        left[1], validation_samples=left[2], legal_ir_bridge_names=("deontic_norms",),
++        legal_ir_evaluate_provers=False, epochs=3, max_seconds=60, max_line_search_attempts=2,
++        projection_max_update_families=1, projection_update_backend="python_sparse_batch",
++    )
++    right = _fixture(monkeypatch)
++    second = _run(right, projection_optimizer_mode="fixed", projection_momentum=0.0)
++    assert first == second
++    assert left[0].state.to_json() == right[0].state.to_json()
++    assert "projection_optimizer" not in first
++    assert first["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 2
++    epoch = first["epoch_reports"][0]
++    assert epoch["objective_before"] - epoch["objective_after"] == pytest.approx(epoch["objective_delta"])
++    assert epoch["cumulative_training_elapsed_seconds"] > epoch["epoch_elapsed_seconds"] > 0
++
++
++def test_adaptive_warmstart_growth_ends_head_on_first_guarded_positive(monkeypatch):
++    fixture = _fixture(monkeypatch)
++    report = _run(fixture)
++    assert fixture[3]["rates"] == pytest.approx([0.175, 0.21875, 0.2734375])
++    assert report["accepted_epochs"] == 3
++    assert all(epoch["adaptive_phase_counts"] == {"guarded_positive": 1, "warm_start": 1}
++               for epoch in report["epoch_reports"])
++    assert [epoch["candidate_holdout_evaluation_count"] for epoch in report["epoch_reports"]] == [1, 1, 1]
++    assert report["projection_optimizer_scope"] == policy.OPTIMIZER_SCOPE
++    assert report["optimizer_history_persisted"] is False
++    assert not report["projection_optimizer"]["global_minimum_claimed"]
++    assert all(attempt["adaptive_optimizer"]["autograd_gradient"] is False for attempt in _attempts(report))
++
++
++def test_growth_never_reports_rate_above_actual_clamp(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: max(0.0, 100.0 - x))
++    report = _run(fixture, epochs=12, learning_rate=1.0)
++    assert max(fixture[3]["rates"]) == 1.0
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 1.0
++
++
++def test_rejected_trial_backoff_then_accepted_rate_warmstart(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: (0.06 - x) ** 2)
++    report = _run(fixture, epochs=1)
++    assert fixture[3]["rates"] == [0.175, 0.0875]
++    assert report["accepted_epochs"] == 1
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == pytest.approx(0.109375)
++    assert [a["adaptive_optimizer"]["phase"] for a in _attempts(report)] == ["warm_start", "backoff"]
++
++
++def test_plateau_has_one_bounded_recovery_and_no_convergence_claim(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0)
++    before = fixture[0].state.to_json()
++    report = _run(fixture, epochs=10)
++    assert report["stopped_reason"] == "search_stalled"
++    assert len(report["epoch_reports"]) == 2
++    assert fixture[3]["rates"] == pytest.approx([0.175, 0.0875, 0.04375, 0.021875])
++    assert report["epoch_reports"][0]["adaptive_phase"] == "plateau_recovery"
++    assert fixture[0].state.to_json() == before
++
++
++@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), float("-inf"), None, "bad"])
++def test_raw_invalid_candidate_metrics_never_commit_or_gain_objective(monkeypatch, invalid):
++    fixture = _fixture(monkeypatch)
++    model = fixture[0]
++    original = model.evaluate
++    def invalid_evaluate(rows, **kwargs):
++        result = original(rows, **kwargs)
++        return replace(result, legal_ir_losses={"legal_ir_multiview_total_loss":
++                                               invalid if model.state.legal_ir_view_logits["x"] else 0.5})
++    monkeypatch.setattr(model, "evaluate", invalid_evaluate)
++    before = model.state.to_json()
++    report = _run(fixture, projection_optimizer_mode="fixed", epochs=1)
++    assert report["accepted_epochs"] == 0
++    assert model.state.to_json() == before
++    assert report["rejection_summary"]["best_rejected_attempt"] == {}
++    assert all(attempt["objective_delta"] is None and attempt["finite_validation"] is False
++               for attempt in _attempts(report))
++    json.dumps(report, allow_nan=False)
++
++
++@pytest.mark.parametrize("mode", ["fixed", "guarded_adaptive"])
++@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), float("-inf")])
++def test_nonfinite_baseline_rejects_before_weight_updates(monkeypatch, mode, invalid):
++    fixture = _fixture(monkeypatch, baseline_invalid=invalid)
++    before = fixture[0].state.to_json()
++    with pytest.raises(ValueError, match="nonfinite projection baseline"):
++        _run(fixture, projection_optimizer_mode=mode)
++    assert not fixture[3]["updates"]
++    assert fixture[0].state.to_json() == before
++
++
++def test_invalid_later_candidate_preserves_earlier_guarded_winner(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: float("nan") if 0.0 < x < 0.1 else (1-x)**2)
++    report = _run(fixture, projection_optimizer_mode="fixed", epochs=1)
++    assert report["accepted_epochs"] == 1
++    assert fixture[0].state.legal_ir_view_logits["x"] == 0.175
++    assert _attempts(report)[1]["finite_validation"] is False
++
++
++def test_timeout_during_later_head_preserves_earlier_winner(monkeypatch):
++    def update(state, rate, calls):
++        state.legal_ir_view_logits["x"] += rate
++        if len(calls["updates"]) == 2:
++            calls["now"] = 61.0
++    fixture = _fixture(monkeypatch, update=update)
++    report = _run(fixture, projection_max_update_families=2)
++    assert report["stopped_reason"] == "projection_timeout"
++    assert report["accepted_epochs"] == 1
++    assert fixture[0].state.legal_ir_view_logits["x"] == 0.175
++    assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 1
++    assert _attempts(report)[1]["validation_evaluation_skipped_reason"] == "projection_timeout"
++    assert fixture[0].state._active_state_transaction is None
++
++
++def test_momentum_carries_only_selected_patch_and_sparse_replay_matches(monkeypatch):
++    fixture = _fixture(monkeypatch)
++    before = fixture[0].state.to_dict()
++    encoded = []
++    def sink(patch, context):
++        encoded.append(encode_patch(patch, base_state_identity=context["base_state_identity"],
++                                   result_state_identity=context["result_state_identity"],
++                                   base_version_id="fixture", sequence=len(encoded)))
++    report = _run(fixture, projection_momentum=0.5, accepted_patch_sink=sink)
++    attempts = _attempts(report)
++    assert [attempt["adaptive_optimizer"]["momentum_applied"] for attempt in attempts] == [False, True, True]
++    assert attempts[1]["adaptive_optimizer"]["momentum_carry_norm"] == pytest.approx(0.0875)
++    restored = ma.ModalAutoencoderTrainingState.from_dict(before)
++    for index, patch in enumerate(encoded):
++        replay_patch(restored, patch, expected_base_version_id="fixture", expected_sequence=index)
++    assert restored.to_json() == fixture[0].state.to_json()
++    assert restored.state_revision == fixture[0].state.state_revision
++
++
++def test_momentum_rejection_plain_fallback_same_rate_inside_budget(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: (0.3-x)**2)
++    report = _run(fixture, projection_momentum=0.5, epochs=2)
++    attempts = _attempts(report)
++    assert [a["adaptive_optimizer"]["phase"] for a in attempts] == ["warm_start", "momentum", "plain_fallback"]
++    assert [a["accepted"] for a in attempts] == [True, False, True]
++    assert fixture[3]["rates"] == pytest.approx([0.175, 0.21875, 0.21875])
++    assert fixture[0].state.legal_ir_view_logits["x"] == pytest.approx(0.39375)
++    assert report["projection_optimizer"]["momentum_reset_reasons"]["candidate_rejected"] == 1
++
++
++def test_second_training_call_resets_optimizer_history(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 100.0-x)
++    first = _run(fixture, projection_momentum=0.5, epochs=2)
++    second = _run(fixture, projection_momentum=0.5, epochs=1)
++    assert _attempts(first)[1]["adaptive_optimizer"]["momentum_applied"]
++    assert not _attempts(second)[0]["adaptive_optimizer"]["momentum_applied"]
++    assert _attempts(second)[0]["effective_learning_rate"] == 0.175
++
++
++def test_candidate_evaluation_exception_rolls_back_sparse_state(monkeypatch):
++    fixture = _fixture(monkeypatch)
++    before = fixture[0].state.to_json()
++    original = fixture[0].evaluate
++    def fail(rows, **kwargs):
++        if fixture[0].state.legal_ir_view_logits["x"]:
++            raise RuntimeError("controlled failure")
++        return original(rows, **kwargs)
++    monkeypatch.setattr(fixture[0], "evaluate", fail)
++    with pytest.raises(RuntimeError, match="controlled failure"):
++        _run(fixture, projection_momentum=0.5)
++    assert fixture[0].state.to_json() == before
++    assert fixture[0].state._active_state_transaction is None
++
++
++@pytest.mark.parametrize("options", [
++    {"projection_optimizer_mode": "other"}, {"projection_optimizer_mode": []},
++    {"projection_momentum": -0.1}, {"projection_momentum": 1.0},
++    {"projection_momentum": float("nan")}, {"projection_momentum": float("inf")},
++    {"projection_momentum": True}, {"projection_momentum": False},
++    {"projection_optimizer_mode": "fixed", "projection_momentum": 0.5},
++    {"projection_momentum": 0.5, "max_line_search_attempts": 1},
++    {"max_line_search_attempts": None}, {"max_line_search_attempts": 11},
++    {"max_line_search_attempts": True}, {"epochs": 33}, {"epochs": 0},
++    {"max_seconds": None}, {"max_seconds": 0}, {"max_seconds": 301},
++    {"max_seconds": float("nan")}, {"max_seconds": float("inf")},
++    {"learning_rate": 0}, {"learning_rate": 5e-324}, {"learning_rate": 1.1}, {"learning_rate": float("nan")},
++    {"l2_regularization": 0.1}, {"projection_deadband_mode": "shadow"},
++    {"projection_prescreen_mode": "enforce"}, {"validation_samples": []},
++])
++def test_adaptive_invalid_contracts_fail_before_evaluation(monkeypatch, options):
++    fixture = _fixture(monkeypatch)
++    with pytest.raises(ValueError):
++        _run(fixture, **options)
++    assert fixture[3]["evaluations"] == []
++
++
++@pytest.mark.parametrize("attribute", ["sample_id", "normalized_text"])
++def test_adaptive_rejects_overlapping_validation(monkeypatch, attribute):
++    fixture = _fixture(monkeypatch)
++    setattr(fixture[2][0], attribute, getattr(fixture[1][0], attribute))
++    with pytest.raises(ValueError, match="disjoint"):
++        _run(fixture)
++
++
++def _commit_delta(state, component, key, value):
++    transaction = state.transaction(label="controlled-commit").begin()
++    getattr(state, component)[key] = value
++    return transaction.commit()
++
++
++def test_tiny_learning_rate_backoff_never_increases_seed():
++    controller = policy.GuardedAdaptiveProjection(1e-30, {"head": 0.5}, 0.5)
++    assert controller.backoff("head", 5e-31) <= 5e-31
++
++
++def test_momentum_skips_inserted_rows_coordinates_sample_memory_and_metadata():
++    state = ma.ModalAutoencoderTrainingState(feature_embedding_weights={"old": [0.0]},
++                                            feature_family_logits={"old": {"existing": 0.0}},
++                                            decoded_embeddings={"memory": [0.0]})
++    transaction = state.transaction(label="controlled").begin()
++    state.feature_embedding_weights["new"] = [10.0]
++    state.feature_embedding_weights["old"][0] = 1.0
++    state.feature_family_logits["old"]["new"] = 10.0
++    state.feature_family_logits["old"]["existing"] = 1.0
++    state.decoded_embeddings["memory"][0] = 100.0
++    state.proof_auxiliary_head_logits["proof"] = {"score": 100.0}
++    patch = transaction.commit()
++    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5)
++    controller.committed("head", patch)
++    assert len(controller.history) == 2
++    assert {key[0] for key in controller.history} == {"feature_embedding_weights", "feature_family_logits"}
++    assert all(key[1] == "old" and "new" not in key[2] for key in controller.history)
++
++
++@pytest.mark.parametrize("direction,reason", [(-0.1, "nonpositive_direction_alignment"), (0.0, "no_current_direction_intersection")])
++def test_momentum_restarts_on_reversal_or_flat_step(direction, reason):
++    state = ma.ModalAutoencoderTrainingState(legal_ir_view_logits={"x": 0.0})
++    patch = _commit_delta(state, "legal_ir_view_logits", "x", 1.0)
++    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5)
++    controller.committed("head", patch)
++    transaction = state.transaction(label="trial").begin()
++    state.legal_ir_view_logits["x"] += direction
++    report = controller.prepare(state, transaction.capture_patch(), head="head", allow_momentum=True, logit_clip=24.0)
++    assert report["momentum_restart_reason"] == reason
++    assert not controller.history
++    transaction.rollback()
++    assert state.legal_ir_view_logits["x"] == 1.0
++
++
++def test_momentum_carry_is_bounded_by_current_fresh_direction_and_clipping():
++    state = ma.ModalAutoencoderTrainingState(legal_ir_view_logits={"x": 0.0})
++    patch = _commit_delta(state, "legal_ir_view_logits", "x", 23.9)
++    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.9)
++    controller.committed("head", patch)
++    transaction = state.transaction(label="trial").begin()
++    state.legal_ir_view_logits["x"] += 0.075
++    report = controller.prepare(state, transaction.capture_patch(), head="head", allow_momentum=True, logit_clip=24.0)
++    assert report["momentum_carry_norm"] <= 0.9 * 0.075
++    assert state.legal_ir_view_logits["x"] == 24.0
++    transaction.rollback()
++    assert state.legal_ir_view_logits["x"] == 23.9
++
++
++def test_momentum_stale_postimage_is_not_reused():
++    state = ma.ModalAutoencoderTrainingState(legal_ir_view_logits={"x": 0.0})
++    patch = _commit_delta(state, "legal_ir_view_logits", "x", 1.0)
++    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5)
++    controller.committed("head", patch)
++    _commit_delta(state, "legal_ir_view_logits", "x", 2.0)
++    transaction = state.transaction(label="trial").begin()
++    state.legal_ir_view_logits["x"] += 0.1
++    report = controller.prepare(state, transaction.capture_patch(), head="head", allow_momentum=True, logit_clip=24)
++    assert report["momentum_restart_reason"] == "no_current_direction_intersection"
++    assert state.legal_ir_view_logits["x"] == 2.1
++    transaction.rollback()
++
++
++def test_history_memory_is_bounded_deterministically(monkeypatch):
++    monkeypatch.setattr(policy, "MAX_MOMENTUM_COORDINATES", 4)
++    state = ma.ModalAutoencoderTrainingState(feature_embedding_weights={"x": [0.0]*10})
++    patch = _commit_delta(state, "feature_embedding_weights", "x", [1.0]*10)
++    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5)
++    controller.committed("head", patch)
++    assert len(controller.history) == 4
++    assert [key[2] for key in controller.history] == [(0,), (1,), (2,), (3,)]
++    assert controller.truncated_histories == 1
++
++
++@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), None])
++def test_composed_refinement_rejects_invalid_family_metric_before_objective(monkeypatch, invalid):
++    fixture = _fixture(monkeypatch)
++    model, _train, _validation, _calls = fixture
++    model.state.feature_embedding_weights["embedding"] = [0.0]
++    original_evaluate = model.evaluate
++    original_update = model._apply_projection_update_batch
++    def evaluate(rows, **kwargs):
++        result = original_evaluate(rows, **kwargs)
++        if model.state.feature_embedding_weights["embedding"][0]:
++            if rows[0].sample_id == "validation":
++                return replace(result, legal_ir_view_family_metrics={"deontic": {"ir_cosine_similarity": invalid}})
++            return replace(result, reconstruction_loss=result.reconstruction_loss - 0.1)
++        return result
++    def update(rows, *, update_targets, **kwargs):
++        if update_targets == ("decoded_embedding",):
++            model.state.feature_embedding_weights["embedding"][0] = 0.1
++            return {key: {} for key in ("gradient_norms_by_family", "gradient_norms_by_head",
++                    "head_family_gradient_norms", "head_family_update_norms", "update_norms_by_family", "update_norms_by_head")}
++        return original_update(rows, update_targets=update_targets, **kwargs)
++    monkeypatch.setattr(model, "evaluate", evaluate)
++    monkeypatch.setattr(model, "_apply_projection_update_batch", update)
++    report = _run(fixture, epochs=1, projection_max_composed_refinement_attempts=1)
++    assert report["accepted_epochs"] == 1
++    assert report["epoch_reports"][0]["selected_update"] == "legal_ir_view_global_logits"
++    trial = report["epoch_reports"][0]["composed_refinement_reports"][0]
++    assert trial["finite_validation"] is False
++    assert trial["objective_delta"] is None
++    assert "nonfinite_validation_metric" in trial["rejection_reasons"]
++    assert model.state.feature_embedding_weights["embedding"] == [0.0]
++    json.dumps(report, allow_nan=False)
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py
+@@ -21,6 +21,7 @@
+     clock = {"now": 0.0}
+     calls = {"updates": [], "evaluations": []}
+     monkeypatch.setattr(ma.time, "time", lambda: clock["now"])
++    monkeypatch.setattr(ma.time, "perf_counter", lambda: clock["now"])
+     monkeypatch.setattr(model, "_select_hard_examples_for_projection", lambda rows, **_: list(rows))
+     monkeypatch.setattr(state, "copy", lambda: pytest.fail("whole-state copy"))
+ 

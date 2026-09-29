@@ -1,0 +1,10 @@
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py
+@@ -21,6 +21,7 @@
+     clock = {"now": 0.0}
+     calls = {"updates": [], "evaluations": []}
+     monkeypatch.setattr(ma.time, "time", lambda: clock["now"])
++    monkeypatch.setattr(ma.time, "perf_counter", lambda: clock["now"])
+     monkeypatch.setattr(model, "_select_hard_examples_for_projection", lambda rows, **_: list(rows))
+     monkeypatch.setattr(state, "copy", lambda: pytest.fail("whole-state copy"))
+ 

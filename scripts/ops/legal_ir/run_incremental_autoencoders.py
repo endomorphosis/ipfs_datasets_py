@@ -57,6 +57,7 @@ def orchestration_hashes():
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualification_pool.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
              ROOT / "ipfs_datasets_py/duckdb_control/autoencoder_registry.py"]
     paths.extend(ROOT / "ipfs_datasets_py" / relative for relative in QUALIFICATION_DEPENDENCIES)
@@ -140,7 +141,9 @@ def local_records(path):
 def make_templates(registry, records, *, state_directory, checkpoint, source_hashes,
                    max_seconds=180.0, source_language="en", model_variant="incremental-modal",
                    arrow_feature_weights=None, shared_targets=None, target_snapshot_id=None,
-                   validation_records=(), composed_refinement_attempts=0):
+                   validation_records=(), composed_refinement_attempts=0,
+                   epochs=1, learning_rate=0.35, line_search_attempts=1,
+                   projection_optimizer_mode="fixed", projection_momentum=0.0):
     """Create one-span gradient jobs with disjoint tuning rows for selection.
 
     The same validation rows also undergo final qualification. Repeated use
@@ -195,6 +198,10 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
             "samples": [record["sample"]], "validation_samples": validation_samples, "variant": variant,
             "autoencoder_config": {"compute_device": "python"},
             "training_config": {"max_seconds": max_seconds, "profile_projection": True,
+                                "epochs": epochs, "learning_rate": learning_rate,
+                                "max_line_search_attempts": line_search_attempts,
+                                "projection_optimizer_mode": projection_optimizer_mode,
+                                "projection_momentum": projection_momentum,
                                 "projection_max_update_families": 5,
                                 "projection_max_composed_refinement_attempts": composed_refinement_attempts},
             "capture_sparse_patches": True, "candidate_storage": "sparse",
@@ -203,11 +210,19 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
     return result
 
 
+def _nondefault_optimizer_settings(config):
+    defaults = {"epochs": 1, "learning_rate": 0.35, "line_search_attempts": 1,
+                "projection_optimizer_mode": "fixed", "projection_momentum": 0.0}
+    return any(config.get(name, default) != default for name, default in defaults.items())
+
+
 def run_cycle(config):
     """Execute one bounded poll/dispatch page, in an isolated child process."""
     mode = config.get("execution_mode", "training")
     if mode not in {"inference", "training"}:
         raise ValueError("unknown autoencoder execution gate")
+    if mode == "inference" and _nondefault_optimizer_settings(config):
+        raise ValueError("optimizer settings require the training execution mode")
     bind_execution_mode(config["state_directory"], mode)
     if mode == "inference":
         from types import SimpleNamespace
@@ -258,6 +273,10 @@ def run_cycle(config):
                 shared_targets=config.get("shared_targets"), target_snapshot_id=config.get("target_snapshot_id"),
                 validation_records=validation,
                 composed_refinement_attempts=config.get("composed_refinement_attempts", 0),
+                epochs=config.get("epochs", 1), learning_rate=config.get("learning_rate", 0.35),
+                line_search_attempts=config.get("line_search_attempts", 1),
+                projection_optimizer_mode=config.get("projection_optimizer_mode", "fixed"),
+                projection_momentum=config.get("projection_momentum", 0.0),
             )
             report = run_qualified_incremental_training(
                 registry, templates, state_directory=state / "progress",
@@ -507,6 +526,16 @@ def parser():
     p.add_argument("--lake-timeout-seconds", type=int, default=120)
     p.add_argument("--max-bundles", type=int, default=4)
     p.add_argument("--max-seconds", type=float, default=180)
+    p.add_argument("--epochs", type=int, choices=range(1, 33), default=1,
+                   help="Bounded epochs per job; the existing total optimizer deadline still applies")
+    p.add_argument("--learning-rate", type=float, default=0.35,
+                   help="Initial optimizer learning rate within (0,1]")
+    p.add_argument("--line-search-attempts", type=int, choices=range(1, 11), default=1,
+                   help="Candidate attempt bound per update family, including optional momentum trials")
+    p.add_argument("--projection-optimizer-mode", choices=["fixed", "guarded_adaptive"], default="fixed",
+                   help="Adaptive search requires disjoint validation; rate/history reset for each training job")
+    p.add_argument("--projection-momentum", type=float, default=0.0,
+                   help="Optional job-local momentum within 0..0.9; requires adaptive search and at least two attempts")
     p.add_argument("--composed-refinement-attempts", type=int, choices=range(4), default=0,
                    help="Opt in to 1..3 bounded reconstruction refinements after strict candidate selection; requires disjoint validation")
     p.add_argument("--polls", type=int, default=1, help="0 runs until interrupted")
@@ -536,6 +565,17 @@ def main(argv=None):
         p.error("--shared-targets and --target-snapshot-id must be supplied together")
     if args.composed_refinement_attempts and (args.execution_mode != "training" or not args.validation_jsonl):
         p.error("composed refinement requires training mode and disjoint --validation-jsonl")
+    if not math.isfinite(args.learning_rate) or not 0 < args.learning_rate <= 1:
+        p.error("learning-rate must be finite and within (0,1]")
+    if not math.isfinite(args.projection_momentum) or not 0 <= args.projection_momentum <= 0.9:
+        p.error("projection-momentum must be finite and within 0..0.9")
+    if args.projection_momentum and (args.projection_optimizer_mode != "guarded_adaptive"
+                                     or args.line_search_attempts < 2):
+        p.error("projection momentum requires guarded_adaptive and at least two line-search-attempts")
+    if args.projection_optimizer_mode == "guarded_adaptive" and not args.validation_jsonl:
+        p.error("guarded_adaptive requires disjoint --validation-jsonl")
+    if args.execution_mode == "inference" and _nondefault_optimizer_settings(vars(args)):
+        p.error("optimizer settings require the training execution mode")
     if type(args.workers) is not int or args.workers < 0 or args.workers > 32:
         p.error("invalid worker count or machine shard assignment")
     if not 0 <= args.parallel_workers <= 32:

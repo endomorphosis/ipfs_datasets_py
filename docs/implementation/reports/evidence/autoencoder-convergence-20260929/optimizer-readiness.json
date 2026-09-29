@@ -1,0 +1,35 @@
+{
+  "admitted": false,
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "after_sha256": "474646fac68afc3f598e7184769399a0babd32b18d481af5ecd8ff9c6ca9971a",
+      "before_sha256": "53e7db399dab42ac6fe90b737b5c71b8d8013b5e05e4f9009182ddd480e048d0",
+      "bytes": 1395187,
+      "new_file": false
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "after_sha256": "eafb53a8b88f62f0c8798942455ad3c8cf03cf858bafc2e950e5cb6fb1cc1ee9",
+      "before_sha256": null,
+      "bytes": 13789,
+      "new_file": true
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py": {
+      "after_sha256": "b23f8cedef84e2cde6fe7af3479d0b71622b239e98cd3b7fc185d0df336203bd",
+      "before_sha256": null,
+      "bytes": 20508,
+      "new_file": true
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py": {
+      "after_sha256": "ef0d45c60a7a8d0c02659afa41393bbab3a43ecae802bb6c64d9c032ba04e910",
+      "before_sha256": "483d1d64924308cabd8c4ab1062928308025a2eaf330f27c74655f15a1858b48",
+      "bytes": 18808,
+      "new_file": false
+    }
+  },
+  "frozen": true,
+  "native_training": false,
+  "nonfinite_comparison": "nonfinite-guard-comparison.json",
+  "passed": true,
+  "test_log": "optimizer-focused-tests.log",
+  "test_summary": "============================= 134 passed in 2.79s =============================="
+}
