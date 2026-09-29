@@ -1,0 +1,153 @@
+{
+  "schema": "daemon-resource-reservations-v1",
+  "reservation_id": "b9a1156285b44571ab35407344dd3608",
+  "scheduler_lane": "hammer_lean",
+  "workload": "canonical_trainer",
+  "status": "released",
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "roots": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      "device": 66306,
+      "inode": 66764317
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      "device": 66306,
+      "inode": 58092485
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      "device": 66306,
+      "inode": 51016937
+    },
+    {
+      "path": "/tmp/pytest-of-barberb",
+      "device": 66306,
+      "inode": 526155
+    }
+  ],
+  "storage_limit_bytes": 85000000000,
+  "record": {
+    "artifacts_durable_asserted": true,
+    "attempt_directory": {
+      "device": 66306,
+      "inode": 68421067,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/evidence"
+    },
+    "child": {
+      "birth": "126551039",
+      "pid": 2171753
+    },
+    "child_process_slots": 3,
+    "cpu_slots": 1,
+    "created_at": 1790697190.134849,
+    "external_charges": {
+      "isolated-source-checkout": 1316777216
+    },
+    "last_charge_usage": {
+      "additional_requested_bytes": 0,
+      "attempt_bytes": 0,
+      "attempt_limit_bytes": 1375497472,
+      "charged_bytes": 82670959830,
+      "checked_at": 1790697196.5522785,
+      "external_charged_bytes": 1316777216,
+      "inventory": {
+        "apparent_bytes": 50563685142,
+        "entry_count": 304644,
+        "special_file_count": 25,
+        "symlink_count": 4005
+      },
+      "limit_bytes": 85000000000,
+      "minimum_filesystem_free_bytes": 153661046784,
+      "observed_apparent_bytes": 50563685142,
+      "outstanding_full_reservations_bytes": 32107274688,
+      "scope": "named_roots_only_apparent_bytes",
+      "total_attempt_charged_bytes": 1316777216
+    },
+    "last_usage": {
+      "observed_apparent_bytes": 50527745862,
+      "outstanding_full_reservations_bytes": 32282274688,
+      "additional_requested_bytes": 0,
+      "charged_bytes": 82810020550,
+      "limit_bytes": 85000000000,
+      "minimum_filesystem_free_bytes": 153634357248,
+      "scope": "named_roots_only_apparent_bytes",
+      "inventory": {
+        "apparent_bytes": 50527745862,
+        "entry_count": 310911,
+        "symlink_count": 4086,
+        "special_file_count": 26
+      },
+      "attempt_bytes": 6125,
+      "attempt_limit_bytes": 1375497472,
+      "external_charged_bytes": 1316777216,
+      "total_attempt_charged_bytes": 1316783341,
+      "group_rss": {
+        "available": true,
+        "live_processes": 0,
+        "rss_bytes": 0
+      },
+      "memory_limit_bytes": 4294967296,
+      "reserved_child_process_slots": 3,
+      "process_slot_estimate_exceeded": false,
+      "checked_at": 1790697236.0373588
+    },
+    "memory_mb": 4096,
+    "owner_pid": 2168065,
+    "prior_children": [],
+    "reservation_id": "b9a1156285b44571ab35407344dd3608",
+    "scheduler_lane": "hammer_lean",
+    "status": "released",
+    "storage_bytes": 1375497472,
+    "workload": "canonical_trainer",
+    "released_at": 1790697236.0480504,
+    "final_accounting": {
+      "observed_apparent_bytes": 50527745862,
+      "outstanding_full_reservations_bytes": 30906777216,
+      "additional_requested_bytes": 0,
+      "charged_bytes": 81434523078,
+      "limit_bytes": 85000000000,
+      "minimum_filesystem_free_bytes": 153634357248,
+      "scope": "named_roots_only_apparent_bytes",
+      "inventory": {
+        "apparent_bytes": 50527745862,
+        "entry_count": 310911,
+        "symlink_count": 4086,
+        "special_file_count": 26
+      }
+    },
+    "final_attempt_bytes": 6125,
+    "final_external_charged_bytes": 1316777216,
+    "final_total_charged_bytes": 1316783341,
+    "attempt_exceeded_reservation": false,
+    "finalization_profile": {
+      "schema_version": "daemon-resource-finalization-profile/v1",
+      "ledger_lock_wait_seconds": 0.0002505651209503412,
+      "strict_attempt_inventory_seconds": 0.0002021638210862875,
+      "global_accounting_seconds": 3.3040345669724047,
+      "process_check_seconds": 0.021592599106952548,
+      "global_inventory_count": 1,
+      "strict_attempt_inventory_count": 1,
+      "scope": "one_fresh_locked_census_with_full_claim_checked_before_release"
+    }
+  },
+  "resource_lease": {
+    "lease_id": "54a3a920a9ff4fcabce1e91a38b3a89b",
+    "lane": "hammer_lean",
+    "cpu_slots": 1,
+    "memory_mb": 4096,
+    "gpu_memory_mb": 0,
+    "unified_memory_mb": 0,
+    "child_process_slots": 3,
+    "requires_gpu": false,
+    "parent_lease_id": null,
+    "owner_pid": 2168065,
+    "acquired_at": 1790697190.1572237,
+    "wait_seconds": 4.959292709827423e-07,
+    "released": true,
+    "cancelled": true
+  },
+  "cleanup_error": null,
+  "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota"
+}

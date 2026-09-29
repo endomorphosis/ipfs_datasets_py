@@ -1,0 +1,397 @@
+{
+  "schema": "source-integration-final-readonly-audit/v2",
+  "created_at": "2026-09-29T15:59:22.065489+00:00",
+  "baseline_origin_main": "74a4d291d805449e350cdfec0484317630c51121",
+  "comparison_release_commit": "02d5739d5fd83b49da920d1448b598c45d243071",
+  "comparison_release_tree": "3f118c87c12efa7f1b9086b1842f4f18c1a202e3",
+  "supersedes_audit": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-lease-20260929T150000Z/final-readonly-publication-audit.json",
+    "sha256": "553dbeca7435bc73e13e2dc85584539e65122217de31433fd0f157418b1e0ff4",
+    "bytes": 18732
+  },
+  "candidate_publication_scope": {
+    "file_count": 11,
+    "same_paths_as_prior_review": true,
+    "files": [
+      {
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py",
+        "release_sha256": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+        "release_bytes": 10375,
+        "live_sha256": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+        "release_matches_live": true,
+        "capsule_sha256": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+        "release_matches_capsule": true
+      },
+      {
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_merge.py",
+        "release_sha256": "775f31eb475706c4f82c71d673cd52f3908d8fbeacc5faa42838b7999e6ff3c6",
+        "release_bytes": 16521,
+        "live_sha256": "775f31eb475706c4f82c71d673cd52f3908d8fbeacc5faa42838b7999e6ff3c6",
+        "release_matches_live": true,
+        "capsule_sha256": "775f31eb475706c4f82c71d673cd52f3908d8fbeacc5faa42838b7999e6ff3c6",
+        "release_matches_capsule": true
+      },
+      {
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py",
+        "release_sha256": "ff01a6020d9e048c1e5683dd6beeb028dc021ef75114c114a00c1bf3b1da75c0",
+        "release_bytes": 43544,
+        "live_sha256": "ff01a6020d9e048c1e5683dd6beeb028dc021ef75114c114a00c1bf3b1da75c0",
+        "release_matches_live": true,
+        "capsule_sha256": "ff01a6020d9e048c1e5683dd6beeb028dc021ef75114c114a00c1bf3b1da75c0",
+        "release_matches_capsule": true
+      },
+      {
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+        "release_sha256": "9e1043f39507cd3be06cf1131f9be5f4787b2a71da5f7ccbe5ae76762482fbd1",
+        "release_bytes": 998965,
+        "live_sha256": "9e1043f39507cd3be06cf1131f9be5f4787b2a71da5f7ccbe5ae76762482fbd1",
+        "release_matches_live": true,
+        "capsule_sha256": "9e1043f39507cd3be06cf1131f9be5f4787b2a71da5f7ccbe5ae76762482fbd1",
+        "release_matches_capsule": true
+      },
+      {
+        "path": "ipfs_datasets_py/utils/symai_config.py",
+        "release_sha256": "f904da58b1fa4016b123736ead77d921a941196529335ae4d9b21ee32c795b52",
+        "release_bytes": 10378,
+        "live_sha256": "f904da58b1fa4016b123736ead77d921a941196529335ae4d9b21ee32c795b52",
+        "release_matches_live": true,
+        "capsule_sha256": "f904da58b1fa4016b123736ead77d921a941196529335ae4d9b21ee32c795b52",
+        "release_matches_capsule": true
+      },
+      {
+        "path": "scripts/ops/legal_ir/merge_autoencoder_source.py",
+        "release_sha256": "bbffd4336aecd476c5ee74921c474ea8fd46abb3bc92f968fb8d13da6398449c",
+        "release_bytes": 6666,
+        "live_sha256": "bbffd4336aecd476c5ee74921c474ea8fd46abb3bc92f968fb8d13da6398449c",
+        "release_matches_live": true,
+        "capsule_sha256": "bbffd4336aecd476c5ee74921c474ea8fd46abb3bc92f968fb8d13da6398449c",
+        "release_matches_capsule": true
+      },
+      {
+        "path": "scripts/ops/legal_ir/run_frozen_autoencoder_source.py",
+        "release_sha256": "c65e90c1e346d9de3f783e79afdfd44549d8afd0b7f4e50940032747f65ce624",
+        "release_bytes": 3396,
+        "live_sha256": "c65e90c1e346d9de3f783e79afdfd44549d8afd0b7f4e50940032747f65ce624",
+        "release_matches_live": true,
+        "capsule_sha256": "c65e90c1e346d9de3f783e79afdfd44549d8afd0b7f4e50940032747f65ce624",
+        "release_matches_capsule": true
+      },
+      {
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_lease.py",
+        "release_sha256": "4dfae239e749c5526dc23f44af1557160a6e8a6f72dc635564065ae99bb02d5d",
+        "release_bytes": 12858,
+        "live_sha256": "4dfae239e749c5526dc23f44af1557160a6e8a6f72dc635564065ae99bb02d5d",
+        "release_matches_live": true
+      },
+      {
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_merge.py",
+        "release_sha256": "24d84d88344daee15f141e72a8b770292a60eba16e20db6f6403d74fbb9fe0de",
+        "release_bytes": 15418,
+        "live_sha256": "24d84d88344daee15f141e72a8b770292a60eba16e20db6f6403d74fbb9fe0de",
+        "release_matches_live": true
+      },
+      {
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py",
+        "release_sha256": "6e133f833d48b2ef60e8c0b22c2299d369f61f12855b6968a3310a7d77b1c30c",
+        "release_bytes": 17235,
+        "live_sha256": "6e133f833d48b2ef60e8c0b22c2299d369f61f12855b6968a3310a7d77b1c30c",
+        "release_matches_live": true
+      },
+      {
+        "path": "tests/unit/utils/test_symai_config_import_order.py",
+        "release_sha256": "89e0fee0aca118856b1bd3a5500b5efbf88324eb945432a2ed0411a408b0b58c",
+        "release_bytes": 2401,
+        "live_sha256": "89e0fee0aca118856b1bd3a5500b5efbf88324eb945432a2ed0411a408b0b58c",
+        "release_matches_live": true
+      }
+    ],
+    "all_match_live": true,
+    "captured_runtime_file_count": 7,
+    "all_captured_runtime_files_match_release": true
+  },
+  "native_source_generation": {
+    "manifest": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1551Z-r5/capsule/manifest.json",
+      "sha256": "34fc62aecb04268df738537be603978a5069d19fee5e17168c534836cb8416af",
+      "bytes": 5072752
+    },
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "source_bytes": 393809638,
+    "file_count": 10009,
+    "matches_entire_release_tree": false,
+    "complete_producer_guard_unchanged": true,
+    "runtime_imports_observed_by_this_audit": false,
+    "runtime_import_statement": "The audit confirms canonical source manifest mappings and seven scoped runtime/script file byte identities; it does not replace running-process tree-pin receipts.",
+    "recorded_preflight_import_consistency": {
+      "preflight": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/frozen-launch/preflight.json",
+        "sha256": "daaa2a67eabdb0ef39d59049894f85ca29999603f7d707efd4d95ceab323053b",
+        "bytes": 2658
+      },
+      "host_acknowledgment": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/frozen-launch/host-verified.json",
+        "sha256": "ee52abbed210645f5e48a1f219285c84ceed5c9c82c63913105cd2baada3db7a",
+        "bytes": 178
+      },
+      "configuration": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/frozen-launch/configuration.json",
+        "sha256": "9f674b98d07460fbbdf258ab0c0b6de73094b6a112e1bdb558a9f2dba8085b2c",
+        "bytes": 1784
+      },
+      "tree_pin": {
+        "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+        "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+      },
+      "all_origins_canonical": true,
+      "capsule_matches_requested_r5": true,
+      "read_only_mounts_verified_by_launcher": true,
+      "host_acknowledgment_binds_exact_preflight": true,
+      "scope": "Read-only audit of recorded startup receipts, not an inspection of resident worker modules and not native completion or qualification."
+    }
+  },
+  "preexisting_source_difference_inventory": {
+    "scope": "Every captured root-repository datasets-package/legal-IR-script Python blob was compared directly with the immutable release tree. Nested Gitlink source and explicit workspace harnesses are separately capsule-bound and excluded from this root-repository comparison.",
+    "tracked_python_files_compared": 7362,
+    "differing_file_count": 18,
+    "differing_files": [
+      {
+        "path": "ipfs_datasets_py/huggingface/autoformal_span_cache.py",
+        "capsule_sha256": "ec0835dfc7ed80e171927ae50b4f518a10e1ae1e101c5b0caa6a3f8236ed436e",
+        "capsule_bytes": 7746,
+        "release_sha256": "13cf6fe7ef82838dc37141019d0d086a50ac9d1f4a14c7bb4ec4f9b9b3521566",
+        "release_bytes": 7664,
+        "release_blob": "c9c367410857df529159b8652bea95846c9edd12"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/entity_cache.py",
+        "capsule_sha256": "cc58b91024b20c709c67af120028ff2fae76b057a2abfd2b62b5b747cd5d4ed4",
+        "capsule_bytes": 79654,
+        "release_sha256": "35f9ad3bd0a7d5afb9b3e59ead221102e3a6670d9004e11fe4bac8b05c964bf7",
+        "release_bytes": 71426,
+        "release_blob": "61061f96e2e8c8bfc66a1a42aa037ad2cc4c7ab3"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/lean_units.py",
+        "capsule_sha256": "fd22c6f66edde6688e59d1df581694c9d4c788cdc1b674d3cb25e6bf1bb1e037",
+        "capsule_bytes": 8159,
+        "release_sha256": "d1979db995edf1e6471e2998f2f5f92bb390042f3e85c049915f0fefdb3c5760",
+        "release_bytes": 5144,
+        "release_blob": "8b65f5fb6c7a9b34dacfccc008b27201ffae4997"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/meta_ontology.py",
+        "capsule_sha256": "4fcb538a7b15e2074fa08bf8d7e297fb742471be9ff826a92b1ded911b836e05",
+        "capsule_bytes": 22763,
+        "release_sha256": "741692543fdcac5580cbe1cb28149be5dcb0cce7204bab94b3f3d121fc5f07f7",
+        "release_bytes": 11020,
+        "release_blob": "23e80acac45d360843d70aa8774e91deee8593eb"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/span_cache.py",
+        "capsule_sha256": "2cfb0260aed12f9588562063cdb3cdc7b079f35942d607a1684b08b924672964",
+        "capsule_bytes": 73312,
+        "release_sha256": "4eb838fac5a4a1a229ed31dcdbb9364067c9178bed5c221d7caf4563ba51860c",
+        "release_bytes": 64106,
+        "release_blob": "b866e6257dddcdfa3265123ae12880422ae38dc7"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/worker_budget.py",
+        "capsule_sha256": "2bd0a41ec8e7dbbe5c8c90fb7e7e8bc8ffdd4327edceb06f3532416ebb396c55",
+        "capsule_bytes": 2585,
+        "release_sha256": "045a2a067c9eff2c1963bc0ceaac50ed712f13fadc18f0fc1807e864615032a9",
+        "release_bytes": 1500,
+        "release_blob": "a61dc15bf69dc9fb705c65ef6817b1717fc4ccaf"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/deontic/formula_builder.py",
+        "capsule_sha256": "6a220bf20aa8bdb24dd14d8b3467554d674cfadd0b44e88f3d019ce0b02afb2a",
+        "capsule_bytes": 392561,
+        "release_sha256": "dc53e7c4875a2afa98e100177c0d70e224e1945048f18993333f72c313529109",
+        "release_bytes": 395573,
+        "release_blob": "84e5bbf331c672ebd06794af750adf945c0daabe"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+        "capsule_sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+        "capsule_bytes": 300668,
+        "release_sha256": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+        "release_bytes": 305902,
+        "release_blob": "4af5c8cec7e4cec8626042d7aaca2eb072a6ce81"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+        "capsule_sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+        "capsule_bytes": 37034,
+        "release_sha256": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+        "release_bytes": 38352,
+        "release_blob": "4823a9845829ea14f7aec9b3aaa63164b5dce2c4"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "capsule_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+        "capsule_bytes": 13437,
+        "release_sha256": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+        "release_bytes": 14528,
+        "release_blob": "a571b40af34ccce49054726a200a9e16e63c47ea"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/modal/decompiler.py",
+        "capsule_sha256": "daddb94ed2170b1d4be5011c6294e024f705b6d75b2f5c853066b24d3271d929",
+        "capsule_bytes": 890498,
+        "release_sha256": "04959738f30dd88243f5f54b6b4d42957ba21d8e97e000e96c4121daee86dbce",
+        "release_bytes": 890894,
+        "release_blob": "8b0a4057edf617afad87967193ef21a0616c560c"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/software_contracts/content.py",
+        "capsule_sha256": "a7036a66ec6b476a78cb3e9a2384eaf9dca72cb8c7cf57ed0b25cd3b592720c9",
+        "capsule_bytes": 21152,
+        "release_sha256": "c69cb85f0901a9a678bcbdf7738ab00095bbe45c5b40d875f2099474bd2a059c",
+        "release_bytes": 20207,
+        "release_blob": "b0f62379855c548cb09eabd0c55ac9a9cb9b0fda"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/software_contracts/semantic_state/merkle.py",
+        "capsule_sha256": "526b8d427247e11a4d3cf9fd568304c8448c4358c0772a28b5637e887d2512e0",
+        "capsule_bytes": 33366,
+        "release_sha256": "41e7ffb908a69940de2e847aeb066aa39db659bf2d5ebbe3934b7341c5bfc83c",
+        "release_bytes": 31734,
+        "release_blob": "e5d0b00f5e7c8fadbd84b3e0991ca3529b44506b"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/software_verification/pipeline.py",
+        "capsule_sha256": "2103f1d21076e79c381a2daa4ef2a70db44d40ee0a4f499b28332ac5a0c76fb2",
+        "capsule_bytes": 51594,
+        "release_sha256": "107af9270284ecc4d1c32ebcc6635fe353ba2ff8af1aa054e9b3c5f567653bd3",
+        "release_bytes": 49299,
+        "release_blob": "64bb199286e65fdf6c6ecc56d30699416b029e3a"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/software_verification/source_adapters.py",
+        "capsule_sha256": "ce961c640f7404fc25c01601680a660bcae5ec033afe465f0bdd5bdc192fdb2f",
+        "capsule_bytes": 65952,
+        "release_sha256": "dd52c743cd4be34c8bcade66d51c9191615c3978e58c5e72b945c4e8e7cc9d90",
+        "release_bytes": 65437,
+        "release_blob": "c4a2f8970d97480d0ea9f62be9d7cf8f7d75ca89"
+      },
+      {
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+        "capsule_sha256": "d19baa8d947f13af265b0871b8324948d4f2a96e79b0f0574cc29d2927f82115",
+        "capsule_bytes": 1416656,
+        "release_sha256": "60ab66aee3223f041d149fa462179fb361c8c8cee775674794479cef4112dddb",
+        "release_bytes": 1416488,
+        "release_blob": "99beada4033594615d5ad122568618e69b08af0c"
+      },
+      {
+        "path": "scripts/ops/legal_ir/ingest_ipfs_uscode_entities.py",
+        "capsule_sha256": "12deaa15d57ff75977105f7aa74b0a750cffada6e9f876f16d6d5f87d888f7bc",
+        "capsule_bytes": 40821,
+        "release_sha256": "b90e0f2e9df108153c9d72da6df0cc03e28bcb4cde062c8a2b9da1c76fec949d",
+        "release_bytes": 17309,
+        "release_blob": "3f50c339cbb0a3f13935ddc8eb53f0b4c76f118c"
+      },
+      {
+        "path": "scripts/ops/legal_ir/publish_kg_meta_ontology.py",
+        "capsule_sha256": "41d8af4124c398e90f4f5f4c4ca7b3ebbe82c74b08c7516b1eeaa2ce80f91392",
+        "capsule_bytes": 4435,
+        "release_sha256": "2b6450f45ab55364d9a340f9caed481ace3ce114e0af3d4cd0229151e06bc063",
+        "release_bytes": 7072,
+        "release_blob": "3585411273d1c88f3db272cf23edb885f87d68c1"
+      }
+    ],
+    "extra_file_count": 3,
+    "extra_files": [
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/law_package.py",
+        "capsule_sha256": "810043bfa86697ce9519f7bf086f70b18d5df954b9a5fa6eb81fe3d7b111a14f",
+        "capsule_bytes": 54145,
+        "release_blob": null
+      },
+      {
+        "path": "scripts/ops/legal_ir/publish_uscode_lean_for_law.py",
+        "capsule_sha256": "9fcc8444bcee79ef23cd9b6db54d510aab8aa2a64dac8e37a5ac55aa08f9e4a6",
+        "capsule_bytes": 2326,
+        "release_blob": null
+      },
+      {
+        "path": "scripts/ops/legal_ir/run_uscode_formal_logic.py",
+        "capsule_sha256": "c402920630d53f326f62bc786c6a5c91e99602392a902654ef60a7587b3eb8b5",
+        "capsule_bytes": 17471,
+        "release_blob": null
+      }
+    ],
+    "include_in_publication": false,
+    "same_differing_paths_as_prior": true,
+    "same_extra_paths_as_prior": true,
+    "nested_gitlink_scope_excluded": [
+      {
+        "path": "ipfs_datasets_py/logic/CEC/DCEC_Library",
+        "release_gitlink_commit": "a4beb5b3280595be6b9221cac3c91dd019e6d371",
+        "captured_python_file_count": 5,
+        "nested_source_matches_gitlink_commit": "not_evaluated_by_this_root_repository_audit"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/CEC/Eng-DCEC",
+        "release_gitlink_commit": "df518c21ef81b8001e6db59f5fd70f10cc04ff6c",
+        "captured_python_file_count": 3,
+        "nested_source_matches_gitlink_commit": "not_evaluated_by_this_root_repository_audit"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/CEC/Talos",
+        "release_gitlink_commit": "e0b7650d3e3a403924773f8253e924c719748d36",
+        "captured_python_file_count": 4,
+        "nested_source_matches_gitlink_commit": "not_evaluated_by_this_root_repository_audit"
+      },
+      {
+        "path": "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type",
+        "release_gitlink_commit": "d58933631a5362b1e2fdc45254ef620fa231223a",
+        "captured_python_file_count": 103,
+        "nested_source_matches_gitlink_commit": "not_evaluated_by_this_root_repository_audit"
+      },
+      {
+        "path": "ipfs_datasets_py/multimedia/omni_converter_mk2",
+        "release_gitlink_commit": "c1d9b0d517cea022516aab5b5d8fa5e3bc9a65aa",
+        "captured_python_file_count": 342,
+        "nested_source_matches_gitlink_commit": "not_evaluated_by_this_root_repository_audit"
+      },
+      {
+        "path": "ipfs_datasets_py/processors/web_archiving/common_crawl_search_engine",
+        "release_gitlink_commit": "0e635cba586e8f6f6ea8126e3b1668b3e675c029",
+        "captured_python_file_count": 108,
+        "nested_source_matches_gitlink_commit": "not_evaluated_by_this_root_repository_audit"
+      }
+    ]
+  },
+  "source_validation_receipts": [
+    {
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/evidence/receipt.json",
+        "sha256": "9ed23416853806e4c2620606896420835db1631a0b5499ccb17fc1c66120bfcf",
+        "bytes": 6125
+      },
+      "integration_commit": "02d5739d5fd83b49da920d1448b598c45d243071",
+      "internal_ref": "refs/autoencoder/integration/source-freeze-20260929",
+      "applied": true,
+      "returncode": 0,
+      "scope": "operator-specified source integration checks; not native training or qualification",
+      "source_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout",
+      "admitted": false,
+      "model_qualified": false,
+      "resource_status": "released",
+      "resource_reservation_id": "b9a1156285b44571ab35407344dd3608",
+      "resource_receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/evidence/resources.json",
+        "sha256": "95669ffa2082011876574ec176e3c61eeb0965b82aba78da1242a263ebcbaf19",
+        "bytes": 5205
+      }
+    }
+  ],
+  "interpretation": "Native3 validates the captured canonical dirty generation identified by the R5 capsule. Isolated source-integration tests validate the release commit separately. Matching scoped files does not establish native validation of the complete release tree.",
+  "audit_only": true,
+  "native_run_outcome_observed": false,
+  "qualified": false,
+  "admitted": false,
+  "publication_performed_by_audit": false,
+  "source_edits_performed_by_audit": false
+}

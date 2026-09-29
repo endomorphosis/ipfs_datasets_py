@@ -1,0 +1,37 @@
+{
+  "admitted": false,
+  "harnesses": [
+    {
+      "bytes": 35886,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/run_pipeline.py",
+      "sha256": "76050a0be3c0e0887e00435f1ac1beff1efa188e7f54d66cab408ad1c48e137e"
+    },
+    {
+      "bytes": 56270,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/native_stage.py",
+      "sha256": "04c424af0c5ba1d03fcd17346cc7d7d50d1d7fc5a9b2b5ee630fc848feff745f"
+    },
+    {
+      "bytes": 9245,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/size_structural_patch.py",
+      "sha256": "ad0d7086d89414609eb48be44d574c65ef1f6718d4ece19e27ef1fc7c845ae3f"
+    },
+    {
+      "bytes": 6146,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/frozen_smoke.py",
+      "sha256": "b1147e4ef2142e9437075c75c14db180ff593f02ef70625edc61dfaea53e94d7"
+    }
+  ],
+  "manifest": {
+    "bytes": 5072752,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1551Z-r5/capsule/manifest.json",
+    "sha256": "34fc62aecb04268df738537be603978a5069d19fee5e17168c534836cb8416af"
+  },
+  "pipeline_plan": {
+    "bytes": 18844,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/pipeline-plan.json",
+    "sha256": "f9765bb5b6fccfe4aadb79d521fc21bb041ad2ee5068a8594ec834c5764f8cd4"
+  },
+  "schema": "source-integration-native-inputs/v1",
+  "scope": "Native validation of explicitly captured dirty canonical generation; distinct from isolated Git source validation."
+}

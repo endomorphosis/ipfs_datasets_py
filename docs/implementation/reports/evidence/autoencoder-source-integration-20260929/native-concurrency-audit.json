@@ -1,0 +1,327 @@
+{
+  "admitted": false,
+  "bridge_settings": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "cache_scope": "Verified shared training+tuning target artifact; generation charged once in separate preparation receipt. Worker metric caches start empty; this is prepared target reuse, not cold native target generation. Disk cache off; OS caches uncontrolled.",
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "metric_disk_cache": 0,
+    "sample_count": 6,
+    "tuning_sample_count": 2,
+    "use_sample_memory": false
+  },
+  "code_edited": false,
+  "model_qualified": false,
+  "operational_findings": {
+    "completed_jobs": 2,
+    "dispatch_failures": [],
+    "remaining_operational_blocker_observed": false,
+    "source_unchanged": true,
+    "stage_operational_passed": true,
+    "telemetry_limitation": "Existing conservative overlap formula is too weak to demonstrate this run; its false value does not mean training was serial. Add absolute monotonic start/end per phase in future instrumentation if exact optimizer overlap is required.",
+    "training_executed_and_persisted": true
+  },
+  "overlap": {
+    "calculation": {
+      "earliest_possible_training_offset_seconds": 20.0867702299729,
+      "enclosing_training_window_seconds": 26.819546764018014,
+      "latest_possible_training_end_offset_seconds": 46.90631699399091,
+      "training_call_overlap_lower_bound_seconds": 11.815997534664348,
+      "training_duration_sum_seconds": 38.63554429868236
+    },
+    "call_order_source_evidence": [
+      {
+        "end_line": 684,
+        "excerpt": "677:                 wave_start = time.monotonic(); before_bytes = directory_bytes(output)\n678:                 write(wave_dir / 'dispatch-start.json', {'monotonic': wave_start, 'wall_time': time.time(), 'job_ids': [s.job_id for s in specs], 'admitted': False})\n679:                 with SharedWeightRegistry(registry, enable_prototype=True) as shared:\n680:                     dispatch = run_training_jobs(shared, specs, max_workers=2, lease_seconds=300,\n681:                         worker_id_prefix='private-campaign', _native_pool=native_pool)\n682:                     transport = shared.transport_report()\n683:                 native_pool.close(); native_pool = None  # Release two processes/RAM before Lake qualification.\n684:                 dispatch_wall_seconds = time.monotonic() - wave_start",
+        "meaning": "Wave start precedes dispatch submission, and dispatch end follows all worker completions and native-pool close.",
+        "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/native_stage.py",
+        "sha256": "04c424af0c5ba1d03fcd17346cc7d7d50d1d7fc5a9b2b5ee630fc848feff745f",
+        "start_line": 677
+      },
+      {
+        "end_line": 1177,
+        "excerpt": "1163:                                  if defer_target_hydration_gc else _execute_native_training_job_with_reduced_targets)\n1164:                     else:\n1165:                         entry = _execute_native_training_job_with_deferred_gc if defer_target_hydration_gc else worker_function\n1166:                     if owned:\n1167:                         job_ref = registry.verify_artifact(\n1168:                             registry.get_run(spec.run_id)[\"spec\"][\"job_spec_artifact\"])\n1169:                         job_artifact = {**job_ref, \"path\": str(registry.artifact_path(job_ref))}\n1170:                     if native_pool is not None:\n1171:                         future = executor.submit(spec)\n1172:                     elif owned_supervisor is not None:\n1173:                         future = executor.submit(spec, lease=lease, job_artifact=job_artifact)\n1174:                     else:\n1175:                         if owned:\n1176:                             before_submit(spec, lease, job_artifact)\n1177:                         future = executor.submit(entry, spec)",
+        "matches_run_package_source_map": true,
+        "meaning": "Native-pool worker jobs are submitted inside run_training_jobs, which is called after wave_start.",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+        "sha256": "8a08373adbc84a3382ded6a05e1ce67a42ba6969bcc31a99cbdf10d49bc45528",
+        "start_line": 1163
+      },
+      {
+        "end_line": 115,
+        "excerpt": "86: def _execute_pool_job(spec, manifest):\n87:     global _PROCESS_MANIFEST, _PROCESS_JOBS, _WORKER_RUNTIME\n88:     from .autoencoder_training_worker import execute_training_job\n89:     started = time.perf_counter()\n90:     observed = _package_manifest()\n91:     if observed != manifest or (_PROCESS_MANIFEST is not None and observed != _PROCESS_MANIFEST):\n92:         raise ValueError(\"native pool producer source changed; start a fresh cycle\")\n93:     _PROCESS_MANIFEST = observed\n94:     from . import modal_autoencoder\n95:     # Do not reuse target values across jobs or retain their large object graphs.\n96:     # First-use imports may be warm even when this cache is empty.\n97:     cleared = len(modal_autoencoder._LEGAL_IR_TARGET_CACHE)\n98:     modal_autoencoder._LEGAL_IR_TARGET_CACHE.clear()\n99:     gc.collect()\n100:     _WORKER_RUNTIME = {\n101:         \"schema_version\": \"native-training-pool-observation/v1\",\n102:         \"pid\": os.getpid(), \"process_job_index\": _PROCESS_JOBS,\n103:         \"process_reused\": _PROCESS_JOBS > 0,\n104:         \"target_cache_cleared_entries\": cleared,\n105:         \"target_cache_policy\": \"clear_before_and_after_every_job\",\n106:         \"shared_target_artifact_supplied\": getattr(spec, \"target_snapshot_artifact\", None) is not None,\n107:         \"shared_target_validation_scope\": \"worker receipt records independent artifact/configuration/sample verification; pool cache clearing does not discard the immutable shared artifact\",\n108:         \"producer_manifest\": observed,\n109:         \"pre_job_guard_seconds\": time.perf_counter() - started,\n110:         \"retained_model_state\": False,\n111:         \"source_scope\": \"package Python contents before/after every job; preloaded bytecode not attested\",\n112:     }\n113:     try:\n114:         result = execute_training_job(spec)\n115:         if _package_manifest() != manifest:",
+        "matches_run_package_source_map": true,
+        "meaning": "The submitted pool entry calls execute_training_job only after receiving its job.",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+        "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb",
+        "start_line": 86
+      },
+      {
+        "end_line": 162,
+        "excerpt": "153:     def submit(self, spec):\n154:         if self.closed or self.submitted_jobs >= MAX_POOL_JOBS:\n155:             raise ValueError(\"native pool is closed or exhausted\")\n156:         self.submitted_jobs += 1\n157:         return self.executor.submit(_execute_pool_job, spec, self.manifest)\n158: \n159:     def close(self):\n160:         if not self.closed:\n161:             self.closed = True\n162:             self.executor.shutdown(wait=True, cancel_futures=True)",
+        "matches_run_package_source_map": true,
+        "meaning": "submit queues _execute_pool_job; close waits for workers to finish before dispatch_wall_seconds is recorded.",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+        "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb",
+        "start_line": 153
+      },
+      {
+        "end_line": 1060,
+        "excerpt": "1051: def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | None,\n1052:              job_file_sha256: str | None, resources: ExitStack, *,\n1053:              defer_target_hydration_gc: bool = False,\n1054:              reduce_native_targets: bool = False) -> dict[str, Any]:\n1055:     global _PROCESS_SOURCE_HASHES\n1056:     started = time.perf_counter()\n1057:     tree_paths = _require_tree_pin()\n1058:     from . import legal_samples\n1059:     from .legal_samples import build_us_code_sample\n1060:     from . import modal_autoencoder",
+        "matches_run_package_source_map": true,
+        "meaning": "Per-job start timer begins inside _execute.",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+        "sha256": "edbd9cf926be7d628b63aaaf03f95f51ef1ca41d5144c9998b5a60d47ebc4f24",
+        "start_line": 1051
+      },
+      {
+        "end_line": 1353,
+        "excerpt": "1338:     train_started = time.perf_counter()\n1339:     if spec.training_config.profile_projection:\n1340:         from .projection_profiler import ProjectionProfiler\n1341:         training_kwargs[\"projection_profiler\"] = ProjectionProfiler()\n1342:     with observe_ontology_captures(producer_identity={\n1343:         \"scope\": \"worker job label; not a complete dependency or reuse attestation\",\n1344:         \"job_spec_sha256\": spec.canonical_sha256,\n1345:         \"target_snapshot_id\": spec.target_snapshot_id,\n1346:     }) as ontology_observation:\n1347:         if trainer is None:\n1348:             from .autoencoder_paths import TRAINING_PATH, gated_projection_training\n1349:             report = gated_projection_training(model, samples, execution_mode=TRAINING_PATH,\n1350:                                                validation_samples=validation, **training_kwargs)\n1351:         else:\n1352:             report = trainer(model, samples, validation_samples=validation, **training_kwargs)\n1353:     training_seconds = time.perf_counter() - train_started",
+        "matches_run_package_source_map": true,
+        "meaning": "Complete native training-call interval begins train_started and ends after gated_projection_training returns.",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+        "sha256": "edbd9cf926be7d628b63aaaf03f95f51ef1ca41d5144c9998b5a60d47ebc4f24",
+        "start_line": 1338
+      },
+      {
+        "end_line": 1413,
+        "excerpt": "1411:         \"target_load_seconds\": target_load_seconds,\n1412:         \"sample_build_seconds\": sample_build_seconds,\n1413:         \"pretraining_seconds\": train_started - started,",
+        "matches_run_package_source_map": true,
+        "meaning": "Reported pretraining_seconds is train_started minus per-job started.",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+        "sha256": "edbd9cf926be7d628b63aaaf03f95f51ef1ca41d5144c9998b5a60d47ebc4f24",
+        "start_line": 1411
+      },
+      {
+        "end_line": 1573,
+        "excerpt": "1569:     try:\n1570:         with ExitStack() as resources, _worker_environment():\n1571:             return _execute(spec, trainer, job_file_sha256, resources,\n1572:                             defer_target_hydration_gc=defer_target_hydration_gc,\n1573:                             reduce_native_targets=reduce_native_targets)",
+        "matches_run_package_source_map": true,
+        "meaning": "Public worker wrapper enters _execute only after dispatch and pool entry.",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+        "sha256": "edbd9cf926be7d628b63aaaf03f95f51ef1ca41d5144c9998b5a60d47ebc4f24",
+        "start_line": 1569
+      }
+    ],
+    "cpu_interval_scope": "This observed interval precedes the earliest possible training call and demonstrates concurrent worker preparation, not optimizer work.",
+    "cpu_progress_interval_relative_to_dispatch_seconds": [
+      2.1031544911675155,
+      4.12252894602716
+    ],
+    "cpu_progress_seconds": {
+      "2228855": 2.0100000000000002,
+      "2229109": 2.01
+    },
+    "derivation": "Both jobs are submitted after wave_start; worker pretraining_seconds is train_started - worker_started. Both training calls therefore lie inside [wave_start + min(pretraining_seconds), dispatch_end]. For two intervals, overlap >= sum(training_seconds) - length(enclosing interval).",
+    "derived_training_call_overlap_lower_bound_seconds": 11.815997534664348,
+    "dispatch_wall_seconds": 46.90631699399091,
+    "minimum_worker_pretraining_seconds": 20.0867702299729,
+    "recorded_formula": "max(0, sum(training_seconds) - dispatch_wall_seconds)",
+    "recorded_training_overlap_demonstrated": false,
+    "scope": "Overlap of complete training calls, including their model evaluation and optimizer work. No claim of simultaneous execution of optimizer inner-loop instructions. Exact phase timestamps were not recorded.",
+    "source_timing_definition": "autoencoder_training_worker.py:1056,1338,1353,1413; worker_source_sha256 matches current file. native_stage.py:677-684 encloses submission, completion and pool close.",
+    "sum_training_seconds": 38.63554429868236,
+    "worker_source_sha256_matches": true
+  },
+  "qualification_findings": {
+    "all_required_gates_passed": false,
+    "canary_model_evaluated": false,
+    "family_aggregate_failure_explanation": "Every emitted rule projection passes all six family syntax checks; aggregate family gate also requires complete source semantic roundtrip and full row coverage, which fail. Do not report these as syntax parser errors. See autoencoder_candidate_qualification.py:225.",
+    "global_holdout_verified": false,
+    "lake_failure_explanation": "Real-corpus Lake gates stop at source_semantic_roundtrip_failed; the command label lake build Legal is not evidence it ran for these rows. One separate supported minimum-duration fixture actually built Legal; it does not admit the corpus.",
+    "metric_scope": "Projected reconstruction metrics pass unchanged thresholds; raw decoder tuning cosine improves but remains about 0.243. Neither metric is a source semantic proof or independent canary.",
+    "thresholds_changed": false,
+    "train_8h_allowed": false,
+    "upstream_training_eligible": false
+  },
+  "run_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3",
+  "schema": "native-smoke-overlap-and-qualification-readonly-audit/v1",
+  "source_references": [
+    {
+      "bytes": 4408,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/stage-result.json",
+      "sha256": "73c0864f6a9367d5f0bbcebe1597e164d9123689d22dacd30cbcb93061549483"
+    },
+    {
+      "bytes": 41935,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/wave-result.json",
+      "sha256": "f0ab97db346e2c8fd5aae02b6c3518a2af05e33d57690f1619cdfb8194156c11"
+    },
+    {
+      "bytes": 141,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/dispatch-start.json",
+      "sha256": "44b367d7bbf27581f278fe50db313382b50d7765b579000b38dbcd6b02569dd8"
+    },
+    {
+      "bytes": 8957,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/dispatch.json",
+      "sha256": "065877f9bc367d9f6aba8661d309e617ad7828ca7cbccebf671dec5a15b37a22"
+    },
+    {
+      "bytes": 283,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/parallel-evidence.json",
+      "sha256": "4091170f8e63d65672827275574e50cf91d3f760fcf7641c99c77bec89c138e9"
+    },
+    {
+      "bytes": 238566,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/semantic-regression.json",
+      "sha256": "76113e5b6ded36e3c8d0dadd455b5d85c1a95f91899fcb4093a739748913c14f"
+    },
+    {
+      "bytes": 56270,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/native_stage.py",
+      "sha256": "04c424af0c5ba1d03fcd17346cc7d7d50d1d7fc5a9b2b5ee630fc848feff745f"
+    },
+    {
+      "bytes": 97481,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "edbd9cf926be7d628b63aaaf03f95f51ef1ca41d5144c9998b5a60d47ebc4f24"
+    },
+    {
+      "bytes": 26425,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+      "sha256": "0ecba6ffffa24804417d9d834192e53c71edf62d780169134615ac82d6db3674"
+    },
+    {
+      "bytes": 244129,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/fixed035/worker/receipt.json",
+      "sha256": "54b3b09ff4b48bf8e0f771a59e1a0baa604b7a1be60ea79411a7c230445da006"
+    },
+    {
+      "bytes": 250457,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/productive035/worker/receipt.json",
+      "sha256": "e8655f0be2feca1a8ca6f639181ccce48a5eb62d7f5dce6b3e6f3e13910c2b60"
+    },
+    {
+      "bytes": 2106624,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/fixed035/qualification/qualification.json",
+      "sha256": "acb842c82cb4a412e5d471c889e4070df3f0a534d37cf723d49eaed650e425a1"
+    },
+    {
+      "bytes": 2106625,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/productive035/qualification/qualification.json",
+      "sha256": "546ef9aafd0e9569b2148819187f9967a8211fcb55dfd8a1712bff716b335489"
+    },
+    {
+      "bytes": 78534,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "sha256": "8a08373adbc84a3382ded6a05e1ce67a42ba6969bcc31a99cbdf10d49bc45528"
+    },
+    {
+      "bytes": 7896,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    {
+      "bytes": 1109143,
+      "path": "workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/pipeline-source-map.json",
+      "sha256": "abbca92a4f1d50a88dd90d54634c6504b5fcf83c184d4f5604c386339a5756ba"
+    }
+  ],
+  "training_rerun": false,
+  "workers": {
+    "fixed035": {
+      "accepted_epochs": 1,
+      "decoder_observation_changes_acceptance": false,
+      "decoder_preprojection_tuning_cosine_after": 0.242828511249809,
+      "decoder_preprojection_tuning_cosine_before": 0.19611613513818404,
+      "elapsed_seconds": 40.80165066709742,
+      "family_export_projection_count": 11,
+      "gates": {
+        "family_syntax_gate": false,
+        "heldout_gate": true,
+        "lake_gate": false,
+        "metric_gate": true,
+        "semantic_gate": false
+      },
+      "heldout_canary": false,
+      "heldout_role": "tuning_validation",
+      "individual_family_syntax_checks": 66,
+      "individual_family_syntax_checks_passed": 66,
+      "lake_failure_reasons": {
+        "source_semantic_roundtrip_failed": 11
+      },
+      "lake_row_count": 11,
+      "model_emits_text_or_formulas": false,
+      "pretraining_seconds": 21.36616116319783,
+      "reconstruction_projected_tuning_cosine_after": 1.0,
+      "source_semantic_failure_reasons": [
+        "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,definition_scope,unsupported_norm_type",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,unsupported_norm_type",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:recipient",
+        "semantic_integrity:canonical_cycle_ir_mismatch",
+        "semantic_integrity:unresolved_source_cross_reference",
+        "semantic_integrity:unsupported_enumerated_condition_continuation",
+        "semantic_integrity:unsupported_enumerated_condition_scope",
+        "semantic_integrity:unsupported_enumerated_participant_scope",
+        "semantic_integrity:unsupported_negative_interpretive_scope"
+      ],
+      "source_semantic_status_counts": {
+        "abstain": 16,
+        "compiled": 9,
+        "roundtrip_ok": 2
+      },
+      "sparse_patch_bytes": 15370309,
+      "sparse_replay_verified": true,
+      "training_seconds": 19.339803849812597,
+      "worker_pid": 2228855
+    },
+    "productive035": {
+      "accepted_epochs": 1,
+      "decoder_observation_changes_acceptance": false,
+      "decoder_preprojection_tuning_cosine_after": 0.242828511249809,
+      "decoder_preprojection_tuning_cosine_before": 0.19611613513818404,
+      "elapsed_seconds": 39.47704346384853,
+      "family_export_projection_count": 11,
+      "gates": {
+        "family_syntax_gate": false,
+        "heldout_gate": true,
+        "lake_gate": false,
+        "metric_gate": true,
+        "semantic_gate": false
+      },
+      "heldout_canary": false,
+      "heldout_role": "tuning_validation",
+      "individual_family_syntax_checks": 66,
+      "individual_family_syntax_checks_passed": 66,
+      "lake_failure_reasons": {
+        "source_semantic_roundtrip_failed": 11
+      },
+      "lake_row_count": 11,
+      "model_emits_text_or_formulas": false,
+      "pretraining_seconds": 20.0867702299729,
+      "reconstruction_projected_tuning_cosine_after": 1.0,
+      "source_semantic_failure_reasons": [
+        "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,definition_scope,unsupported_norm_type",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,unsupported_norm_type",
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:recipient",
+        "semantic_integrity:canonical_cycle_ir_mismatch",
+        "semantic_integrity:unresolved_source_cross_reference",
+        "semantic_integrity:unsupported_enumerated_condition_continuation",
+        "semantic_integrity:unsupported_enumerated_condition_scope",
+        "semantic_integrity:unsupported_enumerated_participant_scope",
+        "semantic_integrity:unsupported_negative_interpretive_scope"
+      ],
+      "source_semantic_status_counts": {
+        "abstain": 16,
+        "compiled": 9,
+        "roundtrip_ok": 2
+      },
+      "sparse_patch_bytes": 15370319,
+      "sparse_replay_verified": true,
+      "training_seconds": 19.295740448869765,
+      "worker_pid": 2229109
+    }
+  }
+}

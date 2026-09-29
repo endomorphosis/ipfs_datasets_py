@@ -1,0 +1,153 @@
+{
+  "schema": "daemon-resource-reservations-v1",
+  "reservation_id": "1627fc6a5d104ce4bd3c1eb7a6dc0af9",
+  "scheduler_lane": "hammer_lean",
+  "workload": "canonical_trainer",
+  "status": "released",
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "roots": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      "device": 66306,
+      "inode": 66764317
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      "device": 66306,
+      "inode": 58092485
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      "device": 66306,
+      "inode": 51016937
+    },
+    {
+      "path": "/tmp/pytest-of-barberb",
+      "device": 66306,
+      "inode": 526155
+    }
+  ],
+  "storage_limit_bytes": 85000000000,
+  "record": {
+    "artifacts_durable_asserted": true,
+    "attempt_directory": {
+      "device": 66306,
+      "inode": 68170217,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r2/evidence"
+    },
+    "child": {
+      "birth": "126388215",
+      "pid": 1711860
+    },
+    "child_process_slots": 3,
+    "cpu_slots": 1,
+    "created_at": 1790695564.4324536,
+    "external_charges": {
+      "isolated-source-checkout": 1316777216
+    },
+    "last_charge_usage": {
+      "additional_requested_bytes": 0,
+      "attempt_bytes": 0,
+      "attempt_limit_bytes": 1375497472,
+      "charged_bytes": 82776882653,
+      "checked_at": 1790695569.5773046,
+      "external_charged_bytes": 1316777216,
+      "inventory": {
+        "apparent_bytes": 49119110493,
+        "entry_count": 256618,
+        "special_file_count": 23,
+        "symlink_count": 3815
+      },
+      "limit_bytes": 85000000000,
+      "minimum_filesystem_free_bytes": 156449538048,
+      "observed_apparent_bytes": 49119110493,
+      "outstanding_full_reservations_bytes": 33657772160,
+      "scope": "named_roots_only_apparent_bytes",
+      "total_attempt_charged_bytes": 1316777216
+    },
+    "last_usage": {
+      "observed_apparent_bytes": 49147519940,
+      "outstanding_full_reservations_bytes": 33657772160,
+      "additional_requested_bytes": 0,
+      "charged_bytes": 82805292100,
+      "limit_bytes": 85000000000,
+      "minimum_filesystem_free_bytes": 155598233600,
+      "scope": "named_roots_only_apparent_bytes",
+      "inventory": {
+        "apparent_bytes": 49147519940,
+        "entry_count": 262290,
+        "symlink_count": 3884,
+        "special_file_count": 24
+      },
+      "attempt_bytes": 5960,
+      "attempt_limit_bytes": 1375497472,
+      "external_charged_bytes": 1316777216,
+      "total_attempt_charged_bytes": 1316783176,
+      "group_rss": {
+        "available": true,
+        "live_processes": 0,
+        "rss_bytes": 0
+      },
+      "memory_limit_bytes": 4294967296,
+      "reserved_child_process_slots": 3,
+      "process_slot_estimate_exceeded": false,
+      "checked_at": 1790695605.262629
+    },
+    "memory_mb": 4096,
+    "owner_pid": 1708247,
+    "prior_children": [],
+    "reservation_id": "1627fc6a5d104ce4bd3c1eb7a6dc0af9",
+    "scheduler_lane": "hammer_lean",
+    "status": "released",
+    "storage_bytes": 1375497472,
+    "workload": "canonical_trainer",
+    "released_at": 1790695605.2732933,
+    "final_accounting": {
+      "observed_apparent_bytes": 49147519940,
+      "outstanding_full_reservations_bytes": 32282274688,
+      "additional_requested_bytes": 0,
+      "charged_bytes": 81429794628,
+      "limit_bytes": 85000000000,
+      "minimum_filesystem_free_bytes": 155598233600,
+      "scope": "named_roots_only_apparent_bytes",
+      "inventory": {
+        "apparent_bytes": 49147519940,
+        "entry_count": 262290,
+        "symlink_count": 3884,
+        "special_file_count": 24
+      }
+    },
+    "final_attempt_bytes": 5960,
+    "final_external_charged_bytes": 1316777216,
+    "final_total_charged_bytes": 1316783176,
+    "attempt_exceeded_reservation": false,
+    "finalization_profile": {
+      "schema_version": "daemon-resource-finalization-profile/v1",
+      "ledger_lock_wait_seconds": 0.00024645007215440273,
+      "strict_attempt_inventory_seconds": 0.00020174612291157246,
+      "global_accounting_seconds": 2.628715965896845,
+      "process_check_seconds": 0.02170606004074216,
+      "global_inventory_count": 1,
+      "strict_attempt_inventory_count": 1,
+      "scope": "one_fresh_locked_census_with_full_claim_checked_before_release"
+    }
+  },
+  "resource_lease": {
+    "lease_id": "7dcb5c209d2f4e958298354918b82340",
+    "lane": "hammer_lean",
+    "cpu_slots": 1,
+    "memory_mb": 4096,
+    "gpu_memory_mb": 0,
+    "unified_memory_mb": 0,
+    "child_process_slots": 3,
+    "requires_gpu": false,
+    "parent_lease_id": null,
+    "owner_pid": 1708247,
+    "acquired_at": 1790695564.4537678,
+    "wait_seconds": 4.3213367462158203e-07,
+    "released": true,
+    "cancelled": true
+  },
+  "cleanup_error": null,
+  "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota"
+}

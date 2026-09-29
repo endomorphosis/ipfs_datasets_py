@@ -1,0 +1,28 @@
+{
+  "schema": "source-lease-validation/v1",
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py": {
+      "sha256": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+      "bytes": 10375
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py": {
+      "sha256": "9e1043f39507cd3be06cf1131f9be5f4787b2a71da5f7ccbe5ae76762482fbd1",
+      "bytes": 998965
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_lease.py": {
+      "sha256": "4dfae239e749c5526dc23f44af1557160a6e8a6f72dc635564065ae99bb02d5d",
+      "bytes": 12858
+    }
+  },
+  "validation": {
+    "passed": 67,
+    "deselected": 226,
+    "elapsed_seconds": 10.72,
+    "command": "PYTHONPATH=/home/barberb/lift_coding/external/ipfs_datasets PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_lease.py tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_merge.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py -k \"source_lease or source_merge or apply_to_main or main_apply_lock_times_out or executor_can_apply_changes\""
+  },
+  "native_canonical_root_read_only_probe": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "revision": "Support primary common/config.worktree with linked lane override and core.bare migrated to worktree config",
+  "scope": "26 source lease and integration tests;26 source merge tests;15 existing merger regression tests. No native training or admission",
+  "source_guards_weakened": false,
+  "admitted": false
+}

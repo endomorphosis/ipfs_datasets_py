@@ -1,0 +1,114 @@
+{
+  "schema": "frozen-symai-import-repair-v1",
+  "cause": "SyMAI requires writable configuration/log prefix; managed helper then swallowed AttributeError from missing stdlib multiprocessing.pool and retried at restored read-only /usr prefix.",
+  "owned_configuration_environment": "IPFS_DATASETS_PY_SYMAI_PREFIX",
+  "prefix_secret_configs_copied": false,
+  "nested_import_exception": "Traceback (most recent call last):\n  File \"<string>\", line 14, in <module>\n  File \"/home/barberb/.local/lib/python3.12/site-packages/symai/__init__.py\", line 597, in <module>\n    from .components import Function, PrimitiveDisabler  # noqa\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/.local/lib/python3.12/site-packages/symai/components.py\", line 24, in <module>\n    from . import core, core_ext\n  File \"/home/barberb/.local/lib/python3.12/site-packages/symai/core.py\", line 11, in <module>\n    from .symbol import Expression, Metadata\n  File \"/home/barberb/.local/lib/python3.12/site-packages/symai/symbol.py\", line 12, in <module>\n    from .ops import SYMBOL_PRIMITIVES\n  File \"/home/barberb/.local/lib/python3.12/site-packages/symai/ops/__init__.py\", line 1, in <module>\n    from . import primitives as _primitives\n  File \"/home/barberb/.local/lib/python3.12/site-packages/symai/ops/primitives.py\", line 13, in <module>\n    from .. import core, core_ext\n  File \"/home/barberb/.local/lib/python3.12/site-packages/symai/core_ext.py\", line 26, in <module>\n    _pool_registry: dict[int, mp.pool.Pool] = {}\n                              ^^^^^^^\nAttributeError: module 'multiprocessing' has no attribute 'pool'. Did you mean: 'Pool'?\n",
+  "before_bridge_count": 4,
+  "after_bridge_count": 5,
+  "probe": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "evaluate_provers": false,
+    "metric_disk_cache": 0,
+    "multiview_cache": false,
+    "workers": 1,
+    "sample_count": 1,
+    "wall_seconds": 5.087713029002771,
+    "wall_seconds_per_span": 5.087713029002771,
+    "telemetry": {
+      "report_received": true,
+      "report_accepted": true,
+      "attempted_bridge_count": 5,
+      "implemented_bridge_count": 5,
+      "failed_bridge_count": 0,
+      "accepted_bridge_count": 5,
+      "attempted_bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "implemented_bridge_names": [
+        "cec_dcec",
+        "deontic_norms",
+        "external_prover_router",
+        "fol_tdfol",
+        "modal_frame_logic"
+      ],
+      "failed_bridge_names": [],
+      "accepted_bridge_names": [
+        "cec_dcec",
+        "deontic_norms",
+        "external_prover_router",
+        "fol_tdfol",
+        "modal_frame_logic"
+      ],
+      "failures": {},
+      "outer_timeout": null
+    },
+    "target_created": true,
+    "multiprocessing_pool_preloaded": true,
+    "synthetic_fixture_only": true,
+    "symai_prefix": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/symai-prefix",
+    "restored_python_prefix": "/usr",
+    "native_training": false,
+    "autoencoder_evaluate": false,
+    "admitted": false
+  },
+  "source_change": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/symai_config.py",
+    "before_sha256": "1606a99f2c5bd17d257d53e8c928cde2e1e9c29ed39ac230a7c618fc83dbdc9f",
+    "after_sha256": "f904da58b1fa4016b123736ead77d921a941196529335ae4d9b21ee32c795b52",
+    "source_lease": "exclusive write",
+    "change": "Import the stdlib multiprocessing.pool submodule before managed SyMAI import; no engine or prover changes.",
+    "admitted": false
+  },
+  "test": {
+    "passed": 50,
+    "seconds": 1.53,
+    "command": "python3 -m pytest -q tests/unit/utils/test_symai_config_defaults.py tests/unit/utils/test_symai_config_import_order.py tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py"
+  },
+  "new_test": {
+    "path": "tests/unit/utils/test_symai_config_import_order.py",
+    "sha256": "89e0fee0aca118856b1bd3a5500b5efbf88324eb945432a2ed0411a408b0b58c"
+  },
+  "claims": [
+    {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/launcher",
+      "reservation_id": "65015c9f561a4b1bbb7f928b3bb0f9c4",
+      "returncode": 1,
+      "container_absent": true,
+      "resource_receipt_present": false
+    },
+    {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/diagnostic-launcher",
+      "reservation_id": "74ba948e2d514f45a7df60c05134e24d",
+      "returncode": 0,
+      "container_absent": true,
+      "resource_receipt_present": true
+    },
+    {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/preparation-context-launcher",
+      "reservation_id": "f4104605316c42de82784a4e15efa2c8",
+      "returncode": 1,
+      "container_absent": true,
+      "resource_receipt_present": false
+    },
+    {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/stdlib-pool-launcher",
+      "reservation_id": "ed89a51350174709bc1758a9933a2517",
+      "returncode": 0,
+      "container_absent": true,
+      "resource_receipt_present": true
+    }
+  ],
+  "source_frozen": true,
+  "admitted": false
+}

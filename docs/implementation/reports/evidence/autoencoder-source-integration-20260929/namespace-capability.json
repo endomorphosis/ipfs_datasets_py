@@ -1,0 +1,45 @@
+{
+  "schema": "source-isolation-capability-summary-v1",
+  "capability_passed": true,
+  "checks": {
+    "host_pid_identity_matches": true,
+    "host_child_identity_matches": true,
+    "direct_child_group": true,
+    "ledger_inode_matches": true,
+    "frozen_bytes_match": true,
+    "host_edit_did_not_change_frozen_fixture": true,
+    "home_matches": true,
+    "lake_available": true,
+    "child_reaped": true,
+    "frozen_source_write_open_refused": true,
+    "all_frozen_mounts_readonly": true,
+    "writable_mode_fixture_write_refused_by_ro_mount": true,
+    "both_disposable_containers_removed": true
+  },
+  "total_container_wall_seconds": 6.408285865094513,
+  "native_training": false,
+  "resource_claims": false,
+  "tree_pin_weakened": false,
+  "weights_copied_or_downloaded": false,
+  "python_prefix": {
+    "executable": "/usr/bin/python3",
+    "prefix": "/usr",
+    "base_prefix": "/usr"
+  },
+  "lake_version_only": {
+    "returncode": 0,
+    "stdout": "Lake version 5.0.0-src+d8204c9 (Lean version 4.26.0)",
+    "stderr": ""
+  },
+  "full_training_ready": false,
+  "limitations": [
+    "Four source files only were mounted for this capability probe, not a sealed complete training producer tree.",
+    "Native integration needs a complete source snapshot excluding pycache, source manifest checks, writable runtime/ledger mounts, exact parent/child accounting, and qualification gates.",
+    "Snapshot bytes live in a distinct directory; read-only mounts do not prevent privileged or same-host users from mutating backing snapshot bytes, so retain cryptographic guards.",
+    "All original host artifacts, checkpoints and ledger content were left untouched except these new owned probe fixtures."
+  ],
+  "receipts": [
+    "probe-result.json",
+    "mount-probe-result.json"
+  ]
+}

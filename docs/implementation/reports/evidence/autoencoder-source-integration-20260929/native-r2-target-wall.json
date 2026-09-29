@@ -1,0 +1,13 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 153.35321092186496,
+  "frozen": {
+    "manifest": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1538Z-r4/capsule/manifest.json",
+    "sha256": "07b09041ca95303f9d2a8f5e68a310abda25a70a1ca86bee07a3a1043d4c195d",
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "source_bytes": 393805182,
+    "read_only_mounts_verified": true,
+    "admitted": false
+  },
+  "admitted": false
+}

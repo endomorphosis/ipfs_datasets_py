@@ -1,0 +1,143 @@
+{
+  "admitted": false,
+  "baseline_claim_count": 187,
+  "baseline_claims_unchanged": true,
+  "fresh_locked_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 82742659450,
+    "inventory": {
+      "apparent_bytes": 52027659450,
+      "entry_count": 317879,
+      "special_file_count": 26,
+      "symlink_count": 4076
+    },
+    "limit_bytes": 85000000000,
+    "minimum_filesystem_free_bytes": 151115456512,
+    "observed_apparent_bytes": 52027659450,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "new_claims": {
+    "0c2b6c17e79d48c3a9756916c06e77b4": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1531Z-r3",
+      "status": "released"
+    },
+    "0fc2bd1970d0445cb7b169e2ff549840": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1522Z-r2",
+      "status": "released"
+    },
+    "1303285a99934dfd864eb6e905facff3": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1519Z",
+      "status": "released"
+    },
+    "1627fc6a5d104ce4bd3c1eb7a6dc0af9": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r2/evidence",
+      "status": "released"
+    },
+    "1e45b9be427b4d1993e35849fe0c1703": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/frozen-launch",
+      "status": "released"
+    },
+    "20e74144f1c24fec8cea6d50f2dc1749": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/diagnostic",
+      "status": "released"
+    },
+    "2127c59d55244a98b7364498e3b85bef": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation/evidence",
+      "status": "released"
+    },
+    "4222774b6b1f47c49a98ade0ffb6da7b": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke",
+      "status": "released"
+    },
+    "54457a802ec6468f8de8101e8ce3acd9": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-shm-probe-20260929T154448Z",
+      "status": "released"
+    },
+    "590fdc036a304efbbcc95cd37d80c7cb": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/shared-targets",
+      "status": "released"
+    },
+    "634a47d6e2c7400ba385b03449f99277": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1531Z-r2/stages/smoke",
+      "status": "released"
+    },
+    "65015c9f561a4b1bbb7f928b3bb0f9c4": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/launcher",
+      "status": "released"
+    },
+    "6af0ce9fb0dd4d10bd83ded9a9744584": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/frozen-launch",
+      "status": "released"
+    },
+    "6b2eeed3f63c418fb6c6d80ac72d4a01": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/evaluation",
+      "status": "released"
+    },
+    "6bbf9032eb364e53921f44b3e3b0a7b1": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r3/evidence",
+      "status": "released"
+    },
+    "728d973c44d647d0844c064a9948cbfc": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1531Z-r2/shared-targets",
+      "status": "released"
+    },
+    "74ba948e2d514f45a7df60c05134e24d": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/diagnostic-launcher",
+      "status": "released"
+    },
+    "8146abd3f40f48ff831e140d8688c831": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/preparation-context",
+      "status": "released"
+    },
+    "97b83e1c64ae41c3a343be398ebeb0af": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/shared-targets",
+      "status": "released"
+    },
+    "a410173ea06c46c48733f04e0b565bd3": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1538Z-r4",
+      "status": "released"
+    },
+    "ac13bac0dd6a4806b845844258c64547": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/stdlib-pool",
+      "status": "released"
+    },
+    "b9283a73868c484a8bacd5d42920712e": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/structural-sizing-resources",
+      "status": "released"
+    },
+    "b9a1156285b44571ab35407344dd3608": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/evidence",
+      "status": "released"
+    },
+    "d0bb993f643043f6a2ce7c6ce18b29dc": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1531Z-r2/structural-sizing-resources",
+      "status": "released"
+    },
+    "e36649752c224910a5124fcbd5fcce47": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1551Z-r5",
+      "status": "released"
+    },
+    "ec1c82348ef64ae2bc32807d2bbe5e0f": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1531Z-r2/frozen-launch",
+      "status": "released"
+    },
+    "ed89a51350174709bc1758a9933a2517": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/stdlib-pool-launcher",
+      "status": "released"
+    },
+    "f4104605316c42de82784a4e15efa2c8": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/preparation-context-launcher",
+      "status": "released"
+    }
+  },
+  "observed_at": 1790697701.0536978,
+  "protected_checkpoint": {
+    "bytes": 25895338,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "remaining_cap_bytes": 2257340550,
+  "schema": "source-integration-final-resource-audit/v1",
+  "scope": "Read-only ledger census; no historical reservations expired or removed."
+}

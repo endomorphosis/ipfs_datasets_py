@@ -1,0 +1,61 @@
+{
+  "schema": "explicit-single-failed-source-merge-reconciliation/v1",
+  "reservation_id": "2127c59d55244a98b7364498e3b85bef",
+  "reviewed_plan_sha256": "356598e98786377fdb41e357932e21c42a56272d8fd99431bea8a56adb38f06d",
+  "original_owner_pid": 1679508,
+  "reconciled_by_pid": 1787650,
+  "previous_record_sha256": "517155a3ee16a1c81ffa1a97872ad84700661da78a27c5e6d9e91bc79d9452a3",
+  "previous_ledger_sha256": "2f2f958f26eb936a48f4f8edbf6123fca30b61ea01ee199d05743bf0388d876b",
+  "other_reservations_sha256": "c3ef7f0ead2a436415c5f81e0f5c91dd1a943087d92cb3eb9711ae2960d885b1",
+  "preserved_other_reservations_count": 192,
+  "artifacts": [
+    {
+      "path": "failure.json",
+      "bytes": 4546,
+      "sha256": "0e2560d376f7ba3eb3e19354f6bd1a04b2152b5c26bdde9ac762690aea8a63c4"
+    }
+  ],
+  "external_charge_disposition": {
+    "isolated-source-checkout": {
+      "historical_reserved_bytes": 1316777216,
+      "current_bytes": 0,
+      "checkout_removed_before_reconciliation": true,
+      "git_worktree_registration_absent": true
+    }
+  },
+  "full_claim_accounting": {
+    "observed_apparent_bytes": 49147688544,
+    "outstanding_full_reservations_bytes": 32090497472,
+    "additional_requested_bytes": 0,
+    "charged_bytes": 81238186016,
+    "limit_bytes": 85000000000,
+    "minimum_filesystem_free_bytes": 150166962176,
+    "scope": "named_roots_only_apparent_bytes",
+    "inventory": {
+      "apparent_bytes": 49147688544,
+      "entry_count": 262310,
+      "symlink_count": 3884,
+      "special_file_count": 24
+    }
+  },
+  "final_accounting_if_applied": {
+    "observed_apparent_bytes": 49147688544,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "additional_requested_bytes": 0,
+    "charged_bytes": 79862688544,
+    "limit_bytes": 85000000000,
+    "minimum_filesystem_free_bytes": 150166962176,
+    "scope": "named_roots_only_apparent_bytes",
+    "inventory": {
+      "apparent_bytes": 49147688544,
+      "entry_count": 262310,
+      "symlink_count": 3884,
+      "special_file_count": 24
+    }
+  },
+  "applied": true,
+  "outputs_deleted": false,
+  "automatic_expiry": false,
+  "admitted": false,
+  "model_qualified": false
+}

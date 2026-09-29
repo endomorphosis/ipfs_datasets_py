@@ -1,0 +1,38 @@
+{
+  "schema": "source-capsule-implementation-validation-v1",
+  "files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py",
+      "sha256": "8d1af50758e47ac7dd6d91d85497f4a9c13d7cdf9254b270530e78c59ad316d0",
+      "bytes": 39088
+    },
+    {
+      "path": "scripts/ops/legal_ir/run_frozen_autoencoder_source.py",
+      "sha256": "c65e90c1e346d9de3f783e79afdfd44549d8afd0b7f4e50940032747f65ce624",
+      "bytes": 3396
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py",
+      "sha256": "744af0e3d476413e3742417f72b52024795bf65fe403722f05cd6743ccc8b443",
+      "bytes": 15088
+    }
+  ],
+  "tests": {
+    "command": "python3 -m pytest -q tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_lease.py",
+    "passed": 69,
+    "elapsed_seconds": 5.97,
+    "snapshot_test_count": 45,
+    "source_lease_test_count": 24
+  },
+  "container_capability_receipt": "capability-summary.json",
+  "production_capsule_native_run_performed": false,
+  "admitted": false,
+  "frozen_for_native_capture": true,
+  "review_fixes": [
+    "Mutable ledger and scheduler data inodes checked under brief shared control-lock handshake; stable parent and lockfile identities pinned.",
+    "Host SIGTERM and SIGINT enter owned cleanup; container checks host PID birth/liveness during command.",
+    "Explicit extra Python harness parents may be writable with exact file read-only overmount.",
+    "Run wrapper has separate16MiB/1GiB/1CPU reservation; native command retains its own reservations.",
+    "Independent capsule verification does not require live harness to remain."
+  ]
+}

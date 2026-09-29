@@ -1,0 +1,19 @@
+{
+  "schema": "frozen-source-native-smoke/v1",
+  "pipeline_status": "completed",
+  "elapsed_seconds": 293.1461745731067,
+  "frozen": {
+    "manifest": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1551Z-r5/capsule/manifest.json",
+    "sha256": "34fc62aecb04268df738537be603978a5069d19fee5e17168c534836cb8416af",
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "source_bytes": 393809638,
+    "read_only_mounts_verified": true,
+    "admitted": false
+  },
+  "scope": "Operational source isolation and existing diagnostic qualification; no eight-hour admission or independent-canary evaluation.",
+  "admitted": false,
+  "constitution_formalized": false,
+  "weights_downloaded": false,
+  "main_published": false,
+  "hub_published": false
+}

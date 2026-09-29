@@ -1,0 +1,2899 @@
+{
+  "admitted": false,
+  "cells": {
+    "fixed035": {
+      "bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "bridge_on_evaluations": [
+        {
+          "model_metrics_seconds": 0.23762189084663987,
+          "ontology_capture_seconds": 1.649013778893277,
+          "sample_count": 2,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "stage": "before_holdout_evaluation",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 2,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.014490700094029307,
+            "supplied_target_count": 2,
+            "target_cache_miss_count": 0,
+            "target_count": 2,
+            "target_items_seconds": 3.235321491956711e-05,
+            "target_reduction_seconds": 0.24871987593360245,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 0.26331571280024946,
+          "total_seconds": 2.14995373506099
+        },
+        {
+          "model_metrics_seconds": 1.4892294080927968,
+          "ontology_capture_seconds": 6.329125924035907,
+          "sample_count": 6,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "stage": "training_cache_prime",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 6,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.09085572301410139,
+            "supplied_target_count": 6,
+            "target_cache_miss_count": 0,
+            "target_count": 6,
+            "target_items_seconds": 2.7376925572752953e-05,
+            "target_reduction_seconds": 1.4006091919727623,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 1.4915691250935197,
+          "total_seconds": 9.309926568996161
+        },
+        {
+          "model_metrics_seconds": 0.13107215706259012,
+          "ontology_capture_seconds": 1.1422127448022366,
+          "sample_count": 2,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "stage": "line_search_evaluation",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 2,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.009423891082406044,
+            "supplied_target_count": 2,
+            "target_cache_miss_count": 0,
+            "target_count": 2,
+            "target_items_seconds": 3.3967895433306694e-05,
+            "target_reduction_seconds": 0.2567307639401406,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 0.26625166507437825,
+          "total_seconds": 1.5395385671872646
+        },
+        {
+          "model_metrics_seconds": 0.12208291119895875,
+          "ontology_capture_seconds": 1.142300902865827,
+          "sample_count": 2,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "stage": "line_search_evaluation",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 2,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.018121897941455245,
+            "supplied_target_count": 2,
+            "target_cache_miss_count": 0,
+            "target_count": 2,
+            "target_items_seconds": 2.7649104595184326e-05,
+            "target_reduction_seconds": 0.2522747148759663,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 0.2704924389254302,
+          "total_seconds": 1.5348784769885242
+        }
+      ],
+      "candidate_storage": "sparse",
+      "decoder_before_safety_projection": {
+        "after": {
+          "complete": true,
+          "embedding_cosine_similarity_mean": 0.242828511249809,
+          "finite": true,
+          "observed_sample_count": 2,
+          "reconstruction_loss_mean": 0.0025027325665173614,
+          "requested_sample_count": 2,
+          "sample_memory_used": false,
+          "sample_metrics": [
+            {
+              "embedding_cosine_similarity": 0.2526356769726019,
+              "reconstruction_loss": 0.0024976315223816012,
+              "sample_id": "us-code-36-50106-bb17fee26e3ac266"
+            },
+            {
+              "embedding_cosine_similarity": 0.2330213455270161,
+              "reconstruction_loss": 0.0025078336106531215,
+              "sample_id": "us-code-42-8286a-579bf6232e305315"
+            }
+          ],
+          "scope": "decoder_before_reconstruction_safety_projection",
+          "stopped_reason": null,
+          "used_for_acceptance": false
+        },
+        "before": {
+          "complete": true,
+          "embedding_cosine_similarity_mean": 0.19611613513818404,
+          "finite": true,
+          "observed_sample_count": 2,
+          "reconstruction_loss_mean": 0.0025270833813965826,
+          "requested_sample_count": 2,
+          "sample_memory_used": false,
+          "sample_metrics": [
+            {
+              "embedding_cosine_similarity": 0.19611613513818404,
+              "reconstruction_loss": 0.002527083326794979,
+              "sample_id": "us-code-36-50106-bb17fee26e3ac266"
+            },
+            {
+              "embedding_cosine_similarity": 0.19611613513818402,
+              "reconstruction_loss": 0.002527083435998186,
+              "sample_id": "us-code-42-8286a-579bf6232e305315"
+            }
+          ],
+          "scope": "decoder_before_reconstruction_safety_projection",
+          "stopped_reason": null,
+          "used_for_acceptance": false
+        },
+        "changes_acceptance": false,
+        "sample_scope": "tuning"
+      },
+      "elapsed_seconds": 40.80165066709742,
+      "evaluation_timing_scope": "Verified shared native targets reused, not cold target generation; five bridges, provers false, disk cache off, sample memory false. Requested one target worker; zero native generation workers used because targets were supplied.",
+      "legal_ir_evaluate_provers": false,
+      "legal_ir_parallel_workers": 1,
+      "metric_disk_cache": 0,
+      "optimizer_accepted_epochs": 1,
+      "qualification_gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 2
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        }
+      },
+      "qualification_metric_scope": "Bridge-off safety-projected embedding metrics; passed metrics do not imply learned decoder correctness or formalization.",
+      "qualification_receipt": {
+        "bytes": 2106624,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/fixed035/qualification/qualification.json",
+        "sha256": "acb842c82cb4a412e5d471c889e4070df3f0a534d37cf723d49eaed650e425a1"
+      },
+      "qualified": false,
+      "rows": [
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Appropriate authority of a covered public building must ensure that the building contains a lactation room that is made available for use by members of the public to express breast milk unless as provided in subsection (c). Covered public building may be excluded from the requirement in subsection b at the discretion of the appropriate authority. New construction would be must create a lactation room in the public building and the cost of such construction is unfeasible. Nothing in this section must be construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter.",
+            "fields": [
+              "definition_scope",
+              "unsupported_norm_type"
+            ],
+            "reason": "",
+            "roundtrip": true,
+            "rule": {
+              "action": "ensure",
+              "actor": "appropriate authority of a covered public building",
+              "conditions": [],
+              "exceptions": [
+                "as provided in subsection (c)"
+              ],
+              "modality": "O",
+              "object": "that the building contains a lactation room that is made available for use by members of the public to express breast milk",
+              "temporal": []
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-40-3318-429cfc454b54ce35",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.25457990798167884,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c0",
+                "decompiled": "",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 7,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c1",
+                "decompiled": "",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 286,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+                "rule": null,
+                "start": 8,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c2",
+                "decompiled": "",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 520,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+                "rule": null,
+                "start": 287,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c3",
+                "decompiled": "",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 811,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+                "rule": null,
+                "start": 521,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c4",
+                "decompiled": "Appropriate authority of a covered public building must ensure that the building contains a lactation room that is made available for use by members of the public to express breast milk unless as provided in subsection (c).",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 1073,
+                "frame_id": "unassigned",
+                "reason": "",
+                "rule": {
+                  "action": "ensure",
+                  "actor": "appropriate authority of a covered public building",
+                  "conditions": [],
+                  "exceptions": [
+                    "as provided in subsection (c)"
+                  ],
+                  "modality": "O",
+                  "object": "that the building contains a lactation room that is made available for use by members of the public to express breast milk",
+                  "temporal": []
+                },
+                "start": 813,
+                "status": "roundtrip_ok"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c5",
+                "decompiled": "Covered public building may be excluded from the requirement in subsection b at the discretion of the appropriate authority.",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 1489,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "covered public building",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "P",
+                  "object": "excluded from the requirement in subsection b at the discretion of the appropriate authority",
+                  "temporal": []
+                },
+                "start": 1074,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c6",
+                "decompiled": "New construction would be must create a lactation room in the public building and the cost of such construction is unfeasible.",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 1628,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_condition_continuation",
+                "rule": {
+                  "action": "create",
+                  "actor": "new construction would be",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "a lactation room in the public building and the cost of such construction is unfeasible",
+                  "temporal": []
+                },
+                "start": 1491,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c7",
+                "decompiled": "Nothing in this section must be construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter.",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 1832,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_negative_interpretive_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "Nothing in this section",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter",
+                  "temporal": []
+                },
+                "start": 1630,
+                "status": "compiled"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "733e94101d6c703ebc80db262fe2c796df1534f85c8fd61ff7f1385ed49d15c1",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "This tax must be imposed and collected under the same regulations that apply to tonnage taxes. Statement under paragraph (1)(B) must be made by.",
+            "fields": [
+              "procedure",
+              "unsupported_norm_type"
+            ],
+            "reason": "",
+            "roundtrip": true,
+            "rule": {
+              "action": "be",
+              "actor": "This tax",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "imposed and collected under the same regulations that apply to tonnage taxes",
+              "temporal": []
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999998,
+            "embedding_cosine_similarity_raw": 0.9999999999999998,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.13864832511171699,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c0",
+                "decompiled": "",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 8,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c1",
+                "decompiled": "",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 194,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 9,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c2",
+                "decompiled": "This tax must be imposed and collected under the same regulations that apply to tonnage taxes.",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 290,
+                "frame_id": "unassigned",
+                "reason": "",
+                "rule": {
+                  "action": "be",
+                  "actor": "This tax",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "imposed and collected under the same regulations that apply to tonnage taxes",
+                  "temporal": []
+                },
+                "start": 195,
+                "status": "roundtrip_ok"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c3",
+                "decompiled": "",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 1003,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,unsupported_norm_type",
+                "rule": null,
+                "start": 291,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c4",
+                "decompiled": "Statement under paragraph (1)(B) must be made by.",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 1209,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_participant_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "statement under paragraph (1)(B)",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "made by",
+                  "temporal": []
+                },
+                "start": 1005,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c5",
+                "decompiled": "",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 1489,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 1211,
+                "status": "abstain"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "3bb27171e42def39132439ffe72cc74d8da0fb8c033b980a111c6c238bdbd5eb",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies must submit to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of 1 year after august 8 and august 8.",
+            "fields": [],
+            "reason": "",
+            "roundtrip": false,
+            "rule": {
+              "action": "submit",
+              "actor": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of",
+              "temporal": [
+                "1 year after august 8",
+                "august 8"
+              ],
+              "temporal_records": [
+                {
+                  "quantity": 1,
+                  "temporal_kind": "not_later_than",
+                  "value": "1 year after august 8"
+                },
+                {
+                  "quantity": null,
+                  "temporal_kind": "after_date",
+                  "value": "august 8"
+                }
+              ]
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-42-15963-7baaee5c0500d91e",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.08026354294270277,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-15963-7baaee5c0500d91e-c0",
+                "decompiled": "",
+                "document_id": "us-code-42-15963-7baaee5c0500d91e",
+                "end": 8,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-15963-7baaee5c0500d91e-c1",
+                "decompiled": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies must submit to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of 1 year after august 8 and august 8.",
+                "document_id": "us-code-42-15963-7baaee5c0500d91e",
+                "end": 437,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unresolved_source_cross_reference",
+                "rule": {
+                  "action": "submit",
+                  "actor": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of",
+                  "temporal": [
+                    "1 year after august 8",
+                    "august 8"
+                  ],
+                  "temporal_records": [
+                    {
+                      "quantity": 1,
+                      "temporal_kind": "not_later_than",
+                      "value": "1 year after august 8"
+                    },
+                    {
+                      "quantity": null,
+                      "temporal_kind": "after_date",
+                      "value": "august 8"
+                    }
+                  ]
+                },
+                "start": 9,
+                "status": "compiled"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "db5b51daef5cd659b2c04113712e40f775aa29b34ef35ae3fa4573c579f0f27b",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "abstain",
+            "decompiled": "",
+            "fields": [],
+            "reason": "no_parser_elements"
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": []
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-22-2-37b796de116a4487",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.020096105989068747,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "no_parser_elements",
+            "rows": [],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "42e1cf170551ea0b7776ee5bbbc5b38797cb11b5fdf57cf69d0908ae8f0dee03",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence must submit to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community 7 days after the date on which the president issues or amends a covered document if such covered document or annex contains a direction to.",
+            "fields": [
+              "procedure",
+              "definition_scope",
+              "unsupported_norm_type"
+            ],
+            "reason": "",
+            "roundtrip": false,
+            "rule": {
+              "action": "submit",
+              "actor": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence",
+              "conditions": [
+                "such covered document or annex contains a direction to"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community",
+              "temporal": [
+                "7 days after the date on which the president issues or amends a covered document"
+              ],
+              "temporal_records": [
+                {
+                  "quantity": 7,
+                  "temporal_kind": "not_later_than",
+                  "value": "7 days after the date on which the president issues or amends a covered document"
+                }
+              ]
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-50-3114-cc36a2057a2cc4f2",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.1746703980024904,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c0",
+                "decompiled": "",
+                "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+                "end": 7,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c1",
+                "decompiled": "",
+                "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+                "end": 351,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,definition_scope,unsupported_norm_type",
+                "rule": null,
+                "start": 8,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c2",
+                "decompiled": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence must submit to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community 7 days after the date on which the president issues or amends a covered document if such covered document or annex contains a direction to.",
+                "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+                "end": 1005,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:canonical_cycle_ir_mismatch",
+                "rule": {
+                  "action": "submit",
+                  "actor": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence",
+                  "conditions": [
+                    "such covered document or annex contains a direction to"
+                  ],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community",
+                  "temporal": [
+                    "7 days after the date on which the president issues or amends a covered document"
+                  ],
+                  "temporal_records": [
+                    {
+                      "quantity": 7,
+                      "temporal_kind": "not_later_than",
+                      "value": "7 days after the date on which the president issues or amends a covered document"
+                    }
+                  ]
+                },
+                "start": 353,
+                "status": "compiled"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "b4b8c3734d10ecef9b7062ac4b595f12b75856c26df2c108c4c3a220eaea7daa",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Action described in subsection (a) may be taken if notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014.",
+            "fields": [
+              "recipient",
+              "cross_references"
+            ],
+            "reason": "",
+            "roundtrip": false,
+            "rule": {
+              "action": "be",
+              "actor": "action described in subsection (a)",
+              "conditions": [
+                "notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014"
+              ],
+              "exceptions": [],
+              "modality": "P",
+              "object": "taken",
+              "temporal": []
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-10-6275-3b7144797fc2e39d",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.14157992298714817,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c0",
+                "decompiled": "",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 7,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c1",
+                "decompiled": "",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 710,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:recipient",
+                "rule": null,
+                "start": 8,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c2",
+                "decompiled": "Action described in subsection (a) may be taken if notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014.",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 1075,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "action described in subsection (a)",
+                  "conditions": [
+                    "notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014"
+                  ],
+                  "exceptions": [],
+                  "modality": "P",
+                  "object": "taken",
+                  "temporal": []
+                },
+                "start": 712,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c3",
+                "decompiled": "",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 1317,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references",
+                "rule": null,
+                "start": 1077,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c4",
+                "decompiled": "",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 1486,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 1318,
+                "status": "abstain"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "0b48777ae8986ffc09acd83fd75f6a19e420f97a208d2993f62884a0705652c4",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "abstain",
+            "decompiled": "",
+            "fields": [],
+            "reason": "no_parser_elements"
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": []
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": true,
+            "diagnostics": [
+              {
+                "code": "cosine_roundoff_clamped",
+                "raw": 1.0000000000000002,
+                "tolerance": 1.7763568394002505e-15,
+                "used": 1.0
+              }
+            ],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0000000000000002,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-36-50106-bb17fee26e3ac266",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.001644860953092575,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "no_parser_elements",
+            "rows": [],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "0fbd645fe80e7ac9cab939e10c065673c585196a14daa8f4de616d8e1e1ca9b2",
+          "split": "heldout"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Of factors and data Factors and data consented to pursuant to may be revised and agreed to by a consensus of the heads of the various Federal agencies involved. Factors and data must be used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies unless that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned.",
+            "fields": [],
+            "reason": "",
+            "roundtrip": false,
+            "rule": {
+              "action": "be",
+              "actor": "of factors and data Factors and data consented to pursuant to",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "revised and agreed to by a consensus of the heads of the various Federal agencies involved",
+              "temporal": []
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999998,
+            "embedding_cosine_similarity_raw": 0.9999999999999998,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-42-8286a-579bf6232e305315",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.09893003711476922,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-8286a-579bf6232e305315-c0",
+                "decompiled": "",
+                "document_id": "us-code-42-8286a-579bf6232e305315",
+                "end": 8,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-8286a-579bf6232e305315-c1",
+                "decompiled": "Of factors and data Factors and data consented to pursuant to may be revised and agreed to by a consensus of the heads of the various Federal agencies involved.",
+                "document_id": "us-code-42-8286a-579bf6232e305315",
+                "end": 173,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unresolved_source_cross_reference",
+                "rule": {
+                  "action": "be",
+                  "actor": "of factors and data Factors and data consented to pursuant to",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "P",
+                  "object": "revised and agreed to by a consensus of the heads of the various Federal agencies involved",
+                  "temporal": []
+                },
+                "start": 9,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-8286a-579bf6232e305315-c2",
+                "decompiled": "Factors and data must be used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies unless that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned.",
+                "document_id": "us-code-42-8286a-579bf6232e305315",
+                "end": 829,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "factors and data",
+                  "conditions": [],
+                  "exceptions": [
+                    "that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned"
+                  ],
+                  "modality": "O",
+                  "object": "used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies",
+                  "temporal": []
+                },
+                "start": 174,
+                "status": "compiled"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "6ea0a4635d33d0621fafbf05fb39b7e5b7543e443f9fe05e94e4fef47ca02a71",
+          "split": "heldout"
+        }
+      ],
+      "runtime": {
+        "native_pool": {
+          "pid": 2228855,
+          "pre_job_guard_seconds": 0.554747553775087,
+          "process_job_index": 0,
+          "process_reused": false,
+          "producer_manifest": {
+            "file_count": 7840,
+            "sha256": "ae94a2d89eab47f8375d38f61bc0ad7612f87cf32b234c8012d2c68999437820"
+          },
+          "retained_model_state": false,
+          "schema_version": "native-training-pool-observation/v1",
+          "shared_target_artifact_supplied": true,
+          "shared_target_validation_scope": "worker receipt records independent artifact/configuration/sample verification; pool cache clearing does not discard the immutable shared artifact",
+          "source_scope": "package Python contents before/after every job; preloaded bytecode not attested",
+          "target_cache_cleared_entries": 0,
+          "target_cache_policy": "clear_before_and_after_every_job"
+        },
+        "pid": 2228855,
+        "python": "3.12.3"
+      },
+      "sample_count": 6,
+      "shared_target_count": 8,
+      "shared_targets_verified": true,
+      "source_manifest_verified": true,
+      "sparse_patch_bytes": 15370309,
+      "target_load_seconds": 20.605305108008906,
+      "training_seconds": 19.339803849812597,
+      "use_sample_memory": false,
+      "validation_sample_count": 2,
+      "weight_storage": "private_json",
+      "worker_receipt": {
+        "bytes": 244129,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/fixed035/worker/receipt.json",
+        "sha256": "54b3b09ff4b48bf8e0f771a59e1a0baa604b7a1be60ea79411a7c230445da006"
+      }
+    },
+    "productive035": {
+      "bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "bridge_on_evaluations": [
+        {
+          "model_metrics_seconds": 0.23518237797543406,
+          "ontology_capture_seconds": 1.6209498930256814,
+          "sample_count": 2,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "stage": "before_holdout_evaluation",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 2,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.014198854798451066,
+            "supplied_target_count": 2,
+            "target_cache_miss_count": 0,
+            "target_count": 2,
+            "target_items_seconds": 3.1600939109921455e-05,
+            "target_reduction_seconds": 0.24521096795797348,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 0.25950904097408056,
+          "total_seconds": 2.115643471945077
+        },
+        {
+          "model_metrics_seconds": 1.51440684706904,
+          "ontology_capture_seconds": 6.282086058054119,
+          "sample_count": 6,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "stage": "training_cache_prime",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 6,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.08769971621222794,
+            "supplied_target_count": 6,
+            "target_cache_miss_count": 0,
+            "target_count": 6,
+            "target_items_seconds": 2.7167843654751778e-05,
+            "target_reduction_seconds": 1.3877037451602519,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 1.4755010618828237,
+          "total_seconds": 9.271995902992785
+        },
+        {
+          "model_metrics_seconds": 0.12540149898268282,
+          "ontology_capture_seconds": 1.1568035969976336,
+          "sample_count": 2,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "stage": "line_search_evaluation",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 2,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.0093391218688339,
+            "supplied_target_count": 2,
+            "target_cache_miss_count": 0,
+            "target_count": 2,
+            "target_items_seconds": 2.878415398299694e-05,
+            "target_reduction_seconds": 0.25446903007104993,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 0.26389829791150987,
+          "total_seconds": 1.5461057617794722
+        },
+        {
+          "model_metrics_seconds": 0.12374236504547298,
+          "ontology_capture_seconds": 1.131539539899677,
+          "sample_count": 2,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "stage": "line_search_evaluation",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 2,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.01733308401890099,
+            "supplied_target_count": 2,
+            "target_cache_miss_count": 0,
+            "target_count": 2,
+            "target_items_seconds": 2.9712915420532227e-05,
+            "target_reduction_seconds": 0.25316487601958215,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 0.27059620106592774,
+          "total_seconds": 1.5258798662107438
+        }
+      ],
+      "candidate_storage": "sparse",
+      "decoder_before_safety_projection": {
+        "after": {
+          "complete": true,
+          "embedding_cosine_similarity_mean": 0.242828511249809,
+          "finite": true,
+          "observed_sample_count": 2,
+          "reconstruction_loss_mean": 0.0025027325665173614,
+          "requested_sample_count": 2,
+          "sample_memory_used": false,
+          "sample_metrics": [
+            {
+              "embedding_cosine_similarity": 0.2526356769726019,
+              "reconstruction_loss": 0.0024976315223816012,
+              "sample_id": "us-code-36-50106-bb17fee26e3ac266"
+            },
+            {
+              "embedding_cosine_similarity": 0.2330213455270161,
+              "reconstruction_loss": 0.0025078336106531215,
+              "sample_id": "us-code-42-8286a-579bf6232e305315"
+            }
+          ],
+          "scope": "decoder_before_reconstruction_safety_projection",
+          "stopped_reason": null,
+          "used_for_acceptance": false
+        },
+        "before": {
+          "complete": true,
+          "embedding_cosine_similarity_mean": 0.19611613513818404,
+          "finite": true,
+          "observed_sample_count": 2,
+          "reconstruction_loss_mean": 0.0025270833813965826,
+          "requested_sample_count": 2,
+          "sample_memory_used": false,
+          "sample_metrics": [
+            {
+              "embedding_cosine_similarity": 0.19611613513818404,
+              "reconstruction_loss": 0.002527083326794979,
+              "sample_id": "us-code-36-50106-bb17fee26e3ac266"
+            },
+            {
+              "embedding_cosine_similarity": 0.19611613513818402,
+              "reconstruction_loss": 0.002527083435998186,
+              "sample_id": "us-code-42-8286a-579bf6232e305315"
+            }
+          ],
+          "scope": "decoder_before_reconstruction_safety_projection",
+          "stopped_reason": null,
+          "used_for_acceptance": false
+        },
+        "changes_acceptance": false,
+        "sample_scope": "tuning"
+      },
+      "elapsed_seconds": 39.47704346384853,
+      "evaluation_timing_scope": "Verified shared native targets reused, not cold target generation; five bridges, provers false, disk cache off, sample memory false. Requested one target worker; zero native generation workers used because targets were supplied.",
+      "legal_ir_evaluate_provers": false,
+      "legal_ir_parallel_workers": 1,
+      "metric_disk_cache": 0,
+      "optimizer_accepted_epochs": 1,
+      "qualification_gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 2
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        }
+      },
+      "qualification_metric_scope": "Bridge-off safety-projected embedding metrics; passed metrics do not imply learned decoder correctness or formalization.",
+      "qualification_receipt": {
+        "bytes": 2106625,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/productive035/qualification/qualification.json",
+        "sha256": "546ef9aafd0e9569b2148819187f9967a8211fcb55dfd8a1712bff716b335489"
+      },
+      "qualified": false,
+      "rows": [
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Appropriate authority of a covered public building must ensure that the building contains a lactation room that is made available for use by members of the public to express breast milk unless as provided in subsection (c). Covered public building may be excluded from the requirement in subsection b at the discretion of the appropriate authority. New construction would be must create a lactation room in the public building and the cost of such construction is unfeasible. Nothing in this section must be construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter.",
+            "fields": [
+              "definition_scope",
+              "unsupported_norm_type"
+            ],
+            "reason": "",
+            "roundtrip": true,
+            "rule": {
+              "action": "ensure",
+              "actor": "appropriate authority of a covered public building",
+              "conditions": [],
+              "exceptions": [
+                "as provided in subsection (c)"
+              ],
+              "modality": "O",
+              "object": "that the building contains a lactation room that is made available for use by members of the public to express breast milk",
+              "temporal": []
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-40-3318-429cfc454b54ce35",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.2608328158967197,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c0",
+                "decompiled": "",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 7,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c1",
+                "decompiled": "",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 286,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+                "rule": null,
+                "start": 8,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c2",
+                "decompiled": "",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 520,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+                "rule": null,
+                "start": 287,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c3",
+                "decompiled": "",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 811,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+                "rule": null,
+                "start": 521,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c4",
+                "decompiled": "Appropriate authority of a covered public building must ensure that the building contains a lactation room that is made available for use by members of the public to express breast milk unless as provided in subsection (c).",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 1073,
+                "frame_id": "unassigned",
+                "reason": "",
+                "rule": {
+                  "action": "ensure",
+                  "actor": "appropriate authority of a covered public building",
+                  "conditions": [],
+                  "exceptions": [
+                    "as provided in subsection (c)"
+                  ],
+                  "modality": "O",
+                  "object": "that the building contains a lactation room that is made available for use by members of the public to express breast milk",
+                  "temporal": []
+                },
+                "start": 813,
+                "status": "roundtrip_ok"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c5",
+                "decompiled": "Covered public building may be excluded from the requirement in subsection b at the discretion of the appropriate authority.",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 1489,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "covered public building",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "P",
+                  "object": "excluded from the requirement in subsection b at the discretion of the appropriate authority",
+                  "temporal": []
+                },
+                "start": 1074,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c6",
+                "decompiled": "New construction would be must create a lactation room in the public building and the cost of such construction is unfeasible.",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 1628,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_condition_continuation",
+                "rule": {
+                  "action": "create",
+                  "actor": "new construction would be",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "a lactation room in the public building and the cost of such construction is unfeasible",
+                  "temporal": []
+                },
+                "start": 1491,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-40-3318-429cfc454b54ce35-c7",
+                "decompiled": "Nothing in this section must be construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter.",
+                "document_id": "us-code-40-3318-429cfc454b54ce35",
+                "end": 1832,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_negative_interpretive_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "Nothing in this section",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter",
+                  "temporal": []
+                },
+                "start": 1630,
+                "status": "compiled"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "733e94101d6c703ebc80db262fe2c796df1534f85c8fd61ff7f1385ed49d15c1",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "This tax must be imposed and collected under the same regulations that apply to tonnage taxes. Statement under paragraph (1)(B) must be made by.",
+            "fields": [
+              "procedure",
+              "unsupported_norm_type"
+            ],
+            "reason": "",
+            "roundtrip": true,
+            "rule": {
+              "action": "be",
+              "actor": "This tax",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "imposed and collected under the same regulations that apply to tonnage taxes",
+              "temporal": []
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999998,
+            "embedding_cosine_similarity_raw": 0.9999999999999998,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.14434388605877757,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c0",
+                "decompiled": "",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 8,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c1",
+                "decompiled": "",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 194,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 9,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c2",
+                "decompiled": "This tax must be imposed and collected under the same regulations that apply to tonnage taxes.",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 290,
+                "frame_id": "unassigned",
+                "reason": "",
+                "rule": {
+                  "action": "be",
+                  "actor": "This tax",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "imposed and collected under the same regulations that apply to tonnage taxes",
+                  "temporal": []
+                },
+                "start": 195,
+                "status": "roundtrip_ok"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c3",
+                "decompiled": "",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 1003,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,unsupported_norm_type",
+                "rule": null,
+                "start": 291,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c4",
+                "decompiled": "Statement under paragraph (1)(B) must be made by.",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 1209,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_participant_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "statement under paragraph (1)(B)",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "made by",
+                  "temporal": []
+                },
+                "start": 1005,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-46-60303-bfa2875bd83d29df-c5",
+                "decompiled": "",
+                "document_id": "us-code-46-60303-bfa2875bd83d29df",
+                "end": 1489,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 1211,
+                "status": "abstain"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "3bb27171e42def39132439ffe72cc74d8da0fb8c033b980a111c6c238bdbd5eb",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies must submit to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of 1 year after august 8 and august 8.",
+            "fields": [],
+            "reason": "",
+            "roundtrip": false,
+            "rule": {
+              "action": "submit",
+              "actor": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of",
+              "temporal": [
+                "1 year after august 8",
+                "august 8"
+              ],
+              "temporal_records": [
+                {
+                  "quantity": 1,
+                  "temporal_kind": "not_later_than",
+                  "value": "1 year after august 8"
+                },
+                {
+                  "quantity": null,
+                  "temporal_kind": "after_date",
+                  "value": "august 8"
+                }
+              ]
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-42-15963-7baaee5c0500d91e",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.051981803961098194,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-15963-7baaee5c0500d91e-c0",
+                "decompiled": "",
+                "document_id": "us-code-42-15963-7baaee5c0500d91e",
+                "end": 8,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-15963-7baaee5c0500d91e-c1",
+                "decompiled": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies must submit to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of 1 year after august 8 and august 8.",
+                "document_id": "us-code-42-15963-7baaee5c0500d91e",
+                "end": 437,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unresolved_source_cross_reference",
+                "rule": {
+                  "action": "submit",
+                  "actor": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of",
+                  "temporal": [
+                    "1 year after august 8",
+                    "august 8"
+                  ],
+                  "temporal_records": [
+                    {
+                      "quantity": 1,
+                      "temporal_kind": "not_later_than",
+                      "value": "1 year after august 8"
+                    },
+                    {
+                      "quantity": null,
+                      "temporal_kind": "after_date",
+                      "value": "august 8"
+                    }
+                  ]
+                },
+                "start": 9,
+                "status": "compiled"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "db5b51daef5cd659b2c04113712e40f775aa29b34ef35ae3fa4573c579f0f27b",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "abstain",
+            "decompiled": "",
+            "fields": [],
+            "reason": "no_parser_elements"
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": []
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-22-2-37b796de116a4487",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.02012188103981316,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "no_parser_elements",
+            "rows": [],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "42e1cf170551ea0b7776ee5bbbc5b38797cb11b5fdf57cf69d0908ae8f0dee03",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence must submit to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community 7 days after the date on which the president issues or amends a covered document if such covered document or annex contains a direction to.",
+            "fields": [
+              "procedure",
+              "definition_scope",
+              "unsupported_norm_type"
+            ],
+            "reason": "",
+            "roundtrip": false,
+            "rule": {
+              "action": "submit",
+              "actor": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence",
+              "conditions": [
+                "such covered document or annex contains a direction to"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community",
+              "temporal": [
+                "7 days after the date on which the president issues or amends a covered document"
+              ],
+              "temporal_records": [
+                {
+                  "quantity": 7,
+                  "temporal_kind": "not_later_than",
+                  "value": "7 days after the date on which the president issues or amends a covered document"
+                }
+              ]
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-50-3114-cc36a2057a2cc4f2",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.17418429907411337,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c0",
+                "decompiled": "",
+                "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+                "end": 7,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c1",
+                "decompiled": "",
+                "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+                "end": 351,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,definition_scope,unsupported_norm_type",
+                "rule": null,
+                "start": 8,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c2",
+                "decompiled": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence must submit to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community 7 days after the date on which the president issues or amends a covered document if such covered document or annex contains a direction to.",
+                "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+                "end": 1005,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:canonical_cycle_ir_mismatch",
+                "rule": {
+                  "action": "submit",
+                  "actor": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence",
+                  "conditions": [
+                    "such covered document or annex contains a direction to"
+                  ],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community",
+                  "temporal": [
+                    "7 days after the date on which the president issues or amends a covered document"
+                  ],
+                  "temporal_records": [
+                    {
+                      "quantity": 7,
+                      "temporal_kind": "not_later_than",
+                      "value": "7 days after the date on which the president issues or amends a covered document"
+                    }
+                  ]
+                },
+                "start": 353,
+                "status": "compiled"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "b4b8c3734d10ecef9b7062ac4b595f12b75856c26df2c108c4c3a220eaea7daa",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Action described in subsection (a) may be taken if notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014.",
+            "fields": [
+              "recipient",
+              "cross_references"
+            ],
+            "reason": "",
+            "roundtrip": false,
+            "rule": {
+              "action": "be",
+              "actor": "action described in subsection (a)",
+              "conditions": [
+                "notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014"
+              ],
+              "exceptions": [],
+              "modality": "P",
+              "object": "taken",
+              "temporal": []
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-10-6275-3b7144797fc2e39d",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.13919472182169557,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c0",
+                "decompiled": "",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 7,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c1",
+                "decompiled": "",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 710,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:recipient",
+                "rule": null,
+                "start": 8,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c2",
+                "decompiled": "Action described in subsection (a) may be taken if notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014.",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 1075,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "action described in subsection (a)",
+                  "conditions": [
+                    "notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014"
+                  ],
+                  "exceptions": [],
+                  "modality": "P",
+                  "object": "taken",
+                  "temporal": []
+                },
+                "start": 712,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c3",
+                "decompiled": "",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 1317,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references",
+                "rule": null,
+                "start": 1077,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-10-6275-3b7144797fc2e39d-c4",
+                "decompiled": "",
+                "document_id": "us-code-10-6275-3b7144797fc2e39d",
+                "end": 1486,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 1318,
+                "status": "abstain"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "0b48777ae8986ffc09acd83fd75f6a19e420f97a208d2993f62884a0705652c4",
+          "split": "training"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "abstain",
+            "decompiled": "",
+            "fields": [],
+            "reason": "no_parser_elements"
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": []
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": true,
+            "diagnostics": [
+              {
+                "code": "cosine_roundoff_clamped",
+                "raw": 1.0000000000000002,
+                "tolerance": 1.7763568394002505e-15,
+                "used": 1.0
+              }
+            ],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0000000000000002,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-36-50106-bb17fee26e3ac266",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.0016546209808439016,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "no_parser_elements",
+            "rows": [],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "0fbd645fe80e7ac9cab939e10c065673c585196a14daa8f4de616d8e1e1ca9b2",
+          "split": "heldout"
+        },
+        {
+          "admitted": false,
+          "compiler": {
+            "compiler_status": "compiled",
+            "decompiled": "Of factors and data Factors and data consented to pursuant to may be revised and agreed to by a consensus of the heads of the various Federal agencies involved. Factors and data must be used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies unless that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned.",
+            "fields": [],
+            "reason": "",
+            "roundtrip": false,
+            "rule": {
+              "action": "be",
+              "actor": "of factors and data Factors and data consented to pursuant to",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "revised and agreed to by a consensus of the heads of the various Federal agencies involved",
+              "temporal": []
+            }
+          },
+          "lake_gate": {
+            "admitted": false,
+            "passed": false,
+            "reason": "source_locked_lake_gate_failed",
+            "rows": [
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              },
+              {
+                "admitted": false,
+                "command": [
+                  "lake",
+                  "build",
+                  "Legal"
+                ],
+                "formalized": false,
+                "lake_ok": false,
+                "passed": false,
+                "reason": "source_semantic_roundtrip_failed",
+                "scope": "source_locked_numeric_pattern",
+                "toolchain": "leanprover/lean4:v4.26.0"
+              }
+            ]
+          },
+          "metric_gate": {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999998,
+            "embedding_cosine_similarity_raw": 0.9999999999999998,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "text_roundtrip_equivalence": false
+          },
+          "qualified": false,
+          "sample_id": "us-code-42-8286a-579bf6232e305315",
+          "semantic_gate": {
+            "admitted": false,
+            "compile_decompile_elapsed_seconds": 0.09665004000999033,
+            "model_generated_text": false,
+            "passed": false,
+            "reason": "incomplete_source_semantic_roundtrip",
+            "rows": [
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-8286a-579bf6232e305315-c0",
+                "decompiled": "",
+                "document_id": "us-code-42-8286a-579bf6232e305315",
+                "end": 8,
+                "frame_id": "unassigned",
+                "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+                "rule": null,
+                "start": 0,
+                "status": "abstain"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-8286a-579bf6232e305315-c1",
+                "decompiled": "Of factors and data Factors and data consented to pursuant to may be revised and agreed to by a consensus of the heads of the various Federal agencies involved.",
+                "document_id": "us-code-42-8286a-579bf6232e305315",
+                "end": 173,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unresolved_source_cross_reference",
+                "rule": {
+                  "action": "be",
+                  "actor": "of factors and data Factors and data consented to pursuant to",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "P",
+                  "object": "revised and agreed to by a consensus of the heads of the various Federal agencies involved",
+                  "temporal": []
+                },
+                "start": 9,
+                "status": "compiled"
+              },
+              {
+                "admitted": false,
+                "clause_id": "us-code-42-8286a-579bf6232e305315-c2",
+                "decompiled": "Factors and data must be used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies unless that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned.",
+                "document_id": "us-code-42-8286a-579bf6232e305315",
+                "end": 829,
+                "frame_id": "unassigned",
+                "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+                "rule": {
+                  "action": "be",
+                  "actor": "factors and data",
+                  "conditions": [],
+                  "exceptions": [
+                    "that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned"
+                  ],
+                  "modality": "O",
+                  "object": "used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies",
+                  "temporal": []
+                },
+                "start": 174,
+                "status": "compiled"
+              }
+            ],
+            "scope": "deterministic_compiler_decompiler_source_roundtrip"
+          },
+          "source_sha256": "6ea0a4635d33d0621fafbf05fb39b7e5b7543e443f9fe05e94e4fef47ca02a71",
+          "split": "heldout"
+        }
+      ],
+      "runtime": {
+        "native_pool": {
+          "pid": 2229109,
+          "pre_job_guard_seconds": 0.5621152350213379,
+          "process_job_index": 0,
+          "process_reused": false,
+          "producer_manifest": {
+            "file_count": 7840,
+            "sha256": "ae94a2d89eab47f8375d38f61bc0ad7612f87cf32b234c8012d2c68999437820"
+          },
+          "retained_model_state": false,
+          "schema_version": "native-training-pool-observation/v1",
+          "shared_target_artifact_supplied": true,
+          "shared_target_validation_scope": "worker receipt records independent artifact/configuration/sample verification; pool cache clearing does not discard the immutable shared artifact",
+          "source_scope": "package Python contents before/after every job; preloaded bytecode not attested",
+          "target_cache_cleared_entries": 0,
+          "target_cache_policy": "clear_before_and_after_every_job"
+        },
+        "pid": 2229109,
+        "python": "3.12.3"
+      },
+      "sample_count": 6,
+      "shared_target_count": 8,
+      "shared_targets_verified": true,
+      "source_manifest_verified": true,
+      "sparse_patch_bytes": 15370319,
+      "target_load_seconds": 19.33438083715737,
+      "training_seconds": 19.295740448869765,
+      "use_sample_memory": false,
+      "validation_sample_count": 2,
+      "weight_storage": "private_json",
+      "worker_receipt": {
+        "bytes": 250457,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-native-20260929T1545Z-r3/stages/smoke/waves/wave-0000/productive035/worker/receipt.json",
+        "sha256": "e8655f0be2feca1a8ca6f639181ccce48a5eb62d7f5dce6b3e6f3e13910c2b60"
+      }
+    }
+  },
+  "dispatch": {
+    "admitted": false,
+    "defer_target_hydration_gc": false,
+    "elapsed_seconds": 46.457395700970665,
+    "execution_mode": "native_training",
+    "failed": [],
+    "lease_seconds": 300,
+    "max_workers": 2,
+    "mutation_retry_count": 0,
+    "native_pool": {
+      "enabled": true,
+      "max_pool_jobs": 8,
+      "max_workers": 2,
+      "producer_manifest": {
+        "file_count": 7840,
+        "sha256": "ae94a2d89eab47f8375d38f61bc0ad7612f87cf32b234c8012d2c68999437820"
+      },
+      "retained_model_state": false,
+      "submitted_jobs": 2
+    },
+    "promotion_performed": false,
+    "reduce_native_targets": false,
+    "resolved_operation_count": 0,
+    "run_count": 2,
+    "schema_version": "autoencoder-training-coordinator-receipt-v1"
+  },
+  "independent_canary_evaluated": false,
+  "native_result": {
+    "admitted": false,
+    "constitution_formalized": false,
+    "elapsed_seconds": 293.1461745731067,
+    "frozen": {
+      "admitted": false,
+      "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "manifest": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-capture-20260929T1551Z-r5/capsule/manifest.json",
+      "read_only_mounts_verified": true,
+      "sha256": "34fc62aecb04268df738537be603978a5069d19fee5e17168c534836cb8416af",
+      "source_bytes": 393809638
+    },
+    "hub_published": false,
+    "main_published": false,
+    "pipeline_status": "completed",
+    "schema": "frozen-source-native-smoke/v1",
+    "scope": "Operational source isolation and existing diagnostic qualification; no eight-hour admission or independent-canary evaluation.",
+    "weights_downloaded": false
+  },
+  "post_run_concurrency_evidence": {
+    "file": "native-concurrency-audit.json",
+    "original_stage_receipt_unchanged": true,
+    "scope": "Overlap of complete training calls including evaluations; not an inner-loop CPU utilization measurement.",
+    "sha256": "ad69f89fcfdb8d6d6f5415b4d5a2a53e8103f798be596483833c98559f229c00"
+  },
+  "post_run_training_call_overlap_lower_bound_seconds": 11.815997534664348,
+  "preparation": {
+    "bridge_failure_sample_count": 0,
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "cache_observation": "targets built directly; metric and multiview caches bypassed; OS cache uncontrolled",
+    "elapsed_seconds": 134.21686733188108,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 8,
+    "metric_disk_cache": 0,
+    "metric_process_cache_used": false,
+    "sample_count": 8,
+    "target_generation_seconds": 115.53458127821796,
+    "target_generation_seconds_per_span": 14.441822659777245,
+    "timeout_fallback_count": 0
+  },
+  "schema": "source-integration-native-summary/v1",
+  "scope": "Operational source isolation; private diagnostic training. Fresh 384D model, not continuation of the protected 8D checkpoint. No causal speedup comparison.",
+  "semantic_fixtures": {
+    "actual_lake_builds": 1,
+    "passed": true,
+    "scope": "Only the source-locked minimum-duration numeric fixture is Lake-admitted; no real-law span or model admission."
+  },
+  "target_preparation_driver_wall_seconds": 154.2685774990823,
+  "train_8h_allowed": false,
+  "training_overlap_demonstrated_by_stage_receipt": false
+}

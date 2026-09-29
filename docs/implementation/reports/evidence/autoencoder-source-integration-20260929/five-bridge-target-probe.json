@@ -1,0 +1,56 @@
+{
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "evaluate_provers": false,
+  "metric_disk_cache": 0,
+  "multiview_cache": false,
+  "workers": 1,
+  "sample_count": 1,
+  "wall_seconds": 5.087713029002771,
+  "wall_seconds_per_span": 5.087713029002771,
+  "telemetry": {
+    "report_received": true,
+    "report_accepted": true,
+    "attempted_bridge_count": 5,
+    "implemented_bridge_count": 5,
+    "failed_bridge_count": 0,
+    "accepted_bridge_count": 5,
+    "attempted_bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "implemented_bridge_names": [
+      "cec_dcec",
+      "deontic_norms",
+      "external_prover_router",
+      "fol_tdfol",
+      "modal_frame_logic"
+    ],
+    "failed_bridge_names": [],
+    "accepted_bridge_names": [
+      "cec_dcec",
+      "deontic_norms",
+      "external_prover_router",
+      "fol_tdfol",
+      "modal_frame_logic"
+    ],
+    "failures": {},
+    "outer_timeout": null
+  },
+  "target_created": true,
+  "multiprocessing_pool_preloaded": true,
+  "synthetic_fixture_only": true,
+  "symai_prefix": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-symai-probe-20260929T1540Z/symai-prefix",
+  "restored_python_prefix": "/usr",
+  "native_training": false,
+  "autoencoder_evaluate": false,
+  "admitted": false
+}

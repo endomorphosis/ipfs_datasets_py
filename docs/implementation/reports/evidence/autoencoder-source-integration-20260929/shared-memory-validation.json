@@ -1,0 +1,41 @@
+{
+  "schema": "source-capsule-private-shm-validation-v1",
+  "files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py",
+      "sha256": "ff01a6020d9e048c1e5683dd6beeb028dc021ef75114c114a00c1bf3b1da75c0"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py",
+      "sha256": "6e133f833d48b2ef60e8c0b22c2299d369f61f12855b6968a3310a7d77b1c30c"
+    }
+  ],
+  "tests": {
+    "passed": 55,
+    "seconds": 1.74,
+    "snapshot_tests": 53,
+    "symai_import_tests": 2
+  },
+  "container_probe": {
+    "receipt": "result.json",
+    "elapsed_seconds": 0.8051878798287362,
+    "queue_lock_roundtrip": true,
+    "spawn_child_and_owned_tracker_reaped": true,
+    "stderr_empty": true,
+    "container_removed": true,
+    "reservation_id": "54457a802ec6468f8de8101e8ce3acd9",
+    "reservation_released": true
+  },
+  "private_shm_bytes": 67108864,
+  "mount_options": [
+    "rw",
+    "noexec",
+    "nosuid",
+    "nodev"
+  ],
+  "charged_within_wrapper_memory_mb": 1024,
+  "wrapper_child_process_slots": 4,
+  "old_native_receipts_preserved": true,
+  "source_frozen": true,
+  "admitted": false
+}

@@ -1,0 +1,47 @@
+{
+  "base": "74a4d291d805449e350cdfec0484317630c51121",
+  "candidate": "585f992826a6696266b064fc77e9ecce3aa51c3c",
+  "tree": "10962c5213a3812ced1923c3734ea4bc300d89f3",
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py": {
+      "sha256": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+      "bytes": 10375
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_merge.py": {
+      "sha256": "775f31eb475706c4f82c71d673cd52f3908d8fbeacc5faa42838b7999e6ff3c6",
+      "bytes": 16521
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py": {
+      "sha256": "8d1af50758e47ac7dd6d91d85497f4a9c13d7cdf9254b270530e78c59ad316d0",
+      "bytes": 39088
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py": {
+      "sha256": "9e1043f39507cd3be06cf1131f9be5f4787b2a71da5f7ccbe5ae76762482fbd1",
+      "bytes": 998965
+    },
+    "scripts/ops/legal_ir/merge_autoencoder_source.py": {
+      "sha256": "bbffd4336aecd476c5ee74921c474ea8fd46abb3bc92f968fb8d13da6398449c",
+      "bytes": 6666
+    },
+    "scripts/ops/legal_ir/run_frozen_autoencoder_source.py": {
+      "sha256": "c65e90c1e346d9de3f783e79afdfd44549d8afd0b7f4e50940032747f65ce624",
+      "bytes": 3396
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_lease.py": {
+      "sha256": "4dfae239e749c5526dc23f44af1557160a6e8a6f72dc635564065ae99bb02d5d",
+      "bytes": 12858
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_merge.py": {
+      "sha256": "24d84d88344daee15f141e72a8b770292a60eba16e20db6f6403d74fbb9fe0de",
+      "bytes": 15418
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py": {
+      "sha256": "744af0e3d476413e3742417f72b52024795bf65fe403722f05cd6743ccc8b443",
+      "bytes": 15088
+    }
+  },
+  "live_head_preserved": true,
+  "ordinary_index_preserved": true,
+  "published": false,
+  "admitted": false
+}

@@ -1,0 +1,41 @@
+{
+  "schema_version": "autoencoder-source-merge/v1",
+  "plan_sha256": "9ff972f682764e662094f39bf89cc4d5b69207c54ab52af476ada9bcffc6b317",
+  "integration_ref": "refs/autoencoder/integration/source-freeze-20260929",
+  "integration_commit": "02d5739d5fd83b49da920d1448b598c45d243071",
+  "merged_tree": "3f118c87c12efa7f1b9086b1842f4f18c1a202e3",
+  "validation": {
+    "argv": [
+      "/usr/bin/env",
+      "PYTHONNOUSERSITE=0",
+      "/home/barberb/.local/bin/python",
+      "-B",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/source_validator_r4.py"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 26.32536447001621,
+    "checkout_bytes": 1129529990,
+    "checkout_files": 23098,
+    "log": "validated import origin: autoencoder_source_lease /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py\nvalidated import origin: autoencoder_source_merge /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_merge.py\nvalidated import origin: autoencoder_source_snapshot /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py\nlogic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py\nvalidated import origin: uscode_modal_daemon_runner /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py\n============================= test session starts ==============================\nplatform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0\nbenchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)\nrootdir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout\nconfigfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)\nplugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function\ncollected 351 items / 226 deselected / 125 selected\n\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_lease.py . [  0%]\n.........................                                                [ 20%]\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_merge.py . [ 21%]\n.........................                                                [ 41%]\ntests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py . [ 42%]\n....................................................                     [ 84%]\ntests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py . [ 84%]\n..............                                                           [ 96%]\ntests/unit/utils/test_symai_config_defaults.py ...                       [ 98%]\ntests/unit/utils/test_symai_config_import_order.py ..                    [100%]\n\n===================== 125 passed, 226 deselected in 11.23s =====================\n",
+    "log_sha256": "1857637f619d53e1938d902f1bb6c483a21f87c3e79ddda93698bdebed76b4d3",
+    "merged_tree": "3f118c87c12efa7f1b9086b1842f4f18c1a202e3",
+    "integration_commit": "02d5739d5fd83b49da920d1448b598c45d243071",
+    "scope": "operator-specified source integration checks; not native training or qualification",
+    "python_import_policy": "PYTHONPATH contains only the isolated worktree; PYTHONHOME cleared; user site disabled. Validators must assert imported source origins, including ignored overlays.",
+    "source_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-merge-integration-20260929T151716Z/merge-validation-r4/autoencoder-source-validation-3phnga8j/checkout",
+    "ignored_build_outputs_permitted": true
+  },
+  "lease": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "mode": "write",
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "waited_seconds": 4.7217123210430145e-05,
+    "schema_version": "autoencoder-source-lease/v1",
+    "cooperative": true
+  },
+  "applied": true,
+  "admitted": false,
+  "model_qualified": false,
+  "main_published": false,
+  "resource_reservation_id": "b9a1156285b44571ab35407344dd3608"
+}

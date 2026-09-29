@@ -1,0 +1,28 @@
+{
+  "schema": "frozen-source-native-incomplete-target-observations/v1",
+  "sample_count": 8,
+  "legal_ir_target_count": 8,
+  "complete_targets": false,
+  "training_started": false,
+  "source_drift_detected": false,
+  "frozen_manifest_sha256": "333b70635501be565bbd2a9667eb889ec96eaca134b6a5f3bba68b5f508c396e",
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "legal_ir_evaluate_provers": false,
+  "metric_disk_cache": 0,
+  "legal_ir_parallel_workers": 1,
+  "use_sample_memory": false,
+  "native_generation_seconds": 113.62500976352021,
+  "generation_wall_seconds_per_span": 14.203126220440026,
+  "failed_bridge": "external_prover_router",
+  "reason": {
+    "external_prover_router": "OSError: [Errno 30] Read-only file system: '/usr/.symai'"
+  },
+  "admitted": false,
+  "scope": "All eight native targets generated but all lack complete five-bridge supervision. Not a successful bridge-on evaluation or speed comparison."
+}

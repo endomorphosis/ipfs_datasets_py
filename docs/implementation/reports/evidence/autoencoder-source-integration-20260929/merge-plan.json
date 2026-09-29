@@ -1,0 +1,26 @@
+{
+  "admitted": false,
+  "base_commit": "74a4d291d805449e350cdfec0484317630c51121",
+  "candidate_commits": [
+    "585f992826a6696266b064fc77e9ecce3aa51c3c"
+  ],
+  "expected_ref_commit": null,
+  "integration_commit": "94210f01e40081eb7ac6b573f6ccbf22bc827ec5",
+  "integration_ref": "refs/autoencoder/integration/source-freeze-20260929",
+  "main_published": false,
+  "merged_tree": "10962c5213a3812ced1923c3734ea4bc300d89f3",
+  "model_qualified": false,
+  "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "schema_version": "autoencoder-source-merge/v1",
+  "status": "prepared",
+  "steps": [
+    {
+      "conflicted": false,
+      "diagnostic": "10962c5213a3812ced1923c3734ea4bc300d89f3\n",
+      "left_commit": "74a4d291d805449e350cdfec0484317630c51121",
+      "right_commit": "585f992826a6696266b064fc77e9ecce3aa51c3c",
+      "stderr": "",
+      "tree": "10962c5213a3812ced1923c3734ea4bc300d89f3"
+    }
+  ]
+}

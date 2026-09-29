@@ -1,0 +1,17 @@
+{
+  "base": "94210f01e40081eb7ac6b573f6ccbf22bc827ec5",
+  "candidate": "c62d7e34715a27404be930bf1c042e20dd382899",
+  "tree": "a43726061b11c75730c34f8fb115cc4cad3045b6",
+  "files": {
+    "ipfs_datasets_py/utils/symai_config.py": {
+      "sha256": "f904da58b1fa4016b123736ead77d921a941196529335ae4d9b21ee32c795b52",
+      "bytes": 10378
+    },
+    "tests/unit/utils/test_symai_config_import_order.py": {
+      "sha256": "89e0fee0aca118856b1bd3a5500b5efbf88324eb945432a2ed0411a408b0b58c",
+      "bytes": 2401
+    }
+  },
+  "published": false,
+  "admitted": false
+}
