@@ -6836,10 +6836,9 @@ class AdaptiveModalAutoencoder:
 
         def rollback_projection_transaction(
             transaction: ModalAutoencoderStateTransaction,
-        ) -> ModalAutoencoderStatePatch:
-            patch = transaction.rollback()
+        ) -> None:
+            transaction.discard()
             self._invalidate_state_dependent_evaluator_caches()
-            return patch
 
         def commit_projection_patch(
             patch: ModalAutoencoderStatePatch,
@@ -7005,9 +7004,11 @@ class AdaptiveModalAutoencoder:
 
         def append_epoch_report(report: Dict[str, Any]) -> None:
             now = time.perf_counter()
+            committed_objective = _evaluation_objective_for_training(best, **objective_weights)
             report.update({
                 "objective_before": epoch_objective_before,
-                "objective_after": _evaluation_objective_for_training(best, **objective_weights),
+                "objective_after": committed_objective,
+                "committed_objective_delta": epoch_objective_before - committed_objective,
                 "epoch_elapsed_seconds": max(0.0, now - epoch_started_at),
                 "cumulative_training_elapsed_seconds": max(0.0, now - monotonic_started_at),
                 "candidate_holdout_evaluation_count": (
@@ -7139,7 +7140,7 @@ class AdaptiveModalAutoencoder:
                         float,
                         Dict[str, Any],
                         AutoencoderEvaluation,
-                        ModalAutoencoderStatePatch,
+                        Optional[ModalAutoencoderStatePatch],
                     ]
                 ] = None
                 best_improved_attempt: Optional[
@@ -7147,7 +7148,7 @@ class AdaptiveModalAutoencoder:
                         float,
                         Dict[str, Any],
                         AutoencoderEvaluation,
-                        ModalAutoencoderStatePatch,
+                        Optional[ModalAutoencoderStatePatch],
                     ]
                 ] = None
                 attempt_tuples: List[
@@ -7155,7 +7156,7 @@ class AdaptiveModalAutoencoder:
                         float,
                         Dict[str, Any],
                         AutoencoderEvaluation,
-                        ModalAutoencoderStatePatch,
+                        Optional[ModalAutoencoderStatePatch],
                     ]
                 ] = []
                 multipliers_to_try = (
@@ -7172,13 +7173,25 @@ class AdaptiveModalAutoencoder:
                 def finalize_attempt_report(
                     *,
                     attempt_report: Dict[str, Any],
-                    candidate_state: ModalAutoencoderStatePatch,
+                    candidate_state: Optional[ModalAutoencoderStatePatch],
                 ) -> tuple[
                     float,
                     Dict[str, Any],
                     AutoencoderEvaluation,
-                    ModalAutoencoderStatePatch,
+                    Optional[ModalAutoencoderStatePatch],
                 ]:
+                    nonlocal projection_stopped_reason
+                    # A skipped snapshot is never a candidate, even if a caller
+                    # reaches this boundary through deferred prescreen ranking.
+                    if candidate_state is None or timed_out():
+                        projection_stopped_reason = "projection_timeout"
+                        attempt_report.update({
+                            "accepted": False, "strict_accepted": False,
+                            "acceptance_source": "projection_timeout",
+                            "objective_delta": None,
+                            "validation_evaluation_skipped_reason": "projection_timeout",
+                        })
+                        return (float("-inf"), attempt_report, best, candidate_state)
                     evaluation_transaction = self.state.transaction(
                         label=(
                             f"projection-evaluate:{epoch}:{update_name}:"
@@ -7187,6 +7200,15 @@ class AdaptiveModalAutoencoder:
                     ).begin()
                     try:
                         candidate_state.apply(evaluation_transaction)
+                        if timed_out():
+                            projection_stopped_reason = "projection_timeout"
+                            attempt_report.update({
+                                "accepted": False, "strict_accepted": False,
+                                "acceptance_source": "projection_timeout",
+                                "objective_delta": None,
+                                "validation_evaluation_skipped_reason": "projection_timeout",
+                            })
+                            return (float("-inf"), attempt_report, best, candidate_state)
                         emit_progress(
                             "line_search_evaluation",
                             epoch=epoch,
@@ -7416,13 +7438,41 @@ class AdaptiveModalAutoencoder:
                             profiler=profiler,
                             update_backend=normalized_update_backend,
                         )
+                        candidate_state: Optional[ModalAutoencoderStatePatch] = None
                         adaptive_step_report: Dict[str, Any] = {}
-                        if adaptive_optimizer is not None:
-                            adaptive_step_report = adaptive_optimizer.prepare(
-                                self.state, attempt_transaction.capture_patch(), head=update_name,
-                                allow_momentum=not attempt_reports and not plain_fallback,
-                                logit_clip=self.feature_logit_clip,
-                            )
+                        preparation_stopped_stage: Optional[str] = None
+                        if timed_out():
+                            preparation_stopped_stage = "after_projection_update"
+                        elif adaptive_optimizer is not None:
+                            candidate_state = attempt_transaction.capture_patch()
+                            if timed_out():
+                                preparation_stopped_stage = "after_candidate_capture"
+                                candidate_state = None
+                            else:
+                                adaptive_step_report = adaptive_optimizer.prepare(
+                                    self.state, candidate_state, head=update_name,
+                                    allow_momentum=not attempt_reports and not plain_fallback,
+                                    logit_clip=self.feature_logit_clip,
+                                )
+                                if timed_out():
+                                    preparation_stopped_stage = "after_adaptive_prepare"
+                                    candidate_state = None
+                                elif adaptive_step_report.get("momentum_applied"):
+                                    candidate_state = attempt_transaction.capture_patch()
+                                    if timed_out():
+                                        preparation_stopped_stage = "after_momentum_capture"
+                                        candidate_state = None
+                                    else:
+                                        adaptive_step_report.update(parameter_step_report(candidate_state))
+                                if preparation_stopped_stage and adaptive_step_report.get("momentum_applied"):
+                                    # prepare() reports the fresh direction. A
+                                    # carried proposal needs a new complete norm;
+                                    # omit it when its recapture was skipped.
+                                    for key in ("parameter_delta_norm", "parameter_delta_coordinate_count",
+                                                "parameter_delta_scope", "inserted_rows_excluded",
+                                                "autograd_gradient"):
+                                        adaptive_step_report.pop(key, None)
+                                    adaptive_step_report["parameter_step_report_skipped_reason"] = "projection_timeout"
                         prescreen_report: Dict[str, Any] = {
                             "effective_mode": effective_prescreen_mode,
                             "enabled": effective_prescreen_mode != "off",
@@ -7430,7 +7480,9 @@ class AdaptiveModalAutoencoder:
                             "selected_for_holdout": True,
                             "top_k": prescreen_top_k,
                         }
-                        if prescreen_before is not None:
+                        if prescreen_before is not None and (preparation_stopped_stage or timed_out()):
+                            prescreen_report["evaluation_skipped_reason"] = "projection_timeout"
+                        elif prescreen_before is not None:
                             emit_progress(
                                 "projection_prescreen_evaluation",
                                 effective_learning_rate=effective_learning_rate,
@@ -7480,9 +7532,14 @@ class AdaptiveModalAutoencoder:
                                     "sample_count": len(update_samples),
                                 }
                             )
-                        candidate_state = attempt_transaction.capture_patch()
-                        if adaptive_optimizer is not None:
-                            adaptive_step_report.update(parameter_step_report(candidate_state))
+                        if adaptive_optimizer is None and not preparation_stopped_stage:
+                            if timed_out():
+                                preparation_stopped_stage = "after_prescreen_evaluation"
+                            else:
+                                candidate_state = attempt_transaction.capture_patch()
+                                if timed_out():
+                                    preparation_stopped_stage = "after_candidate_capture"
+                                    candidate_state = None
                     finally:
                         if attempt_transaction.active:
                             rollback_projection_transaction(attempt_transaction)
@@ -7503,6 +7560,8 @@ class AdaptiveModalAutoencoder:
                         "hard_example_fraction": hard_fraction,
                         "head_learning_rate_scale": head_scale,
                         "holdout_evaluated": False,
+                        "candidate_snapshot_available": candidate_state is not None,
+                        "candidate_preparation_stopped_stage": preparation_stopped_stage,
                         "line_search_attempt": line_search_attempt_index,
                         "line_search_multiplier": float(line_search_multiplier),
                         "line_search_refinement": bool(is_refinement_attempt),
@@ -7536,18 +7595,18 @@ class AdaptiveModalAutoencoder:
                             **adaptive_step_report, "phase": phase,
                             "actual_learning_rate": effective_learning_rate,
                         }
-                        if timed_out():
-                            projection_stopped_reason = "projection_timeout"
-                            if adaptive_optimizer.history_head == update_name:
-                                adaptive_optimizer.reset("projection_timeout")
-                            attempt_report.update({
-                                "acceptance_source": "projection_timeout",
-                                "objective_delta": None,
-                                "validation_evaluation_skipped_reason": "projection_timeout",
-                            })
-                            attempt_reports.append(attempt_report)
-                            attempt_tuples.append((float("-inf"), attempt_report, best, candidate_state))
-                            break
+                    if candidate_state is None or preparation_stopped_stage or timed_out():
+                        projection_stopped_reason = "projection_timeout"
+                        if adaptive_optimizer is not None and adaptive_optimizer.history_head == update_name:
+                            adaptive_optimizer.reset("projection_timeout")
+                        attempt_report.update({
+                            "acceptance_source": "projection_timeout",
+                            "objective_delta": None,
+                            "validation_evaluation_skipped_reason": "projection_timeout",
+                        })
+                        attempt_reports.append(attempt_report)
+                        attempt_tuples.append((float("-inf"), attempt_report, best, candidate_state))
+                        break
                     if defer_holdout_evaluation:
                         attempt_reports.append(attempt_report)
                         attempt_tuples.append(
@@ -7631,6 +7690,20 @@ class AdaptiveModalAutoencoder:
                     for attempt in attempt_tuples:
                         _score, attempt_report, after, candidate_state = attempt
                         prescreen = attempt_report.get("projection_prescreen", {})
+                        if candidate_state is None or attempt_report.get("acceptance_source") == "projection_timeout":
+                            # Timeout disposition takes precedence over rank or
+                            # budget filtering; no snapshot can be evaluated.
+                            projection_stopped_reason = "projection_timeout"
+                            attempt_report.update({
+                                "accepted": False, "strict_accepted": False,
+                                "acceptance_source": "projection_timeout",
+                                "objective_delta": None,
+                                "validation_evaluation_skipped_reason": "projection_timeout",
+                            })
+                            if isinstance(prescreen, MutableMapping):
+                                prescreen["projection_timeout_filtered"] = True
+                                prescreen["selected_for_holdout"] = False
+                            continue
                         selected_for_holdout = bool(
                             isinstance(prescreen, Mapping)
                             and prescreen.get("selected_for_holdout", True)
@@ -7652,12 +7725,17 @@ class AdaptiveModalAutoencoder:
                                 prescreen["selected_for_holdout"] = False
                             attempt_report["acceptance_source"] = "prescreen_filtered"
                             continue
-                        if timed_out():
+                        if candidate_state is None or timed_out():
                             projection_stopped_reason = "projection_timeout"
                             if isinstance(prescreen, MutableMapping):
                                 prescreen["projection_timeout_filtered"] = True
                                 prescreen["selected_for_holdout"] = False
-                            attempt_report["acceptance_source"] = "projection_timeout"
+                            attempt_report.update({
+                                "accepted": False, "strict_accepted": False,
+                                "acceptance_source": "projection_timeout",
+                                "objective_delta": None,
+                                "validation_evaluation_skipped_reason": "projection_timeout",
+                            })
                             continue
                         selected_tuples.append(
                             finalize_attempt_report(
@@ -7751,7 +7829,7 @@ class AdaptiveModalAutoencoder:
                         ),
                     }
                 )
-                if candidate_report["accepted"] and (
+                if candidate_state is not None and candidate_report["accepted"] and (
                     selected is None or objective_delta > selected[0]
                 ):
                     selected = (
@@ -30698,28 +30776,71 @@ def legal_ir_trainable_head_transaction_delta_norm_report(
             "update-norm transaction targets a different state object"
         )
 
-    before_by_field: Dict[str, Dict[tuple[str, ...], float]] = {}
-    after_by_field: Dict[str, Dict[tuple[str, ...], float]] = {}
-    for row in transaction.iter_row_deltas():
-        if row.component not in LEGAL_IR_TRAINABLE_HEAD_FIELDS:
-            continue
-        if row.before_exists:
-            for path, value in _flatten_numeric_head_values(row.before_value).items():
-                before_by_field.setdefault(row.component, {})[(str(row.key), *path)] = value
-        if row.after_exists:
-            for path, value in _flatten_numeric_head_values(row.after_value).items():
-                after_by_field.setdefault(row.component, {})[(str(row.key), *path)] = value
-    values_by_field = {
-        field_name: (
-            before_by_field.get(field_name, {}),
-            after_by_field.get(field_name, {}),
-        )
-        for field_name in LEGAL_IR_TRAINABLE_HEAD_FIELDS
-    }
-    return _legal_ir_trainable_flat_delta_norm_report(
-        values_by_field,
-        learning_rate=learning_rate,
-    )
+    rows_by_field: Dict[str, list[Any]] = {}
+    for row in transaction._iter_borrowed_row_deltas(LEGAL_IR_TRAINABLE_HEAD_FIELDS):
+        rows_by_field.setdefault(row.component, []).append(row)
+
+    def deltas() -> Iterable[tuple[str, tuple[str, ...], float]]:
+        for field_name in LEGAL_IR_TRAINABLE_HEAD_FIELDS:
+            rows = rows_by_field.get(field_name, [])
+            keys = [str(row.key) for row in rows]
+            if len(keys) != len(set(keys)):
+                # Historical flattening merges e.g. integer1 and string"1"
+                # paths, retaining the last value at each colliding leaf. Keep
+                # that uncommon behavior without materializing ordinary rows.
+                before_values: Dict[tuple[str, ...], float] = {}
+                after_values: Dict[tuple[str, ...], float] = {}
+                for row in rows:
+                    for exists, value, target in ((row.before_exists, row.before_value, before_values),
+                                                   (row.after_exists, row.after_value, after_values)):
+                        if exists:
+                            for path, number in _flatten_numeric_head_values(value).items():
+                                target[(str(row.key), *path)] = number
+                for path in sorted(set(before_values) | set(after_values)):
+                    yield field_name, path, after_values.get(path, 0.0) - before_values.get(path, 0.0)
+                continue
+            for row in sorted(rows, key=lambda item: str(item.key)):
+                before = _iter_numeric_head_values_sorted(row.before_value) if row.before_exists else iter(())
+                after = _iter_numeric_head_values_sorted(row.after_value) if row.after_exists else iter(())
+                for path, delta in _merge_numeric_head_deltas(before, after):
+                    yield field_name, (str(row.key), *path), delta
+
+    return _legal_ir_trainable_ordered_delta_norm_report(deltas(), learning_rate=learning_rate)
+
+
+def _iter_numeric_head_values_sorted(value: Any, path: tuple[str, ...] = ()) -> Iterable[tuple[tuple[str, ...], float]]:
+    """Stream the legacy flattened leaf order, including string index sorting."""
+    if isinstance(value, Mapping):
+        children = [(str(key), nested) for key, nested in value.items()]
+        if len(children) != len({key for key, _ in children}):
+            # Stringified-key collisions can merge disjoint descendant leaves;
+            # preserve the exact old last-write behavior for this subtree.
+            for suffix, number in sorted(_flatten_numeric_head_values(value).items()):
+                yield (*path, *suffix), number
+        else:
+            for key, nested in sorted(children, key=lambda item: item[0]):
+                yield from _iter_numeric_head_values_sorted(nested, (*path, key))
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        for index in sorted(range(len(value)), key=str):
+            yield from _iter_numeric_head_values_sorted(value[index], (*path, str(index)))
+    elif isinstance(value, (int, float)) and not isinstance(value, bool):
+        number = float(value)
+        yield path, number if math.isfinite(number) else float("nan")
+
+
+def _merge_numeric_head_deltas(before: Iterable[Any], after: Iterable[Any]) -> Iterable[tuple[tuple[str, ...], float]]:
+    left, right = iter(before), iter(after)
+    a, b = next(left, None), next(right, None)
+    while a is not None or b is not None:
+        if b is None or (a is not None and a[0] < b[0]):
+            yield a[0], 0.0 - a[1]
+            a = next(left, None)
+        elif a is None or b[0] < a[0]:
+            yield b[0], b[1] - 0.0
+            b = next(right, None)
+        else:
+            yield a[0], b[1] - a[1]
+            a, b = next(left, None), next(right, None)
 
 
 def _legal_ir_trainable_flat_delta_norm_report(
@@ -30730,6 +30851,17 @@ def _legal_ir_trainable_flat_delta_norm_report(
     *,
     learning_rate: float,
 ) -> Dict[str, Any]:
+    def deltas() -> Iterable[tuple[str, tuple[str, ...], float]]:
+        for field_name in LEGAL_IR_TRAINABLE_HEAD_FIELDS:
+            before_values, after_values = values_by_field.get(field_name, ({}, {}))
+            for path in sorted(set(before_values) | set(after_values)):
+                yield field_name, path, float(after_values.get(path, 0.0)) - float(before_values.get(path, 0.0))
+    return _legal_ir_trainable_ordered_delta_norm_report(deltas(), learning_rate=learning_rate)
+
+
+def _legal_ir_trainable_ordered_delta_norm_report(
+    deltas: Iterable[tuple[str, tuple[str, ...], float]], *, learning_rate: float,
+) -> Dict[str, Any]:
     step = abs(float(learning_rate)) if math.isfinite(float(learning_rate)) else 0.0
     update_squares_by_head: Dict[str, float] = {}
     update_squares_by_head_family: Dict[str, float] = {}
@@ -30737,25 +30869,23 @@ def _legal_ir_trainable_flat_delta_norm_report(
     scalar_count_by_head: Dict[str, int] = {}
     finite = True
 
-    for field_name, head_family in LEGAL_IR_TRAINABLE_HEAD_FIELDS.items():
-        before_values, after_values = values_by_field.get(field_name, ({}, {}))
-        for path in sorted(set(before_values) | set(after_values)):
-            delta = float(after_values.get(path, 0.0)) - float(before_values.get(path, 0.0))
-            if not math.isfinite(delta):
-                finite = False
-                continue
-            if abs(delta) <= 0.0:
-                continue
-            square = delta * delta
-            family = _trainable_legal_ir_delta_family(field_name, path, head_family)
-            update_squares_by_head[field_name] = (
-                update_squares_by_head.get(field_name, 0.0) + square
-            )
-            update_squares_by_head_family[head_family] = (
-                update_squares_by_head_family.get(head_family, 0.0) + square
-            )
-            update_squares_by_family[family] = update_squares_by_family.get(family, 0.0) + square
-            scalar_count_by_head[field_name] = scalar_count_by_head.get(field_name, 0) + 1
+    for field_name, path, delta in deltas:
+        head_family = LEGAL_IR_TRAINABLE_HEAD_FIELDS[field_name]
+        if not math.isfinite(delta):
+            finite = False
+            continue
+        if abs(delta) <= 0.0:
+            continue
+        square = delta * delta
+        family = _trainable_legal_ir_delta_family(field_name, path, head_family)
+        update_squares_by_head[field_name] = (
+            update_squares_by_head.get(field_name, 0.0) + square
+        )
+        update_squares_by_head_family[head_family] = (
+            update_squares_by_head_family.get(head_family, 0.0) + square
+        )
+        update_squares_by_family[family] = update_squares_by_family.get(family, 0.0) + square
+        scalar_count_by_head[field_name] = scalar_count_by_head.get(field_name, 0) + 1
 
     update_norms_by_head = _sqrt_norms(update_squares_by_head)
     update_norms_by_head_family = _sqrt_norms(update_squares_by_head_family)

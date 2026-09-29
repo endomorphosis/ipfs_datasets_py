@@ -1,0 +1,569 @@
+{
+  "admitted": false,
+  "created_at": "2026-09-29T05:48:18Z",
+  "functional_support_coupling": {
+    "baseline_ce": 1.5890269151739727,
+    "baseline_ce_formula": "(ln(4)+ln(6))/2",
+    "code_path": "_legal_ir_view_distribution uses per-sample target keys union _legal_ir_view_family_candidates. Candidate families include embedding-weight-map keys. Emptyparent starts with4/6 target-dependent labels. Training creates6 global candidate labels; dedicated IR logits remain0 during decoded-only update; both tuning samples now predictuniform6.",
+    "decoded_candidate_ce": 1.791759469228055,
+    "decoded_candidate_ce_formula": "ln(6)",
+    "exact_ce_increase": 0.2027325540540823,
+    "family_cosine_gap_increase": 0.08871550474186574,
+    "fixed_candidate_cosine_gain": 0.803883864861816,
+    "fixed_candidate_mse_reduction": 0.0025270833813965826,
+    "fixed_candidate_scalar_gain": 0.6303137559180287,
+    "implication": "The loss increase is partly candidate-label-space expansion, not evidence that embedding reconstruction worsened. Current guards still correctly reject it; do not alter baselines or thresholds silently."
+  },
+  "global_minimum_claim": false,
+  "head_and_schedule_limits": {
+    "deadline": "Initial8target evaluations precede epoch deadline check. Decoded updates processall6samples and heavy patch processing before the nextcheck; cooperative180s jobs exceed239\u2013278s. Sevenadaptive decoded trials are rejected beforeholdout, not evaluated regressions.",
+    "family_logits": "Sixteen trials cannot change metric through configured zero family-logit readout scales; all evaluated deltas exactly0. They consume evaluation and state insertion work.",
+    "momentum": "Bothbeta.5cells never get a selected/committed step, so history remains empty and momentum never applies. This sweep does not test momentum benefit.",
+    "refinement": "Two refinement3cells never produce a strictaccepted seed and/or reach deadline; selected-is-not-none guard prevents all composed refinements. This sweep does not test refinement benefit.",
+    "shared_targets": "All8workers independently reconstruct training targets with4of6timeoutfallbacks. Share immutable targets preserving fallbackstatus, producer, source, targethashes, bridges, and timeoutpolicy; never countfallbacks as nativeIRsuccess."
+  },
+  "qualified": false,
+  "recommended_validation": {
+    "bounded_native_design": "One immutable native8target preparation (6train/2tune; nevercanary), then two parallel same-parent workers withall5bridges,1epoch/2attempts/5heads/180s, fixed035 andproductive035. Record preparation separately,coldowner/warmsharedtargetworkers, exactcounts; compare outcome/state/guardparity beforeclaimingspeed. A separate presetcombined-head experiment can test coupling only after optimization validation and withunchangedfullguards; no samplecherrypicking orcanaryfeedback.",
+    "expected_minimal_success": "Actual attempts reach all scheduledheads or reportboundedtimeout; no duplicate targetgeneration; rollbackstateparity andunchangedstrictqualification. Acceptedepoch is desired, nevermanufactured; deterministicparser/languagecoverage blockers remain independent.",
+    "storage_resource_ref": {
+      "bytes": 2599,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/resource-feasibility.json",
+      "sha256": "7696d5d5732d30d605bf732e1735115e1ee6ded337dcd334a848112b7c31539a"
+    },
+    "unit_and_regression": [
+      "Unchanged-metric emptyparent target-support test:4labelsample baseline then six-view embeddingkey insertion yields expecteduniform6 and exactCEjump; no changed acceptancecriterion.",
+      "Tiny transactional parity test comparing snapshot-copy vs optimized transaction rollback/commit, mixed inserted+existing rows, cancellation afterpartial update and deadlineduring sampleloop; finalstateidentity mustmatch baseline.",
+      "Shared-target replay test asserts exact source/producer/bridge/prover/vector/targethash binding, preserves2native+4fallbacktraining statuses, and zero repeated nativecompiles inworkers.",
+      "Deadline test checks no new expensivephase begins afterbudget; midphase abort rollsback and marksunevaluated objective null.",
+      "Fixed threeparser/temporal gates and historicalfivecasepilot remain unchanged, plus existing family and source-lockedLake gates."
+    ]
+  },
+  "reports": [
+    {
+      "accepted_epochs": 0,
+      "actual_composed_refinement_trials": 0,
+      "attempted_epochs": 1,
+      "attempted_heads": [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+        "family_logits",
+        "decoded_embedding"
+      ],
+      "candidate_unchanged": true,
+      "cell": "fixed035",
+      "configured_momentum": 0.0,
+      "configured_refinement_attempts": 0,
+      "decoded_trial": {
+        "acceptance_source": "rejected",
+        "accepted": false,
+        "adaptive_optimizer": null,
+        "holdout_evaluated": true,
+        "objective_delta": 0.6303137559180287,
+        "pareto_regressions": {
+          "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.2027325540540822,
+          "legal_ir:legal_ir_view_cross_entropy_loss": 0.2027325540540823,
+          "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.08871550474186574,
+          "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.2027325540540823,
+          "legal_ir:legal_ir_view_family_cross_entropy_loss": 0.2027325540540823,
+          "legal_ir:legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.03428638735580919,
+          "legal_ir:legal_ir_view_family_deontic_cross_entropy_loss": 0.034286387355809134,
+          "legal_ir:legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.08718945763682077,
+          "legal_ir:legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.09107333367647323,
+          "legal_ir:legal_ir_view_family_prover_cross_entropy_excess_loss": 0.08718945763682077
+        },
+        "update": "decoded_embedding"
+      },
+      "evaluated_trial_count": 7,
+      "initial_evaluation_seconds": 103.594690941973,
+      "momentum_applied_trials": 0,
+      "native_source_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "never_reached_head": "combined",
+      "projection_update_batch_seconds": 53.36710797413252,
+      "receipt": {
+        "bytes": 335937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0000/fixed035/worker/receipt.json",
+        "sha256": "a29b1254e1073f942fee35e101bcb8ed187ffee9f105df623a39dc94fc006be1"
+      },
+      "seconds_per_training_span": 46.31516962700213,
+      "sparse_patch_bytes": 0,
+      "training_generated_native_target_count": 2,
+      "training_seconds": 277.8910177620128,
+      "training_target_count": 6,
+      "training_timeout_fallback_count": 4,
+      "trial_count": 7,
+      "unattributed_scope": "Residual only; nested update_head not added to update_batch. No specific cause inferred without new profiling.",
+      "unattributed_training_seconds": 109.66488426481422,
+      "warm_line_search_evaluation_seconds": 11.264332853024825
+    },
+    {
+      "accepted_epochs": 0,
+      "actual_composed_refinement_trials": 0,
+      "attempted_epochs": 1,
+      "attempted_heads": [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+        "family_logits",
+        "decoded_embedding"
+      ],
+      "candidate_unchanged": true,
+      "cell": "guarded035",
+      "configured_momentum": 0.0,
+      "configured_refinement_attempts": 0,
+      "decoded_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": {
+          "actual_learning_rate": 0.175,
+          "autograd_gradient": false,
+          "inserted_rows_excluded": 326571,
+          "momentum_applied": false,
+          "momentum_carry_norm": 0.0,
+          "momentum_coordinate_count": 0,
+          "momentum_restart_reason": null,
+          "parameter_delta_coordinate_count": 0,
+          "parameter_delta_norm": 0.0,
+          "parameter_delta_scope": "existing_numeric_trainable_coordinates_only",
+          "phase": "warm_start"
+        },
+        "holdout_evaluated": false,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding"
+      },
+      "evaluated_trial_count": 6,
+      "initial_evaluation_seconds": 103.687216005056,
+      "momentum_applied_trials": 0,
+      "native_source_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "never_reached_head": "combined",
+      "projection_update_batch_seconds": 52.41599759226665,
+      "receipt": {
+        "bytes": 322437,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0000/guarded035/worker/receipt.json",
+        "sha256": "e295d0f8775d438f401013c76406ec4a473e962b16d6832218748bbb48c7fad5"
+      },
+      "seconds_per_training_span": 40.78406124247704,
+      "sparse_patch_bytes": 0,
+      "training_generated_native_target_count": 2,
+      "training_seconds": 244.70436745486222,
+      "training_target_count": 6,
+      "training_timeout_fallback_count": 4,
+      "trial_count": 7,
+      "unattributed_scope": "Residual only; nested update_head not added to update_batch. No specific cause inferred without new profiling.",
+      "unattributed_training_seconds": 79.90502472733894,
+      "warm_line_search_evaluation_seconds": 8.696127338334918
+    },
+    {
+      "accepted_epochs": 0,
+      "actual_composed_refinement_trials": 0,
+      "attempted_epochs": 1,
+      "attempted_heads": [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+        "family_logits",
+        "decoded_embedding"
+      ],
+      "candidate_unchanged": true,
+      "cell": "productive0175",
+      "configured_momentum": 0.0,
+      "configured_refinement_attempts": 0,
+      "decoded_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": {
+          "actual_learning_rate": 0.0875,
+          "autograd_gradient": false,
+          "inserted_rows_excluded": 326571,
+          "momentum_applied": false,
+          "momentum_carry_norm": 0.0,
+          "momentum_coordinate_count": 0,
+          "momentum_fresh_intersection_coordinate_count": 0,
+          "momentum_fresh_intersection_norm": 0.0,
+          "momentum_fresh_intersection_norm_coverage": 0.0,
+          "momentum_restart_reason": null,
+          "parameter_delta_coordinate_count": 0,
+          "parameter_delta_norm": 0.0,
+          "parameter_delta_scope": "existing_numeric_trainable_coordinates_only",
+          "phase": "warm_start"
+        },
+        "holdout_evaluated": false,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding"
+      },
+      "evaluated_trial_count": 6,
+      "initial_evaluation_seconds": 102.144946686924,
+      "momentum_applied_trials": 0,
+      "native_source_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "never_reached_head": "combined",
+      "projection_update_batch_seconds": 50.870952271157876,
+      "receipt": {
+        "bytes": 327501,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0001/productive0175/worker/receipt.json",
+        "sha256": "35d3e70c528758c501c4a069c71642fbd6935bf83174ac2fcb2a0d0b11f48555"
+      },
+      "seconds_per_training_span": 40.402035348854646,
+      "sparse_patch_bytes": 0,
+      "training_generated_native_target_count": 2,
+      "training_seconds": 242.4122120931279,
+      "training_target_count": 6,
+      "training_timeout_fallback_count": 4,
+      "trial_count": 7,
+      "unattributed_scope": "Residual only; nested update_head not added to update_batch. No specific cause inferred without new profiling.",
+      "unattributed_training_seconds": 80.89400684390964,
+      "warm_line_search_evaluation_seconds": 8.502304419176653
+    },
+    {
+      "accepted_epochs": 0,
+      "actual_composed_refinement_trials": 0,
+      "attempted_epochs": 1,
+      "attempted_heads": [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+        "family_logits",
+        "decoded_embedding"
+      ],
+      "candidate_unchanged": true,
+      "cell": "productive035",
+      "configured_momentum": 0.0,
+      "configured_refinement_attempts": 0,
+      "decoded_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": {
+          "actual_learning_rate": 0.175,
+          "autograd_gradient": false,
+          "inserted_rows_excluded": 326571,
+          "momentum_applied": false,
+          "momentum_carry_norm": 0.0,
+          "momentum_coordinate_count": 0,
+          "momentum_fresh_intersection_coordinate_count": 0,
+          "momentum_fresh_intersection_norm": 0.0,
+          "momentum_fresh_intersection_norm_coverage": 0.0,
+          "momentum_restart_reason": null,
+          "parameter_delta_coordinate_count": 0,
+          "parameter_delta_norm": 0.0,
+          "parameter_delta_scope": "existing_numeric_trainable_coordinates_only",
+          "phase": "warm_start"
+        },
+        "holdout_evaluated": false,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding"
+      },
+      "evaluated_trial_count": 6,
+      "initial_evaluation_seconds": 102.095103457105,
+      "momentum_applied_trials": 0,
+      "native_source_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "never_reached_head": "combined",
+      "projection_update_batch_seconds": 51.35243304586038,
+      "receipt": {
+        "bytes": 327399,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0001/productive035/worker/receipt.json",
+        "sha256": "395e6ac9d9f53ddd106953156e5d8c922c0c27dfb44a695f514c08fb12abcea0"
+      },
+      "seconds_per_training_span": 39.93471261051794,
+      "sparse_patch_bytes": 0,
+      "training_generated_native_target_count": 2,
+      "training_seconds": 239.60827566310763,
+      "training_target_count": 6,
+      "training_timeout_fallback_count": 4,
+      "trial_count": 7,
+      "unattributed_scope": "Residual only; nested update_head not added to update_batch. No specific cause inferred without new profiling.",
+      "unattributed_training_seconds": 77.7925763230302,
+      "warm_line_search_evaluation_seconds": 8.368160981219262
+    },
+    {
+      "accepted_epochs": 0,
+      "actual_composed_refinement_trials": 0,
+      "attempted_epochs": 1,
+      "attempted_heads": [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+        "family_logits",
+        "decoded_embedding"
+      ],
+      "candidate_unchanged": true,
+      "cell": "productive035momentum",
+      "configured_momentum": 0.5,
+      "configured_refinement_attempts": 0,
+      "decoded_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": {
+          "actual_learning_rate": 0.175,
+          "autograd_gradient": false,
+          "inserted_rows_excluded": 326571,
+          "momentum_applied": false,
+          "momentum_carry_norm": 0.0,
+          "momentum_coordinate_count": 0,
+          "momentum_fresh_intersection_coordinate_count": 0,
+          "momentum_fresh_intersection_norm": 0.0,
+          "momentum_fresh_intersection_norm_coverage": 0.0,
+          "momentum_restart_reason": null,
+          "parameter_delta_coordinate_count": 0,
+          "parameter_delta_norm": 0.0,
+          "parameter_delta_scope": "existing_numeric_trainable_coordinates_only",
+          "phase": "warm_start"
+        },
+        "holdout_evaluated": false,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding"
+      },
+      "evaluated_trial_count": 6,
+      "initial_evaluation_seconds": 101.447803026065,
+      "momentum_applied_trials": 0,
+      "native_source_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "never_reached_head": "combined",
+      "projection_update_batch_seconds": 51.04489834490232,
+      "receipt": {
+        "bytes": 327452,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0002/productive035momentum/worker/receipt.json",
+        "sha256": "242d288ae9e16c09ff988046ece70bc14ea90e510525d48b9235d96910801113"
+      },
+      "seconds_per_training_span": 39.88863001515468,
+      "sparse_patch_bytes": 0,
+      "training_generated_native_target_count": 2,
+      "training_seconds": 239.33178009092808,
+      "training_target_count": 6,
+      "training_timeout_fallback_count": 4,
+      "trial_count": 7,
+      "unattributed_scope": "Residual only; nested update_head not added to update_batch. No specific cause inferred without new profiling.",
+      "unattributed_training_seconds": 78.21748230815848,
+      "warm_line_search_evaluation_seconds": 8.621594587806612
+    },
+    {
+      "accepted_epochs": 0,
+      "actual_composed_refinement_trials": 0,
+      "attempted_epochs": 1,
+      "attempted_heads": [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+        "family_logits",
+        "decoded_embedding"
+      ],
+      "candidate_unchanged": true,
+      "cell": "productive070",
+      "configured_momentum": 0.0,
+      "configured_refinement_attempts": 0,
+      "decoded_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": {
+          "actual_learning_rate": 0.35,
+          "autograd_gradient": false,
+          "inserted_rows_excluded": 326571,
+          "momentum_applied": false,
+          "momentum_carry_norm": 0.0,
+          "momentum_coordinate_count": 0,
+          "momentum_fresh_intersection_coordinate_count": 0,
+          "momentum_fresh_intersection_norm": 0.0,
+          "momentum_fresh_intersection_norm_coverage": 0.0,
+          "momentum_restart_reason": null,
+          "parameter_delta_coordinate_count": 0,
+          "parameter_delta_norm": 0.0,
+          "parameter_delta_scope": "existing_numeric_trainable_coordinates_only",
+          "phase": "warm_start"
+        },
+        "holdout_evaluated": false,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding"
+      },
+      "evaluated_trial_count": 6,
+      "initial_evaluation_seconds": 101.647424812894,
+      "momentum_applied_trials": 0,
+      "native_source_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "never_reached_head": "combined",
+      "projection_update_batch_seconds": 54.12981662014499,
+      "receipt": {
+        "bytes": 327360,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0002/productive070/worker/receipt.json",
+        "sha256": "662113d87b5d8f73f634b660197841a66eaba66990da9dd983f63e736af48efb"
+      },
+      "seconds_per_training_span": 40.95701282502463,
+      "sparse_patch_bytes": 0,
+      "training_generated_native_target_count": 2,
+      "training_seconds": 245.74207695014775,
+      "training_target_count": 6,
+      "training_timeout_fallback_count": 4,
+      "trial_count": 7,
+      "unattributed_scope": "Residual only; nested update_head not added to update_batch. No specific cause inferred without new profiling.",
+      "unattributed_training_seconds": 79.4308430012307,
+      "warm_line_search_evaluation_seconds": 10.533990659983829
+    },
+    {
+      "accepted_epochs": 0,
+      "actual_composed_refinement_trials": 0,
+      "attempted_epochs": 1,
+      "attempted_heads": [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+        "family_logits",
+        "decoded_embedding"
+      ],
+      "candidate_unchanged": true,
+      "cell": "productive035both",
+      "configured_momentum": 0.5,
+      "configured_refinement_attempts": 3,
+      "decoded_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": {
+          "actual_learning_rate": 0.175,
+          "autograd_gradient": false,
+          "inserted_rows_excluded": 326571,
+          "momentum_applied": false,
+          "momentum_carry_norm": 0.0,
+          "momentum_coordinate_count": 0,
+          "momentum_fresh_intersection_coordinate_count": 0,
+          "momentum_fresh_intersection_norm": 0.0,
+          "momentum_fresh_intersection_norm_coverage": 0.0,
+          "momentum_restart_reason": null,
+          "parameter_delta_coordinate_count": 0,
+          "parameter_delta_norm": 0.0,
+          "parameter_delta_scope": "existing_numeric_trainable_coordinates_only",
+          "phase": "warm_start"
+        },
+        "holdout_evaluated": false,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding"
+      },
+      "evaluated_trial_count": 6,
+      "initial_evaluation_seconds": 101.46912150992999,
+      "momentum_applied_trials": 0,
+      "native_source_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "never_reached_head": "combined",
+      "projection_update_batch_seconds": 52.6498711889144,
+      "receipt": {
+        "bytes": 327459,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0003/productive035both/worker/receipt.json",
+        "sha256": "f51ba2cb455d9957b2b1c568158f176917b85f4713347f900aa1b93bf5d3362a"
+      },
+      "seconds_per_training_span": 40.62502781716952,
+      "sparse_patch_bytes": 0,
+      "training_generated_native_target_count": 2,
+      "training_seconds": 243.7501669030171,
+      "training_target_count": 6,
+      "training_timeout_fallback_count": 4,
+      "trial_count": 7,
+      "unattributed_scope": "Residual only; nested update_head not added to update_batch. No specific cause inferred without new profiling.",
+      "unattributed_training_seconds": 80.96266800514593,
+      "warm_line_search_evaluation_seconds": 8.668504359200597
+    },
+    {
+      "accepted_epochs": 0,
+      "actual_composed_refinement_trials": 0,
+      "attempted_epochs": 1,
+      "attempted_heads": [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+        "family_logits",
+        "decoded_embedding"
+      ],
+      "candidate_unchanged": true,
+      "cell": "productive035refined",
+      "configured_momentum": 0.0,
+      "configured_refinement_attempts": 3,
+      "decoded_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": {
+          "actual_learning_rate": 0.175,
+          "autograd_gradient": false,
+          "inserted_rows_excluded": 326571,
+          "momentum_applied": false,
+          "momentum_carry_norm": 0.0,
+          "momentum_coordinate_count": 0,
+          "momentum_fresh_intersection_coordinate_count": 0,
+          "momentum_fresh_intersection_norm": 0.0,
+          "momentum_fresh_intersection_norm_coverage": 0.0,
+          "momentum_restart_reason": null,
+          "parameter_delta_coordinate_count": 0,
+          "parameter_delta_norm": 0.0,
+          "parameter_delta_scope": "existing_numeric_trainable_coordinates_only",
+          "phase": "warm_start"
+        },
+        "holdout_evaluated": false,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding"
+      },
+      "evaluated_trial_count": 6,
+      "initial_evaluation_seconds": 104.023605650989,
+      "momentum_applied_trials": 0,
+      "native_source_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "never_reached_head": "combined",
+      "projection_update_batch_seconds": 53.22255872446112,
+      "receipt": {
+        "bytes": 327477,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0003/productive035refined/worker/receipt.json",
+        "sha256": "95dc8a749ed563920d22f799d314b240b74c37c5ab4afa559fdce58971b580d9"
+      },
+      "seconds_per_training_span": 41.790721383139804,
+      "sparse_patch_bytes": 0,
+      "training_generated_native_target_count": 2,
+      "training_seconds": 250.7443282988388,
+      "training_target_count": 6,
+      "training_timeout_fallback_count": 4,
+      "trial_count": 7,
+      "unattributed_scope": "Residual only; nested update_head not added to update_batch. No specific cause inferred without new profiling.",
+      "unattributed_training_seconds": 83.27120652678559,
+      "warm_line_search_evaluation_seconds": 10.226955140708014
+    }
+  ],
+  "schema": "autoencoder-eight-config-stall-causes/v1",
+  "scope": "Read-only audit of all8 immutable native worker receipts plus source snapshot bound exactly to their producer; no model execution or gate changes.",
+  "source_functions": [
+    {
+      "first_line": 6551,
+      "function": "train_generalizable_projection",
+      "last_line": 8127
+    },
+    {
+      "first_line": 8655,
+      "function": "_reconstruction_safe_projection",
+      "last_line": 8692
+    },
+    {
+      "first_line": 8750,
+      "function": "_legal_ir_view_distribution",
+      "last_line": 8771
+    },
+    {
+      "first_line": 9878,
+      "function": "_legal_ir_view_family_candidates",
+      "last_line": 9925
+    },
+    {
+      "first_line": 9930,
+      "function": "_legal_ir_view_logits_for",
+      "last_line": 10067
+    }
+  ],
+  "source_snapshot": {
+    "bytes": 1400654,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325"
+  },
+  "target_aware_projection": {
+    "behavior": "_reconstruction_safe_projection returns the exact target embedding whenever its unclamped least-squares step is positive and target self-loss dominates projected loss. Exact cosine1/MSE0 therefore does not establish learned reconstruction from unseen text or formalization.",
+    "preservation": "Speed fixes must preserve current semantics and metrics; changing the objective or target-aware projection is separate versioned research."
+  },
+  "totals": {
+    "accepted_epochs": 0,
+    "attempted_epochs": 8,
+    "composed_refinement_trials": 0,
+    "decoded_evaluated_but_rejected": 1,
+    "decoded_timeout_without_evaluation": 7,
+    "durable_sparse_patch_bytes": 0,
+    "evaluated_trials": 49,
+    "flat_family_logit_trials": 16,
+    "momentum_applied": 0,
+    "negative_IR_logit_trials": 32,
+    "trials": 56
+  },
+  "worker_count": 8
+}

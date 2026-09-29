@@ -306,9 +306,31 @@ class ModalAutoencoderStateTransaction:
         )
 
     def iter_row_deltas(self) -> Iterable[TouchedRow]:
-        """Yield current row deltas for sparse update-norm accounting."""
+        """Return isolated snapshots of current row deltas."""
 
         return self.capture_patch().rows
+
+    def _iter_borrowed_row_deltas(self, components: Iterable[str]) -> Iterable[TouchedRow]:
+        """Borrow journal values for synchronous, read-only owner accounting.
+
+        Unlike the public snapshot API these values alias the journal/state.
+        Internal consumers must not mutate or retain them. Filter before reading
+        rows so a small norm report never copies unrelated embedding tables.
+        """
+
+        self._require_owner()
+        wanted = frozenset(components)
+        for (component, key), (before_exists, before_value) in sorted(
+            ((marker, value) for marker, value in self._rows.items()
+             if marker[0] in wanted and marker[0] not in self._components),
+            key=lambda item: (item[0][0], repr(item[0][1])),
+        ):
+            self._require_owner()
+            mapping = getattr(self.state, component)
+            after_exists = key in mapping
+            yield TouchedRow(component, key, before_exists, before_value,
+                             after_exists, mapping[key] if after_exists else None,
+                             self.base_revision)
 
     def apply_patch(self, patch: ModalAutoencoderStatePatch) -> None:
         self._require_owner()
@@ -354,6 +376,21 @@ class ModalAutoencoderStateTransaction:
 
         self._require_owner()
         patch = self.capture_patch()
+        self._restore(patch)
+        return patch
+
+    def discard(self) -> None:
+        """Restore a speculative transaction without retaining its postimage.
+
+        Use after an independent candidate patch has already been captured, or
+        when the caller will discard the proposal entirely. Public rollback
+        retains its historical snapshot-returning behavior.
+        """
+
+        self._require_owner()
+        self._restore(None)
+
+    def _restore(self, patch: Optional[ModalAutoencoderStatePatch]) -> None:
         checkpoint = self._tracker_checkpoint
         if checkpoint is None:
             raise StateTransactionError("transaction identity checkpoint is missing")
@@ -379,7 +416,6 @@ class ModalAutoencoderStateTransaction:
             self._active = False
             self._rolled_back = True
             self.state._end_state_transaction(self)
-        return patch
 
     def diagnostics(self) -> Dict[str, Any]:
         return {

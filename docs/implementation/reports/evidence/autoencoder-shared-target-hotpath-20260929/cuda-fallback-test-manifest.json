@@ -1,0 +1,33 @@
+{
+  "schema": "fallback-profile-test-fix/v1",
+  "source_frozen": true,
+  "only_changed_file": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_residency.py",
+  "before": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/before/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_residency.py",
+    "sha256": "30da511c1aa8cf6a46789d08150f031a5a96baddafc404aa7dc8a2c7c9944855",
+    "bytes": 4866
+  },
+  "after": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/optimizer-after/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_residency.py",
+    "sha256": "0352af5930f18ce82b9de6d067f93374b0a6fb9c09087056c7d9da2eea0c9f57",
+    "bytes": 6210
+  },
+  "diagnosis": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/cuda-fallback-diagnosis.json",
+    "sha256": "4d1f92e6209c1742f811168483adbe699ab607f47e7e4bc037b872f5cce6a089",
+    "bytes": 678
+  },
+  "tests": {
+    "passed": 4,
+    "seconds": 16.63,
+    "log": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/cuda-fallback-tests.log",
+      "sha256": "7e0f6748e76e50d50a81bd3d019d8724960407be9e5f5dd507d84a99540a14bb",
+      "bytes": 1026
+    }
+  },
+  "package_source_changed": false,
+  "cuda_used": false,
+  "strengthened_state_assertion": "resident.state.to_dict() == native.state.to_dict()",
+  "all_model_metrics_compared_exactly": true
+}

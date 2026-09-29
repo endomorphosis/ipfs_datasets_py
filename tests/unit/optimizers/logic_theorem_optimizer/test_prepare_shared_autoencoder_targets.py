@@ -279,6 +279,10 @@ def test_handoff_requires_intact_artifact_and_preserves_failed_reservation(cli, 
         assert leases[0].finalized_directory == inputs.output_directory
         assert result["runner_arguments"] == ["--shared-targets", str(inputs.output_directory / "targets.bundle"),
                                                "--target-snapshot-id", "fixture-snapshot"]
+        assert result["training_job_fields"] == {
+            "target_snapshot_id": "fixture-snapshot",
+            "target_snapshot_artifact": result["target_artifact"],
+        }
         assert result["legal_ir_target_count"] == 2
         assert result["training_executed"] is result["model_weights_downloaded"] is result["admitted"] is False
         assert result["preparation_including_input_planning_seconds"] >= result["target_preparation_wall_seconds"]

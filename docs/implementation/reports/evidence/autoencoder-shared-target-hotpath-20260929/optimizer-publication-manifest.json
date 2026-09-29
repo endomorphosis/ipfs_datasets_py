@@ -1,0 +1,90 @@
+{
+  "schema": "scoped-optimizer-publication/v1",
+  "created_at": "2026-09-29T06:24:39.376291+00:00",
+  "origin_commit": "424ba3dda31279e30566a8668d698474375e10f5",
+  "live_HEAD_unchanged": "205bc6ef96c69c3ed9ddcd20ecf0b67f460f1841",
+  "live_index_sha256_unchanged": "89acaf1ef77ad2d709ac3798364047bd246a67a3e929fbec648d1671f93ad9a0",
+  "live_files_unchanged": true,
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "current": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+        "bytes": 1409603,
+        "sha256": "95026a41e04925f090bb0fd2cfd335db028e8f0cab3d470859ae035b4f7c181c"
+      },
+      "before": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+        "bytes": 1400654,
+        "sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325"
+      },
+      "origin_sha256": "a681fe147fb13f3067d884824a5a894e53ed785047f4820ea6b985bf9df1220d",
+      "proposed": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/publication-files/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+        "bytes": 1409435,
+        "sha256": "bf8e75a302ab6a4034ef8c6af3612d5f54e9ccfdc42b838128c40e3c1cab87e5"
+      },
+      "excluded_preexisting_worker_budget_only": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py": {
+      "current": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py",
+        "bytes": 17051,
+        "sha256": "c4da0ecd5ebb0ba83d91a3683f049b163662211afb216cacacf86bdd7a4b48d3"
+      },
+      "before": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py",
+        "bytes": 15446,
+        "sha256": "d590112f9b6dcf3005c273a6291320b0fa0a218969326839f5c5be4ae332e89a"
+      },
+      "origin_sha256": "d590112f9b6dcf3005c273a6291320b0fa0a218969326839f5c5be4ae332e89a",
+      "proposed": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/publication-files/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py",
+        "bytes": 17051,
+        "sha256": "c4da0ecd5ebb0ba83d91a3683f049b163662211afb216cacacf86bdd7a4b48d3"
+      },
+      "excluded_preexisting_worker_budget_only": false
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_proposal_bookkeeping.py": {
+      "current": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_proposal_bookkeeping.py",
+        "bytes": 24015,
+        "sha256": "0ae3ade7ba51819645df4ce15b806ad63e7c3b02259decfc77cb178bf7048304"
+      },
+      "before": null,
+      "origin_sha256": null,
+      "proposed": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/publication-files/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_proposal_bookkeeping.py",
+        "bytes": 24015,
+        "sha256": "0ae3ade7ba51819645df4ce15b806ad63e7c3b02259decfc77cb178bf7048304"
+      },
+      "excluded_preexisting_worker_budget_only": false
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_residency.py": {
+      "current": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_residency.py",
+        "bytes": 6210,
+        "sha256": "0352af5930f18ce82b9de6d067f93374b0a6fb9c09087056c7d9da2eea0c9f57"
+      },
+      "before": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/before/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_residency.py",
+        "bytes": 4866,
+        "sha256": "30da511c1aa8cf6a46789d08150f031a5a96baddafc404aa7dc8a2c7c9944855"
+      },
+      "origin_sha256": "30da511c1aa8cf6a46789d08150f031a5a96baddafc404aa7dc8a2c7c9944855",
+      "proposed": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/publication-files/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_residency.py",
+        "bytes": 6210,
+        "sha256": "0352af5930f18ce82b9de6d067f93374b0a6fb9c09087056c7d9da2eea0c9f57"
+      },
+      "excluded_preexisting_worker_budget_only": false
+    }
+  },
+  "patch": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/optimizer-origin-main.patch",
+    "bytes": 54509,
+    "sha256": "e6621e569558f2fedcdf65826265a04643bceaba681f7773f6c2cba58c6ae37c"
+  },
+  "diffstat": " .../logic_theorem_optimizer/modal_autoencoder.py   |  280 ++++++++++---\n .../modal_autoencoder_state_transaction.py         |   40 ++\n .../test_modal_autoencoder_proposal_bookkeeping.py |  428 ++++++++++++++++++++\n .../test_modal_autoencoder_cuda_residency.py       |   29 +\n 4 files changed, 698 insertions(+), 79 deletions(-)\n",
+  "exclusion": "Only the preexisting automatic worker_budget compiler selection is excluded from proposed modal_autoencoder.py; all owned current bytes otherwise preserved.",
+  "producer_freeze_preserved": true
+}

@@ -1,0 +1,92 @@
+{
+  "schema": "controlled-proposal-bookkeeping-profile/v1",
+  "scope": "Controlled synthetic transaction norm only; not training speed, bridge evaluation, proof, qualification or admit.",
+  "fixture": {
+    "dimension": 384,
+    "existing_trainable_rows_touched": 96,
+    "inserted_unrelated_rows_touched": 128,
+    "training_runs": 0,
+    "native_targets": 0
+  },
+  "exact_norm_report_equal": true,
+  "norm_report": {
+    "finite": true,
+    "gradient_norm": 137.142857142857,
+    "gradient_norms_by_family": {
+      "decompiler": 137.142857142857
+    },
+    "gradient_norms_by_head": {
+      "decompiler_plan_embedding_weights": 137.142857142857
+    },
+    "head_family_gradient_norms": {
+      "decompiler": 137.142857142857
+    },
+    "head_family_update_norms": {
+      "decompiler": 24.0
+    },
+    "learning_rate": 0.175,
+    "nonzero_gradient": true,
+    "nonzero_update": true,
+    "schema_version": "legal-ir-trainable-objective-head-norms-v1",
+    "scalar_update_counts_by_head": {
+      "decompiler_plan_embedding_weights": 36864
+    },
+    "trainable_head_families": {
+      "decompiler_plan_embedding_weights": "decompiler",
+      "decompiler_plan_family_logits": "decompiler",
+      "decompiler_plan_legal_ir_view_logits": "decompiler",
+      "family_semantic_slot_legal_ir_view_logits": "semantic_slot",
+      "feature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+      "legal_ir_view_family_logits": "compiler_facing_legal_ir_view",
+      "legal_ir_view_logits": "compiler_facing_legal_ir_view",
+      "logic_signature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+      "predicate_argument_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+      "proof_auxiliary_head_logits": "proof",
+      "round_trip_signal_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+      "semantic_slot_legal_ir_view_family_logits": "semantic_slot",
+      "semantic_slot_legal_ir_view_logits": "semantic_slot"
+    },
+    "update_norm": 24.0,
+    "update_norms_by_family": {
+      "decompiler": 24.0
+    },
+    "update_norms_by_head": {
+      "decompiler_plan_embedding_weights": 24.0
+    }
+  },
+  "implementations": {
+    "before_snapshot_flatten": {
+      "wall_seconds": [
+        0.124055186053738,
+        0.12361181899905205,
+        0.1277204209472984
+      ],
+      "median_wall_seconds": 0.124055186053738,
+      "tracemalloc_peak_bytes": 16373888
+    },
+    "after_borrowed_stream": {
+      "wall_seconds": [
+        0.09215218108147383,
+        0.09187688096426427,
+        0.09205803601071239
+      ],
+      "median_wall_seconds": 0.09205803601071239,
+      "tracemalloc_peak_bytes": 63699
+    }
+  },
+  "before_source": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "bytes": 1400654,
+    "sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325"
+  },
+  "after_source": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "bytes": 1404979,
+    "sha256": "8dabde0f51010c0b01f6a4540810a9f2fe219f4643f76d885d39b917b618fe46"
+  },
+  "profile_source": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/profile_bookkeeping.py",
+    "bytes": 3123,
+    "sha256": "8576aceea341356ffd077c2840f08b179185102d63a6d6a4b1d829771fd2d258"
+  }
+}

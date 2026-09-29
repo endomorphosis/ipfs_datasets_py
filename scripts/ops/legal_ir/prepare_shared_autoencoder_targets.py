@@ -292,6 +292,10 @@ def execute(args, expected):
                 "schema_version": "shared-target-preparation-handoff/v1", "plan": expected,
                 "producer_receipt": _descriptor(producer_path), "target_artifact": artifact,
                 "target_snapshot_id": preparation["target_snapshot_id"],
+                "training_job_fields": {
+                    "target_snapshot_id": preparation["target_snapshot_id"],
+                    "target_snapshot_artifact": artifact,
+                },
                 "sample_count": preparation["sample_count"],
                 "legal_ir_target_count": preparation["legal_ir_target_count"],
                 "target_preparation_wall_seconds": time.monotonic() - started,
@@ -300,6 +304,7 @@ def execute(args, expected):
                 "runner_arguments": ["--shared-targets", artifact["path"], "--target-snapshot-id", preparation["target_snapshot_id"]],
                 "measurement_scope": "Includes preparation and supervision; add worker target_load_seconds, complete training and qualification wall time before claiming end-to-end speedup.",
                 "status_scope": "ready means target returned, not bridge acceptance, roundtrip success or Lean admission",
+                "reuse_scope": "Use the same immutable target artifact for every hyperparameter candidate over these training/tuning rows. Workers independently verify bytes, source/configuration and sample content; preparation is outside each optimizer deadline.",
                 "training_executed": False, "model_weights_downloaded": False, "admitted": False,
             }
             helpers._write(directory / "receipt.json", result)

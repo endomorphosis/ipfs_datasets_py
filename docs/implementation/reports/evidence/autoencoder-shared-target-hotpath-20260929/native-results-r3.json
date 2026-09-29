@@ -1,0 +1,903 @@
+{
+  "IRworkers_requested": 1,
+  "IRworkers_used_for_suppliedtargets": 0,
+  "accepted_epochs_total": 0,
+  "admitted": false,
+  "arms": [
+    {
+      "accepted_epochs": 0,
+      "actual_epochs": 1,
+      "attempted_trials": 8,
+      "bridge_evaluations": [
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "before_holdout_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.694931339007,
+          "wall_seconds_per_span": 0.8474656695035
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 4,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 6,
+          "stage": "training_cache_prime",
+          "supplied_target_count": 6,
+          "target_count": 6,
+          "wall_seconds": 7.399952878011,
+          "wall_seconds_per_span": 1.2333254796685
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.390316111967,
+          "wall_seconds_per_span": 0.6951580559835
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.401768212905,
+          "wall_seconds_per_span": 0.7008841064525
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.449168605963,
+          "wall_seconds_per_span": 0.7245843029815
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.44911228586,
+          "wall_seconds_per_span": 0.72455614293
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.441748852842,
+          "wall_seconds_per_span": 0.720874426421
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.450224733911,
+          "wall_seconds_per_span": 0.7251123669555
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 2.555264127906,
+          "wall_seconds_per_span": 1.277632063953
+        }
+      ],
+      "candidate_materialized_checkpoint": {
+        "bytes": 1558,
+        "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+      },
+      "cell": "fixed035",
+      "committed_objective_delta": 0,
+      "comparisons": {
+        "original_sweep": {
+          "attempted_trials": 7,
+          "configured_epochs": 2,
+          "evaluated_trials": 7,
+          "exact_common_evaluated_trial_ordinals": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "executed_epochs": 1,
+          "initial_six_span_evaluation_seconds": 83.573517800076,
+          "initial_two_span_evaluation_seconds": 20.021173141897,
+          "observed_training_wall_reduction_percent": 29.347759364732372,
+          "receipt": {
+            "bytes": 335937,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0000/fixed035/worker/receipt.json",
+            "sha256": "a29b1254e1073f942fee35e101bcb8ed187ffee9f105df623a39dc94fc006be1"
+          },
+          "target_hashes_equal": false,
+          "training_seconds": 277.8910177620128,
+          "training_seconds_per_span": 46.31516962700213,
+          "worker_wall_seconds": 278.5354371119756
+        },
+        "r2": {
+          "attempted_trials": 8,
+          "configured_epochs": 1,
+          "evaluated_trials": 7,
+          "exact_common_evaluated_trial_ordinals": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "executed_epochs": 1,
+          "initial_six_span_evaluation_seconds": 7.619994578185,
+          "initial_two_span_evaluation_seconds": 1.769825793104,
+          "observed_training_wall_reduction_percent": 1.1430339470202333,
+          "receipt": {
+            "bytes": 343042,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r2/stages/smoke/waves/wave-0000/fixed035/worker/receipt.json",
+            "sha256": "4ec2fd5184210996e53fdc8a80fcc211bd28a2eef2536704827d70abfcd4e5c2"
+          },
+          "target_hashes_equal": false,
+          "training_seconds": 198.6063687892165,
+          "training_seconds_per_span": 33.10106146486942,
+          "worker_wall_seconds": 204.74596175178885
+        }
+      },
+      "evaluated_trials": 7,
+      "family_syntax_subchecks_passed": 66,
+      "last_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": null,
+        "candidate_preparation_stopped_stage": "after_candidate_capture",
+        "candidate_snapshot_available": false,
+        "effective_learning_rate": 0.0875,
+        "holdout_evaluated": false,
+        "legal_ir_view_cross_entropy_delta": null,
+        "legal_ir_view_family_cosine_gap_delta": null,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding",
+        "validation_evaluation_skipped_reason": "projection_timeout"
+      },
+      "max_rss_kib": 11944776,
+      "metric_passed_rows": 0,
+      "phase_seconds": {
+        "bridge_evaluation_sum": 20.232487148372,
+        "projection_update_batch": 102.81931058806367,
+        "scope": "Exclusive totals; update_head nested inside update_batch, not double-counted.",
+        "unattributed": 73.28443104471125
+      },
+      "qualification": {
+        "bytes": 2109450,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/fixed035/qualification/qualification.json",
+        "sha256": "fd389973373fd23175f4eef5d8aedaa08a679c100411741b5865553d577f6f6e"
+      },
+      "qualification_seconds_metric_only": 10.605833259178326,
+      "raw_epoch_objective_delta": 0.6303137559180287,
+      "real_Lake_builds": 0,
+      "receipt": {
+        "bytes": 344045,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/fixed035/worker/receipt.json",
+        "sha256": "f904fed3e51edd2169c5bbfb550f6aff340ea4210515b7a722c1c87a87dd2823"
+      },
+      "semantic_complete_rows": 0,
+      "sparse_patch_bytes": 0,
+      "target_artifact_verification_seconds": 0.027600059984251857,
+      "target_hydration_seconds_nested_in_load": 4.4564137840643525,
+      "target_load_seconds": 5.259900948032737,
+      "training_seconds": 196.33623057301156,
+      "training_seconds_per_span": 32.72270509550193,
+      "worker_pid": 1835945,
+      "worker_wall_seconds": 202.24398016207851
+    },
+    {
+      "accepted_epochs": 0,
+      "actual_epochs": 1,
+      "attempted_trials": 8,
+      "bridge_evaluations": [
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "before_holdout_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.743842202006,
+          "wall_seconds_per_span": 0.871921101003
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 4,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 6,
+          "stage": "training_cache_prime",
+          "supplied_target_count": 6,
+          "target_count": 6,
+          "wall_seconds": 7.708335023141,
+          "wall_seconds_per_span": 1.2847225038568333
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.454535484081,
+          "wall_seconds_per_span": 0.7272677420405
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.459486179054,
+          "wall_seconds_per_span": 0.729743089527
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.506555000087,
+          "wall_seconds_per_span": 0.7532775000435
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.477850683033,
+          "wall_seconds_per_span": 0.7389253415165
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.482217114186,
+          "wall_seconds_per_span": 0.741108557093
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 1.489560946822,
+          "wall_seconds_per_span": 0.744780473411
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "provers": false,
+          "representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 2,
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_count": 2,
+          "wall_seconds": 2.597062984947,
+          "wall_seconds_per_span": 1.2985314924735
+        }
+      ],
+      "candidate_materialized_checkpoint": {
+        "bytes": 1558,
+        "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+      },
+      "cell": "productive035",
+      "committed_objective_delta": 0,
+      "comparisons": {
+        "original_sweep": {
+          "attempted_trials": 7,
+          "configured_epochs": 2,
+          "evaluated_trials": 6,
+          "exact_common_evaluated_trial_ordinals": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "executed_epochs": 1,
+          "initial_six_span_evaluation_seconds": 82.702853298979,
+          "initial_two_span_evaluation_seconds": 19.392250158126,
+          "observed_training_wall_reduction_percent": 16.68852796152729,
+          "receipt": {
+            "bytes": 327399,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T050700Z/stages/sweep/waves/wave-0001/productive035/worker/receipt.json",
+            "sha256": "395e6ac9d9f53ddd106953156e5d8c922c0c27dfb44a695f514c08fb12abcea0"
+          },
+          "target_hashes_equal": false,
+          "training_seconds": 239.60827566310763,
+          "training_seconds_per_span": 39.93471261051794,
+          "worker_wall_seconds": 240.24564528884366
+        },
+        "r2": {
+          "attempted_trials": 8,
+          "configured_epochs": 1,
+          "evaluated_trials": 7,
+          "exact_common_evaluated_trial_ordinals": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "executed_epochs": 1,
+          "initial_six_span_evaluation_seconds": 8.011866391869,
+          "initial_two_span_evaluation_seconds": 1.766918295994,
+          "observed_training_wall_reduction_percent": 1.4811575092658846,
+          "receipt": {
+            "bytes": 353942,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r2/stages/smoke/waves/wave-0000/productive035/worker/receipt.json",
+            "sha256": "c2f834d24552ea1ac1daf755a8037bb0e9ce0396042722efbc9d411963c657ab"
+          },
+          "target_hashes_equal": false,
+          "training_seconds": 202.62233754899353,
+          "training_seconds_per_span": 33.77038959149892,
+          "worker_wall_seconds": 208.97990580601618
+        }
+      },
+      "evaluated_trials": 7,
+      "family_syntax_subchecks_passed": 66,
+      "last_trial": {
+        "acceptance_source": "projection_timeout",
+        "accepted": false,
+        "adaptive_optimizer": {
+          "actual_learning_rate": 0.0875,
+          "phase": "backoff"
+        },
+        "candidate_preparation_stopped_stage": "after_candidate_capture",
+        "candidate_snapshot_available": false,
+        "effective_learning_rate": 0.0875,
+        "holdout_evaluated": false,
+        "legal_ir_view_cross_entropy_delta": null,
+        "legal_ir_view_family_cosine_gap_delta": null,
+        "objective_delta": null,
+        "pareto_regressions": {},
+        "update": "decoded_embedding",
+        "validation_evaluation_skipped_reason": "projection_timeout"
+      },
+      "max_rss_kib": 11944748,
+      "metric_passed_rows": 0,
+      "phase_seconds": {
+        "bridge_evaluation_sum": 20.919445617357,
+        "projection_update_batch": 103.6370571483858,
+        "scope": "Exclusive totals; update_head nested inside update_batch, not double-counted.",
+        "unattributed": 75.06467689527227
+      },
+      "qualification": {
+        "bytes": 2109449,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/productive035/qualification/qualification.json",
+        "sha256": "d551c464c5b54a706e735b4231b98ee78c8e5069b1feb1a835a55f8297e91572"
+      },
+      "qualification_seconds_metric_only": 10.458915021037683,
+      "raw_epoch_objective_delta": 0.6303137559180287,
+      "real_Lake_builds": 0,
+      "receipt": {
+        "bytes": 354491,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/productive035/worker/receipt.json",
+        "sha256": "adb14a25c5a4e71d566aec5137989f2007030dd4178aaf4dc397895622dfc557"
+      },
+      "semantic_complete_rows": 0,
+      "sparse_patch_bytes": 0,
+      "target_artifact_verification_seconds": 0.028478680877014995,
+      "target_hydration_seconds_nested_in_load": 4.658046282129362,
+      "target_load_seconds": 5.463259534910321,
+      "training_seconds": 199.62118158093654,
+      "training_seconds_per_span": 33.27019693015609,
+      "worker_pid": 1836387,
+      "worker_wall_seconds": 205.72439497197047
+    }
+  ],
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "cold_prep_plus_native_stage_seconds": 341.61753530986607,
+  "cold_preparation": {
+    "bundle_bytes": 8463069,
+    "cache_scope": "targets built directly; metric and multiview caches bypassed; OS cache uncontrolled",
+    "full_wall_seconds": 107.05852455785498,
+    "generation_seconds": 91.3955047831405,
+    "generation_seconds_per_span": 11.424438097892562,
+    "native_report_count": 4,
+    "split_status_counts": {
+      "training": {
+        "ready": 2,
+        "timeout": 4
+      },
+      "validation": {
+        "ready": 2
+      }
+    },
+    "target_count": 8,
+    "timeout_fallback_count": 4,
+    "wall_seconds_per_span": 13.382315569731873
+  },
+  "committed_gain": 0,
+  "comparison_limits": [
+    "Same6train/2tune/fresh384parent/vectors/modelconfig and5bridges/proversfalse/disk0/requestedIRworker1. Original2epochcap actuallyexecuted1; current1cap executes1.",
+    "Originalfixed/productive pairedwithdifferentothercells; R2/R3 samepair. Observationaltimings, unmeasuredOScontention.",
+    "Preparedtargetevals stillhave2or6targets; IRworkersused0 meansnone neededfor suppliedtargets, notbridgeoff.",
+    "R3/R2 each8proposals7evaluated; original7proposals with7fixed/6productive evaluated. Everycommon evaluatedtrial metric/disposition exactparity.",
+    "Preparation107.0585s chargedonce; no matchingoriginalfullcoldpairwall, so no overallend-to-end speedupclaim.",
+    "Targethashes canchangeacrossproducerbundles; no false targetidentityclaim. Commonmodelmetrics andstate/dispositions checkedexactly.",
+    "Raw epochobjective_delta0.6303 isrejectedtrialgain; explicitcommittedgain0."
+  ],
+  "completion": {
+    "bytes": 1314,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/stage-complete.json",
+    "sha256": "0077a4f3458e869c0c5180d3674cefae38a6bf02ade2e94e3032ac42e3064afc"
+  },
+  "created_at": "2026-09-29T06:33:53Z",
+  "deadline_interpretation": "Both native finalattempts expired after candidatecapture; the capturedsnapshot was dropped, and subsequent adaptivepreparation/holdoutevaluation didnotrun. This doesNOTprove no capture crosseddeadline or hard180s wallbound; finaltraining196\u2013200s includes workbegunbeforebudget androllback/finalization. Unit tests cover earlierafter-update expiration; this native observation coversafter-capture branch.",
+  "disk_cache": 0,
+  "durable_sparse_bytes": 0,
+  "global_minimum_claim": false,
+  "native_stage_wall_seconds": 234.5590107520111,
+  "passed": true,
+  "passed_check_count": 72,
+  "passed_checks": [
+    "fixed035 bound receipts",
+    "fixed035 targets shared",
+    "fixed035 objective and state unchanged",
+    "fixed035 no late preparation aftercapture",
+    "fixed035 eight trials seven evaluated",
+    "fixed035 evaluation0 reusedpositive targets",
+    "fixed035 evaluation1 reusedpositive targets",
+    "fixed035 evaluation2 reusedpositive targets",
+    "fixed035 evaluation3 reusedpositive targets",
+    "fixed035 evaluation4 reusedpositive targets",
+    "fixed035 evaluation5 reusedpositive targets",
+    "fixed035 evaluation6 reusedpositive targets",
+    "fixed035 evaluation7 reusedpositive targets",
+    "fixed035 evaluation8 reusedpositive targets",
+    "fixed035 original_sweep same samples model",
+    "fixed035 original_sweep evaluatedtrial0 exactparity",
+    "fixed035 original_sweep evaluatedtrial1 exactparity",
+    "fixed035 original_sweep evaluatedtrial2 exactparity",
+    "fixed035 original_sweep evaluatedtrial3 exactparity",
+    "fixed035 original_sweep evaluatedtrial4 exactparity",
+    "fixed035 original_sweep evaluatedtrial5 exactparity",
+    "fixed035 original_sweep evaluatedtrial6 exactparity",
+    "fixed035 r2 same samples model",
+    "fixed035 r2 evaluatedtrial0 exactparity",
+    "fixed035 r2 evaluatedtrial1 exactparity",
+    "fixed035 r2 evaluatedtrial2 exactparity",
+    "fixed035 r2 evaluatedtrial3 exactparity",
+    "fixed035 r2 evaluatedtrial4 exactparity",
+    "fixed035 r2 evaluatedtrial5 exactparity",
+    "fixed035 r2 evaluatedtrial6 exactparity",
+    "fixed035 qualification metriconly",
+    "fixed035 real gates unchanged fail",
+    "fixed035 no real Lake builds",
+    "fixed035 family66 projection syntax pass",
+    "productive035 bound receipts",
+    "productive035 targets shared",
+    "productive035 objective and state unchanged",
+    "productive035 no late preparation aftercapture",
+    "productive035 eight trials seven evaluated",
+    "productive035 evaluation0 reusedpositive targets",
+    "productive035 evaluation1 reusedpositive targets",
+    "productive035 evaluation2 reusedpositive targets",
+    "productive035 evaluation3 reusedpositive targets",
+    "productive035 evaluation4 reusedpositive targets",
+    "productive035 evaluation5 reusedpositive targets",
+    "productive035 evaluation6 reusedpositive targets",
+    "productive035 evaluation7 reusedpositive targets",
+    "productive035 evaluation8 reusedpositive targets",
+    "productive035 original_sweep same samples model",
+    "productive035 original_sweep evaluatedtrial0 exactparity",
+    "productive035 original_sweep evaluatedtrial1 exactparity",
+    "productive035 original_sweep evaluatedtrial2 exactparity",
+    "productive035 original_sweep evaluatedtrial3 exactparity",
+    "productive035 original_sweep evaluatedtrial4 exactparity",
+    "productive035 original_sweep evaluatedtrial5 exactparity",
+    "productive035 r2 same samples model",
+    "productive035 r2 evaluatedtrial0 exactparity",
+    "productive035 r2 evaluatedtrial1 exactparity",
+    "productive035 r2 evaluatedtrial2 exactparity",
+    "productive035 r2 evaluatedtrial3 exactparity",
+    "productive035 r2 evaluatedtrial4 exactparity",
+    "productive035 r2 evaluatedtrial5 exactparity",
+    "productive035 r2 evaluatedtrial6 exactparity",
+    "productive035 qualification metriconly",
+    "productive035 real gates unchanged fail",
+    "productive035 no real Lake builds",
+    "productive035 family66 projection syntax pass",
+    "parallel actualworkers",
+    "fullproducer stable",
+    "releasedresources",
+    "three fixtures pass supported Lakeonly",
+    "protected8D unchanged"
+  ],
+  "producer_manifest": {
+    "file_count": 7835,
+    "sha256": "bf71450b495f2993bf73e5a6275b76faf5f1f0ef6304d10ff2b18ac9c613cf72"
+  },
+  "protected8Dcheckpoint": {
+    "bytes": 25895338,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "provers": false,
+  "qualification_scope": {
+    "canary_model_evaluated": false,
+    "constitution_formalized": false,
+    "fixture_scope": "Only source-locked minimum-duration numeric theorem; neither wholelaw norautoencoder qualified.",
+    "numeric_fixture_actual_Lake_builds": 1,
+    "qualified_real_models": 0,
+    "real_corpus_actual_Lake_builds": 0,
+    "real_corpus_admissions": 0
+  },
+  "resources": {
+    "bytes": 3543,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/resources.json",
+    "sha256": "f77c91ab1ddc6d1bd251243ab66573accf62c03865134d48bbfd34d993994526"
+  },
+  "run": "R3 final source; original/R2 receipts immutable",
+  "schema": "autoencoder-hotpath-native-results-analysis/v2",
+  "semantic_fixture": {
+    "bytes": 238588,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/semantic-regression.json",
+    "sha256": "758c65e6b91c1bff483365c5584b42032613085caf63df8543c2f6211f4763af"
+  },
+  "stage": {
+    "bytes": 4478,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/stage-result.json",
+    "sha256": "152ffc2bd4f2a57eea4bf3dbb4d9565bb45ba86bd5e3935cdf73f93911a04293"
+  },
+  "target_handoff": {
+    "bytes": 4796,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/shared-targets/receipt.json",
+    "sha256": "d7fff75d287996352424bc0070cd53eedbd920b9be744fb0b7500840fd5dab35"
+  },
+  "target_producer": {
+    "bytes": 9449,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/shared-targets/producer.json",
+    "sha256": "c059847bdfc6fa36bd9d265d4b1bab6dda3869baaac70237cdbdfc2f67895b8d"
+  },
+  "training_overlap_lower_bound_seconds": 187.02996646077372,
+  "training_samples": 6,
+  "trainingworkers": 2,
+  "tuning_samples": 2
+}

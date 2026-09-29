@@ -39,8 +39,12 @@ def _samples():
 def _stable_training_payload(report):
     return {
         "accepted_epochs": report["accepted_epochs"],
-        "after": report["after"],
-        "before": report["before"],
+        # Profiling is enabled only for the resident fallback below. Its
+        # optional wall-time observations are not model metrics or admission.
+        "after": {key: value for key, value in report["after"].items()
+                  if key != "evaluation_profile"},
+        "before": {key: value for key, value in report["before"].items()
+                   if key != "evaluation_profile"},
         "candidate_update_order": report["candidate_update_order"],
         "sample_memory_used": report["sample_memory_used"],
     }
@@ -77,6 +81,10 @@ def test_cuda_resident_backend_falls_back_deterministically_without_cuda() -> No
     ) == json.dumps(
         _stable_training_payload(native_report),
         sort_keys=True,
+    )
+    assert resident.state.to_dict() == native.state.to_dict()
+    assert resident_report["after"]["evaluation_profile"]["scope"] == (
+        "wall_time_observation_not_an_objective_or_admission"
     )
     assert resident_report["projection_update_backend"] == "cuda_resident"
     residency = resident_report["projection_cuda_residency"]
@@ -144,3 +152,20 @@ def test_cuda_residency_report_serializes_transfer_and_sync_counters() -> None:
     assert payload["synchronization_count"] == 0
     assert payload["kernel_launch_count"] == 2
     assert "proof_auxiliary_heads" in payload["update_targets"]
+
+
+def test_stable_payload_excludes_only_optional_evaluation_profile() -> None:
+    report = {
+        "accepted_epochs": 1,
+        "before": {"reconstruction_loss": 1., "decoded_embeddings": {"x": [1., 2.]}},
+        "after": {"reconstruction_loss": .5, "decoded_embeddings": {"x": [2., 3.]}},
+        "candidate_update_order": ["decoded_embedding"],
+        "sample_memory_used": False,
+    }
+    expected = json.loads(json.dumps(report))
+    report["after"]["evaluation_profile"] = {"total_seconds": 123.}
+    report["before"]["evaluation_profile"] = {"total_seconds": 456.}
+    assert _stable_training_payload(report) == expected
+    assert report["after"]["evaluation_profile"] == {"total_seconds": 123.}
+    report["after"]["reconstruction_loss"] = .6
+    assert _stable_training_payload(report) != expected

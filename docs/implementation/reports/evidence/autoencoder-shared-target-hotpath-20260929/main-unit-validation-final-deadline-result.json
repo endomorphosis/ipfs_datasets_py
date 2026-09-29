@@ -1,0 +1,26 @@
+{
+  "schema": "isolated-final-deadline-compatibility-unit-result/v1",
+  "scope": "Release compatibility unit validation only; not pinned-tree native training, bridge speed, Lake evidence or admit.",
+  "returncode": 0,
+  "elapsed_seconds": 3.7949956238735467,
+  "changed_files_since_529_passing_tests": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_proposal_bookkeeping.py"
+  ],
+  "command": [
+    "python3",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/main-unit-pytest-cache",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_proposal_bookkeeping.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_transaction.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py"
+  ],
+  "source_bytes": 156606465,
+  "input_files_unchanged": true,
+  "cuda_used": false,
+  "offline": true
+}

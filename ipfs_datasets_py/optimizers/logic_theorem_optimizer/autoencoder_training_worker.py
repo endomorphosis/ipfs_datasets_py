@@ -1182,6 +1182,7 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
     target_config = None
     target_snapshot = None
     shared_target_status_counts: dict[str, int] = {}
+    shared_target_split_status_counts: dict[str, dict[str, int]] = {}
     target_snapshot_status_counts: dict[str, int] = {}
     target_artifact_format = None
     target_storage_statistics = None
@@ -1236,6 +1237,12 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         for sample_id in shared_targets:
             status = statuses[sample_id]
             shared_target_status_counts[status] = shared_target_status_counts.get(status, 0) + 1
+        for split_name, split_samples in (("training", samples), ("validation", validation)):
+            counts: dict[str, int] = {}
+            for sample in split_samples:
+                status = statuses[sample.sample_id]
+                counts[status] = counts.get(status, 0) + 1
+            shared_target_split_status_counts[split_name] = counts
     target_reduction = {
         "policy": "worker_private_native_targets_v1", "requested": reduce_native_targets,
         "applied": False, "skip_reason": "not_requested",
@@ -1369,7 +1376,18 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         "target_snapshot_sample_count": target_snapshot_sample_count,
         "target_snapshot_status_counts": target_snapshot_status_counts,
         "shared_target_status_counts": shared_target_status_counts,
+        "shared_target_split_status_counts": shared_target_split_status_counts,
+        "shared_timeout_fallback_count": shared_target_status_counts.get("timeout", 0),
+        "shared_target_reuse": {
+            "enabled": shared_targets is not None,
+            "target_source": "verified_shared_artifact" if shared_targets is not None else "native_metric_target_path",
+            "preparation_included_in_training_seconds": False if shared_targets is not None else None,
+            "scope": "Complete verified targets supplied to every training/tuning evaluation; timeout fallbacks remain timeout observations, not successful conversions."
+                if shared_targets is not None else "No shared artifact; target generation and process-cache reuse remain inside training.",
+        },
         "target_load_seconds": target_load_seconds,
+        "sample_build_seconds": sample_build_seconds,
+        "pretraining_seconds": train_started - started,
         "target_artifact_format": target_artifact_format,
         "target_storage_statistics": target_storage_statistics,
         "target_artifact_verification_seconds": target_artifact_verification_seconds,

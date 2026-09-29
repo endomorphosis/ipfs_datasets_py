@@ -182,10 +182,11 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
         with _worker_environment():
             bound_config = target_snapshot_config(config)
             sample_started = time.perf_counter()
-            samples = unique_training_samples(
-                [build_us_code_sample(**asdict(row)) for row in records],
-                [build_us_code_sample(**asdict(row)) for row in validation_records],
-            )
+            split_samples = {
+                "training": [build_us_code_sample(**asdict(row)) for row in records],
+                "validation": [build_us_code_sample(**asdict(row)) for row in validation_records],
+            }
+            samples = unique_training_samples(split_samples["training"], split_samples["validation"])
             sample_seconds = time.perf_counter() - sample_started
 
             def generate(sample):
@@ -270,12 +271,23 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
                 "artifact": artifact, "sample_count": len(samples),
                 "legal_ir_target_count": len(statuses),
                 "statuses": statuses,
+                "split_target_status_counts": {
+                    split: {status: sum(statuses[sample.sample_id] == status for sample in members)
+                            for status in sorted({statuses[sample.sample_id] for sample in members})}
+                    for split, members in split_samples.items()
+                },
+                "timeout_fallback_count": sum(status == "timeout" for status in statuses.values()),
+                "returned_report_count": sum(item["report_received"] for item in bridge_report_telemetry.values()),
+                "bridge_failure_sample_count": sum(bool(item["failures"]) for item in bridge_report_telemetry.values()),
                 "status_definitions": {
                     "ready": "a returned multiview report produced a target; does not imply bridge acceptance or admission",
                     "timeout": "the outer target timeout escaped evaluation; a fallback target was produced",
                 },
                 "bridge_report_telemetry": bridge_report_telemetry,
                 "artifact_format": artifact_format,
+                "model_independent_targets": True,
+                "training_executed": False,
+                "preparation_scope": "training and repeated tuning targets only; no independent canary is selected by this producer",
                 "artifact_statistics": saved.get("statistics", {}),
                 "maximum_pending_generation_results": min(len(samples), config.legal_ir_parallel_workers),
                 "artifact_builder_retains_all_targets": artifact_format == "json",
