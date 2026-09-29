@@ -56,6 +56,7 @@ def orchestration_hashes():
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paths.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualification_pool.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
              ROOT / "ipfs_datasets_py/duckdb_control/autoencoder_registry.py"]
     paths.extend(ROOT / "ipfs_datasets_py" / relative for relative in QUALIFICATION_DEPENDENCIES)
@@ -217,7 +218,7 @@ def run_cycle(config):
     orchestration = orchestration_hashes()
     from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_qualified_training import run_qualified_incremental_training
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan, execution_envelope
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan, execution_envelope, qualification_capacity_plan
     state = Path(config["state_directory"])
     records = local_records(config["input_jsonl"]) if config.get("input_jsonl") else []
     validation = local_records(config["validation_jsonl"]) if config.get("validation_jsonl") else []
@@ -263,6 +264,13 @@ def run_cycle(config):
                 machine_shard_count=config["shard_count"], machine_shard_index=config["shard_index"],
                 lane_count=config["workers"], max_batches=config["max_batches"],
                 max_parallel_workers=config.get("max_parallel_workers", config["workers"]),
+                max_qualification_workers=config.get("parallel_qualification_workers", 0) or config["workers"],
+                qualification_capacity_callback=lambda **limits: qualification_capacity_plan(**limits,
+                        memory_budget_mb=config["memory_mb"],
+                        cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
+                            "training", config.get("max_parallel_workers", config["workers"]))["cpu_slots"]),
+                        process_budget=config.get("reserved_child_process_slots", execution_envelope(
+                            "training", config.get("max_parallel_workers", config["workers"]))["child_process_slots"])),
                 capacity_callback=lambda **limits: execution_capacity_plan("training", **limits,
                         memory_budget_mb=config["memory_mb"],
                         cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
@@ -485,6 +493,8 @@ def parser():
                    help="Stable lane ceiling (1..32). 0 uses 32 logical lanes; actual concurrent passes adapt to hardware")
     p.add_argument("--parallel-workers", type=int, default=0,
                    help="Optional concurrent-pass ceiling (1..32), independent of stable lanes; 0 follows hardware admission")
+    p.add_argument("--parallel-qualification-workers", type=int, default=0,
+                   help="Training-only qualification ceiling (1..32); 0 adapts within the existing group reservation, 1 keeps qualification serial")
     workers = p.add_mutually_exclusive_group()
     workers.add_argument("--fresh-training-workers", dest="fresh_training_workers", action="store_true", default=True,
                          help="Use fresh native worker processes for each wave (default)")
@@ -530,6 +540,10 @@ def main(argv=None):
         p.error("invalid worker count or machine shard assignment")
     if not 0 <= args.parallel_workers <= 32:
         p.error("parallel-workers must be 0..32")
+    if not 0 <= args.parallel_qualification_workers <= 32:
+        p.error("parallel-qualification-workers must be 0..32")
+    if args.execution_mode == "inference" and args.parallel_qualification_workers:
+        p.error("parallel qualification is a training-only setting")
     args.workers = args.workers or 32
     if args.execution_mode == "inference" and (not args.input_jsonl or not args.validation_jsonl or any(
             (args.repository_id, args.publish_repository, args.arrow_feature_weights, args.shared_targets))):

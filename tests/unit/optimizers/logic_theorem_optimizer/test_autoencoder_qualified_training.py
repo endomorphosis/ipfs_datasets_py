@@ -546,3 +546,158 @@ def test_publication_repository_policy_is_bound_on_resume(tmp_path, monkeypatch)
         with pytest.raises(IncrementalTrainingError, match="unsupported sparse publication repository"):
             _run(registry, tmp_path, [], publication_repository="different/public-dataset")
         assert len(registry.pending_outbox("huggingface")) == 1
+
+
+def test_qualification_zero_capacity_defers_trained_candidates_then_resumes_without_training(tmp_path, monkeypatch):
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        templates = _lane_templates(spec, 2)
+        paused = _run(registry, tmp_path, templates, lane_count=2, max_qualification_workers=2,
+            qualification_capacity_callback=lambda **request: {"workers": 0, "reason": "memory"})
+        assert paused["qualification_deferred"] is True
+        assert paused["pending_batch_count"] == 2
+        assert len(paused["dispatched_run_ids"]) == 2
+        assert paused["qualification_wave_reports"] == []
+        assert not list((tmp_path / "qualified/qualifications").iterdir())
+        monkeypatch.setattr(qt.coordinator, "run_training_jobs", lambda *a, **kw: pytest.fail("duplicate training"))
+        resumed = _run(registry, tmp_path, [], lane_count=2, max_qualification_workers=1)
+        assert resumed["qualified_batch_count"] == 2
+        assert resumed["binding"] == paused["binding"]
+        assert not resumed["dispatched_run_ids"]
+        assert [row["job_count"] for row in resumed["qualification_wave_reports"]] == [1, 1]
+
+
+@pytest.mark.parametrize("returned", [{"workers": -1}, {"workers": 3}, {"workers": True},
+                                      {"workers": 1, "pressure": float("nan")}, 1])
+def test_bad_qualification_capacity_cannot_stage_completed_candidate(tmp_path, returned):
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        with pytest.raises(IncrementalTrainingError, match="qualification capacity"):
+            _run(registry, tmp_path, [spec], max_qualification_workers=2,
+                 qualification_capacity_callback=lambda **request: returned)
+        assert not list((tmp_path / "qualified").glob("*.qualification.json"))
+        with duckdb.connect(str(tmp_path / "qualified/qualification.duckdb")) as db:
+            assert db.execute("SELECT completed FROM attempts").fetchall() == [(None,)]
+
+
+def _native_qualification_control_injection(monkeypatch):
+    """Inject work into native control branches; never claim native gate evidence."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_native_pool as training_pool
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_candidate_qualification as candidate
+    manifest = {"sha256": "injected-producer", "file_count": 1}
+    monkeypatch.setattr(training_pool, "_package_manifest", lambda: dict(manifest))
+    original_dispatch = qt.coordinator.run_training_jobs
+    def dispatch(registry, specs, **kwargs):
+        return original_dispatch(registry, specs, max_workers=len(specs),
+            executor_factory=ImmediateExecutor, worker_function=_sparse_worker)
+    monkeypatch.setattr(qt.coordinator, "run_training_jobs", dispatch)
+    def qualify(artifact, version, samples, output, **kwargs):
+        return {**_receipt(artifact, version),
+                "sample_set_sha256": qt.inc._sha({"training": samples, "heldout": kwargs["heldout_samples"]}),
+                "requested_model_config": kwargs["model_config"], "source_sha256": {}}
+    monkeypatch.setattr(candidate, "qualify_candidate", qualify)
+    return training_pool, candidate, manifest, qualify
+
+
+def test_native_width_one_keeps_guarded_parent_path(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualification_pool as pool
+    _native_qualification_control_injection(monkeypatch)
+    monkeypatch.setattr(pool, "run_qualification_jobs", lambda *a, **kw: pytest.fail("width one spawned"))
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        result = qt.run_qualified_incremental_training(registry, [spec], state_directory=tmp_path / "qualified",
+            lane_count=1, control_transport="owner", max_qualification_workers=2,
+            qualification_capacity_callback=lambda **request: {"workers": 1})
+        assert result["qualification_wave_reports"][0]["execution_strategy"] == "parent_serial_qualification"
+        assert result["qualified_batch_count"] == 1
+
+
+def test_parallel_qualification_closes_retained_training_pool_and_keeps_lane_order(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualification_pool as pool
+    training_pool, candidate, manifest, qualify = _native_qualification_control_injection(monkeypatch)
+    observations = []
+    class Retained:
+        def __init__(self, max_workers, **kwargs):
+            self.max_workers, self.submitted_jobs = max_workers, 0
+            observations.append("training pool opened")
+        def close(self):
+            observations.append("training pool closed")
+    monkeypatch.setattr(training_pool, "_NativeTrainingPool", Retained)
+    monkeypatch.setattr(candidate, "qualify_candidate", lambda *a, **kw: pytest.fail("parallel ran in parent"))
+    def wave(jobs, **kwargs):
+        assert observations[-1] == "training pool closed"
+        observations.append([job["run_id"] for job in jobs])
+        receipts = [qualify(job["candidate_artifact"], job["candidate_version_id"], job["samples"], None,
+                           heldout_samples=job["heldout_samples"], model_config=job["model_config"]) for job in jobs]
+        return receipts, {"max_workers": len(jobs), "job_count": len(jobs), "run_ids": observations[-1],
+                          "execution_strategy": "injected_test", "registry_writes_in_workers": False}
+    monkeypatch.setattr(pool, "run_qualification_jobs", wave)
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        result = qt.run_qualified_incremental_training(registry, _lane_templates(spec, 2),
+            state_directory=tmp_path / "qualified", lane_count=2, control_transport="owner",
+            max_qualification_workers=2, reuse_native_workers=True)
+        assert result["qualified_batch_count"] == 2
+        assert [row["run_id"] for row in result["completed"]] == observations[-1]
+        assert result["qualification_wave_reports"][0]["job_count"] == 2
+
+
+def test_parallel_source_drift_cannot_stage_returned_receipts(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualification_pool as pool
+    training_pool, candidate, manifest, qualify = _native_qualification_control_injection(monkeypatch)
+    def changed(jobs, **kwargs):
+        manifest["sha256"] = "changed"
+        return [{}, {}], {"execution_strategy": "injected_test"}
+    monkeypatch.setattr(pool, "run_qualification_jobs", changed)
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        with pytest.raises(IncrementalTrainingError, match="producer source changed"):
+            qt.run_qualified_incremental_training(registry, _lane_templates(spec, 2),
+                state_directory=tmp_path / "qualified", lane_count=2, control_transport="owner",
+                max_qualification_workers=2)
+        assert not list((tmp_path / "qualified").glob("*.qualification.json"))
+        with duckdb.connect(str(tmp_path / "qualified/qualification.duckdb")) as db:
+            assert db.execute("SELECT completed FROM attempts").fetchall() == [(None,), (None,)]
+
+
+def test_sealed_parallel_results_recover_after_owner_loss_with_zero_capacity(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualification_pool as pool
+    training_pool, candidate, manifest, qualify = _native_qualification_control_injection(monkeypatch)
+    def sealed_wave(jobs, **kwargs):
+        receipts = []
+        for job in jobs:
+            receipt = qualify(job["candidate_artifact"], job["candidate_version_id"], job["samples"], None,
+                              heldout_samples=job["heldout_samples"], model_config=job["model_config"])
+            output = Path(job["output_directory"])
+            output.mkdir()
+            qt.inc._write(output / "qualification.json", receipt)
+            qt.inc._write(output / pool.SEAL_NAME, {"schema_version": pool.SCHEMA,
+                "job_sha256": qt.inc._sha(job), "producer_manifest": manifest,
+                "evidence": pool._evidence(output)})
+            receipts.append(receipt)
+        return receipts, {"execution_strategy": "injected_test"}
+    monkeypatch.setattr(pool, "run_qualification_jobs", sealed_wave)
+    original_artifact = qt._artifact
+    def lost(registry, path):
+        if path.name.endswith(".qualification-payload.json"):
+            raise RuntimeError("owner lost before staging")
+        return original_artifact(registry, path)
+    monkeypatch.setattr(qt, "_artifact", lost)
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        templates = _lane_templates(spec, 2)
+        with pytest.raises(RuntimeError, match="owner lost"):
+            qt.run_qualified_incremental_training(registry, templates, state_directory=tmp_path / "qualified",
+                lane_count=2, control_transport="owner", max_qualification_workers=2)
+        assert len(list((tmp_path / "qualified/qualifications").glob("*/" + pool.SEAL_NAME))) == 2
+        assert not list((tmp_path / "qualified").glob("*.qualification.json"))
+        monkeypatch.setattr(qt, "_artifact", original_artifact)
+        monkeypatch.setattr(qt.coordinator, "run_training_jobs", lambda *a, **kw: pytest.fail("duplicate training"))
+        monkeypatch.setattr(pool, "run_qualification_jobs", lambda *a, **kw: pytest.fail("duplicate qualification"))
+        resumed = qt.run_qualified_incremental_training(registry, [], state_directory=tmp_path / "qualified",
+            lane_count=2, control_transport="owner", max_qualification_workers=1,
+            qualification_capacity_callback=lambda **request: {"workers": 0})
+        assert resumed["qualified_batch_count"] == 2
+        assert resumed["qualification_wave_reports"] == []
+        assert resumed["qualification_capacity_reports"] == []
+        assert not resumed["dispatched_run_ids"]

@@ -263,3 +263,89 @@ def test_opt_in_rejects_unvalidated_l2_before_model_calls(monkeypatch, l2):
     with pytest.raises(ValueError, match="zero l2_regularization"):
         _train(model, rows, validation, l2_regularization=l2, projection_max_composed_refinement_attempts=1)
     assert calls == {"evaluations": [], "updates": []}
+
+
+@pytest.mark.parametrize("training", ["same", "nonfinite", "nonfinite_cosine"])
+def test_training_screen_skips_ineligible_bridge_validation_without_inventing_metrics(monkeypatch, training):
+    model, rows, validation, calls = _controlled(monkeypatch, training=training)
+    report = _train(model, rows, validation, projection_max_composed_refinement_attempts=3)
+    attempts = report["epoch_reports"][0]["composed_refinement_reports"]
+    assert len(attempts) == 3
+    # Initial validation and the ordinary IR candidate still run all bridges.
+    # Each optional nudge is screened using training rows before paying for more.
+    assert [ids for ids, _ in calls["evaluations"]] == [
+        ["validation"], ["train"], ["validation"], ["train"],
+        ["train"], ["train"], ["train"],
+    ]
+    for attempt in attempts:
+        assert attempt["training_evaluated"] is True
+        assert attempt["evaluation_order"] == "training_before_validation"
+        assert attempt["holdout_evaluated"] is False
+        assert attempt["objective_delta"] is None
+        assert attempt["validation_evaluation_skipped_reason"] == "training_screen_rejected"
+        assert "validation_after" not in attempt
+        assert "cross_entropy_delta" not in attempt
+        assert "validation_objective_delta_required" in attempt
+        assert not attempt["accepted"]
+    for ids, kwargs in calls["evaluations"][3:]:
+        assert ids == ["train"]
+        assert kwargs["legal_ir_bridge_names"] == ()
+        assert kwargs["legal_ir_targets"] is None
+    json.dumps(report, allow_nan=False)
+
+
+def test_training_improvement_still_requires_bridge_validation_for_every_trial(monkeypatch):
+    model, rows, validation, calls = _controlled(monkeypatch)
+    report = _train(model, rows, validation, projection_max_composed_refinement_attempts=3)
+    attempts = [candidate for candidate in report["epoch_reports"][0]["candidate_reports"]
+                if candidate.get("composed_refinement")]
+    assert [ids for ids, _ in calls["evaluations"]] == [
+        ["validation"], ["train"], ["validation"], ["train"],
+        ["train"], ["validation"], ["train"], ["validation"],
+        ["train"], ["validation"],
+    ]
+    assert all(attempt["holdout_evaluated"] and attempt["training_evaluated"] for attempt in attempts)
+    assert all("validation_evaluation_skipped_reason" not in attempt for attempt in attempts)
+    assert all(attempt["strict_accepted"] for attempt in attempts)
+    for ids, kwargs in calls["evaluations"][4:]:
+        assert kwargs["legal_ir_bridge_names"] == (("deontic_norms",) if ids == ["validation"] else ())
+        assert kwargs["use_sample_memory"] is False
+
+
+@pytest.mark.parametrize("stage", ["train", "validation"])
+def test_screen_or_validation_exception_rolls_back_without_publishing_partial_state(monkeypatch, stage):
+    model, rows, validation, calls = _controlled(monkeypatch)
+    before = model.state.to_json()
+    evaluate = model.evaluate
+
+    def interrupted(rows, **kwargs):
+        if rows[0].sample_id == stage and model.state.feature_embedding_weights["embedding"][0]:
+            raise RuntimeError("interrupted refinement evaluation")
+        return evaluate(rows, **kwargs)
+
+    monkeypatch.setattr(model, "evaluate", interrupted)
+    with pytest.raises(RuntimeError, match="interrupted refinement evaluation"):
+        _train(model, rows, validation, projection_max_composed_refinement_attempts=3,
+               accepted_patch_sink=lambda *_: pytest.fail("partial patch published"))
+    assert model.state.to_json() == before
+    assert model.state._active_state_transaction is None
+
+
+@pytest.mark.parametrize("skipped_delta", [None, 0.0, 100.0])
+def test_skipped_validation_cannot_outrank_a_measured_negative_objective(skipped_delta):
+    measured = {"update": "measured", "accepted": False, "objective_delta": -0.25,
+                "holdout_evaluated": True}
+    skipped = {"update": "skipped", "accepted": False, "objective_delta": skipped_delta,
+               "holdout_evaluated": False}
+    summary = ma._projection_rejection_summary([{"candidate_reports": [measured, skipped]}])
+    assert summary["attempted_count"] == summary["rejected_attempt_count"] == 2
+    assert summary["best_rejected_attempt"]["update"] == "measured"
+    assert summary["best_rejected_attempt"]["objective_delta"] == -0.25
+    assert ma._projection_rejection_summary([
+        {"candidate_reports": [skipped]},
+    ])["best_rejected_attempt"] == {}
+    # Missing evaluation flags in historical reports retain their interpretation.
+    del measured["holdout_evaluated"]
+    assert ma._projection_rejection_summary([
+        {"candidate_reports": [measured]},
+    ])["best_rejected_attempt"]["objective_delta"] == -0.25

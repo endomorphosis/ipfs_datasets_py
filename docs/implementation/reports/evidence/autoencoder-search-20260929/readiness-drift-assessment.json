@@ -1,0 +1,19 @@
+{
+  "admitted": false,
+  "after": {
+    "file_count": 7833,
+    "sha256": "c0b653cc2a2d36314cf4735755df1366d666422a90cd419ece37b5813424ad03"
+  },
+  "after_stable_during_capture": true,
+  "before": {
+    "file_count": 7833,
+    "sha256": "828bfe716fe4733ec1db21737e48c27769e070b19e18dff3f6efaf5aaca4ecdd"
+  },
+  "changes": {
+    "logic/autoformal/meta_ontology.py": {
+      "after": "84c46244dcd8950faeda981584e8023a499fda5dcb5faee27bafa5ace652d758",
+      "before": "741692543fdcac5580cbe1cb28149be5dcb0cce7204bab94b3f3d121fc5f07f7"
+    }
+  },
+  "schema": "native-search-readiness-producer-drift/v1"
+}

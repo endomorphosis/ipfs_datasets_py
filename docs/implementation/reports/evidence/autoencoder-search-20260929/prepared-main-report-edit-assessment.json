@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "path": "docs/implementation/reports/AUTOENCODER_SEARCH_20260929.md",
+      "prepared_workspace_sha256": "62b390eca86f2ab6294032847efeb3467ba5fe039e141df1c0636db3b01dcb42",
+      "current_sha256": "2be54e36f0814e1b51198e84765e5e17704e15530141bab311e23974215e1b26"
+    }
+  ],
+  "all_product_and_test_files_unchanged": true,
+  "action": "Preserve original failed wrapper receipt; rerun exact prepared source with documentation edits paused.",
+  "admitted": false
+}

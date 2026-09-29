@@ -238,3 +238,45 @@ def test_training_owner_cpu_is_not_charged_twice_inside_reserved_group():
 def test_invalid_owner_cpu_reserve_cannot_expand_capacity(value):
     with pytest.raises(ValueError):
         plan(reserve_cpu_slots=value)
+
+
+@pytest.mark.parametrize("training_workers,expected", [(1, 1), (4, 2), (7, 3)])
+def test_qualification_fits_existing_training_group_without_new_reservation(training_workers, expected):
+    outer = cap.execution_envelope("training", training_workers)
+    result = cap.qualification_capacity_plan(max_workers=32,
+        memory_budget_mb=outer["estimated_memory_mb"], pending_count=8,
+        cpu_budget=outer["cpu_slots"], process_budget=outer["child_process_slots"], probe=PROBE)
+    assert result["workers"] == expected
+    child = result["execution_envelope"]
+    assert child["cpu_slots"] <= outer["cpu_slots"]
+    assert child["child_process_slots"] <= outer["child_process_slots"]
+    assert child["estimated_memory_mb"] <= outer["estimated_memory_mb"]
+    assert result["execution_strategy"] == ("owner_serial" if expected == 1 else "spawned_processes")
+
+
+@pytest.mark.parametrize("limit", [{"memory_budget_mb": 1024}, {"cpu_budget": 1},
+                                  {"process_budget": 3}, {"pending_count": 0}])
+def test_qualification_serial_fallback_never_overrides_a_real_capacity_limit(limit):
+    result = cap.qualification_capacity_plan(**{"max_workers": 32, "memory_budget_mb": 12288,
+        "cpu_budget": 8, "process_budget": 11, "pending_count": 8, "probe": PROBE, **limit})
+    assert result["workers"] == 0
+    assert result["execution_strategy"] == "deferred"
+    assert result["execution_envelope"]["cpu_slots"] == 0
+
+
+def test_qualification_explicit_serial_cap_and_low_memory_preserve_original_owner_path():
+    result = cap.qualification_capacity_plan(max_workers=1, memory_budget_mb=3200,
+        cpu_budget=2, process_budget=5, pending_count=8, probe=PROBE)
+    assert result["workers"] == 1
+    assert result["execution_strategy"] == "owner_serial"
+    assert result["execution_envelope"]["estimated_memory_mb"] == 2048
+    with pytest.raises(ValueError, match="overridden"):
+        cap.qualification_capacity_plan(max_workers=1, memory_budget_mb=8192,
+            pending_count=1, probe=PROBE, reserve_mb=0)
+
+
+def test_qualification_parallel_plan_rejects_implicit_cpu_cost_override():
+    with pytest.raises(ValueError, match="overridden"):
+        cap.qualification_capacity_plan(max_workers=8, memory_budget_mb=16384,
+            cpu_budget=16, process_budget=32, pending_count=8, probe=PROBE,
+            per_worker_cpu=2)

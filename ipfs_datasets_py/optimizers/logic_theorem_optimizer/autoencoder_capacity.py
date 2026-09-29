@@ -318,6 +318,10 @@ def execution_resource_policy(execution_mode):
         return {"per_worker_memory_mb": 1792, "reserve_mb": 512, "reserve_cpu_slots": 1,
                 "per_worker_process_slots": 3, "reserve_process_slots": 2,
                 "scope": "parallel_model_lake_lean_plus_coordinator_tracker"}
+    if execution_mode == "qualification":
+        return {"per_worker_memory_mb": 1792, "reserve_mb": 2048, "reserve_cpu_slots": 1,
+                "per_worker_process_slots": 3, "reserve_process_slots": 2,
+                "scope": "parallel_candidate_model_lake_lean_plus_owner_tracker"}
     raise ValueError("unknown autoencoder execution mode")
 
 
@@ -343,3 +347,36 @@ def execution_capacity_plan(execution_mode, **kwargs):
     plan = capacity_plan(**kwargs, **costs)
     plan["execution_envelope"] = execution_envelope(execution_mode, plan["workers"])
     return plan
+
+
+def qualification_capacity_plan(**kwargs):
+    """Fit a separate qualification wave inside the existing training lease.
+
+    Training processes must have exited before a parallel qualification wave.
+    A single qualifier uses the original owner process, so it needs the old
+    owner/proof allowance rather than a second model process. Recompute every
+    capacity call; neither plan acquires or expands a scheduler reservation.
+    """
+    costs = {"per_worker_memory_mb": 2048, "reserve_mb": 0,
+             "per_worker_cpu": 1, "reserve_cpu_slots": 1,
+             "per_worker_process_slots": 2, "reserve_process_slots": 2}
+    if any(name in kwargs for name in costs):
+        raise ValueError("qualification resource estimates cannot be overridden implicitly")
+    parallel = execution_capacity_plan("qualification", **kwargs)
+    if parallel["workers"] >= 2:
+        parallel["execution_strategy"] = "spawned_processes"
+        return parallel
+    serial = capacity_plan(**{**kwargs, "max_workers": 1,
+                              "probe": parallel["telemetry"]}, **costs)
+    count = serial["workers"]
+    serial["execution_strategy"] = "owner_serial" if count else "deferred"
+    serial["parallel_capacity"] = parallel
+    serial["execution_envelope"] = {
+        "execution_mode": "qualification", "workers": count,
+        "estimated_memory_mb": 2048 if count else 0,
+        "cpu_slots": 2 if count else 0, "worker_cpu_slots": count,
+        "coordinator_cpu_slots": count,
+        "child_process_slots": 4 if count else 0,
+        "estimate_policy": {**costs, "scope": "in_owner_model_with_serial_lake_lean"},
+        "scope": "cooperative_resource_estimate_not_kernel_quota"}
+    return serial

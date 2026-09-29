@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import asdict
 import hashlib
 import json
+import time
 from pathlib import Path
 
 from . import autoencoder_incremental_training as inc
@@ -76,7 +77,21 @@ def _job(registry, directory, binding, row, policy, parent):
     return TrainingJobSpec.from_dict(payload)
 
 
-def _qualify(registry, directory, row, spec, completed, policy, qualifier):
+def _qualification_job(registry, directory, spec, completed, policy):
+    inputs = coordinator.registered_checkpoint_inputs(registry, completed["candidate_version_id"])
+    return {"run_id": spec.run_id, "training_job_sha256": spec.canonical_sha256,
+            "qualification_policy_sha256": inc._sha(policy),
+            "candidate_version_id": completed["candidate_version_id"],
+            "candidate_artifact": inputs["base_checkpoint"],
+            "checkpoint_dependencies": inputs.get("base_checkpoint_dependencies", []),
+            "samples": [asdict(sample) for sample in spec.samples],
+            "heldout_samples": _validation(spec, policy),
+            "model_config": spec.to_dict()["autoencoder_config"],
+            "lake_timeout_seconds": policy["lake_timeout_seconds"],
+            "output_directory": str(directory / "qualifications" / spec.run_id)}
+
+
+def _qualify(registry, directory, row, spec, completed, policy, qualifier, *, prepared_receipt=None):
     version_id = completed["candidate_version_id"]
     inputs = coordinator.registered_checkpoint_inputs(registry, version_id)
     record_path = directory / (spec.run_id + ".qualification.json")
@@ -90,16 +105,18 @@ def _qualify(registry, directory, row, spec, completed, policy, qualifier):
         receipt = _read_artifact(registry, record["receipt_artifact"])
     else:
         output = directory / "qualifications" / spec.run_id
-        # An unfinished qualifier has not produced authoritative evidence. Do
-        # not overwrite its artifacts or silently retry an uncertain process.
-        if output.exists():
-            raise inc.IncrementalTrainingError("unfinished qualification requires recovery: " + spec.run_id)
-        receipt = qualifier(inputs["base_checkpoint"], version_id,
-                            [asdict(sample) for sample in spec.samples], output,
-                            checkpoint_dependencies=inputs.get("base_checkpoint_dependencies", ()),
-                            model_config=spec.to_dict()["autoencoder_config"],
-                            heldout_samples=_validation(spec, policy),
-                            lake_timeout_seconds=policy["lake_timeout_seconds"])
+        if prepared_receipt is None:
+            # An unfinished qualifier has not produced authoritative evidence.
+            if output.exists():
+                raise inc.IncrementalTrainingError("unfinished qualification requires recovery: " + spec.run_id)
+            receipt = qualifier(inputs["base_checkpoint"], version_id,
+                                [asdict(sample) for sample in spec.samples], output,
+                                checkpoint_dependencies=inputs.get("base_checkpoint_dependencies", ()),
+                                model_config=spec.to_dict()["autoencoder_config"],
+                                heldout_samples=_validation(spec, policy),
+                                lake_timeout_seconds=policy["lake_timeout_seconds"])
+        else:
+            receipt = prepared_receipt
         if receipt.get("candidate_version_id") != version_id or receipt.get("candidate_artifact") != expected["candidate_artifact"]:
             raise inc.IncrementalTrainingError("qualifier returned evidence for another candidate")
         _verify_receipt_binding(receipt, spec, policy)
@@ -126,7 +143,8 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
         max_training_rounds=3, lake_timeout_seconds=120, producer_identity=None,
         qualification_samples=(), control_transport="quack", publication_repository=None,
         executor_factory=None, worker_function=execute_training_job, qualifier=None,
-        max_parallel_workers=None, capacity_callback=None, reuse_native_workers=False):
+        max_parallel_workers=None, capacity_callback=None, reuse_native_workers=False,
+        max_qualification_workers=1, qualification_capacity_callback=None):
     """Train, qualify and retry measured metric failures within fixed budgets.
 
     Validation is disjoint from gradient-training intake across the entire
@@ -138,6 +156,9 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
     optional ``capacity_callback(pending_count=..., max_workers=...)`` bound
     physical dispatch only and may change on resume. The callback returns a
     JSON-compatible capacity plan with an integer ``workers`` (including zero).
+    Qualification dispatch has a separate physical ceiling/capacity callback.
+    Width one retains parent evaluation; wider native waves use spawned workers
+    after training workers exit. Sealed worker output supports verified recovery.
     Native streams bind the package's Python contents in their saved policy;
     source changes require a new stream, regardless of worker reuse settings.
     """
@@ -161,6 +182,10 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
         raise inc.IncrementalTrainingError("invalid max parallel workers")
     if capacity_callback is not None and not callable(capacity_callback):
         raise inc.IncrementalTrainingError("invalid capacity callback")
+    if type(max_qualification_workers) is not int or not 1 <= max_qualification_workers <= 32:
+        raise inc.IncrementalTrainingError("invalid max qualification workers")
+    if qualification_capacity_callback is not None and not callable(qualification_capacity_callback):
+        raise inc.IncrementalTrainingError("invalid qualification capacity callback")
     if control_transport not in {"quack", "owner"}:
         raise inc.IncrementalTrainingError("invalid weight control transport")
     if publication_repository not in (None, "justicedao/uscode-autoformal-span-cache"):
@@ -302,6 +327,64 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                 _read_artifact(registry, saved["repair_outbox"])
                 return saved
 
+            def finalize_qualification(lane, row, spec, optimization, receipt, artifact):
+                qualified, retry, status = _disposition(receipt, row["round"], max_training_rounds)
+                tasks = list(receipt.get("repair_todos", ()))
+                publication = None
+                if qualified and publication_repository:
+                    from ...huggingface.autoencoder_incremental import (
+                        IncrementalPublicationError, stage_sparse_update, enqueue_sparse_update,
+                    )
+                    # Queue locally before the progress commit. An
+                    # owner crash replays this exact immutable plan;
+                    # uploads happen after durable training intake.
+                    try:
+                        staged = stage_sparse_update(registry, optimization["candidate_version_id"],
+                            {key: artifact[key] for key in ("sha256", "bytes")},
+                            directory / "weight-publications" / spec.run_id,
+                            lane_id=f"shard-{machine_shard_index}-lane-{lane[1]}",
+                            repository_id=publication_repository)
+                        publication = enqueue_sparse_update(registry, staged["manifest_path"])
+                    except IncrementalPublicationError as exc:
+                        publication = {"status": "deferred", "uploaded": False,
+                                       "reason": str(exc), "admitted": False}
+                        tasks.append({"kind": "publication_repair", "candidate_version_id": optimization["candidate_version_id"],
+                                      "evidence": publication, "qualification_artifact": artifact,
+                                      "acceptance": "Publish verified sparse closure and evidence without weakening gates or uploading an unapproved full anchor.",
+                                      "admitted": False})
+                if status == "training_exhausted":
+                    tasks.append({"kind": "training_repair", "reason": "bounded_training_rounds_exhausted",
+                                  "acceptance": "Meet unchanged absolute metric, semantic, syntax and Lake gates.",
+                                  "evidence": receipt.get("metric_gate", {}), "admitted": False})
+                outbox = {"schema_version": "qualification-repair-outbox/v1", "run_id": spec.run_id,
+                          "candidate_version_id": optimization["candidate_version_id"],
+                          "qualification_artifact": artifact, "source_samples": row["template"]["samples"],
+                          "tasks": tasks, "supervisor_submitted": False, "published": False, "admitted": False}
+                outpath = directory / "repair-outbox" / (spec.run_id + ".json")
+                if outpath.exists() and json.loads(outpath.read_bytes()) != outbox:
+                    raise inc.IncrementalTrainingError("durable repair outbox changed")
+                if not outpath.exists():
+                    inc._write(outpath, outbox)
+                saved = {"batch_id": row["batch_id"], "variant_id": lane[0], "lane_index": lane[1],
+                         "round": row["round"], "run_id": spec.run_id, "optimizer": optimization,
+                         "qualification_artifact": artifact, "qualified": qualified,
+                         "qualification_status": status, "repair_outbox": _artifact(registry, outpath),
+                         "publication": publication,
+                         "admitted": False, "formalized": False}
+                db.execute("BEGIN TRANSACTION")
+                try:
+                    db.execute("UPDATE attempts SET completed=? WHERE run_id=?", [inc._raw(saved).decode(), spec.run_id])
+                    db.execute("UPDATE batches SET status=?,round=?,latest=? WHERE batch_id=?",
+                               [status, row["round"] + int(retry), spec.run_id, row["batch_id"]])
+                    db.execute("UPDATE lanes SET head=?,tip=? WHERE variant_id=? AND lane_index=?",
+                               [optimization["next_base_version_id"], spec.run_id, *lane])
+                    db.execute("COMMIT")
+                except BaseException:
+                    db.execute("ROLLBACK")
+                    raise
+                heads[lane] = optimization["next_base_version_id"]
+                completed[spec.run_id] = saved
+
             heads, completed = {}, {}
             for variant, lane, head, tip in db.execute("SELECT * FROM lanes ORDER BY variant_id,lane_index").fetchall():
                 heads[(variant, lane)] = head
@@ -317,10 +400,12 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
             (directory / "qualifications").mkdir(exist_ok=True)
             (directory / "repair-outbox").mkdir(exist_ok=True)
             dispatched, reports, blocked, capacity_reports = [], [], {}, []
+            qualification_capacity_reports, qualification_wave_reports = [], []
+            qualification_deferred = False
             capacity_deferred = False
             while True:
                 check_cycle_source()
-                selected, recovered = [], False
+                selected, recovered, ready = [], False, []
                 for lane, head in heads.items():
                     if lane in blocked:
                         continue
@@ -344,66 +429,7 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                         run = registry.get_run(spec.run_id)
                         if run["status"] == "completed":
                             optimization = inc._completion(registry, row, spec)
-                            check_cycle_source()
-                            receipt, artifact = _qualify(registry, directory, row, spec, optimization, policy, guarded_qualifier)
-                            check_cycle_source()
-                            qualified, retry, status = _disposition(receipt, row["round"], max_training_rounds)
-                            tasks = list(receipt.get("repair_todos", ()))
-                            publication = None
-                            if qualified and publication_repository:
-                                from ...huggingface.autoencoder_incremental import (
-                                    IncrementalPublicationError, stage_sparse_update, enqueue_sparse_update,
-                                )
-                                # Queue locally before the progress commit. An
-                                # owner crash replays this exact immutable plan;
-                                # uploads happen after durable training intake.
-                                try:
-                                    staged = stage_sparse_update(registry, optimization["candidate_version_id"],
-                                        {key: artifact[key] for key in ("sha256", "bytes")},
-                                        directory / "weight-publications" / spec.run_id,
-                                        lane_id=f"shard-{machine_shard_index}-lane-{lane[1]}",
-                                        repository_id=publication_repository)
-                                    publication = enqueue_sparse_update(registry, staged["manifest_path"])
-                                except IncrementalPublicationError as exc:
-                                    publication = {"status": "deferred", "uploaded": False,
-                                                   "reason": str(exc), "admitted": False}
-                                    tasks.append({"kind": "publication_repair", "candidate_version_id": optimization["candidate_version_id"],
-                                                  "evidence": publication, "qualification_artifact": artifact,
-                                                  "acceptance": "Publish verified sparse closure and evidence without weakening gates or uploading an unapproved full anchor.",
-                                                  "admitted": False})
-                            if status == "training_exhausted":
-                                tasks.append({"kind": "training_repair", "reason": "bounded_training_rounds_exhausted",
-                                              "acceptance": "Meet unchanged absolute metric, semantic, syntax and Lake gates.",
-                                              "evidence": receipt.get("metric_gate", {}), "admitted": False})
-                            outbox = {"schema_version": "qualification-repair-outbox/v1", "run_id": spec.run_id,
-                                      "candidate_version_id": optimization["candidate_version_id"],
-                                      "qualification_artifact": artifact, "source_samples": row["template"]["samples"],
-                                      "tasks": tasks, "supervisor_submitted": False, "published": False, "admitted": False}
-                            outpath = directory / "repair-outbox" / (spec.run_id + ".json")
-                            if outpath.exists() and json.loads(outpath.read_bytes()) != outbox:
-                                raise inc.IncrementalTrainingError("durable repair outbox changed")
-                            if not outpath.exists():
-                                inc._write(outpath, outbox)
-                            saved = {"batch_id": row["batch_id"], "variant_id": lane[0], "lane_index": lane[1],
-                                     "round": row["round"], "run_id": spec.run_id, "optimizer": optimization,
-                                     "qualification_artifact": artifact, "qualified": qualified,
-                                     "qualification_status": status, "repair_outbox": _artifact(registry, outpath),
-                                     "publication": publication,
-                                     "admitted": False, "formalized": False}
-                            db.execute("BEGIN TRANSACTION")
-                            try:
-                                db.execute("UPDATE attempts SET completed=? WHERE run_id=?", [inc._raw(saved).decode(), spec.run_id])
-                                db.execute("UPDATE batches SET status=?,round=?,latest=? WHERE batch_id=?",
-                                           [status, row["round"] + int(retry), spec.run_id, row["batch_id"]])
-                                db.execute("UPDATE lanes SET head=?,tip=? WHERE variant_id=? AND lane_index=?",
-                                           [optimization["next_base_version_id"], spec.run_id, *lane])
-                                db.execute("COMMIT")
-                            except BaseException:
-                                db.execute("ROLLBACK")
-                                raise
-                            heads[lane] = optimization["next_base_version_id"]
-                            completed[spec.run_id] = saved
-                            recovered = True
+                            ready.append((lane, row, spec, optimization))
                             continue
                         if run["status"] != "queued" or run["attempt"] != 0 or Path(spec.output_directory).exists():
                             blocked[lane] = {"batch_id": row["batch_id"], "run_id": spec.run_id,
@@ -411,6 +437,77 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                             continue
                     if len(dispatched) + len(selected) < max_batches and len(selected) < lane_count:
                         selected.append((row, spec))
+                if ready:
+                    from .autoencoder_qualification_pool import recover_qualification, run_qualification_jobs, SEAL_NAME
+                    # Idle optimizer workers still retain large imports/arenas.
+                    # Free them before admitting any qualification work.
+                    if native_pool is not None:
+                        native_pool.close()
+                        native_pool = None
+                    pending, ready_results = [], {}
+                    for item in ready:
+                        lane, row, spec, optimization = item
+                        record = directory / (spec.run_id + ".qualification.json")
+                        prepared = None
+                        job = _qualification_job(registry, directory, spec, optimization, policy)
+                        if native and (Path(job["output_directory"]) / SEAL_NAME).exists():
+                            prepared = recover_qualification(job, cycle_manifest)
+                        if record.exists() or prepared is not None:
+                            check_cycle_source()
+                            receipt, artifact = _qualify(registry, directory, row, spec, optimization,
+                                policy, guarded_qualifier, prepared_receipt=prepared)
+                            check_cycle_source()
+                            ready_results[spec.run_id] = (receipt, artifact)
+                        else:
+                            pending.append((item, job))
+                    while pending:
+                        maximum = min(max_qualification_workers, lane_count)
+                        plan = ({"workers": min(maximum, len(pending)), "scope": "candidate_qualification"}
+                                if qualification_capacity_callback is None else
+                                qualification_capacity_callback(pending_count=len(pending), max_workers=maximum))
+                        if (type(plan) is not dict or type(plan.get("workers")) is not int
+                                or not 0 <= plan["workers"] <= min(maximum, len(pending))):
+                            raise inc.IncrementalTrainingError("qualification capacity callback returned an invalid limit")
+                        try:
+                            plan = json.loads(json.dumps(plan, allow_nan=False))
+                        except (TypeError, ValueError) as exc:
+                            raise inc.IncrementalTrainingError("qualification capacity telemetry is not finite JSON") from exc
+                        qualification_capacity_reports.append(plan)
+                        if plan["workers"] == 0:
+                            qualification_deferred = True
+                            selected = []
+                            break
+                        wave = pending[:plan["workers"]]
+                        started = time.monotonic()
+                        check_cycle_source()
+                        if native and plan["workers"] >= 2:
+                            receipts, observation = run_qualification_jobs([job for _, job in wave],
+                                max_workers=plan["workers"], expected_manifest=cycle_manifest)
+                        else:
+                            receipts = [None] * len(wave)
+                            observation = {"max_workers": plan["workers"], "job_count": len(wave),
+                                "run_ids": [job["run_id"] for _, job in wave],
+                                "execution_strategy": "parent_serial_qualification" if native else "injected_test",
+                                "registry_writes_in_workers": False, "admitted": False}
+                        if len(receipts) != len(wave):
+                            raise inc.IncrementalTrainingError("qualification wave returned an incomplete receipt set")
+                        for ((lane, row, spec, optimization), job), prepared in zip(wave, receipts):
+                            check_cycle_source()
+                            receipt, artifact = _qualify(registry, directory, row, spec, optimization,
+                                policy, guarded_qualifier, prepared_receipt=prepared)
+                            check_cycle_source()
+                            ready_results[spec.run_id] = (receipt, artifact)
+                        observation["elapsed_seconds"] = time.monotonic() - started
+                        observation["dispatch_capacity"] = plan
+                        qualification_wave_reports.append(observation)
+                        pending = pending[len(wave):]
+                    # Completion order cannot alter lane heads or report order.
+                    for lane, row, spec, optimization in ready:
+                        if spec.run_id in ready_results:
+                            check_cycle_source()
+                            receipt, artifact = ready_results[spec.run_id]
+                            finalize_qualification(lane, row, spec, optimization, receipt, artifact)
+                            recovered = True
                 if selected:
                     maximum = min(max_parallel_workers, lane_count)
                     plan = ({"workers": min(maximum, len(selected)), "scope": "concurrent_independent_passes"}
@@ -426,7 +523,7 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                     capacity_deferred = plan["workers"] == 0
                     selected = selected[:plan["workers"]]
                 if not selected:
-                    if recovered and not capacity_deferred:
+                    if recovered and not capacity_deferred and not qualification_deferred:
                         continue
                     counts = dict(db.execute("SELECT status,count(*) FROM batches GROUP BY status").fetchall())
                     check_cycle_source()
@@ -438,6 +535,10 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                             "blocked": list(blocked.values()), "dispatch_reports": reports,
                             "capacity_reports": capacity_reports, "capacity_deferred": capacity_deferred,
                             "max_parallel_workers": max_parallel_workers,
+                            "max_qualification_workers": max_qualification_workers,
+                            "qualification_capacity_reports": qualification_capacity_reports,
+                            "qualification_wave_reports": qualification_wave_reports,
+                            "qualification_deferred": qualification_deferred,
                             "reuse_native_workers": reuse_native_workers and native,
                             "native_cycle_manifest": cycle_manifest,
                             "skipped_other_machine_templates": skipped,

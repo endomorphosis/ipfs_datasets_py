@@ -1,0 +1,49 @@
+{
+  "admitted": false,
+  "after_manifest": {
+    "file_count": 7833,
+    "sha256": "1e7f12b60cab5d74c52eb10176b47790e8d90269cc0ac0e9061d9b5061a25344"
+  },
+  "after_package_mapping": {
+    "bytes": 1139468,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-search-20260929/package-optimized.json",
+    "sha256": "6879d24117945418c7b5a707df7ee889ba26f12124c9dbfa2f380302ae670ff1"
+  },
+  "before_manifest": {
+    "file_count": 7832,
+    "sha256": "5eb319082aafd8c84dbb3bbf6029d77cafeec5bf1e95e94a2902d84043201023"
+  },
+  "before_package_mapping": {
+    "bytes": 1139326,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-search-20260929/package-baseline.json",
+    "sha256": "7908a30aea39bf8eacab0ba1ef060ee286a8cfaef13a3d05bcac58fca3d4eed4"
+  },
+  "external_changes": {
+    "logic/autoformal/meta_ontology.py": {
+      "after": "84c46244dcd8950faeda981584e8023a499fda5dcb5faee27bafa5ace652d758",
+      "before": "741692543fdcac5580cbe1cb28149be5dcb0cce7204bab94b3f3d121fc5f07f7"
+    }
+  },
+  "old_to_new_causal_speed_claim_eligible": false,
+  "old_to_new_exact_parity_expected": false,
+  "owned_changes": {
+    "optimizers/logic_theorem_optimizer/autoencoder_capacity.py": {
+      "after": "d9cc2cd5393b7dfb52728d6140afcaae77469c179ff06c0fafbdf5e6aec04b77",
+      "before": "3d6ac070238d3e7ed34ac27593e5f7d1d3b14c912186813c9819fe509abb77e3"
+    },
+    "optimizers/logic_theorem_optimizer/autoencoder_qualification_pool.py": {
+      "after": "e18918579ca60f42f99caaebb5697e92b31014c72e97d0f3d4ce851d2c52ac45",
+      "before": null
+    },
+    "optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py": {
+      "after": "f5ea6a122fe549f058330614edf7547bf736d282c07f7cba11cfa7ed6f7d2906",
+      "before": "dbf356283272ef70614abfa1c64ad75fd489729d773d01a855746cb970ac633d"
+    },
+    "optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "after": "53e7db399dab42ac6fe90b737b5c71b8d8013b5e05e4f9009182ddd480e048d0",
+      "before": "6b705fa3d9718efe5411fa5dc4b94b04210118d38e8996728b10364e8eb507a5"
+    }
+  },
+  "reason": "External meta_ontology edit and source-bound logical-lane parent change. Use final same-source serial/parallel qualification pair.",
+  "schema": "native-search-final-producer-scope/v1"
+}

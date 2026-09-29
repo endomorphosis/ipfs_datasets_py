@@ -1,0 +1,8 @@
+{
+  "command": "prepare_publication.py --audit-only --fetch",
+  "returncode": 1,
+  "error": "baseline source map differs from its native binding",
+  "captured_map_manifest": "1e7f12b60cab5d74c52eb10176b47790e8d90269cc0ac0e9061d9b5061a25344",
+  "serial_and_parallel_native_manifest": "f66e39e68c39e367f2ed881ca9c10beeb88d9b50c6da97e0622f264d6b16fcb8",
+  "scope": "Publication preparation stopped before staging or committing; compare exact full producer maps before retry. Native commands independently sealed unchanged start/end producers."
+}

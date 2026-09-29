@@ -1,0 +1,30 @@
+{
+  "admitted": false,
+  "auditor": {
+    "bytes": 48295,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-search-20260929/audit_native_runs.py",
+    "sha256": "3b877f7b351e7301efb9935f9971e60f9fe2d2ec60f9fd6e99b4bb2bf4310441"
+  },
+  "passed": true,
+  "results": {
+    "declared_external_drift_still_rejected": true,
+    "fabricated_validation_delta_rejected": true,
+    "historical_refinement_records_unchanged": {
+      "check_count": 149,
+      "failures": [],
+      "passed": true
+    },
+    "owned_full_map_delta_accepted": {
+      "check_count": 8,
+      "failures": [],
+      "passed": true
+    },
+    "synthetic_training_first_contract": {
+      "check_count": 238,
+      "failures": [],
+      "passed": true
+    }
+  },
+  "schema": "native-search-auditor-selfcheck/v1",
+  "scope": "Synthetic contract checks and historical receipt reads only; not a new native run, gate admission or performance result."
+}

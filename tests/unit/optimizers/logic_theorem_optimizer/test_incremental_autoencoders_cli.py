@@ -377,3 +377,42 @@ def test_training_nested_callback_receives_complete_reserved_cpu_envelope(tmp_pa
         return {"dispatched_run_ids": []}
     monkeypatch.setattr(qualified, "run_qualified_incremental_training", capture)
     cli.run_cycle(config)
+
+
+@pytest.mark.parametrize("ceiling,expected", [(0, 3), (2, 2), (1, 1)])
+def test_qualification_callback_uses_existing_envelope_with_independent_ceiling(tmp_path, monkeypatch, ceiling, expected):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
+    config = _selection_cycle_config(tmp_path, monkeypatch)
+    config.update(workers=32, max_parallel_workers=7, reserved_cpu_slots=8,
+                  reserved_child_process_slots=11, memory_mb=12288, max_batches=8,
+                  parallel_qualification_workers=ceiling)
+    monkeypatch.setattr(capacity, "hardware_probe", lambda: {"hardware_cpu_count": 20,
+        "affinity_cpu_count": 20, "available_memory_mb": 50000})
+    def capture(_registry, templates, **kwargs):
+        assert kwargs["max_qualification_workers"] == (ceiling or 32)
+        result = kwargs["qualification_capacity_callback"](pending_count=8,
+            max_workers=kwargs["max_qualification_workers"])
+        assert result["workers"] == expected
+        assert result["execution_envelope"]["cpu_slots"] <= 8
+        assert result["execution_envelope"]["child_process_slots"] <= 11
+        assert result["execution_envelope"]["estimated_memory_mb"] <= 12288
+        return {"dispatched_run_ids": []}
+    monkeypatch.setattr(qualified, "run_qualified_incremental_training", capture)
+    cli.run_cycle(config)
+
+
+@pytest.mark.parametrize("value", ["-1", "33"])
+def test_invalid_parallel_qualification_ceiling_rejected_before_work(tmp_path, value):
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(tmp_path / "unused"), "--input-jsonl", str(tmp_path / "input"),
+                  "--parallel-qualification-workers", value])
+    assert not (tmp_path / "unused").exists()
+
+
+def test_explicit_parallel_qualification_setting_is_training_only(tmp_path):
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(tmp_path / "unused"), "--execution-mode", "inference",
+                  "--input-jsonl", str(tmp_path / "input"), "--validation-jsonl", str(tmp_path / "validation"),
+                  "--parallel-qualification-workers", "2"])
+    assert not (tmp_path / "unused").exists()

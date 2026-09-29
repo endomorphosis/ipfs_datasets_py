@@ -1,0 +1,95 @@
+{
+  "schema": "source-identity-placement-assessment/v1",
+  "rows": [
+    {
+      "text": "The officer shall retain the file for at least 20 days.",
+      "actual_old_lane": 23,
+      "recomputed_template_old_lane": 23,
+      "predicted_new_lane": 4,
+      "old_parent": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "old_qualified": true
+    },
+    {
+      "text": "The officer shall retain the file for at least 21 days.",
+      "actual_old_lane": 1,
+      "recomputed_template_old_lane": 1,
+      "predicted_new_lane": 6,
+      "old_parent": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "old_qualified": true
+    },
+    {
+      "text": "The officer shall retain the file for at least 22 days.",
+      "actual_old_lane": 30,
+      "recomputed_template_old_lane": 30,
+      "predicted_new_lane": 26,
+      "old_parent": {
+        "bytes": 27848588,
+        "sha256": "70260b3f726be6535a356b45d5319918b3a09a3ffbd516a428f23519a5cf2b13"
+      },
+      "old_qualified": false
+    },
+    {
+      "text": "The officer shall retain the file for at least 23 days.",
+      "actual_old_lane": 13,
+      "recomputed_template_old_lane": 13,
+      "predicted_new_lane": 17,
+      "old_parent": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "old_qualified": true
+    },
+    {
+      "text": "The officer shall retain the file for at least 24 days.",
+      "actual_old_lane": 21,
+      "recomputed_template_old_lane": 21,
+      "predicted_new_lane": 24,
+      "old_parent": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "old_qualified": true
+    },
+    {
+      "text": "The officer shall retain the file for at least 25 days.",
+      "actual_old_lane": 28,
+      "recomputed_template_old_lane": 28,
+      "predicted_new_lane": 10,
+      "old_parent": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "old_qualified": true
+    },
+    {
+      "text": "The officer shall retain the file for at least 26 days.",
+      "actual_old_lane": 10,
+      "recomputed_template_old_lane": 10,
+      "predicted_new_lane": 30,
+      "old_parent": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "old_qualified": true
+    },
+    {
+      "text": "The officer shall retain the file for at least 27 days.",
+      "actual_old_lane": 30,
+      "recomputed_template_old_lane": 30,
+      "predicted_new_lane": 13,
+      "old_parent": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "old_qualified": true
+    }
+  ],
+  "scope": "Read-only prediction: source changes are part of immutable batch identities and can alter lane parents. Full-native parity must verify parents rather than assume matching lanes.",
+  "admitted": false
+}

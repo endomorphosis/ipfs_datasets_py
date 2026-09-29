@@ -1,0 +1,47 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 764 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_capacity.py . [  0%]
+...............................................                          [  6%]
+tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py . [  6%]
+................................                                         [ 10%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualification_pool.py . [ 10%]
+.................                                                        [ 12%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py . [ 13%]
+...........................................                              [ 18%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_candidate_qualification.py . [ 18%]
+........................................                                 [ 24%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py . [ 24%]
+.........................................                                [ 29%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_paths.py . [ 29%]
+....................................................                     [ 36%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py . [ 36%]
+........................                                                 [ 39%]
+tests/unit/optimizers/logic_theorem_optimizer/test_run_autoencoder_fleet.py . [ 39%]
+.......................                                                  [ 42%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py . [ 43%]
+........................................................................ [ 52%]
+............................                                             [ 56%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py . [ 56%]
+........................................................................ [ 65%]
+........................................................................ [ 75%]
+............                                                             [ 76%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_transaction.py . [ 76%]
+......                                                                   [ 77%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_patch_codec.py . [ 77%]
+......................                                                   [ 80%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_checkpoint.py . [ 80%]
+.....................................................                    [ 87%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_arrow_weights.py . [ 87%]
+............................................                             [ 93%]
+tests/unit/logic/test_family_qualification.py .......................... [ 96%]
+.......................                                                  [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-search-20260929/readiness.xml -
+======================== 764 passed in 67.78s (0:01:07) ========================

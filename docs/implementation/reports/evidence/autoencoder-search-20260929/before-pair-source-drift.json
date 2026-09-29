@@ -1,0 +1,31 @@
+{
+  "actual_pair_manifest": {
+    "file_count": 7833,
+    "sha256": "f66e39e68c39e367f2ed881ca9c10beeb88d9b50c6da97e0622f264d6b16fcb8"
+  },
+  "admitted": false,
+  "before_manifest": {
+    "file_count": 7833,
+    "sha256": "1e7f12b60cab5d74c52eb10176b47790e8d90269cc0ac0e9061d9b5061a25344"
+  },
+  "changes": {
+    "logic/autoformal/meta_ontology.py": {
+      "after": "4fcb538a7b15e2074fa08bf8d7e297fb742471be9ff826a92b1ded911b836e05",
+      "before": "84c46244dcd8950faeda981584e8023a499fda5dcb5faee27bafa5ace652d758"
+    }
+  },
+  "current_matches_both_native_bindings": true,
+  "parallel_manifest": {
+    "file_count": 7833,
+    "sha256": "f66e39e68c39e367f2ed881ca9c10beeb88d9b50c6da97e0622f264d6b16fcb8"
+  },
+  "prior_semantic_gate_manifest": {
+    "file_count": 7833,
+    "sha256": "1e7f12b60cab5d74c52eb10176b47790e8d90269cc0ac0e9061d9b5061a25344"
+  },
+  "schema": "native-search-before-pair-producer-drift/v1",
+  "serial_manifest": {
+    "file_count": 7833,
+    "sha256": "f66e39e68c39e367f2ed881ca9c10beeb88d9b50c6da97e0622f264d6b16fcb8"
+  }
+}

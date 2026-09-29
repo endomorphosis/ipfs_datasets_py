@@ -1,0 +1,347 @@
+{
+  "admitted": false,
+  "checks": {
+    "all_fixed_gates": true,
+    "all_ipfs_imports_canonical": true,
+    "cycle_threshold": true,
+    "five_case_nonregression": true,
+    "historical_forward_threshold": true,
+    "producer_unchanged": true
+  },
+  "comparison_receipt": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928/semantic-pilot.json",
+    "sha256": "c00b77263bf92fcd8360f2566ab1bbf37ff180986a9bcafb885519170ebd846d"
+  },
+  "constitution_formalized": false,
+  "escaped_ipfs_imports": {},
+  "formalized": false,
+  "gates": [
+    {
+      "checks": {
+        "deadline_not_renderable": true,
+        "deadline_text": true,
+        "direct_compile_success": true,
+        "empty_vocabulary_abstains": true,
+        "exception_text": true,
+        "modality": true,
+        "parser_string_atoms": true,
+        "roundtrip_ok": true,
+        "span_compile_success": true,
+        "typed_temporal": true
+      },
+      "decompiled": "Company A must submit backup report within 10 days unless emergency.",
+      "empty_vocabulary": {
+        "error_code": "unsupported_semantics",
+        "status": "abstained"
+      },
+      "name": "deadline_exception",
+      "passed": true,
+      "pattern": null,
+      "rule": {
+        "action": "submit",
+        "actor": "Company A",
+        "conditions": [],
+        "exceptions": [
+          "emergency"
+        ],
+        "modality": "O",
+        "object": "backup report",
+        "temporal": [
+          "within 10 days"
+        ],
+        "temporal_records": [
+          {
+            "quantity": 10,
+            "temporal_kind": "within_duration",
+            "value": "10 days"
+          }
+        ]
+      },
+      "source": "Company A shall submit backup report within 10 days unless emergency.",
+      "vocabulary": {
+        "actions": [
+          "submit"
+        ],
+        "actors": [
+          "Company A"
+        ],
+        "objects": [
+          "backup report"
+        ],
+        "qualifiers": [
+          "emergency",
+          "within 10 days"
+        ]
+      },
+      "wall_seconds": {
+        "compile": 0.018020646180957556,
+        "vocabulary": 0.1163444819394499
+      }
+    },
+    {
+      "checks": {
+        "direct_compile_success": true,
+        "empty_vocabulary_abstains": true,
+        "modality": true,
+        "parser_string_atoms": true,
+        "roundtrip_ok": true,
+        "span_compile_success": true
+      },
+      "decompiled": "Agency must not disclose records.",
+      "empty_vocabulary": {
+        "error_code": "unsupported_semantics",
+        "status": "abstained"
+      },
+      "name": "prohibition",
+      "passed": true,
+      "pattern": null,
+      "rule": {
+        "action": "disclose",
+        "actor": "agency",
+        "conditions": [],
+        "exceptions": [],
+        "modality": "F",
+        "object": "records",
+        "temporal": []
+      },
+      "source": "The agency shall not disclose records.",
+      "vocabulary": {
+        "actions": [
+          "disclose"
+        ],
+        "actors": [
+          "agency"
+        ],
+        "objects": [
+          "records"
+        ],
+        "qualifiers": []
+      },
+      "wall_seconds": {
+        "compile": 0.011587844928726554,
+        "vocabulary": 0.004811276914551854
+      }
+    },
+    {
+      "checks": {
+        "direct_compile_success": true,
+        "empty_vocabulary_abstains": true,
+        "minimum_text": true,
+        "modality": true,
+        "no_malformed_minimum": true,
+        "parser_string_atoms": true,
+        "roundtrip_ok": true,
+        "span_compile_success": true,
+        "threshold_pattern": true,
+        "typed_temporal": true
+      },
+      "decompiled": "Officer must retain the file for at least 20 days.",
+      "empty_vocabulary": {
+        "error_code": "unsupported_semantics",
+        "status": "abstained"
+      },
+      "name": "minimum_duration",
+      "passed": true,
+      "pattern": {
+        "fail": 19,
+        "kind": "threshold",
+        "meet": 20
+      },
+      "rule": {
+        "action": "retain",
+        "actor": "officer",
+        "conditions": [],
+        "exceptions": [],
+        "modality": "O",
+        "object": "the file for at least 20 days",
+        "temporal": [
+          "20 days"
+        ],
+        "temporal_records": [
+          {
+            "quantity": 20,
+            "temporal_kind": "minimum_duration",
+            "value": "20 days"
+          }
+        ]
+      },
+      "source": "The officer shall retain the file for at least 20 days.",
+      "vocabulary": {
+        "actions": [
+          "retain"
+        ],
+        "actors": [
+          "officer"
+        ],
+        "objects": [
+          "the file for at least 20 days"
+        ],
+        "qualifiers": [
+          "20 days"
+        ]
+      },
+      "wall_seconds": {
+        "compile": 0.012300780974328518,
+        "vocabulary": 0.004978799959644675
+      }
+    }
+  ],
+  "harness": {
+    "fixture_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/fixtures/semantic_roundtrip/pilot_cases.json",
+    "fixture_sha256": "6d34cdd1392d3a9964f04e4260f722e076ba7b96c3cdd2fc59749460756cf167",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/benchmarks/bench_semantic_logic_roundtrip.py",
+    "sha256": "353c61ca907ea2f6649d135d1e3b5d8fcdcae0fd67a14d7901d8ef63f5386d90"
+  },
+  "passed": true,
+  "pilot": {
+    "aggregate": {
+      "case_count": 5,
+      "conditional_mean_cycle_semantic_score": 1.0,
+      "conditional_mean_end_to_end_semantic_score": 0.92,
+      "conditional_mean_forward_semantic_score": 0.92,
+      "copy_risk_count": 1,
+      "coverage_rate": 1.0,
+      "execution_rate": 1.0,
+      "forward_semantic_coverage_count": 5,
+      "forward_semantic_coverage_rate": 1.0,
+      "full_roundtrip_coverage_count": 5,
+      "full_roundtrip_coverage_rate": 1.0,
+      "hammer_equivalent_count": 0,
+      "mean_cycle_semantic_loss": 0.0,
+      "mean_cycle_semantic_score": 1.0,
+      "mean_end_to_end_semantic_loss": 0.08,
+      "mean_end_to_end_semantic_score": 0.92,
+      "mean_forward_semantic_loss": 0.08,
+      "mean_forward_semantic_score": 0.92,
+      "mean_total_seconds": 0.050841311,
+      "nonvacuous_exact_identity_count": 0,
+      "raw_lean_kernel_accepted_count": 0,
+      "semantic_coverage_count": 5,
+      "success_count": 5,
+      "timing_scope": "arm_reported_wall_time_on_executed_cases",
+      "validation_failure_count": 0
+    },
+    "cases": [
+      {
+        "case_id": "exception_with_window",
+        "l1_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+        "l2_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+        "passed": true,
+        "previous_canonical_scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 1.0,
+          "forward_vs_gold": 1.0
+        },
+        "realization": "Company A shall submit backup report within 10 days unless emergency.",
+        "rule_count": 1,
+        "scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 1.0,
+          "forward_vs_gold": 1.0
+        }
+      },
+      {
+        "case_id": "legal_doc_1",
+        "l1_cid": "baguqeerau4435xy2x4m42eg6sjdren7zbwtpe3dbukdw7whptridqgls53uq",
+        "l2_cid": "baguqeerau4435xy2x4m42eg6sjdren7zbwtpe3dbukdw7whptridqgls53uq",
+        "passed": true,
+        "previous_canonical_scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 0.866666667,
+          "forward_vs_gold": 0.866666667
+        },
+        "realization": "All financial institutions shall maintain records of all transactions exceeding $10,000 for a period of five years. Banks shall report suspicious activities to the Financial Crimes Enforcement Network. Banks shall not disclose customer information to third parties when required by law enforcement agencies except when required by law enforcement agencies and unless explicit consent.",
+        "rule_count": 3,
+        "scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 0.866666667,
+          "forward_vs_gold": 0.866666667
+        }
+      },
+      {
+        "case_id": "exec_order_1",
+        "l1_cid": "baguqeerazbqlo5iz7wxzwtif6gq7cgsavj5h6n4cfhzrj2ju5iknsbrptt6q",
+        "l2_cid": "baguqeerazbqlo5iz7wxzwtif6gq7cgsavj5h6n4cfhzrj2ju5iknsbrptt6q",
+        "passed": true,
+        "previous_canonical_scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 0.975,
+          "forward_vs_gold": 0.975
+        },
+        "realization": "Federal agencies shall implement zero-trust cybersecurity frameworks within 90 days. All government contractors shall report cybersecurity incidents within 24 hours. Agencies shall not use Chinese-manufactured telecommunications equipment in any government communications. Federal employees shall receive mandatory cybersecurity training annually.",
+        "rule_count": 4,
+        "scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 0.975,
+          "forward_vs_gold": 0.975
+        }
+      },
+      {
+        "case_id": "corp_policy_1",
+        "l1_cid": "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q",
+        "l2_cid": "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q",
+        "passed": true,
+        "previous_canonical_scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 0.9,
+          "forward_vs_gold": 0.9
+        },
+        "realization": "All employees shall report conflicts of interest to the Ethics Committee. Managers shall complete annual ethics training and certifications. Employees shall not accept gifts valued over $25 from clients or vendors. All staff shall maintain confidentiality of proprietary information and customer data at all times.",
+        "rule_count": 4,
+        "scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 0.9,
+          "forward_vs_gold": 0.9
+        }
+      },
+      {
+        "case_id": "construction_contract",
+        "l1_cid": "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va",
+        "l2_cid": "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va",
+        "passed": true,
+        "previous_canonical_scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 0.858333333,
+          "forward_vs_gold": 0.858333333
+        },
+        "realization": "Contractor shall complete all construction work by December 31, 2024. Contractor shall ensure all work meets city building codes and standards. Contractor shall maintain comprehensive insurance coverage. Client shall pay the Contractor. Client may withhold payment if work does not meet specifications. Client may inspect the work at any time with 24 hours advance notice. Contractor shall not use materials that do not meet specification requirements. Contractor shall not subcontract work unless prior written approval. Either party may terminate this agreement with 30 days written notice. Contractor shall complete all work in progress upon termination notice. All disputes shall be resolved through binding arbitration in Springfield, Illinois. Parties shall attempt mediation before proceeding to arbitration.",
+        "rule_count": 11,
+        "scores": {
+          "cycle_l1_vs_l2": 1.0,
+          "end_to_end_vs_gold": 0.858333333,
+          "forward_vs_gold": 0.858333333
+        }
+      }
+    ]
+  },
+  "prepared_directory": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "prepared_tree": "current-canonical-workspace",
+  "producer_after": {
+    "file_count": 7833,
+    "sha256": "f66e39e68c39e367f2ed881ca9c10beeb88d9b50c6da97e0622f264d6b16fcb8"
+  },
+  "producer_before": {
+    "file_count": 7833,
+    "sha256": "f66e39e68c39e367f2ed881ca9c10beeb88d9b50c6da97e0622f264d6b16fcb8"
+  },
+  "schema": "canonical-search-semantic-gates/v1",
+  "scope": "Canonical source tests using current benchmark resources and unchanged JevOps rendering helper. No model calls, external prover, or Lake execution; not an admission.",
+  "source_files": {
+    "compiler": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd"
+    },
+    "decompiler": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    },
+    "parser": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+      "sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59"
+    }
+  },
+  "statement_lock": {
+    "path": "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py",
+    "sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237"
+  }
+}

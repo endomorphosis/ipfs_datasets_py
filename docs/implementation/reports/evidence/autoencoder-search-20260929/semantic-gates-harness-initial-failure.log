@@ -1,0 +1,11 @@
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-search-20260929/audit_semantic_gates.py", line 73, in <module>
+    if __name__ == "__main__": raise SystemExit(main())
+                                                ^^^^^^
+  File "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-search-20260929/audit_semantic_gates.py", line 52, in main
+    gates.append({"name": name, "source": text, "passed": all(checks.values()), "producer_before": producer_before, "producer_after": producer_after, "checks": checks, "vocabulary": vocab, "rule": rule, "decompiled": decompiled, "pattern": pattern, "empty_vocabulary": {"status": empty.status.value, "error_code": None if empty.error is None else empty.error.code.value}, "wall_seconds": {"vocabulary": vocabulary_seconds, "compile": compile_seconds}})
+                                                                                                                                      ^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'producer_after' where it is not associated with a value

@@ -1,0 +1,30 @@
+{
+  "schema_version": "optimizer-training-first/v1",
+  "files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "before_sha256": "6b705fa3d9718efe5411fa5dc4b94b04210118d38e8996728b10364e8eb507a5",
+      "after_sha256": "53e7db399dab42ac6fe90b737b5c71b8d8013b5e05e4f9009182ddd480e048d0"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py",
+      "before_sha256": "76ec38006776d4dab89d27f5e48da773a2f0d1f5c11e4c31995a133f52f637cf",
+      "after_sha256": "483d1d64924308cabd8c4ab1062928308025a2eaf330f27c74655f15a1858b48"
+    }
+  ],
+  "native_validation_required": true,
+  "scope": "optional composed refinement evaluation ordering and truthful rejection summary",
+  "tests": [
+    {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "229",
+      "time": "8.366",
+      "timestamp": "2026-09-29T02:27:26.967681+00:00",
+      "hostname": "spark-b271"
+    }
+  ],
+  "source_matches_manifest": true
+}

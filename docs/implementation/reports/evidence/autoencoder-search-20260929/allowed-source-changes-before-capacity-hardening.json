@@ -1,0 +1,34 @@
+{
+  "after_package_mapping": {
+    "bytes": 1139468,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-search-20260929/package-optimized.json",
+    "sha256": "e081c0310098ac5501ba8060ff39c4fbdebdb37d4bdf5aa3cd9a3dc3fc992602"
+  },
+  "allowed_core_roles": [
+    "autoencoder"
+  ],
+  "before_package_mapping": {
+    "bytes": 1139326,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-search-20260929/package-baseline.json",
+    "sha256": "7908a30aea39bf8eacab0ba1ef060ee286a8cfaef13a3d05bcac58fca3d4eed4"
+  },
+  "changes": {
+    "optimizers/logic_theorem_optimizer/autoencoder_capacity.py": {
+      "after": "0202b9113aee150e04cf7cc6546cef0375ca3a1461f145343703e326f62c8c4d",
+      "before": "3d6ac070238d3e7ed34ac27593e5f7d1d3b14c912186813c9819fe509abb77e3"
+    },
+    "optimizers/logic_theorem_optimizer/autoencoder_qualification_pool.py": {
+      "after": "e18918579ca60f42f99caaebb5697e92b31014c72e97d0f3d4ce851d2c52ac45",
+      "before": null
+    },
+    "optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py": {
+      "after": "f5ea6a122fe549f058330614edf7547bf736d282c07f7cba11cfa7ed6f7d2906",
+      "before": "dbf356283272ef70614abfa1c64ad75fd489729d773d01a855746cb970ac633d"
+    },
+    "optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "after": "53e7db399dab42ac6fe90b737b5c71b8d8013b5e05e4f9009182ddd480e048d0",
+      "before": "6b705fa3d9718efe5411fa5dc4b94b04210118d38e8996728b10364e8eb507a5"
+    }
+  },
+  "schema": "native-optimizer-owned-source-changes/v1"
+}

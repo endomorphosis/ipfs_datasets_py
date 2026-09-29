@@ -1,0 +1,952 @@
+{
+  "admitted": false,
+  "bridge_config": {
+    "cold_processes": true,
+    "evaluate_provers": false,
+    "first_evaluation_sample_count": 1,
+    "first_evaluation_target_count": 1,
+    "metric_disk_cache": 0,
+    "names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "os_cache_controlled": false,
+    "parallel_workers": 1,
+    "use_sample_memory": false
+  },
+  "constitution_formalized": false,
+  "dispatch_wall_seconds": 36.65130434487946,
+  "exact_gate_thresholds": {
+    "max_reconstruction_loss": 0.2,
+    "min_cosine": 0.72
+  },
+  "formalized": false,
+  "optimization_claim_limits": {
+    "global_minimum_certified": false,
+    "global_minimum_speed_guaranteed": false,
+    "heldout_canary": false,
+    "reason": "The supplied implementation has discontinuous target-aware projection, multiple weighted losses and strict Pareto guards; finite bounded search does not certify a global optimum.",
+    "recommended_objective": "Wall time to additional qualified candidates under unchanged gates, plus fixed-budget loss vectors and rejection reasons.",
+    "tuning_row": "30-day duration fixture, repeatedly reused for candidate selection.",
+    "untouched_canary_requirement": "Reserve source/document-disjoint examples before tuning; keep them outside gradients and repeated selection; bind source/split/checkpoint provenance and evaluate finalists separately."
+  },
+  "outside_dispatch_and_qualification_seconds": 40.93284897925332,
+  "performance_receipt": {
+    "bytes": 211384,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/native-performance-summary.json",
+    "sha256": "7219a1e75fb2dd2461afb31955a6eb214269de5a9d9bf61e6612b57cd51d3595"
+  },
+  "phase_limits": [
+    "Worker stage sums overlap in concurrent execution and are not whole-route elapsed time.",
+    "Projection head seconds are nested inside projection batch seconds; do not add them.",
+    "Structural seconds include Lake and compile/decompile seconds.",
+    "The outside-rows residual includes checkpoint loading/replay and guards but has no finer sealed phase breakdown."
+  ],
+  "previous_fixed_gate_pilot_receipt": {
+    "bytes": 12629,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/modal-lazy-semantic-gates.json",
+    "sha256": "86c5508d76fc25b6d35552d6d0b7aaac9b994f589974c440b0ae53d241de9d1c"
+  },
+  "prior_refinement_report": {
+    "bytes": 14112,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/AUTOENCODER_OPTIMIZER_20260929.md",
+    "sha256": "4239a5b35e58b5bfb82aff1a0c9377302613f121cedf5d90a3a500b570f4dc25"
+  },
+  "projection_explanation": {
+    "behavior": "A positive residual/update alignment can select the supplied target vector exactly. Nonpositive alignment can retain the initial rotated fallback.",
+    "criterion_change_proposed": false,
+    "initial_even_dimension_cosine": 0.19611613513818402,
+    "initial_rotation_scale": 0.1,
+    "initial_scale": 0.02,
+    "interpretation": "Target-aware, discontinuous reconstruction metrics; not learned text generation or independent semantic generalization.",
+    "method": "AdaptiveModalAutoencoder._reconstruction_safe_projection",
+    "source_at_assessment": {
+      "bytes": 1383413,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "6b705fa3d9718efe5411fa5dc4b94b04210118d38e8996728b10364e8eb507a5"
+    }
+  },
+  "qualification_phase_sums": {
+    "actual_lake_build_count": 16.0,
+    "actual_lake_build_seconds": 9.821548944106326,
+    "compile_decompile_seconds": 0.7988676598761231,
+    "model_embedding_seconds": 1.859621416311711,
+    "outside_rows_seconds": 22.71817578934133,
+    "structural_seconds": 10.761250514304265,
+    "whole_qualification_seconds": 35.33904771995731
+  },
+  "recommendations": [
+    "Bound qualification subprocess concurrency under CPU/RAM/process reservations, retaining parent-only DuckDB ownership and source/proof checks.",
+    "Skip provably useless refinement trials once a finite training reconstruction baseline is already at its exact nonnegative floor, without weakening acceptance.",
+    "Compare baseline and improved three-attempt refinement on the same eight fixtures and exact protected seed, including passing, repaired and still-blocked rows.",
+    "Report full-route wall and actual qualified count rather than accepted epochs alone.",
+    "Use representative source-disjoint federal-law data and an untouched canary before generalization claims."
+  ],
+  "rows": [
+    {
+      "accepted_epochs": 1,
+      "candidates": [
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005573959500852599,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.007552972483643838,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "decoded_embedding"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005317464096832314,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "combined"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": true,
+        "diagnostics": [
+          {
+            "code": "cosine_roundoff_clamped",
+            "raw": 1.0000000000000002,
+            "tolerance": 1.7763568394002505e-15,
+            "used": 1.0
+          }
+        ],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0000000000000002,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "objective_delta": 0.007552972483643838,
+      "qualification": {
+        "bytes": 186154,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/qualifications/qualified-2cfb2ffef319aa6325950592ed280501424ba89ae22606f05efb3bc3b1389706/qualification.json",
+        "sha256": "00336e51c7293701c3c078b96c42df099525e12f78b8048dba303caa35f6a8e5"
+      },
+      "qualified": true,
+      "section": "20",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 20 days.",
+      "worker": {
+        "bytes": 165409,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/outputs/qualified-2cfb2ffef319aa6325950592ed280501424ba89ae22606f05efb3bc3b1389706/receipt.json",
+        "sha256": "c6ead2a94ca2178a0f1b6f8c52f47f8f4bc66ff567d3c8493aa9cead15214839"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "candidates": [
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005573959500852599,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.007552972483643838,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "decoded_embedding"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005317464096832314,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "combined"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "objective_delta": 0.007552972483643838,
+      "qualification": {
+        "bytes": 186031,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/qualifications/qualified-6a33cf05f5df06ff7fff6e335437b775a92da2fb7bc046767c78251a532e05c5/qualification.json",
+        "sha256": "47a9377c15e9251fa073096e0b2cb334e9741c9474f860ffa151bec179ea031d"
+      },
+      "qualified": true,
+      "section": "21",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 21 days.",
+      "worker": {
+        "bytes": 165388,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/outputs/qualified-6a33cf05f5df06ff7fff6e335437b775a92da2fb7bc046767c78251a532e05c5/receipt.json",
+        "sha256": "04d8d4c0cab77dca443d912f1d94b97c744799dff4cc7e4d00bd9cad0068441f"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "candidates": [
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005573959500852599,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.007552972483643838,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": -0.8038838648618158,
+          "objective_delta": -1.5327918489416938,
+          "pareto_regressions": {
+            "embedding_cosine_similarity": 0.8038838648618158,
+            "reconstruction_loss": 0.3269660516489694
+          },
+          "reconstruction_delta": -0.3269660516489694,
+          "update": "decoded_embedding"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": -0.8038838648618158,
+          "objective_delta": -1.527474384844861,
+          "pareto_regressions": {
+            "embedding_cosine_similarity": 0.8038838648618158,
+            "reconstruction_loss": 0.3269660516489694
+          },
+          "reconstruction_delta": -0.3269660516489694,
+          "update": "combined"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-22-0598dc92060587b1"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818407,
+        "embedding_cosine_similarity_raw": 0.19611613513818407,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.37794123682465003,
+        "text_roundtrip_equivalence": false
+      },
+      "objective_delta": 0.007552972483643838,
+      "qualification": {
+        "bytes": 186294,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/qualifications/qualified-b801c09bf39b06a6f01e7bb60588ae1ebcccc0adad129e28ba880c026f151295/qualification.json",
+        "sha256": "21c9bed041491f0052e7805b74a3d40231a3610c7680b4eda48f68d802d2d459"
+      },
+      "qualified": false,
+      "section": "22",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 22 days.",
+      "worker": {
+        "bytes": 168654,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/outputs/qualified-b801c09bf39b06a6f01e7bb60588ae1ebcccc0adad129e28ba880c026f151295/receipt.json",
+        "sha256": "5b62a3a3c54cc9ad394cc1ec734d07189c7323a59eda951bcac65e599364ac29"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "candidates": [
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005573959500852599,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.007552972483643838,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "decoded_embedding"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005317464096832314,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "combined"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-23-11407496e48a82a3"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.196116135138184,
+        "embedding_cosine_similarity_raw": 0.196116135138184,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.342003247738783,
+        "text_roundtrip_equivalence": false
+      },
+      "objective_delta": 0.007552972483643838,
+      "qualification": {
+        "bytes": 186290,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/qualifications/qualified-a180437ee410a1b3e9b09c21c7af5c52e6f158353e19e135afa416210f9e5da6/qualification.json",
+        "sha256": "c744ecfad5ae2691e70db80a86253e58a83c5695292a51632c67cce4082787a0"
+      },
+      "qualified": false,
+      "section": "23",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 23 days.",
+      "worker": {
+        "bytes": 167268,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/outputs/qualified-a180437ee410a1b3e9b09c21c7af5c52e6f158353e19e135afa416210f9e5da6/receipt.json",
+        "sha256": "98b9b9f0846d45e61852b3a90f78e5e92fd737e2abd348200c594e2398365f72"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "candidates": [
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005573959500852599,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.007552972483643838,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "decoded_embedding"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005317464096832314,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "combined"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-24-b670ee7a3c61d675"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.326040643365787,
+        "text_roundtrip_equivalence": false
+      },
+      "objective_delta": 0.007552972483643838,
+      "qualification": {
+        "bytes": 186313,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/qualifications/qualified-42f0010d80ea76a47ad2035d9484e72fdc8340076af438a485cecb59e0045f64/qualification.json",
+        "sha256": "c0802a26c138d81177066086771497712b56b49f52abd779be31dff5f2295825"
+      },
+      "qualified": false,
+      "section": "24",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 24 days.",
+      "worker": {
+        "bytes": 167274,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/outputs/qualified-42f0010d80ea76a47ad2035d9484e72fdc8340076af438a485cecb59e0045f64/receipt.json",
+        "sha256": "1e445d85207671e92a882ab6a3bde7ce8644c81d73a7a8f6161ace540142cc6d"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "candidates": [
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005573959500852599,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.007552972483643838,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "decoded_embedding"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005317464096832314,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "combined"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": true,
+        "diagnostics": [
+          {
+            "code": "cosine_roundoff_clamped",
+            "raw": 1.0000000000000002,
+            "tolerance": 1.7763568394002505e-15,
+            "used": 1.0
+          }
+        ],
+        "embedding_cosine_similarity": 1.0,
+        "embedding_cosine_similarity_raw": 1.0000000000000002,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0,
+        "text_roundtrip_equivalence": false
+      },
+      "objective_delta": 0.007552972483643838,
+      "qualification": {
+        "bytes": 186152,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/qualifications/qualified-d3d504a1e794f10566dd28f9a1ff33e16f612f71d06e83e895061b133b0973c6/qualification.json",
+        "sha256": "f2b625f74f0e8422f1b2066c3faa2acfc86fab65feb2a476767478cba8f29321"
+      },
+      "qualified": true,
+      "section": "25",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 25 days.",
+      "worker": {
+        "bytes": 165397,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/outputs/qualified-d3d504a1e794f10566dd28f9a1ff33e16f612f71d06e83e895061b133b0973c6/receipt.json",
+        "sha256": "c8fd904e66c915b5bba6bb8b97ffb4d973636bab0e266cb8a02095954231e023"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "candidates": [
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005573959500852599,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.007552972483643838,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "decoded_embedding"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005317464096832314,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "combined"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-26-4b76ba4e85847986"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.21600881475501774,
+        "text_roundtrip_equivalence": false
+      },
+      "objective_delta": 0.007552972483643838,
+      "qualification": {
+        "bytes": 186316,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/qualifications/qualified-e6eb382b8ccf59ce0d03df81fedc6a71d723a849bf863dec6b102662b401ada0/qualification.json",
+        "sha256": "a74cf893485e218474a65b18cc6fb17ce8c804166630d424b8c91ffbf7749aef"
+      },
+      "qualified": false,
+      "section": "26",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 26 days.",
+      "worker": {
+        "bytes": 167271,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/outputs/qualified-e6eb382b8ccf59ce0d03df81fedc6a71d723a849bf863dec6b102662b401ada0/receipt.json",
+        "sha256": "c03cd48905e877c02efc2adc9887b062091d88fd8abb18277ab7ee3e3555de93"
+      }
+    },
+    {
+      "accepted_epochs": 1,
+      "candidates": [
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005573959500852599,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_global_logits"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.007552972483643838,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "family_logits"
+        },
+        {
+          "accepted": false,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.0,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "decoded_embedding"
+        },
+        {
+          "accepted": true,
+          "cosine_similarity_delta": 0.0,
+          "objective_delta": 0.005317464096832314,
+          "pareto_regressions": {},
+          "reconstruction_delta": 0.0,
+          "update": "combined"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-qualification-fixture-27-9fba465df35ce769"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818402,
+        "embedding_cosine_similarity_raw": 0.19611613513818402,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.3130512645260574,
+        "text_roundtrip_equivalence": false
+      },
+      "objective_delta": 0.007552972483643838,
+      "qualification": {
+        "bytes": 186307,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/qualifications/qualified-731f9c529357a8a3e609fd7d72cd7c4371c6ebc6a82aa37e81edcf35638e2e63/qualification.json",
+        "sha256": "11afffa752098defff2cc781807f509b13c3be88e4e7bbc35eda5e9806366419"
+      },
+      "qualified": false,
+      "section": "27",
+      "selected_update": "legal_ir_view_logits",
+      "source_text": "The officer shall retain the file for at least 27 days.",
+      "worker": {
+        "bytes": 167272,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/progress/outputs/qualified-731f9c529357a8a3e609fd7d72cd7c4371c6ebc6a82aa37e81edcf35638e2e63/receipt.json",
+        "sha256": "2ec364a17c3d85e06bbf3d80efd50b8c7b0fa52c8d8a5893df32606906540aaa"
+      }
+    }
+  ],
+  "schema": "autoencoder-search-prior-evidence/v1",
+  "scope": "Read-only analysis of prior sealed synthetic fixture receipts. No new training, import, Lake build, or database write.",
+  "syntax_and_lean_coverage": {
+    "cognitive_operator_count_per_fixture": 0,
+    "complete_legal_ir_proved": false,
+    "event_calculus_atom_count_per_fixture": 0,
+    "families": [
+      "fol",
+      "deontic_fol",
+      "temporal_fol",
+      "deontic_temporal_fol",
+      "deontic_cognitive_event_calculus",
+      "frame_logic"
+    ],
+    "fol_tfol_omitted_facets": [
+      "modality"
+    ],
+    "lean_admit_command": [
+      "lake",
+      "build",
+      "Legal"
+    ],
+    "lean_scope": "source_locked_numeric_pattern",
+    "qualification_fragment": "canonical_atom_syntax_projection",
+    "source_at_assessment": {
+      "bytes": 26466,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py",
+      "sha256": "6df7456a31e369f81140d5055c01b03765420e9fff829ce7e9184b12208d7c87"
+    },
+    "temporal_operator_count_per_fixture": 0,
+    "typed_duration_semantics": "Parser-supplied minimum_duration or within_duration predicates remain distinct; no invented event time or temporal operator."
+  },
+  "whole_route_seconds": 112.92320104409009,
+  "worker_training_profile_stage_sums": {
+    "before_holdout_evaluation": 35.7597098108381,
+    "hard_example_selection": 1.4160294085741043e-05,
+    "line_search_evaluation": 4.307265358045697,
+    "projection_update_batch": 2.3060361535754055,
+    "projection_update_head": 2.3052781594451517,
+    "training_cache_prime": 10.560075992485508
+  }
+}
