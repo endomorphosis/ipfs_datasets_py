@@ -1,0 +1,21 @@
+[
+  "tests/unit/logic/test_autoformal.py",
+  "tests/unit/logic/test_autoformal_speed_semantics.py",
+  "tests/unit/logic/test_family_qualification.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_candidate_qualification.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_capacity.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_training.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_native_pool.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_paths.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_manifest.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_observability.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_prepare_shared_autoencoder_targets.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_run_autoencoder_fleet.py"
+]

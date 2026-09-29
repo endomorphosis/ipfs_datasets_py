@@ -1,0 +1,1266 @@
+{
+  "admitted": false,
+  "baseline_to_optimized_wall_reduction_fraction": 0.13644743641042223,
+  "runs": [
+    {
+      "admitted": false,
+      "audit": {
+        "path": "baseline-audit.json",
+        "sha256": "8b8b3eca034f3d3bcad737520c0636d9f18e85e9bdcc96c535abc22f224b0449"
+      },
+      "command": {
+        "path": "baseline-command.json",
+        "sha256": "dcc75a96e54dbb02cd8f84dfd87a6b918b0e415111f192941da87bd158efab71"
+      },
+      "dispatch_widths": [
+        2,
+        2
+      ],
+      "first_bridge_evaluations": [
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.4860046149697155,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008669521193951368,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.533752030227333,
+          "target_reduction_seconds": 0.011160235153511167,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.659547534072772,
+          "training_source": "The officer shall retain the file for at least 22 days.",
+          "training_target_seconds_sum": 0.0010826820507645607
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.319563698023558,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0009302650578320026,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.36690228106454,
+          "target_reduction_seconds": 0.011473098071292043,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.494149318896234,
+          "training_source": "The officer shall retain the file for at least 21 days.",
+          "training_target_seconds_sum": 0.0010858660098165274
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.227096924092621,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008605520706623793,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.274530756054446,
+          "target_reduction_seconds": 0.011441705981269479,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.400159393902868,
+          "training_source": "The officer shall retain the file for at least 20 days.",
+          "training_target_seconds_sum": 0.0010787618812173605
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.35272907698527,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008130001369863749,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.399724659975618,
+          "target_reduction_seconds": 0.010975481010973454,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.520497699966654,
+          "training_source": "The officer shall retain the file for at least 23 days.",
+          "training_target_seconds_sum": 0.001016570022329688
+        }
+      ],
+      "first_bridge_seconds_range": [
+        4.400159393902868,
+        4.659547534072772
+      ],
+      "input_count": 4,
+      "label": "baseline",
+      "native_builds_in_profiled_training_evaluations": 8,
+      "qualified_count": 2,
+      "receipts": [
+        {
+          "path": "baseline/progress/outputs/qualified-223e08f72022a6b3f758b947f9f51f96f8a0e39e563e4394474bd57e1558a63b/receipt.json",
+          "sha256": "8d3be33f60f55899c9823edbcc1f2ee6cc0c9903e4d7e136f7230aeb6c7c536b"
+        },
+        {
+          "path": "baseline/progress/outputs/qualified-90f52c87bf6bac6dd8a03077ff66b859d174fbb3a0ebc662674f47a68797569e/receipt.json",
+          "sha256": "d4f395c94387aefb37b4df2772a81b767143cc69291c3704d192d33b754ac2d9"
+        },
+        {
+          "path": "baseline/progress/outputs/qualified-af38feea95fd6e708b9665f2b20e5d9188ad282d5b35cea7c6f0181caa209a89/receipt.json",
+          "sha256": "e6e088f98c514b1d3ff4e46002d6b7a44fccf3f6c279f9d822e9eee5b51523f9"
+        },
+        {
+          "path": "baseline/progress/outputs/qualified-fbf110438f657a6a07bea4a29054e90e45c3712df3fb814623c8019b07a37ca5/receipt.json",
+          "sha256": "0ec5be4fd76791e0e164e7ba8f90474033d39f8a4a7ac4f0ce4a6718e3fbda82"
+        }
+      ],
+      "reserved_child_process_slots": 6,
+      "reserved_cpu_slots": 2,
+      "reserved_memory_mb": 8192,
+      "resource_finalization_profile": null,
+      "resource_status": "released",
+      "sampled_peak_group_processes": 4,
+      "sampled_peak_group_rss_bytes": 3304558592,
+      "use_sample_memory": false,
+      "validation_count": 1,
+      "wall_seconds": 97.79850050806999,
+      "wall_seconds_per_input_span": 24.449625127017498,
+      "worker_target_hydration_seconds_sum": 0.0
+    },
+    {
+      "admitted": false,
+      "audit": {
+        "path": "optimized-audit.json",
+        "sha256": "e87ad7fd58016f4fa8febd381b4820cabbea6d7827d24625eacbcb1a6cf5435b"
+      },
+      "command": {
+        "path": "optimized-command.json",
+        "sha256": "1b7cac287741bc131b8b84eb7e37e272677bfc667f5fea330ce2df4ed0777cb7"
+      },
+      "dispatch_widths": [
+        2,
+        2
+      ],
+      "first_bridge_evaluations": [
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.402633706107736,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0007541840896010399,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.452272688038647,
+          "target_reduction_seconds": 0.010501617100089788,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.572292189113796,
+          "training_source": "The officer shall retain the file for at least 23 days.",
+          "training_target_seconds_sum": 0.0009729869198054075
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.416033238871023,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0007275438401848078,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.462825919035822,
+          "target_reduction_seconds": 0.010655538877472281,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.583036572905257,
+          "training_source": "The officer shall retain the file for at least 22 days.",
+          "training_target_seconds_sum": 0.0009973710402846336
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.352743108058348,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0009046490304172039,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.400250907987356,
+          "target_reduction_seconds": 0.011425625998526812,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.525912404991686,
+          "training_source": "The officer shall retain the file for at least 20 days.",
+          "training_target_seconds_sum": 0.0010750191286206245
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.402246558107436,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008244570344686508,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.448884381912649,
+          "target_reduction_seconds": 0.010962835978716612,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.570544266840443,
+          "training_source": "The officer shall retain the file for at least 21 days.",
+          "training_target_seconds_sum": 0.0010030020494014025
+        }
+      ],
+      "first_bridge_seconds_range": [
+        4.525912404991686,
+        4.583036572905257
+      ],
+      "input_count": 4,
+      "label": "optimized",
+      "native_builds_in_profiled_training_evaluations": 8,
+      "qualified_count": 2,
+      "receipts": [
+        {
+          "path": "optimized/progress/outputs/qualified-561f1395df3ce9be7318ca1397e722c7d8ee4c16685783ec65163d3af945b7e0/receipt.json",
+          "sha256": "1c9262be485a025a633c212f5d039de37e43589c35cfef05b9c7ff2c062f128e"
+        },
+        {
+          "path": "optimized/progress/outputs/qualified-7b68ef47d89f7dbeceae142fd77831258862d04966f5c00fa1ad517b00ebfa1a/receipt.json",
+          "sha256": "2f09bfa2571c40b8aae79e269dd449b62b6a5a4d71982e880ebc6eb09461a751"
+        },
+        {
+          "path": "optimized/progress/outputs/qualified-8362bc701bf8d68a4685fcd07671f1d54d3e11e67b41c006e6854f398dab5e08/receipt.json",
+          "sha256": "db6528f78023276a892cd43dc0827151f9ac8b48af5531fdfef98dbd63d7e890"
+        },
+        {
+          "path": "optimized/progress/outputs/qualified-ab8605521095bbfcdc83d069c0c6978ca257042ad40b7017889f07e919c30337/receipt.json",
+          "sha256": "60b4dbd0d2bdd5636cfecfbea7324fb18a8c0a2c46debcd782a5c0eb743ad66a"
+        }
+      ],
+      "reserved_child_process_slots": 6,
+      "reserved_cpu_slots": 2,
+      "reserved_memory_mb": 8192,
+      "resource_finalization_profile": {
+        "global_accounting_seconds": 3.2717563579790294,
+        "global_inventory_count": 1,
+        "ledger_lock_wait_seconds": 0.0002620350569486618,
+        "process_check_seconds": 0.020291517255827785,
+        "schema_version": "daemon-resource-finalization-profile/v1",
+        "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+        "strict_attempt_inventory_count": 1,
+        "strict_attempt_inventory_seconds": 0.006925051100552082
+      },
+      "resource_status": "released",
+      "sampled_peak_group_processes": 4,
+      "sampled_peak_group_rss_bytes": 3266629632,
+      "use_sample_memory": false,
+      "validation_count": 1,
+      "wall_seconds": 84.45414582896046,
+      "wall_seconds_per_input_span": 21.113536457240116,
+      "worker_target_hydration_seconds_sum": 0.0
+    },
+    {
+      "admitted": false,
+      "audit": {
+        "path": "scaled-audit.json",
+        "sha256": "bdf442f5422e0023244a0293a3cd286207f76d48439f022d21f0589d41ca6dba"
+      },
+      "command": {
+        "path": "scaled-command.json",
+        "sha256": "37532f0853fc4d660eafc13fe0dc70e92b626781be0b79e3d57fedfeafb32b79"
+      },
+      "dispatch_widths": [
+        4
+      ],
+      "first_bridge_evaluations": [
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.476092331809923,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008627139031887054,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.523439618991688,
+          "target_reduction_seconds": 0.011163678020238876,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.645980635890737,
+          "training_source": "The officer shall retain the file for at least 22 days.",
+          "training_target_seconds_sum": 0.0010411799885332584
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.454071039101109,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008699300233274698,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.502317744074389,
+          "target_reduction_seconds": 0.011244494933634996,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.626915792003274,
+          "training_source": "The officer shall retain the file for at least 21 days.",
+          "training_target_seconds_sum": 0.0010587959550321102
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.507338481023908,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008852099999785423,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.555474719963968,
+          "target_reduction_seconds": 0.011179518885910511,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.679026499856263,
+          "training_source": "The officer shall retain the file for at least 23 days.",
+          "training_target_seconds_sum": 0.0010525081306695938
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.482990582939237,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008687609806656837,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.531068198150024,
+          "target_reduction_seconds": 0.011181103065609932,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.655184640781954,
+          "training_source": "The officer shall retain the file for at least 20 days.",
+          "training_target_seconds_sum": 0.0010636288207024336
+        }
+      ],
+      "first_bridge_seconds_range": [
+        4.626915792003274,
+        4.679026499856263
+      ],
+      "input_count": 4,
+      "label": "scaled",
+      "native_builds_in_profiled_training_evaluations": 8,
+      "qualified_count": 2,
+      "receipts": [
+        {
+          "path": "scaled/progress/outputs/qualified-844d76fccf640bfdaa9db9f20016619c7663f2674a17c99359f26fa670fb8011/receipt.json",
+          "sha256": "b83e0b6782496292b99d66f098eda2e53c1d2d88117e61eb3941f6a0ae5f3edb"
+        },
+        {
+          "path": "scaled/progress/outputs/qualified-90752a3d14b2249291065ca6881315402ad09be645c02f59beb1619b896304b6/receipt.json",
+          "sha256": "1998c63700f250708c5219c0a6af9361fe26c48430bac33ca1b8871407526296"
+        },
+        {
+          "path": "scaled/progress/outputs/qualified-c582566577657dfb3588f6b550acfc4d39f73ff090bceb76cdd6026d707887db/receipt.json",
+          "sha256": "24ed3858ca186a3994bb203578c8ab98f29086a35de8b2abd9671a609c6cf8aa"
+        },
+        {
+          "path": "scaled/progress/outputs/qualified-cfe8ae7cfb50ea6f4d78fa48ea51e10f86ad221e9e15745133e901ca69373868/receipt.json",
+          "sha256": "fec028e0ad80af8fc59682f55e7596f054ed514167ae4e2aad0b05c005603ab3"
+        }
+      ],
+      "reserved_child_process_slots": 8,
+      "reserved_cpu_slots": 4,
+      "reserved_memory_mb": 8192,
+      "resource_finalization_profile": {
+        "global_accounting_seconds": 3.2978051300160587,
+        "global_inventory_count": 1,
+        "ledger_lock_wait_seconds": 0.0004879259504377842,
+        "process_check_seconds": 0.033079145941883326,
+        "schema_version": "daemon-resource-finalization-profile/v1",
+        "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+        "strict_attempt_inventory_count": 1,
+        "strict_attempt_inventory_seconds": 0.013105685822665691
+      },
+      "resource_status": "released",
+      "sampled_peak_group_processes": 6,
+      "sampled_peak_group_rss_bytes": 4792741888,
+      "use_sample_memory": false,
+      "validation_count": 1,
+      "wall_seconds": 71.7854775080923,
+      "wall_seconds_per_input_span": 17.946369377023075,
+      "worker_target_hydration_seconds_sum": 0.0
+    },
+    {
+      "admitted": false,
+      "audit": {
+        "path": "refined-audit.json",
+        "sha256": "a6c1b0e48ccebd209ede7d646a85e57e60597ed5d7c4343bca728814bfc9d131"
+      },
+      "command": {
+        "path": "refined-command.json",
+        "sha256": "ccc490b0bc53e39b854cb887a4763b17ff13c4f1de79d6fba9ed3415bf0d5bbd"
+      },
+      "dispatch_widths": [
+        4
+      ],
+      "first_bridge_evaluations": [
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.426590519957244,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008831149898469448,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.474852442042902,
+          "target_reduction_seconds": 0.011191605124622583,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.597337987041101,
+          "training_source": "The officer shall retain the file for at least 22 days.",
+          "training_target_seconds_sum": 0.0010420768521726131
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.707249075872824,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008533541113138199,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.755146784009412,
+          "target_reduction_seconds": 0.011173669947311282,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.8792629251256585,
+          "training_source": "The officer shall retain the file for at least 23 days.",
+          "training_target_seconds_sum": 0.0010130039881914854
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.440698303980753,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008389861322939396,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.488896943861619,
+          "target_reduction_seconds": 0.011170452926307917,
+          "timeout_fallback_count": 0,
+          "total_seconds": 4.612900892039761,
+          "training_source": "The officer shall retain the file for at least 20 days.",
+          "training_target_seconds_sum": 0.0010540438815951347
+        },
+        {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 1,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 1,
+          "native_evaluation_seconds_sum": 4.934118028031662,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 0.0008830500300973654,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 1,
+          "target_count": 1,
+          "target_items_seconds": 4.98241220600903,
+          "target_reduction_seconds": 0.011239095125347376,
+          "timeout_fallback_count": 0,
+          "total_seconds": 5.107806538930163,
+          "training_source": "The officer shall retain the file for at least 21 days.",
+          "training_target_seconds_sum": 0.001056796871125698
+        }
+      ],
+      "first_bridge_seconds_range": [
+        4.597337987041101,
+        5.107806538930163
+      ],
+      "input_count": 4,
+      "label": "refined",
+      "native_builds_in_profiled_training_evaluations": 8,
+      "qualified_count": 3,
+      "receipts": [
+        {
+          "path": "refined/progress/outputs/qualified-02152aee99c121352c68d730f5ea02123caadd6c38cdd38c74e88b1e4d45969e/receipt.json",
+          "sha256": "9facd3fef9154c0ab817baed5cc431c5bcf4b4e65f1071a87d48528f5b9accb8"
+        },
+        {
+          "path": "refined/progress/outputs/qualified-2091eec5e817146f7a80963da905b3e269c65d51de21185f794d358c0447e7b3/receipt.json",
+          "sha256": "d2110162619a4cca55a42195afe297bae48676c3fb3ed3a973129ac62abd1d5c"
+        },
+        {
+          "path": "refined/progress/outputs/qualified-ca6681a6d028fe3f9547c3239a755397071fd9b969cc0ebb5872816fd6a158fc/receipt.json",
+          "sha256": "85784936c02bd785f73df8b1df39c0f9baed80b9c5e7d76c86a0735c3519a3a1"
+        },
+        {
+          "path": "refined/progress/outputs/qualified-e6e634f7915c949f843c39def420fbf15f75f5ab887d0eceb45f8e89b3cd40fe/receipt.json",
+          "sha256": "174005119c6ce01d20bb6f746ce7150737d5f8a37c118ffea21991bb3c8e1b71"
+        }
+      ],
+      "reserved_child_process_slots": 8,
+      "reserved_cpu_slots": 4,
+      "reserved_memory_mb": 8192,
+      "resource_finalization_profile": {
+        "global_accounting_seconds": 3.344883620971814,
+        "global_inventory_count": 1,
+        "ledger_lock_wait_seconds": 0.00045368517749011517,
+        "process_check_seconds": 0.029681685147807002,
+        "schema_version": "daemon-resource-finalization-profile/v1",
+        "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+        "strict_attempt_inventory_count": 1,
+        "strict_attempt_inventory_seconds": 0.013030397007241845
+      },
+      "resource_status": "released",
+      "sampled_peak_group_processes": 6,
+      "sampled_peak_group_rss_bytes": 4815912960,
+      "use_sample_memory": false,
+      "validation_count": 1,
+      "wall_seconds": 76.13944660802372,
+      "wall_seconds_per_input_span": 19.03486165200593,
+      "worker_target_hydration_seconds_sum": 0.0
+    },
+    {
+      "admitted": false,
+      "audit": {
+        "path": "shared-audit.json",
+        "sha256": "1aeb550b5c466c25eb4188fd9e59fa77493ca69357dc7aeb99cb8cbc45e30143"
+      },
+      "command": {
+        "path": "shared-command.json",
+        "sha256": "ae216ee6ef71d76cfeb3b183ddffbbb8eac7073f0fe502231deabaa03c22cda1"
+      },
+      "dispatch_widths": [
+        4
+      ],
+      "first_bridge_evaluations": [
+        {
+          "bridge_module_preloaded_at_start": true,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 0,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "native_evaluation_seconds_sum": 0.0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 2.1575966889504343,
+          "supplied_target_count": 1,
+          "target_cache_miss_count": 0,
+          "target_count": 1,
+          "target_items_seconds": 2.4928012862801552e-05,
+          "target_reduction_seconds": 0.013770184945315123,
+          "timeout_fallback_count": 0,
+          "total_seconds": 2.4044795450754464,
+          "training_source": "The officer shall retain the file for at least 20 days.",
+          "training_target_seconds_sum": 0.0
+        },
+        {
+          "bridge_module_preloaded_at_start": true,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 0,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "native_evaluation_seconds_sum": 0.0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 2.228001484880224,
+          "supplied_target_count": 1,
+          "target_cache_miss_count": 0,
+          "target_count": 1,
+          "target_items_seconds": 2.1263957023620605e-05,
+          "target_reduction_seconds": 0.014157661003991961,
+          "timeout_fallback_count": 0,
+          "total_seconds": 2.4774679401889443,
+          "training_source": "The officer shall retain the file for at least 22 days.",
+          "training_target_seconds_sum": 0.0
+        },
+        {
+          "bridge_module_preloaded_at_start": true,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 0,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "native_evaluation_seconds_sum": 0.0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 2.1774345149751753,
+          "supplied_target_count": 1,
+          "target_cache_miss_count": 0,
+          "target_count": 1,
+          "target_items_seconds": 2.5023939087986946e-05,
+          "target_reduction_seconds": 0.014485360821709037,
+          "timeout_fallback_count": 0,
+          "total_seconds": 2.4272486709523946,
+          "training_source": "The officer shall retain the file for at least 23 days.",
+          "training_target_seconds_sum": 0.0
+        },
+        {
+          "bridge_module_preloaded_at_start": true,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "evaluated_sources": [
+            "The officer shall retain the file for at least 30 days."
+          ],
+          "evaluation_role": "before_holdout_evaluation",
+          "generated_target_count": 0,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 0,
+          "native_evaluation_seconds_sum": 0.0,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 0,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "sample_count": 1,
+          "structural_target_seconds": 2.201233719009906,
+          "supplied_target_count": 1,
+          "target_cache_miss_count": 0,
+          "target_count": 1,
+          "target_items_seconds": 2.595316618680954e-05,
+          "target_reduction_seconds": 0.013417524052783847,
+          "timeout_fallback_count": 0,
+          "total_seconds": 2.447334149852395,
+          "training_source": "The officer shall retain the file for at least 21 days.",
+          "training_target_seconds_sum": 0.0
+        }
+      ],
+      "first_bridge_seconds_range": [
+        2.4044795450754464,
+        2.4774679401889443
+      ],
+      "input_count": 4,
+      "label": "shared",
+      "native_builds_in_profiled_training_evaluations": 0,
+      "qualified_count": 2,
+      "receipts": [
+        {
+          "path": "shared/progress/outputs/qualified-389539471b99ff7cab83f2789127a2c70448339e66812d13062cfc2796add17b/receipt.json",
+          "sha256": "13f8d270fedaf3fb0cebcf276a4d932fe38be3d60948aa44069221ded063da01"
+        },
+        {
+          "path": "shared/progress/outputs/qualified-8fcb1c7b76ec4444b63705f37fdab6dd2ef8f53e44f0391b4978669d423a4d6d/receipt.json",
+          "sha256": "af9715731969c2f1e80d79601287e888ac7552207fc9047e596ac28d1ac935c6"
+        },
+        {
+          "path": "shared/progress/outputs/qualified-dc8f23ac4c230af8acc84072d9f38a6b0f995e04dddb39ea9127cd6223a4d0c6/receipt.json",
+          "sha256": "cc73c1a6c9692ccaa747c214c1cc40edc8a29dcd4c738e241bbe8d9766fa6a5e"
+        },
+        {
+          "path": "shared/progress/outputs/qualified-f695e7dabc911ad698002d1634c924b8afbf05871dc550863cfdc22b604ae005/receipt.json",
+          "sha256": "7c8908beeb82d896b012657f920d9a7e4432e24142aacd843931255e334ba25d"
+        }
+      ],
+      "reserved_child_process_slots": 8,
+      "reserved_cpu_slots": 4,
+      "reserved_memory_mb": 8192,
+      "resource_finalization_profile": {
+        "global_accounting_seconds": 3.352453154977411,
+        "global_inventory_count": 1,
+        "ledger_lock_wait_seconds": 0.0002533630467951298,
+        "process_check_seconds": 0.021033121971413493,
+        "schema_version": "daemon-resource-finalization-profile/v1",
+        "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+        "strict_attempt_inventory_count": 1,
+        "strict_attempt_inventory_seconds": 0.00692349299788475
+      },
+      "resource_status": "released",
+      "sampled_peak_group_processes": 6,
+      "sampled_peak_group_rss_bytes": 4432863232,
+      "use_sample_memory": false,
+      "validation_count": 1,
+      "wall_seconds": 70.374008245999,
+      "wall_seconds_per_input_span": 17.59350206149975,
+      "worker_target_hydration_seconds_sum": 0.8557737478986382
+    }
+  ],
+  "schema": "autoencoder-optimizer-performance/v1",
+  "scope": "Four synthetic numeric training spans, one repeated tuning row, existing mock embeddings. First fresh-worker evaluations are process-cold; target cache status is recorded separately. Single sequential measurements, not a repeated benchmark.",
+  "shared_preparation_receipt": {
+    "admitted": false,
+    "legal_ir_target_count": 5,
+    "measurement_scope": "Includes preparation and supervision; add worker target_load_seconds, complete training and qualification wall time before claiming end-to-end speedup.",
+    "model_weights_downloaded": false,
+    "plan": {
+      "admitted": false,
+      "artifact_format": "bundle",
+      "bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "child_process_slots": 3,
+      "cpu_slots": 1,
+      "input_planning_wall_seconds": 0.11886741104535758,
+      "inputs": {
+        "training": {
+          "bytes": 816,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/input.jsonl",
+          "sha256": "e66380cd7d0de7ff26f0ac677c017bc47a12c51174213c571d41afb8b78c6fdf"
+        },
+        "validation": {
+          "bytes": 160,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/validation.jsonl",
+          "sha256": "251a3006f53f986fb708f820eb7c3922a73e2eabbfc4e78f1294834f083a1022"
+        }
+      },
+      "legal_ir_evaluate_provers": false,
+      "legal_ir_parallel_workers": 1,
+      "max_output_bytes": 268435456,
+      "maximum_union_target_count": 5,
+      "memory_mb": 8192,
+      "metric_disk_cache": 0,
+      "metric_process_cache_used": false,
+      "model_weights_downloaded": false,
+      "output_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets",
+      "pinned_source_sha256": {
+        "autoencoder": "6b705fa3d9718efe5411fa5dc4b94b04210118d38e8996728b10364e8eb507a5",
+        "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+        "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+        "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+        "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+        "worker": "5eef2278827f2deb85d8c6e8feaf54a6c201744f114933f0fc2ca3e9e864a496"
+      },
+      "runner_sha256": "5c3c731e7c16a2f1573ade8cbba712d0785065dd1fc95abc82d291fecc3bdb36",
+      "schema_version": "shared-target-preparation-plan/v1",
+      "script_sha256": "6cff16e3745b0e1e86b9e74bd8a79b6185090488c90ae67db9d913fcdb829935",
+      "selection_sha256": "455a1e425333e59a0f0328efb0100c8536fa061372b3662f141899e82c31e0a2",
+      "storage_bytes": 750000000,
+      "timeout_seconds": 600.0,
+      "training_executed": false,
+      "training_record_count": 4,
+      "use_sample_memory": false,
+      "validation_record_count": 1,
+      "validation_role": "disjoint_repeated_tuning_not_independent_canary"
+    },
+    "preparation_including_input_planning_seconds": 22.973785947076976,
+    "producer_receipt": {
+      "bytes": 7808,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets/producer.json",
+      "sha256": "bc1c3a6c2efa5cbfac7d42411e431333adf3839a8a2a98804132ee21f757e581"
+    },
+    "runner_arguments": [
+      "--shared-targets",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets/targets.bundle",
+      "--target-snapshot-id",
+      "sha256:8a69fe4fe5fcb5d5b4e00888630fd4a370242e618f6f189d5542b801491e7cf6"
+    ],
+    "sample_count": 5,
+    "schema_version": "shared-target-preparation-handoff/v1",
+    "status_scope": "ready means target returned, not bridge acceptance, roundtrip success or Lean admission",
+    "supervision": {
+      "enforcement": "existing_resource_reservation_and_polled_group_usage_with_per_file_RLIMIT_FSIZE",
+      "observed_max_group_process_count": 1,
+      "observed_peak_group_rss_bytes": 950226944,
+      "peak_scope": "polled lower bound; shared pages may be counted more than once",
+      "supervised_process_wall_seconds": 16.012508931802586
+    },
+    "target_artifact": {
+      "bytes": 2299411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets/targets.bundle",
+      "sha256": "c4fe50a608d8766432ec19d93f3d394a31a68fb8ee9788df642399875b18ae75"
+    },
+    "target_preparation_wall_seconds": 22.8549176719971,
+    "target_snapshot_id": "sha256:8a69fe4fe5fcb5d5b4e00888630fd4a370242e618f6f189d5542b801491e7cf6",
+    "training_executed": false
+  }
+}

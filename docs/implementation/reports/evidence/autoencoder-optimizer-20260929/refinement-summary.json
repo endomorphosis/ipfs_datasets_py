@@ -1,0 +1,1287 @@
+{
+  "admitted": false,
+  "audit": {
+    "bytes": 485186,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/refined-audit.json",
+    "sha256": "a6c1b0e48ccebd209ede7d646a85e57e60597ed5d7c4343bca728814bfc9d131"
+  },
+  "comparison_audit": {
+    "bytes": 227232,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled-audit.json",
+    "sha256": "bdf442f5422e0023244a0293a3cd286207f76d48439f022d21f0589d41ca6dba"
+  },
+  "comparison_run_command": {
+    "bytes": 1199,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled-command.json",
+    "sha256": "37532f0853fc4d660eafc13fe0dc70e92b626781be0b79e3d57fedfeafb32b79"
+  },
+  "comparison_wall_seconds": 71.7854775080923,
+  "configuration": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "bridge_workers": 1,
+    "metric_disk_cache": 0,
+    "provers": false,
+    "refinement_attempts": 3,
+    "sample_count_per_job": 1,
+    "shared_targets": false,
+    "use_sample_memory": false
+  },
+  "constitution_formalized": false,
+  "formalized": false,
+  "native_counts": {
+    "accepted_epochs": 4,
+    "family_artifacts_reparsed": 48,
+    "jobs": 4,
+    "lake_builds_verified": 8,
+    "qualified": 3
+  },
+  "rows": [
+    {
+      "base": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "base_identity": {
+        "component_digests": {
+          "applied_leanstral_guidance_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "applied_proof_feedback_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "applied_todo_ids": "754b56b6c6d05f2b185348fc01a2b352a3a79f3eddde2107a5e8fa67dae14fbc",
+          "architecture_version": "4c0a3d348151589f9be7c7559147dd3db276f3048cd441fafc93883809106ae8",
+          "compiler_quality_embedding_weights": "bfe81483e92c6e25993f3a55171ce8c0b878937d86edd81caf268b8fa1221b08",
+          "compiler_quality_family_logits": "ba882b8279841406e79c9557248d895d5488fbbee3a69dfe3e7b7eb327717807",
+          "decoded_embeddings": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "decompiler_plan_embedding_weights": "1ee10f32806fd9da2262dd42198434975ce48b10c95abbfb3e22c0dcd4594478",
+          "decompiler_plan_family_logits": "9db109ad87e9420afcbbc3b7b37968a7a9df491aa875f7a829ece355430cd222",
+          "decompiler_plan_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_embedding_weights": "e51f04e02047e2154afee4c1721cadd5055621a018c567395d69e33defa44b31",
+          "family_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_logits": "61ee4741934877df0979158becb8ddedf005921d6ba521147def9fa0ef7cf694",
+          "family_semantic_slot_embedding_weights": "062800996da2767e198dee4b1c108ab659e0fd40c523e5d9f75ec5906b66bc9a",
+          "family_semantic_slot_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_semantic_slot_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "feature_embedding_weights": "af02830741901940a4a3da8508c2726c069cd6cfc07b7e4798d6046e33208117",
+          "feature_family_logits": "4c8f8e332ef916f1744ad8daad6792956e43aa6d7a7634cc033930e8e5facebc",
+          "feature_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_family_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "logic_signature_embedding_weights": "8598342aa4604da532e2e0f85b114af5282a77855835b8c3726672808a3848eb",
+          "logic_signature_family_logits": "e540d7da55ad3b20d671e00e6e15020483975b5b1026da9af543ba2283106bf0",
+          "logic_signature_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "predicate_argument_embedding_weights": "de47ad24b2f3bb5104f49cd7d92e7b02c424453aa51646663df9d263f9e8f8ea",
+          "predicate_argument_family_logits": "f7fc8b39f0f58a556f6d3762759a4f5b653d30a442c08913aa9ff67bf0e6c113",
+          "predicate_argument_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "proof_auxiliary_head_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "proof_feedback_version_fingerprint": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+          "round_trip_signal_embedding_weights": "8e6c581c41346c24339f77d60f8bb91caa5d7cc7c0228adcd0c3406219a51ceb",
+          "round_trip_signal_family_logits": "9d3513ba890d50e832a1b5cae35b30b51f0a23d11d8df3f15a60a24f03fd9dff",
+          "round_trip_signal_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_embedding_weights": "f0c9a90d5907bee771e7902cb8bffbc41a750e891382f565acb9964c2fe6f590",
+          "semantic_slot_family_logits": "fafa5987d8a1860065275b818a33c726cab41293cf07e7fa161af8bfdca2de0f",
+          "semantic_slot_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_legal_ir_view_family_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        },
+        "digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+        "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+        "revision": 0,
+        "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+        "state_schema_version": "modal-autoencoder-state-v1"
+      },
+      "candidate": {
+        "bytes": 26626107,
+        "sha256": "cd5bc2b3c65cdd5c8d0b8d5ac8f4abb9de28593ca489a35eac567557c82e5304"
+      },
+      "comparison": {
+        "after_candidate": {
+          "bytes": 26626107,
+          "sha256": "cd5bc2b3c65cdd5c8d0b8d5ac8f4abb9de28593ca489a35eac567557c82e5304"
+        },
+        "after_metric_gates": [
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": true,
+            "diagnostics": [
+              {
+                "code": "cosine_roundoff_clamped",
+                "raw": 1.0000000000000002,
+                "tolerance": 1.7763568394002505e-15,
+                "used": 1.0
+              }
+            ],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0000000000000002,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "training",
+            "text_roundtrip_equivalence": false
+          },
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "heldout",
+            "text_roundtrip_equivalence": false
+          }
+        ],
+        "after_qualified": true,
+        "after_status": "qualified",
+        "after_training_seconds": 8.701126121915877,
+        "before_candidate": {
+          "bytes": 26626107,
+          "sha256": "cd5bc2b3c65cdd5c8d0b8d5ac8f4abb9de28593ca489a35eac567557c82e5304"
+        },
+        "before_metric_gates": [
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": true,
+            "diagnostics": [
+              {
+                "code": "cosine_roundoff_clamped",
+                "raw": 1.0000000000000002,
+                "tolerance": 1.7763568394002505e-15,
+                "used": 1.0
+              }
+            ],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0000000000000002,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "training",
+            "text_roundtrip_equivalence": false
+          },
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "heldout",
+            "text_roundtrip_equivalence": false
+          }
+        ],
+        "before_qualified": true,
+        "before_status": "qualified",
+        "before_training_seconds": 7.482951551210135,
+        "eligible": true,
+        "mismatched_fields": [],
+        "scope": "identical parent state and samples; explicit refinement policy differs",
+        "training_seconds_delta": 1.2181745707057416
+      },
+      "epochs": [
+        {
+          "accepted": true,
+          "attempts": [
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.175,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 1,
+              "rejection_reasons": [
+                "no_training_reconstruction_improvement"
+              ],
+              "selected_candidate_regressions": {},
+              "strict_accepted": false,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0000000000000002,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 1.0000000000000002,
+                "reconstruction_loss": 0.0
+              },
+              "training_reconstruction_delta": 0.0,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+              "validation_objective_delta_required": 0.007552972483643838
+            },
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.0875,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 2,
+              "rejection_reasons": [
+                "no_training_reconstruction_improvement"
+              ],
+              "selected_candidate_regressions": {},
+              "strict_accepted": false,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0000000000000002,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 1.0000000000000002,
+                "reconstruction_loss": 0.0
+              },
+              "training_reconstruction_delta": 0.0,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:2",
+              "validation_objective_delta_required": 0.007552972483643838
+            },
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.04375,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 3,
+              "rejection_reasons": [
+                "no_training_reconstruction_improvement"
+              ],
+              "selected_candidate_regressions": {},
+              "strict_accepted": false,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0000000000000002,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 1.0000000000000002,
+                "reconstruction_loss": 0.0
+              },
+              "training_reconstruction_delta": 0.0,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:3",
+              "validation_objective_delta_required": 0.007552972483643838
+            }
+          ],
+          "eligible_refinement_count": 0,
+          "epoch": 1,
+          "refinement_attempt_count": 3,
+          "selected_refinement": null,
+          "selected_update": "legal_ir_view_logits"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": true,
+        "semantic_gate": true
+      },
+      "lane": 23,
+      "numeric_lake_scope": [
+        {
+          "proofs": [
+            {
+              "command": [
+                "lake",
+                "build",
+                "Legal"
+              ],
+              "lean_source_sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d",
+              "pattern": {
+                "fail": 19,
+                "kind": "threshold",
+                "meet": 20
+              },
+              "returncode": 0,
+              "scope": "source_locked_numeric_pattern"
+            }
+          ],
+          "source_text": "The officer shall retain the file for at least 20 days.",
+          "split": "training"
+        },
+        {
+          "proofs": [
+            {
+              "command": [
+                "lake",
+                "build",
+                "Legal"
+              ],
+              "lean_source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+              "pattern": {
+                "fail": 29,
+                "kind": "threshold",
+                "meet": 30
+              },
+              "returncode": 0,
+              "scope": "source_locked_numeric_pattern"
+            }
+          ],
+          "source_text": "The officer shall retain the file for at least 30 days.",
+          "split": "heldout"
+        }
+      ],
+      "profile_scope": "Observed refinement evaluation and update-batch phases only; excludes nested update-head phases to avoid double counting, and is not total trial wall time.",
+      "profiled_refinement_nonoverlapping_seconds": 0.912216008175,
+      "profiled_refinement_stage_seconds": {
+        "composed_refinement_training_baseline": 0.089288413059,
+        "composed_refinement_training_evaluation": 0.17591045796799998,
+        "composed_refinement_validation": 0.322630117881,
+        "projection_update_batch": 0.32438701926700003
+      },
+      "qualified": true,
+      "sample_key": "177175a5cde0b02a39db27c66237a6c7e3f6ae56ed18a475f826bb3027c5d388",
+      "source_text": "The officer shall retain the file for at least 20 days.",
+      "status": "qualified",
+      "training_seconds": 8.701126121915877,
+      "worker_seconds": 10.547233546851203
+    },
+    {
+      "base": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "base_identity": {
+        "component_digests": {
+          "applied_leanstral_guidance_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "applied_proof_feedback_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "applied_todo_ids": "754b56b6c6d05f2b185348fc01a2b352a3a79f3eddde2107a5e8fa67dae14fbc",
+          "architecture_version": "4c0a3d348151589f9be7c7559147dd3db276f3048cd441fafc93883809106ae8",
+          "compiler_quality_embedding_weights": "bfe81483e92c6e25993f3a55171ce8c0b878937d86edd81caf268b8fa1221b08",
+          "compiler_quality_family_logits": "ba882b8279841406e79c9557248d895d5488fbbee3a69dfe3e7b7eb327717807",
+          "decoded_embeddings": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "decompiler_plan_embedding_weights": "1ee10f32806fd9da2262dd42198434975ce48b10c95abbfb3e22c0dcd4594478",
+          "decompiler_plan_family_logits": "9db109ad87e9420afcbbc3b7b37968a7a9df491aa875f7a829ece355430cd222",
+          "decompiler_plan_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_embedding_weights": "e51f04e02047e2154afee4c1721cadd5055621a018c567395d69e33defa44b31",
+          "family_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_logits": "61ee4741934877df0979158becb8ddedf005921d6ba521147def9fa0ef7cf694",
+          "family_semantic_slot_embedding_weights": "062800996da2767e198dee4b1c108ab659e0fd40c523e5d9f75ec5906b66bc9a",
+          "family_semantic_slot_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_semantic_slot_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "feature_embedding_weights": "af02830741901940a4a3da8508c2726c069cd6cfc07b7e4798d6046e33208117",
+          "feature_family_logits": "4c8f8e332ef916f1744ad8daad6792956e43aa6d7a7634cc033930e8e5facebc",
+          "feature_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_family_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "logic_signature_embedding_weights": "8598342aa4604da532e2e0f85b114af5282a77855835b8c3726672808a3848eb",
+          "logic_signature_family_logits": "e540d7da55ad3b20d671e00e6e15020483975b5b1026da9af543ba2283106bf0",
+          "logic_signature_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "predicate_argument_embedding_weights": "de47ad24b2f3bb5104f49cd7d92e7b02c424453aa51646663df9d263f9e8f8ea",
+          "predicate_argument_family_logits": "f7fc8b39f0f58a556f6d3762759a4f5b653d30a442c08913aa9ff67bf0e6c113",
+          "predicate_argument_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "proof_auxiliary_head_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "proof_feedback_version_fingerprint": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+          "round_trip_signal_embedding_weights": "8e6c581c41346c24339f77d60f8bb91caa5d7cc7c0228adcd0c3406219a51ceb",
+          "round_trip_signal_family_logits": "9d3513ba890d50e832a1b5cae35b30b51f0a23d11d8df3f15a60a24f03fd9dff",
+          "round_trip_signal_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_embedding_weights": "f0c9a90d5907bee771e7902cb8bffbc41a750e891382f565acb9964c2fe6f590",
+          "semantic_slot_family_logits": "fafa5987d8a1860065275b818a33c726cab41293cf07e7fa161af8bfdca2de0f",
+          "semantic_slot_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_legal_ir_view_family_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        },
+        "digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+        "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+        "revision": 0,
+        "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+        "state_schema_version": "modal-autoencoder-state-v1"
+      },
+      "candidate": {
+        "bytes": 27840683,
+        "sha256": "b1a76462faae0769b7bc27e59d6f608ce388b32968a26923fa6e7fe5651ac3b6"
+      },
+      "comparison": {
+        "after_candidate": {
+          "bytes": 27840683,
+          "sha256": "b1a76462faae0769b7bc27e59d6f608ce388b32968a26923fa6e7fe5651ac3b6"
+        },
+        "after_metric_gates": [
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "training",
+            "text_roundtrip_equivalence": false
+          },
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "heldout",
+            "text_roundtrip_equivalence": false
+          }
+        ],
+        "after_qualified": true,
+        "after_status": "qualified",
+        "after_training_seconds": 9.743369843810797,
+        "before_candidate": {
+          "bytes": 26626107,
+          "sha256": "edc12a05d2ec4aa6743cb2f74c3ecf0a6c1a4487a254f14ce87a52caa5603bcc"
+        },
+        "before_metric_gates": [
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.196116135138184,
+            "embedding_cosine_similarity_raw": 0.196116135138184,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": false,
+            "reasons": [
+              "embedding_cosine_below_threshold",
+              "reconstruction_loss_above_threshold"
+            ],
+            "reconstruction_loss": 0.342003247738783,
+            "split": "training",
+            "text_roundtrip_equivalence": false
+          },
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "heldout",
+            "text_roundtrip_equivalence": false
+          }
+        ],
+        "before_qualified": false,
+        "before_status": "training_exhausted",
+        "before_training_seconds": 7.482127567054704,
+        "eligible": true,
+        "mismatched_fields": [],
+        "scope": "identical parent state and samples; explicit refinement policy differs",
+        "training_seconds_delta": 2.261242276756093
+      },
+      "epochs": [
+        {
+          "accepted": true,
+          "attempts": [
+            {
+              "acceptance_source": "strict_composed_refinement",
+              "accepted": true,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.175,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 1,
+              "rejection_reasons": [],
+              "selected_candidate_regressions": {},
+              "strict_accepted": true,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 0.196116135138184,
+                "reconstruction_loss": 0.342003247738783
+              },
+              "training_reconstruction_delta": 0.342003247738783,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+              "validation_objective_delta_required": 0.007552972483643838
+            },
+            {
+              "acceptance_source": "strict_composed_refinement",
+              "accepted": true,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.0875,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 2,
+              "rejection_reasons": [],
+              "selected_candidate_regressions": {},
+              "strict_accepted": true,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 0.196116135138184,
+                "reconstruction_loss": 0.342003247738783
+              },
+              "training_reconstruction_delta": 0.342003247738783,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:2",
+              "validation_objective_delta_required": 0.007552972483643838
+            },
+            {
+              "acceptance_source": "strict_composed_refinement",
+              "accepted": true,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.04375,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 3,
+              "rejection_reasons": [],
+              "selected_candidate_regressions": {},
+              "strict_accepted": true,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 0.196116135138184,
+                "reconstruction_loss": 0.342003247738783
+              },
+              "training_reconstruction_delta": 0.342003247738783,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:3",
+              "validation_objective_delta_required": 0.007552972483643838
+            }
+          ],
+          "eligible_refinement_count": 3,
+          "epoch": 1,
+          "refinement_attempt_count": 3,
+          "selected_refinement": {
+            "acceptance_source": "strict_composed_refinement",
+            "accepted": true,
+            "base_selected_update": "legal_ir_view_logits",
+            "effective_learning_rate": 0.175,
+            "holdout_evaluated": true,
+            "objective_delta": 0.007552972483643838,
+            "pareto_regressions": {},
+            "refinement_attempt": 1,
+            "rejection_reasons": [],
+            "selected_candidate_regressions": {},
+            "strict_accepted": true,
+            "training_after": {
+              "embedding_cosine_similarity": 1.0,
+              "reconstruction_loss": 0.0
+            },
+            "training_before": {
+              "embedding_cosine_similarity": 0.196116135138184,
+              "reconstruction_loss": 0.342003247738783
+            },
+            "training_reconstruction_delta": 0.342003247738783,
+            "update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+            "validation_objective_delta_required": 0.007552972483643838
+          },
+          "selected_update": "legal_ir_view_logits+decoded_embedding_refinement:1"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": true,
+        "semantic_gate": true
+      },
+      "lane": 13,
+      "numeric_lake_scope": [
+        {
+          "proofs": [
+            {
+              "command": [
+                "lake",
+                "build",
+                "Legal"
+              ],
+              "lean_source_sha256": "fbde2bbc32ea46233c8b4c17e4c3a190341183eb045e956bff186e554888a10f",
+              "pattern": {
+                "fail": 22,
+                "kind": "threshold",
+                "meet": 23
+              },
+              "returncode": 0,
+              "scope": "source_locked_numeric_pattern"
+            }
+          ],
+          "source_text": "The officer shall retain the file for at least 23 days.",
+          "split": "training"
+        },
+        {
+          "proofs": [
+            {
+              "command": [
+                "lake",
+                "build",
+                "Legal"
+              ],
+              "lean_source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+              "pattern": {
+                "fail": 29,
+                "kind": "threshold",
+                "meet": 30
+              },
+              "returncode": 0,
+              "scope": "source_locked_numeric_pattern"
+            }
+          ],
+          "source_text": "The officer shall retain the file for at least 30 days.",
+          "split": "heldout"
+        }
+      ],
+      "profile_scope": "Observed refinement evaluation and update-batch phases only; excludes nested update-head phases to avoid double counting, and is not total trial wall time.",
+      "profiled_refinement_nonoverlapping_seconds": 0.966491183731,
+      "profiled_refinement_stage_seconds": {
+        "composed_refinement_training_baseline": 0.094085414195,
+        "composed_refinement_training_evaluation": 0.192456318996,
+        "composed_refinement_validation": 0.346254512435,
+        "projection_update_batch": 0.333694938105
+      },
+      "qualified": true,
+      "sample_key": "6d4a77a1386b859404f835c8001580f43bb94b80890195c2a5dab1332b879f4b",
+      "source_text": "The officer shall retain the file for at least 23 days.",
+      "status": "qualified",
+      "training_seconds": 9.743369843810797,
+      "worker_seconds": 11.634874658891931
+    },
+    {
+      "base": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "base_identity": {
+        "component_digests": {
+          "applied_leanstral_guidance_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "applied_proof_feedback_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "applied_todo_ids": "754b56b6c6d05f2b185348fc01a2b352a3a79f3eddde2107a5e8fa67dae14fbc",
+          "architecture_version": "4c0a3d348151589f9be7c7559147dd3db276f3048cd441fafc93883809106ae8",
+          "compiler_quality_embedding_weights": "bfe81483e92c6e25993f3a55171ce8c0b878937d86edd81caf268b8fa1221b08",
+          "compiler_quality_family_logits": "ba882b8279841406e79c9557248d895d5488fbbee3a69dfe3e7b7eb327717807",
+          "decoded_embeddings": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "decompiler_plan_embedding_weights": "1ee10f32806fd9da2262dd42198434975ce48b10c95abbfb3e22c0dcd4594478",
+          "decompiler_plan_family_logits": "9db109ad87e9420afcbbc3b7b37968a7a9df491aa875f7a829ece355430cd222",
+          "decompiler_plan_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_embedding_weights": "e51f04e02047e2154afee4c1721cadd5055621a018c567395d69e33defa44b31",
+          "family_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_logits": "61ee4741934877df0979158becb8ddedf005921d6ba521147def9fa0ef7cf694",
+          "family_semantic_slot_embedding_weights": "062800996da2767e198dee4b1c108ab659e0fd40c523e5d9f75ec5906b66bc9a",
+          "family_semantic_slot_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_semantic_slot_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "feature_embedding_weights": "af02830741901940a4a3da8508c2726c069cd6cfc07b7e4798d6046e33208117",
+          "feature_family_logits": "4c8f8e332ef916f1744ad8daad6792956e43aa6d7a7634cc033930e8e5facebc",
+          "feature_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_family_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "logic_signature_embedding_weights": "8598342aa4604da532e2e0f85b114af5282a77855835b8c3726672808a3848eb",
+          "logic_signature_family_logits": "e540d7da55ad3b20d671e00e6e15020483975b5b1026da9af543ba2283106bf0",
+          "logic_signature_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "predicate_argument_embedding_weights": "de47ad24b2f3bb5104f49cd7d92e7b02c424453aa51646663df9d263f9e8f8ea",
+          "predicate_argument_family_logits": "f7fc8b39f0f58a556f6d3762759a4f5b653d30a442c08913aa9ff67bf0e6c113",
+          "predicate_argument_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "proof_auxiliary_head_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "proof_feedback_version_fingerprint": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+          "round_trip_signal_embedding_weights": "8e6c581c41346c24339f77d60f8bb91caa5d7cc7c0228adcd0c3406219a51ceb",
+          "round_trip_signal_family_logits": "9d3513ba890d50e832a1b5cae35b30b51f0a23d11d8df3f15a60a24f03fd9dff",
+          "round_trip_signal_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_embedding_weights": "f0c9a90d5907bee771e7902cb8bffbc41a750e891382f565acb9964c2fe6f590",
+          "semantic_slot_family_logits": "fafa5987d8a1860065275b818a33c726cab41293cf07e7fa161af8bfdca2de0f",
+          "semantic_slot_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_legal_ir_view_family_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        },
+        "digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+        "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+        "revision": 0,
+        "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+        "state_schema_version": "modal-autoencoder-state-v1"
+      },
+      "candidate": {
+        "bytes": 26626107,
+        "sha256": "88885174b43d65c50479af92391cd895f48c7b31d876a738d91d0ed5467356ba"
+      },
+      "comparison": {
+        "after_candidate": {
+          "bytes": 26626107,
+          "sha256": "88885174b43d65c50479af92391cd895f48c7b31d876a738d91d0ed5467356ba"
+        },
+        "after_metric_gates": [
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.19611613513818407,
+            "embedding_cosine_similarity_raw": 0.19611613513818407,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": false,
+            "reasons": [
+              "embedding_cosine_below_threshold",
+              "reconstruction_loss_above_threshold"
+            ],
+            "reconstruction_loss": 0.37794123682465003,
+            "split": "training",
+            "text_roundtrip_equivalence": false
+          },
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "heldout",
+            "text_roundtrip_equivalence": false
+          }
+        ],
+        "after_qualified": false,
+        "after_status": "training_exhausted",
+        "after_training_seconds": 8.661234016064554,
+        "before_candidate": {
+          "bytes": 26626107,
+          "sha256": "88885174b43d65c50479af92391cd895f48c7b31d876a738d91d0ed5467356ba"
+        },
+        "before_metric_gates": [
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.19611613513818407,
+            "embedding_cosine_similarity_raw": 0.19611613513818407,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": false,
+            "reasons": [
+              "embedding_cosine_below_threshold",
+              "reconstruction_loss_above_threshold"
+            ],
+            "reconstruction_loss": 0.37794123682465003,
+            "split": "training",
+            "text_roundtrip_equivalence": false
+          },
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "heldout",
+            "text_roundtrip_equivalence": false
+          }
+        ],
+        "before_qualified": false,
+        "before_status": "training_exhausted",
+        "before_training_seconds": 7.44854850997217,
+        "eligible": true,
+        "mismatched_fields": [],
+        "scope": "identical parent state and samples; explicit refinement policy differs",
+        "training_seconds_delta": 1.2126855060923845
+      },
+      "epochs": [
+        {
+          "accepted": true,
+          "attempts": [
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.175,
+              "holdout_evaluated": true,
+              "objective_delta": -1.5252388764580496,
+              "pareto_regressions": {
+                "embedding_cosine_similarity": 0.8038838648618158,
+                "reconstruction_loss": 0.3269660516489694
+              },
+              "refinement_attempt": 1,
+              "rejection_reasons": [
+                "validation_guardrail_regression",
+                "validation_objective_not_preserved"
+              ],
+              "selected_candidate_regressions": {
+                "embedding_cosine_similarity": 0.8038838648618158,
+                "reconstruction_loss": 0.3269660516489694
+              },
+              "strict_accepted": false,
+              "training_before": {
+                "embedding_cosine_similarity": 0.19611613513818407,
+                "reconstruction_loss": 0.37794123682465003
+              },
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+              "validation_objective_delta_required": 0.007552972483643838
+            },
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.0875,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 2,
+              "rejection_reasons": [
+                "no_training_reconstruction_improvement"
+              ],
+              "selected_candidate_regressions": {},
+              "strict_accepted": false,
+              "training_after": {
+                "embedding_cosine_similarity": 0.19611613513818407,
+                "reconstruction_loss": 0.37794123682465003
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 0.19611613513818407,
+                "reconstruction_loss": 0.37794123682465003
+              },
+              "training_reconstruction_delta": 0.0,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:2",
+              "validation_objective_delta_required": 0.007552972483643838
+            },
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.04375,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 3,
+              "rejection_reasons": [
+                "no_training_reconstruction_improvement"
+              ],
+              "selected_candidate_regressions": {},
+              "strict_accepted": false,
+              "training_after": {
+                "embedding_cosine_similarity": 0.19611613513818407,
+                "reconstruction_loss": 0.37794123682465003
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 0.19611613513818407,
+                "reconstruction_loss": 0.37794123682465003
+              },
+              "training_reconstruction_delta": 0.0,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:3",
+              "validation_objective_delta_required": 0.007552972483643838
+            }
+          ],
+          "eligible_refinement_count": 0,
+          "epoch": 1,
+          "refinement_attempt_count": 3,
+          "selected_refinement": null,
+          "selected_update": "legal_ir_view_logits"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": false,
+        "semantic_gate": true
+      },
+      "lane": 30,
+      "numeric_lake_scope": [
+        {
+          "proofs": [
+            {
+              "command": [
+                "lake",
+                "build",
+                "Legal"
+              ],
+              "lean_source_sha256": "88749153e060b5e748f6d2707bfa949f04281fc70756051eed9cec67a2e44ae8",
+              "pattern": {
+                "fail": 21,
+                "kind": "threshold",
+                "meet": 22
+              },
+              "returncode": 0,
+              "scope": "source_locked_numeric_pattern"
+            }
+          ],
+          "source_text": "The officer shall retain the file for at least 22 days.",
+          "split": "training"
+        },
+        {
+          "proofs": [
+            {
+              "command": [
+                "lake",
+                "build",
+                "Legal"
+              ],
+              "lean_source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+              "pattern": {
+                "fail": 29,
+                "kind": "threshold",
+                "meet": 30
+              },
+              "returncode": 0,
+              "scope": "source_locked_numeric_pattern"
+            }
+          ],
+          "source_text": "The officer shall retain the file for at least 30 days.",
+          "split": "heldout"
+        }
+      ],
+      "profile_scope": "Observed refinement evaluation and update-batch phases only; excludes nested update-head phases to avoid double counting, and is not total trial wall time.",
+      "profiled_refinement_nonoverlapping_seconds": 0.861361365067,
+      "profiled_refinement_stage_seconds": {
+        "composed_refinement_training_baseline": 0.089002377121,
+        "composed_refinement_training_evaluation": 0.119439477101,
+        "composed_refinement_validation": 0.327349391067,
+        "projection_update_batch": 0.325570119778
+      },
+      "qualified": false,
+      "sample_key": "d6e424b71cc986ea2aceddbe051e27a65704a35c786d7c67fa8563404167971d",
+      "source_text": "The officer shall retain the file for at least 22 days.",
+      "status": "training_exhausted",
+      "training_seconds": 8.661234016064554,
+      "worker_seconds": 10.525845453841612
+    },
+    {
+      "base": {
+        "bytes": 25895338,
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "base_identity": {
+        "component_digests": {
+          "applied_leanstral_guidance_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "applied_proof_feedback_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "applied_todo_ids": "754b56b6c6d05f2b185348fc01a2b352a3a79f3eddde2107a5e8fa67dae14fbc",
+          "architecture_version": "4c0a3d348151589f9be7c7559147dd3db276f3048cd441fafc93883809106ae8",
+          "compiler_quality_embedding_weights": "bfe81483e92c6e25993f3a55171ce8c0b878937d86edd81caf268b8fa1221b08",
+          "compiler_quality_family_logits": "ba882b8279841406e79c9557248d895d5488fbbee3a69dfe3e7b7eb327717807",
+          "decoded_embeddings": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "decompiler_plan_embedding_weights": "1ee10f32806fd9da2262dd42198434975ce48b10c95abbfb3e22c0dcd4594478",
+          "decompiler_plan_family_logits": "9db109ad87e9420afcbbc3b7b37968a7a9df491aa875f7a829ece355430cd222",
+          "decompiler_plan_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_embedding_weights": "e51f04e02047e2154afee4c1721cadd5055621a018c567395d69e33defa44b31",
+          "family_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_logits": "61ee4741934877df0979158becb8ddedf005921d6ba521147def9fa0ef7cf694",
+          "family_semantic_slot_embedding_weights": "062800996da2767e198dee4b1c108ab659e0fd40c523e5d9f75ec5906b66bc9a",
+          "family_semantic_slot_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "family_semantic_slot_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "feature_embedding_weights": "af02830741901940a4a3da8508c2726c069cd6cfc07b7e4798d6046e33208117",
+          "feature_family_logits": "4c8f8e332ef916f1744ad8daad6792956e43aa6d7a7634cc033930e8e5facebc",
+          "feature_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_family_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "logic_signature_embedding_weights": "8598342aa4604da532e2e0f85b114af5282a77855835b8c3726672808a3848eb",
+          "logic_signature_family_logits": "e540d7da55ad3b20d671e00e6e15020483975b5b1026da9af543ba2283106bf0",
+          "logic_signature_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "predicate_argument_embedding_weights": "de47ad24b2f3bb5104f49cd7d92e7b02c424453aa51646663df9d263f9e8f8ea",
+          "predicate_argument_family_logits": "f7fc8b39f0f58a556f6d3762759a4f5b653d30a442c08913aa9ff67bf0e6c113",
+          "predicate_argument_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "proof_auxiliary_head_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "proof_feedback_version_fingerprint": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+          "round_trip_signal_embedding_weights": "8e6c581c41346c24339f77d60f8bb91caa5d7cc7c0228adcd0c3406219a51ceb",
+          "round_trip_signal_family_logits": "9d3513ba890d50e832a1b5cae35b30b51f0a23d11d8df3f15a60a24f03fd9dff",
+          "round_trip_signal_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_embedding_weights": "f0c9a90d5907bee771e7902cb8bffbc41a750e891382f565acb9964c2fe6f590",
+          "semantic_slot_family_logits": "fafa5987d8a1860065275b818a33c726cab41293cf07e7fa161af8bfdca2de0f",
+          "semantic_slot_legal_ir_view_embedding_weights": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_legal_ir_view_family_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "semantic_slot_legal_ir_view_logits": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        },
+        "digest": "aaa68dbc25ce1de8ed35e106642d8c192e862ea075dc9d860c1ec5e07fd33922",
+        "metric_lineage_digest": "12eb2bb68ba375d5d2911dd06c1b8d0c51e962e7732ad54572514b9231ac4d34",
+        "revision": 0,
+        "schema_version": "modal-autoencoder-incremental-state-identity-v1",
+        "state_schema_version": "modal-autoencoder-state-v1"
+      },
+      "candidate": {
+        "bytes": 26626107,
+        "sha256": "66aa8d5dfe164292759bed7944bd99819290258230290d99d04e94431d1ab273"
+      },
+      "comparison": {
+        "after_candidate": {
+          "bytes": 26626107,
+          "sha256": "66aa8d5dfe164292759bed7944bd99819290258230290d99d04e94431d1ab273"
+        },
+        "after_metric_gates": [
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "training",
+            "text_roundtrip_equivalence": false
+          },
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "heldout",
+            "text_roundtrip_equivalence": false
+          }
+        ],
+        "after_qualified": true,
+        "after_status": "qualified",
+        "after_training_seconds": 9.459688396891579,
+        "before_candidate": {
+          "bytes": 26626107,
+          "sha256": "66aa8d5dfe164292759bed7944bd99819290258230290d99d04e94431d1ab273"
+        },
+        "before_metric_gates": [
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 1.0,
+            "embedding_cosine_similarity_raw": 1.0,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "training",
+            "text_roundtrip_equivalence": false
+          },
+          {
+            "admitted": false,
+            "cosine_roundoff_clamped": false,
+            "diagnostics": [],
+            "embedding_cosine_similarity": 0.9999999999999999,
+            "embedding_cosine_similarity_raw": 0.9999999999999999,
+            "max_reconstruction_loss": 0.2,
+            "metric_scope": "model_encode_decode_embedding_reconstruction",
+            "min_cosine": 0.72,
+            "passed": true,
+            "reasons": [],
+            "reconstruction_loss": 0.0,
+            "split": "heldout",
+            "text_roundtrip_equivalence": false
+          }
+        ],
+        "before_qualified": true,
+        "before_status": "qualified",
+        "before_training_seconds": 7.412610959960148,
+        "eligible": true,
+        "mismatched_fields": [],
+        "scope": "identical parent state and samples; explicit refinement policy differs",
+        "training_seconds_delta": 2.0470774369314313
+      },
+      "epochs": [
+        {
+          "accepted": true,
+          "attempts": [
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.175,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 1,
+              "rejection_reasons": [
+                "no_training_reconstruction_improvement"
+              ],
+              "selected_candidate_regressions": {},
+              "strict_accepted": false,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_reconstruction_delta": 0.0,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+              "validation_objective_delta_required": 0.007552972483643838
+            },
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.0875,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 2,
+              "rejection_reasons": [
+                "no_training_reconstruction_improvement"
+              ],
+              "selected_candidate_regressions": {},
+              "strict_accepted": false,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_reconstruction_delta": 0.0,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:2",
+              "validation_objective_delta_required": 0.007552972483643838
+            },
+            {
+              "acceptance_source": "rejected",
+              "accepted": false,
+              "base_selected_update": "legal_ir_view_logits",
+              "effective_learning_rate": 0.04375,
+              "holdout_evaluated": true,
+              "objective_delta": 0.007552972483643838,
+              "pareto_regressions": {},
+              "refinement_attempt": 3,
+              "rejection_reasons": [
+                "no_training_reconstruction_improvement"
+              ],
+              "selected_candidate_regressions": {},
+              "strict_accepted": false,
+              "training_after": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_before": {
+                "embedding_cosine_similarity": 1.0,
+                "reconstruction_loss": 0.0
+              },
+              "training_reconstruction_delta": 0.0,
+              "update": "legal_ir_view_logits+decoded_embedding_refinement:3",
+              "validation_objective_delta_required": 0.007552972483643838
+            }
+          ],
+          "eligible_refinement_count": 0,
+          "epoch": 1,
+          "refinement_attempt_count": 3,
+          "selected_refinement": null,
+          "selected_update": "legal_ir_view_logits"
+        }
+      ],
+      "gates": {
+        "family_syntax_gate": true,
+        "heldout_gate": true,
+        "lake_gate": true,
+        "metric_gate": true,
+        "semantic_gate": true
+      },
+      "lane": 1,
+      "numeric_lake_scope": [
+        {
+          "proofs": [
+            {
+              "command": [
+                "lake",
+                "build",
+                "Legal"
+              ],
+              "lean_source_sha256": "a93124de37873b0f6d8733dda83983aca20e8485f4ebefb6686dfd972c409d7e",
+              "pattern": {
+                "fail": 20,
+                "kind": "threshold",
+                "meet": 21
+              },
+              "returncode": 0,
+              "scope": "source_locked_numeric_pattern"
+            }
+          ],
+          "source_text": "The officer shall retain the file for at least 21 days.",
+          "split": "training"
+        },
+        {
+          "proofs": [
+            {
+              "command": [
+                "lake",
+                "build",
+                "Legal"
+              ],
+              "lean_source_sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+              "pattern": {
+                "fail": 29,
+                "kind": "threshold",
+                "meet": 30
+              },
+              "returncode": 0,
+              "scope": "source_locked_numeric_pattern"
+            }
+          ],
+          "source_text": "The officer shall retain the file for at least 30 days.",
+          "split": "heldout"
+        }
+      ],
+      "profile_scope": "Observed refinement evaluation and update-batch phases only; excludes nested update-head phases to avoid double counting, and is not total trial wall time.",
+      "profiled_refinement_nonoverlapping_seconds": 0.969817496138,
+      "profiled_refinement_stage_seconds": {
+        "composed_refinement_training_baseline": 0.094207464019,
+        "composed_refinement_training_evaluation": 0.193492636085,
+        "composed_refinement_validation": 0.347053640987,
+        "projection_update_batch": 0.335063755047
+      },
+      "qualified": true,
+      "sample_key": "deecf3136cd32d81a4b2cc4bb95bb046c24f99faaf2eb31aee4e2e9b6b9e7aa7",
+      "source_text": "The officer shall retain the file for at least 21 days.",
+      "status": "qualified",
+      "training_seconds": 9.459688396891579,
+      "worker_seconds": 11.329600936966017
+    }
+  ],
+  "run_command": {
+    "bytes": 1248,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/refined-command.json",
+    "sha256": "ccc490b0bc53e39b854cb887a4763b17ff13c4f1de79d6fba9ed3415bf0d5bbd"
+  },
+  "schema": "native-composed-refinement-summary/v1",
+  "scope": "Synthetic fixture optimization only. Repeated tuning rows are not an independent canary. Embedding metrics retain the existing target-aware reconstruction projection. Six family syntax projections do not establish semantic equivalence or complete cognitive/event semantics. Lake evidence proves the recorded source-locked numeric pattern only.",
+  "selected_refinement_count": 1,
+  "speed_comparison_eligible": false,
+  "speed_scope": "Optimizer policy and candidate results differ; these route timings are observations, not a speed parity result.",
+  "wall_seconds": 76.13944660802372
+}

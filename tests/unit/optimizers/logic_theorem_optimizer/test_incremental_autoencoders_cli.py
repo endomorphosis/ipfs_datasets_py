@@ -46,6 +46,7 @@ def test_templates_reuse_registered_baseline_and_preserve_source_evidence(tmp_pa
         assert first.training_config.use_sample_memory is False
         assert first.candidate_storage == "sparse"
         assert first.validation_samples == ()
+        assert "projection_max_composed_refinement_attempts" not in first.to_dict()["training_config"]
         assert json.loads((tmp_path / "inputs" / ("a" * 64 + ".json")).read_bytes()) == record
         changed = {**record, "sample": {**record["sample"], "text": "Changed"}}
         with pytest.raises(ValueError, match="identity collision"):
@@ -71,9 +72,23 @@ def test_templates_bind_validation_split_and_operator_requires_qualification(tmp
         assert template.split_snapshot_id != no_validation.split_snapshot_id
         assert template.canonical_sha256 != no_validation.canonical_sha256
         assert template.samples == no_validation.samples
+        refined = cli.make_templates(registry, [train], validation_records=[validation],
+                                     composed_refinement_attempts=3, **opts)[0]
+        assert refined.training_config.projection_max_composed_refinement_attempts == 3
+        assert refined.canonical_sha256 != template.canonical_sha256
+        assert refined.samples == template.samples and refined.validation_samples == template.validation_samples
     args = cli.parser().parse_args(["--state-directory", str(tmp_path), "--input-jsonl", "input"])
     assert args.max_training_rounds == 3 and args.lake_timeout_seconds == 120
     assert not hasattr(args, "disable_qualification")
+    assert args.composed_refinement_attempts == 0
+
+
+@pytest.mark.parametrize("extra", [[], ["--execution-mode", "inference", "--validation-jsonl", "validation"]])
+def test_refinement_rejected_before_work_without_training_validation(tmp_path, extra):
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(tmp_path / "uncreated"), "--input-jsonl", "input",
+                  "--composed-refinement-attempts", "1", *extra])
+    assert not (tmp_path / "uncreated").exists()
 
 
 def test_orchestration_binds_native_grammar_and_statement_lock():
@@ -123,15 +138,49 @@ def test_completed_group_cleanup_kills_lingering_workers(monkeypatch):
     assert (123, cli.signal.SIGKILL) in calls
 
 
-def test_omitted_workers_follow_the_machine_budget(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "ipfs_datasets_py.logic.autoformal.worker_budget.worker_budget",
-        lambda **_kwargs: 5,
-    )
-    from ipfs_datasets_py.logic.autoformal.worker_budget import resolve_worker_count
+def test_omitted_workers_delegate_live_capacity_without_changing_logical_lanes(tmp_path, monkeypatch, capsys):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as scheduler
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
 
-    assert cli.parser().get_default("workers") == 0
-    assert resolve_worker_count(cli.parser().get_default("workers"), maximum=32) == 5
+    snapshot = {"fixture": "current scheduler census"}
+    class Scheduler:
+        def snapshot(self):
+            return snapshot
+
+    def available(observed):
+        assert observed is snapshot
+        return {"cpu_slots": 5, "memory_mb": 8192, "child_process_slots": 9}
+
+    plans, configs = [], []
+    def plan(mode, **limits):
+        plans.append((mode, limits))
+        return {"workers": 0, "reason": "fixture capacity exhausted"}
+
+    supervised = cli.supervised_cycle
+    def cycle(config):
+        configs.append(dict(config))
+        return supervised(config)
+
+    monkeypatch.setattr(cli, "_pin", lambda **_: {})
+    monkeypatch.setattr(cli, "supervised_cycle", cycle)
+    monkeypatch.setattr(scheduler, "get_global_resource_scheduler", lambda: Scheduler())
+    monkeypatch.setattr(capacity, "scheduler_capacity", available)
+    monkeypatch.setattr(capacity, "execution_capacity_plan", plan)
+    monkeypatch.setattr(resources, "DaemonResourceReservation", lambda **_: pytest.fail("reserved without capacity"))
+    monkeypatch.setattr(cli.subprocess, "Popen", lambda *a, **k: pytest.fail("started work without capacity"))
+    state = tmp_path / "automatic"
+    ledger = tmp_path / "resources.json"
+    assert cli.parser().get_default("workers") == cli.parser().get_default("parallel_workers") == 0
+    assert cli.main(["--state-directory", str(state), "--input-jsonl", "source",
+                     "--resource-ledger", str(ledger)]) == 0
+    assert len(configs) == 1 and configs[0]["workers"] == 32 and configs[0]["parallel_workers"] == 0
+    assert plans == [("training", {"max_workers": 32, "memory_budget_mb": 8192,
+        "pending_count": 4, "scheduler_available_cpu": 5,
+        "scheduler_available_memory_mb": 8192, "scheduler_available_process_slots": 9})]
+    receipt = json.loads(capsys.readouterr().out)
+    assert receipt["deferred"] and receipt["training_executed"] is False
+    assert not (state / "cycles").exists() and not ledger.exists()
 
 
 @pytest.mark.parametrize("extra", [
@@ -259,12 +308,13 @@ def test_cycle_rejects_normalized_training_validation_overlap_before_dispatch(tm
     assert not Path(config["cycle_receipt"]).exists()
 
 
-def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicate_inventory(tmp_path, monkeypatch):
+@pytest.mark.parametrize("parallel,pending,expected", [(0, 2, 2), (2, 4, 2), (1, 4, 1)])
+def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicate_inventory(tmp_path, monkeypatch, parallel, pending, expected):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as scheduler
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
     from types import SimpleNamespace
-    clock, checks, admitted = [0.0], [], []
+    clock, checks, finalized, admitted = [0.0], [], [], []
     monkeypatch.setattr(scheduler, "get_global_resource_scheduler", lambda: SimpleNamespace(snapshot=lambda: {}))
     monkeypatch.setattr(capacity, "scheduler_capacity", lambda _: {"cpu_slots": 8, "memory_mb": 50000, "child_process_slots": 64})
     monkeypatch.setattr(capacity, "hardware_probe", lambda: {"hardware_cpu_count": 20,
@@ -274,11 +324,16 @@ def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicat
         def __enter__(self): return self
         def __exit__(self, *args): return False
         def check_usage(self, **kwargs): checks.append(clock[0])
-        def release(self, **kwargs): return {"status": "released"}
+        def finalize(self, **kwargs):
+            assert kwargs["artifacts_durable"] is True
+            finalized.append(clock[0])
+            return {"status": "released"}
     class Input:
         def write(self, raw):
             config = json.loads(raw)
-            assert config["reserved_child_process_slots"] == 6
+            assert config["reserved_child_process_slots"] == expected + 4
+            assert config["max_parallel_workers"] == expected
+            assert config["workers"] == 32
             Path(config["cycle_receipt"]).write_text(json.dumps({"input_count": 2,
                 "training": {}, "training_executed": False, "weight_publications": []}))
         def close(self): pass
@@ -295,9 +350,12 @@ def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicat
     monkeypatch.setattr(cli.time, "monotonic", lambda: clock[0])
     monkeypatch.setattr(cli.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
     result = cli.supervised_cycle({"execution_mode": "training", "workers": 32,
-        "memory_mb": 8192, "max_batches": 2, "state_directory": str(tmp_path / "state"),
+        "parallel_workers": parallel,
+        "memory_mb": 8192, "max_batches": pending, "state_directory": str(tmp_path / "state"),
         "resource_ledger": str(tmp_path / "ledger.json"), "resource_roots": [],
         "storage_bytes": 1000000, "cycle_timeout": 120})
-    assert admitted[0]["cpu_slots"] == 2 and admitted[0]["child_process_slots"] == 6
-    assert checks == [0.0, 0.5]  # Initial admission check and final durable check.
-    assert result["capacity_plan"]["execution_envelope"]["estimated_memory_mb"] == 4352
+    assert admitted[0]["cpu_slots"] == expected and admitted[0]["child_process_slots"] == expected + 4
+    assert checks == [0.0]  # Initial check; finalization performs its own fresh census.
+    assert finalized == [0.5]
+    assert result["resource_finalization_seconds"] == 0.0
+    assert result["capacity_plan"]["execution_envelope"]["estimated_memory_mb"] == 2048 + 1152 * expected

@@ -1,0 +1,1059 @@
+{
+  "admitted": false,
+  "aggregate_worker_observations": {
+    "private": {
+      "target_artifact_verification_seconds": 0.0,
+      "target_hydration_seconds": 0.0,
+      "target_load_seconds": 1.1152122169733047e-05,
+      "target_reduction_seconds": 0.0,
+      "training_seconds": 29.826238588197157,
+      "worker_elapsed_seconds": 37.891574828885496
+    },
+    "shared": {
+      "target_artifact_verification_seconds": 0.09400402777828276,
+      "target_hydration_seconds": 0.8557737478986382,
+      "target_load_seconds": 4.042061639018357,
+      "target_reduction_seconds": 0.0,
+      "training_seconds": 16.72438963665627,
+      "worker_elapsed_seconds": 28.14380206144415
+    }
+  },
+  "aggregate_worker_scope": "Concurrent worker duration sums are work observations, not end-to-end elapsed wall time. Target load contains artifact verification/hydration and is not additive with them.",
+  "comparison": {
+    "cold_preparation_wall_seconds": 23.06734701897949,
+    "conditional_amortization_if_expected_transport_and_lane_changes_are_separately_validated": 17,
+    "conditional_amortization_scope": "Transport and exact parent/candidate parity passed; arithmetic projects repeated use of these one-run timings only. The 1.411s consumer difference may include measurement noise. Repeated-run savings and 17-use payback have not been demonstrated.",
+    "consumer_comparison_eligible": true,
+    "estimated_first_reuse_count_with_net_saving": 17,
+    "exact_parity_verified": true,
+    "formula": "P + N*S < N*B; first integer N = floor(P/(B-S))+1 only if B>S and parity holds",
+    "full_cli_seconds_per_training_span": {
+      "private": 17.946369377023075,
+      "shared_cold_preparation_plus_consumer": 23.36033881624462,
+      "shared_consumer": 17.59350206149975
+    },
+    "numeric_objective_candidate_gate_parity_verified": true,
+    "observed_end_to_end_speedup": false,
+    "one_off_extra_wall_seconds": 21.655877756886184,
+    "one_off_preparation_plus_consumer_wall_seconds": 93.44135526497848,
+    "one_off_total_ratio_to_private": 1.3016749140443475,
+    "per_consumer_observed_wall_seconds_saved": 1.4114692620933056,
+    "scaled_private_targets_wall_seconds": 71.7854775080923,
+    "scope": "Single sequential measurements on four synthetic duration fixtures, four simultaneous worker slots, same five bridges and disjoint repeated tuning validation. Estimate assumes similar future timings and unchanged source/runtime/input binding; it is not a measured repeated-run speedup.",
+    "shared_consumer_wall_seconds": 70.374008245999,
+    "strict_route_parity_failures": [
+      "same_configuration",
+      "177175a5cde0b02a39db27c66237a6c7e3f6ae56ed18a475f826bb3027c5d388:same_lane",
+      "6d4a77a1386b859404f835c8001580f43bb94b80890195c2a5dab1332b879f4b:same_lane",
+      "d6e424b71cc986ea2aceddbe051e27a65704a35c786d7c67fa8563404167971d:same_lane",
+      "deecf3136cd32d81a4b2cc4bb95bb046c24f99faaf2eb31aee4e2e9b6b9e7aa7:same_lane"
+    ],
+    "strict_route_parity_passed": false,
+    "transport_parity_check_count": 74,
+    "transport_parity_passed": true
+  },
+  "constitution_formalized": false,
+  "consumer_finalization_profile": {
+    "private": {
+      "global_accounting_seconds": 3.2978051300160587,
+      "global_inventory_count": 1,
+      "ledger_lock_wait_seconds": 0.0004879259504377842,
+      "process_check_seconds": 0.033079145941883326,
+      "schema_version": "daemon-resource-finalization-profile/v1",
+      "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+      "strict_attempt_inventory_count": 1,
+      "strict_attempt_inventory_seconds": 0.013105685822665691
+    },
+    "shared": {
+      "global_accounting_seconds": 3.352453154977411,
+      "global_inventory_count": 1,
+      "ledger_lock_wait_seconds": 0.0002533630467951298,
+      "process_check_seconds": 0.021033121971413493,
+      "schema_version": "daemon-resource-finalization-profile/v1",
+      "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+      "strict_attempt_inventory_count": 1,
+      "strict_attempt_inventory_seconds": 0.00692349299788475
+    }
+  },
+  "consumers": {
+    "private": [
+      {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "first_bridge_on_evaluation": {
+          "model_metrics_seconds": 0.06338877999223769,
+          "ontology_capture_seconds": 0.04706285195425153,
+          "sample_count": 1,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": false,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 1,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 1,
+            "native_evaluation_seconds_sum": 4.476092331809923,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 1,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 1,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.0008627139031887054,
+            "supplied_target_count": 0,
+            "target_cache_miss_count": 1,
+            "target_count": 1,
+            "target_items_seconds": 4.523439618991688,
+            "target_reduction_seconds": 0.011163678020238876,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0010411799885332584
+          },
+          "target_payload_seconds": 4.535527579952031,
+          "total_seconds": 4.645980635890737
+        },
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "metric_disk_cache": 0,
+        "receipt": {
+          "bytes": 168627,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled/progress/outputs/qualified-844d76fccf640bfdaa9db9f20016619c7663f2674a17c99359f26fa670fb8011/receipt.json",
+          "sha256": "b83e0b6782496292b99d66f098eda2e53c1d2d88117e61eb3941f6a0ae5f3edb"
+        },
+        "run_id": "qualified-844d76fccf640bfdaa9db9f20016619c7663f2674a17c99359f26fa670fb8011",
+        "runtime": {
+          "native_pool": null,
+          "pid": 125590,
+          "python": "3.12.3"
+        },
+        "sample": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "22",
+          "text": "The officer shall retain the file for at least 22 days.",
+          "title": "qualification-fixture"
+        },
+        "shared_target_count": 0,
+        "shared_target_verification_scope": null,
+        "shared_targets_verified": false,
+        "source_manifest_verified": true,
+        "target_artifact_verification_seconds": 0.0,
+        "target_hydration_seconds": 0.0,
+        "target_load_seconds": 2.335989847779274e-06,
+        "target_reduction_seconds": 0.0,
+        "target_snapshot_sample_count": 0,
+        "training_seconds": 7.44854850997217,
+        "use_sample_memory": false,
+        "worker_elapsed_seconds": 9.471547211054713
+      },
+      {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "first_bridge_on_evaluation": {
+          "model_metrics_seconds": 0.06413250090554357,
+          "ontology_capture_seconds": 0.04828718607313931,
+          "sample_count": 1,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": false,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 1,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 1,
+            "native_evaluation_seconds_sum": 4.454071039101109,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 1,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 1,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.0008699300233274698,
+            "supplied_target_count": 0,
+            "target_cache_miss_count": 1,
+            "target_count": 1,
+            "target_items_seconds": 4.502317744074389,
+            "target_reduction_seconds": 0.011244494933634996,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0010587959550321102
+          },
+          "target_payload_seconds": 4.5144944249186665,
+          "total_seconds": 4.626915792003274
+        },
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "metric_disk_cache": 0,
+        "receipt": {
+          "bytes": 165395,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled/progress/outputs/qualified-90752a3d14b2249291065ca6881315402ad09be645c02f59beb1619b896304b6/receipt.json",
+          "sha256": "1998c63700f250708c5219c0a6af9361fe26c48430bac33ca1b8871407526296"
+        },
+        "run_id": "qualified-90752a3d14b2249291065ca6881315402ad09be645c02f59beb1619b896304b6",
+        "runtime": {
+          "native_pool": null,
+          "pid": 124861,
+          "python": "3.12.3"
+        },
+        "sample": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "21",
+          "text": "The officer shall retain the file for at least 21 days.",
+          "title": "qualification-fixture"
+        },
+        "shared_target_count": 0,
+        "shared_target_verification_scope": null,
+        "shared_targets_verified": false,
+        "source_manifest_verified": true,
+        "target_artifact_verification_seconds": 0.0,
+        "target_hydration_seconds": 0.0,
+        "target_load_seconds": 4.4959597289562225e-06,
+        "target_reduction_seconds": 0.0,
+        "target_snapshot_sample_count": 0,
+        "training_seconds": 7.412610959960148,
+        "use_sample_memory": false,
+        "worker_elapsed_seconds": 9.425935819977894
+      },
+      {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "first_bridge_on_evaluation": {
+          "model_metrics_seconds": 0.06346460478380322,
+          "ontology_capture_seconds": 0.04795708600431681,
+          "sample_count": 1,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": false,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 1,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 1,
+            "native_evaluation_seconds_sum": 4.507338481023908,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 1,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 1,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.0008852099999785423,
+            "supplied_target_count": 0,
+            "target_cache_miss_count": 1,
+            "target_count": 1,
+            "target_items_seconds": 4.555474719963968,
+            "target_reduction_seconds": 0.011179518885910511,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0010525081306695938
+          },
+          "target_payload_seconds": 4.56760298484005,
+          "total_seconds": 4.679026499856263
+        },
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "metric_disk_cache": 0,
+        "receipt": {
+          "bytes": 167263,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled/progress/outputs/qualified-c582566577657dfb3588f6b550acfc4d39f73ff090bceb76cdd6026d707887db/receipt.json",
+          "sha256": "24ed3858ca186a3994bb203578c8ab98f29086a35de8b2abd9671a609c6cf8aa"
+        },
+        "run_id": "qualified-c582566577657dfb3588f6b550acfc4d39f73ff090bceb76cdd6026d707887db",
+        "runtime": {
+          "native_pool": null,
+          "pid": 125940,
+          "python": "3.12.3"
+        },
+        "sample": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "23",
+          "text": "The officer shall retain the file for at least 23 days.",
+          "title": "qualification-fixture"
+        },
+        "shared_target_count": 0,
+        "shared_target_verification_scope": null,
+        "shared_targets_verified": false,
+        "source_manifest_verified": true,
+        "target_artifact_verification_seconds": 0.0,
+        "target_hydration_seconds": 0.0,
+        "target_load_seconds": 2.032145857810974e-06,
+        "target_reduction_seconds": 0.0,
+        "target_snapshot_sample_count": 0,
+        "training_seconds": 7.482127567054704,
+        "use_sample_memory": false,
+        "worker_elapsed_seconds": 9.504564676899463
+      },
+      {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "first_bridge_on_evaluation": {
+          "model_metrics_seconds": 0.06366481585428119,
+          "ontology_capture_seconds": 0.048334306105971336,
+          "sample_count": 1,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": false,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 1,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 1,
+            "native_evaluation_seconds_sum": 4.482990582939237,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 1,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 1,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 0.0008687609806656837,
+            "supplied_target_count": 0,
+            "target_cache_miss_count": 1,
+            "target_count": 1,
+            "target_items_seconds": 4.531068198150024,
+            "target_reduction_seconds": 0.011181103065609932,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0010636288207024336
+          },
+          "target_payload_seconds": 4.543183534871787,
+          "total_seconds": 4.655184640781954
+        },
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "metric_disk_cache": 0,
+        "receipt": {
+          "bytes": 165376,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled/progress/outputs/qualified-cfe8ae7cfb50ea6f4d78fa48ea51e10f86ad221e9e15745133e901ca69373868/receipt.json",
+          "sha256": "fec028e0ad80af8fc59682f55e7596f054ed514167ae4e2aad0b05c005603ab3"
+        },
+        "run_id": "qualified-cfe8ae7cfb50ea6f4d78fa48ea51e10f86ad221e9e15745133e901ca69373868",
+        "runtime": {
+          "native_pool": null,
+          "pid": 125220,
+          "python": "3.12.3"
+        },
+        "sample": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "20",
+          "text": "The officer shall retain the file for at least 20 days.",
+          "title": "qualification-fixture"
+        },
+        "shared_target_count": 0,
+        "shared_target_verification_scope": null,
+        "shared_targets_verified": false,
+        "source_manifest_verified": true,
+        "target_artifact_verification_seconds": 0.0,
+        "target_hydration_seconds": 0.0,
+        "target_load_seconds": 2.288026735186577e-06,
+        "target_reduction_seconds": 0.0,
+        "target_snapshot_sample_count": 0,
+        "training_seconds": 7.482951551210135,
+        "use_sample_memory": false,
+        "worker_elapsed_seconds": 9.489527120953426
+      }
+    ],
+    "shared": [
+      {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "first_bridge_on_evaluation": {
+          "model_metrics_seconds": 0.06275038211606443,
+          "ontology_capture_seconds": 0.17028276808559895,
+          "sample_count": 1,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 1,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 2.1575966889504343,
+            "supplied_target_count": 1,
+            "target_cache_miss_count": 0,
+            "target_count": 1,
+            "target_items_seconds": 2.4928012862801552e-05,
+            "target_reduction_seconds": 0.013770184945315123,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 2.171444810926914,
+          "total_seconds": 2.4044795450754464
+        },
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "metric_disk_cache": 0,
+        "receipt": {
+          "bytes": 167860,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared/progress/outputs/qualified-389539471b99ff7cab83f2789127a2c70448339e66812d13062cfc2796add17b/receipt.json",
+          "sha256": "13f8d270fedaf3fb0cebcf276a4d932fe38be3d60948aa44069221ded063da01"
+        },
+        "run_id": "qualified-389539471b99ff7cab83f2789127a2c70448339e66812d13062cfc2796add17b",
+        "runtime": {
+          "native_pool": null,
+          "pid": 282177,
+          "python": "3.12.3"
+        },
+        "sample": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "20",
+          "text": "The officer shall retain the file for at least 20 days.",
+          "title": "qualification-fixture"
+        },
+        "shared_target_count": 2,
+        "shared_target_verification_scope": "artifact bytes, manifest/config and requested training/validation targets; unrequested target semantics not decoded",
+        "shared_targets_verified": true,
+        "source_manifest_verified": true,
+        "target_artifact_verification_seconds": 0.023191082989796996,
+        "target_hydration_seconds": 0.2111150431446731,
+        "target_load_seconds": 0.9999125320464373,
+        "target_reduction_seconds": 0.0,
+        "target_snapshot_sample_count": 5,
+        "training_seconds": 4.111157562816516,
+        "use_sample_memory": false,
+        "worker_elapsed_seconds": 6.961882362840697
+      },
+      {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "first_bridge_on_evaluation": {
+          "model_metrics_seconds": 0.06340346205979586,
+          "ontology_capture_seconds": 0.17183041898533702,
+          "sample_count": 1,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 1,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 2.228001484880224,
+            "supplied_target_count": 1,
+            "target_cache_miss_count": 0,
+            "target_count": 1,
+            "target_items_seconds": 2.1263957023620605e-05,
+            "target_reduction_seconds": 0.014157661003991961,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 2.2422321550548077,
+          "total_seconds": 2.4774679401889443
+        },
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "metric_disk_cache": 0,
+        "receipt": {
+          "bytes": 171126,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared/progress/outputs/qualified-8fcb1c7b76ec4444b63705f37fdab6dd2ef8f53e44f0391b4978669d423a4d6d/receipt.json",
+          "sha256": "af9715731969c2f1e80d79601287e888ac7552207fc9047e596ac28d1ac935c6"
+        },
+        "run_id": "qualified-8fcb1c7b76ec4444b63705f37fdab6dd2ef8f53e44f0391b4978669d423a4d6d",
+        "runtime": {
+          "native_pool": null,
+          "pid": 281683,
+          "python": "3.12.3"
+        },
+        "sample": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "22",
+          "text": "The officer shall retain the file for at least 22 days.",
+          "title": "qualification-fixture"
+        },
+        "shared_target_count": 2,
+        "shared_target_verification_scope": "artifact bytes, manifest/config and requested training/validation targets; unrequested target semantics not decoded",
+        "shared_targets_verified": true,
+        "source_manifest_verified": true,
+        "target_artifact_verification_seconds": 0.023307852912694216,
+        "target_hydration_seconds": 0.1986855948343873,
+        "target_load_seconds": 0.9892316979821771,
+        "target_reduction_seconds": 0.0,
+        "target_snapshot_sample_count": 5,
+        "training_seconds": 4.237704019993544,
+        "use_sample_memory": false,
+        "worker_elapsed_seconds": 7.058320866897702
+      },
+      {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "first_bridge_on_evaluation": {
+          "model_metrics_seconds": 0.06335658207535744,
+          "ontology_capture_seconds": 0.1718921149149537,
+          "sample_count": 1,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 1,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 2.1774345149751753,
+            "supplied_target_count": 1,
+            "target_cache_miss_count": 0,
+            "target_count": 1,
+            "target_items_seconds": 2.5023939087986946e-05,
+            "target_reduction_seconds": 0.014485360821709037,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 2.1919980379752815,
+          "total_seconds": 2.4272486709523946
+        },
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "metric_disk_cache": 0,
+        "receipt": {
+          "bytes": 169763,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared/progress/outputs/qualified-dc8f23ac4c230af8acc84072d9f38a6b0f995e04dddb39ea9127cd6223a4d0c6/receipt.json",
+          "sha256": "cc73c1a6c9692ccaa747c214c1cc40edc8a29dcd4c738e241bbe8d9766fa6a5e"
+        },
+        "run_id": "qualified-dc8f23ac4c230af8acc84072d9f38a6b0f995e04dddb39ea9127cd6223a4d0c6",
+        "runtime": {
+          "native_pool": null,
+          "pid": 281917,
+          "python": "3.12.3"
+        },
+        "sample": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "23",
+          "text": "The officer shall retain the file for at least 23 days.",
+          "title": "qualification-fixture"
+        },
+        "shared_target_count": 2,
+        "shared_target_verification_scope": "artifact bytes, manifest/config and requested training/validation targets; unrequested target semantics not decoded",
+        "shared_targets_verified": true,
+        "source_manifest_verified": true,
+        "target_artifact_verification_seconds": 0.02367316884920001,
+        "target_hydration_seconds": 0.22231495496816933,
+        "target_load_seconds": 1.0304605849087238,
+        "target_reduction_seconds": 0.0,
+        "target_snapshot_sample_count": 5,
+        "training_seconds": 4.206543623935431,
+        "use_sample_memory": false,
+        "worker_elapsed_seconds": 7.092171585885808
+      },
+      {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "first_bridge_on_evaluation": {
+          "model_metrics_seconds": 0.0629830900579691,
+          "ontology_capture_seconds": 0.16962146409787238,
+          "sample_count": 1,
+          "schema_version": "autoencoder-evaluation-profile/v1",
+          "scope": "wall_time_observation_not_an_objective_or_admission",
+          "target_observation": {
+            "bridge_module_preloaded_at_start": true,
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+            "disk_cache_enabled": false,
+            "disk_cache_hit_count": 0,
+            "evaluate_provers": false,
+            "generated_target_count": 0,
+            "memory_cache_hit_count": 0,
+            "native_evaluation_attempt_count": 0,
+            "native_evaluation_seconds_sum": 0.0,
+            "parallel_workers_requested": 1,
+            "parallel_workers_used": 0,
+            "process_target_cache_empty_at_start": true,
+            "process_target_cache_entries_at_start": 0,
+            "representation_counts": {
+              "cached_summary": 0,
+              "native": 1,
+              "other": 0,
+              "prepared_native": 0
+            },
+            "structural_target_seconds": 2.201233719009906,
+            "supplied_target_count": 1,
+            "target_cache_miss_count": 0,
+            "target_count": 1,
+            "target_items_seconds": 2.595316618680954e-05,
+            "target_reduction_seconds": 0.013417524052783847,
+            "timeout_fallback_count": 0,
+            "training_target_seconds_sum": 0.0
+          },
+          "target_payload_seconds": 2.21472780383192,
+          "total_seconds": 2.447334149852395
+        },
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "metric_disk_cache": 0,
+        "receipt": {
+          "bytes": 167866,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared/progress/outputs/qualified-f695e7dabc911ad698002d1634c924b8afbf05871dc550863cfdc22b604ae005/receipt.json",
+          "sha256": "7c8908beeb82d896b012657f920d9a7e4432e24142aacd843931255e334ba25d"
+        },
+        "run_id": "qualified-f695e7dabc911ad698002d1634c924b8afbf05871dc550863cfdc22b604ae005",
+        "runtime": {
+          "native_pool": null,
+          "pid": 282485,
+          "python": "3.12.3"
+        },
+        "sample": {
+          "citation": null,
+          "embedding_model": "mock:stable-sha256",
+          "embedding_vector": null,
+          "section": "21",
+          "text": "The officer shall retain the file for at least 21 days.",
+          "title": "qualification-fixture"
+        },
+        "shared_target_count": 2,
+        "shared_target_verification_scope": "artifact bytes, manifest/config and requested training/validation targets; unrequested target semantics not decoded",
+        "shared_targets_verified": true,
+        "source_manifest_verified": true,
+        "target_artifact_verification_seconds": 0.02383192302659154,
+        "target_hydration_seconds": 0.2236581549514085,
+        "target_load_seconds": 1.0224568240810186,
+        "target_reduction_seconds": 0.0,
+        "target_snapshot_sample_count": 5,
+        "training_seconds": 4.168984429910779,
+        "use_sample_memory": false,
+        "worker_elapsed_seconds": 7.031427245819941
+      }
+    ]
+  },
+  "evidence": {
+    "scaled-audit.json": {
+      "bytes": 227232,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled-audit.json",
+      "sha256": "bdf442f5422e0023244a0293a3cd286207f76d48439f022d21f0589d41ca6dba"
+    },
+    "scaled-command.json": {
+      "bytes": 1199,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled-command.json",
+      "sha256": "37532f0853fc4d660eafc13fe0dc70e92b626781be0b79e3d57fedfeafb32b79"
+    },
+    "shared-audit.json": {
+      "bytes": 227087,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-audit.json",
+      "sha256": "1aeb550b5c466c25eb4188fd9e59fa77493ca69357dc7aeb99cb8cbc45e30143"
+    },
+    "shared-command.json": {
+      "bytes": 1487,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-command.json",
+      "sha256": "ae216ee6ef71d76cfeb3b183ddffbbb8eac7073f0fe502231deabaa03c22cda1"
+    },
+    "shared-parity-audit.json": {
+      "bytes": 1538,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-parity-audit.json",
+      "sha256": "327e67ae7b1618b0093e50798cc491979dc4f7024313a6d3662c9839a3d44e8e"
+    },
+    "shared-preparation-audit.json": {
+      "bytes": 15995,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-preparation-audit.json",
+      "sha256": "4dd96c03ebfe8c8be61269154c4477a5bb76e9e37e1032a90144019e79596bae"
+    },
+    "shared-preparation-command.json": {
+      "bytes": 1882,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-preparation-command.json",
+      "sha256": "139c136ac38990b71667be1d006ab0e27f4d686c64cbc20304ddb6d12acfa256"
+    },
+    "shared-transport-parity-audit.json": {
+      "bytes": 1946,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-transport-parity-audit.json",
+      "sha256": "8d2591354987fff1429639477ab4bf43a6ae66df6b642652d1eb2cd50f23ae9a"
+    }
+  },
+  "exact_per_sample_parity": {
+    "177175a5cde0b02a39db27c66237a6c7e3f6ae56ed18a475f826bb3027c5d388": {
+      "base": true,
+      "base_identity": true,
+      "candidate": true,
+      "candidate_identity": true,
+      "gates": true,
+      "model_config": true,
+      "qualified": true,
+      "samples": true,
+      "selected_updates": true,
+      "training_config": true,
+      "training_metrics_sha256": true,
+      "validation_samples": true
+    },
+    "6d4a77a1386b859404f835c8001580f43bb94b80890195c2a5dab1332b879f4b": {
+      "base": true,
+      "base_identity": true,
+      "candidate": true,
+      "candidate_identity": true,
+      "gates": true,
+      "model_config": true,
+      "qualified": true,
+      "samples": true,
+      "selected_updates": true,
+      "training_config": true,
+      "training_metrics_sha256": true,
+      "validation_samples": true
+    },
+    "d6e424b71cc986ea2aceddbe051e27a65704a35c786d7c67fa8563404167971d": {
+      "base": true,
+      "base_identity": true,
+      "candidate": true,
+      "candidate_identity": true,
+      "gates": true,
+      "model_config": true,
+      "qualified": true,
+      "samples": true,
+      "selected_updates": true,
+      "training_config": true,
+      "training_metrics_sha256": true,
+      "validation_samples": true
+    },
+    "deecf3136cd32d81a4b2cc4bb95bb046c24f99faaf2eb31aee4e2e9b6b9e7aa7": {
+      "base": true,
+      "base_identity": true,
+      "candidate": true,
+      "candidate_identity": true,
+      "gates": true,
+      "model_config": true,
+      "qualified": true,
+      "samples": true,
+      "selected_updates": true,
+      "training_config": true,
+      "training_metrics_sha256": true,
+      "validation_samples": true
+    }
+  },
+  "limits": [
+    "Shared targets amortize only while exact producer package/runtime/input binding remains valid.",
+    "One validation target is reused across all four jobs; validation is repeated tuning, not an independent held-out canary.",
+    "Targets, bridge acceptance, metrics and bundle rows do not establish Lean admission; native Lake builds remain separately audited.",
+    "No US Constitution span was formalized; these are five synthetic duration fixtures."
+  ],
+  "matched_topology": {
+    "chain_depths": [
+      [
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "dispatch_widths": [
+      [
+        4
+      ],
+      [
+        4
+      ]
+    ],
+    "distinct_lanes_per_route": [
+      4,
+      4
+    ],
+    "exact_parent_candidate_binding_for_all_rows": true,
+    "expected_transport_differences": {
+      "lane_indices": {
+        "177175a5cde0b02a39db27c66237a6c7e3f6ae56ed18a475f826bb3027c5d388": [
+          4,
+          20
+        ],
+        "6d4a77a1386b859404f835c8001580f43bb94b80890195c2a5dab1332b879f4b": [
+          13,
+          19
+        ],
+        "d6e424b71cc986ea2aceddbe051e27a65704a35c786d7c67fa8563404167971d": [
+          8,
+          17
+        ],
+        "deecf3136cd32d81a4b2cc4bb95bb046c24f99faaf2eb31aee4e2e9b6b9e7aa7": [
+          0,
+          24
+        ]
+      },
+      "reason": "Shared target artifact identity is bound to immutable policy and therefore changes placement; exact parents and all candidate/gate checks are retained.",
+      "shared_targets": [
+        false,
+        true
+      ]
+    },
+    "logical_lane_count": [
+      32,
+      32
+    ],
+    "runtime_parallel_workers": [
+      4,
+      4
+    ]
+  },
+  "preparation": {
+    "all_five_bridge_reports_accepted_per_target": true,
+    "all_targets_ready": true,
+    "artifact_statistics": {
+      "artifact_bytes": 2299411,
+      "artifact_format": "bundle",
+      "compressed_target_bytes": 1187860,
+      "compression_seconds": 0.10345252137631178,
+      "deduplicated_target_count": 0,
+      "encoding_validate_seconds": 0.2643201726023108,
+      "manifest_bytes": 1111535,
+      "referenced_uncompressed_target_bytes": 20490517,
+      "sample_count": 5,
+      "schema_version": "legal-ir-target-bundle-v1",
+      "shard_count": 5,
+      "target_reference_count": 5,
+      "unique_uncompressed_target_bytes": 20490517
+    },
+    "attempt_exceeded_reservation": false,
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "cache_scope": "fresh child process; disk cache disabled; producer metric/multiview caches bypassed; operating system cache uncontrolled",
+    "finalization_profile": {
+      "global_accounting_seconds": 3.3473600789438933,
+      "global_inventory_count": 1,
+      "ledger_lock_wait_seconds": 0.0004731409717351198,
+      "process_check_seconds": 0.03359592822380364,
+      "schema_version": "daemon-resource-finalization-profile/v1",
+      "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+      "strict_attempt_inventory_count": 1,
+      "strict_attempt_inventory_seconds": 0.0003435090184211731
+    },
+    "fresh_process": true,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "metric_disk_cache": 0,
+    "metric_process_cache_used": false,
+    "multiview_process_cache_used": false,
+    "observed_peak_group_rss_bytes": 950226944,
+    "reservation_status": "released",
+    "source_input_seed_unchanged": true,
+    "storage_limit_bytes": 80000000000,
+    "target_artifact": {
+      "bytes": 2299411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets/targets.bundle",
+      "sha256": "c4fe50a608d8766432ec19d93f3d394a31a68fb8ee9788df642399875b18ae75"
+    },
+    "target_snapshot_id": "sha256:8a69fe4fe5fcb5d5b4e00888630fd4a370242e618f6f189d5542b801491e7cf6",
+    "timing_scope": "Nested timings are not additive. Residuals include uninstrumented startup/guards/accounting work and are not attributed to a single function.",
+    "timings": {
+      "child_outside_producer_residual_seconds": 4.500385484658182,
+      "cli_outside_supervised_child_residual_seconds": 7.054838087176904,
+      "compression_seconds": 0.10345252137631178,
+      "encoding_validate_seconds": 0.2643201726023108,
+      "full_cli_wall_seconds": 23.06734701897949,
+      "full_cli_wall_seconds_per_unique_span": 4.613469403795898,
+      "handoff_preparation_including_input_planning_seconds": 22.973785947076976,
+      "handoff_target_preparation_wall_seconds": 22.8549176719971,
+      "producer_call_wall_seconds": 11.512123447144404,
+      "producer_elapsed_seconds": 11.432005034061149,
+      "producer_outside_sample_pipeline_residual_seconds": 0.7551135879475623,
+      "sample_preparation_seconds": 0.04838940408080816,
+      "supervised_process_wall_seconds": 16.012508931802586,
+      "target_generation_and_artifact_seconds": 10.628502042032778,
+      "target_generation_seconds": 9.308900273172185,
+      "target_generation_seconds_per_span": 1.861780054634437,
+      "target_pipeline_non_generation_seconds": 1.3196017688605934
+    },
+    "training_rows": 4,
+    "unique_targets": 5,
+    "use_sample_memory": false,
+    "validation_rows": 1
+  },
+  "qualification_counts": {
+    "private": {
+      "accepted_epochs": 4,
+      "family_artifacts_reparsed": 48,
+      "jobs": 4,
+      "lake_builds_verified": 8,
+      "qualified": 2
+    },
+    "shared": {
+      "accepted_epochs": 4,
+      "family_artifacts_reparsed": 48,
+      "jobs": 4,
+      "lake_builds_verified": 8,
+      "qualified": 2
+    }
+  },
+  "schema_version": "native-shared-target-cost-summary/v1"
+}

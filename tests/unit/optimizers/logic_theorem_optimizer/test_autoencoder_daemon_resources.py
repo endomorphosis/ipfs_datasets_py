@@ -592,3 +592,146 @@ def test_corrupt_named_ledger_charge_is_not_ignored(setup):
             reservation.check_usage(roots[0])
         ledger.write_bytes(raw)
         reservation.release(artifacts_durable=True)
+
+
+def test_finalization_checks_current_full_claim_once_and_preserves_other_claims(setup, monkeypatch):
+    import fcntl
+    factory, roots, ledger, scheduler = setup
+    with factory() as retained:
+        pass
+    historical = json.loads(ledger.read_bytes())["reservations"][retained.reservation_id]
+    attempt = roots[0] / "attempt"
+    attempt.mkdir()
+    (attempt / "output").write_bytes(b"exact output")
+    with factory() as reservation:
+        reservation.check_usage(attempt)
+        original_inventory = resources._inventory
+        scans = []
+        def observed_inventory(paths, **kwargs):
+            scans.append((tuple(paths), kwargs.get("strict", False)))
+            # Each observation belongs to the one held ledger lock, including
+            # the strict attempt scan; another descriptor cannot acquire it.
+            with reservation.lock_path.open("rb") as other:
+                with pytest.raises(BlockingIOError):
+                    fcntl.flock(other.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return original_inventory(paths, **kwargs)
+        monkeypatch.setattr(resources, "_inventory", observed_inventory)
+        result = reservation.finalize(attempt, artifacts_durable=True)
+        monkeypatch.setattr(resources, "_inventory", original_inventory)
+        assert scans == [((attempt,), True), (tuple(roots), False)]
+        row = result["record"]
+        assert row["last_usage"]["outstanding_full_reservations_bytes"] == 20_000
+        assert row["last_usage"]["charged_bytes"] == 20_012
+        assert row["final_accounting"]["outstanding_full_reservations_bytes"] == 10_000
+        assert row["final_accounting"]["charged_bytes"] == 10_012
+        assert row["last_usage"]["inventory"] == row["final_accounting"]["inventory"]
+        assert row["final_attempt_bytes"] == row["final_total_charged_bytes"] == 12
+        assert row["attempt_exceeded_reservation"] is False
+        assert row["finalization_profile"]["global_inventory_count"] == 1
+        assert result["resource_lease"]["released"] is True
+        assert scheduler.snapshot()["allocated_child_process_slots"] == 0
+        assert reservation.finalize(attempt, artifacts_durable=True) == result
+    assert json.loads(ledger.read_bytes())["reservations"][retained.reservation_id] == historical
+    assert (attempt / "output").read_bytes() == b"exact output"
+
+
+def test_finalization_requires_durability_and_prior_binding(setup):
+    factory, roots, _, _ = setup
+    with factory() as reservation:
+        with pytest.raises(resources.DaemonResourceError, match="durability"):
+            reservation.finalize(roots[0])
+        with pytest.raises(resources.DaemonResourceError, match="previously bound"):
+            reservation.finalize(roots[0], artifacts_durable=True)
+        reservation.check_usage(roots[0])
+        reservation.finalize(roots[0], artifacts_durable=True)
+
+
+@pytest.mark.parametrize("external", [False, True])
+def test_finalization_records_attempt_overage_and_retains_claim(setup, external):
+    factory, roots, ledger, _ = setup
+    attempt = roots[0] / "attempt"
+    attempt.mkdir()
+    with pytest.raises(resources.DaemonResourceError, match="attempt storage"):
+        with factory(storage_bytes=50) as reservation:
+            reservation.check_usage(attempt)
+            if external:
+                reservation.account_external_bytes("existing-cas-output", 40)
+            (attempt / "grown").write_bytes(b"x" * (11 if external else 51))
+            reservation.finalize(attempt, artifacts_durable=True)
+    row = json.loads(ledger.read_bytes())["reservations"][reservation.reservation_id]
+    assert row["status"] == "retained"
+    assert row["last_usage"]["total_attempt_charged_bytes"] == 51
+    assert row["artifacts_durable_asserted"] is False
+    assert "released_at" not in row and "final_accounting" not in row
+    # Explicit audited recovery keeps its original behavior and preserves data.
+    legacy = reservation.release(artifacts_durable=True)
+    assert legacy["record"]["attempt_exceeded_reservation"] is True
+
+
+def test_finalization_does_not_drop_claim_to_make_global_capacity_fit(setup):
+    factory, roots, ledger, _ = setup
+    with pytest.raises(resources.DaemonResourceError, match="capacity"):
+        with factory() as reservation:
+            reservation.check_usage(roots[0])
+            before = reservation.to_dict()["record"]["last_usage"]
+            (roots[1] / "other-owner-growth").write_bytes(b"x" * 95_000)
+            reservation.finalize(roots[0], artifacts_durable=True)
+    row = json.loads(ledger.read_bytes())["reservations"][reservation.reservation_id]
+    assert row["status"] == "retained" and row["last_usage"] == before
+    assert "released_at" not in row
+    # Legacy explicit release can still reconcile stopped outputs after failure.
+    assert reservation.release(artifacts_durable=True)["record"]["final_accounting"]["charged_bytes"] == 95_000
+
+
+def test_finalization_rechecks_attempt_identity_after_global_inventory(setup, monkeypatch):
+    factory, roots, ledger, _ = setup
+    attempt = roots[0] / "attempt"
+    attempt.mkdir()
+    original_inventory = resources._inventory
+    def replaced_after_scan(paths, **kwargs):
+        observed = original_inventory(paths, **kwargs)
+        if tuple(paths) == tuple(roots):
+            attempt.rename(roots[0] / "old-attempt")
+            attempt.mkdir()
+        return observed
+    with pytest.raises(resources.DaemonResourceError, match="identity changed"):
+        with factory() as reservation:
+            reservation.check_usage(attempt)
+            monkeypatch.setattr(resources, "_inventory", replaced_after_scan)
+            reservation.finalize(attempt, artifacts_durable=True)
+    row = json.loads(ledger.read_bytes())["reservations"][reservation.reservation_id]
+    assert row["status"] == "retained" and "released_at" not in row
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux process-group accounting")
+def test_finalization_requires_real_child_group_dead_and_records_live_observation(setup):
+    factory, roots, ledger, _ = setup
+    with factory() as reservation:
+        child = subprocess.Popen([sys.executable, "-c", "import sys; print('ready',flush=True);sys.stdin.buffer.read(1)"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, start_new_session=True)
+        try:
+            assert child.stdout.readline() == b"ready\n"
+            reservation.check_usage(roots[0], child_pid=child.pid)
+            with pytest.raises(resources.DaemonResourceError, match="still alive"):
+                reservation.finalize(roots[0], artifacts_durable=True)
+            row = json.loads(ledger.read_bytes())["reservations"][reservation.reservation_id]
+            assert row["status"] == "active"
+            assert row["last_usage"]["group_rss"]["live_processes"] == 1
+            assert "released_at" not in row
+        finally:
+            child.communicate(b"x", timeout=5)
+        assert reservation.finalize(roots[0], artifacts_durable=True)["status"] == "released"
+
+
+def test_finalization_preserves_rss_failure_usage(setup, monkeypatch):
+    factory, roots, ledger, _ = setup
+    with factory(memory_mb=1) as reservation:
+        reservation.check_usage(roots[0])
+        monkeypatch.setattr(resources, "_group_usage", lambda child: {"available": True, "live_processes": 1, "rss_bytes": 2 * 1024 * 1024})
+        with pytest.raises(resources.DaemonResourceError, match="RSS"):
+            reservation.finalize(roots[0], artifacts_durable=True)
+        row = json.loads(ledger.read_bytes())["reservations"][reservation.reservation_id]
+        assert row["last_usage"]["group_rss"]["rss_bytes"] == 2 * 1024 * 1024
+        assert row["status"] == "active" and "released_at" not in row
+        monkeypatch.setattr(resources, "_group_usage", lambda child: {"available": True, "live_processes": 0, "rss_bytes": 0})
+        reservation.finalize(roots[0], artifacts_durable=True)

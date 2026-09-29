@@ -1,0 +1,45 @@
+Tue Sep 29 00:08:58 2026    workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/owner.pstats
+
+         670555356 function calls (327914878 primitive calls) in 179.380 seconds
+
+   Ordered by: cumulative time
+   List reduced from 22569 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+       27    0.570    0.021   40.737    1.509 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py:25(_package_manifest)
+       26    0.007    0.000   39.229    1.509 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py:181(check_cycle_source)
+        4    0.000    0.000   37.022    9.256 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py:235(_load_candidate)
+        4    0.027    0.007   27.192    6.798 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_plan.py:314(_verify_completed_candidate)
+   219/77    0.010    0.000   20.118    0.261 /home/barberb/.local/lib/python3.12/site-packages/torch/_ops.py:317(py_impl)
+  245/101    0.001    0.000   19.623    0.194 /home/barberb/.local/lib/python3.12/site-packages/torch/_ops.py:374(fallthrough)
+ 40412303    5.867    0.000   16.151    0.000 {built-in method builtins.issubclass}
+   211546    0.583    0.000   14.675    0.000 /usr/lib/python3.12/pathlib.py:663(relative_to)
+  3955819    0.707    0.000   12.364    0.000 <frozen _collections_abc>:1022(__iter__)
+  3532745    1.646    0.000   11.658    0.000 /usr/lib/python3.12/pathlib.py:276(__getitem__)
+   423266    0.661    0.000   10.432    0.000 <frozen _collections_abc>:1032(__contains__)
+40348137/40345622    6.676    0.000   10.266    0.000 <frozen abc>:121(__subclasscheck__)
+        1    0.000    0.000    9.787    9.787 /home/barberb/.local/lib/python3.12/site-packages/torch/_higher_order_ops/effects.py:87(__init__)
+   212001    0.143    0.000    9.697    0.000 /usr/lib/python3.12/pathlib.py:1230(resolve)
+    12/10    0.000    0.000    8.923    0.892 /home/barberb/.local/lib/python3.12/site-packages/torch/_ops.py:166(py_functionalize_impl)
+  4481839    1.717    0.000    8.103    0.000 /usr/lib/python3.12/pathlib.py:380(with_segments)
+  3321526    1.057    0.000    7.671    0.000 /usr/lib/python3.12/pathlib.py:420(_from_parsed_parts)
+   215967    0.131    0.000    7.541    0.000 <frozen posixpath>:428(realpath)
+   211546    0.163    0.000    7.087    0.000 /usr/lib/python3.12/pathlib.py:690(is_relative_to)
+215970/215967    1.558    0.000    6.914    0.000 <frozen posixpath>:437(_joinrealpath)
+        8    0.000    0.000    5.772    0.722 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py:187(_structural_gates)
+      7/6    0.000    0.000    5.512    0.919 /home/barberb/.local/lib/python3.12/site-packages/torch/_ops.py:325(py_autograd_impl)
+       12    0.084    0.007    5.472    0.456 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_sparse_checkpoint.py:289(inventory_checkpoint)
+    22/12    0.160    0.007    5.388    0.449 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_sparse_checkpoint.py:326(visit)
+  4483699    1.261    0.000    5.366    0.000 /usr/lib/python3.12/pathlib.py:1159(__init__)
+       20    0.000    0.000    4.620    0.231 /home/barberb/.local/lib/python3.12/site-packages/torch/_jit_internal.py:1047(_overload)
+  4160625    0.768    0.000    4.349    0.000 /usr/lib/python3.12/pathlib.py:437(__str__)
+        8    0.001    0.000    4.138    0.517 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py:129(_lake_gate)
+        9    0.000    0.000    4.133    0.459 /usr/lib/python3.12/subprocess.py:506(run)
+       11    0.000    0.000    4.129    0.375 /usr/lib/python3.12/subprocess.py:1165(communicate)
+       11    0.001    0.000    4.129    0.375 /usr/lib/python3.12/subprocess.py:2062(_communicate)
+       64    4.118    0.064    4.118    0.064 {method 'poll' of 'select.poll' objects}
+  4483700    2.578    0.000    4.105    0.000 /usr/lib/python3.12/pathlib.py:357(__init__)
+  1585223    0.444    0.000    4.052    0.000 /usr/lib/python3.12/pathlib.py:551(drive)
+      312    0.000    0.000    3.682    0.012 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/connections.py:1592(short_writer_transaction)
+
+

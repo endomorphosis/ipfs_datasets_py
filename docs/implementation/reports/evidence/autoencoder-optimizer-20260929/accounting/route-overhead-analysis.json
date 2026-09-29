@@ -1,0 +1,98 @@
+{
+  "admitted": false,
+  "clock_ticks_per_second": 100,
+  "coordinator_wave_seconds": 36.16375308204442,
+  "formalized": false,
+  "historical_source_directory": "workspace/test-logs/federal-corpus-audits/autoencoder-hardware-optimizer-20260928",
+  "intervals_without_training_worker_at_endpoints": {
+    "interval_count": 24,
+    "owner_cpu_seconds": 51.23,
+    "wall_seconds": 55.47679042816162
+  },
+  "ledger_changed": false,
+  "measurement_scope": "Existing canonical native receipt timings plus sampled Linux group CPU deltas; no new training or proof run. Sampled CPU/absence bounds cannot identify the unobserved calls or prove exact kernel overlap.",
+  "observation_gaps_over_three_seconds": [
+    {
+      "no_known_training_worker_at_either_endpoint": false,
+      "owner_cpu_seconds": 3.71,
+      "wall_seconds": 4.421066522598267
+    },
+    {
+      "no_known_training_worker_at_either_endpoint": true,
+      "owner_cpu_seconds": 4.44,
+      "wall_seconds": 4.429338455200195
+    },
+    {
+      "no_known_training_worker_at_either_endpoint": false,
+      "owner_cpu_seconds": 0.64,
+      "wall_seconds": 4.464859247207642
+    },
+    {
+      "no_known_training_worker_at_either_endpoint": true,
+      "owner_cpu_seconds": 4.42,
+      "wall_seconds": 4.430203914642334
+    },
+    {
+      "no_known_training_worker_at_either_endpoint": true,
+      "owner_cpu_seconds": 4.39,
+      "wall_seconds": 4.3862144947052
+    }
+  ],
+  "observed_process_span_seconds": 96.55783271789551,
+  "outside_coordinator_and_qualification_seconds": 50.10835206671618,
+  "qualification_seconds": 25.529015524080023,
+  "recommendations_ranked": [
+    {
+      "basis": "Owner CPU activity dominates inter-wave intervals; parent inventory scans mostly overlap owner work. Root owns direct manifest profiling.",
+      "change": "Optimize repeated complete producer-manifest traversal without skipping any byte hashing or verification boundary.",
+      "rank": 1
+    },
+    {
+      "basis": "Current wrapper runs two complete global inventories back to back; each current scan measured about3.14s. Keep full final census, no stale cached size or automatic release.",
+      "change": "Consolidate the immediate final check_usage plus release into one lock-held final accounting operation that enforces current outstanding claim, final attempt/external allowance, dead child group, durability, root identities and capacity before releasing.",
+      "rank": 2
+    },
+    {
+      "basis": "Instrumented47,639 descendant validations spend8.095s of9.027s scan; raw scan3.14s. Do not compare instrumented versus raw as speedup.",
+      "change": "Reduce immutable lexical-path bookkeeping in inventory descent while retaining fresh lstat of every currently checked ancestor, root identity before each descent and after census, symlink/special/churn behavior and pathname accounting.",
+      "rank": 3
+    },
+    {
+      "basis": "Qualification is currently serial25.529s; actual Lake processes and model memory must be separately budgeted. No automatic increase in epochs, line search, context, CUDA, or gates.",
+      "change": "After serial owner work is reduced, consider overlap of independent qualification jobs within current envelope and owner-only commit ordering.",
+      "rank": 4
+    }
+  ],
+  "reservation": {
+    "child_process_slots": 6,
+    "cpu_slots": 2,
+    "memory_mb": 8192
+  },
+  "resource_scheduler_wait_seconds": 5.918554961681366e-07,
+  "sampled_owner_cpu_seconds": 74.82,
+  "schema": "historical-route-accounting-analysis/v1",
+  "source_artifacts": {
+    "final-training-summary.json": {
+      "bytes": 11198,
+      "sha256": "891ecd024219072f5cdaa6135d453035e950b64ce0657de2346a11d3402f9495"
+    },
+    "tuning-validation/cycles/79b02eaf408241a2825c167fb3e7f976/cycle.json": {
+      "bytes": 60246,
+      "sha256": "9e04983421efab055adf49f1ca317be0f76fab384ece768245c547fdfe251a59"
+    },
+    "tuning-validation/cycles/79b02eaf408241a2825c167fb3e7f976/process-observations.json": {
+      "bytes": 11784,
+      "sha256": "5c4ddcb8f54a8c8692655edd2e574d545c8a59a3c5cadc67052d8a8d8b128833"
+    },
+    "tuning-validation/cycles/79b02eaf408241a2825c167fb3e7f976/resources.json": {
+      "bytes": 3118,
+      "sha256": "5299291ca2b6ea1200f81fc42906d29fb2dca1b3e881bcfe005ad3e5add749b1"
+    }
+  },
+  "source_changed": false,
+  "wall_seconds": 111.80112067284063,
+  "workers_per_wave": [
+    2,
+    2
+  ]
+}

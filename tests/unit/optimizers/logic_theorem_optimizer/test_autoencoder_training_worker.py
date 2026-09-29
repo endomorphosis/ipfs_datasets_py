@@ -58,6 +58,42 @@ def _spawn_entry(spec, results):
         results.put({"error": repr(exc)})
 
 
+def test_refinement_opt_in_preserves_archived_default_job_identity(tmp_path):
+    default = worker.TrainingJobSpec.from_dict(_job(tmp_path))
+    archived = default.to_dict()
+    assert "projection_max_composed_refinement_attempts" not in archived["training_config"]
+    assert "projection_max_composed_refinement_attempts" not in default.training_config.projection_kwargs()
+    assert worker.TrainingJobSpec.from_dict(archived).canonical_sha256 == default.canonical_sha256
+    explicit_zero = {**archived, "training_config": {
+        **archived["training_config"], "projection_max_composed_refinement_attempts": 0}}
+    assert worker.TrainingJobSpec.from_dict(explicit_zero).canonical_sha256 == default.canonical_sha256
+    validation = [{"title": "5", "section": "2", "text": "The officer shall file reports."}]
+    old = worker.TrainingJobSpec.from_dict({**archived, "validation_samples": validation})
+    enabled = worker.TrainingJobSpec.from_dict({**old.to_dict(), "training_config": {
+        **archived["training_config"], "projection_max_composed_refinement_attempts": 3}})
+    assert enabled.canonical_sha256 != old.canonical_sha256
+    assert enabled.to_dict()["training_config"]["projection_max_composed_refinement_attempts"] == 3
+    assert enabled.training_config.projection_kwargs()["projection_max_composed_refinement_attempts"] == 3
+
+
+@pytest.mark.parametrize("attempts", [-1, 4, True, 1.0, "2"])
+def test_refinement_budget_is_explicit_and_bounded(attempts):
+    with pytest.raises(worker.TrainingJobValidationError, match="must be 0..3"):
+        worker.TrainingConfig(projection_max_composed_refinement_attempts=attempts)
+
+
+def test_refinement_config_rejects_unqualified_regularization():
+    with pytest.raises(worker.TrainingJobValidationError, match="zero l2_regularization"):
+        worker.TrainingConfig(projection_max_composed_refinement_attempts=1, l2_regularization=0.1)
+
+
+@pytest.mark.parametrize("validation", [[], [{"title": "5", "section": "2", "text": " THE AGENCY SHALL   RETAIN RECORDS. "}]])
+def test_refinement_job_requires_disjoint_validation(tmp_path, validation):
+    with pytest.raises(worker.TrainingJobValidationError, match="disjoint"):
+        worker.TrainingJobSpec.from_dict(_job(tmp_path, validation_samples=validation,
+            training_config={"projection_max_composed_refinement_attempts": 1}))
+
+
 def test_worker_writes_private_candidate_and_complete_receipt(tmp_path, monkeypatch):
     payload = _job(tmp_path)
     checkpoint = Path(payload["base_checkpoint"]["path"])

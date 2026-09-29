@@ -1,0 +1,300 @@
+{
+  "global_inventory_1": {
+    "elapsed_seconds": 3.1332522679585963,
+    "result": {
+      "apparent_bytes": 46664062835,
+      "entry_count": 222574,
+      "special_file_count": 21,
+      "symlink_count": 3759
+    }
+  },
+  "global_inventory_2": {
+    "elapsed_seconds": 3.150067809037864,
+    "result": {
+      "apparent_bytes": 46664062835,
+      "entry_count": 222574,
+      "special_file_count": 21,
+      "symlink_count": 3759
+    }
+  },
+  "hardware_probe": {
+    "elapsed_seconds": 0.000576759921386838,
+    "result": {
+      "affinity_cpu_count": 20,
+      "available_memory_mb": 46771,
+      "cgroup_cpu_count": null,
+      "cgroup_memory_remaining_mb": null,
+      "hardware_cpu_count": 20,
+      "load_average": 8.94677734375,
+      "probe_errors": []
+    }
+  },
+  "ledger_limit_bytes": 80000000000,
+  "ledger_sha256_after": "4e72d29d707233a62dd200bb32f215ea75adedaf708b8e16c370d1fd7a04fc39",
+  "ledger_sha256_before": "4e72d29d707233a62dd200bb32f215ea75adedaf708b8e16c370d1fd7a04fc39",
+  "ledger_unchanged": true,
+  "outstanding_reservations_bytes": 28765000000,
+  "profile_hot_functions": [
+    {
+      "calls": 1,
+      "cumulative_seconds": 9.027436972,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "function": "_inventory",
+      "line": 139,
+      "primitive_calls": 1,
+      "total_seconds": 0.376537251
+    },
+    {
+      "calls": 47639,
+      "cumulative_seconds": 8.095132292,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "function": "_inventory_descendant",
+      "line": 98,
+      "primitive_calls": 47639,
+      "total_seconds": 0.23300927800000001
+    },
+    {
+      "calls": 47639,
+      "cumulative_seconds": 2.88379304,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "relative_to",
+      "line": 663,
+      "primitive_calls": 47639,
+      "total_seconds": 0.106374272
+    },
+    {
+      "calls": 1106654,
+      "cumulative_seconds": 2.3751941220000004,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__str__",
+      "line": 437,
+      "primitive_calls": 1106654,
+      "total_seconds": 0.373937528
+    },
+    {
+      "calls": 611673,
+      "cumulative_seconds": 2.362659729,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "drive",
+      "line": 551,
+      "primitive_calls": 611673,
+      "total_seconds": 0.225788918
+    },
+    {
+      "calls": 410400,
+      "cumulative_seconds": 2.31704678,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "lstat",
+      "line": 844,
+      "primitive_calls": 410400,
+      "total_seconds": 0.07093252700000001
+    },
+    {
+      "calls": 458047,
+      "cumulative_seconds": 2.3099536940000003,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "stat",
+      "line": 837,
+      "primitive_calls": 458047,
+      "total_seconds": 0.066476355
+    },
+    {
+      "calls": 458047,
+      "cumulative_seconds": 2.243477339,
+      "file": "~",
+      "function": "<built-in method posix.stat>",
+      "line": 0,
+      "primitive_calls": 458047,
+      "total_seconds": 0.479390472
+    },
+    {
+      "calls": 516391,
+      "cumulative_seconds": 2.136870811,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "_load_parts",
+      "line": 407,
+      "primitive_calls": 516391,
+      "total_seconds": 0.25859738600000004
+    },
+    {
+      "calls": 553329,
+      "cumulative_seconds": 1.977098808,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__fspath__",
+      "line": 447,
+      "primitive_calls": 553329,
+      "total_seconds": 0.12170373400000001
+    },
+    {
+      "calls": 47647,
+      "cumulative_seconds": 1.8731815330000001,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "function": "_root_identity",
+      "line": 92,
+      "primitive_calls": 47647,
+      "total_seconds": 0.03436371
+    },
+    {
+      "calls": 47639,
+      "cumulative_seconds": 1.8007758210000002,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "is_relative_to",
+      "line": 690,
+      "primitive_calls": 47639,
+      "total_seconds": 0.036670583
+    },
+    {
+      "calls": 47647,
+      "cumulative_seconds": 1.7722098210000001,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "function": "_safe_path",
+      "line": 72,
+      "primitive_calls": 47647,
+      "total_seconds": 0.187586942
+    },
+    {
+      "calls": 542550,
+      "cumulative_seconds": 1.738460281,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__getitem__",
+      "line": 276,
+      "primitive_calls": 542550,
+      "total_seconds": 0.24616842600000002
+    },
+    {
+      "calls": 868373,
+      "cumulative_seconds": 1.6304672050000002,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "with_segments",
+      "line": 380,
+      "primitive_calls": 868373,
+      "total_seconds": 0.33464025000000003
+    },
+    {
+      "calls": 457977,
+      "cumulative_seconds": 1.3709832180000001,
+      "file": "<frozen _collections_abc>",
+      "function": "__iter__",
+      "line": 1022,
+      "primitive_calls": 457977,
+      "total_seconds": 0.08985243400000001
+    },
+    {
+      "calls": 1058941,
+      "cumulative_seconds": 1.29532328,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__init__",
+      "line": 1159,
+      "primitive_calls": 1058941,
+      "total_seconds": 0.29485187100000004
+    },
+    {
+      "calls": 516391,
+      "cumulative_seconds": 1.1947162260000002,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "_parse_path",
+      "line": 387,
+      "primitive_calls": 516391,
+      "total_seconds": 0.630905744
+    },
+    {
+      "calls": 47635,
+      "cumulative_seconds": 1.153487809,
+      "file": "<frozen _collections_abc>",
+      "function": "__contains__",
+      "line": 1032,
+      "primitive_calls": 47635,
+      "total_seconds": 0.071250214
+    },
+    {
+      "calls": 494911,
+      "cumulative_seconds": 1.126644283,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "_from_parsed_parts",
+      "line": 420,
+      "primitive_calls": 494911,
+      "total_seconds": 0.159307067
+    },
+    {
+      "calls": 458039,
+      "cumulative_seconds": 1.00222156,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__eq__",
+      "line": 519,
+      "primitive_calls": 458039,
+      "total_seconds": 0.142700821
+    },
+    {
+      "calls": 1058941,
+      "cumulative_seconds": 1.000471409,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__init__",
+      "line": 357,
+      "primitive_calls": 1058941,
+      "total_seconds": 0.618967155
+    },
+    {
+      "calls": 916078,
+      "cumulative_seconds": 0.830542054,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "_str_normcase",
+      "line": 484,
+      "primitive_calls": 916078,
+      "total_seconds": 0.31351156700000005
+    },
+    {
+      "calls": 278064,
+      "cumulative_seconds": 0.620001723,
+      "file": "<frozen posixpath>",
+      "function": "join",
+      "line": 71,
+      "primitive_calls": 278064,
+      "total_seconds": 0.33975067800000003
+    },
+    {
+      "calls": 230545,
+      "cumulative_seconds": 0.584047136,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__truediv__",
+      "line": 719,
+      "primitive_calls": 230545,
+      "total_seconds": 0.042653324
+    }
+  ],
+  "profiled_global_inventory": {
+    "elapsed_seconds": 9.027480558026582,
+    "result": {
+      "apparent_bytes": 46664062835,
+      "entry_count": 222574,
+      "special_file_count": 21,
+      "symlink_count": 3759
+    }
+  },
+  "reservation_count": 153,
+  "roots": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+    "/tmp/pytest-of-barberb"
+  ],
+  "scheduler_read_only_snapshot_capacity": {
+    "elapsed_seconds": 0.00630120700225234,
+    "result": {
+      "child_process_slots": 64,
+      "cpu_slots": 8,
+      "memory_mb": 99688
+    }
+  },
+  "schema": "read-only-resource-accounting-profile/v1",
+  "scope": "Read-only microbenchmarks; no reservation entry/release, scheduler recovery, model training, or source changes.",
+  "source_sha256": "cc900e88fccb2c6b194b3e1fc1b5494936e38d8040380d1be6881775dd60b9dd",
+  "strict_attempt_inventory": {
+    "elapsed_seconds": 0.006740013137459755,
+    "result": {
+      "apparent_bytes": 50591684,
+      "entry_count": 303,
+      "special_file_count": 0,
+      "symlink_count": 0
+    }
+  }
+}

@@ -226,6 +226,7 @@ class TrainingConfig:
     objective_legal_ir_weight: float = 1.0
     hard_example_fraction: float = 1.0
     profile_projection: bool = False
+    projection_max_composed_refinement_attempts: int = 0
 
     def __post_init__(self) -> None:
         if not isinstance(self.legal_ir_bridge_names, (list, tuple)):
@@ -242,6 +243,9 @@ class TrainingConfig:
             raise TrainingJobValidationError("this worker requires the profiled python_sparse_batch backend")
         if type(self.profile_projection) is not bool:
             raise TrainingJobValidationError("profile_projection must be boolean")
+        if (type(self.projection_max_composed_refinement_attempts) is not int
+                or not 0 <= self.projection_max_composed_refinement_attempts <= 3):
+            raise TrainingJobValidationError("projection_max_composed_refinement_attempts must be 0..3")
         integers = {"legal_ir_parallel_workers", "epochs", "max_line_search_attempts", "projection_max_update_families"}
         for name in integers:
             _number(getattr(self, name), name, 1, integer=True)
@@ -256,10 +260,20 @@ class TrainingConfig:
                      "objective_cross_entropy_weight", "objective_reconstruction_weight",
                      "objective_cosine_gap_weight", "objective_legal_ir_weight"):
             _number(getattr(self, name), name)
+        if self.projection_max_composed_refinement_attempts and self.l2_regularization != 0.0:
+            raise TrainingJobValidationError("composed refinement currently requires zero l2_regularization")
 
     def projection_kwargs(self) -> dict[str, Any]:
-        return {key: value for key, value in asdict(self).items()
+        return {key: value for key, value in self.to_dict().items()
                 if key not in {"metric_disk_cache", "use_sample_memory", "profile_projection"}}
+
+    def to_dict(self) -> dict[str, Any]:
+        result = asdict(self)
+        # Preserve archived job and training-policy identities when this new
+        # opt-in is disabled. Enabled budgets must be bound into both.
+        if self.projection_max_composed_refinement_attempts == 0:
+            result.pop("projection_max_composed_refinement_attempts")
+        return result
 
     @classmethod
     def from_dict(cls, value: Any) -> "TrainingConfig":
@@ -426,6 +440,11 @@ class TrainingJobSpec:
             object.__setattr__(self, name, tuple(values))
         if not self.samples:
             raise TrainingJobValidationError("samples must not be empty")
+        if self.training_config.projection_max_composed_refinement_attempts:
+            training_texts = {" ".join(row.text.casefold().split()) for row in self.samples}
+            validation_texts = {" ".join(row.text.casefold().split()) for row in self.validation_samples}
+            if not validation_texts or training_texts & validation_texts:
+                raise TrainingJobValidationError("composed refinement requires nonempty disjoint validation_samples")
         if self.schema_version in {CAMPAIGN_SCHEMA_VERSION, INDEXED_SCHEMA_VERSION, PRODUCED_SCHEMA_VERSION, ARROW_INPUT_SCHEMA_VERSION} and not self.validation_samples:
             # The native optimizer otherwise uses training rows for line search.
             # Indexed jobs must bind every validation row to the validation split.
@@ -505,6 +524,7 @@ class TrainingJobSpec:
         result = {field.name: getattr(self, field.name) for field in fields(self)}
         for name in ("base_checkpoint", "variant", "training_config"):
             result[name] = asdict(result[name])
+        result["training_config"] = self.training_config.to_dict()
         if self.target_snapshot_artifact is not None:
             result["target_snapshot_artifact"] = asdict(self.target_snapshot_artifact)
         if self.arrow_feature_weights_artifact is not None:

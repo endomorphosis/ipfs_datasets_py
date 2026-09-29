@@ -6575,6 +6575,7 @@ class AdaptiveModalAutoencoder:
         projection_prescreen_top_k: int = 3,
         projection_periodic_full_search_every_n_cycles: int = 0,
         projection_max_update_families: Optional[int] = None,
+        projection_max_composed_refinement_attempts: int = 0,
         projection_cycle: Optional[int] = None,
         precomputed_holdout_evaluation: Optional[AutoencoderEvaluation] = None,
         precomputed_training_evaluation: Optional[AutoencoderEvaluation] = None,
@@ -6589,6 +6590,9 @@ class AdaptiveModalAutoencoder:
 
         This guarded path keeps sample-memory disabled for updates, so any
         accepted improvement must come from reusable feature embeddings/logits.
+        Composed refinements are off by default. Opting in tests at most three
+        training-only embedding nudges of the strict winner, preserving its
+        validation objective gain while requiring lower training reconstruction.
 
         ``accepted_patch_sink`` receives only committed, selected patches. Sink
         failure propagates after the state commit so callers cannot register an
@@ -6601,6 +6605,21 @@ class AdaptiveModalAutoencoder:
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
+        refinement_limit = projection_max_composed_refinement_attempts
+        if type(refinement_limit) is not int or not 0 <= refinement_limit <= 3:
+            raise ValueError("projection_max_composed_refinement_attempts must be an integer from 0 to 3")
+        if refinement_limit:
+            if float(l2_regularization) != 0.0:
+                raise ValueError("composed refinement currently requires zero l2_regularization")
+            if not sample_list or not validation_list:
+                raise ValueError("composed refinement requires training and disjoint validation samples")
+            for attribute in ("sample_id", "normalized_text"):
+                training_keys = {str(getattr(row, attribute, "") or "") for row in sample_list} - {""}
+                validation_keys = {str(getattr(row, attribute, "") or "") for row in validation_list} - {""}
+                if training_keys & validation_keys:
+                    raise ValueError("composed refinement requires disjoint validation samples")
+            if max_seconds is None or not math.isfinite(float(max_seconds)) or float(max_seconds) <= 0.0:
+                raise ValueError("composed refinement requires a finite positive max_seconds")
 
         def elapsed_seconds() -> float:
             return max(0.0, time.time() - started_at)
@@ -7518,6 +7537,206 @@ class AdaptiveModalAutoencoder:
                         update_name,
                     )
 
+            # Opt-in refinement keeps the strict winning IR update intact, then
+            # tests training-only embedding nudges. It cannot trade away any of
+            # that winner's validation objective gain for training improvement.
+            if refinement_limit and selected is not None and not projection_stopped_reason:
+                selected_report = next(
+                    report for report in candidate_reports if report["update"] == selected[3]
+                )
+                if bool(selected_report.get("strict_accepted", False)):
+                    seed_delta, seed_validation, seed_patch, seed_name = selected
+                    refinement_reports: List[Dict[str, Any]] = []
+                    selected_report["composed_refinement_reports"] = refinement_reports
+                    seed_training: Optional[AutoencoderEvaluation] = None
+                    if not timed_out():
+                        seed_transaction = self.state.transaction(
+                            label=f"projection-refinement-training-baseline:{epoch}"
+                        ).begin()
+                        try:
+                            seed_patch.apply(seed_transaction)
+                            self._invalidate_state_dependent_evaluator_caches()
+                            with profile_phase(
+                                "python_loop", stage="composed_refinement_training_baseline",
+                                metadata={"sample_count": len(sample_list), "bridge_names": []},
+                            ):
+                                seed_training = self.evaluate(sample_list, **base_evaluation_kwargs)
+                        finally:
+                            if seed_transaction.active:
+                                rollback_projection_transaction(seed_transaction)
+                    def finite_metric_payload(value: Any) -> Any:
+                        # Rejected NaN/Inf observations remain explicit nulls in
+                        # telemetry, never nonstandard JSON or fabricated zeros.
+                        if isinstance(value, float) and not math.isfinite(value):
+                            return None
+                        if isinstance(value, Mapping):
+                            return {key: finite_metric_payload(item) for key, item in value.items()}
+                        if isinstance(value, (list, tuple)):
+                            return [finite_metric_payload(item) for item in value]
+                        return value
+
+                    seed_training_finite = seed_training is not None and all(math.isfinite(float(value)) for value in (
+                        seed_training.reconstruction_loss, seed_training.embedding_cosine_similarity,
+                    ))
+                    if seed_training is not None and not seed_training_finite:
+                        selected_report["composed_refinement_skipped_reason"] = "nonfinite_training_baseline"
+                    if timed_out():
+                        projection_stopped_reason = "projection_timeout"
+                    selected_training_delta = 0.0
+                    for refinement_index in range(refinement_limit if seed_training_finite else 0):
+                        if timed_out() or seed_training is None:
+                            projection_stopped_reason = "projection_timeout"
+                            break
+                        multiplier = (1.0, 0.5, 0.25)[refinement_index]
+                        refinement_rate = learning_rate * head_learning_rate_scales["decoded_embedding"] * multiplier
+                        refinement_name = f"{seed_name}+decoded_embedding_refinement:{refinement_index + 1}"
+                        refinement_report: Dict[str, Any] = {
+                            "update": refinement_name, "base_selected_update": seed_name,
+                            "accepted": False, "strict_accepted": False,
+                            "acceptance_source": "rejected", "holdout_evaluated": False,
+                            "objective_delta": seed_delta, "composed_refinement": True,
+                            "refinement_attempt": refinement_index + 1,
+                            "effective_learning_rate": refinement_rate,
+                            "line_search_multiplier": multiplier,
+                            "training_sample_count": len(sample_list),
+                            "validation_sample_count": len(validation_list),
+                            "training_metric_scope": "bridge_off_reconstruction_only",
+                            "update_norm_scope": "embedding_refinement_increment_only",
+                            "training_before": {
+                                "reconstruction_loss": seed_training.reconstruction_loss,
+                                "embedding_cosine_similarity": seed_training.embedding_cosine_similarity,
+                            },
+                            "validation_objective_delta_required": seed_delta,
+                            "rejection_reasons": [], "pareto_regressions": {},
+                        }
+                        emit_progress("composed_refinement_attempt", epoch=epoch,
+                                      refinement_attempt=refinement_index + 1,
+                                      effective_learning_rate=refinement_rate,
+                                      base_selected_update=seed_name)
+                        trial_transaction = self.state.transaction(
+                            label=f"projection-composed-refinement:{epoch}:{refinement_index + 1}"
+                        ).begin()
+                        try:
+                            seed_patch.apply(trial_transaction)
+                            self._invalidate_state_dependent_evaluator_caches()
+                            update_norm_report = self._apply_projection_update_batch(
+                                update_samples, update_targets=("decoded_embedding",),
+                                learning_rate=refinement_rate, l2_regularization=0.0,
+                                profiler=profiler, update_backend=normalized_update_backend,
+                            )
+                            refinement_report["trainable_legal_ir_head_norms"] = update_norm_report
+                            for norm_key in (
+                                "gradient_norms_by_family", "gradient_norms_by_head",
+                                "head_family_gradient_norms", "head_family_update_norms",
+                                "update_norms_by_family", "update_norms_by_head",
+                            ):
+                                refinement_report[norm_key] = update_norm_report[norm_key]
+                            self._invalidate_state_dependent_evaluator_caches()
+                            if timed_out():
+                                refinement_report["rejection_reasons"].append("projection_timeout")
+                            else:
+                                refinement_validation = evaluate_projection_rows(
+                                    target_samples, stage="composed_refinement_validation",
+                                )
+                                refinement_report["holdout_evaluated"] = True
+                                regressions = _evaluation_regressions_for_training(
+                                    best, refinement_validation,
+                                    max_cosine_regression=max_cosine_regression,
+                                    max_reconstruction_regression=max_reconstruction_regression,
+                                    max_cross_entropy_regression=max_cross_entropy_regression,
+                                    max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+                                )
+                                seed_regressions = _evaluation_regressions_for_training(
+                                    seed_validation, refinement_validation,
+                                    max_cosine_regression=max_cosine_regression,
+                                    max_reconstruction_regression=max_reconstruction_regression,
+                                    max_cross_entropy_regression=max_cross_entropy_regression,
+                                    max_legal_ir_loss_regression=max_legal_ir_loss_regression,
+                                )
+                                refinement_delta = _evaluation_objective_for_training(
+                                    best, **objective_weights,
+                                ) - _evaluation_objective_for_training(
+                                    refinement_validation, **objective_weights,
+                                )
+                                refinement_report.update({
+                                    "objective_delta": refinement_delta if math.isfinite(refinement_delta) else None,
+                                    "pareto_regressions": finite_metric_payload(regressions),
+                                    "selected_candidate_regressions": finite_metric_payload(seed_regressions),
+                                    "validation_after": finite_metric_payload(refinement_validation.to_dict()),
+                                    "cosine_similarity_delta": refinement_validation.embedding_cosine_similarity - best.embedding_cosine_similarity,
+                                    "reconstruction_delta": best.reconstruction_loss - refinement_validation.reconstruction_loss,
+                                })
+                                refinement_report["cross_entropy_delta"] = best.cross_entropy_loss - refinement_validation.cross_entropy_loss
+                                refinement_report["cross_entropy_excess_delta"] = best.cross_entropy_excess_loss - refinement_validation.cross_entropy_excess_loss
+                                for loss_name in (
+                                    "legal_ir_view_cross_entropy", "legal_ir_view_cross_entropy_excess",
+                                    "legal_ir_view_family_cross_entropy", "legal_ir_view_family_cross_entropy_excess",
+                                    "legal_ir_view_family_cosine_gap",
+                                ):
+                                    refinement_report[f"{loss_name}_delta"] = (
+                                        float(best.legal_ir_losses.get(f"{loss_name}_loss", 0.0))
+                                        - float(refinement_validation.legal_ir_losses.get(f"{loss_name}_loss", 0.0))
+                                    )
+                                reasons = refinement_report["rejection_reasons"]
+                                finite_validation_values = (
+                                    refinement_validation.embedding_cosine_similarity,
+                                    refinement_validation.reconstruction_loss,
+                                    refinement_validation.cross_entropy_loss,
+                                    refinement_validation.cross_entropy_excess_loss,
+                                    *refinement_validation.legal_ir_losses.values(),
+                                )
+                                if not all(math.isfinite(float(value)) for value in finite_validation_values):
+                                    reasons.append("nonfinite_validation_metric")
+                                if regressions or seed_regressions:
+                                    reasons.append("validation_guardrail_regression")
+                                if not math.isfinite(refinement_delta) or not (refinement_delta >= seed_delta and refinement_delta > 0.0):
+                                    reasons.append("validation_objective_not_preserved")
+                                if timed_out():
+                                    reasons.append("projection_timeout")
+                                if not reasons:
+                                    with profile_phase(
+                                        "python_loop", stage="composed_refinement_training_evaluation",
+                                        metadata={"sample_count": len(sample_list), "bridge_names": []},
+                                    ):
+                                        refinement_training = self.evaluate(sample_list, **base_evaluation_kwargs)
+                                    training_delta = seed_training.reconstruction_loss - refinement_training.reconstruction_loss
+                                    refinement_report.update({
+                                        "training_reconstruction_delta": training_delta if math.isfinite(training_delta) else None,
+                                        "training_after": finite_metric_payload({
+                                            "reconstruction_loss": refinement_training.reconstruction_loss,
+                                            "embedding_cosine_similarity": refinement_training.embedding_cosine_similarity,
+                                        }),
+                                    })
+                                    if not all(math.isfinite(float(value)) for value in (
+                                        refinement_training.reconstruction_loss,
+                                        refinement_training.embedding_cosine_similarity,
+                                    )):
+                                        reasons.append("nonfinite_training_metric")
+                                    if not math.isfinite(training_delta) or training_delta <= 0.0:
+                                        reasons.append("no_training_reconstruction_improvement")
+                                    if timed_out():
+                                        reasons.append("projection_timeout")
+                                    if not reasons:
+                                        refinement_report.update({
+                                            "accepted": True, "strict_accepted": True,
+                                            "acceptance_source": "strict_composed_refinement",
+                                        })
+                                        if (refinement_delta, training_delta) > (selected[0], selected_training_delta):
+                                            selected = (
+                                                refinement_delta, refinement_validation,
+                                                trial_transaction.capture_patch(), refinement_name,
+                                            )
+                                            selected_training_delta = training_delta
+                        finally:
+                            if trial_transaction.active:
+                                rollback_projection_transaction(trial_transaction)
+                        refinement_report = finite_metric_payload(refinement_report)
+                        refinement_reports.append(refinement_report)
+                        candidate_reports.append(refinement_report)
+                        if "projection_timeout" in refinement_report["rejection_reasons"]:
+                            projection_stopped_reason = "projection_timeout"
+                            break
+
             if projection_stopped_reason:
                 if selected is None:
                     epoch_reports.append(
@@ -7636,6 +7855,11 @@ class AdaptiveModalAutoencoder:
             "projection_profile_enabled": profiler is not None,
             "projection_cuda_residency": cuda_residency,
             "projection_update_backend": normalized_update_backend,
+            "projection_composed_refinement": {
+                "enabled": bool(refinement_limit), "max_attempts_per_epoch": refinement_limit,
+                "acceptance_policy": "strict_validation_gain_preserved_and_training_reconstruction_improved",
+                "validation_gradients_used": False,
+            },
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
             "legal_ir_bridge_max_samples": bridge_sample_cap,

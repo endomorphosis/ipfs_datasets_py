@@ -1,0 +1,437 @@
+{
+  "admitted": false,
+  "amortization_scope": "Add full preparation once and full shared consumer wall for one-off comparison. Reuse break-even requires consumer savings > 0 and same source/runtime/input bindings; target preparation is invalidated by package-source changes.",
+  "cache_scope": "fresh child process; disk cache disabled; producer metric/multiview caches bypassed; operating system cache uncontrolled",
+  "command": {
+    "admitted": false,
+    "argv": [
+      "/home/barberb/.local/bin/python",
+      "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/prepare_shared_autoencoder_targets.py",
+      "--input-jsonl",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/input.jsonl",
+      "--validation-jsonl",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/validation.jsonl",
+      "--output-directory",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets",
+      "--bridge-names",
+      "modal_frame_logic,deontic_norms,fol_tdfol,cec_dcec,external_prover_router",
+      "--legal-ir-evaluate-provers",
+      "false",
+      "--metric-disk-cache",
+      "0",
+      "--legal-ir-parallel-workers",
+      "1",
+      "--max-input-rows",
+      "256",
+      "--max-input-bytes",
+      "67108864",
+      "--max-output-bytes",
+      "268435456",
+      "--storage-bytes",
+      "750000000",
+      "--memory-mb",
+      "8192",
+      "--timeout-seconds",
+      "600"
+    ],
+    "environment_overrides": {
+      "CUDA_VISIBLE_DEVICES": "",
+      "HF_HUB_OFFLINE": "1",
+      "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE": "0",
+      "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONPATH": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "TRANSFORMERS_OFFLINE": "1"
+    },
+    "measurement_scope": "complete fresh preparation CLI including startup, source guards, bundle encoding, artifact verification and final resource accounting; outside audit hashing excluded",
+    "outside_audit_hash_seconds": 0.8393648387864232,
+    "returncode": 0,
+    "sources_inputs_seed_unchanged": true,
+    "wall_seconds": 23.06734701897949
+  },
+  "legal_ir_target_count": 5,
+  "preparation": {
+    "admitted": false,
+    "artifact_builder_retains_all_targets": false,
+    "artifact_format": "bundle",
+    "artifact_statistics": {
+      "artifact_bytes": 2299411,
+      "artifact_format": "bundle",
+      "compressed_target_bytes": 1187860,
+      "compression_seconds": 0.10345252137631178,
+      "deduplicated_target_count": 0,
+      "encoding_validate_seconds": 0.2643201726023108,
+      "manifest_bytes": 1111535,
+      "referenced_uncompressed_target_bytes": 20490517,
+      "sample_count": 5,
+      "schema_version": "legal-ir-target-bundle-v1",
+      "shard_count": 5,
+      "target_reference_count": 5,
+      "unique_uncompressed_target_bytes": 20490517
+    },
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "bridge_report_telemetry": {
+      "us-code-qualification-fixture-20-1725202d80bd6f55": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "us-code-qualification-fixture-21-13375fbcc450ade5": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "us-code-qualification-fixture-22-0598dc92060587b1": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "us-code-qualification-fixture-23-11407496e48a82a3": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "us-code-qualification-fixture-30-763799b0a9e96617": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      }
+    },
+    "cache_observation": "targets built directly; metric and multiview caches bypassed; OS cache uncontrolled",
+    "elapsed_seconds": 11.432005034061149,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 5,
+    "maximum_pending_generation_results": 1,
+    "metric_disk_cache": 0,
+    "metric_process_cache_used": false,
+    "multiview_process_cache_used": false,
+    "sample_count": 5,
+    "sample_preparation_seconds": 0.04838940408080816,
+    "schema_version": "autoencoder-target-preparation-v1",
+    "status_definitions": {
+      "ready": "a returned multiview report produced a target; does not imply bridge acceptance or admission",
+      "timeout": "the outer target timeout escaped evaluation; a fallback target was produced"
+    },
+    "statuses": {
+      "us-code-qualification-fixture-20-1725202d80bd6f55": "ready",
+      "us-code-qualification-fixture-21-13375fbcc450ade5": "ready",
+      "us-code-qualification-fixture-22-0598dc92060587b1": "ready",
+      "us-code-qualification-fixture-23-11407496e48a82a3": "ready",
+      "us-code-qualification-fixture-30-763799b0a9e96617": "ready"
+    },
+    "target_generate_call_seconds": 9.308900273172185,
+    "target_generation_and_artifact_seconds": 10.628502042032778,
+    "target_generation_seconds": 9.308900273172185,
+    "target_generation_seconds_per_span": 1.861780054634437,
+    "target_generation_timing_scope": "union of producer call wall intervals; parallel generation may overlap bundle encoding",
+    "target_pipeline_non_generation_seconds": 1.3196017688605934,
+    "target_timeout_enforcement": "main_thread_sigalrm"
+  },
+  "producer_receipt": {
+    "bytes": 7808,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets/producer.json",
+    "sha256": "bc1c3a6c2efa5cbfac7d42411e431333adf3839a8a2a98804132ee21f757e581"
+  },
+  "resources": {
+    "cleanup_error": null,
+    "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": {
+      "artifacts_durable_asserted": true,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67641469,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets"
+      },
+      "attempt_exceeded_reservation": false,
+      "child": {
+        "birth": "121059005",
+        "pid": 260659
+      },
+      "child_process_slots": 3,
+      "cpu_slots": 1,
+      "created_at": 1790642283.3631728,
+      "external_charges": {},
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 75964944799,
+        "inventory": {
+          "apparent_bytes": 47199944799,
+          "entry_count": 225660,
+          "special_file_count": 23,
+          "symlink_count": 3780
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 220091625472,
+        "observed_apparent_bytes": 47199944799,
+        "outstanding_full_reservations_bytes": 28765000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "final_attempt_bytes": 2311140,
+      "final_external_charged_bytes": 0,
+      "final_total_charged_bytes": 2311140,
+      "finalization_profile": {
+        "global_accounting_seconds": 3.3473600789438933,
+        "global_inventory_count": 1,
+        "ledger_lock_wait_seconds": 0.0004731409717351198,
+        "process_check_seconds": 0.03359592822380364,
+        "schema_version": "daemon-resource-finalization-profile/v1",
+        "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+        "strict_attempt_inventory_count": 1,
+        "strict_attempt_inventory_seconds": 0.0003435090184211731
+      },
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 2311140,
+        "attempt_limit_bytes": 750000000,
+        "charged_bytes": 76714944799,
+        "checked_at": 1790642302.8073049,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "inventory": {
+          "apparent_bytes": 47199944799,
+          "entry_count": 225660,
+          "special_file_count": 23,
+          "symlink_count": 3780
+        },
+        "limit_bytes": 80000000000,
+        "memory_limit_bytes": 8589934592,
+        "minimum_filesystem_free_bytes": 220091625472,
+        "observed_apparent_bytes": 47199944799,
+        "outstanding_full_reservations_bytes": 29515000000,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 3,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 2311140
+      },
+      "memory_mb": 8192,
+      "owner_pid": 259102,
+      "prior_children": [],
+      "released_at": 1790642302.8182037,
+      "reservation_id": "d337c0e1f8234edbb47611a8f69f8c9a",
+      "scheduler_lane": "hammer_lean",
+      "status": "released",
+      "storage_bytes": 750000000,
+      "workload": "canonical_trainer"
+    },
+    "reservation_id": "d337c0e1f8234edbb47611a8f69f8c9a",
+    "resource_lease": {
+      "acquired_at": 1790642283.3968797,
+      "cancelled": true,
+      "child_process_slots": 3,
+      "cpu_slots": 1,
+      "gpu_memory_mb": 0,
+      "lane": "hammer_lean",
+      "lease_id": "a3edf58aa9294dff96ec0a970a56f9f0",
+      "memory_mb": 8192,
+      "owner_pid": 259102,
+      "parent_lease_id": null,
+      "released": true,
+      "requires_gpu": false,
+      "unified_memory_mb": 0,
+      "wait_seconds": 4.798639565706253e-07
+    },
+    "roots": [
+      {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "device": 66306,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      {
+        "device": 66306,
+        "inode": 526155,
+        "path": "/tmp/pytest-of-barberb"
+      }
+    ],
+    "scheduler_lane": "hammer_lean",
+    "schema": "daemon-resource-reservations-v1",
+    "status": "released",
+    "storage_limit_bytes": 80000000000,
+    "workload": "canonical_trainer"
+  },
+  "runner_arguments": [
+    "--shared-targets",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets/targets.bundle",
+    "--target-snapshot-id",
+    "sha256:8a69fe4fe5fcb5d5b4e00888630fd4a370242e618f6f189d5542b801491e7cf6"
+  ],
+  "sample_count": 5,
+  "supervision": {
+    "enforcement": "existing_resource_reservation_and_polled_group_usage_with_per_file_RLIMIT_FSIZE",
+    "observed_max_group_process_count": 1,
+    "observed_peak_group_rss_bytes": 950226944,
+    "peak_scope": "polled lower bound; shared pages may be counted more than once",
+    "supervised_process_wall_seconds": 16.012508931802586
+  },
+  "target_artifact": {
+    "bytes": 2299411,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-targets/targets.bundle",
+    "sha256": "c4fe50a608d8766432ec19d93f3d394a31a68fb8ee9788df642399875b18ae75"
+  },
+  "target_snapshot_id": "sha256:8a69fe4fe5fcb5d5b4e00888630fd4a370242e618f6f189d5542b801491e7cf6",
+  "timings": {
+    "full_cli_wall_seconds": 23.06734701897949,
+    "full_cli_wall_seconds_per_unique_span": 4.613469403795898,
+    "handoff_preparation_including_input_planning_seconds": 22.973785947076976,
+    "handoff_target_preparation_wall_seconds": 22.8549176719971,
+    "producer_call_wall_seconds": 11.512123447144404
+  }
+}

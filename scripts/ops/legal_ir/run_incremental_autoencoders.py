@@ -139,7 +139,7 @@ def local_records(path):
 def make_templates(registry, records, *, state_directory, checkpoint, source_hashes,
                    max_seconds=180.0, source_language="en", model_variant="incremental-modal",
                    arrow_feature_weights=None, shared_targets=None, target_snapshot_id=None,
-                   validation_records=()):
+                   validation_records=(), composed_refinement_attempts=0):
     """Create one-span gradient jobs with disjoint tuning rows for selection.
 
     The same validation rows also undergo final qualification. Repeated use
@@ -194,7 +194,8 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
             "samples": [record["sample"]], "validation_samples": validation_samples, "variant": variant,
             "autoencoder_config": {"compute_device": "python"},
             "training_config": {"max_seconds": max_seconds, "profile_projection": True,
-                                "projection_max_update_families": 5},
+                                "projection_max_update_families": 5,
+                                "projection_max_composed_refinement_attempts": composed_refinement_attempts},
             "capture_sparse_patches": True, "candidate_storage": "sparse",
             **shared,
         }))
@@ -255,6 +256,7 @@ def run_cycle(config):
                 arrow_feature_weights=config.get("arrow_feature_weights"),
                 shared_targets=config.get("shared_targets"), target_snapshot_id=config.get("target_snapshot_id"),
                 validation_records=validation,
+                composed_refinement_attempts=config.get("composed_refinement_attempts", 0),
             )
             report = run_qualified_incremental_training(
                 registry, templates, state_directory=state / "progress",
@@ -372,7 +374,8 @@ def supervised_cycle(config):
         raise ValueError("unknown autoencoder execution gate")
     available = scheduler_capacity(get_global_resource_scheduler().snapshot())
     plan = execution_capacity_plan(config.get("execution_mode", "training"),
-        max_workers=config["workers"], memory_budget_mb=config["memory_mb"],
+        max_workers=min(config["workers"], config.get("parallel_workers", 0) or config["workers"]),
+        memory_budget_mb=config["memory_mb"],
         pending_count=config["max_batches"], scheduler_available_cpu=available["cpu_slots"],
         scheduler_available_memory_mb=available["memory_mb"],
         scheduler_available_process_slots=available["child_process_slots"])
@@ -436,15 +439,17 @@ def supervised_cycle(config):
                 _stop_group(process)
                 if process.returncode:
                     raise RuntimeError(f"training cycle exited {process.returncode}; see {receipt_directory / 'worker.log'}")
-            reservation.check_usage(attempt_directory=state)
             receipt = json.loads(Path(child_config["cycle_receipt"]).read_bytes())
             if not (receipt_directory / "process-observations.json").exists():
                 _write(receipt_directory / "process-observations.json", observations)
-            resource = reservation.release(artifacts_durable=True)
+            finalization_started = time.monotonic()
+            resource = reservation.finalize(attempt_directory=state, artifacts_durable=True)
+            finalization_seconds = time.monotonic() - finalization_started
             _write(receipt_directory / "resources.json", resource)
             return {"receipt": child_config["cycle_receipt"], "elapsed_seconds": time.monotonic() - started,
                     "execution_path": receipt.get("execution_path", "training"),
                     "training_executed": receipt.get("training_executed", False), "capacity_plan": plan,
+                    "resource_finalization_seconds": finalization_seconds,
                     "inference": receipt.get("inference"),
                     "input_count": receipt["input_count"], "training": receipt["training"],
                     "weight_publications": receipt["weight_publications"], "admitted": False}
@@ -476,6 +481,8 @@ def parser():
     p.add_argument("--revision", default="main")
     p.add_argument("--workers", type=int, default=0,
                    help="Stable lane ceiling (1..32). 0 uses 32 logical lanes; actual concurrent passes adapt to hardware")
+    p.add_argument("--parallel-workers", type=int, default=0,
+                   help="Optional concurrent-pass ceiling (1..32), independent of stable lanes; 0 follows hardware admission")
     workers = p.add_mutually_exclusive_group()
     workers.add_argument("--fresh-training-workers", dest="fresh_training_workers", action="store_true", default=True,
                          help="Use fresh native worker processes for each wave (default)")
@@ -488,6 +495,8 @@ def parser():
     p.add_argument("--lake-timeout-seconds", type=int, default=120)
     p.add_argument("--max-bundles", type=int, default=4)
     p.add_argument("--max-seconds", type=float, default=180)
+    p.add_argument("--composed-refinement-attempts", type=int, choices=range(4), default=0,
+                   help="Opt in to 1..3 bounded reconstruction refinements after strict candidate selection; requires disjoint validation")
     p.add_argument("--polls", type=int, default=1, help="0 runs until interrupted")
     p.add_argument("--sync-interval", type=float, default=300)
     p.add_argument("--cycle-timeout", type=float, default=900)
@@ -513,8 +522,12 @@ def main(argv=None):
         p.error("supply --input-jsonl and/or --repository-id")
     if bool(args.shared_targets) != bool(args.target_snapshot_id):
         p.error("--shared-targets and --target-snapshot-id must be supplied together")
+    if args.composed_refinement_attempts and (args.execution_mode != "training" or not args.validation_jsonl):
+        p.error("composed refinement requires training mode and disjoint --validation-jsonl")
     if type(args.workers) is not int or args.workers < 0 or args.workers > 32:
         p.error("invalid worker count or machine shard assignment")
+    if not 0 <= args.parallel_workers <= 32:
+        p.error("parallel-workers must be 0..32")
     args.workers = args.workers or 32
     if args.execution_mode == "inference" and (not args.input_jsonl or not args.validation_jsonl or any(
             (args.repository_id, args.publish_repository, args.arrow_feature_weights, args.shared_targets))):

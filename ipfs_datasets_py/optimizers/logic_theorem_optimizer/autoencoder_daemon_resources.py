@@ -526,6 +526,100 @@ class DaemonResourceReservation:
             raise DaemonResourceError("child group RSS limit exceeded")
         return copy.deepcopy(usage)
 
+    def finalize(self, attempt_directory: Path, *, artifacts_durable=False):
+        """Check and release a bound, stopped attempt using one fresh census.
+
+        This is the strict success path equivalent to a final ``check_usage``
+        followed by ``release``. The full claim remains charged while limits
+        are checked. Only the claim arithmetic is adjusted after success; no
+        filesystem observation is cached across calls or ledger-lock scopes.
+        Legacy ``release`` remains available for explicitly audited recovery.
+        """
+        if not self._entered:
+            raise DaemonResourceError("reservation was not entered")
+        if self._record["status"] == "released":
+            return self.to_dict()
+        if artifacts_durable is not True:
+            raise DaemonResourceError("explicit artifact durability assertion required")
+        attempt = _safe_path(attempt_directory, directory=True)
+        if not any(attempt == root or root in attempt.parents for root in self.roots):
+            raise DaemonResourceError("attempt directory is outside named storage roots")
+        if self._attempt is None:
+            raise DaemonResourceError("finalization requires a previously bound attempt")
+        if _root_identity(attempt) != self._attempt:
+            raise DaemonResourceError("attempt directory identity changed")
+        started = time.monotonic()
+        with self._locked():
+            lock_acquired = time.monotonic()
+            ledger = self._read()
+            row = ledger["reservations"].get(self.reservation_id)
+            if (row is None or row["owner_pid"] != self._owner_pid
+                    or row["storage_bytes"] != self.storage_bytes
+                    or row["status"] == "released"):
+                raise DaemonResourceError("owned disk reservation differs")
+            if row.get("attempt_directory") != self._attempt or row.get("child") != self._child:
+                raise DaemonResourceError("bound attempt or child identity changed")
+            group_started = time.monotonic()
+            group = _group_usage(self._child)
+            group_seconds = time.monotonic() - group_started
+            attempt_started = time.monotonic()
+            attempt_bytes = _inventory([attempt], strict=True)["apparent_bytes"]
+            attempt_seconds = time.monotonic() - attempt_started
+            account_started = time.monotonic()
+            accounting = self._account(ledger)
+            account_seconds = time.monotonic() - account_started
+            if _root_identity(attempt) != self._attempt:
+                raise DaemonResourceError("attempt directory identity changed")
+            external_bytes = sum(_external_charges(row).values())
+            usage = copy.deepcopy(accounting)
+            usage.update(attempt_bytes=attempt_bytes, attempt_limit_bytes=self.storage_bytes,
+                         external_charged_bytes=external_bytes,
+                         total_attempt_charged_bytes=attempt_bytes + external_bytes,
+                         group_rss=group, memory_limit_bytes=self.memory_mb * 1024 * 1024,
+                         reserved_child_process_slots=self.child_process_slots,
+                         process_slot_estimate_exceeded=group["live_processes"] > self.child_process_slots,
+                         checked_at=time.time())
+            row["last_usage"] = usage
+            failure = None
+            if attempt_bytes + external_bytes > self.storage_bytes:
+                failure = "attempt storage byte limit exceeded"
+            elif group["rss_bytes"] > self.memory_mb * 1024 * 1024:
+                failure = "child group RSS limit exceeded"
+            else:
+                group_started = time.monotonic()
+                final_group = _group_usage(self._child)
+                group_seconds += time.monotonic() - group_started
+                if final_group["live_processes"]:
+                    failure = "child process group is still alive"
+            if failure is not None:
+                # Preserve the observed failed usage before context cleanup
+                # retains this claim. No release event is written on failure.
+                self._write(ledger)
+                self._record = copy.deepcopy(row)
+                raise DaemonResourceError(failure)
+            final_accounting = copy.deepcopy(accounting)
+            final_accounting["outstanding_full_reservations_bytes"] -= self.storage_bytes
+            final_accounting["charged_bytes"] -= self.storage_bytes
+            row.update(status="released", artifacts_durable_asserted=True, released_at=time.time(),
+                       final_accounting=final_accounting, final_attempt_bytes=attempt_bytes,
+                       final_external_charged_bytes=external_bytes,
+                       final_total_charged_bytes=attempt_bytes + external_bytes,
+                       attempt_exceeded_reservation=False,
+                       finalization_profile={
+                           "schema_version": "daemon-resource-finalization-profile/v1",
+                           "ledger_lock_wait_seconds": lock_acquired - started,
+                           "strict_attempt_inventory_seconds": attempt_seconds,
+                           "global_accounting_seconds": account_seconds,
+                           "process_check_seconds": group_seconds,
+                           "global_inventory_count": 1, "strict_attempt_inventory_count": 1,
+                           "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+                       })
+            self._write(ledger)
+            self._record = copy.deepcopy(row)
+        if self._lease is not None:
+            self._lease.release()
+        return self.to_dict()
+
     def release(self, *, artifacts_durable=False):
         if not self._entered:
             raise DaemonResourceError("reservation was not entered")

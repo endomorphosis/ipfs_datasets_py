@@ -13,6 +13,7 @@ import json
 import multiprocessing
 import os
 from pathlib import Path
+import stat
 import time
 
 MAX_RETAINED_WORKERS = 2
@@ -22,16 +23,57 @@ _PROCESS_JOBS = 0
 _WORKER_RUNTIME = None
 
 
-def _package_manifest():
-    """Content binding, including bridges outside the six core worker files."""
-    root = Path(__file__).resolve().parents[2]
+def _source_entries(root):
+    """Read every source on every call; never trust cached filesystem metadata.
+
+    Directory descriptors avoid resolving every ancestor of every file. They
+    also let the open refuse a symlink substituted after enumeration. Preserve
+    pathlib's exclusion of directory aliases; matching ``*.py`` aliases still
+    fail. The portable path keeps the previous traversal where fd walking is
+    unavailable.
+    """
     entries = {}
+    if hasattr(os, "fwalk") and hasattr(os, "O_NOFOLLOW"):
+        def fail(error):
+            raise error
+
+        for directory, directories, files, directory_fd in os.fwalk(
+                root, follow_symlinks=False, onerror=fail):
+            relative = os.path.relpath(directory, root)
+            prefix = "" if relative == "." else relative.replace(os.sep, "/") + "/"
+            for name in files + directories:
+                if not name.endswith(".py"):
+                    continue
+                observed = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+                if stat.S_ISLNK(observed.st_mode):
+                    raise ValueError("native pool producer source aliases another tree")
+                if stat.S_ISDIR(observed.st_mode):
+                    continue
+                fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+                             dir_fd=directory_fd)
+                with os.fdopen(fd, "rb") as handle:
+                    before = os.fstat(handle.fileno())
+                    if (not stat.S_ISREG(before.st_mode)
+                            or (before.st_dev, before.st_ino) != (observed.st_dev, observed.st_ino)):
+                        raise ValueError("native pool producer file changed or is not regular")
+                    entries[prefix + name] = hashlib.sha256(handle.read()).hexdigest()
+                    after = os.fstat(handle.fileno())
+                    if any(getattr(before, key) != getattr(after, key) for key in
+                           ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")):
+                        raise ValueError("native pool producer source changed during read")
+        return entries
     for path in sorted(root.rglob("*.py")):
         if path.is_symlink() or root not in path.resolve().parents:
             raise ValueError("native pool producer source aliases another tree")
         if path.is_dir():
             continue
         entries[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return entries
+
+
+def _package_manifest():
+    """Content binding, including bridges outside the six core worker files."""
+    entries = _source_entries(Path(__file__).resolve().parents[2])
     raw = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode()
     return {"sha256": hashlib.sha256(raw).hexdigest(), "file_count": len(entries)}
 

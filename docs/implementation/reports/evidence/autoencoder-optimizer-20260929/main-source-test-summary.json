@@ -1,0 +1,97 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "isolated-prepared-imports.json": {
+      "bytes": 86335,
+      "sha256": "447de14c5727e0d4516bdd3466570bce74a2fcbf91b0f3a1d46c047fe1a6ea4d"
+    },
+    "isolated-prepared-tests.log": {
+      "bytes": 3812,
+      "sha256": "12d3bff45d7a16f7f86dcfdd29e7e1d7862d705a6c07ef97637dd84c1ce5b69b"
+    },
+    "isolated-prepared-tests.xml": {
+      "bytes": 107242,
+      "sha256": "bf631cfa1db403618e5070f91217e90996c1e1a194d3640f71e937eb9c5c8aa6"
+    }
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "isolated_source_plugin",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_concurrency.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_lock_contention.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_manifest.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_native_pool.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_prepare_shared_autoencoder_targets.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_transaction.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_state.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_checkpoint.py",
+    "tests/unit/logic/test_family_qualification.py",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/isolated-prepared-tests.xml"
+  ],
+  "directory": "/tmp/autoencoder-prepared-main-tests-ulgi_o13/external/ipfs_datasets",
+  "elapsed_seconds": 20.971066795056686,
+  "errors": 0,
+  "exit_code": 0,
+  "export_manifest_sha256": "e880a3b7d2fcc2ec970c9c013ca970c5c5a3c2a31575a82fd76ac2e97b52f0de",
+  "export_only": false,
+  "exported_bytes": 254919983,
+  "exported_files": 12790,
+  "exported_source_files_unchanged": true,
+  "external_hash_input": {
+    "binding_sha256": "3c56b7f1949a863f87b5f77ed61180312c635a0472343acc88f7a3fb11f758a7",
+    "bytes": 19344,
+    "isolated": "/tmp/autoencoder-prepared-main-tests-ulgi_o13/JevOps/jevops/statement_lock.py",
+    "original": "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py",
+    "scope": "Exact sibling orchestration-hash input only; no Lake execution or prepared-main provenance claim.",
+    "sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237"
+  },
+  "external_hash_input_unchanged": true,
+  "failures": 0,
+  "import_audit_passed": true,
+  "imported_module_count": 384,
+  "live_head_unchanged": true,
+  "live_index_unchanged": true,
+  "modal_sha256": "1d78bab6d9d30f40c398bbc1b186b193246c38e09cdd1313f04c46f71975154d",
+  "origin_main_base": "fa1a7017632b6b0be6b74f96a7ebffc5d5c76db2",
+  "passed": true,
+  "policy": {
+    "bytes": 2306,
+    "git_blob": "447876849d6247a0109da3362ac15bb577589472",
+    "path": "docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json",
+    "sha256": "9e4b1ecbc4e062d3b25eade13e28f57c92e54a5de407c8f238f590cab844b818"
+  },
+  "schema": "prepared-main-focused-source-tests/v2",
+  "scope": "Isolated exact prepared-main source integration tests; not canonical pinned native qualification, Lake evidence, admission, or generalization. Git-linked external repositories and model weights are not exported.",
+  "skipped": 0,
+  "source_tree": "b5794ec713e86763a9cb0cd3da091ce8c0ce2c58",
+  "test_files": [
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_concurrency.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_lock_contention.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_manifest.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_native_pool.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_prepare_shared_autoencoder_targets.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_transaction.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_state.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_checkpoint.py",
+    "tests/unit/logic/test_family_qualification.py"
+  ],
+  "tests": 544,
+  "weights_downloaded": false,
+  "workspace_files_unchanged": true
+}

@@ -1,0 +1,29 @@
+{
+  "admitted": false,
+  "after_audit": {
+    "bytes": 227087,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-audit.json",
+    "sha256": "1aeb550b5c466c25eb4188fd9e59fa77493ca69357dc7aeb99cb8cbc45e30143"
+  },
+  "baseline_wall_seconds": 71.7854775080923,
+  "before_audit": {
+    "bytes": 227232,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/scaled-audit.json",
+    "sha256": "bdf442f5422e0023244a0293a3cd286207f76d48439f022d21f0589d41ca6dba"
+  },
+  "check_count": 74,
+  "failures": [
+    "same_configuration",
+    "177175a5cde0b02a39db27c66237a6c7e3f6ae56ed18a475f826bb3027c5d388:same_lane",
+    "6d4a77a1386b859404f835c8001580f43bb94b80890195c2a5dab1332b879f4b:same_lane",
+    "d6e424b71cc986ea2aceddbe051e27a65704a35c786d7c67fa8563404167971d:same_lane",
+    "deecf3136cd32d81a4b2cc4bb95bb046c24f99faaf2eb31aee4e2e9b6b9e7aa7:same_lane"
+  ],
+  "optimized_wall_seconds": 70.374008245999,
+  "passed": false,
+  "schema": "native-optimizer-speed-parity-audit/v1",
+  "scope": "Sequential unprofiled native routes with identical model settings, source core, samples, candidates and gates. Full producer and orchestration bindings differ for the explicitly compared scheduling/accounting implementation; cProfile observations are excluded.",
+  "speed_claim_eligible": false,
+  "wall_seconds_saved": 1.4114692620933056,
+  "wall_time_ratio": 0.9803376767684774
+}

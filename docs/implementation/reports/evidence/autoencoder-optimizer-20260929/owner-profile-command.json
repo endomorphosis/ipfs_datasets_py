@@ -1,0 +1,32 @@
+{
+  "admitted": false,
+  "argv": [
+    "--execution-mode",
+    "training",
+    "--state-directory",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/owner-profile",
+    "--input-jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/input.jsonl",
+    "--validation-jsonl",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/validation.jsonl",
+    "--workers",
+    "2",
+    "--max-batches",
+    "4",
+    "--max-training-rounds",
+    "1",
+    "--max-seconds",
+    "120",
+    "--lake-timeout-seconds",
+    "60",
+    "--cycle-timeout",
+    "420",
+    "--storage-bytes",
+    "500000000"
+  ],
+  "checkpoint_unchanged": true,
+  "instrumentation": "cProfile child owner; timing not comparable to unprofiled runs",
+  "returncode": 0,
+  "source_unchanged": true,
+  "wall_seconds": 197.892547236057
+}

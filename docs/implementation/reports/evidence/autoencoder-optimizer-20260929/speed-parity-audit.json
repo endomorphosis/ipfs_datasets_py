@@ -1,0 +1,23 @@
+{
+  "admitted": false,
+  "after_audit": {
+    "bytes": 227198,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/optimized-audit.json",
+    "sha256": "e87ad7fd58016f4fa8febd381b4820cabbea6d7827d24625eacbcb1a6cf5435b"
+  },
+  "baseline_wall_seconds": 97.79850050806999,
+  "before_audit": {
+    "bytes": 225643,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/baseline-audit.json",
+    "sha256": "8b8b3eca034f3d3bcad737520c0636d9f18e85e9bdcc96c535abc22f224b0449"
+  },
+  "check_count": 74,
+  "failures": [],
+  "optimized_wall_seconds": 84.45414582896046,
+  "passed": true,
+  "schema": "native-optimizer-speed-parity-audit/v1",
+  "scope": "Sequential unprofiled native routes with identical model settings, source core, samples, candidates and gates. Full producer and orchestration bindings differ for the explicitly compared scheduling/accounting implementation; cProfile observations are excluded.",
+  "speed_claim_eligible": true,
+  "wall_seconds_saved": 13.344354679109529,
+  "wall_time_ratio": 0.8635525635895778
+}

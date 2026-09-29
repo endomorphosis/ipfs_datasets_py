@@ -1,0 +1,26 @@
+         5993973 function calls (5740240 primitive calls) in 1.500 seconds
+
+   Ordered by: cumulative time
+   List reduced from 140 to 18 due to restriction <18>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.021    0.021    1.500    1.500 /home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py:25(_package_manifest)
+     7832    0.021    0.000    0.550    0.000 /usr/lib/python3.12/pathlib.py:663(relative_to)
+   146441    0.027    0.000    0.463    0.000 <frozen _collections_abc>:1022(__iter__)
+   130776    0.062    0.000    0.437    0.000 /usr/lib/python3.12/pathlib.py:276(__getitem__)
+    15666    0.025    0.000    0.391    0.000 <frozen _collections_abc>:1032(__contains__)
+     7835    0.005    0.000    0.357    0.000 /usr/lib/python3.12/pathlib.py:1230(resolve)
+   165769    0.063    0.000    0.301    0.000 /usr/lib/python3.12/pathlib.py:380(with_segments)
+   122944    0.039    0.000    0.286    0.000 /usr/lib/python3.12/pathlib.py:420(_from_parsed_parts)
+     7835    0.005    0.000    0.273    0.000 <frozen posixpath>:428(realpath)
+     7832    0.006    0.000    0.265    0.000 /usr/lib/python3.12/pathlib.py:690(is_relative_to)
+     7835    0.056    0.000    0.251    0.000 <frozen posixpath>:437(_joinrealpath)
+   165770    0.047    0.000    0.197    0.000 /usr/lib/python3.12/pathlib.py:1159(__init__)
+   153777    0.028    0.000    0.163    0.000 /usr/lib/python3.12/pathlib.py:437(__str__)
+    58493    0.016    0.000    0.152    0.000 /usr/lib/python3.12/pathlib.py:551(drive)
+   165770    0.094    0.000    0.150    0.000 /usr/lib/python3.12/pathlib.py:357(__init__)
+    31332    0.015    0.000    0.136    0.000 /usr/lib/python3.12/pathlib.py:407(_load_parts)
+    83783    0.027    0.000    0.131    0.000 /usr/lib/python3.12/pathlib.py:519(__eq__)
+        1    0.005    0.005    0.115    0.115 {built-in method builtins.sorted}
+
+

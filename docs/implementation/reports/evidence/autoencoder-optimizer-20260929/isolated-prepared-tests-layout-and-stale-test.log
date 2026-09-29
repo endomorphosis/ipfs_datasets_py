@@ -1,0 +1,66 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/autoencoder-prepared-main-tests-lwjeptjk
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 544 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py . [  0%]
+......................................................................   [ 13%]
+tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_concurrency.py . [ 13%]
+..................................                                       [ 19%]
+tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_lock_contention.py . [ 19%]
+..................                                                       [ 22%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py . [ 23%]
+........................................................................ [ 36%]
+........................................................................ [ 49%]
+............                                                             [ 51%]
+tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py . [ 52%]
+....F..F................                                                 [ 56%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_manifest.py . [ 56%]
+.......                                                                  [ 57%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_native_pool.py . [ 58%]
+....                                                                     [ 58%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py . [ 59%]
+................................                                         [ 64%]
+tests/unit/optimizers/logic_theorem_optimizer/test_prepare_shared_autoencoder_targets.py . [ 65%]
+..........................                                               [ 69%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_target_preparation.py . [ 70%]
+.....................                                                    [ 73%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_prepared_targets.py . [ 74%]
+..................................                                       [ 80%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_transaction.py . [ 80%]
+......                                                                   [ 81%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_state.py . [ 81%]
+.                                                                        [ 81%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_checkpoint.py . [ 82%]
+.....................................................                    [ 91%]
+tests/unit/logic/test_family_qualification.py .......................... [ 96%]
+..................                                                       [100%]
+
+=================================== FAILURES ===================================
+__________ test_orchestration_binds_native_grammar_and_statement_lock __________
+tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py:95: in test_orchestration_binds_native_grammar_and_statement_lock
+    hashes = cli.orchestration_hashes()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/ops/legal_ir/run_incremental_autoencoders.py:66: in orchestration_hashes
+    result[str(lock)] = _sha(lock)
+                        ^^^^^^^^^^
+scripts/ops/legal_ir/run_incremental_autoencoders.py:37: in _sha
+    with Path(path).open("rb") as stream:
+         ^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/JevOps/jevops/statement_lock.py'
+________________ test_omitted_workers_follow_the_machine_budget ________________
+tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py:146: in test_omitted_workers_follow_the_machine_budget
+    from ipfs_datasets_py.logic.autoformal.worker_budget import resolve_worker_count
+E   ImportError: cannot import name 'resolve_worker_count' from 'ipfs_datasets_py.logic.autoformal.worker_budget' (/tmp/autoencoder-prepared-main-tests-lwjeptjk/ipfs_datasets_py/logic/autoformal/worker_budget.py)
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/isolated-prepared-tests.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py::test_orchestration_binds_native_grammar_and_statement_lock
+FAILED tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py::test_omitted_workers_follow_the_machine_budget
+======================== 2 failed, 542 passed in 18.84s ========================
