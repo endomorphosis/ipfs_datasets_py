@@ -1,0 +1,18 @@
+{
+  "admitted": false,
+  "failure": "ui_ux_ir_formalization loss names are missing from todo-generator thresholds",
+  "fixed": false,
+  "prior_reproduction": {
+    "bytes": 2640,
+    "path": "workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/modal-lazy-evidence/prechange-ui-registry-failure.log",
+    "sha256": "5c650504b6b97e259f32c333f54fcc130c989f68b16a1f532ca856ef0b8d2254"
+  },
+  "schema": "preexisting-out-of-scope-test-failure/v1",
+  "scope": "Previously reproduced with eager modal package import; outside the five measured legal-IR bridges and current optimization changes. Kept separate from focused main-source test results.",
+  "test": "tests/unit/logic/test_logic_submodule_registry.py::test_bridge_loss_names_are_known_to_todo_generator",
+  "unrecognized_loss_names": [
+    "ui_projection_loss",
+    "ui_roundtrip_loss",
+    "ui_accessibility_gap"
+  ]
+}

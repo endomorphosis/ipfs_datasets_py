@@ -336,3 +336,32 @@ def test_multiple_real_compiled_clauses_keep_separate_source_and_duration_bindin
         assert report["admitted"] is False
     assert reports[0]["source_id"] != reports[1]["source_id"]
     assert reports[0]["rule_sha256"] != reports[1]["rule_sha256"]
+
+
+@pytest.mark.parametrize("conflict", [
+    {"temporal_kind": "minimum_duration", "quantity": 21, "value": "20 days"},
+    {"temporal_kind": "within_duration", "quantity": 20, "value": "20 days"},
+])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_conflicting_known_temporal_sidecars_fail_closed_for_the_same_canonical_atom(conflict, reverse):
+    records = [{"temporal_kind": "minimum_duration", "quantity": 20, "value": "20 days"}, conflict]
+    if reverse:
+        records.reverse()
+    report = qualification.qualify_logic_families(TEXT, {**RULE, "temporal": ["20 days"], "temporal_records": records})
+    assert report["passed"] is False
+    assert len(report["goals"]) == len(qualification.REQUIRED_FAMILIES)
+    assert "conflicting_temporal_sidecars_for_canonical_atom" in report["diagnostics"][0]["code"]
+    assert all(row["passed"] is False for row in report["families"].values())
+    assert report["admitted"] is report["formalized"] is False
+
+
+def test_identical_duplicate_temporal_sidecars_preserve_existing_export_contract():
+    record = {"temporal_kind": "minimum_duration", "quantity": 20, "value": "20 days"}
+    report = qualification.qualify_logic_families(TEXT, {**RULE, "temporal": ["20 days"], "temporal_records": [record, dict(record)]})
+    assert report["passed"] is True
+    frame = report["families"]["frame_logic"]
+    assert frame["representation_coverage"]["typed_duration_record_count"] == 2
+    assert frame["representation_coverage"]["typed_duration_atom_indices"] == [0]
+    assert frame["formula"].count('temporal_kind(0)->"minimum_duration"') == 2
+    assert frame["formula"].count('temporal_quantity(0)->20') == 2
+    assert report["admitted"] is report["formalized"] is False

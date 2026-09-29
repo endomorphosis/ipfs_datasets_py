@@ -217,7 +217,7 @@ def run_cycle(config):
     orchestration = orchestration_hashes()
     from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_qualified_training import run_qualified_incremental_training
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan, execution_envelope
     state = Path(config["state_directory"])
     records = local_records(config["input_jsonl"]) if config.get("input_jsonl") else []
     validation = local_records(config["validation_jsonl"]) if config.get("validation_jsonl") else []
@@ -265,7 +265,8 @@ def run_cycle(config):
                 max_parallel_workers=config.get("max_parallel_workers", config["workers"]),
                 capacity_callback=lambda **limits: execution_capacity_plan("training", **limits,
                         memory_budget_mb=config["memory_mb"],
-                        cpu_budget=config.get("max_parallel_workers", config["workers"]),
+                        cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
+                            "training", config.get("max_parallel_workers", config["workers"]))["cpu_slots"]),
                         process_budget=config.get("reserved_child_process_slots")),
                 reuse_native_workers=not config.get("fresh_training_workers", True),
                 max_training_rounds=config.get("max_training_rounds", 3),
@@ -398,11 +399,12 @@ def supervised_cycle(config):
     receipt_directory = state / "cycles" / cycle_id
     receipt_directory.mkdir(parents=True)
     child_config = {**config, "max_parallel_workers": plan["workers"],
+                    "reserved_cpu_slots": plan["execution_envelope"]["cpu_slots"],
                     "reserved_child_process_slots": plan["execution_envelope"]["child_process_slots"],
                     "capacity_plan": plan, "cycle_receipt": str(receipt_directory / "cycle.json")}
     reservation = DaemonResourceReservation(
         ledger, roots=roots, storage_bytes=config["storage_bytes"], memory_mb=config["memory_mb"],
-        cpu_slots=plan["workers"], timeout_seconds=0, ledger_lock_timeout_seconds=60,
+        cpu_slots=plan["execution_envelope"]["cpu_slots"], timeout_seconds=0, ledger_lock_timeout_seconds=60,
         child_process_slots=plan["execution_envelope"]["child_process_slots"],
     )
     started = time.monotonic()

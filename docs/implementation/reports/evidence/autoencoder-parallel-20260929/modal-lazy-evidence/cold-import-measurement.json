@@ -1,0 +1,28 @@
+{
+  "admitted": false,
+  "formalized": false,
+  "observation": {
+    "cold_structural_seconds": 0.02981571783311665,
+    "formula_target_count": 1,
+    "identical_payload": true,
+    "modal_modules_loaded": [
+      "ipfs_datasets_py.logic.modal.decompiler_repairs"
+    ],
+    "paths": {
+      "decompiler_repairs": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/decompiler_repairs.py",
+      "modal": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/__init__.py"
+    },
+    "payload_sha256": "bf3756f2482da9819dc6920a65f6aad69be4ad8e627e4d11853239c485a162e5",
+    "symai_imported": false,
+    "torch_imported": false,
+    "warm_structural_seconds": 0.00020616292022168636
+  },
+  "scope": "Fresh subprocess, no prewarm; read-only structural-target import observation, not a bridge-on evaluation, training, or Lake admission.",
+  "source_sha256": {
+    "ipfs_datasets_py/logic/modal/__init__.py": "8305b15bf8d51229a2d3e8e99105bb8c07b1d051c11a1ffc53a0a55cd5c53c3a",
+    "ipfs_datasets_py/logic/modal/decompiler_repairs.py": "c75783a057f9bee0c18a0ee534e5a9a7a1ad14225d7f85393e2ce0631b9ecc68",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "6b705fa3d9718efe5411fa5dc4b94b04210118d38e8996728b10364e8eb507a5"
+  },
+  "source_unchanged": true,
+  "subprocess_wall_seconds": 0.1371369289699942
+}

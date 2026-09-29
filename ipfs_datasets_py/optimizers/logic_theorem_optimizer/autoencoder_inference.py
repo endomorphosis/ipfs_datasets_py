@@ -62,7 +62,7 @@ def _pass(candidate, version, sample, validation, directory, timeout):
 def run_inference_cycle(config, cli, *, executor_factory=None, pass_function=_pass,
                         capacity_callback=None):
     """Local-only inference: never fall through to training or publication."""
-    from .autoencoder_capacity import execution_capacity_plan
+    from .autoencoder_capacity import execution_capacity_plan, execution_envelope
     if config.get("execution_mode") != "inference":
         raise ValueError("inference route requires the inference execution gate")
     if (not config.get("input_jsonl") or not config.get("validation_jsonl")
@@ -103,7 +103,9 @@ def run_inference_cycle(config, cli, *, executor_factory=None, pass_function=_pa
     while pending and dispatched < config["max_batches"]:
         plan = (capacity_callback or (lambda **limits: execution_capacity_plan("inference", **limits)))(
             max_workers=config.get("max_parallel_workers", config["workers"]),
-            memory_budget_mb=config["memory_mb"], cpu_budget=config.get("max_parallel_workers", config["workers"]),
+            memory_budget_mb=config["memory_mb"],
+            cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
+                "inference", config.get("max_parallel_workers", config["workers"]))["cpu_slots"]),
             process_budget=config.get("reserved_child_process_slots"),
             pending_count=min(len(pending), config["max_batches"] - dispatched))
         plans.append(plan)

@@ -1,0 +1,56 @@
+{
+  "schema": "fresh-inventory-lexical-prototype/v1",
+  "rows": [
+    {
+      "implementation": "baseline",
+      "wall_seconds": 3.3946589650586247,
+      "result": {
+        "apparent_bytes": 47117955959,
+        "entry_count": 228238,
+        "symlink_count": 3833,
+        "special_file_count": 21
+      }
+    },
+    {
+      "implementation": "prototype",
+      "wall_seconds": 2.06271541188471,
+      "result": {
+        "apparent_bytes": 47117957376,
+        "entry_count": 228238,
+        "symlink_count": 3833,
+        "special_file_count": 21
+      }
+    },
+    {
+      "implementation": "baseline",
+      "wall_seconds": 3.323680102825165,
+      "result": {
+        "apparent_bytes": 47078962863,
+        "entry_count": 226566,
+        "symlink_count": 3828,
+        "special_file_count": 23
+      }
+    },
+    {
+      "implementation": "prototype",
+      "wall_seconds": 2.0205587728414685,
+      "result": {
+        "apparent_bytes": 47117457909,
+        "entry_count": 226738,
+        "symlink_count": 3859,
+        "special_file_count": 24
+      }
+    }
+  ],
+  "baseline_source_sha256": "873f9b2f25de39cd1887a6f18818a0a75971f4282ea423ceeedd0f100fb71705",
+  "prototype_sha256": "c09272104abb966a881598016bfef66ca077fe8a87a533b6554c324c9ea60ad3",
+  "result_equality": false,
+  "roots": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+    "/tmp/pytest-of-barberb"
+  ],
+  "metadata_reused": false,
+  "admitted": false
+}

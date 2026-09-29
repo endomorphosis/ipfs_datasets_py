@@ -1,0 +1,31 @@
+{
+  "files": {
+    "ipfs_datasets_py/logic/autoformal/family_qualification.py": {
+      "after_bytes": 26466,
+      "after_sha256": "6df7456a31e369f81140d5055c01b03765420e9fff829ce7e9184b12208d7c87",
+      "before_sha256": "8fae617c1b40817eafdb0c5a35ed901bd9209d7015c0e4eb700284fdfbbabe59"
+    },
+    "ipfs_datasets_py/logic/modal/__init__.py": {
+      "after_bytes": 38854,
+      "after_sha256": "8305b15bf8d51229a2d3e8e99105bb8c07b1d051c11a1ffc53a0a55cd5c53c3a",
+      "before_sha256": "038602303c59549236b551d77caaba34f73bdf4db90780b878521a93354b5893"
+    },
+    "tests/unit/logic/modal/test_modal_lazy_exports.py": {
+      "after_bytes": 5452,
+      "after_sha256": "15298595f8adebdd60780c15719d2d6ef52c8d45d51c1900414e0593dcbf28be",
+      "before_sha256": null
+    },
+    "tests/unit/logic/test_family_qualification.py": {
+      "after_bytes": 18948,
+      "after_sha256": "5f759b90cf239ff5752fc5998bf883eca6c5d1275a1ba8cfafcf21525cfd4dfb",
+      "before_sha256": "fbb3d9a378cd83a3e099d3392c15c749618ad8b30a9e0b0c9e28621de089a8a4"
+    }
+  },
+  "historical_api": {
+    "all_entries": 255,
+    "all_unique": 252,
+    "imported_objects": 261
+  },
+  "scope": "No semantic threshold, parser/tree switch, weight download, or Lean admission change.",
+  "side_effect_scope": "Previously eager optional integrations are deferred until their exports or submodules are requested. Package had no top-level code beyond imports and __all__; declaring modules keep their own definitions/registries. Direct vars(package) before first access intentionally no longer contains all lazy values; dir/from-import/star remain supported."
+}

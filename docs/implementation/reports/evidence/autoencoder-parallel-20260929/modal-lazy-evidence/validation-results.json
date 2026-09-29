@@ -1,0 +1,27 @@
+{
+  "canonical_suite": {
+    "collected": 140,
+    "diagnosis": "Pre-existing UI bridge loss names absent from ModalLossTodoGenerator thresholds; same failure reproduced with historical eager modal package initializer in a fresh isolated subprocess.",
+    "failed": 1,
+    "failure": "tests/unit/logic/test_logic_submodule_registry.py::test_bridge_loss_names_are_known_to_todo_generator",
+    "missing_ui_loss_names": [
+      "ui_projection_loss",
+      "ui_roundtrip_loss",
+      "ui_accessibility_gap"
+    ],
+    "passed": 126,
+    "skipped": 13,
+    "wall_seconds": 184.76
+  },
+  "fixed_and_pilot_receipt": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/modal-lazy-semantic-gates.json",
+    "sha256": "86c5508d76fc25b6d35552d6d0b7aaac9b994f589974c440b0ae53d241de9d1c"
+  },
+  "focused_lazy_and_family_cases": {
+    "canonical_suite_cases_all_passed": true,
+    "isolated_pre_apply_wall_seconds": 7.96,
+    "passed": 55
+  },
+  "no_model_or_lake_execution_for_import_benchmark": true,
+  "source_files_frozen": true
+}

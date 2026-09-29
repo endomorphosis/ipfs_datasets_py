@@ -1,0 +1,1327 @@
+{
+  "all": [
+    "DECOMPILER_CONTRACT_ID",
+    "MODAL_DECOMPILER_REPAIR_SCHEMA_VERSION",
+    "MODAL_COMPILER_REPAIR_SCHEMA_VERSION",
+    "compile_exception_precedence",
+    "compile_frame_role_bindings",
+    "decompile_modal_ir_structure",
+    "repair_decompiler_round_trip",
+    "validate_decompiler_round_trip_preservation",
+    "DecodedModalPhrase",
+    "DecodedModalText",
+    "DEFAULT_LEGAL_IR_BRIDGE_NAMES",
+    "DeterministicModalCompiler",
+    "DeterministicModalLogicCodec",
+    "FrameLogicPatchValidation",
+    "INTROSPECTION_ANALYSIS_CONFIG_VERSION",
+    "INTROSPECTION_ANALYSIS_SCHEMA_VERSION",
+    "INTROSPECTION_EXPORT_CONFIG_VERSION",
+    "INTROSPECTION_EXPORT_SCHEMA_VERSION",
+    "INTROSPECTION_METRIC_CONFIG_VERSION",
+    "INTROSPECTION_METRIC_SCHEMA_VERSION",
+    "IntrospectionAnalysisConfig",
+    "IntrospectionAnalysisSchemaError",
+    "IntrospectionPacketExportConfig",
+    "IntrospectionMetricRecord",
+    "IntrospectionMetricSchemaError",
+    "LegalModalAutoencoderLoop",
+    "LegalIRDisagreementPacket",
+    "LegalIRGapAnalysis",
+    "LegalIRGapCluster",
+    "LegalIRLeanTask",
+    "LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION",
+    "LEANSTRAL_FAILURE_BRANCH_PROMPT_SCHEMA_VERSION",
+    "LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION",
+    "LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION",
+    "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
+    "LEANSTRAL_MUTATION_FIXTURE_SCHEMA_VERSION",
+    "LEANSTRAL_PROJECTED_VALIDATION_SCHEMA_VERSION",
+    "LEANSTRAL_CANARY_MANIFEST_VERSION",
+    "LEANSTRAL_THEOREM_SCHEMA_VERSION",
+    "LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION",
+    "LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION",
+    "LEANSTRAL_VERIFIER_SCHEMA_VERSION",
+    "LEGAL_IR_THEOREM_LEAN_KERNEL",
+    "LeanstralCanaryManifest",
+    "LeanstralOwnedSurface",
+    "ALLOWED_AUDIT_CLASSIFICATIONS",
+    "LEANSTRAL_AUDIT_CACHE_SCHEMA_VERSION",
+    "LEANSTRAL_AUDIT_REQUEST_SCHEMA",
+    "LEANSTRAL_AUDIT_REQUEST_SCHEMA_HASH",
+    "LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION",
+    "LEANSTRAL_AUDIT_RESPONSE_SCHEMA",
+    "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_HASH",
+    "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION",
+    "LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION",
+    "LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION",
+    "LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION",
+    "LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION",
+    "LEANSTRAL_CONTINUOUS_SERVICE_SCHEMA_VERSION",
+    "LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION",
+    "LEANSTRAL_PERSISTENT_SERVICE_SCHEMA_VERSION",
+    "LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION",
+    "LEANSTRAL_ARTIFACT_CACHE_ENV",
+    "LEANSTRAL_ARTIFACT_CACHE_INDEX_ENV",
+    "LEANSTRAL_ARTIFACT_CACHE_INDEX_SCHEMA_VERSION",
+    "LEANSTRAL_ARTIFACT_CACHE_PIN_ENV",
+    "LEANSTRAL_AUDIT_IPFS_CACHE_ENV",
+    "LearnedIRViewFamilyMetrics",
+    "LeanstralMetricComparison",
+    "LeanstralProjectedChangeValidation",
+    "LeanstralProjectedChangeValidator",
+    "LeanstralProjectedValidationConfig",
+    "CompilerChangeSpec",
+    "CompilerIRMetrics",
+    "ModalCompilationAmbiguity",
+    "ModalCompilationResult",
+    "ModalCompilerConfig",
+    "MODAL_INTROSPECTION_MODES",
+    "ModalAutoencoderLoopConfig",
+    "ModalAutoencoderLoopResult",
+    "ModalIntrospectionSummary",
+    "ModalLogicCodecConfig",
+    "ModalLogicCodecResult",
+    "ModalProgramSynthesisHint",
+    "AntiCopyMetrics",
+    "LeanstralConfig",
+    "LeanstralDraftGuidance",
+    "LeanstralFailureBranchCandidateValidation",
+    "LeanstralFailureBranchSanitization",
+    "LeanstralProofValidation",
+    "LeanstralProposal",
+    "LeanstralShadowResult",
+    "LeanstralShadowRunner",
+    "LeanstralValidationCheck",
+    "LeanstralValidationReason",
+    "LeanstralTheorem",
+    "LeanstralTheoremRegistry",
+    "LeanstralAuditCache",
+    "LeanstralAuditCacheEntry",
+    "LeanstralAuditConfig",
+    "LeanstralAuditCheckpoint",
+    "LeanstralAuditRequest",
+    "LeanstralAuditResponse",
+    "LeanstralAuditResult",
+    "LeanstralAuditRunner",
+    "LeanstralAuditValidation",
+    "LeanstralAuditWorker",
+    "LeanstralAuditWorkerConfig",
+    "LeanstralAuditWorkerSummary",
+    "LeanstralAuditWorkItem",
+    "LeanstralAuditWorkResult",
+    "LeanstralBatchKey",
+    "LeanstralBatchScheduler",
+    "LeanstralBatchSchedulerConfig",
+    "LeanstralBatchTelemetry",
+    "LeanstralContinuousBatchService",
+    "LeanstralContinuousBatchServiceConfig",
+    "LeanstralCycleConsumptionDecision",
+    "LeanstralCycleEnqueueDecision",
+    "LeanstralCycleGuidanceRequest",
+    "LeanstralCycleGuidanceResult",
+    "LeanstralCycleLineage",
+    "LeanstralCyclePipeline",
+    "LeanstralCyclePipelineClosed",
+    "LeanstralCyclePipelineConfig",
+    "LeanstralGuidanceLineage",
+    "LeanstralInferenceBatch",
+    "LeanstralPersistentServiceConfig",
+    "LeanstralPersistentServiceManager",
+    "LeanstralQueueBackpressureError",
+    "LeanstralScheduledItem",
+    "LeanstralServiceHealth",
+    "LeanstralServiceHealthError",
+    "LeanstralServiceIdentity",
+    "LeanstralServiceIdentityError",
+    "LeanstralServiceLease",
+    "LeanstralArtifactCache",
+    "LeanstralArtifactCacheRecord",
+    "LeanstralAuditVerificationResult",
+    "LeanstralAuditVerifier",
+    "LeanstralHammerCandidateResult",
+    "LeanstralHammerCandidateVerifier",
+    "LeanstralHammerVerificationReport",
+    "LeanstralHammerVerifierConfig",
+    "LeanstralRejectedAudit",
+    "LeanstralRuleGap",
+    "LeanstralRuleGapEvidence",
+    "LeanstralRuleGapReport",
+    "LeanstralRuleGapReportConfig",
+    "NormalizedLegalIRGap",
+    "OWNED_LEANSTRAL_RULE_GAP_SURFACES",
+    "OwnedCompilerSurface",
+    "OWNED_COMPILER_SURFACES",
+    "append_disagreement_packets_jsonl",
+    "LeanstralTheorem",
+    "LeanstralTheoremRegistry",
+    "PhaseTiming",
+    "ProjectionEvidence",
+    "PythonPatchProposal",
+    "PythonPatchValidation",
+    "LeanstralCompilerCheck",
+    "LeanstralLocalCheck",
+    "LeanstralPatchFeedbackReport",
+    "LeanstralPatchLineage",
+    "LeanstralPatchOutcomeRecord",
+    "LeanstralSourceSpanCheck",
+    "LeanstralVerificationOutcome",
+    "LeanstralVerifierConfig",
+    "REQUIRED_LEGAL_IR_GAP_FAMILIES",
+    "REQUIRED_LEGAL_LOGIC_FAMILIES",
+    "SourceDecodedMetrics",
+    "StateConfigVersions",
+    "StructuralProverValidity",
+    "LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION",
+    "DEFAULT_LEANSTRAL_REPLAY_FIXTURE",
+    "ChangedScopeValidationPlan",
+    "TypedASTScope",
+    "ValidationBoundary",
+    "LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT",
+    "LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE",
+    "LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION",
+    "LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE",
+    "LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS",
+    "analysis_to_json",
+    "analyze_introspection_disagreements",
+    "analyze_legal_ir_gap_clusters",
+    "aggregate_verified_audits",
+    "build_introspection_metric_record",
+    "build_leanstral_patch_feedback_report",
+    "build_leanstral_rule_gap_report",
+    "build_leanstral_audit_cache_key",
+    "estimate_leanstral_audit_tokens",
+    "estimate_leanstral_marginal_information",
+    "leanstral_batch_metadata",
+    "build_leanstral_audit_work_items",
+    "build_leanstral_failure_branch_prompt",
+    "cache_entry_is_current",
+    "leanstral_llm_router_health",
+    "probe_reusable_cuda_leanstral_service",
+    "cluster_legal_ir_disagreements",
+    "cluster_legal_ir_gaps",
+    "compare_leanstral_holdout_pareto",
+    "decode_modal_ir_document",
+    "decode_modal_ir_text",
+    "decoded_modal_phrase_slot_text_map",
+    "export_autoencoder_disagreement_packet",
+    "export_introspection_packet",
+    "export_prioritized_disagreement_packets",
+    "flogic_ontology_to_dict",
+    "flogic_triples_to_graph_data",
+    "flogic_triples_to_ontology",
+    "generate_legal_semantics_theorem_registry",
+    "import_graph_data_to_graph_engine",
+    "import_modal_ir_to_graph_engine",
+    "load_introspection_metric_record",
+    "load_leanstral_canary_manifest",
+    "load_leanstral_audit_checkpoint",
+    "load_leanstral_audit_disagreements",
+    "leanstral_artifact_cache_enabled",
+    "leanstral_draft_guidance",
+    "leanstral_rule_gap_report_to_json",
+    "leanstral_patch_feedback_report_to_json",
+    "classify_leanstral_patch_outcome",
+    "modal_formula_to_text",
+    "modal_text_token_similarity",
+    "merge_leanstral_guidance_into_compiler_guidance",
+    "sanitize_leanstral_failure_branch_candidates",
+    "normalize_legal_ir_gaps",
+    "packet_to_json",
+    "introspection_export_mode_enabled",
+    "validate_disagreement_packet",
+    "parse_leanstral_audit_response",
+    "resolve_leanstral_llm_router",
+    "modal_ir_to_flogic_triples",
+    "modal_ir_to_neo4j_graph_data",
+    "synthesis_hints_from_autoencoder_introspection",
+    "synthesis_hints_from_autoencoder_introspections",
+    "synthesis_hints_from_leanstral_guidance",
+    "synthesis_hints_from_leanstral_rule_gap_report",
+    "synthesis_hints_from_leanstral_rule_gaps",
+    "target_family_distribution_for_modal_ir",
+    "target_family_for_modal_ir",
+    "validate_frame_logic_patch",
+    "validate_leanstral_projected_change",
+    "plan_incremental_validation",
+    "validate_leanstral_failure_branch_candidate",
+    "verify_leanstral_hammer_candidates",
+    "verify_leanstral_audit_hammer_candidates",
+    "lean_theorem_proof_rejection_reasons",
+    "validate_leanstral_audit_response",
+    "write_leanstral_audit_checkpoint",
+    "lean_theorem_proof_rejection_reasons",
+    "validate_leanstral_proposal",
+    "validate_leanstral_canary_manifest",
+    "validate_python_patch_proposal",
+    "verify_leanstral_audit"
+  ],
+  "exports": {
+    "ALLOWED_AUDIT_CLASSIFICATIONS": [
+      ".leanstral_audit",
+      "ALLOWED_AUDIT_CLASSIFICATIONS"
+    ],
+    "AntiCopyMetrics": [
+      ".introspection_metrics",
+      "AntiCopyMetrics"
+    ],
+    "ChangedScopeValidationPlan": [
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.incremental_validation",
+      "ChangedScopeValidationPlan"
+    ],
+    "CompilerChangeSpec": [
+      ".leanstral",
+      "CompilerChangeSpec"
+    ],
+    "CompilerIRMetrics": [
+      ".introspection_metrics",
+      "CompilerIRMetrics"
+    ],
+    "DECOMPILER_CONTRACT_ID": [
+      ".decompiler_repairs",
+      "DECOMPILER_CONTRACT_ID"
+    ],
+    "DEFAULT_LEANSTRAL_REPLAY_FIXTURE": [
+      ".leanstral_validation",
+      "DEFAULT_LEANSTRAL_REPLAY_FIXTURE"
+    ],
+    "DEFAULT_LEGAL_IR_BRIDGE_NAMES": [
+      ".autoencoder_loop",
+      "DEFAULT_LEGAL_IR_BRIDGE_NAMES"
+    ],
+    "DecodedModalPhrase": [
+      ".decompiler",
+      "DecodedModalPhrase"
+    ],
+    "DecodedModalText": [
+      ".decompiler",
+      "DecodedModalText"
+    ],
+    "DeterministicModalCompiler": [
+      ".compiler",
+      "DeterministicModalCompiler"
+    ],
+    "DeterministicModalLogicCodec": [
+      ".codec",
+      "DeterministicModalLogicCodec"
+    ],
+    "FrameLogicPatchValidation": [
+      ".autoencoder_loop",
+      "FrameLogicPatchValidation"
+    ],
+    "INTROSPECTION_ANALYSIS_CONFIG_VERSION": [
+      ".introspection_analysis",
+      "INTROSPECTION_ANALYSIS_CONFIG_VERSION"
+    ],
+    "INTROSPECTION_ANALYSIS_SCHEMA_VERSION": [
+      ".introspection_analysis",
+      "INTROSPECTION_ANALYSIS_SCHEMA_VERSION"
+    ],
+    "INTROSPECTION_EXPORT_CONFIG_VERSION": [
+      ".introspection_export",
+      "INTROSPECTION_EXPORT_CONFIG_VERSION"
+    ],
+    "INTROSPECTION_EXPORT_SCHEMA_VERSION": [
+      ".introspection_export",
+      "INTROSPECTION_EXPORT_SCHEMA_VERSION"
+    ],
+    "INTROSPECTION_METRIC_CONFIG_VERSION": [
+      ".introspection_metrics",
+      "INTROSPECTION_METRIC_CONFIG_VERSION"
+    ],
+    "INTROSPECTION_METRIC_SCHEMA_VERSION": [
+      ".introspection_metrics",
+      "INTROSPECTION_METRIC_SCHEMA_VERSION"
+    ],
+    "IntrospectionAnalysisConfig": [
+      ".introspection_analysis",
+      "IntrospectionAnalysisConfig"
+    ],
+    "IntrospectionAnalysisSchemaError": [
+      ".introspection_analysis",
+      "IntrospectionAnalysisSchemaError"
+    ],
+    "IntrospectionMetricRecord": [
+      ".introspection_metrics",
+      "IntrospectionMetricRecord"
+    ],
+    "IntrospectionMetricSchemaError": [
+      ".introspection_metrics",
+      "IntrospectionMetricSchemaError"
+    ],
+    "IntrospectionPacketExportConfig": [
+      ".introspection_export",
+      "IntrospectionPacketExportConfig"
+    ],
+    "LEANSTRAL_ARTIFACT_CACHE_ENV": [
+      ".leanstral_artifact_cache",
+      "LEANSTRAL_ARTIFACT_CACHE_ENV"
+    ],
+    "LEANSTRAL_ARTIFACT_CACHE_INDEX_ENV": [
+      ".leanstral_artifact_cache",
+      "LEANSTRAL_ARTIFACT_CACHE_INDEX_ENV"
+    ],
+    "LEANSTRAL_ARTIFACT_CACHE_INDEX_SCHEMA_VERSION": [
+      ".leanstral_artifact_cache",
+      "LEANSTRAL_ARTIFACT_CACHE_INDEX_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_ARTIFACT_CACHE_PIN_ENV": [
+      ".leanstral_artifact_cache",
+      "LEANSTRAL_ARTIFACT_CACHE_PIN_ENV"
+    ],
+    "LEANSTRAL_AUDIT_CACHE_SCHEMA_VERSION": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_CACHE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_AUDIT_IPFS_CACHE_ENV": [
+      ".leanstral_artifact_cache",
+      "LEANSTRAL_AUDIT_IPFS_CACHE_ENV"
+    ],
+    "LEANSTRAL_AUDIT_POLICY_SCHEMA_VERSION": [
+      ".leanstral_audit_policy",
+      "LEANSTRAL_AUDIT_POLICY_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_AUDIT_REQUEST_SCHEMA": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_REQUEST_SCHEMA"
+    ],
+    "LEANSTRAL_AUDIT_REQUEST_SCHEMA_HASH": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_REQUEST_SCHEMA_HASH"
+    ],
+    "LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_AUDIT_RESPONSE_SCHEMA": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_RESPONSE_SCHEMA"
+    ],
+    "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_HASH": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_HASH"
+    ],
+    "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION": [
+      ".leanstral_audit",
+      "LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION": [
+      ".leanstral_audit_worker",
+      "LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION": [
+      ".leanstral_audit_worker",
+      "LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_CANARY_MANIFEST_VERSION": [
+      ".introspection_metrics",
+      "LEANSTRAL_CANARY_MANIFEST_VERSION"
+    ],
+    "LEANSTRAL_CONTINUOUS_SERVICE_SCHEMA_VERSION": [
+      ".leanstral_audit_worker",
+      "LEANSTRAL_CONTINUOUS_SERVICE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION": [
+      ".leanstral_audit_worker",
+      "LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION": [
+      ".leanstral_audit",
+      "LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION": [
+      ".leanstral",
+      "LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_FAILURE_BRANCH_PROMPT_SCHEMA_VERSION": [
+      ".leanstral",
+      "LEANSTRAL_FAILURE_BRANCH_PROMPT_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION": [
+      ".leanstral",
+      "LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION": [
+      ".leanstral",
+      "LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION": [
+      ".leanstral_verifier",
+      "LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_MUTATION_FIXTURE_SCHEMA_VERSION": [
+      ".leanstral_validation",
+      "LEANSTRAL_MUTATION_FIXTURE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION": [
+      ".leanstral_reporting",
+      "LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT": [
+      ".leanstral_reporting",
+      "LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT"
+    ],
+    "LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE": [
+      ".leanstral_reporting",
+      "LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE"
+    ],
+    "LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION": [
+      ".leanstral_reporting",
+      "LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION"
+    ],
+    "LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE": [
+      ".leanstral_reporting",
+      "LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE"
+    ],
+    "LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS": [
+      ".leanstral_reporting",
+      "LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS"
+    ],
+    "LEANSTRAL_PERSISTENT_SERVICE_SCHEMA_VERSION": [
+      ".leanstral_audit_worker",
+      "LEANSTRAL_PERSISTENT_SERVICE_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_PROJECTED_VALIDATION_SCHEMA_VERSION": [
+      ".leanstral_validation",
+      "LEANSTRAL_PROJECTED_VALIDATION_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_PROPOSAL_SCHEMA_VERSION": [
+      ".leanstral",
+      "LEANSTRAL_PROPOSAL_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION": [
+      ".leanstral_reporting",
+      "LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_THEOREM_SCHEMA_VERSION": [
+      ".leanstral_theorems",
+      "LEANSTRAL_THEOREM_SCHEMA_VERSION"
+    ],
+    "LEANSTRAL_VERIFIER_SCHEMA_VERSION": [
+      ".leanstral_verifier",
+      "LEANSTRAL_VERIFIER_SCHEMA_VERSION"
+    ],
+    "LEGAL_IR_THEOREM_LEAN_KERNEL": [
+      ".leanstral_theorems",
+      "LEGAL_IR_THEOREM_LEAN_KERNEL"
+    ],
+    "LeanstralArtifactCache": [
+      ".leanstral_artifact_cache",
+      "LeanstralArtifactCache"
+    ],
+    "LeanstralArtifactCacheRecord": [
+      ".leanstral_artifact_cache",
+      "LeanstralArtifactCacheRecord"
+    ],
+    "LeanstralAuditCache": [
+      ".leanstral_audit",
+      "LeanstralAuditCache"
+    ],
+    "LeanstralAuditCacheEntry": [
+      ".leanstral_audit",
+      "LeanstralAuditCacheEntry"
+    ],
+    "LeanstralAuditCheckpoint": [
+      ".leanstral_audit",
+      "LeanstralAuditCheckpoint"
+    ],
+    "LeanstralAuditConfig": [
+      ".leanstral_audit",
+      "LeanstralAuditConfig"
+    ],
+    "LeanstralAuditPolicyConfig": [
+      ".leanstral_audit_policy",
+      "LeanstralAuditPolicyConfig"
+    ],
+    "LeanstralAuditPolicyDecision": [
+      ".leanstral_audit_policy",
+      "LeanstralAuditPolicyDecision"
+    ],
+    "LeanstralAuditPolicyOutcome": [
+      ".leanstral_audit_policy",
+      "LeanstralAuditPolicyOutcome"
+    ],
+    "LeanstralAuditPolicyReport": [
+      ".leanstral_audit_policy",
+      "LeanstralAuditPolicyReport"
+    ],
+    "LeanstralAuditRequest": [
+      ".leanstral_audit",
+      "LeanstralAuditRequest"
+    ],
+    "LeanstralAuditResponse": [
+      ".leanstral_audit",
+      "LeanstralAuditResponse"
+    ],
+    "LeanstralAuditResult": [
+      ".leanstral_audit",
+      "LeanstralAuditResult"
+    ],
+    "LeanstralAuditRunner": [
+      ".leanstral_audit",
+      "LeanstralAuditRunner"
+    ],
+    "LeanstralAuditValidation": [
+      ".leanstral_audit",
+      "LeanstralAuditValidation"
+    ],
+    "LeanstralAuditVerificationResult": [
+      ".leanstral_verifier",
+      "LeanstralAuditVerificationResult"
+    ],
+    "LeanstralAuditVerifier": [
+      ".leanstral_verifier",
+      "LeanstralAuditVerifier"
+    ],
+    "LeanstralAuditWorkItem": [
+      ".leanstral_audit",
+      "LeanstralAuditWorkItem"
+    ],
+    "LeanstralAuditWorkResult": [
+      ".leanstral_audit",
+      "LeanstralAuditWorkResult"
+    ],
+    "LeanstralAuditWorker": [
+      ".leanstral_audit",
+      "LeanstralAuditWorker"
+    ],
+    "LeanstralAuditWorkerConfig": [
+      ".leanstral_audit",
+      "LeanstralAuditWorkerConfig"
+    ],
+    "LeanstralAuditWorkerSummary": [
+      ".leanstral_audit",
+      "LeanstralAuditWorkerSummary"
+    ],
+    "LeanstralBatchKey": [
+      ".leanstral_audit_worker",
+      "LeanstralBatchKey"
+    ],
+    "LeanstralBatchScheduler": [
+      ".leanstral_audit_worker",
+      "LeanstralBatchScheduler"
+    ],
+    "LeanstralBatchSchedulerConfig": [
+      ".leanstral_audit_worker",
+      "LeanstralBatchSchedulerConfig"
+    ],
+    "LeanstralBatchTelemetry": [
+      ".leanstral_audit_worker",
+      "LeanstralBatchTelemetry"
+    ],
+    "LeanstralCanaryManifest": [
+      ".introspection_metrics",
+      "LeanstralCanaryManifest"
+    ],
+    "LeanstralCompilerCheck": [
+      ".leanstral_verifier",
+      "LeanstralCompilerCheck"
+    ],
+    "LeanstralConfig": [
+      ".leanstral",
+      "LeanstralConfig"
+    ],
+    "LeanstralContinuousBatchService": [
+      ".leanstral_audit_worker",
+      "LeanstralContinuousBatchService"
+    ],
+    "LeanstralContinuousBatchServiceConfig": [
+      ".leanstral_audit_worker",
+      "LeanstralContinuousBatchServiceConfig"
+    ],
+    "LeanstralCycleConsumptionDecision": [
+      ".leanstral_audit_worker",
+      "LeanstralCycleConsumptionDecision"
+    ],
+    "LeanstralCycleEnqueueDecision": [
+      ".leanstral_audit_worker",
+      "LeanstralCycleEnqueueDecision"
+    ],
+    "LeanstralCycleGuidanceRequest": [
+      ".leanstral_audit_worker",
+      "LeanstralCycleGuidanceRequest"
+    ],
+    "LeanstralCycleGuidanceResult": [
+      ".leanstral_audit_worker",
+      "LeanstralCycleGuidanceResult"
+    ],
+    "LeanstralCycleLineage": [
+      ".leanstral_audit_worker",
+      "LeanstralCycleLineage"
+    ],
+    "LeanstralCyclePipeline": [
+      ".leanstral_audit_worker",
+      "LeanstralCyclePipeline"
+    ],
+    "LeanstralCyclePipelineClosed": [
+      ".leanstral_audit_worker",
+      "LeanstralCyclePipelineClosed"
+    ],
+    "LeanstralCyclePipelineConfig": [
+      ".leanstral_audit_worker",
+      "LeanstralCyclePipelineConfig"
+    ],
+    "LeanstralDraftGuidance": [
+      ".leanstral",
+      "LeanstralDraftGuidance"
+    ],
+    "LeanstralFailureBranchCandidateValidation": [
+      ".leanstral",
+      "LeanstralFailureBranchCandidateValidation"
+    ],
+    "LeanstralFailureBranchSanitization": [
+      ".leanstral",
+      "LeanstralFailureBranchSanitization"
+    ],
+    "LeanstralGuidanceLineage": [
+      ".leanstral_audit_worker",
+      "LeanstralGuidanceLineage"
+    ],
+    "LeanstralHammerCandidateResult": [
+      ".leanstral_verifier",
+      "LeanstralHammerCandidateResult"
+    ],
+    "LeanstralHammerCandidateVerifier": [
+      ".leanstral_verifier",
+      "LeanstralHammerCandidateVerifier"
+    ],
+    "LeanstralHammerVerificationReport": [
+      ".leanstral_verifier",
+      "LeanstralHammerVerificationReport"
+    ],
+    "LeanstralHammerVerifierConfig": [
+      ".leanstral_verifier",
+      "LeanstralHammerVerifierConfig"
+    ],
+    "LeanstralInferenceBatch": [
+      ".leanstral_audit_worker",
+      "LeanstralInferenceBatch"
+    ],
+    "LeanstralLocalCheck": [
+      ".leanstral_verifier",
+      "LeanstralLocalCheck"
+    ],
+    "LeanstralMetricComparison": [
+      ".leanstral_validation",
+      "LeanstralMetricComparison"
+    ],
+    "LeanstralOwnedSurface": [
+      ".leanstral_reporting",
+      "LeanstralOwnedSurface"
+    ],
+    "LeanstralPatchFeedbackReport": [
+      ".leanstral_reporting",
+      "LeanstralPatchFeedbackReport"
+    ],
+    "LeanstralPatchLineage": [
+      ".leanstral_reporting",
+      "LeanstralPatchLineage"
+    ],
+    "LeanstralPatchOutcomeRecord": [
+      ".leanstral_reporting",
+      "LeanstralPatchOutcomeRecord"
+    ],
+    "LeanstralPersistentServiceConfig": [
+      ".leanstral_audit_worker",
+      "LeanstralPersistentServiceConfig"
+    ],
+    "LeanstralPersistentServiceManager": [
+      ".leanstral_audit_worker",
+      "LeanstralPersistentServiceManager"
+    ],
+    "LeanstralProjectedChangeValidation": [
+      ".leanstral_validation",
+      "LeanstralProjectedChangeValidation"
+    ],
+    "LeanstralProjectedChangeValidator": [
+      ".leanstral_validation",
+      "LeanstralProjectedChangeValidator"
+    ],
+    "LeanstralProjectedValidationConfig": [
+      ".leanstral_validation",
+      "LeanstralProjectedValidationConfig"
+    ],
+    "LeanstralProofValidation": [
+      ".leanstral",
+      "LeanstralProofValidation"
+    ],
+    "LeanstralProposal": [
+      ".leanstral",
+      "LeanstralProposal"
+    ],
+    "LeanstralQueueBackpressureError": [
+      ".leanstral_audit_worker",
+      "LeanstralQueueBackpressureError"
+    ],
+    "LeanstralRejectedAudit": [
+      ".leanstral_reporting",
+      "LeanstralRejectedAudit"
+    ],
+    "LeanstralRuleGap": [
+      ".leanstral_reporting",
+      "LeanstralRuleGap"
+    ],
+    "LeanstralRuleGapEvidence": [
+      ".leanstral_reporting",
+      "LeanstralRuleGapEvidence"
+    ],
+    "LeanstralRuleGapReport": [
+      ".leanstral_reporting",
+      "LeanstralRuleGapReport"
+    ],
+    "LeanstralRuleGapReportConfig": [
+      ".leanstral_reporting",
+      "LeanstralRuleGapReportConfig"
+    ],
+    "LeanstralScheduledItem": [
+      ".leanstral_audit_worker",
+      "LeanstralScheduledItem"
+    ],
+    "LeanstralServiceHealth": [
+      ".leanstral_audit_worker",
+      "LeanstralServiceHealth"
+    ],
+    "LeanstralServiceHealthError": [
+      ".leanstral_audit_worker",
+      "LeanstralServiceHealthError"
+    ],
+    "LeanstralServiceIdentity": [
+      ".leanstral_audit_worker",
+      "LeanstralServiceIdentity"
+    ],
+    "LeanstralServiceIdentityError": [
+      ".leanstral_audit_worker",
+      "LeanstralServiceIdentityError"
+    ],
+    "LeanstralServiceLease": [
+      ".leanstral_audit_worker",
+      "LeanstralServiceLease"
+    ],
+    "LeanstralShadowResult": [
+      ".leanstral",
+      "LeanstralShadowResult"
+    ],
+    "LeanstralShadowRunner": [
+      ".leanstral",
+      "LeanstralShadowRunner"
+    ],
+    "LeanstralSourceSpanCheck": [
+      ".leanstral_verifier",
+      "LeanstralSourceSpanCheck"
+    ],
+    "LeanstralTheorem": [
+      ".leanstral_theorems",
+      "LeanstralTheorem"
+    ],
+    "LeanstralTheoremRegistry": [
+      ".leanstral_theorems",
+      "LeanstralTheoremRegistry"
+    ],
+    "LeanstralValidationCheck": [
+      ".leanstral_validation",
+      "LeanstralValidationCheck"
+    ],
+    "LeanstralValidationReason": [
+      ".leanstral_validation",
+      "LeanstralValidationReason"
+    ],
+    "LeanstralVerificationOutcome": [
+      ".leanstral_verifier",
+      "LeanstralVerificationOutcome"
+    ],
+    "LeanstralVerifierConfig": [
+      ".leanstral_verifier",
+      "LeanstralVerifierConfig"
+    ],
+    "LearnedIRViewFamilyMetrics": [
+      ".introspection_metrics",
+      "LearnedIRViewFamilyMetrics"
+    ],
+    "LegalIRDisagreementPacket": [
+      ".introspection_export",
+      "LegalIRDisagreementPacket"
+    ],
+    "LegalIRGapAnalysis": [
+      ".introspection_analysis",
+      "LegalIRGapAnalysis"
+    ],
+    "LegalIRGapCluster": [
+      ".introspection_analysis",
+      "LegalIRGapCluster"
+    ],
+    "LegalIRLeanTask": [
+      ".leanstral",
+      "LegalIRLeanTask"
+    ],
+    "LegalModalAutoencoderLoop": [
+      ".autoencoder_loop",
+      "LegalModalAutoencoderLoop"
+    ],
+    "MODAL_COMPILER_REPAIR_SCHEMA_VERSION": [
+      ".compiler_repairs",
+      "MODAL_COMPILER_REPAIR_SCHEMA_VERSION"
+    ],
+    "MODAL_DECOMPILER_REPAIR_SCHEMA_VERSION": [
+      ".decompiler_repairs",
+      "MODAL_DECOMPILER_REPAIR_SCHEMA_VERSION"
+    ],
+    "MODAL_INTROSPECTION_MODES": [
+      ".autoencoder_loop",
+      "MODAL_INTROSPECTION_MODES"
+    ],
+    "ModalAutoencoderLoopConfig": [
+      ".autoencoder_loop",
+      "ModalAutoencoderLoopConfig"
+    ],
+    "ModalAutoencoderLoopResult": [
+      ".autoencoder_loop",
+      "ModalAutoencoderLoopResult"
+    ],
+    "ModalCompilationAmbiguity": [
+      ".compiler",
+      "ModalCompilationAmbiguity"
+    ],
+    "ModalCompilationResult": [
+      ".compiler",
+      "ModalCompilationResult"
+    ],
+    "ModalCompilerConfig": [
+      ".compiler",
+      "ModalCompilerConfig"
+    ],
+    "ModalIntrospectionSummary": [
+      ".autoencoder_loop",
+      "ModalIntrospectionSummary"
+    ],
+    "ModalLogicCodecConfig": [
+      ".codec",
+      "ModalLogicCodecConfig"
+    ],
+    "ModalLogicCodecResult": [
+      ".codec",
+      "ModalLogicCodecResult"
+    ],
+    "ModalProgramSynthesisHint": [
+      ".synthesis",
+      "ModalProgramSynthesisHint"
+    ],
+    "NormalizedLegalIRGap": [
+      ".introspection_analysis",
+      "NormalizedLegalIRGap"
+    ],
+    "OWNED_COMPILER_SURFACES": [
+      ".introspection_analysis",
+      "OWNED_COMPILER_SURFACES"
+    ],
+    "OWNED_LEANSTRAL_RULE_GAP_SURFACES": [
+      ".leanstral_reporting",
+      "OWNED_LEANSTRAL_RULE_GAP_SURFACES"
+    ],
+    "OwnedCompilerSurface": [
+      ".introspection_analysis",
+      "OwnedCompilerSurface"
+    ],
+    "PhaseTiming": [
+      ".introspection_metrics",
+      "PhaseTiming"
+    ],
+    "ProjectionEvidence": [
+      ".leanstral",
+      "ProjectionEvidence"
+    ],
+    "PythonPatchProposal": [
+      ".leanstral",
+      "PythonPatchProposal"
+    ],
+    "PythonPatchValidation": [
+      ".leanstral",
+      "PythonPatchValidation"
+    ],
+    "REQUIRED_LEGAL_IR_GAP_FAMILIES": [
+      ".introspection_analysis",
+      "REQUIRED_LEGAL_IR_GAP_FAMILIES"
+    ],
+    "REQUIRED_LEGAL_LOGIC_FAMILIES": [
+      ".introspection_metrics",
+      "REQUIRED_LEGAL_LOGIC_FAMILIES"
+    ],
+    "SourceDecodedMetrics": [
+      ".introspection_metrics",
+      "SourceDecodedMetrics"
+    ],
+    "StateConfigVersions": [
+      ".introspection_metrics",
+      "StateConfigVersions"
+    ],
+    "StructuralProverValidity": [
+      ".introspection_metrics",
+      "StructuralProverValidity"
+    ],
+    "TypedASTScope": [
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.incremental_validation",
+      "TypedASTScope"
+    ],
+    "ValidationBoundary": [
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.incremental_validation",
+      "ValidationBoundary"
+    ],
+    "aggregate_verified_audits": [
+      ".leanstral_reporting",
+      "aggregate_verified_audits"
+    ],
+    "analysis_to_json": [
+      ".introspection_analysis",
+      "analysis_to_json"
+    ],
+    "analyze_introspection_disagreements": [
+      ".introspection_analysis",
+      "analyze_introspection_disagreements"
+    ],
+    "analyze_legal_ir_gap_clusters": [
+      ".introspection_analysis",
+      "analyze_legal_ir_gap_clusters"
+    ],
+    "append_disagreement_packets_jsonl": [
+      ".introspection_export",
+      "append_disagreement_packets_jsonl"
+    ],
+    "build_introspection_metric_record": [
+      ".introspection_metrics",
+      "build_introspection_metric_record"
+    ],
+    "build_leanstral_audit_cache_key": [
+      ".leanstral_audit",
+      "build_leanstral_audit_cache_key"
+    ],
+    "build_leanstral_audit_work_items": [
+      ".leanstral_audit",
+      "build_leanstral_audit_work_items"
+    ],
+    "build_leanstral_failure_branch_prompt": [
+      ".leanstral",
+      "build_leanstral_failure_branch_prompt"
+    ],
+    "build_leanstral_patch_feedback_report": [
+      ".leanstral_reporting",
+      "build_leanstral_patch_feedback_report"
+    ],
+    "build_leanstral_rule_gap_report": [
+      ".leanstral_reporting",
+      "build_leanstral_rule_gap_report"
+    ],
+    "cache_entry_is_current": [
+      ".leanstral_audit",
+      "cache_entry_is_current"
+    ],
+    "classify_leanstral_patch_outcome": [
+      ".leanstral_reporting",
+      "classify_leanstral_patch_outcome"
+    ],
+    "cluster_legal_ir_disagreements": [
+      ".introspection_analysis",
+      "cluster_legal_ir_disagreements"
+    ],
+    "cluster_legal_ir_gaps": [
+      ".introspection_analysis",
+      "cluster_legal_ir_gaps"
+    ],
+    "compare_leanstral_holdout_pareto": [
+      ".leanstral_validation",
+      "compare_leanstral_holdout_pareto"
+    ],
+    "compile_exception_precedence": [
+      ".compiler_repairs",
+      "compile_exception_precedence"
+    ],
+    "compile_frame_role_bindings": [
+      ".compiler_repairs",
+      "compile_frame_role_bindings"
+    ],
+    "decode_modal_ir_document": [
+      ".decompiler",
+      "decode_modal_ir_document"
+    ],
+    "decode_modal_ir_text": [
+      ".codec",
+      "decode_modal_ir_text"
+    ],
+    "decoded_modal_phrase_slot_text_map": [
+      ".decompiler",
+      "decoded_modal_phrase_slot_text_map"
+    ],
+    "decompile_modal_ir_structure": [
+      ".decompiler_repairs",
+      "decompile_modal_ir_structure"
+    ],
+    "estimate_leanstral_audit_tokens": [
+      ".leanstral_audit_worker",
+      "estimate_leanstral_audit_tokens"
+    ],
+    "estimate_leanstral_marginal_information": [
+      ".leanstral_audit_worker",
+      "estimate_leanstral_marginal_information"
+    ],
+    "export_autoencoder_disagreement_packet": [
+      ".introspection_export",
+      "export_autoencoder_disagreement_packet"
+    ],
+    "export_introspection_packet": [
+      ".introspection_export",
+      "export_introspection_packet"
+    ],
+    "export_prioritized_disagreement_packets": [
+      ".introspection_export",
+      "export_prioritized_disagreement_packets"
+    ],
+    "flogic_ontology_to_dict": [
+      ".kg_bridge",
+      "flogic_ontology_to_dict"
+    ],
+    "flogic_triples_to_graph_data": [
+      ".kg_bridge",
+      "flogic_triples_to_graph_data"
+    ],
+    "flogic_triples_to_ontology": [
+      ".kg_bridge",
+      "flogic_triples_to_ontology"
+    ],
+    "generate_legal_semantics_theorem_registry": [
+      ".leanstral_theorems",
+      "generate_legal_semantics_theorem_registry"
+    ],
+    "import_graph_data_to_graph_engine": [
+      ".kg_bridge",
+      "import_graph_data_to_graph_engine"
+    ],
+    "import_modal_ir_to_graph_engine": [
+      ".kg_bridge",
+      "import_modal_ir_to_graph_engine"
+    ],
+    "introspection_export_mode_enabled": [
+      ".introspection_export",
+      "introspection_export_mode_enabled"
+    ],
+    "lean_theorem_proof_rejection_reasons": [
+      ".leanstral_theorems",
+      "lean_theorem_proof_rejection_reasons"
+    ],
+    "leanstral_artifact_cache_enabled": [
+      ".leanstral_artifact_cache",
+      "leanstral_artifact_cache_enabled"
+    ],
+    "leanstral_batch_metadata": [
+      ".leanstral_audit_worker",
+      "leanstral_batch_metadata"
+    ],
+    "leanstral_draft_guidance": [
+      ".leanstral",
+      "leanstral_draft_guidance"
+    ],
+    "leanstral_llm_router_health": [
+      ".leanstral_audit",
+      "leanstral_llm_router_health"
+    ],
+    "leanstral_patch_feedback_report_to_json": [
+      ".leanstral_reporting",
+      "leanstral_patch_feedback_report_to_json"
+    ],
+    "leanstral_policy_report_with_cache_hits": [
+      ".leanstral_audit_policy",
+      "leanstral_policy_report_with_cache_hits"
+    ],
+    "leanstral_rule_gap_report_to_json": [
+      ".leanstral_reporting",
+      "leanstral_rule_gap_report_to_json"
+    ],
+    "load_introspection_metric_record": [
+      ".introspection_metrics",
+      "load_introspection_metric_record"
+    ],
+    "load_leanstral_audit_checkpoint": [
+      ".leanstral_audit",
+      "load_leanstral_audit_checkpoint"
+    ],
+    "load_leanstral_audit_disagreements": [
+      ".leanstral_audit",
+      "load_leanstral_audit_disagreements"
+    ],
+    "load_leanstral_canary_manifest": [
+      ".introspection_metrics",
+      "load_leanstral_canary_manifest"
+    ],
+    "merge_leanstral_guidance_into_compiler_guidance": [
+      ".leanstral",
+      "merge_leanstral_guidance_into_compiler_guidance"
+    ],
+    "modal_formula_to_text": [
+      ".decompiler",
+      "modal_formula_to_text"
+    ],
+    "modal_ir_to_flogic_triples": [
+      ".codec",
+      "modal_ir_to_flogic_triples"
+    ],
+    "modal_ir_to_neo4j_graph_data": [
+      ".kg_bridge",
+      "modal_ir_to_neo4j_graph_data"
+    ],
+    "modal_text_token_similarity": [
+      ".decompiler",
+      "modal_text_token_similarity"
+    ],
+    "normalize_legal_ir_gaps": [
+      ".introspection_analysis",
+      "normalize_legal_ir_gaps"
+    ],
+    "packet_to_json": [
+      ".introspection_export",
+      "packet_to_json"
+    ],
+    "parse_leanstral_audit_response": [
+      ".leanstral_audit",
+      "parse_leanstral_audit_response"
+    ],
+    "plan_incremental_validation": [
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.incremental_validation",
+      "plan_incremental_validation"
+    ],
+    "plan_leanstral_audit_work_items": [
+      ".leanstral_audit",
+      "plan_leanstral_audit_work_items"
+    ],
+    "policy_decision_by_candidate_id": [
+      ".leanstral_audit_policy",
+      "policy_decision_by_candidate_id"
+    ],
+    "probe_reusable_cuda_leanstral_service": [
+      ".leanstral_audit_worker",
+      "probe_reusable_cuda_leanstral_service"
+    ],
+    "repair_decompiler_round_trip": [
+      ".decompiler_repairs",
+      "repair_decompiler_round_trip"
+    ],
+    "resolve_leanstral_llm_router": [
+      ".leanstral_audit",
+      "resolve_leanstral_llm_router"
+    ],
+    "sanitize_leanstral_failure_branch_candidates": [
+      ".leanstral",
+      "sanitize_leanstral_failure_branch_candidates"
+    ],
+    "select_informative_leanstral_audit_clusters": [
+      ".leanstral_audit_policy",
+      "select_informative_leanstral_audit_clusters"
+    ],
+    "synthesis_hints_from_autoencoder_introspection": [
+      ".synthesis",
+      "synthesis_hints_from_autoencoder_introspection"
+    ],
+    "synthesis_hints_from_autoencoder_introspections": [
+      ".synthesis",
+      "synthesis_hints_from_autoencoder_introspections"
+    ],
+    "synthesis_hints_from_leanstral_guidance": [
+      ".synthesis",
+      "synthesis_hints_from_leanstral_guidance"
+    ],
+    "synthesis_hints_from_leanstral_rule_gap_report": [
+      ".synthesis",
+      "synthesis_hints_from_leanstral_rule_gap_report"
+    ],
+    "synthesis_hints_from_leanstral_rule_gaps": [
+      ".synthesis",
+      "synthesis_hints_from_leanstral_rule_gaps"
+    ],
+    "target_family_distribution_for_modal_ir": [
+      ".codec",
+      "target_family_distribution_for_modal_ir"
+    ],
+    "target_family_for_modal_ir": [
+      ".codec",
+      "target_family_for_modal_ir"
+    ],
+    "validate_decompiler_round_trip_preservation": [
+      ".decompiler_repairs",
+      "validate_decompiler_round_trip_preservation"
+    ],
+    "validate_disagreement_packet": [
+      ".introspection_export",
+      "validate_disagreement_packet"
+    ],
+    "validate_frame_logic_patch": [
+      ".autoencoder_loop",
+      "validate_frame_logic_patch"
+    ],
+    "validate_leanstral_audit_response": [
+      ".leanstral_audit",
+      "validate_leanstral_audit_response"
+    ],
+    "validate_leanstral_canary_manifest": [
+      ".introspection_metrics",
+      "validate_leanstral_canary_manifest"
+    ],
+    "validate_leanstral_failure_branch_candidate": [
+      ".leanstral",
+      "validate_leanstral_failure_branch_candidate"
+    ],
+    "validate_leanstral_projected_change": [
+      ".leanstral_validation",
+      "validate_leanstral_projected_change"
+    ],
+    "validate_leanstral_proposal": [
+      ".leanstral",
+      "validate_leanstral_proposal"
+    ],
+    "validate_python_patch_proposal": [
+      ".leanstral",
+      "validate_python_patch_proposal"
+    ],
+    "verify_leanstral_audit": [
+      ".leanstral_verifier",
+      "verify_leanstral_audit"
+    ],
+    "verify_leanstral_audit_hammer_candidates": [
+      ".leanstral_verifier",
+      "verify_leanstral_audit_hammer_candidates"
+    ],
+    "verify_leanstral_hammer_candidates": [
+      ".leanstral_verifier",
+      "verify_leanstral_hammer_candidates"
+    ],
+    "write_leanstral_audit_checkpoint": [
+      ".leanstral_audit",
+      "write_leanstral_audit_checkpoint"
+    ]
+  },
+  "submodules": {
+    "autoencoder_loop": ".autoencoder_loop",
+    "codec": ".codec",
+    "compiler": ".compiler",
+    "compiler_repairs": ".compiler_repairs",
+    "decompiler": ".decompiler",
+    "decompiler_repairs": ".decompiler_repairs",
+    "introspection_analysis": ".introspection_analysis",
+    "introspection_export": ".introspection_export",
+    "introspection_metrics": ".introspection_metrics",
+    "kg_bridge": ".kg_bridge",
+    "leanstral": ".leanstral",
+    "leanstral_artifact_cache": ".leanstral_artifact_cache",
+    "leanstral_audit": ".leanstral_audit",
+    "leanstral_audit_policy": ".leanstral_audit_policy",
+    "leanstral_audit_worker": ".leanstral_audit_worker",
+    "leanstral_reporting": ".leanstral_reporting",
+    "leanstral_theorems": ".leanstral_theorems",
+    "leanstral_validation": ".leanstral_validation",
+    "leanstral_verifier": ".leanstral_verifier",
+    "synthesis": ".synthesis"
+  }
+}

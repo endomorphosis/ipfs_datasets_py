@@ -219,7 +219,7 @@ def scheduler_snapshot(config=None):
 
 
 def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=None,
-                  per_worker_memory_mb=1024, per_worker_cpu=1, reserve_mb=512,
+                  per_worker_memory_mb=1024, per_worker_cpu=1, reserve_mb=512, reserve_cpu_slots=0,
                   storage_headroom_bytes=None, per_worker_storage_bytes=0,
                   scheduler_available_cpu=None, scheduler_available_memory_mb=None,
                   scheduler_available_process_slots=None, per_worker_process_slots=1,
@@ -230,12 +230,15 @@ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=No
     ``memory_budget_mb`` is the whole group's existing reservation. For a fleet
     it is the maximum aggregate envelope. Scheduler limits are supplied only
     before acquiring root reservations; a nested caller supplies its parent's
-    CPU/memory envelope instead. Zero capacity is a normal deferral.
+    CPU/memory envelope instead. ``cpu_budget`` includes coordinator CPU;
+    subtract its reserve once from each independent limiting envelope, then
+    take the minimum. Zero capacity is a normal deferral.
     """
     for name, value, minimum in (("max_workers", max_workers, 1),
             ("memory_budget_mb", memory_budget_mb, 0), ("pending_count", pending_count, 0),
             ("per_worker_memory_mb", per_worker_memory_mb, 1), ("per_worker_cpu", per_worker_cpu, 1),
-            ("reserve_mb", reserve_mb, 0), ("per_worker_storage_bytes", per_worker_storage_bytes, 0),
+            ("reserve_mb", reserve_mb, 0), ("reserve_cpu_slots", reserve_cpu_slots, 0),
+            ("per_worker_storage_bytes", per_worker_storage_bytes, 0),
             ("reserve_process_slots", reserve_process_slots, 0),
             ("per_worker_process_slots", per_worker_process_slots, 1)):
         _integer(value, name, minimum)
@@ -261,7 +264,7 @@ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=No
             continue
         if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
             raise ValueError("invalid hardware probe " + name)
-        limits[name] = math.floor(value / per_worker_cpu)
+        limits[name] = math.floor(max(0, value - reserve_cpu_slots) / per_worker_cpu)
     for name in ("available_memory_mb", "cgroup_memory_remaining_mb"):
         value = observed.get(name)
         if value is None:
@@ -280,7 +283,8 @@ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=No
             ("reservation_process_slots", process_budget, per_worker_process_slots),
             ("scheduler_process_slots", scheduler_available_process_slots, per_worker_process_slots)):
         if value is not None:
-            overhead = (reserve_mb if name == "scheduler_memory" else reserve_process_slots
+            overhead = (reserve_cpu_slots if name in {"reservation_cpu", "scheduler_cpu"} else
+                        reserve_mb if name == "scheduler_memory" else reserve_process_slots
                         if name in {"scheduler_process_slots", "reservation_process_slots"} else 0)
             limits[name] = max(0, value - overhead) // cost
     if per_worker_storage_bytes:
@@ -307,11 +311,11 @@ def execution_resource_policy(execution_mode):
     resident. Receipts retain these assumptions; RSS remains polled separately.
     """
     if execution_mode == "training":
-        return {"per_worker_memory_mb": 1152, "reserve_mb": 2048,
+        return {"per_worker_memory_mb": 1152, "reserve_mb": 2048, "reserve_cpu_slots": 1,
                 "per_worker_process_slots": 1, "reserve_process_slots": 4,
                 "scope": "resident_optimizer_workers_plus_owner_tracker_lake_lean"}
     if execution_mode == "inference":
-        return {"per_worker_memory_mb": 1792, "reserve_mb": 512,
+        return {"per_worker_memory_mb": 1792, "reserve_mb": 512, "reserve_cpu_slots": 1,
                 "per_worker_process_slots": 3, "reserve_process_slots": 2,
                 "scope": "parallel_model_lake_lean_plus_coordinator_tracker"}
     raise ValueError("unknown autoencoder execution mode")
@@ -324,7 +328,8 @@ def execution_envelope(execution_mode, workers):
     policy = execution_resource_policy(execution_mode)
     return {"execution_mode": execution_mode, "workers": workers,
             "estimated_memory_mb": policy["reserve_mb"] + workers * policy["per_worker_memory_mb"] if workers else 0,
-            "cpu_slots": workers,
+            "cpu_slots": policy["reserve_cpu_slots"] + workers if workers else 0,
+            "worker_cpu_slots": workers, "coordinator_cpu_slots": policy["reserve_cpu_slots"] if workers else 0,
             "child_process_slots": policy["reserve_process_slots"] + workers * policy["per_worker_process_slots"] if workers else 0,
             "estimate_policy": policy, "scope": "cooperative_resource_estimate_not_kernel_quota"}
 

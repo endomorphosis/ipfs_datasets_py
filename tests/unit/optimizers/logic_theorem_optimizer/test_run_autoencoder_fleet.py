@@ -66,7 +66,7 @@ def test_readonly_plan_has_no_fleet_files_reservations_or_processes(tmp_path):
         wave_runner=lambda *a: pytest.fail("plan launched a child"))
     assert result["plan_only"] is True
     assert result["capacity"]["workers"] == 3
-    assert result["per_worker"] == {"memory_mb": 9216, "cpu_slots": 2, "child_process_slots": 6, "storage_bytes": 1_500_000_000}
+    assert result["per_worker"] == {"memory_mb": 9216, "cpu_slots": 3, "child_process_slots": 6, "storage_bytes": 1_500_000_000}
     assert result["reservation_acquired"] is False
     assert not args.state_directory.exists()
     assert before == {str(p): p.read_bytes() for p in tmp_path.iterdir() if p.is_file()}
@@ -283,3 +283,14 @@ def test_identity_and_token_file_validation(tmp_path):
     token = tmp_path / "worker-0.token"; token.chmod(0o644)
     with pytest.raises(fleet.FleetError, match="private"):
         fleet.connections(args.connection_file, args.state_directory)
+
+
+def test_fleet_training_cpu_includes_outer_control_inner_owner_and_model(tmp_path):
+    args, rows = setup(tmp_path, count=5, cpu_budget=8)
+    result = planned(args, rows)
+    assert result["per_worker"]["cpu_slots"] == 3
+    assert result["capacity"]["workers"] == 2
+    args.sync_only = True
+    result = planned(args, rows)
+    assert result["per_worker"]["cpu_slots"] == 1
+    assert result["capacity"]["workers"] == 5

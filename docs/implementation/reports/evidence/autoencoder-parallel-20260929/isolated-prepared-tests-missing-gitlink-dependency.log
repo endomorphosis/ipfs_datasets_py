@@ -1,0 +1,39 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/autoencoder-prepared-main-tests-v1duq9nm/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 743 items / 1 error
+
+==================================== ERRORS ====================================
+_ ERROR collecting tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_version.py _
+ImportError while importing test module '/tmp/autoencoder-prepared-main-tests-v1duq9nm/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_version.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_version.py:24: in <module>
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py:81: in <module>
+    from ipfs_datasets_py.optimizers.agentic.patch_control import PatchManager, WorktreeManager
+ipfs_datasets_py/optimizers/agentic/__init__.py:63: in <module>
+    from .llm_integration import (
+ipfs_datasets_py/optimizers/agentic/llm_integration.py:13: in <module>
+    from ...llm_router import generate_text as router_generate
+ipfs_datasets_py/llm_router.py:15: in <module>
+    _canonical_router = _load_router("llm_router")
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/_router_alias.py:15: in load_accelerator_router
+    return importlib.import_module(qualified_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'ipfs_accelerate_py'
+------------------------------- Captured stdout --------------------------------
+logic tree pin compiler=/tmp/autoencoder-prepared-main-tests-v1duq9nm/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/autoencoder-prepared-main-tests-v1duq9nm/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/autoencoder-prepared-main-tests-v1duq9nm/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/isolated-prepared-tests.xml -
+=========================== short test summary info ============================
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_version.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 5.87s ===============================

@@ -173,7 +173,7 @@ def plan_wave(args, rows, *, campaign_reader=read_campaign, storage_reader=stora
     scheduler = scheduler_reader() if scheduler_reader is not None else sizing.scheduler_snapshot()
     available = sizing.scheduler_capacity(scheduler)
     memory = 1024 if args.sync_only else 1024 + inner_memory
-    cpu = 1 if args.sync_only else 2
+    cpu = 1 if args.sync_only else 1 + sizing.execution_envelope("training", 1)["cpu_slots"]
     # The outer control process and inner coordinator reserve independently.
     # The inner envelope includes its model pool and serial Lake/Lean work.
     processes = 1 if args.sync_only else 1 + sizing.execution_envelope("training", 1)["child_process_slots"]

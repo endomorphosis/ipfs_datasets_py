@@ -308,8 +308,8 @@ def test_cycle_rejects_normalized_training_validation_overlap_before_dispatch(tm
     assert not Path(config["cycle_receipt"]).exists()
 
 
-@pytest.mark.parametrize("parallel,pending,expected", [(0, 2, 2), (2, 4, 2), (1, 4, 1)])
-def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicate_inventory(tmp_path, monkeypatch, parallel, pending, expected):
+@pytest.mark.parametrize("parallel,pending,memory,expected", [(0, 2, 8192, 2), (2, 4, 8192, 2), (1, 4, 8192, 1), (0, 8, 12288, 7)])
+def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicate_inventory(tmp_path, monkeypatch, parallel, pending, memory, expected):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as scheduler
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
@@ -331,6 +331,7 @@ def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicat
     class Input:
         def write(self, raw):
             config = json.loads(raw)
+            assert config["reserved_cpu_slots"] == expected + 1
             assert config["reserved_child_process_slots"] == expected + 4
             assert config["max_parallel_workers"] == expected
             assert config["workers"] == 32
@@ -351,11 +352,28 @@ def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicat
     monkeypatch.setattr(cli.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
     result = cli.supervised_cycle({"execution_mode": "training", "workers": 32,
         "parallel_workers": parallel,
-        "memory_mb": 8192, "max_batches": pending, "state_directory": str(tmp_path / "state"),
+        "memory_mb": memory, "max_batches": pending, "state_directory": str(tmp_path / "state"),
         "resource_ledger": str(tmp_path / "ledger.json"), "resource_roots": [],
         "storage_bytes": 1000000, "cycle_timeout": 120})
-    assert admitted[0]["cpu_slots"] == expected and admitted[0]["child_process_slots"] == expected + 4
+    assert admitted[0]["cpu_slots"] == expected + 1 and admitted[0]["child_process_slots"] == expected + 4
     assert checks == [0.0]  # Initial check; finalization performs its own fresh census.
     assert finalized == [0.5]
     assert result["resource_finalization_seconds"] == 0.0
     assert result["capacity_plan"]["execution_envelope"]["estimated_memory_mb"] == 2048 + 1152 * expected
+
+
+def test_training_nested_callback_receives_complete_reserved_cpu_envelope(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
+    config = _selection_cycle_config(tmp_path, monkeypatch)
+    config.update(workers=32, max_parallel_workers=7, reserved_cpu_slots=8,
+                  reserved_child_process_slots=11, memory_mb=12288, max_batches=8)
+    monkeypatch.setattr(capacity, "hardware_probe", lambda: {"hardware_cpu_count": 20,
+        "affinity_cpu_count": 20, "available_memory_mb": 50000})
+    def capture(_registry, templates, **kwargs):
+        plan = kwargs["capacity_callback"](pending_count=8, max_workers=7)
+        assert plan["workers"] == 7
+        assert plan["execution_envelope"]["cpu_slots"] == 8
+        return {"dispatched_run_ids": []}
+    monkeypatch.setattr(qualified, "run_qualified_incremental_training", capture)
+    cli.run_cycle(config)

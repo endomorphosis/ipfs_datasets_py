@@ -1,0 +1,78 @@
+{
+  "schema": "fresh-inventory-abba/v1",
+  "rows": [
+    {
+      "implementation": "before",
+      "wall_seconds": 3.3348457468673587,
+      "result": {
+        "apparent_bytes": 47092265113,
+        "entry_count": 226875,
+        "symlink_count": 3892,
+        "special_file_count": 30
+      }
+    },
+    {
+      "implementation": "after",
+      "wall_seconds": 2.042225808138028,
+      "result": {
+        "apparent_bytes": 47092265113,
+        "entry_count": 226875,
+        "symlink_count": 3892,
+        "special_file_count": 30
+      }
+    },
+    {
+      "implementation": "after",
+      "wall_seconds": 2.0416281819343567,
+      "result": {
+        "apparent_bytes": 47092265113,
+        "entry_count": 226875,
+        "symlink_count": 3892,
+        "special_file_count": 30
+      }
+    },
+    {
+      "implementation": "before",
+      "wall_seconds": 3.4955370579846203,
+      "result": {
+        "apparent_bytes": 47092265113,
+        "entry_count": 226875,
+        "symlink_count": 3892,
+        "special_file_count": 30
+      }
+    }
+  ],
+  "result_equality": true,
+  "stable_completed_run_parity": true,
+  "stable_completed_run_observations": [
+    {
+      "implementation": "before",
+      "result": {
+        "apparent_bytes": 66843681,
+        "entry_count": 585,
+        "symlink_count": 0,
+        "special_file_count": 0
+      }
+    },
+    {
+      "implementation": "after",
+      "result": {
+        "apparent_bytes": 66843681,
+        "entry_count": 585,
+        "symlink_count": 0,
+        "special_file_count": 0
+      }
+    }
+  ],
+  "before_source_sha256": "873f9b2f25de39cd1887a6f18818a0a75971f4282ea423ceeedd0f100fb71705",
+  "after_source_sha256": "c09272104abb966a881598016bfef66ca077fe8a87a533b6554c324c9ea60ad3",
+  "ledger_unchanged": true,
+  "roots": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+    "/tmp/pytest-of-barberb"
+  ],
+  "metadata_reused": false,
+  "admitted": false
+}

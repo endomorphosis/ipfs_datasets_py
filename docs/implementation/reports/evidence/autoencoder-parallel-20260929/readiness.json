@@ -1,0 +1,41 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/logic/test_autoformal.py",
+    "tests/unit/logic/test_autoformal_speed_semantics.py",
+    "tests/unit/logic/test_family_qualification.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_candidate_qualification.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_capacity.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_training.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_native_pool.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_paths.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_manifest.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_coordinator.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_composed_refinement.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_observability.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_prepare_shared_autoencoder_targets.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_run_autoencoder_fleet.py",
+    "tests/unit/logic/modal/test_modal_lazy_exports.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_tracking_fastpath.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_lexical.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_concurrency.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_lock_contention.py",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/readiness.xml"
+  ],
+  "returncode": 0,
+  "wall_seconds": 113.49871054198593,
+  "source_manifest": {
+    "sha256": "5261d962362db43d5f0100490760ddbf1961bf2cfc242b79510886dd4c524ed9",
+    "file_count": 7832
+  },
+  "source_unchanged": false,
+  "admitted": false
+}

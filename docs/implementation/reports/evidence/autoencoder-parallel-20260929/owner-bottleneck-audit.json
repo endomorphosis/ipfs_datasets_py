@@ -1,0 +1,59 @@
+{
+  "admitted": false,
+  "eight_span_baseline_wall_seconds": 157.59608241100796,
+  "eight_span_serial_qualification_seconds": 49.58035107329488,
+  "evidence_limits": [
+    "Historical whole-owner cProfile contains unreliable recursive aggregates and PyTorch import noise; used only to locate targets.",
+    "Localized single-thread cProfile identifies relative call cost, not native wall-time improvement.",
+    "Replay microbenchmarks reconstruct models and fully verify each closure; OS page cache is uncontrolled.",
+    "Reported qualification sums are serial in the current qualified-training loop. Residual route time is not attributed to a single operation."
+  ],
+  "localized_replay_measurement": {
+    "bytes": 12098,
+    "path": "workspace/test-logs/federal-corpus-audits/autoencoder-replay-20260929/replay-measurement.json",
+    "sha256": "313884ac031ed237b53eb852e7ec099bbf332431d34d85fbfe5b53cbf0227977"
+  },
+  "localized_replay_profile": {
+    "bytes": 7008,
+    "path": "workspace/test-logs/federal-corpus-audits/autoencoder-replay-20260929/replay-profile.txt",
+    "sha256": "ecc860316a588e35cd1f2e8d718f0f9f3f8417a6217e1b9ac17754db70a97cf1"
+  },
+  "native_compare_plan": "Compare same eight inputs,32logical lanes,four concurrent workers,one epoch/one line-search attempt,five bridges/proversfalse/diskcache0/bridgeworkers1/samplememoryfalse/python_sparse_batch. Require exact parent/full/logical candidate state, optimizer objective/update, metric/semantic/six-family artifacts and source-locked Lake parity. Keep optional wider scheduling as a separately labeled experiment.",
+  "ranking": [
+    {
+      "change": "Exact built-in atomic classification shortcut in _tracked_value",
+      "evidence": "Fresh candidate loads2.4234/2.4238seconds. Localized6.466second profile spends4.276seconds in recursive tracking and2.971seconds in typing instance checks. Every replay/check/normalization remains.",
+      "rank": 1,
+      "source": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py:327",
+      "status": "implemented and197 focused tests passed; native parity and speed pending"
+    },
+    {
+      "change": "Bounded process qualification waves with parent-only durable commits",
+      "design": "After verified registry completion, dispatch immutable candidate/dependency/sample/config descriptors to isolated qualifier processes; retain full source-before/after and candidate replay guards, actual Lake builds, deterministic lane heads, repair/publication gating and exclusive output directories. Commit each returned exact candidate result on owner only. Reserve explicit model+Lake/Lean memory/process/CPU envelope. Avoid thread workers because qualifier environment is process-global. Resume must never overwrite incomplete outputs.",
+      "rank": 2,
+      "source": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py:348",
+      "status": "design only"
+    },
+    {
+      "change": "Overlap qualification with independent future training waves",
+      "design": "Requires explicit leases/heartbeat liveness and summed phase envelopes. Current coordinator has synchronous preparation/finalization and its after_terminal hook applies only owned mode. Do not place qualification directly on owner callback while other leases depend on cooperative renewal.",
+      "rank": 3,
+      "status": "defer until process-wave measurement"
+    }
+  ],
+  "scaled_dispatch_seconds": 19.643608783138916,
+  "scaled_four_span_wall_seconds": 71.7854775080923,
+  "scaled_serial_qualification_seconds": 22.49895266420208,
+  "schema": "remaining-owner-bottleneck-audit/v1",
+  "trust_checks_retained": [
+    "every artifact byte andSHA",
+    "closure/depth/size limits",
+    "patch order,provenance,before/postimages",
+    "state digest and revisions",
+    "canonical materialized checkpoint bytes",
+    "full producer source guard",
+    "absolute metric thresholds",
+    "all required syntax families",
+    "actual source-locked lake build Legal"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "admitted": false,
+  "baseline_manifest": {
+    "file_count": 7832,
+    "sha256": "ef32a492b15076b9808bbe47290927ad3a4159aa7b1ddf290a645c2531084bc1"
+  },
+  "baseline_to_optimized_external_changes": {
+    "huggingface/autoformal_span_cache.py": {
+      "baseline": "13cf6fe7ef82838dc37141019d0d086a50ac9d1f4a14c7bb4ec4f9b9b3521566",
+      "optimized": "ec0835dfc7ed80e171927ae50b4f518a10e1ae1e101c5b0caa6a3f8236ed436e"
+    },
+    "logic/autoformal/entity_cache.py": {
+      "baseline": "35f9ad3bd0a7d5afb9b3e59ead221102e3a6670d9004e11fe4bac8b05c964bf7",
+      "optimized": "155ef45f6d293b95a830850d27e41882bf26edbbca61cdc13f889f75c6886580"
+    },
+    "logic/autoformal/lean_units.py": {
+      "baseline": "d1979db995edf1e6471e2998f2f5f92bb390042f3e85c049915f0fefdb3c5760",
+      "optimized": "fd22c6f66edde6688e59d1df581694c9d4c788cdc1b674d3cb25e6bf1bb1e037"
+    },
+    "logic/autoformal/span_cache.py": {
+      "baseline": "4eb838fac5a4a1a229ed31dcdbb9364067c9178bed5c221d7caf4563ba51860c",
+      "optimized": "2cfb0260aed12f9588562063cdb3cdc7b079f35942d607a1684b08b924672964"
+    }
+  },
+  "concurrent_external_producer_changes_during_readiness": {
+    "huggingface/autoformal_span_cache.py": {
+      "after": "ec0835dfc7ed80e171927ae50b4f518a10e1ae1e101c5b0caa6a3f8236ed436e",
+      "before": "13cf6fe7ef82838dc37141019d0d086a50ac9d1f4a14c7bb4ec4f9b9b3521566"
+    },
+    "logic/autoformal/entity_cache.py": {
+      "after": "155ef45f6d293b95a830850d27e41882bf26edbbca61cdc13f889f75c6886580",
+      "before": "35f9ad3bd0a7d5afb9b3e59ead221102e3a6670d9004e11fe4bac8b05c964bf7"
+    },
+    "logic/autoformal/span_cache.py": {
+      "after": "2cfb0260aed12f9588562063cdb3cdc7b079f35942d607a1684b08b924672964",
+      "before": "4eb838fac5a4a1a229ed31dcdbb9364067c9178bed5c221d7caf4563ba51860c"
+    }
+  },
+  "external_change_before_readiness": {
+    "logic/autoformal/lean_units.py": {
+      "baseline": "d1979db995edf1e6471e2998f2f5f92bb390042f3e85c049915f0fefdb3c5760",
+      "readiness_before": "fd22c6f66edde6688e59d1df581694c9d4c788cdc1b674d3cb25e6bf1bb1e037"
+    }
+  },
+  "mapping_inputs": {
+    "historical_source_map": {
+      "bytes": 1157412,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-optimizer-20260929/shared-preparation-before.json",
+      "sha256": "d33e8dddd83330d9f48847ef559d3be967fa54cb52f347f3698e2d1e5b59a14d"
+    },
+    "owned_after_and_external_after_source_map": {
+      "bytes": 1139326,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/package-current.json",
+      "sha256": "d545a48b8f7f9a4769172057aaaec7791b94af2d60d504d9e6f8bcc92c5c0a60"
+    },
+    "reconstructed_readiness_before": {
+      "bytes": 1139326,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/package-readiness-before-reconstructed.json",
+      "sha256": "e45538a017a0ac179fae17f6153b19e000bcd6dd10b587961c87b5c19eb4afe3"
+    }
+  },
+  "native_comparison_limitation": "Baseline and optimized runs each have their own immutable producer bindings. Their cross-run difference includes six intended package changes and four external source changes; exact result parity remains auditable, but elapsed differences cannot be attributed solely to the intended changes. Optimized-to-auto comparison requires identical complete producer manifests.",
+  "optimized_manifest": {
+    "file_count": 7832,
+    "sha256": "a9bc39f4eb1570d724c4e55a11ec58f7519ba95016282a97fb0fb36a864d1442"
+  },
+  "owned_package_files_unchanged_during_readiness": {
+    "logic/autoformal/family_qualification.py": "6df7456a31e369f81140d5055c01b03765420e9fff829ce7e9184b12208d7c87",
+    "logic/modal/__init__.py": "8305b15bf8d51229a2d3e8e99105bb8c07b1d051c11a1ffc53a0a55cd5c53c3a",
+    "optimizers/logic_theorem_optimizer/autoencoder_capacity.py": "3d6ac070238d3e7ed34ac27593e5f7d1d3b14c912186813c9819fe509abb77e3",
+    "optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "c09272104abb966a881598016bfef66ca077fe8a87a533b6554c324c9ea60ad3",
+    "optimizers/logic_theorem_optimizer/autoencoder_inference.py": "73fca445ce821d5022f0eb67f9fa7c6cef490bb2d4b933e6ff91855e8b7761bd",
+    "optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py": "136756e14822dcec8158fb2718417972096842de74c4e841f08df28f1c7a028e"
+  },
+  "qualification": "Test execution passed, but the full producer guard failed. This audit documents and preserves that failure; it does not relabel the suite as a stable-source validation.",
+  "readiness_before_manifest": {
+    "file_count": 7832,
+    "sha256": "5261d962362db43d5f0100490760ddbf1961bf2cfc242b79510886dd4c524ed9"
+  },
+  "readiness_receipt": {
+    "bytes": 2516,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/readiness.json",
+    "sha256": "507bec29521090a9cde206edc24420ee37007caa45b9448d5516bf2e0dca0940"
+  },
+  "reconstruction_verified": true,
+  "schema": "readiness-producer-drift-audit/v1",
+  "source_unchanged": false,
+  "test_exit_code": 0
+}

@@ -1,0 +1,42 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_bridge_loss_names_are_known_to_todo_generator ______________
+
+    def test_bridge_loss_names_are_known_to_todo_generator() -> None:
+        from ipfs_datasets_py.logic.bridge import logic_bridge_specs
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+            ModalLossTodoGenerator,
+        )
+    
+        thresholds = set(ModalLossTodoGenerator.DEFAULT_THRESHOLDS)
+        missing = {
+            spec.name: [
+                loss_name
+                for loss_name in spec.loss_names
+                if loss_name not in thresholds and loss_name != "cosine_similarity"
+            ]
+            for spec in logic_bridge_specs(implemented_only=True)
+        }
+        missing = {bridge_name: loss_names for bridge_name, loss_names in missing.items() if loss_names}
+    
+>       assert missing == {}
+E       AssertionError: assert {'ui_ux_ir_fo...ibility_gap']} == {}
+E         
+E         Left contains 1 more item:
+E         {'ui_ux_ir_formalization': ['ui_projection_loss',
+E                                     'ui_roundtrip_loss',
+E                                     'ui_accessibility_gap']}
+E         Use -v to get more diff
+
+modal-lazy-exports-20260929/test_registry_before.py:125: AssertionError
+----------------------------- Captured stdout call -----------------------------
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+=============================== warnings summary ===============================
+modal-lazy-exports-20260929/test_registry_before.py::test_bridge_loss_names_are_known_to_todo_generator
+  /tmp/modal-lazy-exports-20260929/ipfs_datasets_py/logic/integration/reasoning/proof_execution_engine.py:39: DeprecationWarning: integration.caching.proof_cache is deprecated. Import from ipfs_datasets_py.logic.common.proof_cache instead.
+    from ..caching.proof_cache import get_global_cache
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED modal-lazy-exports-20260929/test_registry_before.py::test_bridge_loss_names_are_known_to_todo_generator
+1 failed, 1 warning in 2.70s

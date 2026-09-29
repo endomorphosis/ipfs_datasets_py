@@ -1,0 +1,38 @@
+{
+  "admitted": false,
+  "after_audit": {
+    "bytes": 451795,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/automatic-retry-audit.json",
+    "sha256": "34f4e067c3db632cb01e07de4e6f1cf6081bb4bc2230495c49b3b2e39fcecfef"
+  },
+  "baseline_wall_seconds": 112.92320104409009,
+  "before_audit": {
+    "bytes": 451520,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked-audit.json",
+    "sha256": "e76f6ce7c571ea3d33d9259083ba65eda21467d4bff4e0a6cee9f88e5c6e8440"
+  },
+  "check_count": 143,
+  "consumer_comparison_eligible": true,
+  "expected_transport_differences": null,
+  "external_producer_drift": null,
+  "failures": [],
+  "isolated_causal_speed_claim_eligible": true,
+  "optimized_wall_seconds": 108.26620465796441,
+  "passed": true,
+  "prerequisite_run_audits": {
+    "after_failures": [],
+    "before_failures": [],
+    "passed": true
+  },
+  "row_equality": {
+    "check_count": 136,
+    "failures": [],
+    "passed": true,
+    "scope": "Per-row exact equality only; cannot override failed native audit prerequisites."
+  },
+  "schema": "native-optimizer-speed-parity-audit/v1",
+  "scope": "Sequential unprofiled native routes with the same complete package producer manifest, model settings, samples, exact parents, candidate weights, metrics and qualification gates. This single matched pair compares runtime concurrency; cProfile observations are excluded and repeated-run variance is not established.",
+  "speed_claim_eligible": true,
+  "wall_seconds_saved": 4.656996386125684,
+  "wall_time_ratio": 0.9587596141176746
+}

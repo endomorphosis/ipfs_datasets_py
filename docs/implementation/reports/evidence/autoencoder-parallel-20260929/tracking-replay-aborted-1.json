@@ -1,0 +1,9 @@
+{
+  "accepted_measurements": false,
+  "passed": false,
+  "reason": "full_package_producer_changed_during_benchmark",
+  "schema": "tracking-replay-aborted/v1",
+  "scope": "First same-process ABBA run aborted at final full producer guard; no timing results were sealed. Other package edits were ongoing.",
+  "source_or_gate_weakened": false,
+  "state_function_restored": true
+}

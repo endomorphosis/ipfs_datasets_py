@@ -1,0 +1,67 @@
+{
+  "admitted": false,
+  "after_audit": {
+    "bytes": 451338,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/optimized-audit.json",
+    "sha256": "c9b47bbdec34f32f29d355e6302066700d222c2d9582afe8d5a4b0c7fb89ab20"
+  },
+  "baseline_wall_seconds": 157.59608241100796,
+  "before_audit": {
+    "bytes": 448905,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/baseline-audit.json",
+    "sha256": "77fdf13fdbed823dd242405fb5cf1c40578841fe4369f0ae363d2df3631c581a"
+  },
+  "check_count": 144,
+  "consumer_comparison_eligible": false,
+  "expected_transport_differences": null,
+  "external_producer_drift": {
+    "audit": {
+      "bytes": 5198,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/readiness-provenance-audit.json",
+      "sha256": "596ab291c80b460152e76ffed396c7be6167a0377c202eb0df50878ae287c847"
+    },
+    "changes": {
+      "huggingface/autoformal_span_cache.py": {
+        "baseline": "13cf6fe7ef82838dc37141019d0d086a50ac9d1f4a14c7bb4ec4f9b9b3521566",
+        "optimized": "ec0835dfc7ed80e171927ae50b4f518a10e1ae1e101c5b0caa6a3f8236ed436e"
+      },
+      "logic/autoformal/entity_cache.py": {
+        "baseline": "35f9ad3bd0a7d5afb9b3e59ead221102e3a6670d9004e11fe4bac8b05c964bf7",
+        "optimized": "155ef45f6d293b95a830850d27e41882bf26edbbca61cdc13f889f75c6886580"
+      },
+      "logic/autoformal/lean_units.py": {
+        "baseline": "d1979db995edf1e6471e2998f2f5f92bb390042f3e85c049915f0fefdb3c5760",
+        "optimized": "fd22c6f66edde6688e59d1df581694c9d4c788cdc1b674d3cb25e6bf1bb1e037"
+      },
+      "logic/autoformal/span_cache.py": {
+        "baseline": "4eb838fac5a4a1a229ed31dcdbb9364067c9178bed5c221d7caf4563ba51860c",
+        "optimized": "2cfb0260aed12f9588562063cdb3cdc7b079f35942d607a1684b08b924672964"
+      }
+    }
+  },
+  "failures": [
+    "both_run_audits_passed"
+  ],
+  "isolated_causal_speed_claim_eligible": false,
+  "optimized_wall_seconds": 113.95645472710021,
+  "passed": false,
+  "prerequisite_run_audits": {
+    "after_failures": [
+      "current_complete_producer_matches_run_binding",
+      "producer_unchanged_during_read_only_audit"
+    ],
+    "before_failures": [],
+    "passed": false
+  },
+  "row_equality": {
+    "check_count": 136,
+    "failures": [],
+    "passed": true,
+    "scope": "Per-row exact equality only; cannot override failed native audit prerequisites."
+  },
+  "schema": "native-optimizer-speed-parity-audit/v1",
+  "scope": "Exact result parity and standalone wall times are retained, but four concurrent external source changes prevent attribution of elapsed differences solely to the intended optimization.",
+  "speed_claim_eligible": false,
+  "wall_seconds_saved": 43.63962768390775,
+  "wall_time_ratio": 0.7230919257872392
+}

@@ -200,3 +200,41 @@ def test_scheduler_corruption_or_configuration_drift_is_not_free_capacity(tmp_pa
     config.state_path.write_text("{}")
     with pytest.raises(ValueError, match="schema"):
         cap.scheduler_snapshot(config)
+
+
+@pytest.mark.parametrize("mode", ["training", "inference"])
+@pytest.mark.parametrize("limit", ["cpu_budget", "scheduler_available_cpu", "affinity_cpu_count", "cgroup_cpu_count"])
+def test_execution_reserves_owner_cpu_inside_every_independent_limit(mode, limit):
+    kwargs = {"max_workers": 32, "memory_budget_mb": 32768, "pending_count": 8, "probe": PROBE}
+    if limit in PROBE:
+        kwargs["probe"] = {**PROBE, limit: 8}
+    else:
+        kwargs[limit] = 8
+    result = cap.execution_capacity_plan(mode, **kwargs)
+    assert result["workers"] == 7
+    assert result["execution_envelope"]["cpu_slots"] == 8
+    assert result["execution_envelope"]["worker_cpu_slots"] == 7
+    assert result["execution_envelope"]["coordinator_cpu_slots"] == 1
+
+
+def test_training_owner_cpu_is_not_charged_twice_inside_reserved_group():
+    kwargs = {"max_workers": 32, "memory_budget_mb": 12288, "pending_count": 8, "probe": PROBE}
+    root = cap.execution_capacity_plan("training", scheduler_available_cpu=8, **kwargs)
+    assert root["workers"] == 7
+    nested = cap.execution_capacity_plan("training",
+        **{**kwargs, "max_workers": root["workers"]},
+        cpu_budget=root["execution_envelope"]["cpu_slots"],
+        process_budget=root["execution_envelope"]["child_process_slots"])
+    assert nested["workers"] == 7
+    shrunk = cap.execution_capacity_plan("training",
+        **{**kwargs, "probe": {**PROBE, "affinity_cpu_count": 4}},
+        cpu_budget=root["execution_envelope"]["cpu_slots"])
+    assert shrunk["workers"] == 3
+    assert cap.execution_capacity_plan("training", cpu_budget=1, **kwargs)["workers"] == 0
+    assert cap.execution_envelope("training", 0)["cpu_slots"] == 0
+
+
+@pytest.mark.parametrize("value", [-1, True, 1.5])
+def test_invalid_owner_cpu_reserve_cannot_expand_capacity(value):
+    with pytest.raises(ValueError):
+        plan(reserve_cpu_slots=value)

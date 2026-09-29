@@ -71,7 +71,12 @@ def _external_charges(record):
 
 def _safe_path(value, *, directory=False, missing=False):
     path = Path(os.path.abspath(os.fspath(value)))
-    for part in [*reversed(path.parents), path]:
+    return _checked_path(path, (*reversed(path.parents), path), directory=directory, missing=missing)
+
+
+def _checked_path(path, components, *, directory=False, missing=False):
+    """Check fresh metadata using only precomputed lexical path objects."""
+    for part in components:
         try:
             info = part.lstat()
         except FileNotFoundError:
@@ -95,7 +100,7 @@ def _root_identity(path):
     return {"path": str(path), "device": info.st_dev, "inode": info.st_ino}
 
 
-def _inventory_descendant(root, directory):
+def _inventory_descendant(root, directory, *, lexical_root=None):
     """Validate a discovered directory; only a missing descendant is absent.
 
     Shared roots can contain another process's temporary trees. Their deletion
@@ -103,13 +108,17 @@ def _inventory_descendant(root, directory):
     non-directory ancestor still invalidates the observation. This helper is
     deliberately separate from strict owned-attempt path validation.
     """
-    named = Path(root["path"])
-    if _root_identity(named) != root:
+    named, ancestry = lexical_root or (Path(root["path"]), None)
+    if ancestry is None:
+        ancestry = (*reversed(named.parents), named)
+    _checked_path(named, ancestry, directory=True)
+    info = named.stat()
+    if {"path": str(named), "device": info.st_dev, "inode": info.st_ino} != root:
         raise DaemonResourceError("storage root identity changed")
-    try:
-        components = Path(directory).relative_to(named).parts
-    except ValueError as exc:
-        raise DaemonResourceError("inventory descendant is outside its named root") from exc
+    named_parts, directory_parts = named.parts, Path(directory).parts
+    if directory_parts[:len(named_parts)] != named_parts:
+        raise DaemonResourceError("inventory descendant is outside its named root")
+    components = directory_parts[len(named_parts):]
     current = named
     for component in components:
         current = current / component
@@ -139,11 +148,17 @@ def _inventory_entry_disappeared(root, path):
 def _inventory(roots, *, strict=False):
     count, total, symlinks, special = 0, 0, 0, 0
     identities = [_root_identity(root) for root in roots]
-    pending = [(Path(root["path"]), root) for root in identities]
+    # Cache path spelling only. Every root and ancestor is freshly lstat'ed at
+    # every previous guard boundary; no identity, size or absence is reused.
+    lexical_roots = {
+        root["path"]: (named, (*reversed(named.parents), named))
+        for root in identities for named in (Path(root["path"]),)
+    }
+    pending = [(lexical_roots[root["path"]][0], root) for root in identities]
     while pending:
         directory, root = pending.pop()
         directory = (_safe_path(directory, directory=True) if strict
-                     else _inventory_descendant(root, directory))
+                     else _inventory_descendant(root, directory, lexical_root=lexical_roots[root["path"]]))
         if directory is None:
             continue
         try:

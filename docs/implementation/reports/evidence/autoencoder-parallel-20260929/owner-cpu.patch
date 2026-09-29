@@ -1,0 +1,279 @@
+--- a/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py
+@@ -219,7 +219,7 @@
+ 
+ 
+ def capacity_plan(*, max_workers, memory_budget_mb, pending_count, cpu_budget=None,
+-                  per_worker_memory_mb=1024, per_worker_cpu=1, reserve_mb=512,
++                  per_worker_memory_mb=1024, per_worker_cpu=1, reserve_mb=512, reserve_cpu_slots=0,
+                   storage_headroom_bytes=None, per_worker_storage_bytes=0,
+                   scheduler_available_cpu=None, scheduler_available_memory_mb=None,
+                   scheduler_available_process_slots=None, per_worker_process_slots=1,
+@@ -230,12 +230,15 @@
+     ``memory_budget_mb`` is the whole group's existing reservation. For a fleet
+     it is the maximum aggregate envelope. Scheduler limits are supplied only
+     before acquiring root reservations; a nested caller supplies its parent's
+-    CPU/memory envelope instead. Zero capacity is a normal deferral.
++    CPU/memory envelope instead. ``cpu_budget`` includes coordinator CPU;
++    subtract its reserve once from each independent limiting envelope, then
++    take the minimum. Zero capacity is a normal deferral.
+     """
+     for name, value, minimum in (("max_workers", max_workers, 1),
+             ("memory_budget_mb", memory_budget_mb, 0), ("pending_count", pending_count, 0),
+             ("per_worker_memory_mb", per_worker_memory_mb, 1), ("per_worker_cpu", per_worker_cpu, 1),
+-            ("reserve_mb", reserve_mb, 0), ("per_worker_storage_bytes", per_worker_storage_bytes, 0),
++            ("reserve_mb", reserve_mb, 0), ("reserve_cpu_slots", reserve_cpu_slots, 0),
++            ("per_worker_storage_bytes", per_worker_storage_bytes, 0),
+             ("reserve_process_slots", reserve_process_slots, 0),
+             ("per_worker_process_slots", per_worker_process_slots, 1)):
+         _integer(value, name, minimum)
+@@ -261,7 +264,7 @@
+             continue
+         if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+             raise ValueError("invalid hardware probe " + name)
+-        limits[name] = math.floor(value / per_worker_cpu)
++        limits[name] = math.floor(max(0, value - reserve_cpu_slots) / per_worker_cpu)
+     for name in ("available_memory_mb", "cgroup_memory_remaining_mb"):
+         value = observed.get(name)
+         if value is None:
+@@ -280,7 +283,8 @@
+             ("reservation_process_slots", process_budget, per_worker_process_slots),
+             ("scheduler_process_slots", scheduler_available_process_slots, per_worker_process_slots)):
+         if value is not None:
+-            overhead = (reserve_mb if name == "scheduler_memory" else reserve_process_slots
++            overhead = (reserve_cpu_slots if name in {"reservation_cpu", "scheduler_cpu"} else
++                        reserve_mb if name == "scheduler_memory" else reserve_process_slots
+                         if name in {"scheduler_process_slots", "reservation_process_slots"} else 0)
+             limits[name] = max(0, value - overhead) // cost
+     if per_worker_storage_bytes:
+@@ -307,11 +311,11 @@
+     resident. Receipts retain these assumptions; RSS remains polled separately.
+     """
+     if execution_mode == "training":
+-        return {"per_worker_memory_mb": 1152, "reserve_mb": 2048,
++        return {"per_worker_memory_mb": 1152, "reserve_mb": 2048, "reserve_cpu_slots": 1,
+                 "per_worker_process_slots": 1, "reserve_process_slots": 4,
+                 "scope": "resident_optimizer_workers_plus_owner_tracker_lake_lean"}
+     if execution_mode == "inference":
+-        return {"per_worker_memory_mb": 1792, "reserve_mb": 512,
++        return {"per_worker_memory_mb": 1792, "reserve_mb": 512, "reserve_cpu_slots": 1,
+                 "per_worker_process_slots": 3, "reserve_process_slots": 2,
+                 "scope": "parallel_model_lake_lean_plus_coordinator_tracker"}
+     raise ValueError("unknown autoencoder execution mode")
+@@ -324,7 +328,8 @@
+     policy = execution_resource_policy(execution_mode)
+     return {"execution_mode": execution_mode, "workers": workers,
+             "estimated_memory_mb": policy["reserve_mb"] + workers * policy["per_worker_memory_mb"] if workers else 0,
+-            "cpu_slots": workers,
++            "cpu_slots": policy["reserve_cpu_slots"] + workers if workers else 0,
++            "worker_cpu_slots": workers, "coordinator_cpu_slots": policy["reserve_cpu_slots"] if workers else 0,
+             "child_process_slots": policy["reserve_process_slots"] + workers * policy["per_worker_process_slots"] if workers else 0,
+             "estimate_policy": policy, "scope": "cooperative_resource_estimate_not_kernel_quota"}
+ 
+--- a/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py
+@@ -62,7 +62,7 @@
+ def run_inference_cycle(config, cli, *, executor_factory=None, pass_function=_pass,
+                         capacity_callback=None):
+     """Local-only inference: never fall through to training or publication."""
+-    from .autoencoder_capacity import execution_capacity_plan
++    from .autoencoder_capacity import execution_capacity_plan, execution_envelope
+     if config.get("execution_mode") != "inference":
+         raise ValueError("inference route requires the inference execution gate")
+     if (not config.get("input_jsonl") or not config.get("validation_jsonl")
+@@ -103,7 +103,9 @@
+     while pending and dispatched < config["max_batches"]:
+         plan = (capacity_callback or (lambda **limits: execution_capacity_plan("inference", **limits)))(
+             max_workers=config.get("max_parallel_workers", config["workers"]),
+-            memory_budget_mb=config["memory_mb"], cpu_budget=config.get("max_parallel_workers", config["workers"]),
++            memory_budget_mb=config["memory_mb"],
++            cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
++                "inference", config.get("max_parallel_workers", config["workers"]))["cpu_slots"]),
+             process_budget=config.get("reserved_child_process_slots"),
+             pending_count=min(len(pending), config["max_batches"] - dispatched))
+         plans.append(plan)
+--- a/scripts/ops/legal_ir/run_incremental_autoencoders.py
++++ b/scripts/ops/legal_ir/run_incremental_autoencoders.py
+@@ -217,7 +217,7 @@
+     orchestration = orchestration_hashes()
+     from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
+     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_qualified_training import run_qualified_incremental_training
+-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan
++    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan, execution_envelope
+     state = Path(config["state_directory"])
+     records = local_records(config["input_jsonl"]) if config.get("input_jsonl") else []
+     validation = local_records(config["validation_jsonl"]) if config.get("validation_jsonl") else []
+@@ -265,7 +265,8 @@
+                 max_parallel_workers=config.get("max_parallel_workers", config["workers"]),
+                 capacity_callback=lambda **limits: execution_capacity_plan("training", **limits,
+                         memory_budget_mb=config["memory_mb"],
+-                        cpu_budget=config.get("max_parallel_workers", config["workers"]),
++                        cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
++                            "training", config.get("max_parallel_workers", config["workers"]))["cpu_slots"]),
+                         process_budget=config.get("reserved_child_process_slots")),
+                 reuse_native_workers=not config.get("fresh_training_workers", True),
+                 max_training_rounds=config.get("max_training_rounds", 3),
+@@ -398,11 +399,12 @@
+     receipt_directory = state / "cycles" / cycle_id
+     receipt_directory.mkdir(parents=True)
+     child_config = {**config, "max_parallel_workers": plan["workers"],
++                    "reserved_cpu_slots": plan["execution_envelope"]["cpu_slots"],
+                     "reserved_child_process_slots": plan["execution_envelope"]["child_process_slots"],
+                     "capacity_plan": plan, "cycle_receipt": str(receipt_directory / "cycle.json")}
+     reservation = DaemonResourceReservation(
+         ledger, roots=roots, storage_bytes=config["storage_bytes"], memory_mb=config["memory_mb"],
+-        cpu_slots=plan["workers"], timeout_seconds=0, ledger_lock_timeout_seconds=60,
++        cpu_slots=plan["execution_envelope"]["cpu_slots"], timeout_seconds=0, ledger_lock_timeout_seconds=60,
+         child_process_slots=plan["execution_envelope"]["child_process_slots"],
+     )
+     started = time.monotonic()
+--- a/scripts/ops/legal_ir/run_autoencoder_fleet.py
++++ b/scripts/ops/legal_ir/run_autoencoder_fleet.py
+@@ -173,7 +173,7 @@
+     scheduler = scheduler_reader() if scheduler_reader is not None else sizing.scheduler_snapshot()
+     available = sizing.scheduler_capacity(scheduler)
+     memory = 1024 if args.sync_only else 1024 + inner_memory
+-    cpu = 1 if args.sync_only else 2
++    cpu = 1 if args.sync_only else 1 + sizing.execution_envelope("training", 1)["cpu_slots"]
+     # The outer control process and inner coordinator reserve independently.
+     # The inner envelope includes its model pool and serial Lake/Lean work.
+     processes = 1 if args.sync_only else 1 + sizing.execution_envelope("training", 1)["child_process_slots"]
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_capacity.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_capacity.py
+@@ -200,3 +200,41 @@
+     config.state_path.write_text("{}")
+     with pytest.raises(ValueError, match="schema"):
+         cap.scheduler_snapshot(config)
++
++
++@pytest.mark.parametrize("mode", ["training", "inference"])
++@pytest.mark.parametrize("limit", ["cpu_budget", "scheduler_available_cpu", "affinity_cpu_count", "cgroup_cpu_count"])
++def test_execution_reserves_owner_cpu_inside_every_independent_limit(mode, limit):
++    kwargs = {"max_workers": 32, "memory_budget_mb": 32768, "pending_count": 8, "probe": PROBE}
++    if limit in PROBE:
++        kwargs["probe"] = {**PROBE, limit: 8}
++    else:
++        kwargs[limit] = 8
++    result = cap.execution_capacity_plan(mode, **kwargs)
++    assert result["workers"] == 7
++    assert result["execution_envelope"]["cpu_slots"] == 8
++    assert result["execution_envelope"]["worker_cpu_slots"] == 7
++    assert result["execution_envelope"]["coordinator_cpu_slots"] == 1
++
++
++def test_training_owner_cpu_is_not_charged_twice_inside_reserved_group():
++    kwargs = {"max_workers": 32, "memory_budget_mb": 12288, "pending_count": 8, "probe": PROBE}
++    root = cap.execution_capacity_plan("training", scheduler_available_cpu=8, **kwargs)
++    assert root["workers"] == 7
++    nested = cap.execution_capacity_plan("training",
++        **{**kwargs, "max_workers": root["workers"]},
++        cpu_budget=root["execution_envelope"]["cpu_slots"],
++        process_budget=root["execution_envelope"]["child_process_slots"])
++    assert nested["workers"] == 7
++    shrunk = cap.execution_capacity_plan("training",
++        **{**kwargs, "probe": {**PROBE, "affinity_cpu_count": 4}},
++        cpu_budget=root["execution_envelope"]["cpu_slots"])
++    assert shrunk["workers"] == 3
++    assert cap.execution_capacity_plan("training", cpu_budget=1, **kwargs)["workers"] == 0
++    assert cap.execution_envelope("training", 0)["cpu_slots"] == 0
++
++
++@pytest.mark.parametrize("value", [-1, True, 1.5])
++def test_invalid_owner_cpu_reserve_cannot_expand_capacity(value):
++    with pytest.raises(ValueError):
++        plan(reserve_cpu_slots=value)
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py
+@@ -308,8 +308,8 @@
+     assert not Path(config["cycle_receipt"]).exists()
+ 
+ 
+-@pytest.mark.parametrize("parallel,pending,expected", [(0, 2, 2), (2, 4, 2), (1, 4, 1)])
+-def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicate_inventory(tmp_path, monkeypatch, parallel, pending, expected):
++@pytest.mark.parametrize("parallel,pending,memory,expected", [(0, 2, 8192, 2), (2, 4, 8192, 2), (1, 4, 8192, 1), (0, 8, 12288, 7)])
++def test_supervised_cycle_reserves_proof_processes_and_avoids_immediate_duplicate_inventory(tmp_path, monkeypatch, parallel, pending, memory, expected):
+     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
+     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as scheduler
+     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
+@@ -331,6 +331,7 @@
+     class Input:
+         def write(self, raw):
+             config = json.loads(raw)
++            assert config["reserved_cpu_slots"] == expected + 1
+             assert config["reserved_child_process_slots"] == expected + 4
+             assert config["max_parallel_workers"] == expected
+             assert config["workers"] == 32
+@@ -351,11 +352,28 @@
+     monkeypatch.setattr(cli.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
+     result = cli.supervised_cycle({"execution_mode": "training", "workers": 32,
+         "parallel_workers": parallel,
+-        "memory_mb": 8192, "max_batches": pending, "state_directory": str(tmp_path / "state"),
++        "memory_mb": memory, "max_batches": pending, "state_directory": str(tmp_path / "state"),
+         "resource_ledger": str(tmp_path / "ledger.json"), "resource_roots": [],
+         "storage_bytes": 1000000, "cycle_timeout": 120})
+-    assert admitted[0]["cpu_slots"] == expected and admitted[0]["child_process_slots"] == expected + 4
++    assert admitted[0]["cpu_slots"] == expected + 1 and admitted[0]["child_process_slots"] == expected + 4
+     assert checks == [0.0]  # Initial check; finalization performs its own fresh census.
+     assert finalized == [0.5]
+     assert result["resource_finalization_seconds"] == 0.0
+     assert result["capacity_plan"]["execution_envelope"]["estimated_memory_mb"] == 2048 + 1152 * expected
++
++
++def test_training_nested_callback_receives_complete_reserved_cpu_envelope(tmp_path, monkeypatch):
++    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
++    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_capacity as capacity
++    config = _selection_cycle_config(tmp_path, monkeypatch)
++    config.update(workers=32, max_parallel_workers=7, reserved_cpu_slots=8,
++                  reserved_child_process_slots=11, memory_mb=12288, max_batches=8)
++    monkeypatch.setattr(capacity, "hardware_probe", lambda: {"hardware_cpu_count": 20,
++        "affinity_cpu_count": 20, "available_memory_mb": 50000})
++    def capture(_registry, templates, **kwargs):
++        plan = kwargs["capacity_callback"](pending_count=8, max_workers=7)
++        assert plan["workers"] == 7
++        assert plan["execution_envelope"]["cpu_slots"] == 8
++        return {"dispatched_run_ids": []}
++    monkeypatch.setattr(qualified, "run_qualified_incremental_training", capture)
++    cli.run_cycle(config)
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_run_autoencoder_fleet.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_run_autoencoder_fleet.py
+@@ -66,7 +66,7 @@
+         wave_runner=lambda *a: pytest.fail("plan launched a child"))
+     assert result["plan_only"] is True
+     assert result["capacity"]["workers"] == 3
+-    assert result["per_worker"] == {"memory_mb": 9216, "cpu_slots": 2, "child_process_slots": 6, "storage_bytes": 1_500_000_000}
++    assert result["per_worker"] == {"memory_mb": 9216, "cpu_slots": 3, "child_process_slots": 6, "storage_bytes": 1_500_000_000}
+     assert result["reservation_acquired"] is False
+     assert not args.state_directory.exists()
+     assert before == {str(p): p.read_bytes() for p in tmp_path.iterdir() if p.is_file()}
+@@ -283,3 +283,14 @@
+     token = tmp_path / "worker-0.token"; token.chmod(0o644)
+     with pytest.raises(fleet.FleetError, match="private"):
+         fleet.connections(args.connection_file, args.state_directory)
++
++
++def test_fleet_training_cpu_includes_outer_control_inner_owner_and_model(tmp_path):
++    args, rows = setup(tmp_path, count=5, cpu_budget=8)
++    result = planned(args, rows)
++    assert result["per_worker"]["cpu_slots"] == 3
++    assert result["capacity"]["workers"] == 2
++    args.sync_only = True
++    result = planned(args, rows)
++    assert result["per_worker"]["cpu_slots"] == 1
++    assert result["capacity"]["workers"] == 5
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py
+@@ -283,3 +283,14 @@
+     assert calls[0][0] is config
+     with pytest.raises(ValueError):
+         cli.run_cycle({"execution_mode": "unknown"})
++
++
++def test_inference_nested_callback_receives_complete_reserved_cpu_envelope(context):
++    config, _ = context
++    config.update(max_parallel_workers=7, reserved_cpu_slots=8, reserved_child_process_slots=23)
++    seen = []
++    def capacity(**limits):
++        seen.append(limits)
++        return {"workers": min(limits["max_workers"], limits["pending_count"])}
++    _run(context, capacity_callback=capacity)
++    assert seen and all(call["cpu_budget"] == 8 for call in seen)

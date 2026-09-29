@@ -283,3 +283,14 @@ def test_cli_dispatches_inference_before_training_registry_and_rejects_unknown_m
     assert calls[0][0] is config
     with pytest.raises(ValueError):
         cli.run_cycle({"execution_mode": "unknown"})
+
+
+def test_inference_nested_callback_receives_complete_reserved_cpu_envelope(context):
+    config, _ = context
+    config.update(max_parallel_workers=7, reserved_cpu_slots=8, reserved_child_process_slots=23)
+    seen = []
+    def capacity(**limits):
+        seen.append(limits)
+        return {"workers": min(limits["max_workers"], limits["pending_count"])}
+    _run(context, capacity_callback=capacity)
+    assert seen and all(call["cpu_budget"] == 8 for call in seen)

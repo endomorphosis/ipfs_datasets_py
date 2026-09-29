@@ -1,0 +1,19 @@
+{
+  "admitted": false,
+  "audit_failed_preserved": true,
+  "changed_files": {
+    "logic/autoformal/entity_cache.py": {
+      "after": "cc58b91024b20c709c67af120028ff2fae76b057a2abfd2b62b5b747cd5d4ed4",
+      "before": "155ef45f6d293b95a830850d27e41882bf26edbbca61cdc13f889f75c6886580"
+    }
+  },
+  "current_manifest": {
+    "file_count": 7832,
+    "sha256": "5eb319082aafd8c84dbb3bbf6029d77cafeec5bf1e95e94a2902d84043201023"
+  },
+  "native_binding": {
+    "file_count": 7832,
+    "sha256": "a9bc39f4eb1570d724c4e55a11ec58f7519ba95016282a97fb0fb36a864d1442"
+  },
+  "schema": "post-native-producer-drift/v1"
+}

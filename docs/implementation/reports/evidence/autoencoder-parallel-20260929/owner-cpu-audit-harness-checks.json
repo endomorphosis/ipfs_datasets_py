@@ -1,0 +1,55 @@
+{
+  "cases": [
+    {
+      "case": "valid",
+      "check_count": 9,
+      "failures": [],
+      "passed": true
+    },
+    {
+      "case": "missing_coordinator",
+      "check_count": 9,
+      "failures": [
+        "owner_envelope:dispatch:0:one_coordinator_cpu"
+      ],
+      "passed": false
+    },
+    {
+      "case": "outer_cpu_overdraw",
+      "check_count": 9,
+      "failures": [
+        "owner_envelope:dispatch:0:nested_reservation_subtracts_owner_once",
+        "owner_envelope:dispatch:0:no_outer_reservation_overdraw"
+      ],
+      "passed": false
+    },
+    {
+      "case": "double_subtracted_owner",
+      "check_count": 9,
+      "failures": [
+        "owner_envelope:dispatch:0:fits_every_capacity_limit",
+        "owner_envelope:dispatch:0:nested_reservation_subtracts_owner_once"
+      ],
+      "passed": false
+    },
+    {
+      "case": "process_overdraw",
+      "check_count": 9,
+      "failures": [
+        "owner_envelope:dispatch:0:no_outer_reservation_overdraw"
+      ],
+      "passed": false
+    },
+    {
+      "case": "memory_overdraw",
+      "check_count": 9,
+      "failures": [
+        "owner_envelope:dispatch:0:no_outer_reservation_overdraw"
+      ],
+      "passed": false
+    }
+  ],
+  "passed": true,
+  "schema": "owner-cpu-audit-fixtures/v1",
+  "scope": "Injected audit-shape fixtures only; no native qualification or resource reservation."
+}

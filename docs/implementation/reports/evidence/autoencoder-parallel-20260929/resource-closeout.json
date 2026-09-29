@@ -1,0 +1,277 @@
+{
+  "admitted": false,
+  "global_storage_cap_bytes": 80000000000,
+  "ledger": {
+    "after_sha256": "e37a3010e61abc2fa6b9aa83e248f20f8dcc277c9f97670ee4c04a47b344be9f",
+    "all_prior_records_exactly_preserved": true,
+    "before_sha256": "d77924aeb58536c8ed3f2d45607c4dc55e68bca3afc121e46c4d7b84eb1addfe",
+    "current_record_count": 164,
+    "failed_automatic_admission_created_no_record": true,
+    "missing_prior_records": [],
+    "modified_prior_records": [],
+    "new_records_exactly_owned_completed_runs": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "prior_record_count": 160,
+    "retained_claim_count": 61,
+    "retained_full_reservations_bytes": 28765000000,
+    "roots_schema_and_limit_unchanged": true,
+    "status_counts_after": {
+      "released": 103,
+      "retained": 61
+    },
+    "status_counts_before": {
+      "released": 99,
+      "retained": 61
+    },
+    "unchanged_during_read": true
+  },
+  "owned_reservations": [
+    {
+      "artifacts_durable_asserted": true,
+      "child_process_slots": 8,
+      "cpu_slots": 4,
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 76171937932,
+        "inventory": {
+          "apparent_bytes": 47406937932,
+          "entry_count": 230400,
+          "special_file_count": 21,
+          "symlink_count": 3819
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 217616691200,
+        "observed_apparent_bytes": 47406937932,
+        "outstanding_full_reservations_bytes": 28765000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 66840165,
+        "attempt_limit_bytes": 750000000,
+        "charged_bytes": 76921937932,
+        "checked_at": 1790643612.3731759,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "inventory": {
+          "apparent_bytes": 47406937932,
+          "entry_count": 230400,
+          "special_file_count": 21,
+          "symlink_count": 3819
+        },
+        "limit_bytes": 80000000000,
+        "memory_limit_bytes": 12884901888,
+        "minimum_filesystem_free_bytes": 217616691200,
+        "observed_apparent_bytes": 47406937932,
+        "outstanding_full_reservations_bytes": 29515000000,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 8,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 66840165
+      },
+      "memory_mb": 12288,
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/baseline/cycles/6512dd66bc1c4d14b127fe1351d850a7/resources.json",
+        "sha256": "d599212516474414b0b72d4f1fc3b6a639fb07f3a0b237f5c3991fd6c0f34451"
+      },
+      "released_at": 1790643612.3840754,
+      "reservation_id": "e1062ba8ee214d398710e7988a368505",
+      "run": "baseline",
+      "status": "released",
+      "storage_bytes": 750000000
+    },
+    {
+      "artifacts_durable_asserted": true,
+      "child_process_slots": 8,
+      "cpu_slots": 5,
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 76738817754,
+        "inventory": {
+          "apparent_bytes": 47973817754,
+          "entry_count": 236856,
+          "special_file_count": 34,
+          "symlink_count": 4153
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 216901038080,
+        "observed_apparent_bytes": 47973817754,
+        "outstanding_full_reservations_bytes": 28765000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 66838772,
+        "attempt_limit_bytes": 750000000,
+        "charged_bytes": 77488817754,
+        "checked_at": 1790644463.8614876,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "inventory": {
+          "apparent_bytes": 47973817754,
+          "entry_count": 236856,
+          "special_file_count": 34,
+          "symlink_count": 4153
+        },
+        "limit_bytes": 80000000000,
+        "memory_limit_bytes": 12884901888,
+        "minimum_filesystem_free_bytes": 216901038080,
+        "observed_apparent_bytes": 47973817754,
+        "outstanding_full_reservations_bytes": 29515000000,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 8,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 66838772
+      },
+      "memory_mb": 12288,
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/optimized/cycles/88277ed5e5704fa6bf0af5ecd8c5aee0/resources.json",
+        "sha256": "1686b8f176db8b154153c440742dcaab02830b79a8a089951ad01fb1d35c0f98"
+      },
+      "released_at": 1790644463.8723733,
+      "reservation_id": "8b4c5366e5574ec5aab526ce7876a686",
+      "run": "optimized",
+      "status": "released",
+      "storage_bytes": 750000000
+    },
+    {
+      "artifacts_durable_asserted": true,
+      "child_process_slots": 8,
+      "cpu_slots": 5,
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 79227663200,
+        "inventory": {
+          "apparent_bytes": 50462663200,
+          "entry_count": 228581,
+          "special_file_count": 25,
+          "symlink_count": 3827
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 213610151936,
+        "observed_apparent_bytes": 50462663200,
+        "outstanding_full_reservations_bytes": 28765000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 66838714,
+        "attempt_limit_bytes": 750000000,
+        "charged_bytes": 79977663200,
+        "checked_at": 1790645510.9677963,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "inventory": {
+          "apparent_bytes": 50462663200,
+          "entry_count": 228581,
+          "special_file_count": 25,
+          "symlink_count": 3827
+        },
+        "limit_bytes": 80000000000,
+        "memory_limit_bytes": 12884901888,
+        "minimum_filesystem_free_bytes": 213610151936,
+        "observed_apparent_bytes": 50462663200,
+        "outstanding_full_reservations_bytes": 29515000000,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 8,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 66838714
+      },
+      "memory_mb": 12288,
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/rechecked/cycles/b9566b8286cf4035bca7a3e5e79daa44/resources.json",
+        "sha256": "0af37965a10c877f81795f6724b200608e53978df63723084f09e9a165f3d1c3"
+      },
+      "released_at": 1790645510.9783034,
+      "reservation_id": "75ee6720b135420d9fbd3cea255ae44f",
+      "run": "rechecked",
+      "status": "released",
+      "storage_bytes": 750000000
+    },
+    {
+      "artifacts_durable_asserted": true,
+      "child_process_slots": 11,
+      "cpu_slots": 8,
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 76660691327,
+        "inventory": {
+          "apparent_bytes": 47895691327,
+          "entry_count": 228795,
+          "special_file_count": 24,
+          "symlink_count": 3869
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 216160993280,
+        "observed_apparent_bytes": 47895691327,
+        "outstanding_full_reservations_bytes": 28765000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 66841795,
+        "attempt_limit_bytes": 750000000,
+        "charged_bytes": 77410691327,
+        "checked_at": 1790645858.944208,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "inventory": {
+          "apparent_bytes": 47895691327,
+          "entry_count": 228795,
+          "special_file_count": 24,
+          "symlink_count": 3869
+        },
+        "limit_bytes": 80000000000,
+        "memory_limit_bytes": 12884901888,
+        "minimum_filesystem_free_bytes": 216160993280,
+        "observed_apparent_bytes": 47895691327,
+        "outstanding_full_reservations_bytes": 29515000000,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 11,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 66841795
+      },
+      "memory_mb": 12288,
+      "receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-parallel-20260929/automatic-retry/cycles/4f18138ad75a475ab3ae680ddb6788f4/resources.json",
+        "sha256": "ec7c724bbc8f2df9d511c61eba969156819a3152814b9767465f984588ae9b22"
+      },
+      "released_at": 1790645858.953859,
+      "reservation_id": "765f352c8b2247ae888bd4dc4b47afd9",
+      "run": "automatic-retry",
+      "status": "released",
+      "storage_bytes": 750000000
+    }
+  ],
+  "passed": true,
+  "per_worker_cli_storage_cap": {
+    "bytes": 50000000000,
+    "line": 546,
+    "source": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_incremental_autoencoders.py",
+    "source_sha256": "a2e6b41a2c4b905f34d2aaae683cb9d676604bf9943a48cfc872ee5b6ce21fa3"
+  },
+  "protected_checkpoint": {
+    "bytes": 25895338,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "unchanged": true
+  },
+  "schema": "read-only-resource-closeout/v1",
+  "scope": "Reads ledger and immutable run resource receipts, checks protected checkpoint bytes and CLI cap source. No ledger writes, release operations or filesystem inventory rescans; existing last_usage/final_accounting observations retain their original timestamps and are not fresh headroom estimates. Process liveness was not re-probed."
+}

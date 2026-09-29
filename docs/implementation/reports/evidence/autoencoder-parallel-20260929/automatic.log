@@ -1,0 +1,17 @@
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_incremental_autoencoders.py", line 575, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_incremental_autoencoders.py", line 566, in main
+    report = supervised_cycle(config)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_incremental_autoencoders.py", line 413, in supervised_cycle
+    with reservation:
+  File "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py", line 408, in __enter__
+    observation = self._account(ledger, additional=self.storage_bytes)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py", line 397, in _account
+    raise DaemonResourceError("storage reservation capacity exceeded")
+ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources.DaemonResourceError: storage reservation capacity exceeded

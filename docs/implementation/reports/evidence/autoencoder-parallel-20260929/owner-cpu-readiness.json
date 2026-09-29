@@ -1,0 +1,135 @@
+{
+  "admitted": false,
+  "cpu_policy": {
+    "execution_coordinator_cpu_slots": 1,
+    "fleet_sync_only_identity_cpu_slots": 1,
+    "fleet_training_identity_cpu_slots": 3,
+    "nested_cpu_budget_scope": "whole already-acquired envelope; coordinator subtracted once per independent bound",
+    "worker_cpu_slots": 1
+  },
+  "demonstrated_planner_case": {
+    "execution_cpu_slots": 8,
+    "memory_budget_mb": 12288,
+    "nested_workers": 7,
+    "pending_count": 8,
+    "scheduler_cpu_slots": 8,
+    "workers": 7
+  },
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py": {
+      "before": {
+        "bytes": 16830,
+        "sha256": "15dc51aac2d95feab06739411aebf31bb762903503653e7f4b77eca7d8d24625"
+      },
+      "ready": {
+        "bytes": 17379,
+        "sha256": "3d6ac070238d3e7ed34ac27593e5f7d1d3b14c912186813c9819fe509abb77e3"
+      }
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py": {
+      "before": {
+        "bytes": 7897,
+        "sha256": "8b4b955409dd4bc34c8fc9fbdf4b2126bcccf9bf710919905a4b34ff7331e63a"
+      },
+      "ready": {
+        "bytes": 8026,
+        "sha256": "73fca445ce821d5022f0eb67f9fa7c6cef490bb2d4b933e6ff91855e8b7761bd"
+      }
+    },
+    "scripts/ops/legal_ir/run_autoencoder_fleet.py": {
+      "before": {
+        "bytes": 25228,
+        "sha256": "2d276d06ce37d9214ff247248d19946a4c1924a11cac3e77d8d9cf005afb06ae"
+      },
+      "ready": {
+        "bytes": 25284,
+        "sha256": "d7319851aac58ebc2b7ac8c1cb10d715da3f799815a49cbc2b9879b94e25c7d5"
+      }
+    },
+    "scripts/ops/legal_ir/run_incremental_autoencoders.py": {
+      "before": {
+        "bytes": 33945,
+        "sha256": "5c3c731e7c16a2f1573ade8cbba712d0785065dd1fc95abc82d291fecc3bdb36"
+      },
+      "ready": {
+        "bytes": 34180,
+        "sha256": "a2e6b41a2c4b905f34d2aaae683cb9d676604bf9943a48cfc872ee5b6ce21fa3"
+      }
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_capacity.py": {
+      "before": {
+        "bytes": 10380,
+        "sha256": "3dd859bcb8ca86bae536251775fd2c86128f470a65f98e89b2fde2baf5bef177"
+      },
+      "ready": {
+        "bytes": 12261,
+        "sha256": "82ae1a842a953670a3b00fbac860ebe68ec99567e46cd7ceebc2584351984f29"
+      }
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py": {
+      "before": {
+        "bytes": 13720,
+        "sha256": "c26692eb7855f196637be9587a3ab9eb28969170f8e4c7c37d077bdcbcdde4d8"
+      },
+      "ready": {
+        "bytes": 14190,
+        "sha256": "c0b8630d23b1a96e8b700a42d25ac2cda9338ea8e1edaec73ae1b8d09b479a3b"
+      }
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py": {
+      "before": {
+        "bytes": 21216,
+        "sha256": "e7460d420858b6e535fe2c809805e4171b79995673f8e142041f7af53493c5ac"
+      },
+      "ready": {
+        "bytes": 22391,
+        "sha256": "377ff89d9476f168b847d54b1f1c48c0a43e8ff189cc34ed74b5fee9fc0975be"
+      }
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_run_autoencoder_fleet.py": {
+      "before": {
+        "bytes": 14511,
+        "sha256": "8a84e70558c66b2474e926e97c53a101c52318bdba1b3c9457281f5ec8e5a83d"
+      },
+      "ready": {
+        "bytes": 14937,
+        "sha256": "8cc1925831f857f855788e3d0cff2060819da55205efac6241f17f9b1ef6e420"
+      }
+    }
+  },
+  "limits_unchanged": [
+    "32 logical lanes",
+    "max_batches default4",
+    "memory estimates",
+    "process slot estimates",
+    "disk/storage cap",
+    "training numerical objective",
+    "qualification gates"
+  ],
+  "patch": {
+    "path": "/tmp/autoencoder-owner-cpu-20260929/owner-cpu.patch",
+    "sha256": "8e32bb2af7b90d3ed4617f2f3334c0b699a9c80c521d404e34134794c24adaa2"
+  },
+  "schema_version": "autoencoder-owner-cpu-readiness/v1",
+  "scope": "resource estimates and admission only; no model objective, source logic or gates changed",
+  "syntax_compile": "all eight changed files compile",
+  "tests": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_capacity.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_run_autoencoder_fleet.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py",
+      "--disable-warnings",
+      "--maxfail=3"
+    ],
+    "elapsed_seconds": 11.32,
+    "failed": 0,
+    "native_training_executed": false,
+    "passed": 116
+  },
+  "written_at": "2026-09-29T01:03:07.975960+00:00"
+}
