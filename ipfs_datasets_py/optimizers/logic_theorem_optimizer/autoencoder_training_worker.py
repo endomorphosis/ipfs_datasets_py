@@ -233,6 +233,7 @@ class TrainingConfig:
     projection_optimizer_mode: str = "fixed"
     projection_momentum: float = 0.0
     projection_candidate_update_order: tuple[str, ...] | None = None
+    projection_reconstruction_objective: str = "safety_projected"
 
     def __post_init__(self) -> None:
         try:
@@ -240,6 +241,9 @@ class TrainingConfig:
         except ValueError as exc:
             raise TrainingJobValidationError(str(exc)) from exc
         object.__setattr__(self, "projection_candidate_update_order", order)
+        if (type(self.projection_reconstruction_objective) is not str
+                or self.projection_reconstruction_objective not in {"safety_projected", "raw_decoder"}):
+            raise TrainingJobValidationError("projection_reconstruction_objective must be safety_projected or raw_decoder")
         if not isinstance(self.legal_ir_bridge_names, (list, tuple)):
             raise TrainingJobValidationError("legal_ir_bridge_names must be an array")
         names = tuple(self.legal_ir_bridge_names)
@@ -305,6 +309,8 @@ class TrainingConfig:
         # opt-in is disabled. Enabled budgets must be bound into both.
         if self.projection_candidate_update_order is None:
             result.pop("projection_candidate_update_order")
+        if self.projection_reconstruction_objective == "safety_projected":
+            result.pop("projection_reconstruction_objective")
         if self.projection_max_composed_refinement_attempts == 0:
             result.pop("projection_max_composed_refinement_attempts")
         if self.projection_optimizer_mode == "fixed" and self.projection_momentum == 0.0:
@@ -482,6 +488,11 @@ class TrainingJobSpec:
             object.__setattr__(self, name, tuple(values))
         if not self.samples:
             raise TrainingJobValidationError("samples must not be empty")
+        if self.training_config.projection_reconstruction_objective == "raw_decoder":
+            training_texts = {" ".join(row.text.casefold().split()) for row in self.samples}
+            validation_texts = {" ".join(row.text.casefold().split()) for row in self.validation_samples}
+            if not validation_texts or training_texts & validation_texts:
+                raise TrainingJobValidationError("raw_decoder requires nonempty disjoint validation_samples")
         if self.training_config.projection_max_composed_refinement_attempts:
             training_texts = {" ".join(row.text.casefold().split()) for row in self.samples}
             validation_texts = {" ".join(row.text.casefold().split()) for row in self.validation_samples}
@@ -1200,6 +1211,7 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         validation_mode = "overlapping" if overlap or text_overlap else "holdout"
     target_load_started = time.perf_counter()
     shared_targets = None
+    shared_target_supervision = None
     target_config = None
     target_snapshot = None
     shared_target_status_counts: dict[str, int] = {}
@@ -1240,9 +1252,18 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         target_hydration_started = time.perf_counter()
         if reduce_native_targets and _target_reduction_skip_reason(target_snapshot, trainer) is None:
             streamed_memory_before = _memory_observation()
+            prepare_targets = prepare_native_targets
+            checked_feature_targets = set()
+            if spec.training_config.projection_reconstruction_objective == "raw_decoder":
+                from .autoencoder_feature_training import verify_feature_target_supervision
+                def prepare_targets(targets):
+                    verify_feature_target_supervision(targets, target_snapshot.statuses,
+                        spec.training_config.legal_ir_bridge_names, sample_ids=list(targets))
+                    checked_feature_targets.update(targets)
+                    return prepare_native_targets(targets)
             shared_targets, target_hydration_gc, streamed_reduction = _stream_reduced_shared_targets(
                 target_snapshot, members, target_config, defer_gc=defer_target_hydration_gc,
-                prepare=prepare_native_targets)
+                prepare=prepare_targets)
             streamed_memory_after = _memory_observation()
             # Hash/conversion and release are outside the disjoint hydration
             # scopes. The encompassing target_load_seconds includes all work.
@@ -1265,6 +1286,18 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
                 status = statuses[sample.sample_id]
                 counts[status] = counts.get(status, 0) + 1
             shared_target_split_status_counts[split_name] = counts
+        if spec.training_config.projection_reconstruction_objective == "raw_decoder":
+            from .autoencoder_feature_training import verify_feature_target_supervision
+            if streamed_reduction is not None:
+                from .autoencoder_feature_training import _supervision_receipt
+                if checked_feature_targets != {member.sample_id for member in members}:
+                    raise TrainingJobValidationError("streamed feature supervision selection is incomplete")
+                shared_target_supervision = _supervision_receipt(
+                    checked_feature_targets, spec.training_config.legal_ir_bridge_names)
+            else:
+                shared_target_supervision = verify_feature_target_supervision(
+                    shared_targets, statuses, spec.training_config.legal_ir_bridge_names,
+                    sample_ids=[member.sample_id for member in members])
     target_reduction = {
         "policy": "worker_private_native_targets_v1", "requested": reduce_native_targets,
         "applied": False, "skip_reason": "not_requested",
@@ -1470,6 +1503,8 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         "sparse_patch_segments": segments,
         "sparse_patch_bytes": sum(segment["bytes"] for segment in segments),
     }
+    if shared_target_supervision is not None:
+        receipt["shared_target_supervision"] = shared_target_supervision
     if spec.training_config.projection_optimizer_mode in {"guarded_adaptive", "productive_adaptive"}:
         receipt["projection_optimizer_scope"] = "job_local_reset_per_training_call"
         receipt["optimizer_history_persisted"] = False

@@ -35,7 +35,7 @@ from .resource_scheduler import ResourceLane, get_global_resource_scheduler
 # Campaign cap increased with operator authorization on 2026-09-29. Existing
 # ledgers require an explicit, lock-held limit migration; _read never upgrades
 # historical ledgers or releases their retained reservations implicitly.
-MAX_STORAGE_BYTES = 85_000_000_000
+MAX_STORAGE_BYTES = 87_000_000_000
 MAX_LEDGER_BYTES = 8 * 1024 * 1024
 MAX_RESERVATIONS = 4096
 MAX_CHILDREN_PER_RESERVATION = 16

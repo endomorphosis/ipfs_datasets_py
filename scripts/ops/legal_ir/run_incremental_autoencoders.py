@@ -44,6 +44,8 @@ def orchestration_hashes():
              ROOT / "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_training.py",
+             ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_inputs.py",
              ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
              ROOT / "ipfs_datasets_py/logic/autoformal/family_qualification.py",
              ROOT / "ipfs_datasets_py/logic/modal/decompiler.py",
@@ -144,14 +146,18 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
                    validation_records=(), composed_refinement_attempts=0,
                    epochs=1, learning_rate=0.35, line_search_attempts=1,
                    projection_optimizer_mode="fixed", projection_momentum=0.0,
-                   projection_candidate_update_order=None, target_shard_max_bytes=64 * 1024 * 1024):
+                   projection_candidate_update_order=None, target_shard_max_bytes=64 * 1024 * 1024,
+                   training_purpose="formalization"):
     """Create one-span gradient jobs with disjoint tuning rows for selection.
 
-    The same validation rows also undergo final qualification. Repeated use
-    for candidate selection does not establish an independent held-out canary.
+    The formalization purpose also qualifies those validation rows. Feature
+    pretraining records raw reconstruction and IR metrics separately. Repeated
+    candidate selection does not establish an independent held-out canary.
     The runner supplies actual lane parents and enforces source disjointness.
     """
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker import TrainingJobSpec
+    if training_purpose not in {"formalization", "feature_pretraining"}:
+        raise ValueError("unknown training purpose")
     state_directory = Path(state_directory)
     checkpoint = Path(checkpoint)
     checkpoint_sha = _sha(checkpoint)
@@ -159,6 +165,8 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
         raise ValueError("protected restart12 checkpoint hash mismatch")
     variant = {"source_language": source_language, "target_formal_language": "typed_deontic_ir",
                "jurisdiction": "us", "model_variant": model_variant}
+    if training_purpose == "feature_pretraining":
+        variant["model_variant"] += ":feature-pretraining-v1"
     variant_id = "incremental-" + hashlib.sha256(_json(variant).encode()).hexdigest()[:32]
     registry.register_variant("variant-" + variant_id, variant_id, variant)
     artifact = registry.stage_artifact(checkpoint, checkpoint_sha)
@@ -183,7 +191,7 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
         provenance_path = state_directory / "inputs" / (record_id + ".json")
         if provenance_path.exists():
             old = json.loads(provenance_path.read_bytes())
-            if old["record_id"] != record["record_id"] or old["sample"] != record["sample"]:
+            if old["record_id"] != record["record_id"] or _json(old["sample"]) != _json(record["sample"]):
                 raise ValueError("immutable input identity collision")
         else:
             _write(provenance_path, record)
@@ -205,6 +213,7 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
                                 "projection_optimizer_mode": projection_optimizer_mode,
                                 "projection_momentum": projection_momentum,
                                 "projection_candidate_update_order": projection_candidate_update_order,
+                                "projection_reconstruction_objective": ("raw_decoder" if training_purpose == "feature_pretraining" else "safety_projected"),
                                 "projection_max_update_families": 5,
                                 "projection_max_composed_refinement_attempts": composed_refinement_attempts},
             "capture_sparse_patches": True, "candidate_storage": "sparse",
@@ -220,9 +229,53 @@ def _nondefault_optimizer_settings(config):
     return any(config.get(name, default) != default for name, default in defaults.items())
 
 
+def _training_purpose(config):
+    purpose = config.get("training_purpose", "formalization")
+    if purpose not in {"formalization", "feature_pretraining"}:
+        raise ValueError("unknown training purpose")
+    if purpose == "feature_pretraining":
+        if config.get("execution_mode", "training") != "training":
+            raise ValueError("feature pretraining requires the training execution mode")
+        if not all(config.get(name) for name in ("input_jsonl", "validation_jsonl", "feature_input_manifest")):
+            raise ValueError("feature pretraining requires local input, disjoint validation and --feature-input-manifest")
+        if not config.get("shared_targets") or not config.get("target_snapshot_id"):
+            raise ValueError("feature pretraining requires verified --shared-targets and --target-snapshot-id")
+        if config.get("repository_id") or config.get("publish_repository"):
+            raise ValueError("feature pretraining uses verified local inputs and private checkpoints; qualified publication is separate")
+    elif config.get("feature_input_manifest"):
+        raise ValueError("feature-input-manifest requires feature_pretraining purpose")
+    return purpose
+
+
+def bind_training_purpose(state, purpose):
+    if purpose not in {"formalization", "feature_pretraining"}:
+        raise ValueError("unknown training purpose")
+    path = Path(state) / "training-purpose.json"
+    expected = {"schema": "autoencoder-training-purpose/v1", "purpose": purpose,
+                "formalization_gates_unchanged": True, "admitted": False}
+    if path.exists():
+        if json.loads(path.read_bytes()) != expected:
+            raise ValueError("training purpose changed; use a new state directory")
+    else:
+        _write(path, expected)
+
+
+def bind_verified_feature_records(training, validation, verification):
+    # Intake and provenance verification read independently. Bind the bytes
+    # already parsed into memory, so a concurrent file replacement cannot
+    # attach one generation's receipt to another generation's training rows.
+    for role, records in (("training", training), ("validation", validation)):
+        evidence = verification[role]
+        if (len(records) != evidence["count"] or not records
+                or any(record["provenance"]["input_sha256"] != evidence["rows"]["sha256"]
+                       for record in records)):
+            raise ValueError("feature input changed between intake and verification: " + role)
+
+
 def run_cycle(config):
     """Execute one bounded poll/dispatch page, in an isolated child process."""
     mode = config.get("execution_mode", "training")
+    purpose = _training_purpose(config)
     if mode not in {"inference", "training"}:
         raise ValueError("unknown autoencoder execution gate")
     if mode == "inference" and _nondefault_optimizer_settings(config):
@@ -233,6 +286,7 @@ def run_cycle(config):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_inference import run_inference_cycle
         return run_inference_cycle(config, SimpleNamespace(_pin=_pin, orchestration_hashes=orchestration_hashes,
             local_records=local_records, PINNED=PINNED, PINNED_SHA=PINNED_SHA, _sha=_sha, _write=_write))
+    bind_training_purpose(config["state_directory"], purpose)
     source_hashes = _pin(dataset_network=bool(config.get("repository_id") or config.get("publish_repository")))
     orchestration = orchestration_hashes()
     from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
@@ -241,6 +295,12 @@ def run_cycle(config):
     state = Path(config["state_directory"])
     records = local_records(config["input_jsonl"]) if config.get("input_jsonl") else []
     validation = local_records(config["validation_jsonl"]) if config.get("validation_jsonl") else []
+    feature_inputs = None
+    if purpose == "feature_pretraining":
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_feature_inputs import verify_feature_training_inputs
+        feature_inputs = verify_feature_training_inputs(config["feature_input_manifest"],
+            config["input_jsonl"], config["validation_jsonl"])
+        bind_verified_feature_records(records, validation, feature_inputs)
     if len(validation) > 32:
         raise ValueError("qualification validation is bounded to 32 rows per cycle")
     feed_report = None
@@ -283,32 +343,41 @@ def run_cycle(config):
                 projection_optimizer_mode=config.get("projection_optimizer_mode", "fixed"),
                 projection_momentum=config.get("projection_momentum", 0.0),
                 projection_candidate_update_order=config.get("projection_candidate_update_order"),
+                training_purpose=purpose,
             )
-            report = run_qualified_incremental_training(
-                registry, templates, state_directory=state / "progress",
+            common_options = dict(
+                state_directory=state / "progress",
                 machine_shard_count=config["shard_count"], machine_shard_index=config["shard_index"],
                 lane_count=config["workers"], max_batches=config["max_batches"],
                 max_parallel_workers=config.get("max_parallel_workers", config["workers"]),
-                max_qualification_workers=config.get("parallel_qualification_workers", 0) or config["workers"],
-                qualification_capacity_callback=lambda **limits: qualification_capacity_plan(**limits,
-                        memory_budget_mb=config["memory_mb"],
-                        cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
-                            "training", config.get("max_parallel_workers", config["workers"]))["cpu_slots"]),
-                        process_budget=config.get("reserved_child_process_slots", execution_envelope(
-                            "training", config.get("max_parallel_workers", config["workers"]))["child_process_slots"])),
                 capacity_callback=lambda **limits: execution_capacity_plan("training", **limits,
                         memory_budget_mb=config["memory_mb"],
                         cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
                             "training", config.get("max_parallel_workers", config["workers"]))["cpu_slots"]),
                         process_budget=config.get("reserved_child_process_slots")),
                 reuse_native_workers=not config.get("fresh_training_workers", True),
-                max_training_rounds=config.get("max_training_rounds", 3),
-                lake_timeout_seconds=config.get("lake_timeout_seconds", 120),
-                producer_identity=orchestration,
-                qualification_samples=[record["sample"] for record in validation],
                 control_transport="quack",
-                publication_repository=config.get("publish_repository"),
             )
+            if purpose == "feature_pretraining":
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_feature_training import run_feature_incremental_training
+                report = run_feature_incremental_training(registry, templates, **common_options,
+                    producer_identity={"orchestration": orchestration, "embedding_verification": feature_inputs})
+            else:
+                report = run_qualified_incremental_training(
+                    registry, templates, **common_options,
+                    max_qualification_workers=config.get("parallel_qualification_workers", 0) or config["workers"],
+                    qualification_capacity_callback=lambda **limits: qualification_capacity_plan(**limits,
+                        memory_budget_mb=config["memory_mb"],
+                        cpu_budget=config.get("reserved_cpu_slots", execution_envelope(
+                            "training", config.get("max_parallel_workers", config["workers"]))["cpu_slots"]),
+                        process_budget=config.get("reserved_child_process_slots", execution_envelope(
+                            "training", config.get("max_parallel_workers", config["workers"]))["child_process_slots"])),
+                    max_training_rounds=config.get("max_training_rounds", 3),
+                    lake_timeout_seconds=config.get("lake_timeout_seconds", 120),
+                    producer_identity=orchestration,
+                    qualification_samples=[record["sample"] for record in validation],
+                    publication_repository=config.get("publish_repository"),
+                )
             if config.get("publish_repository"):
                 if orchestration_hashes() != orchestration:
                     raise RuntimeError("orchestration source changed before publication; retained outbox requires replay")
@@ -332,6 +401,8 @@ def run_cycle(config):
         raise RuntimeError("orchestration source changed during cycle; retained registry work requires replay")
     receipt = {"schema": "incremental-autoencoder-cycle/v2", "feed": feed_report,
                "execution_path": "training", "training_executed": bool(report["dispatched_run_ids"]),
+               "training_purpose": purpose,
+               "feature_input_verification": feature_inputs,
                "training": report, "input_count": len(records), "admitted": False,
                "eligible_input_count": len(eligible), "skipped_inputs": skipped,
                "formalized": False, "heldout_canary": False, "temperature": 0,
@@ -404,6 +475,7 @@ def supervised_cycle(config):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import DaemonResourceReservation
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan, scheduler_capacity
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import get_global_resource_scheduler
+    _training_purpose(config)
     if config.get("execution_mode", "training") not in {"inference", "training"}:
         raise ValueError("unknown autoencoder execution gate")
     available = scheduler_capacity(get_global_resource_scheduler().snapshot())
@@ -502,6 +574,10 @@ def parser():
     p.add_argument("--state-directory", type=Path, required=True)
     p.add_argument("--execution-mode", choices=["inference", "training"], default="training",
                    help="Inference only evaluates immutable local weights; training may create private candidates")
+    p.add_argument("--training-purpose", choices=["formalization", "feature_pretraining"], default="formalization",
+                   help="Feature pretraining optimizes raw learned representations without requiring compiler/Lake qualification; checkpoints remain private and unqualified")
+    p.add_argument("--feature-input-manifest", type=Path,
+                   help="Local embedding production/split manifest required for feature pretraining")
     p.add_argument("--checkpoint", type=Path, default=PINNED)
     p.add_argument("--arrow-feature-weights", type=Path, help="Optional local baseline-bound Arrow IPC weights")
     p.add_argument("--target-shard-max-bytes", type=int, default=64 * 1024 * 1024,
@@ -571,6 +647,10 @@ def main(argv=None):
         return 0
     p = parser()
     args = p.parse_args(argv)
+    try:
+        _training_purpose(vars(args))
+    except ValueError as exc:
+        p.error(str(exc))
     if not args.input_jsonl and not args.repository_id:
         p.error("supply --input-jsonl and/or --repository-id")
     if not 1 <= args.target_shard_max_bytes <= 256 * 1024 * 1024:
@@ -624,7 +704,7 @@ def main(argv=None):
     state = args.state_directory.absolute()
     state.mkdir(parents=True, exist_ok=True)
     config = vars(args).copy()
-    for name in ("state_directory", "checkpoint", "input_jsonl", "validation_jsonl", "resource_ledger", "arrow_feature_weights", "shared_targets"):
+    for name in ("state_directory", "checkpoint", "input_jsonl", "validation_jsonl", "resource_ledger", "arrow_feature_weights", "shared_targets", "feature_input_manifest"):
         config[name] = str(Path(config[name]).absolute()) if config[name] is not None else None
     config["resource_roots"] = [str(path.absolute()) for path in config.pop("resource_root")]
     _pin()
@@ -635,6 +715,8 @@ def main(argv=None):
             p.error("another incremental runner owns this state directory")
         try:
             bind_execution_mode(state, args.execution_mode)
+            if args.execution_mode == "training":
+                bind_training_purpose(state, args.training_purpose)
         except ValueError as exc:
             p.error(str(exc))
         cycle = 0
