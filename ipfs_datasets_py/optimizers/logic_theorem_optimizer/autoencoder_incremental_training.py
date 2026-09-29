@@ -132,7 +132,9 @@ def _policy(registry, spec):
             "training_config": spec.to_dict()["training_config"],
             "autoencoder_config": spec.to_dict()["autoencoder_config"],
             "candidate_storage": spec.candidate_storage,
-            "capture_sparse_patches": spec.capture_sparse_patches}
+            "capture_sparse_patches": spec.capture_sparse_patches,
+            **({"target_shard_max_bytes": spec.target_shard_max_bytes}
+               if spec.target_shard_max_bytes != 64 * 1024 * 1024 else {})}
 
 
 def _verify_completed(registry, spec):

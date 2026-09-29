@@ -11,6 +11,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from collections import deque
 from dataclasses import asdict
+from copy import deepcopy
 import hashlib
 import importlib.metadata
 import json
@@ -145,10 +146,84 @@ def _bridge_report_telemetry(report: Any = None, *, outer_timeout: Exception | N
     }
 
 
+def target_supervision_completeness(statuses: Any, telemetry: Any,
+                                    bridge_names: Sequence[str]) -> dict[str, Any]:
+    """Describe complete bridge supervision without granting proof authority.
+
+    A returned but partial or rejected bridge report remains incomplete for
+    this optional readiness policy. Malformed observations fail explicitly;
+    neither missing observations nor timeout fallbacks become ready targets.
+    """
+    from .legal_ir_target_snapshot import STATUSES
+
+    names = tuple(bridge_names)
+    if (not names or any(type(name) is not str or not name for name in names)
+            or len(set(names)) != len(names)):
+        raise ValueError("completeness requires ordered unique bridge names")
+    if (type(statuses) is not dict or not statuses
+            or any(type(key) is not str or not key or type(value) is not str or value not in STATUSES
+                   for key, value in statuses.items())
+            or type(telemetry) is not dict or set(telemetry) != set(statuses)):
+        raise ValueError("malformed target statuses or missing bridge observations")
+    observations = {}
+    for sample_id, status in statuses.items():
+        row = telemetry[sample_id]
+        required = {"report_received", "report_accepted", "failures", "outer_timeout"}
+        if (type(row) is not dict or not required <= set(row) or type(row.get("report_received")) is not bool
+                or (row.get("report_accepted") is not None and type(row["report_accepted"]) is not bool)
+                or type(row.get("failures")) is not dict
+                or any(type(name) is not str or type(error) is not str for name, error in row["failures"].items())
+                or (row["outer_timeout"] is not None and type(row["outer_timeout"]) is not dict)):
+            raise ValueError("malformed target bridge observations")
+        if row["report_received"] is False and row.get("report_accepted") is not None:
+            raise ValueError("missing report must retain unknown acceptance")
+        if row["report_received"] is True and type(row["report_accepted"]) is not bool:
+            raise ValueError("returned report requires boolean acceptance")
+        reasons = []
+        if status != "ready":
+            reasons.append("target_status:" + status)
+        if row["report_received"] is not True:
+            reasons.append("no_multiview_report")
+        if row["report_accepted"] is not True:
+            reasons.append("multiview_report_not_accepted")
+        if row.get("outer_timeout") is not None:
+            reasons.append("outer_timeout")
+        if row["failures"]:
+            reasons.append("bridge_exceptions")
+        for kind in ("attempted", "implemented", "failed", "accepted"):
+            values, count = row.get(kind + "_bridge_names"), row.get(kind + "_bridge_count")
+            if row["report_received"] is False:
+                if values is not None or count is not None:
+                    raise ValueError("missing report must retain unknown bridge observations")
+                continue
+            if (type(values) is not list or any(type(value) is not str or not value for value in values)
+                    or len(set(values)) != len(values) or type(count) is not int or count != len(values)):
+                raise ValueError("malformed target bridge names or counts")
+            if kind == "attempted" and values != list(names):
+                reasons.append("attempted_bridges_differ")
+            elif kind in {"implemented", "accepted"} and set(values) != set(names):
+                reasons.append(kind + "_bridges_incomplete")
+            elif kind == "failed" and values:
+                reasons.append("failed_bridges")
+        observations[sample_id] = {"complete": not reasons, "reasons": reasons}
+    complete_count = sum(row["complete"] for row in observations.values())
+    return {
+        "schema_version": "target-supervision-completeness/v1",
+        "complete": complete_count == len(statuses),
+        "target_count": len(statuses), "complete_target_count": complete_count,
+        "incomplete_target_count": len(statuses) - complete_count,
+        "observations": observations,
+        "scope": "all requested bridge reports returned and accepted without timeout or exception; not a Lean admission or model qualification",
+        "admitted": False,
+    }
+
+
 def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
                              training_config: Any = None,
                              validation_records: Sequence[Any] = (),
-                             artifact_format: str = "json") -> dict[str, Any]:
+                             artifact_format: str = "json",
+                             target_shard_max_bytes: int = 64 * 1024 * 1024,
+                             _observation_callback: Callable[[dict[str, Any]], None] | None = None) -> dict[str, Any]:
     """Build a sealed target snapshot for SampleRecord inputs, never model weights.
 
     Writes one new artifact, exclusively. There is no owner registration, Lake
@@ -156,15 +231,22 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
     targets remain explicitly retryable observations in the snapshot status.
     ``artifact_format="bundle"`` streams individual compressed target shards;
     the default JSON representation preserves the existing artifact behavior.
+    ``target_shard_max_bytes`` bounds each expanded bundle target independently
+    of its compressed artifact size. Consumers must use the same explicit bound.
     """
     from .autoencoder_training_worker import (
         SampleRecord, TrainingConfig, _JOB_LOCK, _worker_environment,
     )
     from .legal_samples import build_us_code_sample
     from .legal_ir_target_snapshot import build_target_snapshot
+    from .legal_ir_target_bundle import MAX_TARGET_SHARD_BYTES
     from . import modal_autoencoder as modal
     from ...logic.bridge import evaluate_legal_ir_multiview
 
+    if type(target_shard_max_bytes) is not int or not 1 <= target_shard_max_bytes <= MAX_TARGET_SHARD_BYTES:
+        raise ValueError("target_shard_max_bytes must be an integer within [1,256 MiB]")
+    if _observation_callback is not None and not callable(_observation_callback):
+        raise ValueError("target observation callback must be callable")
     config = training_config or TrainingConfig()
     if not isinstance(artifact_format, str) or artifact_format not in {"json", "bundle"}:
         raise ValueError("artifact_format must be json or bundle")
@@ -212,6 +294,7 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
                     return sample.sample_id, target, "timeout", _bridge_report_telemetry(outer_timeout=exc)
 
             generation_intervals = []
+            generation_seconds_by_sample = {}
             generation_lock = threading.Lock()
             statuses = {}
             bridge_report_telemetry = {}
@@ -224,6 +307,7 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
                     interval = (generate_started, time.perf_counter())
                     with generation_lock:
                         generation_intervals.append(interval)
+                        generation_seconds_by_sample[sample.sample_id] = interval[1] - interval[0]
 
             def target_records():
                 generated = _bounded_target_results(timed_generate, samples, config.legal_ir_parallel_workers)
@@ -231,6 +315,16 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
                     for sample, (key, target, status, telemetry) in generated:
                         statuses[key] = status
                         bridge_report_telemetry[key] = telemetry
+                        if _observation_callback is not None:
+                            # Completion observation precedes serialization and
+                            # final source checks. It is not a reusable target
+                            # or an artifact/qualification success receipt.
+                            _observation_callback({
+                                "sample_id": key, "status": status,
+                                "target_generation_seconds": generation_seconds_by_sample[key],
+                                "bridge_report_telemetry": deepcopy(telemetry),
+                                "admitted": False,
+                            })
                         yield sample, target, status
                         # Do not retain the prior target while producing the next.
                         del target
@@ -244,7 +338,8 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
                 from .legal_ir_target_bundle import write_target_bundle
                 generated_records = target_records()
                 try:
-                    saved = write_target_bundle(path, generated_records, config=bound_config)
+                    saved = write_target_bundle(path, generated_records, config=bound_config,
+                                                max_shard_bytes=target_shard_max_bytes)
                 finally:
                     generated_records.close()
                 snapshot_id = saved["snapshot_id"]
@@ -284,7 +379,10 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
                     "timeout": "the outer target timeout escaped evaluation; a fallback target was produced",
                 },
                 "bridge_report_telemetry": bridge_report_telemetry,
+                "target_completeness": target_supervision_completeness(
+                    statuses, bridge_report_telemetry, config.legal_ir_bridge_names),
                 "artifact_format": artifact_format,
+                "target_shard_max_bytes": target_shard_max_bytes,
                 "model_independent_targets": True,
                 "training_executed": False,
                 "preparation_scope": "training and repeated tuning targets only; no independent canary is selected by this producer",
@@ -300,6 +398,8 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
                 "cache_observation": "targets built directly; metric and multiview caches bypassed; OS cache uncontrolled",
                 "sample_preparation_seconds": sample_seconds,
                 "target_generation_seconds": target_seconds,
+                "target_generation_seconds_by_sample": generation_seconds_by_sample,
+                "target_timeout_seconds": bound_config.target_timeout_seconds,
                 "target_generation_seconds_per_span": target_seconds / len(samples),
                 "target_generation_timing_scope": "union of producer call wall intervals; parallel generation may overlap bundle encoding",
                 "target_generate_call_seconds": sum(end - start for start, end in generation_intervals),
@@ -312,4 +412,5 @@ def prepare_training_targets(records: Sequence[Any], path: str | Path, *,
         _JOB_LOCK.release()
 
 
-__all__ = ["prepare_training_targets", "target_snapshot_config", "unique_training_samples"]
+__all__ = ["prepare_training_targets", "target_snapshot_config", "unique_training_samples",
+           "target_supervision_completeness"]

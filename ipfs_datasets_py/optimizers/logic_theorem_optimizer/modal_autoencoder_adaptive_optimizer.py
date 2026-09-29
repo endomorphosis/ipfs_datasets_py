@@ -13,6 +13,24 @@ from typing import Any, Iterable, Mapping
 
 OPTIMIZER_SCOPE = "job_local_reset_per_training_call"
 MAX_MOMENTUM_COORDINATES = 8192
+DEFAULT_PROJECTION_CANDIDATE_ORDER = (
+    "legal_ir_view_global_logits", "legal_ir_view_logits", "family_logits",
+    "decoded_embedding", "combined",
+)
+PROJECTION_CANDIDATE_NAMES = frozenset((*DEFAULT_PROJECTION_CANDIDATE_ORDER, "decoded_embedding_nonview", "decoded_embedding_structural"))
+
+
+def normalize_projection_candidate_update_order(value: Any) -> tuple[str, ...] | None:
+    """Validate a bounded explicit operator order; None preserves legacy search."""
+    if value is None:
+        return None
+    if (not isinstance(value, (list, tuple)) or not value
+            or len(value) > len(PROJECTION_CANDIDATE_NAMES)
+            or any(type(name) is not str or name not in PROJECTION_CANDIDATE_NAMES for name in value)
+            or len(set(value)) != len(value)):
+        raise ValueError("projection_candidate_update_order must be a nonempty unique array of known projection candidates")
+    return tuple(value)
+
 # Only reusable heads used by projection. Sample memories and proof metadata
 # are intentionally absent, including when supplied in an otherwise valid patch.
 MOMENTUM_COMPONENTS = frozenset({
@@ -178,7 +196,7 @@ def _set_coordinate(state: Any, key: tuple, value: float) -> None:
 
 
 class GuardedAdaptiveProjection:
-    """At most five per-head rates and one bounded accepted sparse direction."""
+    """At most seven per-head rates and one bounded accepted sparse direction."""
 
     def __init__(self, learning_rate: float, scales: Mapping[str, float], momentum: float,
                  *, mode: str = "guarded_adaptive"):

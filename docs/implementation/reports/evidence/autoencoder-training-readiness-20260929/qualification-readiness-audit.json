@@ -1,0 +1,858 @@
+{
+  "admitted": false,
+  "arm_summaries": {
+    "fixed035": {
+      "actual_lake_build_count": 0,
+      "admitted": false,
+      "clause_status_counts": {
+        "abstain": 16,
+        "roundtrip_ok": 11
+      },
+      "family_semantic_equivalence_checked": false,
+      "family_syntax_checks": 66,
+      "family_syntax_checks_passed": 66,
+      "formalized": false,
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 2
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        }
+      },
+      "heldout_canary": false,
+      "heldout_role": "tuning_validation",
+      "lake_reason_counts": {
+        "source_semantic_roundtrip_failed": 11
+      },
+      "lake_rows": 11,
+      "metric_cosine_range": [
+        0.19611613513818402,
+        0.19611613513818404
+      ],
+      "metric_evaluation": {
+        "bridge_names": [],
+        "cache_enabled": false,
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "legal_ir_target_count": 0,
+        "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+        "use_sample_memory": false
+      },
+      "metric_mse_range": [
+        0.0025270827114514723,
+        0.0025270837604041336
+      ],
+      "qualification_elapsed_seconds": 10.605833259178326,
+      "qualification_timing_scope": "bridge_off_embedding_metrics_plus_deterministic_structural_checks_not_IR_evaluate",
+      "qualified": false,
+      "receipt": {
+        "bytes": 2109450,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/fixed035/qualification/qualification.json",
+        "sha256": "fd389973373fd23175f4eef5d8aedaa08a679c100411741b5865553d577f6f6e"
+      },
+      "samples": 8,
+      "training_count": 6,
+      "tuning_count": 2
+    },
+    "productive035": {
+      "actual_lake_build_count": 0,
+      "admitted": false,
+      "clause_status_counts": {
+        "abstain": 16,
+        "roundtrip_ok": 11
+      },
+      "family_semantic_equivalence_checked": false,
+      "family_syntax_checks": 66,
+      "family_syntax_checks_passed": 66,
+      "formalized": false,
+      "gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 2
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        }
+      },
+      "heldout_canary": false,
+      "heldout_role": "tuning_validation",
+      "lake_reason_counts": {
+        "source_semantic_roundtrip_failed": 11
+      },
+      "lake_rows": 11,
+      "metric_cosine_range": [
+        0.19611613513818402,
+        0.19611613513818404
+      ],
+      "metric_evaluation": {
+        "bridge_names": [],
+        "cache_enabled": false,
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "legal_ir_target_count": 0,
+        "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+        "use_sample_memory": false
+      },
+      "metric_mse_range": [
+        0.0025270827114514723,
+        0.0025270837604041336
+      ],
+      "qualification_elapsed_seconds": 10.458915021037683,
+      "qualification_timing_scope": "bridge_off_embedding_metrics_plus_deterministic_structural_checks_not_IR_evaluate",
+      "qualified": false,
+      "receipt": {
+        "bytes": 2109449,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/productive035/qualification/qualification.json",
+        "sha256": "d551c464c5b54a706e735b4231b98ee78c8e5069b1feb1a835a55f8297e91572"
+      },
+      "samples": 8,
+      "training_count": 6,
+      "tuning_count": 2
+    }
+  },
+  "canary_accessed": false,
+  "constitution_formalized": false,
+  "created_at": "2026-09-29T07:06:15.338996+00:00",
+  "current_eight_hour_admission_ready": false,
+  "documents": [
+    {
+      "audit": {
+        "class": [
+          "parser_scope",
+          "boolean_conditions",
+          "definition_ir",
+          "interpretive_negation"
+        ],
+        "findings": [
+          "Three definitions abstain, header abstains; none may be silently omitted from whole-source success.",
+          "Clause c5 drops the exclusion conditions; c6 splits a condition into a new obligation; c7 turns a negative interpretive constraint into positive O."
+        ],
+        "lake_barrier": "No supported numeric minimum-duration/amount pattern; generic norm fingerprint is not an admission target.",
+        "requirements": {
+          "5": [
+            "Preserve exclusion permission conditional on OR(AND(no employee room, no room affordably repurposable), new-construction-required AND unfeasible cost), including branch split into c6."
+          ],
+          "6": [
+            "Keep this as a branch of the previous permission condition, never a freestanding duty to create a room."
+          ],
+          "7": [
+            "Preserve the negative scope of Nothing ... shall be construed to authorize; do not encode a positive duty to construe as authorization."
+          ]
+        }
+      },
+      "citation": "40 U.S.C. § 3318",
+      "clause_status_counts": {
+        "abstain": 4,
+        "roundtrip_ok": 4
+      },
+      "compiler_fields": [
+        "definition_scope",
+        "unsupported_norm_type"
+      ],
+      "compiler_reason": "",
+      "compiler_status": "compiled",
+      "family_projection_count": 4,
+      "family_syntax_checks_passed": 24,
+      "lake_precondition_reasons": {
+        "source_semantic_roundtrip_failed": 4
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold"
+        ],
+        "reconstruction_loss": 0.0025270837604041336,
+        "text_roundtrip_equivalence": false
+      },
+      "sample_id": "us-code-40-3318-429cfc454b54ce35",
+      "semantic_reason": "incomplete_source_semantic_roundtrip",
+      "source_bytes": 1865,
+      "source_sha256": "733e94101d6c703ebc80db262fe2c796df1534f85c8fd61ff7f1385ed49d15c1",
+      "source_text": "§ 3318. Lactation room in public buildings\n(a) Definitions .—\nIn this section:\n(1) Appropriate authority .—\nThe term “appropriate authority” means the head of a Federal agency, the Architect of the Capitol, or other official authority responsible for the operation of a public building.\n(2) Covered public building .—\nThe term “covered public building” means a public building (as defined in section 3301) that is open to the public and contains a public restroom, and includes a building listed in section 6301 or 5101.\n(3) Lactation room .—\nThe term “lactation room” means a hygienic place, other than a bathroom, that—\n(A) is shielded from view;\n(B) is free from intrusion; and\n(C) contains a chair, a working surface, and, if the public building is otherwise supplied with electricity, an electrical outlet.\n\n(b) Lactation Room Required .—\nExcept as provided in subsection (c), the appropriate authority of a covered public building shall ensure that the building contains a lactation room that is made available for use by members of the public to express breast milk.\n(c) Exceptions .—\nA covered public building may be excluded from the requirement in subsection (b) at the discretion of the appropriate authority if—\n(1) the public building—\n(A) does not contain a lactation room for employees who work in the building; and\n(B) does not have a room that could be repurposed as a lactation room or a space that could be made private using portable materials, at a reasonable cost; or\n\n(2) new construction would be required to create a lactation room in the public building and the cost of such construction is unfeasible.\n\n(d) No Unauthorized Entry .—\nNothing in this section shall be construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter.",
+      "split": "training"
+    },
+    {
+      "audit": {
+        "class": [
+          "parser_scope",
+          "boolean_alternatives",
+          "declarative_tax_ir",
+          "cross_reference"
+        ],
+        "findings": [
+          "Tax imposition without shall and applicability exception abstain.",
+          "Clause c4 retains made by but loses both alternative responsible parties and their conditions."
+        ],
+        "lake_barrier": "50 cents per ton is a tax rate, not existing base/extra/cutoff amount schema; regulations/ownership/port-time applicability need actual semantics.",
+        "requirements": {
+          "3": [
+            "Preserve document AND oath prerequisites and nested ownership alternatives; no coercion of applicability exclusion into positive obligation."
+          ],
+          "4": [
+            "Preserve owner if one resides at port, OR master if owner does not reside there."
+          ],
+          "5": [
+            "Preserve ownership AND after-entering/before-leaving documentation exception."
+          ]
+        }
+      },
+      "citation": "46 U.S.C. § 60303",
+      "clause_status_counts": {
+        "abstain": 4,
+        "roundtrip_ok": 2
+      },
+      "compiler_fields": [
+        "procedure",
+        "unsupported_norm_type"
+      ],
+      "compiler_reason": "",
+      "compiler_status": "compiled",
+      "family_projection_count": 2,
+      "family_syntax_checks_passed": 12,
+      "lake_precondition_reasons": {
+        "source_semantic_roundtrip_failed": 2
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold"
+        ],
+        "reconstruction_loss": 0.002527083678400739,
+        "text_roundtrip_equivalence": false
+      },
+      "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+      "semantic_reason": "incomplete_source_semantic_roundtrip",
+      "source_bytes": 1514,
+      "source_sha256": "3bb27171e42def39132439ffe72cc74d8da0fb8c033b980a111c6c238bdbd5eb",
+      "source_text": "§ 60303. Light money\n(a) Imposition of Tax .—\nA tax of 50 cents per ton, to be called “light money”, is imposed on a vessel not of the United States at each entry in a port of the United States. This tax shall be imposed and collected under the same regulations that apply to tonnage taxes.\n(b) Exception for Vessels Owned by Citizens .—\n(1) In general .—\nSubsection (a) does not apply to a vessel owned only by citizens of the United States if—\n(A) the vessel is carrying a regular document issued by a customhouse of the United States proving the vessel to be owned only by citizens of the United States; and\n(B) on entry of the vessel from a foreign port, the individual designated under paragraph (2) states under oath that—\n(i) the document contains the names of all the owners of the vessel; or\n(ii) part of the ownership has been transferred since the document was issued and, to the best of that individual’s knowledge and belief, the vessel is still owned only by citizens of the United States.\n\n(2) Person to make statement .—\nThe statement under paragraph (1)(B) shall be made by—\n(A) an owner if one resides at the port of entry; or\n(B) the master if an owner does not reside at the port of entry.\n\n(c) Exception for Vessels Becoming Documented .—\nSubsection (a) does not apply to a vessel that—\n(1) is owned only by citizens of the United States; and\n(2) after entering a port of the United States, becomes documented as a vessel of the United States before leaving that port.",
+      "split": "training"
+    },
+    {
+      "audit": {
+        "class": [
+          "parser_scope",
+          "temporal_recurrence",
+          "list_coverage",
+          "source_reference_missing"
+        ],
+        "findings": [
+          "Clause c1 includes heading and deadline in actor; loses report item (2); typed deadline loses year 2005 and two-year recurrence/end 2014.",
+          "Local text contains empty cross-reference surfaces set forth in and of ;. Source content cannot be invented by optimizer."
+        ],
+        "lake_barrier": "Deadlines and recurrence are not minimum_duration. No conversion into a lower-bound theorem.",
+        "requirements": {
+          "1": [
+            "Actor must preserve Secretary with consultation role, separate from heading/deadline.",
+            "Preserve initial one-year-after-August-8-2005 deadline, recurrence every two years through 2014, AND both report items.",
+            "Keep missing cross-reference unresolved and explicit; no fabricated statute identity."
+          ]
+        }
+      },
+      "citation": "42 U.S.C. § 15963",
+      "clause_status_counts": {
+        "abstain": 1,
+        "roundtrip_ok": 1
+      },
+      "compiler_fields": [],
+      "compiler_reason": "",
+      "compiler_status": "compiled",
+      "family_projection_count": 1,
+      "family_syntax_checks_passed": 6,
+      "lake_precondition_reasons": {
+        "source_semantic_roundtrip_failed": 1
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818402,
+        "embedding_cosine_similarity_raw": 0.19611613513818402,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold"
+        ],
+        "reconstruction_loss": 0.0025270827114514723,
+        "text_roundtrip_equivalence": false
+      },
+      "sample_id": "us-code-42-15963-7baaee5c0500d91e",
+      "semantic_reason": "incomplete_source_semantic_roundtrip",
+      "source_bytes": 440,
+      "source_sha256": "db5b51daef5cd659b2c04113712e40f775aa29b34ef35ae3fa4573c579f0f27b",
+      "source_text": "§ 15963. Report\nNot later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies, shall submit to Congress a report describing—\n(1) the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections (b)(1)(B) and (b)(2) of ; and\n(2) the status of projects funded under this part.",
+      "split": "training"
+    },
+    {
+      "audit": {
+        "class": [
+          "nonoperative_findings",
+          "source_identity_review"
+        ],
+        "findings": [
+          "Whole row has no_parser_elements; begins SEC. 2. FINDINGS and consists of legislative findings.",
+          "Citation/text identity requires upstream source review: record citation is 22 USC 2 while local text is a quoted public-law-style findings section; this is a suspicion, not a verified misidentification."
+        ],
+        "lake_barrier": "Declarative findings are outside current O/P/F rule grammar; no lawful coercion into duties or fabricated numeric theorem.",
+        "requirements": {}
+      },
+      "citation": "22 U.S.C. § 2",
+      "clause_status_counts": {},
+      "compiler_fields": [],
+      "compiler_reason": "no_parser_elements",
+      "compiler_status": "abstain",
+      "family_projection_count": 0,
+      "family_syntax_checks_passed": 0,
+      "lake_precondition_reasons": {},
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818402,
+        "embedding_cosine_similarity_raw": 0.19611613513818402,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold"
+        ],
+        "reconstruction_loss": 0.0025270830233111723,
+        "text_roundtrip_equivalence": false
+      },
+      "sample_id": "us-code-22-2-37b796de116a4487",
+      "semantic_reason": "no_parser_elements",
+      "source_bytes": 2089,
+      "source_sha256": "42e1cf170551ea0b7776ee5bbbc5b38797cb11b5fdf57cf69d0908ae8f0dee03",
+      "source_text": "“SEC. 2. FINDINGS.\n“Congress makes the following findings:\n“(1) The American people abhor torture by any government or person. The existence of torture creates a climate of fear and international insecurity that affects all people.\n“(2) Torture is the deliberate mental and physical damage caused by governments to individuals to destroy individual personality and terrorize society. The effects of torture are long term. Those effects can last a lifetime for the survivors and affect future generations.\n“(3) By eliminating the leadership of their opposition and frightening the general public, repressive governments often use torture as a weapon against democracy.\n“(4) Torture survivors remain under physical and psychological threats, especially in communities where the perpetrators are not brought to justice. In many nations, even those who treat torture survivors are threatened with reprisals, including torture, for carrying out their ethical duty to provide care. Both the survivors of torture and their treatment providers should be accorded protection from further repression.\n“(5) A significant number of refugees and asylees entering the United States have been victims of torture. Those claiming asylum deserve prompt consideration of their applications for political asylum to minimize their insecurity and sense of danger. Many torture survivors now live in the United States. They should be provided with the rehabilitation services which would enable them to become productive members of our communities.\n“(6) The development of a treatment movement for torture survivors has created new opportunities for action by the United States and other nations to oppose state-sponsored and other acts of torture.\n“(7) There is a need for a comprehensive strategy to protect and support torture victims and their treatment providers, together with overall efforts to eliminate torture.\n“(8) By acting to heal the survivors of torture and protect their families, the United States can help to heal the effects of torture and prevent its use around the world.",
+      "split": "training"
+    },
+    {
+      "audit": {
+        "class": [
+          "definition_ir",
+          "boolean_alternatives",
+          "parser_scope",
+          "temporal_trigger"
+        ],
+        "findings": [
+          "Definition abstains.",
+          "Clause c2 mixes deadline into actor and retains only first condition branch as a condition; other OR branches appear in object text without logical guard structure."
+        ],
+        "lake_barrier": "Seven-day upper deadline is not a minimum-duration threshold; rules also require event-trigger and recipient semantics.",
+        "requirements": {
+          "2": [
+            "Preserve OR(direction, requirement, restriction) condition over document/annex, with correct scope.",
+            "Preserve seven-day deadline relative to issue OR amend event, all three recipient committees and accompanying annex.",
+            "Actor must remain President acting through Director, not heading/deadline."
+          ]
+        }
+      },
+      "citation": "50 U.S.C. § 3114",
+      "clause_status_counts": {
+        "abstain": 2,
+        "roundtrip_ok": 1
+      },
+      "compiler_fields": [
+        "procedure",
+        "definition_scope",
+        "unsupported_norm_type"
+      ],
+      "compiler_reason": "",
+      "compiler_status": "compiled",
+      "family_projection_count": 1,
+      "family_syntax_checks_passed": 6,
+      "lake_precondition_reasons": {
+        "source_semantic_roundtrip_failed": 1
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold"
+        ],
+        "reconstruction_loss": 0.0025270829888448063,
+        "text_roundtrip_equivalence": false
+      },
+      "sample_id": "us-code-50-3114-cc36a2057a2cc4f2",
+      "semantic_reason": "incomplete_source_semantic_roundtrip",
+      "source_bytes": 1010,
+      "source_sha256": "b4b8c3734d10ecef9b7062ac4b595f12b75856c26df2c108c4c3a220eaea7daa",
+      "source_text": "§ 3114. Submission of covered documents and classified annexes\n(a) Covered document defined\nIn this section, the term “covered document” means any executive order, memorandum, or policy directive issued by the President, including national security Presidential memoranda and Presidential policy directives, or such successor memoranda and directives.\n\n(b) Requirement\nNot later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence, shall submit to the congressional intelligence committees, the Subcommittee on Defense of the Committee on Appropriations of the Senate, and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to, establishes a requirement for, or includes a restriction on any element of the intelligence community.",
+      "split": "training"
+    },
+    {
+      "audit": {
+        "class": [
+          "boolean_conditions",
+          "temporal_calendar",
+          "cross_reference",
+          "numeric_expression"
+        ],
+        "findings": [
+          "Cost ceiling prohibition abstains recipient; computation-of-days abstains cross_references; minor-project exclusion has no parser output.",
+          "Clause c2 permission loses both report-submission AND thirty-day elapsed prerequisites."
+        ],
+        "lake_barrier": "Potential arithmetic theorem requires full cost/max and calendar semantics/source-bound values; bare thirty-day minimum would omit statutory qualification.",
+        "requirements": {
+          "1": [
+            "Preserve two prohibited actions and the more-than-125%-of-maximum authorized/current-budget cost trigger, subject to subsection(b)."
+          ],
+          "2": [
+            "Preserve report submitted AND 30 days elapsed since committee receipt as prerequisites.",
+            "Interpret the 30 days jointly with subsection(c), which excludes specified congressional adjournment days; do not prove a naive calendar-day threshold."
+          ],
+          "3": [
+            "Preserve congressional adjournment day exclusion and reference to subsection(b)."
+          ],
+          "4": [
+            "Preserve minor construction threshold exclusion without inventing external threshold amount."
+          ]
+        }
+      },
+      "citation": "10 U.S.C. § 6275",
+      "clause_status_counts": {
+        "abstain": 4,
+        "roundtrip_ok": 1
+      },
+      "compiler_fields": [
+        "recipient",
+        "cross_references"
+      ],
+      "compiler_reason": "",
+      "compiler_status": "compiled",
+      "family_projection_count": 1,
+      "family_syntax_checks_passed": 6,
+      "lake_precondition_reasons": {
+        "source_semantic_roundtrip_failed": 1
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818402,
+        "embedding_cosine_similarity_raw": 0.19611613513818402,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold"
+        ],
+        "reconstruction_loss": 0.002527083414320093,
+        "text_roundtrip_equivalence": false
+      },
+      "sample_id": "us-code-10-6275-3b7144797fc2e39d",
+      "semantic_reason": "incomplete_source_semantic_roundtrip",
+      "source_bytes": 1499,
+      "source_sha256": "0b48777ae8986ffc09acd83fd75f6a19e420f97a208d2993f62884a0705652c4",
+      "source_text": "§ 6275. Limits on construction projects\n(a) Construction Cost Ceiling .—\nExcept as provided in subsection (b), construction on a construction project which is in support of national security programs of the Department of Energy and was authorized by a DOE national security authorization may not be started, and additional obligations in connection with the project above the total estimated cost may not be incurred, whenever the current estimated cost of the construction project exceeds by more than 25 percent the higher of—\n(1) the amount authorized for the project; or\n(2) the amount of the total estimated cost for the project as shown in the most recent budget justification data submitted to Congress.\n\n(b) Exception Where Notice-and-wait Given .—\nAn action described in subsection (a) may be taken if—\n(1) the Secretary of Energy has submitted to the congressional defense committees a report on the actions and the circumstances making such action necessary; and\n(2) a period of 30 days has elapsed after the date on which the report is received by the committees.\n\n(c) Computation of Days .—\nIn the computation of the 30-day period under subsection (b), there shall be excluded any day on which either House of Congress is not in session because of an adjournment of more than three days to a day certain.\n(d) Exception for Minor Projects .—\nSubsection (a) does not apply to a construction project with a current estimated cost of less than the minor construction threshold.",
+      "split": "training"
+    },
+    {
+      "audit": {
+        "class": [
+          "capability_limitation",
+          "cross_reference"
+        ],
+        "findings": [
+          "Whole row has no_parser_elements.",
+          "Only powers provided in bylaws/articles filed in each State is an exclusive capability limitation with external documents; not simple modal duty."
+        ],
+        "lake_barrier": "Current O/P/F numeric renderer cannot express the exclusive-power/cross-document rule.",
+        "requirements": {}
+      },
+      "citation": "36 U.S.C. § 50106",
+      "clause_status_counts": {},
+      "compiler_fields": [],
+      "compiler_reason": "no_parser_elements",
+      "compiler_status": "abstain",
+      "family_projection_count": 0,
+      "family_syntax_checks_passed": 0,
+      "lake_precondition_reasons": {},
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "embedding_cosine_similarity_raw": 0.19611613513818404,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold"
+        ],
+        "reconstruction_loss": 0.002527083326794979,
+        "text_roundtrip_equivalence": false
+      },
+      "sample_id": "us-code-36-50106-bb17fee26e3ac266",
+      "semantic_reason": "no_parser_elements",
+      "source_bytes": 154,
+      "source_sha256": "0fbd645fe80e7ac9cab939e10c065673c585196a14daa8f4de616d8e1e1ca9b2",
+      "source_text": "§ 50106. Powers\nThe corporation has only the powers provided in its bylaws and articles of incorporation filed in each State in which it is incorporated.",
+      "split": "heldout"
+    },
+    {
+      "audit": {
+        "class": [
+          "boolean_exceptions",
+          "source_reference_missing",
+          "parser_scope"
+        ],
+        "findings": [
+          "Clause c1 actor includes heading and local text contains empty pursuant to reference.",
+          "Clause c2 exception retains only numbered branch(1), losing branches(2) and(3)."
+        ],
+        "lake_barrier": "No numeric supported theorem; exceptions and statutory precedence need represented logic before proof.",
+        "requirements": {
+          "1": [
+            "Preserve factors/data and consensus-agency permission; keep missing pursuant-to reference unresolved."
+          ],
+          "2": [
+            "Preserve three alternative exception branches: Secretary approved critical unique need OR using agreed factors violates express law OR statute/responsibilities require modification."
+          ]
+        }
+      },
+      "citation": "42 U.S.C. § 8286a",
+      "clause_status_counts": {
+        "abstain": 1,
+        "roundtrip_ok": 2
+      },
+      "compiler_fields": [],
+      "compiler_reason": "",
+      "compiler_status": "compiled",
+      "family_projection_count": 2,
+      "family_syntax_checks_passed": 12,
+      "lake_precondition_reasons": {
+        "source_semantic_roundtrip_failed": 2
+      },
+      "metric_gate": {
+        "admitted": false,
+        "cosine_roundoff_clamped": false,
+        "diagnostics": [],
+        "embedding_cosine_similarity": 0.19611613513818402,
+        "embedding_cosine_similarity_raw": 0.19611613513818402,
+        "max_reconstruction_loss": 0.2,
+        "metric_scope": "model_encode_decode_embedding_reconstruction",
+        "min_cosine": 0.72,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold"
+        ],
+        "reconstruction_loss": 0.002527083435998186,
+        "text_roundtrip_equivalence": false
+      },
+      "sample_id": "us-code-42-8286a-579bf6232e305315",
+      "semantic_reason": "incomplete_source_semantic_roundtrip",
+      "source_bytes": 832,
+      "source_sha256": "6ea0a4635d33d0621fafbf05fb39b7e5b7543e443f9fe05e94e4fef47ca02a71",
+      "source_text": "§ 8286a. Use of factors and data\nFactors and data consented to pursuant to may be revised and agreed to by a consensus of the heads of the various Federal agencies involved. Such factors and data shall be used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies, except that other factors and data may be used with respect to the standards applicable to any program if—\n(1) the other factors and data are approved by the Secretary of Energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned;\n(2) using the consented to factors and data would cause a violation of an express provision of law; or\n(3) statutory requirements or responsibilities require a modification of the consented to factors and data.",
+      "split": "heldout"
+    }
+  ],
+  "family_scope": "11 accepted subclauses per arm produce66 syntax checks with projection_only true and semantic_equivalence_checked false. Lost source semantics can therefore coexist with all66 syntax checks passing.",
+  "fixtures": {
+    "bytes": 46763,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/qualification-failing-case-fixtures.json",
+    "sha256": "d31873eae566bad8bdcce2d961112e400a64d4909fd1e4ef6498851f386b322e"
+  },
+  "hard_barriers": [
+    "Current canonical rule grammar supports O/P/F and flat string qualifier arrays; unsupported definitions/findings/capability restrictions cannot be truthfully forced into it.",
+    "Current Lean admission renderer only supports narrow numeric threshold/conjunction/amount patterns. None of11 current rules has a supported numeric pattern. Semantic repairs alone do not imply Lake readiness.",
+    "The existing true conditional calendar requirement in10USC6275 is not a naive30calendar-day threshold.",
+    "A real source document with missing cross-reference targets cannot acquire those targets through optimization."
+  ],
+  "harness_files": [
+    {
+      "bytes": 55609,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/native_stage.py",
+      "sha256": "f664ea4b2357c62a402bb4505481a419b3085ef3a7d31835e8c2a0b4b68ae856"
+    },
+    {
+      "bytes": 35829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/run_pipeline.py",
+      "sha256": "6db31e1e739984bcca25a68700ebe2443e3821c0e37ced2cb98dd177d7199824"
+    }
+  ],
+  "inputs_changed": false,
+  "lake_scope": "22 Lake entries across both arms are precondition refusals, not failed Lean compiles; zero actual corpus lake builds. Separate synthetic20day fixture Lake proof does not qualify the real dataset or model.",
+  "model_runs_performed": 0,
+  "no_global_minimum_claim": true,
+  "operational_findings": [
+    {
+      "finding": "staged-shared-target.json is written with exclusive xb unconditionally before completed-wave replay; existing file makes replay fail.",
+      "id": "resume_shared_target_exclusive_write",
+      "next_change": "Verify an existing immutable descriptor exactly or create it once; test completed-wave resume and tamper rejection; leave R3 immutable.",
+      "severity": "blocker_for_wave_resume",
+      "source": "native_stage.py:79,599,615"
+    },
+    {
+      "finding": "Frozen R3 STAGES contains only smoke 300s,300MB; it is not an eight-hour configured launcher.",
+      "id": "smoke_only_configuration",
+      "next_change": "New sealed successor explicitly declares stage budgets and gate policy; do not edit sealed historical plan.",
+      "severity": "scope_limit",
+      "source": "run_pipeline.py:39"
+    },
+    {
+      "finding": "Deterministic stalled-state guard excludes train, and train permits qualified objective equality. A qualified zero-update unchanged candidate could be selected repeatedly.",
+      "id": "unchanged_train_churn",
+      "next_change": "Require explicit progress/plateau policy per immutable state+data+config; terminate or apply predeclared next data/config schedule without weakening qualification.",
+      "severity": "long_run_productivity",
+      "source": "native_stage.py:634,691"
+    },
+    {
+      "finding": "Train always uses the same six rows split train[lane::2]. This is not incremental processing of full US Code.",
+      "id": "fixed_six_row_lanes",
+      "next_change": "Bind corpus shard cursor, span IDs, source/split hashes, immutable frontier and completed-shard receipt; preserve canary partition and exact replay.",
+      "severity": "scope_limit",
+      "source": "native_stage.py:642"
+    },
+    {
+      "finding": "Two workers start one common parent and owner selects one qualified nonregressing branch; this does not merge both sparse updates or implement distributed SGD.",
+      "id": "parallel_branch_selection_not_merge",
+      "next_change": "Continue reporting branch search honestly. Any merge requires exact parent binding, conflict policy and full requalification of merged state before advancing.",
+      "severity": "scope_limit",
+      "source": "native_stage.py:643,691-694"
+    },
+    {
+      "finding": "Local owner DuckDB/Quack transport is exercised; Hub publication false and no multi-machine synchronization or remote resumption is exercised.",
+      "id": "remote_sync_not_exercised",
+      "next_change": "Use existing immutable sparse-checkpoint closure/outbox manifest interfaces for independently qualified state; replay parent chains/CAS conflicts; do not claim cross-machine readiness from local smoke.",
+      "severity": "scope_limit",
+      "source": "native_stage.py:659,761"
+    },
+    {
+      "finding": "Only sealed completed waves replay; incomplete wave requires explicit recovery rather than duplicate dispatch.",
+      "id": "incomplete_wave_recovery",
+      "next_change": "Test crash recovery with lease fencing and orphan output recognition; never reuse partially qualified rows or silently delete old resource claims.",
+      "severity": "intentional_fail_closed",
+      "source": "native_stage.py:509-526"
+    },
+    {
+      "finding": "Canary model evaluation follows immutable tuning-only winner selection; no winner exists in R3, so no model canary evaluation occurred.",
+      "id": "canary_access_boundary",
+      "next_change": "Keep this boundary and avoid using canary contents for repairs/hyperparameter selection. Byte hashing/frozen embedding provenance does not authorize AE feedback.",
+      "severity": "preserve",
+      "source": "native_stage.py:719-733;run_pipeline.py:302-322"
+    }
+  ],
+  "protective_semantic_gate": {
+    "empty_vocabulary": "TypedDeonticCanonicalCompiler must abstain; no vocabulary fallback.",
+    "historical_pilot": "Preserve five-case frozen baseline with authorized retained 24-hour deadline; forward/cycle report independently from source semantic coverage.",
+    "positive_controls": [
+      {
+        "must_preserve": [
+          "modality O",
+          "within_duration quantity10",
+          "decompiled 10 days and emergency",
+          "pattern_from_rule None"
+        ],
+        "text": "Company A shall submit backup report within 10 days unless emergency."
+      },
+      {
+        "must_preserve": [
+          "modality F"
+        ],
+        "text": "The agency shall not disclose records."
+      },
+      {
+        "must_preserve": [
+          "minimum_duration quantity20",
+          "decompiled at least 20 days",
+          "not at least days",
+          "supported numeric Lake proof only"
+        ],
+        "text": "The officer shall retain the file for at least 20 days."
+      }
+    ],
+    "requirements": [
+      "Do not interpret pipeline SUCCESS as semantic parity. Bind L1/T1/L2 payloads and compare represented rules under the existing fixed parity policy before roundtrip labeling.",
+      "L1/L2 parity alone is insufficient. Require source-backed coverage for each operative modal/negation/conditional/exception/temporal trigger and every enumerated logical branch.",
+      "Track offsets and grouping from source through parser/IR/decompiler. A token appearing incidentally in actor/object is not evidence that it was retained as a logical condition.",
+      "Detect enumeration boundary continuation before sentence splitting; if not representable, abstain on the enclosing affected clause instead of inventing standalone obligations.",
+      "Add exact fail-closed diagnostics for lost condition, lost exception alternative, unresolved negation scope, lost temporal recurrence/anchor, or dangling cross-reference; do not blanket-reject all if/or clauses.",
+      "Use positive simple implication, unless-exception, prohibition and minimum-duration controls to show supported cases still pass. Golden fixtures are regression evidence, not a production text allowlist.",
+      "Definitions, findings, powers, cross-reference semantics and nonnumeric norms remain unsupported unless implemented with explicit source-grounded IR; do not mark nonoperative text formalized simply to make whole-document gate pass.",
+      "Do not add a generic Lean fingerprint/vacuous theorem renderer. Lake proof must state an actual supported source-grounded obligation/constraint and preserve scope."
+    ],
+    "root_cause": {
+      "callee_contract": "canonical_roundtrip.py:7-11",
+      "caller": "AutoformalSession.roundtrip_clause:214-219",
+      "finding": "Caller promotes compiled to roundtrip_ok solely from operation SUCCESS although callee explicitly defines this as stage completion, not semantic parity. Same lossy parse can be cycle-stable."
+    }
+  },
+  "provenance_scope": "Private diagnostic, locally byte-bound real text and verified local384D embeddings; no official-source/global-heldout assertion. Missing references require source repair. These provenance limitations are not introduced as new numeric acceptance gates.",
+  "read_only": true,
+  "schema": "real-corpus-qualification-readiness-audit/v1",
+  "source_files_observed": [
+    {
+      "bytes": 48070,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30"
+    },
+    {
+      "bytes": 27010,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py",
+      "sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 37034,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd"
+    },
+    {
+      "bytes": 26466,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py",
+      "sha256": "6df7456a31e369f81140d5055c01b03765420e9fff829ce7e9184b12208d7c87"
+    },
+    {
+      "bytes": 26379,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+      "sha256": "2037a625ddb663cc8c0e444428f33b8d24308d7c55a9d78174b43387a1ece777"
+    },
+    {
+      "bytes": 19344,
+      "path": "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py",
+      "sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237"
+    }
+  ],
+  "thresholds_changed": false,
+  "todos": {
+    "bytes": 11081,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/qualification-repair-todos.json",
+    "sha256": "791f575808023a185b6865bf56d2851fbb41094131820164c0789a6be42c0fe3"
+  },
+  "why": "Both immutable candidates fail every row cosine and whole-source semantic/family/Lake gates. Source defects and unsupported theorem classes cannot be repaired solely by longer optimization."
+}

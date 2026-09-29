@@ -1,6 +1,7 @@
 """Exact target parity, lazy selection, bounded decoding and durable publication."""
 from dataclasses import replace
 import hashlib
+import inspect
 import json
 import os
 from pathlib import Path
@@ -276,6 +277,40 @@ def test_writer_size_bounds_fail_without_artifact(sample, config, tmp_path, boun
     with pytest.raises(TargetSnapshotError, match="bound"):
         codec.write_target_bundle(tmp_path / "small.bundle", [(sample, target_for(sample), None)], config=config, **{bound: 1})
     assert list(tmp_path.iterdir()) == []
+
+
+def test_shard_overflow_reports_exact_size_and_limit_without_target_text(sample, config, tmp_path):
+    target = target_for(sample)
+    encoded_bytes = len(_json(_encode(target)))
+    limit = encoded_bytes - 1
+    with pytest.raises(TargetSnapshotError) as caught:
+        codec.write_target_bundle(tmp_path / "oversize.bundle", [(sample, target, None)],
+                                  config=config, max_shard_bytes=limit)
+    assert str(caught.value) == (
+        "encoded target exceeds shard byte bound: "
+        f"encoded_bytes={encoded_bytes} max_shard_bytes={limit}"
+    )
+    assert sample.text not in str(caught.value)
+    assert sample.sample_id not in str(caught.value)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_explicit_shard_bound_preserves_default_and_exact_loader_checks(sample, config, tmp_path):
+    assert codec.DEFAULT_MAX_SHARD_BYTES == 64 * 1024 * 1024
+    assert codec.MAX_TARGET_SHARD_BYTES == 256 * 1024 * 1024
+    for function in (codec.write_target_bundle, codec.load_target_bundle, codec.load_target_artifact):
+        assert inspect.signature(function).parameters["max_shard_bytes"].default == codec.DEFAULT_MAX_SHARD_BYTES
+    target = target_for(sample)
+    encoded_bytes = len(_json(_encode(target)))
+    descriptor = codec.write_target_bundle(tmp_path / "exact-limit.bundle", [(sample, target, None)],
+                                          config=config, max_shard_bytes=encoded_bytes)
+    with pytest.raises(TargetSnapshotError, match="expanded byte bound"):
+        codec.load_target_artifact(descriptor["path"], expected_sha256=descriptor["sha256"],
+                                   config=config, max_shard_bytes=encoded_bytes - 1)
+    with codec.load_target_artifact(descriptor["path"], expected_sha256=descriptor["sha256"],
+                                    config=config, max_shard_bytes=encoded_bytes) as snapshot:
+        restored = snapshot.targets_for([sample], config=config)[sample.sample_id]
+        assert _json(_encode(restored)) == _json(_encode(target))
 
 
 def test_config_bound_fails_before_producer_is_consumed(config, tmp_path):

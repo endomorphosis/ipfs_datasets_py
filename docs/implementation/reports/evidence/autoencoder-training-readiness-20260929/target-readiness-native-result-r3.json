@@ -1,0 +1,520 @@
+{
+  "admitted": false,
+  "artifact_statistics": {
+    "artifact_bytes": 25949433,
+    "artifact_format": "bundle",
+    "compressed_target_bytes": 24835831,
+    "compression_seconds": 2.2217227967921644,
+    "deduplicated_target_count": 0,
+    "encoding_validate_seconds": 14.59230450191535,
+    "manifest_bytes": 1113586,
+    "referenced_uncompressed_target_bytes": 447724922,
+    "sample_count": 8,
+    "schema_version": "legal-ir-target-bundle-v1",
+    "shard_count": 8,
+    "target_reference_count": 8,
+    "unique_uncompressed_target_bytes": 447724922
+  },
+  "bridge_failure_sample_count": 0,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "canary_evaluated": false,
+  "cold_native_generation": true,
+  "compressed_max_output_bytes": 67108864,
+  "constitution_formalized": false,
+  "exit_code": 0,
+  "full_package_final_source_guard_completed": true,
+  "journal_matches_final_generation_timings": true,
+  "lean_admissions": 0,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "legal_ir_target_count": 8,
+  "measurement_scope": "Shared cold target preparation only; consumers hydrate these explicit targets. Add worker hydration, complete training and qualification before claiming end-to-end acceleration. Compared with historical15s runs this changes the explicit target timeout policy.",
+  "metric_disk_cache": 0,
+  "metric_process_cache_used": false,
+  "observation_journal": {
+    "bytes": 5628,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/shared-targets-r3/target-observations.jsonl",
+    "sha256": "e66c71f16bee98905b68b3dccd6d52d2237277247e8b6b94a54762bc83d345c4"
+  },
+  "outer_command_wall_seconds": 142.54736355994828,
+  "owner_final_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 79285464368,
+    "inventory": {
+      "apparent_bytes": 48570464368,
+      "entry_count": 244820,
+      "special_file_count": 21,
+      "symlink_count": 3842
+    },
+    "limit_bytes": 80000000000,
+    "minimum_filesystem_free_bytes": 179188441088,
+    "observed_apparent_bytes": 48570464368,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "owner_final_attempt_bytes": 25971829,
+  "owner_including_input_planning_seconds": 142.46137710195035,
+  "owner_wall_seconds": 142.29444726905786,
+  "owner_wall_seconds_per_span": 17.786805908632232,
+  "package_source_manifest": {
+    "file_count": 7837,
+    "hash_scope": "sha256 of canonical sorted compact JSON code_sha256 mapping in bundle config",
+    "sha256": "bd3059862b4c669938079705b0e2eff3c7fe2cf9f4786b30dd32e359b21a3213"
+  },
+  "per_span": [
+    {
+      "admitted": false,
+      "bridge_report_telemetry": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "complete": true,
+      "compressed_target_bytes": 2066386,
+      "expanded_target_bytes": 36949131,
+      "generation_wall_seconds": 12.441158218076453,
+      "role": "training",
+      "sample_id": "us-code-50-3114-cc36a2057a2cc4f2",
+      "status": "ready"
+    },
+    {
+      "admitted": false,
+      "bridge_report_telemetry": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "complete": true,
+      "compressed_target_bytes": 3830848,
+      "expanded_target_bytes": 67482571,
+      "generation_wall_seconds": 16.18114432389848,
+      "role": "training",
+      "sample_id": "us-code-22-2-37b796de116a4487",
+      "status": "ready"
+    },
+    {
+      "admitted": false,
+      "bridge_report_telemetry": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "complete": true,
+      "compressed_target_bytes": 5018585,
+      "expanded_target_bytes": 91141821,
+      "generation_wall_seconds": 23.99609441915527,
+      "role": "training",
+      "sample_id": "us-code-40-3318-429cfc454b54ce35",
+      "status": "ready"
+    },
+    {
+      "admitted": false,
+      "bridge_report_telemetry": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "complete": true,
+      "compressed_target_bytes": 4414312,
+      "expanded_target_bytes": 79214210,
+      "generation_wall_seconds": 20.408418968087062,
+      "role": "training",
+      "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+      "status": "ready"
+    },
+    {
+      "admitted": false,
+      "bridge_report_telemetry": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "complete": true,
+      "compressed_target_bytes": 1463314,
+      "expanded_target_bytes": 26612709,
+      "generation_wall_seconds": 6.0843482099007815,
+      "role": "training",
+      "sample_id": "us-code-42-15963-7baaee5c0500d91e",
+      "status": "ready"
+    },
+    {
+      "admitted": false,
+      "bridge_report_telemetry": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "complete": true,
+      "compressed_target_bytes": 4225545,
+      "expanded_target_bytes": 76609462,
+      "generation_wall_seconds": 22.004557020030916,
+      "role": "training",
+      "sample_id": "us-code-10-6275-3b7144797fc2e39d",
+      "status": "ready"
+    },
+    {
+      "admitted": false,
+      "bridge_report_telemetry": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "complete": true,
+      "compressed_target_bytes": 1006307,
+      "expanded_target_bytes": 17923940,
+      "generation_wall_seconds": 3.37745209899731,
+      "role": "repeated_tuning_not_canary",
+      "sample_id": "us-code-36-50106-bb17fee26e3ac266",
+      "status": "ready"
+    },
+    {
+      "admitted": false,
+      "bridge_report_telemetry": {
+        "accepted_bridge_count": 5,
+        "accepted_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "attempted_bridge_count": 5,
+        "attempted_bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "failed_bridge_count": 0,
+        "failed_bridge_names": [],
+        "failures": {},
+        "implemented_bridge_count": 5,
+        "implemented_bridge_names": [
+          "cec_dcec",
+          "deontic_norms",
+          "external_prover_router",
+          "fol_tdfol",
+          "modal_frame_logic"
+        ],
+        "outer_timeout": null,
+        "report_accepted": true,
+        "report_received": true
+      },
+      "complete": true,
+      "compressed_target_bytes": 2810534,
+      "expanded_target_bytes": 51791078,
+      "generation_wall_seconds": 10.07298889500089,
+      "role": "repeated_tuning_not_canary",
+      "sample_id": "us-code-42-8286a-579bf6232e305315",
+      "status": "ready"
+    }
+  ],
+  "pinned_source_sha256": {
+    "autoencoder": "d19baa8d947f13af265b0871b8324948d4f2a96e79b0f0574cc29d2927f82115",
+    "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "worker": "edbd9cf926be7d628b63aaaf03f95f51ef1ca41d5144c9998b5a60d47ebc4f24"
+  },
+  "producer_call_wall_seconds": 133.81331117381342,
+  "repeated_tuning_count": 2,
+  "reservation_id": "189de1e83e024e8786bf336ce79c943f",
+  "reservation_status": "released",
+  "resource_finalization_profile": {
+    "global_accounting_seconds": 2.388682780088857,
+    "global_inventory_count": 1,
+    "ledger_lock_wait_seconds": 0.0002464680001139641,
+    "process_check_seconds": 0.021596231032162905,
+    "schema_version": "daemon-resource-finalization-profile/v1",
+    "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+    "strict_attempt_inventory_count": 1,
+    "strict_attempt_inventory_seconds": 0.00019558798521757126
+  },
+  "runner_environment": {
+    "IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS": "60.0"
+  },
+  "runner_sha256": "113324782b6007a655469e0a6a60859f8ddc12826e762cc49218d6f642d11b8e",
+  "sample_count": 8,
+  "schema": "shared-target-readiness-native-result/v1",
+  "script_sha256": "dffa055d9ca726ab1dfcff06fc9ed97e323c85fcb7e9b9d393ab5bb240d203c7",
+  "split_target_status_counts": {
+    "training": {
+      "ready": 6
+    },
+    "validation": {
+      "ready": 2
+    }
+  },
+  "status": "complete_native_target_supervision",
+  "storage_reserved_bytes": 175000000,
+  "supervision": {
+    "enforcement": "existing_resource_reservation_and_polled_group_usage_with_per_file_RLIMIT_FSIZE",
+    "observed_max_group_process_count": 1,
+    "observed_peak_group_rss_bytes": 1424113664,
+    "peak_scope": "polled lower bound; shared pages may be counted more than once",
+    "supervised_process_wall_seconds": 137.40003827307373
+  },
+  "target_artifact": {
+    "bytes": 25949433,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/shared-targets-r3/targets.bundle",
+    "sha256": "a90e387b2a555c2aacce0407e0bf241186710fc6ba8f60b87287e8ab5fe0a95c"
+  },
+  "target_completeness": {
+    "admitted": false,
+    "complete": true,
+    "complete_target_count": 8,
+    "incomplete_target_count": 0,
+    "observations": {
+      "us-code-10-6275-3b7144797fc2e39d": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-22-2-37b796de116a4487": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-36-50106-bb17fee26e3ac266": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-40-3318-429cfc454b54ce35": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-42-15963-7baaee5c0500d91e": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-42-8286a-579bf6232e305315": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-46-60303-bfa2875bd83d29df": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-50-3114-cc36a2057a2cc4f2": {
+        "complete": true,
+        "reasons": []
+      }
+    },
+    "schema_version": "target-supervision-completeness/v1",
+    "scope": "all requested bridge reports returned and accepted without timeout or exception; not a Lean admission or model qualification",
+    "target_count": 8
+  },
+  "target_generation_wall_seconds": 114.56616215314716,
+  "target_generation_wall_seconds_per_span": 14.320770269143395,
+  "target_shard_max_bytes": 268435456,
+  "target_snapshot_id": "sha256:7db1bc2da39ece2a19075d6072366a168da632890bdafabb1fcb2364f0d64b81",
+  "target_timeout_seconds": 60.0,
+  "timeout_fallback_count": 0,
+  "training_count": 6,
+  "training_executed": false,
+  "training_job_fields": {
+    "target_shard_max_bytes": 268435456,
+    "target_snapshot_artifact": {
+      "bytes": 25949433,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/shared-targets-r3/targets.bundle",
+      "sha256": "a90e387b2a555c2aacce0407e0bf241186710fc6ba8f60b87287e8ab5fe0a95c"
+    },
+    "target_snapshot_id": "sha256:7db1bc2da39ece2a19075d6072366a168da632890bdafabb1fcb2364f0d64b81"
+  },
+  "use_sample_memory": false
+}

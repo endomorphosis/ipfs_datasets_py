@@ -1,0 +1,45 @@
+{
+  "schema": "semantic-integrity-change-manifest/v1",
+  "frozen_at": "2026-09-29T07:16:37.980465+00:00",
+  "files": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "81d9f1553f7b4bbd0771aedc057377d3690d00249cabbdd381cee075bb26d5ca",
+      "bytes": 49170,
+      "before_sha256": "a8dc7e550452d279a8d96fd4eb623607ba73e53f2d13a75d259d0375f6303f30"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/semantic_integrity.py",
+      "sha256": "c755f98a629c13c24d6b44c7fe146da65914ae2fbeb9c70f2e38fabd37ef1507",
+      "bytes": 4466,
+      "before_sha256": null
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+      "sha256": "0ecba6ffffa24804417d9d834192e53c71edf62d780169134615ac82d6db3674",
+      "bytes": 26425,
+      "before_sha256": "2037a625ddb663cc8c0e444428f33b8d24308d7c55a9d78174b43387a1ece777"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_semantic_integrity.py",
+      "sha256": "afd997e6c33f80ac6a4abe1ee76785b9d2dfb974883eaf75fc59b062ab238472",
+      "bytes": 7509,
+      "before_sha256": null
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_candidate_qualification.py",
+      "sha256": "80c1de6dceb9336fafdbf86e87c29833847472419226d1a145d84b5fbcef27a1",
+      "bytes": 14322,
+      "before_sha256": "7a88b0fbf6f0422a4108bac24366b67ca3d9b7e410c328f0eebe0300eac90d66"
+    }
+  ],
+  "tests": {
+    "final_tests": "semantic-final-tests.xml",
+    "count": 147
+  },
+  "notes": [
+    "No parser/compiler/decompiler/Lean/source-selection or numerical metric gate changes.",
+    "Nine false roundtrip claims are expected to be guarded; two simple represented norm subclauses remain eligible for cycle labeling, not proof.",
+    "Known source grammar restrictions are explicitly unsupported; exact IR identity does not prove full source coverage."
+  ]
+}

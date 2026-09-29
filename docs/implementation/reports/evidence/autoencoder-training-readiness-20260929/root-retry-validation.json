@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+      "before_sha256": "f5ea6a122fe549f058330614edf7547bf736d282c07f7cba11cfa7ed6f7d2906",
+      "after_sha256": "bdad812f4cdd8da982a923aadba35438d7c5a005433228b317a535757f9487c7",
+      "before_snapshot": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+      "bytes": 41999
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py",
+      "before_sha256": "d17e88c0e9675d6341dea78c1b8f683564cdcaba8f0a35c190ce0e5df359e927",
+      "after_sha256": "9a81a7cf2a6324652dc8da196bd520dcbdd27a363b662e6497df10907066c0a5",
+      "before_snapshot": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/before/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py",
+      "bytes": 45378
+    }
+  ],
+  "tests": {
+    "qualified_training": {
+      "passed": 49,
+      "seconds": 27.0
+    },
+    "successor_controller": {
+      "passed": 7,
+      "seconds": 0.15
+    }
+  },
+  "new_retry_policy": "metric_only_without_structural_failures_v2",
+  "all_qualification_thresholds_unchanged": true,
+  "admitted": false
+}

@@ -391,6 +391,11 @@ def _verify_receipt_payload(spec: TrainingJobSpec, receipt: Mapping[str, Any], *
     artifacts, replay candidate updates or establish native execution itself.
     """
     output = Path(spec.output_directory)
+    # Archived receipts predate the optional expanded-shard bound and used 64MiB.
+    # Nondefault jobs require the explicit effective worker bound to match.
+    effective_shard_bound = receipt.get("target_shard_max_bytes", 64 * 1024 * 1024)
+    if type(effective_shard_bound) is not int or effective_shard_bound != spec.target_shard_max_bytes:
+        raise TrainingCoordinationError("worker target_shard_max_bytes differs from job")
     expected = {"schema_version": "autoencoder-training-worker-receipt-v1",
                 "job_id": spec.job_id, "run_id": spec.run_id,
                 "base_version_id": spec.base_version_id,
@@ -698,6 +703,7 @@ def _result_summary(receipt: Mapping[str, Any], receipt_artifact: Mapping[str, A
         "dataset_and_split_identity_verified": receipt["dataset_and_split_identity_verified"],
         "target_snapshot_id": receipt["target_snapshot_id"],
         "shared_targets_verified": receipt["shared_targets_verified"],
+        "target_shard_max_bytes": receipt.get("target_shard_max_bytes", 64 * 1024 * 1024),
         "shared_target_count": receipt["shared_target_count"],
         "shared_target_status_counts": receipt["shared_target_status_counts"],
         "target_load_seconds": receipt["target_load_seconds"],

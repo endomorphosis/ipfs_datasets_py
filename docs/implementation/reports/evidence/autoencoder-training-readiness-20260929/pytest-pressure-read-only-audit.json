@@ -1,0 +1,268 @@
+{
+  "active_pytest_processes": [],
+  "admitted": false,
+  "claims_changed": false,
+  "deletions": false,
+  "finished_epoch": 1790668471.052886,
+  "our_last_native_prep_started_epoch": "2026-09-29T07:42:28Z",
+  "ownership_assessment": {
+    "assessment": "No recent directory was established as this agent's own temporary output. Current numeric directories postdate the final shared-target suite and contain other fixture names. Absence of active process references does not establish ownership or absence of retained evidence.",
+    "known_our_reclaimable_paths": [],
+    "other_named_directories": "Historical named campaign/evidence directories were left untouched and not inventoried for reclamation.",
+    "our_shared_target_tests_completed_before_utc": "2026-09-29T07:42:28Z",
+    "retention_assessment": "The current three numeric directories resemble normal pytest retention. A later external pytest session may replace/remove older runs, but idle waiting guarantees neither cleanup nor enough net headroom. No cleanup-triggering process was started."
+  },
+  "proc_link_checks": 5407,
+  "process_access_races_or_denials": 385,
+  "process_references_into_pytest_root": [],
+  "recent_directories": [
+    {
+      "apparent_regular_file_bytes": 38311967,
+      "exists_after": true,
+      "immediate_test_directories": [
+        "test_direct_codex_command_has_0",
+        "test_live_external_validation_0",
+        "test_predispatch_deferral_keep0",
+        "test_rehashed_packet_cannot_ch5",
+        "test_trusted_duckdb_home_is_pr0"
+      ],
+      "initial_ctime": 1790668388.174715,
+      "initial_mtime": 1790668388.174715,
+      "largest_test_directories": [
+        [
+          "test_predispatch_deferral_keep0",
+          38309888
+        ],
+        [
+          "test_rehashed_packet_cannot_ch5",
+          1964
+        ],
+        [
+          "test_direct_codex_command_has_0",
+          115
+        ]
+      ],
+      "path": "/tmp/pytest-of-barberb/garbage-b9e5562c-baea-45f7-9387-b65397bc71fa",
+      "regular_file_count": 18,
+      "symlink_count": 5,
+      "vanished_during_walk": 0
+    },
+    {
+      "apparent_regular_file_bytes": 2079,
+      "exists_after": true,
+      "immediate_test_directories": [
+        "test_direct_codex_command_has_0",
+        "test_live_external_validation_0",
+        "test_rehashed_packet_cannot_ch5",
+        "test_trusted_duckdb_home_is_pr0"
+      ],
+      "initial_ctime": 1790668388.17503,
+      "initial_mtime": 1790668388.17503,
+      "largest_test_directories": [
+        [
+          "test_rehashed_packet_cannot_ch5",
+          1964
+        ],
+        [
+          "test_direct_codex_command_has_0",
+          115
+        ]
+      ],
+      "path": "/tmp/pytest-of-barberb/garbage-e6a8573a-e8f6-439f-a61b-085287432f23",
+      "regular_file_count": 9,
+      "symlink_count": 3,
+      "vanished_during_walk": 0
+    },
+    {
+      "apparent_regular_file_bytes": 525904443,
+      "exists_after": true,
+      "immediate_test_directories": [
+        "test_actual_router_consumes_se0",
+        "test_actual_router_transports_0",
+        "test_container_boundary_refuse0",
+        "test_container_boundary_refuse1",
+        "test_container_boundary_refuse10",
+        "test_container_boundary_refuse11",
+        "test_container_boundary_refuse12",
+        "test_container_boundary_refuse13",
+        "test_container_boundary_refuse2",
+        "test_container_boundary_refuse3",
+        "test_container_boundary_refuse4",
+        "test_container_boundary_refuse5",
+        "test_container_boundary_refuse6",
+        "test_container_boundary_refuse7",
+        "test_container_boundary_refuse8",
+        "test_container_boundary_refuse9",
+        "test_container_boundary_unit_f0",
+        "test_decode_refusal_retains_ob0",
+        "test_dispatch_refuses_stale_or0",
+        "test_dispatch_refuses_stale_or1",
+        "test_dispatch_refuses_stale_or2",
+        "test_driver_selects_before_own0",
+        "test_driver_selects_before_own1",
+        "test_driver_selects_before_own2",
+        "test_native_rollout_usage_bind0",
+        "test_owner_rejects_residual_re0",
+        "test_owner_rejects_residual_re1",
+        "test_owner_rejects_residual_re2",
+        "test_owner_rejects_residual_re3",
+        "test_plain_summary_remains_lit0",
+        "test_publication_refuses_unsaf0",
+        "test_publication_refuses_unsaf1",
+        "test_publication_refuses_unsaf2",
+        "test_real_automatic_dispatch_p0",
+        "test_real_residual_retains_mod0",
+        "test_real_residual_retains_mod1",
+        "test_residual_context_refuses_0",
+        "test_residual_context_refuses_1",
+        "test_residual_context_refuses_2",
+        "test_residual_context_refuses_3",
+        "test_residual_context_refuses_4",
+        "test_residual_context_refuses_5",
+        "test_runner_keeps_usage_and_re0",
+        "test_runner_keeps_usage_and_re1",
+        "test_structured_reply_refuses_0",
+        "test_typed_native_residual_cap0"
+      ],
+      "initial_ctime": 1790668312.0476038,
+      "initial_mtime": 1790668312.0476038,
+      "largest_test_directories": [
+        [
+          "test_actual_router_consumes_se0",
+          40818431
+        ],
+        [
+          "test_real_automatic_dispatch_p0",
+          28466827
+        ],
+        [
+          "test_real_residual_retains_mod1",
+          28405028
+        ],
+        [
+          "test_real_residual_retains_mod0",
+          28403284
+        ],
+        [
+          "test_typed_native_residual_cap0",
+          28391869
+        ],
+        [
+          "test_residual_context_refuses_2",
+          28391837
+        ],
+        [
+          "test_residual_context_refuses_5",
+          28391837
+        ],
+        [
+          "test_residual_context_refuses_0",
+          28391835
+        ]
+      ],
+      "path": "/tmp/pytest-of-barberb/pytest-3074",
+      "regular_file_count": 1692,
+      "symlink_count": 21,
+      "vanished_during_walk": 0
+    },
+    {
+      "apparent_regular_file_bytes": 99797849,
+      "exists_after": true,
+      "immediate_test_directories": [
+        "pinned-learned-refresh0",
+        "test_actual_local_model_rebuil0",
+        "test_owner_model_refuses_worke0",
+        "test_pin_or_source_drift_absta0",
+        "test_pin_or_source_drift_absta1",
+        "test_pin_or_source_drift_absta2",
+        "test_pin_or_source_drift_absta3",
+        "test_pin_or_source_drift_absta4",
+        "test_pin_or_source_drift_absta5",
+        "test_pin_or_source_drift_absta6"
+      ],
+      "initial_ctime": 1790668344.5446029,
+      "initial_mtime": 1790668344.5446029,
+      "largest_test_directories": [
+        [
+          "pinned-learned-refresh0",
+          99023499
+        ],
+        [
+          "test_actual_local_model_rebuil0",
+          123198
+        ],
+        [
+          "test_pin_or_source_drift_absta2",
+          100549
+        ],
+        [
+          "test_pin_or_source_drift_absta4",
+          100549
+        ],
+        [
+          "test_pin_or_source_drift_absta3",
+          100549
+        ],
+        [
+          "test_pin_or_source_drift_absta5",
+          100549
+        ],
+        [
+          "test_pin_or_source_drift_absta6",
+          100472
+        ],
+        [
+          "test_pin_or_source_drift_absta1",
+          98956
+        ]
+      ],
+      "path": "/tmp/pytest-of-barberb/pytest-3075",
+      "regular_file_count": 64,
+      "symlink_count": 6,
+      "vanished_during_walk": 0
+    },
+    {
+      "apparent_regular_file_bytes": 183496912,
+      "exists_after": true,
+      "immediate_test_directories": [
+        "test_actual_initial_indexes_re0",
+        "test_initial_evidence_drift_re0",
+        "test_initial_evidence_drift_re1",
+        "test_initial_evidence_drift_re2",
+        "test_initial_evidence_drift_re3"
+      ],
+      "initial_ctime": 1790668388.17503,
+      "initial_mtime": 1790668388.17503,
+      "largest_test_directories": [
+        [
+          "test_actual_initial_indexes_re0",
+          61145117
+        ],
+        [
+          "test_initial_evidence_drift_re0",
+          30587952
+        ],
+        [
+          "test_initial_evidence_drift_re1",
+          30587951
+        ],
+        [
+          "test_initial_evidence_drift_re3",
+          30587948
+        ],
+        [
+          "test_initial_evidence_drift_re2",
+          30587944
+        ]
+      ],
+      "path": "/tmp/pytest-of-barberb/pytest-3076",
+      "regular_file_count": 951,
+      "symlink_count": 2,
+      "vanished_during_walk": 0
+    }
+  ],
+  "schema": "pytest-temporary-pressure-read-only-audit/v1",
+  "scope": "One inventory of recent numeric pytest and recent garbage directories only; no full-root repeated census",
+  "source_edits": false,
+  "started_epoch": 1790668470.9440222
+}

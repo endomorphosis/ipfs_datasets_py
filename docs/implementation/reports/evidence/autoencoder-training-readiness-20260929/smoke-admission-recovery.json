@@ -1,0 +1,22 @@
+{
+  "schema": "pre-dispatch-admission-recovery/v1",
+  "at": 1790668428.9999492,
+  "failed_owner_pid": 3194968,
+  "owner_absent": true,
+  "no_child_launched": true,
+  "reservation_created": false,
+  "files_preserved": {
+    "pipeline-state.json": {
+      "sha256": "e9849646bc0fb9d77e59a75961de39a963aed5c31ca8fc70a764ba7aa059e033",
+      "bytes": 454
+    },
+    "native-pipeline-launch.log": {
+      "sha256": "9958a56655e33fde701f0a245b6d3140dfaf53fec3823ab97eb4a3e82ac84b46",
+      "bytes": 3106
+    }
+  },
+  "capacity_preserved": "admission-failure-1/smoke/capacity.json",
+  "action": "archive_only_undispatched_stage_for_explicit_retry",
+  "source_or_plan_changed": false,
+  "admitted": false
+}

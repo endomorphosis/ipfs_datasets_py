@@ -9,6 +9,7 @@ opt-in sparse manifests reference explicitly supplied immutable dependencies.
 from __future__ import annotations
 
 from .autoencoder_native_pool import worker_runtime
+from .modal_autoencoder_adaptive_optimizer import normalize_projection_candidate_update_order
 
 import gc
 import hashlib
@@ -37,6 +38,8 @@ SPARSE_SCHEMA_VERSION = "autoencoder-training-job-v3"
 PREVIOUS_SCHEMA_VERSION = "autoencoder-training-job-v2"
 LEGACY_SCHEMA_VERSION = "autoencoder-training-job-v1"
 MAX_BASE_DEPENDENCIES = 256
+DEFAULT_TARGET_SHARD_MAX_BYTES = 64 * 1024 * 1024
+MAX_TARGET_SHARD_BYTES = 256 * 1024 * 1024
 MAX_CHECKPOINT_BYTES = 512 * 1024 * 1024
 MAX_BASE_DEPENDENCY_BYTES = 4 * 1024 * 1024 * 1024
 MAX_CORPUS_SOURCES = 256
@@ -229,8 +232,14 @@ class TrainingConfig:
     projection_max_composed_refinement_attempts: int = 0
     projection_optimizer_mode: str = "fixed"
     projection_momentum: float = 0.0
+    projection_candidate_update_order: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
+        try:
+            order = normalize_projection_candidate_update_order(self.projection_candidate_update_order)
+        except ValueError as exc:
+            raise TrainingJobValidationError(str(exc)) from exc
+        object.__setattr__(self, "projection_candidate_update_order", order)
         if not isinstance(self.legal_ir_bridge_names, (list, tuple)):
             raise TrainingJobValidationError("legal_ir_bridge_names must be an array")
         names = tuple(self.legal_ir_bridge_names)
@@ -264,6 +273,9 @@ class TrainingConfig:
             _number(getattr(self, name), name)
         if self.projection_max_composed_refinement_attempts and self.l2_regularization != 0.0:
             raise TrainingJobValidationError("composed refinement currently requires zero l2_regularization")
+        if (self.projection_candidate_update_order and set(self.projection_candidate_update_order) & {"decoded_embedding_nonview", "decoded_embedding_structural"}
+                and self.l2_regularization != 0.0):
+            raise TrainingJobValidationError("support-preserving embedding operators require zero l2_regularization to preserve untouched view heads")
         if (type(self.projection_optimizer_mode) is not str
                 or self.projection_optimizer_mode not in {"fixed", "guarded_adaptive", "productive_adaptive"}):
             raise TrainingJobValidationError("projection_optimizer_mode must be fixed, guarded_adaptive or productive_adaptive")
@@ -291,6 +303,8 @@ class TrainingConfig:
         result = asdict(self)
         # Preserve archived job and training-policy identities when this new
         # opt-in is disabled. Enabled budgets must be bound into both.
+        if self.projection_candidate_update_order is None:
+            result.pop("projection_candidate_update_order")
         if self.projection_max_composed_refinement_attempts == 0:
             result.pop("projection_max_composed_refinement_attempts")
         if self.projection_optimizer_mode == "fixed" and self.projection_momentum == 0.0:
@@ -337,6 +351,7 @@ class TrainingJobSpec:
     embedding_receipt_set_artifact: CheckpointArtifact | None = None
     produced_record_projection_artifact: CheckpointArtifact | None = None
     embedding_receipt_artifacts: tuple[CheckpointArtifact, ...] = ()
+    target_shard_max_bytes: int = DEFAULT_TARGET_SHARD_MAX_BYTES
 
     def __post_init__(self) -> None:
         for name in ("job_id", "run_id", "base_version_id", "output_directory", "code_identity",
@@ -347,6 +362,10 @@ class TrainingJobSpec:
             raise TrainingJobValidationError("target snapshot ID and artifact must be supplied together")
         if self.target_snapshot_artifact is not None and not isinstance(self.target_snapshot_artifact, CheckpointArtifact):
             raise TrainingJobValidationError("target_snapshot_artifact must be CheckpointArtifact")
+        if type(self.target_shard_max_bytes) is not int or not 1 <= self.target_shard_max_bytes <= MAX_TARGET_SHARD_BYTES:
+            raise TrainingJobValidationError("target_shard_max_bytes must be a positive integer <= 256 MiB")
+        if self.target_shard_max_bytes != DEFAULT_TARGET_SHARD_MAX_BYTES and self.target_snapshot_artifact is None:
+            raise TrainingJobValidationError("nondefault target_shard_max_bytes requires a target snapshot artifact")
         if type(self.capture_sparse_patches) is not bool:
             raise TrainingJobValidationError("capture_sparse_patches must be boolean")
         if self.arrow_feature_weights_artifact is not None and not isinstance(self.arrow_feature_weights_artifact, CheckpointArtifact):
@@ -555,6 +574,8 @@ class TrainingJobSpec:
         result["training_config"] = self.training_config.to_dict()
         if self.target_snapshot_artifact is not None:
             result["target_snapshot_artifact"] = asdict(self.target_snapshot_artifact)
+        if self.target_shard_max_bytes == DEFAULT_TARGET_SHARD_MAX_BYTES:
+            result.pop("target_shard_max_bytes")
         if self.arrow_feature_weights_artifact is not None:
             result["arrow_feature_weights_artifact"] = asdict(self.arrow_feature_weights_artifact)
         result["base_checkpoint_dependencies"] = [asdict(item) for item in self.base_checkpoint_dependencies]
@@ -1207,6 +1228,7 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         target_snapshot = load_target_artifact(
             artifact.path, expected_sha256=artifact.sha256,
             config=target_config, max_bytes=min(artifact.bytes, DEFAULT_MAX_BYTES),
+            max_shard_bytes=spec.target_shard_max_bytes,
         )
         target_artifact_verification_seconds = time.perf_counter() - target_verification_started
         close_snapshot = getattr(target_snapshot, "close", None)
@@ -1371,6 +1393,7 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
         "sample_count": len(samples), "validation_sample_count": len(validation),
         "target_snapshot_id": spec.target_snapshot_id,
         "target_snapshot_artifact": asdict(spec.target_snapshot_artifact) if spec.target_snapshot_artifact else None,
+        "target_shard_max_bytes": spec.target_shard_max_bytes,
         "shared_targets_verified": shared_targets is not None,
         "shared_target_count": len(shared_targets) if shared_targets is not None else 0,
         "target_snapshot_sample_count": target_snapshot_sample_count,

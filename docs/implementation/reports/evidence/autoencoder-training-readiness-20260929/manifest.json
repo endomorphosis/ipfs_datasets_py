@@ -1,0 +1,135 @@
+{
+  "schema": "autoencoder-readiness-evidence/v1",
+  "native_target_preparation_complete": true,
+  "native_training_complete": false,
+  "eight_hour_run_started": false,
+  "admitted": false,
+  "source_scope": "canonical workspace pinned source; publication delta separately reviewed",
+  "files": [
+    {
+      "path": "explicit-failed-preparation-reconciliation-r2.json",
+      "bytes": 1924,
+      "sha256": "6e11da3670b672d8167934aa4af837da24e374f9ac6a231581d5b9742c5f4daa"
+    },
+    {
+      "path": "explicit-failed-preparation-reconciliation.json",
+      "bytes": 2029,
+      "sha256": "d99b164ec1d1f43a8adb76998495de48d5eb99728dcbc0e0faf574407e9f152c"
+    },
+    {
+      "path": "ir-support-analysis.json",
+      "bytes": 3496,
+      "sha256": "849059e87fcd8f14c5279b371fd7640b513c931041f6103bb4c69fa5f828fb2a"
+    },
+    {
+      "path": "nonview-sparse-shape.json",
+      "bytes": 5518,
+      "sha256": "b687d9cdf11fcc483de647d81eb3f78e474acdaf1d9209ca9889570b8f7b41a5"
+    },
+    {
+      "path": "optimizer-after-manifest-phase2.json",
+      "bytes": 3753,
+      "sha256": "26e551f9d4baa23db552cbeb94e0fcce910a29864fea185d8f87b773e7a2ee2f"
+    },
+    {
+      "path": "publication-final-source-check.json",
+      "bytes": 370,
+      "sha256": "6e116f1fd3b0616e550384abd99b50a90fd8db88c47d70c6ee97cfcc30415008"
+    },
+    {
+      "path": "pytest-pressure-read-only-audit.json",
+      "bytes": 8716,
+      "sha256": "0420dabc258e0bb40fbea741b99dcfc985712a8492e342b3ebd997976f048a69"
+    },
+    {
+      "path": "qualification-readiness-audit.json",
+      "bytes": 46807,
+      "sha256": "1e7c67d908577e3c49115e1e1dfce0bdf57d8ae201cd720914c0f38731a787de"
+    },
+    {
+      "path": "qualification-repair-todos.json",
+      "bytes": 11081,
+      "sha256": "791f575808023a185b6865bf56d2851fbb41094131820164c0789a6be42c0fe3"
+    },
+    {
+      "path": "resource-pressure-after-r2.json",
+      "bytes": 1085,
+      "sha256": "4c452dcf22b8cdbb45ea1bc00adfd336ecde18a31372c173a399f59c729fdcd6"
+    },
+    {
+      "path": "resource-pressure-smoke-launch.json",
+      "bytes": 1053,
+      "sha256": "3e1dc13e4fc83d02678faa35e5b3b016cd1c40f986e9b3042d0bb6b198450f1b"
+    },
+    {
+      "path": "root-retry-validation.json",
+      "bytes": 1467,
+      "sha256": "0a7e43e77c0cc72d4068b47fe22ed9d90129ad94e7367fccd50f4c638f6c13fa"
+    },
+    {
+      "path": "semantic-change-manifest.json",
+      "bytes": 2176,
+      "sha256": "15acab36111cb04530dd76673d885b2dedb25870ac4cf400f1f3e6aed0c6b64e"
+    },
+    {
+      "path": "semantic-gates.json",
+      "bytes": 12935,
+      "sha256": "f6a8ac3243df3458f74c5db81e197152792b60cd709e20fa06d7c8bd31f7b5b3"
+    },
+    {
+      "path": "semantic-integrity-real-row-observations.json",
+      "bytes": 34379,
+      "sha256": "55b712bcbdd8759cdd7ad57887906d08bf788c7d6fcf50b26487ee2a11d0395a"
+    },
+    {
+      "path": "smoke-admission-recovery.json",
+      "bytes": 699,
+      "sha256": "b982be684b0dafb0457b95476b3804aef5aaaece6e1394a8aac95676bca6a4fc"
+    },
+    {
+      "path": "structural-sparse-shape-r3-parent.json",
+      "bytes": 1039,
+      "sha256": "1bd21f8c3efef98ab193a1460b2989a842550ad2dd9e5e2a4555bd7e2b3719cc"
+    },
+    {
+      "path": "structural-sparse-shape-r3.json",
+      "bytes": 8813,
+      "sha256": "8f34914a1941a18ba79496227b7327dda152fb49670f8b7ceb9796cee638558b"
+    },
+    {
+      "path": "structural-sparse-shape.json",
+      "bytes": 6354,
+      "sha256": "6788370678a25ea6b36ff3357788009838c9789f10ca44f689ea8501a2b41de5"
+    },
+    {
+      "path": "target-readiness-expanded-bound-tests.json",
+      "bytes": 1106,
+      "sha256": "431c56d37a29f7c17221de4c9a90cbd9bea6590007b0172c1a71b4419d44dc25"
+    },
+    {
+      "path": "target-readiness-journal-tests.json",
+      "bytes": 1443,
+      "sha256": "3716d3a9a2f804e87a41a93d54ae0dff58f4fb409d3c2329b46bfd8cc9717ec4"
+    },
+    {
+      "path": "target-readiness-native-result-r2.json",
+      "bytes": 4132,
+      "sha256": "5ee9a4ab53ce6426b4cd3f322da081dbe31e65c3e0df2914cdc23403f4b38471"
+    },
+    {
+      "path": "target-readiness-native-result-r3.json",
+      "bytes": 16986,
+      "sha256": "cfd6420a7abcfee31488d784da9f69a5ad6057887e81df912182d0e385b953f0"
+    },
+    {
+      "path": "target-readiness-native-result.json",
+      "bytes": 4060,
+      "sha256": "c8708b27494a516f1c86384e299fc8b7c6da21dccec6b173b8c7745474cf93fb"
+    },
+    {
+      "path": "target-timeout-profile-summary.json",
+      "bytes": 8654,
+      "sha256": "50b983bee1357a67fad50b74a84934bb84c4605d0e4764f20f9639fd57fac388"
+    }
+  ]
+}

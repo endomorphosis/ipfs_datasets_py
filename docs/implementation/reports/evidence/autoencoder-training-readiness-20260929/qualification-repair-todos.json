@@ -1,0 +1,187 @@
+{
+  "admitted": false,
+  "automatic_supervisor_enqueue": false,
+  "fixtures": {
+    "bytes": 46763,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/qualification-failing-case-fixtures.json",
+    "sha256": "d31873eae566bad8bdcce2d961112e400a64d4909fd1e4ef6498851f386b322e"
+  },
+  "operational_findings": [
+    {
+      "finding": "staged-shared-target.json is written with exclusive xb unconditionally before completed-wave replay; existing file makes replay fail.",
+      "id": "resume_shared_target_exclusive_write",
+      "next_change": "Verify an existing immutable descriptor exactly or create it once; test completed-wave resume and tamper rejection; leave R3 immutable.",
+      "severity": "blocker_for_wave_resume",
+      "source": "native_stage.py:79,599,615"
+    },
+    {
+      "finding": "Frozen R3 STAGES contains only smoke 300s,300MB; it is not an eight-hour configured launcher.",
+      "id": "smoke_only_configuration",
+      "next_change": "New sealed successor explicitly declares stage budgets and gate policy; do not edit sealed historical plan.",
+      "severity": "scope_limit",
+      "source": "run_pipeline.py:39"
+    },
+    {
+      "finding": "Deterministic stalled-state guard excludes train, and train permits qualified objective equality. A qualified zero-update unchanged candidate could be selected repeatedly.",
+      "id": "unchanged_train_churn",
+      "next_change": "Require explicit progress/plateau policy per immutable state+data+config; terminate or apply predeclared next data/config schedule without weakening qualification.",
+      "severity": "long_run_productivity",
+      "source": "native_stage.py:634,691"
+    },
+    {
+      "finding": "Train always uses the same six rows split train[lane::2]. This is not incremental processing of full US Code.",
+      "id": "fixed_six_row_lanes",
+      "next_change": "Bind corpus shard cursor, span IDs, source/split hashes, immutable frontier and completed-shard receipt; preserve canary partition and exact replay.",
+      "severity": "scope_limit",
+      "source": "native_stage.py:642"
+    },
+    {
+      "finding": "Two workers start one common parent and owner selects one qualified nonregressing branch; this does not merge both sparse updates or implement distributed SGD.",
+      "id": "parallel_branch_selection_not_merge",
+      "next_change": "Continue reporting branch search honestly. Any merge requires exact parent binding, conflict policy and full requalification of merged state before advancing.",
+      "severity": "scope_limit",
+      "source": "native_stage.py:643,691-694"
+    },
+    {
+      "finding": "Local owner DuckDB/Quack transport is exercised; Hub publication false and no multi-machine synchronization or remote resumption is exercised.",
+      "id": "remote_sync_not_exercised",
+      "next_change": "Use existing immutable sparse-checkpoint closure/outbox manifest interfaces for independently qualified state; replay parent chains/CAS conflicts; do not claim cross-machine readiness from local smoke.",
+      "severity": "scope_limit",
+      "source": "native_stage.py:659,761"
+    },
+    {
+      "finding": "Only sealed completed waves replay; incomplete wave requires explicit recovery rather than duplicate dispatch.",
+      "id": "incomplete_wave_recovery",
+      "next_change": "Test crash recovery with lease fencing and orphan output recognition; never reuse partially qualified rows or silently delete old resource claims.",
+      "severity": "intentional_fail_closed",
+      "source": "native_stage.py:509-526"
+    },
+    {
+      "finding": "Canary model evaluation follows immutable tuning-only winner selection; no winner exists in R3, so no model canary evaluation occurred.",
+      "id": "canary_access_boundary",
+      "next_change": "Keep this boundary and avoid using canary contents for repairs/hyperparameter selection. Byte hashing/frozen embedding provenance does not authorize AE feedback.",
+      "severity": "preserve",
+      "source": "native_stage.py:719-733;run_pipeline.py:302-322"
+    }
+  ],
+  "protective_semantic_gate": {
+    "empty_vocabulary": "TypedDeonticCanonicalCompiler must abstain; no vocabulary fallback.",
+    "historical_pilot": "Preserve five-case frozen baseline with authorized retained 24-hour deadline; forward/cycle report independently from source semantic coverage.",
+    "positive_controls": [
+      {
+        "must_preserve": [
+          "modality O",
+          "within_duration quantity10",
+          "decompiled 10 days and emergency",
+          "pattern_from_rule None"
+        ],
+        "text": "Company A shall submit backup report within 10 days unless emergency."
+      },
+      {
+        "must_preserve": [
+          "modality F"
+        ],
+        "text": "The agency shall not disclose records."
+      },
+      {
+        "must_preserve": [
+          "minimum_duration quantity20",
+          "decompiled at least 20 days",
+          "not at least days",
+          "supported numeric Lake proof only"
+        ],
+        "text": "The officer shall retain the file for at least 20 days."
+      }
+    ],
+    "requirements": [
+      "Do not interpret pipeline SUCCESS as semantic parity. Bind L1/T1/L2 payloads and compare represented rules under the existing fixed parity policy before roundtrip labeling.",
+      "L1/L2 parity alone is insufficient. Require source-backed coverage for each operative modal/negation/conditional/exception/temporal trigger and every enumerated logical branch.",
+      "Track offsets and grouping from source through parser/IR/decompiler. A token appearing incidentally in actor/object is not evidence that it was retained as a logical condition.",
+      "Detect enumeration boundary continuation before sentence splitting; if not representable, abstain on the enclosing affected clause instead of inventing standalone obligations.",
+      "Add exact fail-closed diagnostics for lost condition, lost exception alternative, unresolved negation scope, lost temporal recurrence/anchor, or dangling cross-reference; do not blanket-reject all if/or clauses.",
+      "Use positive simple implication, unless-exception, prohibition and minimum-duration controls to show supported cases still pass. Golden fixtures are regression evidence, not a production text allowlist.",
+      "Definitions, findings, powers, cross-reference semantics and nonnumeric norms remain unsupported unless implemented with explicit source-grounded IR; do not mark nonoperative text formalized simply to make whole-document gate pass.",
+      "Do not add a generic Lean fingerprint/vacuous theorem renderer. Lake proof must state an actual supported source-grounded obligation/constraint and preserve scope."
+    ],
+    "root_cause": {
+      "callee_contract": "canonical_roundtrip.py:7-11",
+      "caller": "AutoformalSession.roundtrip_clause:214-219",
+      "finding": "Caller promotes compiled to roundtrip_ok solely from operation SUCCESS although callee explicitly defines this as stage completion, not semantic parity. Same lossy parse can be cycle-stable."
+    }
+  },
+  "schema": "real-corpus-qualification-repair-todos/v1",
+  "todos": [
+    {
+      "acceptance": "Pipeline completion alone can never set roundtrip_ok; lossy fixtures fail and three controls plus five-case pilot retain approved results.",
+      "id": "semantic-roundtrip-status",
+      "owner_area": "autoformal semantic qualification",
+      "priority": 0
+    },
+    {
+      "acceptance": "Each affected conditional/exception/negation branch is source-bound and represented with correct grouping, or emits explicit unsupported diagnostics without roundtrip_ok.",
+      "id": "source-operator-coverage",
+      "owner_area": "parser/compiler/decompiler",
+      "priority": 0
+    },
+    {
+      "acceptance": "Completed-wave re-entry succeeds without native replay; mutated descriptor/bytes fail; interrupted wave still fails closed.",
+      "id": "resume-artifact-idempotency",
+      "owner_area": "workspace training harness",
+      "priority": 0
+    },
+    {
+      "acceptance": "Actual accepted nonzero update meets cosine>=0.72 and MSE<=0.20 per all fixed training/tuning rows while unchanged IR and other guards pass. Target-aware reconstruction and inactive CE constants remain disclosed.",
+      "id": "metric-update-qualification",
+      "owner_area": "optimizer",
+      "priority": 1
+    },
+    {
+      "acceptance": "Nested AND/OR, alternatives and scoped exceptions retain truth conditions, not just flattened strings. Recompile roundtrip verifies structure; no forcing complex clauses into current v1 grammar.",
+      "id": "typed-boolean-ir",
+      "owner_area": "IR/compiler/decompiler",
+      "priority": 1
+    },
+    {
+      "acceptance": "Full date years, trigger events, recurrence/end dates and calendar exclusions preserved; upper deadlines never converted to minimum duration.",
+      "id": "temporal-source-semantics",
+      "owner_area": "parser/temporal IR",
+      "priority": 1
+    },
+    {
+      "acceptance": "Missing references in 42USC15963 and42USC8286a and suspected22USC2 identity are audited against bound authoritative source artifacts in a separately versioned dataset, with original split unchanged for this diagnostic comparison.",
+      "id": "source-reference-gap",
+      "owner_area": "source ingest/provenance",
+      "priority": 1
+    },
+    {
+      "acceptance": "Definitions, findings, taxes/applicability and powers have reviewed explicit representations or remain unsupported; no silent omission from whole-source gate.",
+      "id": "nonmodal-source-coverage",
+      "owner_area": "IR and document model",
+      "priority": 2
+    },
+    {
+      "acceptance": "Add genuinely supported source-grounded theorem schemas for applicable norms/temporal/numeric constraints with exact source locks and lake build Legal; no Mathlib, new toolchain download, or vacuous generic-norm proof.",
+      "id": "sourceful-lean-theorems",
+      "owner_area": "Lean legal semantics",
+      "priority": 2
+    },
+    {
+      "acceptance": "Six syntax consumers continue parsing complete exports; separate provenance says projection_only and semantic_equivalence_checked false unless new equivalence evidence exists. Never count syntax as theorem admission.",
+      "id": "family-semantic-alignment",
+      "owner_area": "family exports",
+      "priority": 2
+    },
+    {
+      "acceptance": "Immutable shard progress and state cursor, explicit no-progress behavior, qualified winner-only common-head changes, exact retained sparse parent closure.",
+      "id": "long-run-frontier-and-plateau",
+      "owner_area": "parallel harness",
+      "priority": 1
+    },
+    {
+      "acceptance": "Fresh admission under80GB/perworker50GB, bounded RAM+deadline/storage, no old-claim deletion; owner-only registry writes and separately tested sparse publication/replay before multi-machine claims.",
+      "id": "resource-and-remote-durability",
+      "owner_area": "owner/control plane",
+      "priority": 1
+    }
+  ]
+}

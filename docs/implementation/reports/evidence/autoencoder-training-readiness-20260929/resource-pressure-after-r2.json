@@ -1,0 +1,39 @@
+{
+  "at": 1790667250.9008272,
+  "roots": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      "apparent_bytes": 12012826706,
+      "entry_count": 62680,
+      "symlink_count": 141,
+      "special_file_count": 1
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      "apparent_bytes": 174471830,
+      "entry_count": 112,
+      "symlink_count": 0,
+      "special_file_count": 0
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      "apparent_bytes": 385212649,
+      "entry_count": 4773,
+      "symlink_count": 0,
+      "special_file_count": 0
+    },
+    {
+      "path": "/tmp/pytest-of-barberb",
+      "apparent_bytes": 36822784420,
+      "entry_count": 179857,
+      "symlink_count": 3649,
+      "special_file_count": 20
+    }
+  ],
+  "observed_bytes": 49395295605,
+  "outstanding_bytes": 30890000000,
+  "charged_bytes": 80285295605,
+  "limit_bytes": 80000000000,
+  "headroom_bytes": -285295605,
+  "read_only": true
+}

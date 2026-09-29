@@ -51,6 +51,7 @@ from .modal_autoencoder_adaptive_optimizer import (
     GuardedAdaptiveProjection,
     exact_finite_evaluation_metrics_equal,
     nonfinite_evaluation_fields,
+    normalize_projection_candidate_update_order,
     parameter_step_report,
     validate_optimizer_options,
 )
@@ -6582,6 +6583,7 @@ class AdaptiveModalAutoencoder:
         projection_prescreen_top_k: int = 3,
         projection_periodic_full_search_every_n_cycles: int = 0,
         projection_max_update_families: Optional[int] = None,
+        projection_candidate_update_order: Optional[Sequence[str]] = None,
         projection_max_composed_refinement_attempts: int = 0,
         projection_optimizer_mode: str = "fixed",
         projection_momentum: float = 0.0,
@@ -6602,6 +6604,13 @@ class AdaptiveModalAutoencoder:
         Composed refinements are off by default. Opting in tests at most three
         training-only embedding nudges of the strict winner, preserving its
         validation objective gain while requiring lower training reconstruction.
+        An explicit ``projection_candidate_update_order`` selects and orders
+        named proposals; the family cap then truncates that ordered prefix.
+        Its default preserves the historical five proposals. The opt-in
+        ``decoded_embedding_nonview`` skips four view-embedding maps;
+        ``decoded_embedding_structural`` also skips slot, family-slot and
+        feature maps. Both preserve full-head normalization and require zero
+        regularization. All acceptance metrics and guards are unchanged.
 
         ``accepted_patch_sink`` receives only committed, selected patches. Sink
         failure propagates after the state commit so callers cannot register an
@@ -6616,6 +6625,9 @@ class AdaptiveModalAutoencoder:
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
+        requested_candidate_order = normalize_projection_candidate_update_order(projection_candidate_update_order)
+        if requested_candidate_order and set(requested_candidate_order) & {"decoded_embedding_nonview", "decoded_embedding_structural"} and float(l2_regularization) != 0.0:
+            raise ValueError("support-preserving embedding operators require zero l2_regularization to preserve untouched view heads")
         optimizer_mode = validate_optimizer_options(
             mode=projection_optimizer_mode, momentum=projection_momentum,
             epochs=epochs, learning_rate=learning_rate, max_seconds=max_seconds,
@@ -6710,6 +6722,10 @@ class AdaptiveModalAutoencoder:
                 "projection_update_backend must be auto, cuda_resident, native, "
                 "legacy_device, or python_sparse_batch"
             )
+
+        if (normalized_update_backend == "cuda_resident" and requested_candidate_order
+                and set(requested_candidate_order) & {"decoded_embedding_nonview", "decoded_embedding_structural"}):
+            raise ValueError("support-preserving embedding operators do not support cuda_resident; select python_sparse_batch")
 
         bridge_names = tuple(
             str(name).strip() for name in legal_ir_bridge_names if str(name).strip()
@@ -6979,6 +6995,11 @@ class AdaptiveModalAutoencoder:
                 ("family_logits", "decoded_embedding", "legal_ir_view_logits"),
             ),
         )
+        if requested_candidate_order is not None:
+            candidates_by_name = dict(candidate_updates)
+            candidates_by_name["decoded_embedding_nonview"] = ("decoded_embedding_nonview",)
+            candidates_by_name["decoded_embedding_structural"] = ("decoded_embedding_structural",)
+            candidate_updates = tuple((name, candidates_by_name[name]) for name in requested_candidate_order)
         effective_max_update_families = max(
             0,
             int(projection_max_update_families or 0),
@@ -6989,6 +7010,11 @@ class AdaptiveModalAutoencoder:
             "candidate_update_family_count": len(candidate_updates),
             "max_update_families": effective_max_update_families or None,
         }
+        if requested_candidate_order is not None:
+            projection_update_family_config.update({
+                "requested_candidate_update_order": list(requested_candidate_order),
+                "family_cap_policy": "take_prefix_after_explicit_order_selection",
+            })
         head_learning_rate_scales = {
             "family_logits": 1.0,
             "decoded_embedding": 0.5,
@@ -6996,10 +7022,19 @@ class AdaptiveModalAutoencoder:
             "legal_ir_view_logits": 0.5,
             "combined": 0.35,
         }
+        for name, _targets in candidate_updates:
+            if name in {"decoded_embedding_nonview", "decoded_embedding_structural"}:
+                head_learning_rate_scales[name] = head_learning_rate_scales["decoded_embedding"]
         adaptive_optimizer = (
             GuardedAdaptiveProjection(learning_rate, head_learning_rate_scales, projection_momentum,
                                       mode=optimizer_mode)
             if optimizer_mode != "fixed" else None
+        )
+
+        observe_preprojection = any(name in {"decoded_embedding_nonview", "decoded_embedding_structural"} for name, _targets in candidate_updates)
+        preprojection_before = (
+            self.decoder_preprojection_metrics(target_samples, stop_requested=timed_out)
+            if observe_preprojection else None
         )
 
         def append_epoch_report(report: Dict[str, Any]) -> None:
@@ -8149,6 +8184,12 @@ class AdaptiveModalAutoencoder:
                 }
             )
 
+        preprojection_observation = ({
+            "before": preprojection_before,
+            "after": self.decoder_preprojection_metrics(target_samples, stop_requested=timed_out),
+            "sample_scope": "tuning" if validation_list else "in_sample",
+            "changes_acceptance": False,
+        } if observe_preprojection else None)
         projection_profile = profiler.summarize() if profiler is not None else {}
         cuda_residency = {
             "enabled": normalized_update_backend == "cuda_resident",
@@ -8166,6 +8207,7 @@ class AdaptiveModalAutoencoder:
             "before": before.to_dict(),
             "compute_backend": self.compute_backend_metadata(),
             "candidate_update_order": [name for name, _targets in candidate_updates],
+            **({"decoder_preprojection_observation": preprojection_observation} if observe_preprojection else {}),
             "epoch_reports": epoch_reports,
             "evaluated_objective": {
                 "after": _selected_objective_metric_values(best, objective_weights),
@@ -8270,6 +8312,9 @@ class AdaptiveModalAutoencoder:
             raise StateTransactionConflictError(
                 "projection update batch requires an active state transaction"
             )
+        if (normalized_backend == "cuda_resident"
+                and set(target_tuple) & {"decoded_embedding_nonview", "decoded_embedding_structural"}):
+            raise ValueError("support-preserving embedding operators do not support cuda_resident; select python_sparse_batch")
         if normalized_backend == "cuda_resident":
             try:
                 from .modal_autoencoder_cuda import (
@@ -8372,6 +8417,14 @@ class AdaptiveModalAutoencoder:
                                     sample,
                                     learning_rate=learning_rate,
                                     update_sample_memory=False,
+                                )
+                            elif update_target in {"decoded_embedding_nonview", "decoded_embedding_structural"}:
+                                self._nudge_decoded_embedding(
+                                    sample,
+                                    learning_rate=learning_rate,
+                                    update_sample_memory=False,
+                                    include_legal_ir_view_heads=False,
+                                    include_combinatorial_heads=update_target != "decoded_embedding_structural",
                                 )
                             elif update_target == "legal_ir_view_logits":
                                 self._nudge_legal_ir_view_logits(
@@ -8481,7 +8534,10 @@ class AdaptiveModalAutoencoder:
             + (legal_weight * legal_ir_loss)
         )
 
-    def _decoded_for(self, sample: LegalSample, *, use_sample_memory: bool = True) -> List[float]:
+    def _decoded_for(
+        self, sample: LegalSample, *, use_sample_memory: bool = True,
+        apply_reconstruction_projection: bool = True,
+    ) -> List[float]:
         stored = self.state.decoded_embeddings.get(sample.sample_id) if use_sample_memory else None
         if stored is not None and len(stored) == len(sample.embedding_vector):
             return list(stored)
@@ -8586,11 +8642,57 @@ class AdaptiveModalAutoencoder:
                 legacy_tail_adjustment,
             )
         ]
+        if not apply_reconstruction_projection:
+            return candidate
         return self._reconstruction_safe_projection(
             sample.embedding_vector,
             base,
             candidate,
         )
+
+    def decoder_preprojection_metrics(
+        self, samples: Sequence[LegalSample], *,
+        stop_requested: Optional[Callable[[], bool]] = None,
+    ) -> Dict[str, Any]:
+        """Observe the decoder before target-point projection; never a gate.
+
+        The usual decoder can return the supplied target after its safety
+        projection. These diagnostics keep that existing metric distinct from
+        the unprojected decoder output, without changing acceptance.
+        """
+        rows = list(samples)
+        metrics: List[Dict[str, Any]] = []
+        for sample in rows:
+            if stop_requested is not None and stop_requested():
+                break
+            decoded = self._decoded_for(
+                sample, use_sample_memory=False, apply_reconstruction_projection=False,
+            )
+            cosine = cosine_similarity(sample.embedding_vector, decoded)
+            reconstruction = mse_loss(sample.embedding_vector, decoded)
+            metrics.append({
+                "sample_id": sample.sample_id,
+                "embedding_cosine_similarity": cosine if math.isfinite(cosine) else None,
+                "reconstruction_loss": reconstruction if math.isfinite(reconstruction) else None,
+            })
+        finite = all(row["embedding_cosine_similarity"] is not None and row["reconstruction_loss"] is not None for row in metrics)
+        complete = len(metrics) == len(rows)
+        return {
+            "scope": "decoder_before_reconstruction_safety_projection",
+            "used_for_acceptance": False, "sample_memory_used": False,
+            "requested_sample_count": len(rows), "observed_sample_count": len(metrics),
+            "complete": complete, "finite": finite,
+            "stopped_reason": None if complete else "projection_timeout",
+            "embedding_cosine_similarity_mean": (
+                sum(row["embedding_cosine_similarity"] for row in metrics) / len(metrics)
+                if metrics and finite else None
+            ),
+            "reconstruction_loss_mean": (
+                sum(row["reconstruction_loss"] for row in metrics) / len(metrics)
+                if metrics and finite else None
+            ),
+            "sample_metrics": metrics,
+        }
 
     def _legacy_embedding_tail_adjustment(
         self,
@@ -23141,7 +23243,14 @@ class AdaptiveModalAutoencoder:
         *,
         learning_rate: float,
         update_sample_memory: bool = True,
+        include_legal_ir_view_heads: bool = True,
+        include_combinatorial_heads: bool = True,
     ) -> None:
+        # The opt-in nonview operator preserves the reader's LegalIR class
+        # support. It retains the original normalization denominator so each
+        # surviving head uses the same update arithmetic as the full operator.
+        # The structural operator additionally excludes the three combinatorial
+        # slot/feature maps; this is an explicit proposal scope, not a row mask.
         step = _clamp_learning_rate(learning_rate)
         current = self._decoded_for(sample, use_sample_memory=update_sample_memory)
         if len(current) != len(sample.embedding_vector):
@@ -23258,7 +23367,7 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        if self.semantic_slot_embedding_weight_scale > 0.0:
+        if include_combinatorial_heads and self.semantic_slot_embedding_weight_scale > 0.0:
             for slot, slot_weight in self._semantic_slot_distribution_for(sample).items():
                 normalized_weight = max(0.0, float(slot_weight))
                 if normalized_weight <= 0.0:
@@ -23274,7 +23383,7 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        if self.family_semantic_slot_embedding_weight_scale > 0.0:
+        if include_combinatorial_heads and self.family_semantic_slot_embedding_weight_scale > 0.0:
             for key, target_weight in self._target_family_semantic_slot_distribution_for_sample(
                 sample
             ).items():
@@ -23292,7 +23401,7 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        if self.semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
+        if include_legal_ir_view_heads and self.semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
             for (
                 key,
                 target_weight,
@@ -23311,7 +23420,7 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        if self.family_semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
+        if include_legal_ir_view_heads and self.family_semantic_slot_legal_ir_view_embedding_weight_scale > 0.0:
             for (
                 key,
                 target_weight,
@@ -23334,7 +23443,7 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        if self.legal_ir_view_embedding_weight_scale > 0.0:
+        if include_legal_ir_view_heads and self.legal_ir_view_embedding_weight_scale > 0.0:
             legal_ir_view_distribution = _normalized_distribution(
                 self._legal_ir_view_target_distribution_for_sample(sample)
             )
@@ -23353,7 +23462,7 @@ class AdaptiveModalAutoencoder:
                     error,
                     scale=step * embedding_update_scale * normalized_weight,
                 )
-        if self.family_legal_ir_view_embedding_weight_scale > 0.0:
+        if include_legal_ir_view_heads and self.family_legal_ir_view_embedding_weight_scale > 0.0:
             for key, target_weight in self._target_family_legal_ir_view_distribution_for_sample(
                 sample
             ).items():
@@ -23372,7 +23481,7 @@ class AdaptiveModalAutoencoder:
                     scale=step * embedding_update_scale * normalized_weight,
                 )
         self._invalidate_legal_ir_view_family_candidates()
-        if self.feature_embedding_weight_scale <= 0.0:
+        if not include_combinatorial_heads or self.feature_embedding_weight_scale <= 0.0:
             return
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:

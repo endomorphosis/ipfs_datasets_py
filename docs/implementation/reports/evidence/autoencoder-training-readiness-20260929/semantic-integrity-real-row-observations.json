@@ -1,0 +1,726 @@
+{
+  "admitted": false,
+  "canary_accessed": false,
+  "input_receipt": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/fixed035/qualification/qualification.json",
+    "sha256": "fd389973373fd23175f4eef5d8aedaa08a679c100411741b5865553d577f6f6e"
+  },
+  "lake_builds": 0,
+  "model_evaluations": 0,
+  "rows": [
+    {
+      "compiler": {
+        "compiler_status": "compiled",
+        "decompiled": "Appropriate authority of a covered public building must ensure that the building contains a lactation room that is made available for use by members of the public to express breast milk unless as provided in subsection (c). Covered public building may be excluded from the requirement in subsection b at the discretion of the appropriate authority. New construction would be must create a lactation room in the public building and the cost of such construction is unfeasible. Nothing in this section must be construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter.",
+        "fields": [
+          "definition_scope",
+          "unsupported_norm_type"
+        ],
+        "reason": "",
+        "roundtrip": true,
+        "rule": {
+          "action": "ensure",
+          "actor": "appropriate authority of a covered public building",
+          "conditions": [],
+          "exceptions": [
+            "as provided in subsection (c)"
+          ],
+          "modality": "O",
+          "object": "that the building contains a lactation room that is made available for use by members of the public to express breast milk",
+          "temporal": []
+        }
+      },
+      "elapsed_seconds": 0.39243545290082693,
+      "old_status_by_clause": {
+        "us-code-40-3318-429cfc454b54ce35-c0": "abstain",
+        "us-code-40-3318-429cfc454b54ce35-c1": "abstain",
+        "us-code-40-3318-429cfc454b54ce35-c2": "abstain",
+        "us-code-40-3318-429cfc454b54ce35-c3": "abstain",
+        "us-code-40-3318-429cfc454b54ce35-c4": "roundtrip_ok",
+        "us-code-40-3318-429cfc454b54ce35-c5": "roundtrip_ok",
+        "us-code-40-3318-429cfc454b54ce35-c6": "roundtrip_ok",
+        "us-code-40-3318-429cfc454b54ce35-c7": "roundtrip_ok"
+      },
+      "rows": [
+        {
+          "admitted": false,
+          "clause_id": "us-code-40-3318-429cfc454b54ce35-c0",
+          "decompiled": "",
+          "document_id": "us-code-40-3318-429cfc454b54ce35",
+          "end": 7,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 0,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-40-3318-429cfc454b54ce35-c1",
+          "decompiled": "",
+          "document_id": "us-code-40-3318-429cfc454b54ce35",
+          "end": 286,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+          "rule": null,
+          "start": 8,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-40-3318-429cfc454b54ce35-c2",
+          "decompiled": "",
+          "document_id": "us-code-40-3318-429cfc454b54ce35",
+          "end": 520,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+          "rule": null,
+          "start": 287,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-40-3318-429cfc454b54ce35-c3",
+          "decompiled": "",
+          "document_id": "us-code-40-3318-429cfc454b54ce35",
+          "end": 811,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+          "rule": null,
+          "start": 521,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-40-3318-429cfc454b54ce35-c4",
+          "decompiled": "Appropriate authority of a covered public building must ensure that the building contains a lactation room that is made available for use by members of the public to express breast milk unless as provided in subsection (c).",
+          "document_id": "us-code-40-3318-429cfc454b54ce35",
+          "end": 1073,
+          "frame_id": "unassigned",
+          "reason": "",
+          "rule": {
+            "action": "ensure",
+            "actor": "appropriate authority of a covered public building",
+            "conditions": [],
+            "exceptions": [
+              "as provided in subsection (c)"
+            ],
+            "modality": "O",
+            "object": "that the building contains a lactation room that is made available for use by members of the public to express breast milk",
+            "temporal": []
+          },
+          "start": 813,
+          "status": "roundtrip_ok"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-40-3318-429cfc454b54ce35-c5",
+          "decompiled": "Covered public building may be excluded from the requirement in subsection b at the discretion of the appropriate authority.",
+          "document_id": "us-code-40-3318-429cfc454b54ce35",
+          "end": 1489,
+          "frame_id": "unassigned",
+          "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+          "rule": {
+            "action": "be",
+            "actor": "covered public building",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "excluded from the requirement in subsection b at the discretion of the appropriate authority",
+            "temporal": []
+          },
+          "start": 1074,
+          "status": "compiled"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-40-3318-429cfc454b54ce35-c6",
+          "decompiled": "New construction would be must create a lactation room in the public building and the cost of such construction is unfeasible.",
+          "document_id": "us-code-40-3318-429cfc454b54ce35",
+          "end": 1628,
+          "frame_id": "unassigned",
+          "reason": "semantic_integrity:unsupported_enumerated_condition_continuation",
+          "rule": {
+            "action": "create",
+            "actor": "new construction would be",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "a lactation room in the public building and the cost of such construction is unfeasible",
+            "temporal": []
+          },
+          "start": 1491,
+          "status": "compiled"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-40-3318-429cfc454b54ce35-c7",
+          "decompiled": "Nothing in this section must be construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter.",
+          "document_id": "us-code-40-3318-429cfc454b54ce35",
+          "end": 1832,
+          "frame_id": "unassigned",
+          "reason": "semantic_integrity:unsupported_negative_interpretive_scope",
+          "rule": {
+            "action": "be",
+            "actor": "Nothing in this section",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "construed to authorize an individual to enter a public building or portion thereof that the individual is not otherwise authorized to enter",
+            "temporal": []
+          },
+          "start": 1630,
+          "status": "compiled"
+        }
+      ],
+      "sample_id": "us-code-40-3318-429cfc454b54ce35",
+      "source_sha256": "733e94101d6c703ebc80db262fe2c796df1534f85c8fd61ff7f1385ed49d15c1"
+    },
+    {
+      "compiler": {
+        "compiler_status": "compiled",
+        "decompiled": "This tax must be imposed and collected under the same regulations that apply to tonnage taxes. Statement under paragraph (1)(B) must be made by.",
+        "fields": [
+          "procedure",
+          "unsupported_norm_type"
+        ],
+        "reason": "",
+        "roundtrip": true,
+        "rule": {
+          "action": "be",
+          "actor": "This tax",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "imposed and collected under the same regulations that apply to tonnage taxes",
+          "temporal": []
+        }
+      },
+      "elapsed_seconds": 0.14193328702822328,
+      "old_status_by_clause": {
+        "us-code-46-60303-bfa2875bd83d29df-c0": "abstain",
+        "us-code-46-60303-bfa2875bd83d29df-c1": "abstain",
+        "us-code-46-60303-bfa2875bd83d29df-c2": "roundtrip_ok",
+        "us-code-46-60303-bfa2875bd83d29df-c3": "abstain",
+        "us-code-46-60303-bfa2875bd83d29df-c4": "roundtrip_ok",
+        "us-code-46-60303-bfa2875bd83d29df-c5": "abstain"
+      },
+      "rows": [
+        {
+          "admitted": false,
+          "clause_id": "us-code-46-60303-bfa2875bd83d29df-c0",
+          "decompiled": "",
+          "document_id": "us-code-46-60303-bfa2875bd83d29df",
+          "end": 8,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 0,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-46-60303-bfa2875bd83d29df-c1",
+          "decompiled": "",
+          "document_id": "us-code-46-60303-bfa2875bd83d29df",
+          "end": 194,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 9,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-46-60303-bfa2875bd83d29df-c2",
+          "decompiled": "This tax must be imposed and collected under the same regulations that apply to tonnage taxes.",
+          "document_id": "us-code-46-60303-bfa2875bd83d29df",
+          "end": 290,
+          "frame_id": "unassigned",
+          "reason": "",
+          "rule": {
+            "action": "be",
+            "actor": "This tax",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "imposed and collected under the same regulations that apply to tonnage taxes",
+            "temporal": []
+          },
+          "start": 195,
+          "status": "roundtrip_ok"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-46-60303-bfa2875bd83d29df-c3",
+          "decompiled": "",
+          "document_id": "us-code-46-60303-bfa2875bd83d29df",
+          "end": 1003,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,unsupported_norm_type",
+          "rule": null,
+          "start": 291,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-46-60303-bfa2875bd83d29df-c4",
+          "decompiled": "Statement under paragraph (1)(B) must be made by.",
+          "document_id": "us-code-46-60303-bfa2875bd83d29df",
+          "end": 1209,
+          "frame_id": "unassigned",
+          "reason": "semantic_integrity:unsupported_enumerated_participant_scope",
+          "rule": {
+            "action": "be",
+            "actor": "statement under paragraph (1)(B)",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "made by",
+            "temporal": []
+          },
+          "start": 1005,
+          "status": "compiled"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-46-60303-bfa2875bd83d29df-c5",
+          "decompiled": "",
+          "document_id": "us-code-46-60303-bfa2875bd83d29df",
+          "end": 1489,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 1211,
+          "status": "abstain"
+        }
+      ],
+      "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+      "source_sha256": "3bb27171e42def39132439ffe72cc74d8da0fb8c033b980a111c6c238bdbd5eb"
+    },
+    {
+      "compiler": {
+        "compiler_status": "compiled",
+        "decompiled": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies must submit to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of 1 year after august 8 and august 8.",
+        "fields": [],
+        "reason": "",
+        "roundtrip": true,
+        "rule": {
+          "action": "submit",
+          "actor": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of",
+          "temporal": [
+            "1 year after august 8",
+            "august 8"
+          ],
+          "temporal_records": [
+            {
+              "quantity": 1,
+              "temporal_kind": "not_later_than",
+              "value": "1 year after august 8"
+            },
+            {
+              "quantity": null,
+              "temporal_kind": "after_date",
+              "value": "august 8"
+            }
+          ]
+        }
+      },
+      "elapsed_seconds": 0.09871290414594114,
+      "old_status_by_clause": {
+        "us-code-42-15963-7baaee5c0500d91e-c0": "abstain",
+        "us-code-42-15963-7baaee5c0500d91e-c1": "roundtrip_ok"
+      },
+      "rows": [
+        {
+          "admitted": false,
+          "clause_id": "us-code-42-15963-7baaee5c0500d91e-c0",
+          "decompiled": "",
+          "document_id": "us-code-42-15963-7baaee5c0500d91e",
+          "end": 8,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 0,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-42-15963-7baaee5c0500d91e-c1",
+          "decompiled": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies must submit to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of 1 year after august 8 and august 8.",
+          "document_id": "us-code-42-15963-7baaee5c0500d91e",
+          "end": 437,
+          "frame_id": "unassigned",
+          "reason": "",
+          "rule": {
+            "action": "submit",
+            "actor": "Report Not later than 1 year after August 8, 2005 , and once every 2 years thereafter through 2014, the Secretary, in consultation with other appropriate Federal agencies",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "to Congress a report describing the technical milestones set forth in and how those milestones ensure progress toward meeting the requirements of subsections b B and b of",
+            "temporal": [
+              "1 year after august 8",
+              "august 8"
+            ],
+            "temporal_records": [
+              {
+                "quantity": 1,
+                "temporal_kind": "not_later_than",
+                "value": "1 year after august 8"
+              },
+              {
+                "quantity": null,
+                "temporal_kind": "after_date",
+                "value": "august 8"
+              }
+            ]
+          },
+          "start": 9,
+          "status": "roundtrip_ok"
+        }
+      ],
+      "sample_id": "us-code-42-15963-7baaee5c0500d91e",
+      "source_sha256": "db5b51daef5cd659b2c04113712e40f775aa29b34ef35ae3fa4573c579f0f27b"
+    },
+    {
+      "compiler": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "fields": [],
+        "reason": "no_parser_elements"
+      },
+      "elapsed_seconds": 0.019998674979433417,
+      "old_status_by_clause": {},
+      "rows": [],
+      "sample_id": "us-code-22-2-37b796de116a4487",
+      "source_sha256": "42e1cf170551ea0b7776ee5bbbc5b38797cb11b5fdf57cf69d0908ae8f0dee03"
+    },
+    {
+      "compiler": {
+        "compiler_status": "compiled",
+        "decompiled": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence must submit to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community 7 days after the date on which the president issues or amends a covered document if such covered document or annex contains a direction to.",
+        "fields": [
+          "procedure",
+          "definition_scope",
+          "unsupported_norm_type"
+        ],
+        "reason": "",
+        "roundtrip": false,
+        "rule": {
+          "action": "submit",
+          "actor": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence",
+          "conditions": [
+            "such covered document or annex contains a direction to"
+          ],
+          "exceptions": [],
+          "modality": "O",
+          "object": "to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community",
+          "temporal": [
+            "7 days after the date on which the president issues or amends a covered document"
+          ],
+          "temporal_records": [
+            {
+              "quantity": 7,
+              "temporal_kind": "not_later_than",
+              "value": "7 days after the date on which the president issues or amends a covered document"
+            }
+          ]
+        }
+      },
+      "elapsed_seconds": 0.17999916686676443,
+      "old_status_by_clause": {
+        "us-code-50-3114-cc36a2057a2cc4f2-c0": "abstain",
+        "us-code-50-3114-cc36a2057a2cc4f2-c1": "abstain",
+        "us-code-50-3114-cc36a2057a2cc4f2-c2": "roundtrip_ok"
+      },
+      "rows": [
+        {
+          "admitted": false,
+          "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c0",
+          "decompiled": "",
+          "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+          "end": 7,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 0,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c1",
+          "decompiled": "",
+          "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+          "end": 351,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure,definition_scope,unsupported_norm_type",
+          "rule": null,
+          "start": 8,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-50-3114-cc36a2057a2cc4f2-c2",
+          "decompiled": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence must submit to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community 7 days after the date on which the president issues or amends a covered document if such covered document or annex contains a direction to.",
+          "document_id": "us-code-50-3114-cc36a2057a2cc4f2",
+          "end": 1005,
+          "frame_id": "unassigned",
+          "reason": "semantic_integrity:canonical_cycle_ir_mismatch",
+          "rule": {
+            "action": "submit",
+            "actor": "Requirement Not later than 7 days after the date on which the President issues or amends a covered document, the President, acting through the Director of National Intelligence",
+            "conditions": [
+              "such covered document or annex contains a direction to"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "to the congressional intelligence committees the Subcommittee on Defense of the Committee on Appropriations of the Senate and the Subcommittee on Defense of the Committee on Appropriations of the House of Representatives the covered document and any classified annex accompanying that document if such covered document or annex contains a direction to establishes a requirement for or includes a restriction on any element of the intelligence community",
+            "temporal": [
+              "7 days after the date on which the president issues or amends a covered document"
+            ],
+            "temporal_records": [
+              {
+                "quantity": 7,
+                "temporal_kind": "not_later_than",
+                "value": "7 days after the date on which the president issues or amends a covered document"
+              }
+            ]
+          },
+          "start": 353,
+          "status": "compiled"
+        }
+      ],
+      "sample_id": "us-code-50-3114-cc36a2057a2cc4f2",
+      "source_sha256": "b4b8c3734d10ecef9b7062ac4b595f12b75856c26df2c108c4c3a220eaea7daa"
+    },
+    {
+      "compiler": {
+        "compiler_status": "compiled",
+        "decompiled": "Action described in subsection (a) may be taken if notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014.",
+        "fields": [
+          "recipient",
+          "cross_references"
+        ],
+        "reason": "",
+        "roundtrip": false,
+        "rule": {
+          "action": "be",
+          "actor": "action described in subsection (a)",
+          "conditions": [
+            "notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "taken",
+          "temporal": []
+        }
+      },
+      "elapsed_seconds": 0.13453343999572098,
+      "old_status_by_clause": {
+        "us-code-10-6275-3b7144797fc2e39d-c0": "abstain",
+        "us-code-10-6275-3b7144797fc2e39d-c1": "abstain",
+        "us-code-10-6275-3b7144797fc2e39d-c2": "roundtrip_ok",
+        "us-code-10-6275-3b7144797fc2e39d-c3": "abstain",
+        "us-code-10-6275-3b7144797fc2e39d-c4": "abstain"
+      },
+      "rows": [
+        {
+          "admitted": false,
+          "clause_id": "us-code-10-6275-3b7144797fc2e39d-c0",
+          "decompiled": "",
+          "document_id": "us-code-10-6275-3b7144797fc2e39d",
+          "end": 7,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 0,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-10-6275-3b7144797fc2e39d-c1",
+          "decompiled": "",
+          "document_id": "us-code-10-6275-3b7144797fc2e39d",
+          "end": 710,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:recipient",
+          "rule": null,
+          "start": 8,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-10-6275-3b7144797fc2e39d-c2",
+          "decompiled": "Action described in subsection (a) may be taken if notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014.",
+          "document_id": "us-code-10-6275-3b7144797fc2e39d",
+          "end": 1075,
+          "frame_id": "unassigned",
+          "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+          "rule": {
+            "action": "be",
+            "actor": "action described in subsection (a)",
+            "conditions": [
+              "notice-and-wait given .\u2014 an action described in subsection (a) may be taken if\u2014"
+            ],
+            "exceptions": [],
+            "modality": "P",
+            "object": "taken",
+            "temporal": []
+          },
+          "start": 712,
+          "status": "compiled"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-10-6275-3b7144797fc2e39d-c3",
+          "decompiled": "",
+          "document_id": "us-code-10-6275-3b7144797fc2e39d",
+          "end": 1317,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references",
+          "rule": null,
+          "start": 1077,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-10-6275-3b7144797fc2e39d-c4",
+          "decompiled": "",
+          "document_id": "us-code-10-6275-3b7144797fc2e39d",
+          "end": 1486,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 1318,
+          "status": "abstain"
+        }
+      ],
+      "sample_id": "us-code-10-6275-3b7144797fc2e39d",
+      "source_sha256": "0b48777ae8986ffc09acd83fd75f6a19e420f97a208d2993f62884a0705652c4"
+    },
+    {
+      "compiler": {
+        "compiler_status": "abstain",
+        "decompiled": "",
+        "fields": [],
+        "reason": "no_parser_elements"
+      },
+      "elapsed_seconds": 0.0018703178502619267,
+      "old_status_by_clause": {},
+      "rows": [],
+      "sample_id": "us-code-36-50106-bb17fee26e3ac266",
+      "source_sha256": "0fbd645fe80e7ac9cab939e10c065673c585196a14daa8f4de616d8e1e1ca9b2"
+    },
+    {
+      "compiler": {
+        "compiler_status": "compiled",
+        "decompiled": "Of factors and data Factors and data consented to pursuant to may be revised and agreed to by a consensus of the heads of the various Federal agencies involved. Factors and data must be used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies unless that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned.",
+        "fields": [],
+        "reason": "",
+        "roundtrip": true,
+        "rule": {
+          "action": "be",
+          "actor": "of factors and data Factors and data consented to pursuant to",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "P",
+          "object": "revised and agreed to by a consensus of the heads of the various Federal agencies involved",
+          "temporal": []
+        }
+      },
+      "elapsed_seconds": 0.12997163110412657,
+      "old_status_by_clause": {
+        "us-code-42-8286a-579bf6232e305315-c0": "abstain",
+        "us-code-42-8286a-579bf6232e305315-c1": "roundtrip_ok",
+        "us-code-42-8286a-579bf6232e305315-c2": "roundtrip_ok"
+      },
+      "rows": [
+        {
+          "admitted": false,
+          "clause_id": "us-code-42-8286a-579bf6232e305315-c0",
+          "decompiled": "",
+          "document_id": "us-code-42-8286a-579bf6232e305315",
+          "end": 8,
+          "frame_id": "unassigned",
+          "reason": "CanonicalErrorCode.EMPTY_OUTPUT The selected typed deontic component returned no parser elements; arbitrary text was not coerced into an obligation.",
+          "rule": null,
+          "start": 0,
+          "status": "abstain"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-42-8286a-579bf6232e305315-c1",
+          "decompiled": "Of factors and data Factors and data consented to pursuant to may be revised and agreed to by a consensus of the heads of the various Federal agencies involved.",
+          "document_id": "us-code-42-8286a-579bf6232e305315",
+          "end": 173,
+          "frame_id": "unassigned",
+          "reason": "",
+          "rule": {
+            "action": "be",
+            "actor": "of factors and data Factors and data consented to pursuant to",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "revised and agreed to by a consensus of the heads of the various Federal agencies involved",
+            "temporal": []
+          },
+          "start": 9,
+          "status": "roundtrip_ok"
+        },
+        {
+          "admitted": false,
+          "clause_id": "us-code-42-8286a-579bf6232e305315-c2",
+          "decompiled": "Factors and data must be used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies unless that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned.",
+          "document_id": "us-code-42-8286a-579bf6232e305315",
+          "end": 829,
+          "frame_id": "unassigned",
+          "reason": "semantic_integrity:unsupported_enumerated_condition_scope",
+          "rule": {
+            "action": "be",
+            "actor": "factors and data",
+            "conditions": [],
+            "exceptions": [
+              "that other factors and data may be used with respect to the standards applicable to any program if\u2014 (1) the other factors and data are approved by the secretary of energy solely on the basis that such other factors and data are critical to meet the unique needs of the program concerned"
+            ],
+            "modality": "O",
+            "object": "used by all Federal agencies in establishing and revising various energy conservation standards used by such agencies",
+            "temporal": []
+          },
+          "start": 174,
+          "status": "compiled"
+        }
+      ],
+      "sample_id": "us-code-42-8286a-579bf6232e305315",
+      "source_sha256": "6ea0a4635d33d0621fafbf05fb39b7e5b7543e443f9fe05e94e4fef47ca02a71"
+    }
+  ],
+  "schema": "semantic-integrity-fixed-source-observations/v1",
+  "scope": "Recompile unchanged six training/two tuning source rows only; explicit unsupported/cycle mismatches are protective observations, not completed source repairs.",
+  "source_after": {
+    "autoformal": "81d9f1553f7b4bbd0771aedc057377d3690d00249cabbdd381cee075bb26d5ca",
+    "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "semantic_integrity": "e557e56b091295e016eafd710f5e43b096c88a7c7a235e28f7f04cd057443d2b"
+  },
+  "source_before": {
+    "autoformal": "81d9f1553f7b4bbd0771aedc057377d3690d00249cabbdd381cee075bb26d5ca",
+    "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "semantic_integrity": "e557e56b091295e016eafd710f5e43b096c88a7c7a235e28f7f04cd057443d2b"
+  },
+  "source_paths": {
+    "autoformal": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "semantic_integrity": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/semantic_integrity.py"
+  },
+  "source_unchanged": true
+}

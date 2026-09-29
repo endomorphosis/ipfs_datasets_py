@@ -1,0 +1,71 @@
+{
+  "schema": "legal-ir-support-barrier-diagnostic/v1",
+  "source_receipt": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/productive035/worker/receipt.json",
+    "sha256": "adb14a25c5a4e71d566aec5137989f2007030dd4178aaf4dc397895622dfc557"
+  },
+  "artifact": {
+    "bytes": 8463069,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/artifacts/6c/6c3a9d1bdc58b46defd8bc294800f0926d2f58a58c2651567fee77c9739b982a",
+    "sha256": "6c3a9d1bdc58b46defd8bc294800f0926d2f58a58c2651567fee77c9739b982a"
+  },
+  "rows": [
+    {
+      "sample_id": "us-code-36-50106-bb17fee26e3ac266",
+      "target_sha256": "94d8859a183307f01e6a66e91b0e499cd310431b9fed5aafcb7ef337b6bab232",
+      "target_distribution": {
+        "CEC.native": 0.18468395444335714,
+        "TDFOL.prover": 0.1813103237911247,
+        "deontic.ir": 0.21214996174299938,
+        "external_provers.router": 0.1215613181477857,
+        "knowledge_graphs.neo4j_compat": 0.12661925596461115,
+        "modal.frame_logic": 0.1736751859101219
+      },
+      "support": [
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "external_provers.router",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic"
+      ],
+      "support_count": 6,
+      "target_uniform": false,
+      "entropy_floor": 1.7723459316146364,
+      "empty_state_uniform_prediction_ce": 1.791759469228055,
+      "baseline_excess_KL": 0.019413537613418574,
+      "maximum_unsupported_mass_if_conditional_distribution_perfect_and_per_sample_ce_not_worse": 0.01922630844316653
+    },
+    {
+      "sample_id": "us-code-42-8286a-579bf6232e305315",
+      "target_sha256": "99f4093010a648ac1918298b1cdf37fc3f23d222e5afe48063c5982bc715c025",
+      "target_distribution": {
+        "CEC.native": 0.24797114774299417,
+        "TDFOL.prover": 0.25723762304564,
+        "deontic.ir": 0.34049445109496623,
+        "knowledge_graphs.neo4j_compat": 0.15429677811639964
+      },
+      "support": [
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat"
+      ],
+      "support_count": 4,
+      "target_uniform": false,
+      "entropy_floor": 1.3502429293728189,
+      "empty_state_uniform_prediction_ce": 1.3862943611198906,
+      "baseline_excess_KL": 0.036051431747071705,
+      "maximum_unsupported_mass_if_conditional_distribution_perfect_and_per_sample_ce_not_worse": 0.035409318376643295
+    }
+  ],
+  "mean_entropy": 1.5612944304937275,
+  "mean_baseline_ce": 1.5890269151739727,
+  "mean_baseline_excess_KL": 0.02773248468024514,
+  "equation": "CE(q,p)=H(q)+KL(q||p); assigning unsupported mass epsilon gives minimal CE H(q)-ln(1-epsilon).",
+  "interpretation": "Baseline predictions, not target distributions, are uniform. Positive entropy slack disproves a general zero-KL impossibility claim; it does not prove the trained family of conditional logits can satisfy every existing aggregate/family guard.",
+  "operator_dependency": "Nonview decoder embedding maps are absent from _legal_ir_view_family_candidates and do not write any LegalIR logit map. An explicit update limited to those maps preserves view probability support without reference-target masking.",
+  "used_for_update": false,
+  "training_launched": false,
+  "admitted": false
+}

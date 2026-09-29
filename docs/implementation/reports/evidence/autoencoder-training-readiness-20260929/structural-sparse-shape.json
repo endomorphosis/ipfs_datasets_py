@@ -1,0 +1,156 @@
+{
+  "schema": "nonview-proposal-sparse-shape-preflight/v1",
+  "native_training": false,
+  "numeric_update": false,
+  "admitted": false,
+  "job": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/waves/wave-0000/productive035/job.json",
+    "sha256": "5d62129701a47e40ebe73744f913a5c789c3907551bacfd424ce9b609f7f7fce"
+  },
+  "target_artifact": {
+    "bytes": 8463069,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z-r3/stages/smoke/artifacts/6c/6c3a9d1bdc58b46defd8bc294800f0926d2f58a58c2651567fee77c9739b982a",
+    "sha256": "6c3a9d1bdc58b46defd8bc294800f0926d2f58a58c2651567fee77c9739b982a"
+  },
+  "source": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "sha256": "b7b6b5b9caf5021e7f2c99e2af2b278d58b942482f6229c92e367f3a6633b4d5"
+  },
+  "training_sample_count": 6,
+  "tuning_targets_used_for_inventory": false,
+  "sample_shapes": [
+    {
+      "sample_id": "us-code-40-3318-429cfc454b54ce35",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 29,
+        "logic_signature_embedding_weights": 95,
+        "round_trip_signal_embedding_weights": 28,
+        "decompiler_plan_embedding_weights": 159,
+        "predicate_argument_embedding_weights": 65,
+        "family_embedding_weights": 3,
+        "semantic_slot_embedding_weights": 1734,
+        "family_semantic_slot_embedding_weights": 10404,
+        "feature_embedding_weights": 3455
+      }
+    },
+    {
+      "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 24,
+        "logic_signature_embedding_weights": 88,
+        "round_trip_signal_embedding_weights": 34,
+        "decompiler_plan_embedding_weights": 213,
+        "predicate_argument_embedding_weights": 74,
+        "family_embedding_weights": 5,
+        "semantic_slot_embedding_weights": 1648,
+        "family_semantic_slot_embedding_weights": 11536,
+        "feature_embedding_weights": 3271
+      }
+    },
+    {
+      "sample_id": "us-code-42-15963-7baaee5c0500d91e",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 16,
+        "logic_signature_embedding_weights": 49,
+        "round_trip_signal_embedding_weights": 29,
+        "decompiler_plan_embedding_weights": 153,
+        "predicate_argument_embedding_weights": 65,
+        "family_embedding_weights": 3,
+        "semantic_slot_embedding_weights": 1124,
+        "family_semantic_slot_embedding_weights": 7868,
+        "feature_embedding_weights": 2499
+      }
+    },
+    {
+      "sample_id": "us-code-22-2-37b796de116a4487",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 23,
+        "logic_signature_embedding_weights": 41,
+        "round_trip_signal_embedding_weights": 29,
+        "decompiler_plan_embedding_weights": 129,
+        "predicate_argument_embedding_weights": 41,
+        "family_embedding_weights": 2,
+        "semantic_slot_embedding_weights": 742,
+        "family_semantic_slot_embedding_weights": 4452,
+        "feature_embedding_weights": 1843
+      }
+    },
+    {
+      "sample_id": "us-code-50-3114-cc36a2057a2cc4f2",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 16,
+        "logic_signature_embedding_weights": 63,
+        "round_trip_signal_embedding_weights": 30,
+        "decompiler_plan_embedding_weights": 201,
+        "predicate_argument_embedding_weights": 76,
+        "family_embedding_weights": 4,
+        "semantic_slot_embedding_weights": 1243,
+        "family_semantic_slot_embedding_weights": 7458,
+        "feature_embedding_weights": 2806
+      }
+    },
+    {
+      "sample_id": "us-code-10-6275-3b7144797fc2e39d",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 24,
+        "logic_signature_embedding_weights": 95,
+        "round_trip_signal_embedding_weights": 30,
+        "decompiler_plan_embedding_weights": 200,
+        "predicate_argument_embedding_weights": 49,
+        "family_embedding_weights": 5,
+        "semantic_slot_embedding_weights": 3358,
+        "family_semantic_slot_embedding_weights": 26864,
+        "feature_embedding_weights": 5007
+      }
+    }
+  ],
+  "unique_rows_by_component": {
+    "compiler_quality_embedding_weights": 41,
+    "logic_signature_embedding_weights": 187,
+    "round_trip_signal_embedding_weights": 54,
+    "decompiler_plan_embedding_weights": 725,
+    "predicate_argument_embedding_weights": 270,
+    "family_embedding_weights": 6
+  },
+  "unique_total_rows": 1283,
+  "float64_scalar_count": 492672,
+  "encoded_rows_bytes_including_separators": 15625190,
+  "encoded_rows_bytes_by_component": {
+    "compiler_quality_embedding_weights": 499131,
+    "logic_signature_embedding_weights": 2275018,
+    "round_trip_signal_embedding_weights": 656816,
+    "decompiler_plan_embedding_weights": 8833925,
+    "predicate_argument_embedding_weights": 3287572,
+    "family_embedding_weights": 72728,
+    "semantic_slot_embedding_weights": 65382354,
+    "family_semantic_slot_embedding_weights": 486726330,
+    "feature_embedding_weights": 146166624
+  },
+  "envelope_margin_bytes": 65536,
+  "planned_segment_bytes_upper_bound": 15690726,
+  "MAX_PATCH_BYTES": 67108864,
+  "within_patch_bound": true,
+  "scope": "Exact row inventory of six structural maps over all six immutable training samples; no numeric update, fit, evaluation, acceptance or proof. Float64 codec size exact independently of values;65536byte envelope margin.",
+  "elapsed_seconds": 7.519645929103717,
+  "operator": "decoded_embedding_structural",
+  "normalization": "full original active-head count, without renormalizing selected six heads",
+  "selected_components": [
+    "compiler_quality_embedding_weights",
+    "logic_signature_embedding_weights",
+    "round_trip_signal_embedding_weights",
+    "decompiler_plan_embedding_weights",
+    "predicate_argument_embedding_weights",
+    "family_embedding_weights"
+  ],
+  "excluded_nonview_components": [
+    "semantic_slot_embedding_weights",
+    "family_semantic_slot_embedding_weights",
+    "feature_embedding_weights"
+  ]
+}

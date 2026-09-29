@@ -62,7 +62,7 @@ def test_failed_metric_retries_exact_private_parent_then_qualifies(tmp_path):
 
 def test_metric_exhaustion_is_repair_work_never_qualified(tmp_path):
     def qualify(artifact, version, *args, **kwargs):
-        return _receipt(artifact, version, metric=False, syntax=False)
+        return _receipt(artifact, version, metric=False)
     with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
         spec = _prepare_sparse(registry, tmp_path)
         result = _run(registry, tmp_path, [spec], qualifier=qualify, max_training_rounds=2)
@@ -71,7 +71,7 @@ def test_metric_exhaustion_is_repair_work_never_qualified(tmp_path):
         assert result["qualified_batch_count"] == 0
         last = result["completed"][-1]
         outbox = qt._read_artifact(registry, last["repair_outbox"])
-        assert {task["kind"] for task in outbox["tasks"]} == {"source_repair", "training_repair"}
+        assert {task["kind"] for task in outbox["tasks"]} == {"training_repair"}
         assert not outbox["supervisor_submitted"] and not outbox["published"]
         assert not _run(registry, tmp_path, [], qualifier=qualify, max_training_rounds=2)["dispatched_run_ids"]
 
@@ -701,3 +701,46 @@ def test_sealed_parallel_results_recover_after_owner_loss_with_zero_capacity(tmp
         assert resumed["qualification_wave_reports"] == []
         assert resumed["qualification_capacity_reports"] == []
         assert not resumed["dispatched_run_ids"]
+
+
+@pytest.mark.parametrize("blocker", [gate for gate in qt.GATES if gate != "metric_gate"])
+def test_mixed_metric_and_structural_failure_preserves_work_without_repeated_training(tmp_path, blocker):
+    calls = []
+    def qualify(artifact, version, *args, **kwargs):
+        calls.append(version)
+        receipt = _receipt(artifact, version, metric=False)
+        receipt["gate_results"][blocker]["passed"] = False
+        receipt["repair_todos"] = [{"kind": "source_repair", "gate": blocker}]
+        return receipt
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        result = _run(registry, tmp_path, [spec], qualifier=qualify, max_training_rounds=3)
+        assert len(result["dispatched_run_ids"]) == 1
+        assert result["batch_status_counts"] == {"needs_repair": 1}
+        assert result["qualified_batch_count"] == 0
+        saved = result["completed"][0]
+        outbox = qt._read_artifact(registry, saved["repair_outbox"])
+        assert outbox["tasks"][0] == {"kind": "source_repair", "gate": blocker}
+        training = outbox["tasks"][1]
+        assert training["kind"] == "training_repair"
+        assert training["reason"] == "training_blocked_by_non_metric_qualification"
+        assert training["blocking_gates"] == [blocker]
+        assert training["evidence"]["passed"] is False
+        assert not training["admitted"]
+        resumed = _run(registry, tmp_path, [], qualifier=qualify, max_training_rounds=3)
+        assert not resumed["dispatched_run_ids"] and len(calls) == 1
+        assert resumed["batch_status_counts"] == {"needs_repair": 1}
+
+
+def test_old_retry_policy_requires_a_new_stream(tmp_path):
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        result = _run(registry, tmp_path, [spec])
+        assert result["binding"]["policy"]["retry_policy"] == qt.RETRY_POLICY
+        path = tmp_path / "qualified/qualification.duckdb"
+        with duckdb.connect(str(path)) as db:
+            binding = json.loads(db.execute("SELECT binding FROM stream").fetchone()[0])
+            del binding["policy"]["retry_policy"]
+            db.execute("UPDATE stream SET binding=?", [json.dumps(binding)])
+        with pytest.raises(IncrementalTrainingError, match="policy binding changed"):
+            _run(registry, tmp_path, [])

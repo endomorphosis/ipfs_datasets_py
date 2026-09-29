@@ -1,0 +1,233 @@
+{
+  "admitted": false,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "bridge_report_telemetry": {
+    "us-code-36-50106-bb17fee26e3ac266": {
+      "accepted_bridge_count": 5,
+      "accepted_bridge_names": [
+        "cec_dcec",
+        "deontic_norms",
+        "external_prover_router",
+        "fol_tdfol",
+        "modal_frame_logic"
+      ],
+      "attempted_bridge_count": 5,
+      "attempted_bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "failed_bridge_count": 0,
+      "failed_bridge_names": [],
+      "failures": {},
+      "implemented_bridge_count": 5,
+      "implemented_bridge_names": [
+        "cec_dcec",
+        "deontic_norms",
+        "external_prover_router",
+        "fol_tdfol",
+        "modal_frame_logic"
+      ],
+      "outer_timeout": null,
+      "report_accepted": true,
+      "report_received": true
+    },
+    "us-code-40-3318-429cfc454b54ce35": {
+      "accepted_bridge_count": null,
+      "accepted_bridge_names": null,
+      "attempted_bridge_count": null,
+      "attempted_bridge_names": null,
+      "failed_bridge_count": null,
+      "failed_bridge_names": null,
+      "failures": {},
+      "implemented_bridge_count": null,
+      "implemented_bridge_names": null,
+      "outer_timeout": {
+        "exception_type": "_LegalIRTargetTimeout",
+        "message": "LegalIR target construction exceeded 15.000s"
+      },
+      "report_accepted": null,
+      "report_received": false
+    }
+  },
+  "cold_native_generation": true,
+  "diagnosis": "The selected 40 USC 3318 native target hit the unchanged outer 15-second limit; 36 USC 50106 returned all five accepted bridge reports. Profiling locates substantial work in modal encoding, decoding and contextual text scans. An ErgoAI initialization/import is not a proof.",
+  "hotspots": [
+    {
+      "cumulative_seconds": 25.315229745,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/codec.py",
+      "function": "encode",
+      "line": 2705,
+      "primitive_calls": 2,
+      "self_seconds": 0.013781476,
+      "total_calls": 2
+    },
+    {
+      "cumulative_seconds": 9.779757414,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/decompiler.py",
+      "function": "decode_modal_ir_document",
+      "line": 2936,
+      "primitive_calls": 2,
+      "self_seconds": 0.0007498030000000001,
+      "total_calls": 2
+    },
+    {
+      "cumulative_seconds": 7.3249197090000004,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/decompiler.py",
+      "function": "_refined_contextual_modal_transition_slots",
+      "line": 21627,
+      "primitive_calls": 790,
+      "self_seconds": 0.004437393,
+      "total_calls": 790
+    },
+    {
+      "cumulative_seconds": 7.271932456,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/decompiler.py",
+      "function": "_source_span_slot_phrases",
+      "line": 10770,
+      "primitive_calls": 4,
+      "self_seconds": 0.005818493,
+      "total_calls": 4
+    },
+    {
+      "cumulative_seconds": 7.164493219000001,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/decompiler.py",
+      "function": "_refined_contextual_modal_cues_from_text",
+      "line": 21597,
+      "primitive_calls": 956,
+      "self_seconds": 0.005516035000000001,
+      "total_calls": 956
+    },
+    {
+      "cumulative_seconds": 5.831900716000001,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/codec.py",
+      "function": "_evaluate_flogic",
+      "line": 3483,
+      "primitive_calls": 1,
+      "self_seconds": 1.2448e-05,
+      "total_calls": 1
+    },
+    {
+      "cumulative_seconds": 5.828317640000001,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/flogic_optimizer.py",
+      "function": "evaluate",
+      "line": 158,
+      "primitive_calls": 1,
+      "self_seconds": 3.0656e-05,
+      "total_calls": 1
+    },
+    {
+      "cumulative_seconds": 5.3536346020000005,
+      "file": "/home/barberb/.local/lib/python3.12/site-packages/torch/_ops.py",
+      "function": "py_impl",
+      "line": 317,
+      "primitive_calls": 64,
+      "self_seconds": 0.007788174,
+      "total_calls": 217
+    },
+    {
+      "cumulative_seconds": 5.070096093,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/modal/codec.py",
+      "function": "modal_ir_to_flogic_triples",
+      "line": 3760,
+      "primitive_calls": 2,
+      "self_seconds": 0.030943460000000002,
+      "total_calls": 2
+    },
+    {
+      "cumulative_seconds": 4.555409824000001,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/flogic_optimizer.py",
+      "function": "_check_flogic_consistency",
+      "line": 266,
+      "primitive_calls": 1,
+      "self_seconds": 0.008302369,
+      "total_calls": 1
+    },
+    {
+      "cumulative_seconds": 4.517798387,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/flogic_optimizer.py",
+      "function": "_get_ergo",
+      "line": 258,
+      "primitive_calls": 1,
+      "self_seconds": 1.7201e-05,
+      "total_calls": 1
+    }
+  ],
+  "instrumented": true,
+  "instrumented_child_seconds": 34.4119000218343,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "metric_disk_cache": 0,
+  "next_test": "Explicit per-span 60-second budget with unchanged five bridges and require-complete-targets; a new target configuration, not a comparable 15-second wall-time baseline.",
+  "profile_artifact": {
+    "bytes": 3954177,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/target-timeout-profile-r1/attempt/target-profile.pstats",
+    "sha256": "4fd8b5ea47e75df3d8ea12b33e44e81d346b8644779b652ea31f579b33fcaa51"
+  },
+  "profile_caveat": "Nested cumulative times overlap and must not be summed. SIGALRM interrupted outer frames have inconsistent primitive/cumulative call counters; do not infer per-adapter completion from those counters.",
+  "resource_receipt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/target-timeout-profile-r1/attempt/resources.json",
+  "resource_status": "released",
+  "sample_count": 2,
+  "schema": "target-timeout-profile-summary/v1",
+  "scope": "Diagnostic attribution only; profiler overhead changes wall time and may change timeout disposition",
+  "selected": {
+    "training": {
+      "embedding_width": 384,
+      "input": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/target-timeout-profile-r1/training.jsonl",
+      "section": "3318",
+      "text_characters": 1832,
+      "title": "40"
+    },
+    "tuning": {
+      "embedding_width": 384,
+      "input": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/target-timeout-profile-r1/tuning.jsonl",
+      "section": "50106",
+      "text_characters": 153,
+      "title": "36"
+    }
+  },
+  "source_inputs": {
+    "training": {
+      "bytes": 60191,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T042818Z/verified-embeddings-r1/training.jsonl",
+      "sha256": "8ed9584552747db9e461dd21e9095f4fc31622ec71aba86ffa47bbe4b4487860"
+    },
+    "tuning": {
+      "bytes": 18196,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T042818Z/verified-embeddings-r1/tuning.jsonl",
+      "sha256": "a799ac706c35565ecb11bebfba696a65f40d0379c64eb940a829ee8b56f9512e"
+    }
+  },
+  "source_manifest": {
+    "file_count": 7835,
+    "sha256": "bf71450b495f2993bf73e5a6275b76faf5f1f0ef6304d10ff2b18ac9c613cf72"
+  },
+  "source_unchanged": true,
+  "split_target_status_counts": {
+    "training": {
+      "timeout": 1
+    },
+    "validation": {
+      "ready": 1
+    }
+  },
+  "statuses": {
+    "us-code-36-50106-bb17fee26e3ac266": "ready",
+    "us-code-40-3318-429cfc454b54ce35": "timeout"
+  },
+  "target_status_counts": {
+    "ready": 1,
+    "timeout": 1
+  },
+  "target_timeout_seconds": 15.0,
+  "training_executed": false,
+  "use_sample_memory": false
+}

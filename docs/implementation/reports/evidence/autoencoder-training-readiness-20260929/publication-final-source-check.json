@@ -1,0 +1,10 @@
+{
+  "schema": "readiness-source-publication-check/v1",
+  "verified_staged_source_count": 24,
+  "all_source_ast_parse": true,
+  "all_live_after_hashes_unchanged": true,
+  "protected_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "protected_checkpoint_bytes": 25895338,
+  "native_training_complete": false,
+  "admitted": false
+}

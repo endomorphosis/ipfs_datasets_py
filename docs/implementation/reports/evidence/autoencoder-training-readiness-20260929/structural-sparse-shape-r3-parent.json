@@ -1,0 +1,22 @@
+{
+  "schema": "structural-shape-parent-binding/v1",
+  "checkpoint": {
+    "bytes": 1558,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/fresh-gte-small-384.state.json",
+    "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+  },
+  "shape_receipt": {
+    "path": "workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/structural-sparse-shape-r3.json",
+    "sha256": "8f34914a1941a18ba79496227b7327dda152fb49670f8b7ceb9796cee638558b"
+  },
+  "selected_maps_empty": true,
+  "selected_components": [
+    "compiler_quality_embedding_weights",
+    "logic_signature_embedding_weights",
+    "round_trip_signal_embedding_weights",
+    "decompiler_plan_embedding_weights",
+    "predicate_argument_embedding_weights",
+    "family_embedding_weights"
+  ],
+  "scope": "Additional read-only check: actual planned fresh parent has no existing selected-map rows. No state mutation/model fitting or proof."
+}

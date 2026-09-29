@@ -145,6 +145,9 @@ def test_qualifier_uses_inference_gate_and_never_enters_training(tmp_path, monke
     assert len(calls) == 1 and calls[0]["execution_mode"] == paths.INFERENCE_PATH
     assert result["execution_path"] == paths.INFERENCE_PATH
     assert "dependency:optimizers/logic_theorem_optimizer/autoencoder_paths.py" in result["source_sha256"]
+    semantic_key = "dependency:logic/autoformal/semantic_integrity.py"
+    assert result["source_sha256"][semantic_key] == hashlib.sha256(
+        Path(result["source_files"][semantic_key]).read_bytes()).hexdigest()
     receipt = result.pop("receipt_artifact")
     raw = Path(receipt["path"]).read_bytes()
     assert receipt["sha256"] == hashlib.sha256(raw).hexdigest()
@@ -161,7 +164,7 @@ def test_same_text_with_different_citation_is_not_validation(tmp_path, monkeypat
 
 
 @pytest.mark.parametrize("changed_file", ["family_qualification.py", "tdfol_parser.py", "legacy_modal.py",
-                                         "prover_syntax.py", "canonical_contracts.py"])
+                                         "prover_syntax.py", "canonical_contracts.py", "semantic_integrity.py"])
 def test_producer_changes_abort_before_receipt(tmp_path, monkeypatch, changed_file):
     monkeypatch.setattr(q, "_structural_gates", _failed_structure)
     original = Path.read_bytes

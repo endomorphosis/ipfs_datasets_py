@@ -198,6 +198,20 @@ class AutoformalSession:
         clause = self.documents.clause(document_id, clause_id)
         if clause is None:
             return {"error": "not_found"}
+        from .semantic_integrity import canonical_cycle_integrity, unsupported_source_grammar
+
+        document = self.documents.documents.get(document_id)
+        source_gaps = unsupported_source_grammar(
+            clause.text, preceding_text=document.text[:clause.start] if document is not None else "",
+        )
+        if source_gaps:
+            for row in matched:
+                if row.status == "compiled":
+                    row.reason = "semantic_integrity:" + ",".join(source_gaps)
+            return {"rows": [row.public() for row in matched], "evaluated": False,
+                    "roundtrip_status": "unsupported_source_grammar",
+                    "semantic_integrity": {"passed": False, "reasons": source_gaps,
+                                           "full_source_equivalence_proved": False, "admitted": False}}
         try:
             from ipfs_datasets_py.logic.legal_ir.canonical_contracts import (
                 CanonicalAtomVocabulary,
@@ -213,11 +227,18 @@ class AutoformalSession:
             atom_vocabulary=_vocabulary(self.vocabularies.get(clause_id)),
         ))
         status = getattr(result.status, "value", result.status)
-        if status == OperationStatus.SUCCESS or status == OperationStatus.SUCCESS.value:
+        integrity = canonical_cycle_integrity(result)
+        if integrity["passed"]:
             for row in matched:
                 if row.status == "compiled":
                     row.status = "roundtrip_ok"
-        return {"rows": [row.public() for row in matched], "evaluated": True, "roundtrip_status": str(status)}
+                    row.reason = ""
+        else:
+            for row in matched:
+                if row.status == "compiled":
+                    row.reason = "semantic_integrity:" + ",".join(integrity["reasons"])
+        return {"rows": [row.public() for row in matched], "evaluated": True,
+                "roundtrip_status": str(status), "semantic_integrity": integrity}
 
     def formalize_against(
         self,

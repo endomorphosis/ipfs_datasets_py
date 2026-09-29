@@ -1,0 +1,66 @@
+{
+  "source_frozen": true,
+  "files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "d19baa8d947f13af265b0871b8324948d4f2a96e79b0f0574cc29d2927f82115",
+      "bytes": 1416656,
+      "before_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "before_sha256": "95026a41e04925f090bb0fd2cfd335db028e8f0cab3d470859ae035b4f7c181c"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524",
+      "bytes": 21228,
+      "before_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "before_sha256": "11c1ff8fb5c9a0c301fec36b3214242bcd9ee4dc2a7be7bbb2ca5cbc7bfc3fb4"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "edbd9cf926be7d628b63aaaf03f95f51ef1ca41d5144c9998b5a60d47ebc4f24",
+      "bytes": 97481,
+      "before_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "before_sha256": "f12f28ed7587da8de6f6e3b791237cda5e04a7594e1ef6b29e4b54ef2f5cae4a"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "sha256": "8a08373adbc84a3382ded6a05e1ce67a42ba6969bcc31a99cbdf10d49bc45528",
+      "bytes": 78534,
+      "before_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "before_sha256": "6a446c9dc19ff61545bfb1540aa4f08e900f08f3a245861f7ca8d925e3f29bbb"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py",
+      "sha256": "a8b7af67b1c706248a684173ac2f09f793befd4e564d3ea84d991213ed14f1fc",
+      "bytes": 21456,
+      "before_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py",
+      "before_sha256": "612c7e8756c25179c9ad1628f24bace169e7869408d7e1fad0d7ca0b60b453b3"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_nonview_projection.py",
+      "sha256": "c1cc6a72b0df515d08896df8c62bd82ddd203f3a997cbd86b31defa03bbb119c",
+      "bytes": 17782,
+      "before_path": null,
+      "before_sha256": null
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_worker_target_shard_bound.py",
+      "sha256": "276740558fab6517f82041140b9201b85988490fcee8b17f93295aa434357908",
+      "bytes": 7325,
+      "before_path": null,
+      "before_sha256": null
+    }
+  ],
+  "test_logs": {
+    "optimizer-phase2-tests-final.log": {
+      "passed": 524,
+      "seconds": 36.37
+    },
+    "optimizer-phase2-incremental-tests.log": {
+      "passed": 25,
+      "seconds": 21.19
+    }
+  },
+  "unique_passing_tests": 535,
+  "test_scope": "controlled tests and injected worker/owner/resume integration; no native-training or admit claim"
+}

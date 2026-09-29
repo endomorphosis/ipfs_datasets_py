@@ -1,0 +1,63 @@
+{
+  "schema": "explicit-retained-reservation-reconciliation/v1",
+  "reservation_id": "182f00ac3c9e460da83c427cf08f2d32",
+  "previous_record_sha256": "5d2e5f484b32a89e2afd8e6c8fa5f4b084fde399b0490fde0e478b215f2e9022",
+  "original_owner_pid": 2719670,
+  "reconciled_by_pid": 2871763,
+  "artifacts": [
+    {
+      "path": "failure.json",
+      "bytes": 2713,
+      "sha256": "a6ff0aacd1d2df57afb45e57ce7207ded48d9d85d91c1083027826b5a3f7eff6"
+    },
+    {
+      "path": "plan.json",
+      "bytes": 2417,
+      "sha256": "b49596638710bc120eac403a9ce5dc9309b29b164f3ad11ff71b939f935eef4d"
+    },
+    {
+      "path": "producer.log",
+      "bytes": 2398,
+      "sha256": "186b65891e2182215a27388b8b938e018544c0821f0ab2e4b28308b145fc12fa"
+    }
+  ],
+  "other_reservations_sha256": "41a1f11fe23761391ca6053fe1fbde1557fc72c9bb84be00b6525fa26cd12742",
+  "full_claim_accounting": {
+    "observed_apparent_bytes": 48677602503,
+    "outstanding_full_reservations_bytes": 30890000000,
+    "additional_requested_bytes": 0,
+    "charged_bytes": 79567602503,
+    "limit_bytes": 80000000000,
+    "minimum_filesystem_free_bytes": 179152482304,
+    "scope": "named_roots_only_apparent_bytes",
+    "inventory": {
+      "apparent_bytes": 48677602503,
+      "entry_count": 245458,
+      "symlink_count": 3845,
+      "special_file_count": 21
+    }
+  },
+  "final_accounting": {
+    "observed_apparent_bytes": 48677602503,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "additional_requested_bytes": 0,
+    "charged_bytes": 79392602503,
+    "limit_bytes": 80000000000,
+    "minimum_filesystem_free_bytes": 179152482304,
+    "scope": "named_roots_only_apparent_bytes",
+    "inventory": {
+      "apparent_bytes": 48677602503,
+      "entry_count": 245458,
+      "symlink_count": 3845,
+      "special_file_count": 21
+    }
+  },
+  "outputs_deleted": false,
+  "automatic_expiry": false,
+  "admitted": false,
+  "prior_record_count_preserved": 182,
+  "tests": {
+    "resource_recovery_cases_passed": 14,
+    "combined_cli_cases_total_passed": 83
+  }
+}

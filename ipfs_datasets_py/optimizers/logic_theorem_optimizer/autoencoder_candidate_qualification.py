@@ -38,6 +38,7 @@ QUALIFICATION_DEPENDENCIES = (
     "logic/deontic/ir.py", "logic/deontic/formula_builder.py",
     "logic/deontic/decoder.py", "logic/legal_ir/canonical_contracts.py",
     "logic/legal_ir/canonical_roundtrip.py",
+    "logic/autoformal/semantic_integrity.py",
     "optimizers/logic_theorem_optimizer/autoencoder_paths.py",
 )
 

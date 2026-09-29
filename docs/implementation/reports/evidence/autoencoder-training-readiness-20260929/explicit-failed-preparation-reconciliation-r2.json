@@ -1,0 +1,59 @@
+{
+  "schema": "explicit-retained-reservation-reconciliation/v1",
+  "reservation_id": "b93bbf185292450fa02f069081887e2b",
+  "previous_record_sha256": "b1c051a77f691e068b1cb3ea9ac25489f0c820910f11d59f5424ac49e14ddc8e",
+  "original_owner_pid": 2886266,
+  "reconciled_by_pid": 3005190,
+  "artifacts": [
+    {
+      "path": "failure.json",
+      "bytes": 2721,
+      "sha256": "b415e4377acd2f0c4f5887559f645a05e9946ac215207498d1edba7adb1665c2"
+    },
+    {
+      "path": "plan.json",
+      "bytes": 2454,
+      "sha256": "3a121d05ed7cadb8dc2700338efd61fc7ffc614a78ecd2860fbaa43ec11f2fc1"
+    },
+    {
+      "path": "producer.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "other_reservations_sha256": "6e83ddc39c1c9720b6ed061a6cd8056e8d685582a8601f6248b9b17d30b26c13",
+  "full_claim_accounting": {
+    "observed_apparent_bytes": 48544299621,
+    "outstanding_full_reservations_bytes": 30890000000,
+    "additional_requested_bytes": 0,
+    "charged_bytes": 79434299621,
+    "limit_bytes": 80000000000,
+    "minimum_filesystem_free_bytes": 179251634176,
+    "scope": "named_roots_only_apparent_bytes",
+    "inventory": {
+      "apparent_bytes": 48544299621,
+      "entry_count": 244789,
+      "symlink_count": 3842,
+      "special_file_count": 21
+    }
+  },
+  "final_accounting": {
+    "observed_apparent_bytes": 48544299621,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "additional_requested_bytes": 0,
+    "charged_bytes": 79259299621,
+    "limit_bytes": 80000000000,
+    "minimum_filesystem_free_bytes": 179251634176,
+    "scope": "named_roots_only_apparent_bytes",
+    "inventory": {
+      "apparent_bytes": 48544299621,
+      "entry_count": 244789,
+      "symlink_count": 3842,
+      "special_file_count": 21
+    }
+  },
+  "outputs_deleted": false,
+  "automatic_expiry": false,
+  "admitted": false,
+  "prior_record_count_preserved": 183
+}

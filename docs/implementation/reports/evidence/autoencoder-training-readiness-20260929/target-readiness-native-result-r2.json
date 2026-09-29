@@ -1,0 +1,99 @@
+{
+  "admitted": false,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "bundle_present": false,
+  "compressed_max_output_bytes": 67108864,
+  "exit_code": 1,
+  "failure": {
+    "exception_type": "DaemonResourceError",
+    "message": "storage reservation capacity exceeded",
+    "per_span_bridge_reports_available": false,
+    "per_span_timing_available": false,
+    "phase": "owner periodic whole-root storage accounting",
+    "target_generation_failure_observed": false
+  },
+  "full_package_final_source_guard_completed": false,
+  "last_successful_polled_owner_usage": {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 2454,
+    "attempt_limit_bytes": 175000000,
+    "charged_bytes": 79940773334,
+    "checked_at": 1790667176.102923,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 1026469888
+    },
+    "inventory": {
+      "apparent_bytes": 49050773334,
+      "entry_count": 246373,
+      "special_file_count": 21,
+      "symlink_count": 3792
+    },
+    "limit_bytes": 80000000000,
+    "memory_limit_bytes": 8589934592,
+    "minimum_filesystem_free_bytes": 178681884672,
+    "observed_apparent_bytes": 49050773334,
+    "outstanding_full_reservations_bytes": 30890000000,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 3,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 2454
+  },
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "legal_ir_target_count": null,
+  "measurement_scope": "Stopped preparation, not bridge evaluation or completed target timing. No target report escaped the stopped writer; acceptance and target coverage are unmeasured.",
+  "metric_disk_cache": 0,
+  "outer_command_wall_seconds": 92.84837607201189,
+  "persisted_artifacts": [
+    {
+      "bytes": 2721,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/shared-targets-r2/failure.json",
+      "sha256": "b415e4377acd2f0c4f5887559f645a05e9946ac215207498d1edba7adb1665c2"
+    },
+    {
+      "bytes": 2454,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/shared-targets-r2/plan.json",
+      "sha256": "3a121d05ed7cadb8dc2700338efd61fc7ffc614a78ecd2860fbaa43ec11f2fc1"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-readiness-20260929T065644Z/shared-targets-r2/producer.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "pinned_source_sha256": {
+    "autoencoder": "d19baa8d947f13af265b0871b8324948d4f2a96e79b0f0574cc29d2927f82115",
+    "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "worker": "edbd9cf926be7d628b63aaaf03f95f51ef1ca41d5144c9998b5a60d47ebc4f24"
+  },
+  "producer_receipt_present": false,
+  "reservation_id": "b93bbf185292450fa02f069081887e2b",
+  "reservation_status": "retained",
+  "retention_reason": "context_failed",
+  "retry_launched": false,
+  "runner_sha256": "113324782b6007a655469e0a6a60859f8ddc12826e762cc49218d6f642d11b8e",
+  "schema": "shared-target-readiness-native-result/v1",
+  "script_sha256": "205eb9d4c24f07a54ec18cb9da3154ba4e0551f8ec915e827184b41d57980f10",
+  "selected_training_count": 6,
+  "selected_tuning_count": 2,
+  "status": "failed_resource_owner_capacity_guard",
+  "storage_reserved_bytes": 175000000,
+  "successful_handoff_present": false,
+  "target_completeness_verified": false,
+  "target_shard_max_bytes": 268435456,
+  "target_timeout_seconds": 60.0,
+  "training_executed": false,
+  "use_sample_memory": false
+}

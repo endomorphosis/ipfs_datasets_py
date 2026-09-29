@@ -1,0 +1,24 @@
+{
+  "admitted": false,
+  "elapsed_seconds": 2.19,
+  "exit_code": 0,
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py": "999b39a72c9e7a8651e993bae15491358bb0ecbec55f3109ac674be7b908c2ad",
+    "scripts/ops/legal_ir/prepare_shared_autoencoder_targets.py": "205eb9d4c24f07a54ec18cb9da3154ba4e0551f8ec915e827184b41d57980f10",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_prepare_shared_autoencoder_targets.py": "604958f85da88d0dd736bd4e58f79697ca21631d9efe349ff6eec31fb17e2939",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_shared_target_readiness.py": "37df6bc608d4942dda961b5a28ebbfb97e20192b3852fb12698753c4b6fc91c0"
+  },
+  "handoff_argument_parse_checked_for_bytes": [
+    67108864,
+    268435456
+  ],
+  "native_bridge_generation_in_tests": false,
+  "passed": 98,
+  "schema": "shared-target-expanded-bound-validation/v1",
+  "test_scope": [
+    "test_shared_target_readiness.py",
+    "test_prepare_shared_autoencoder_targets.py",
+    "test_autoencoder_target_preparation.py",
+    "test_parallel_shared_target_preparation.py"
+  ]
+}

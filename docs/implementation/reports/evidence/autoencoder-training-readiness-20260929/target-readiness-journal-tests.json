@@ -1,0 +1,32 @@
+{
+  "admitted": false,
+  "elapsed_seconds": 2.09,
+  "exit_code": 0,
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py": "2d63251dd3a1135acf6ad6612eb0e60b62409569f564273b5a175bdf9109ae19",
+    "scripts/ops/legal_ir/prepare_shared_autoencoder_targets.py": "dffa055d9ca726ab1dfcff06fc9ed97e323c85fcb7e9b9d393ab5bb240d203c7",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_prepare_shared_autoencoder_targets.py": "604958f85da88d0dd736bd4e58f79697ca21631d9efe349ff6eec31fb17e2939",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_shared_target_readiness.py": "d9fb5b652d8822dabd107287627771547a7daf658498e0a5d46bd868dd128520"
+  },
+  "handoff_argument_parse_checked_for_bytes": [
+    67108864,
+    268435456
+  ],
+  "journal_checks": [
+    "pre-serialization failure retains first exact observation",
+    "fsync file and parent creation plus every appended record",
+    "record and byte ceilings",
+    "duplicate and extra payload rejection",
+    "prior-prefix retention without truncation",
+    "timeout is not a ready or admitted result"
+  ],
+  "native_bridge_generation_in_tests": false,
+  "passed": 105,
+  "schema": "shared-target-observation-journal-validation/v1",
+  "test_scope": [
+    "test_shared_target_readiness.py",
+    "test_prepare_shared_autoencoder_targets.py",
+    "test_autoencoder_target_preparation.py",
+    "test_parallel_shared_target_preparation.py"
+  ]
+}

@@ -143,7 +143,8 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
                    arrow_feature_weights=None, shared_targets=None, target_snapshot_id=None,
                    validation_records=(), composed_refinement_attempts=0,
                    epochs=1, learning_rate=0.35, line_search_attempts=1,
-                   projection_optimizer_mode="fixed", projection_momentum=0.0):
+                   projection_optimizer_mode="fixed", projection_momentum=0.0,
+                   projection_candidate_update_order=None, target_shard_max_bytes=64 * 1024 * 1024):
     """Create one-span gradient jobs with disjoint tuning rows for selection.
 
     The same validation rows also undergo final qualification. Repeated use
@@ -171,6 +172,7 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
             shared[field] = {**descriptor, "path": str(registry.artifact_path(descriptor))}
     if shared_targets:
         shared["target_snapshot_id"] = target_snapshot_id
+        shared["target_shard_max_bytes"] = target_shard_max_bytes
     result = []
     validation_samples = [record["sample"] for record in validation_records]
     split_identity = "qualification-validation-" + hashlib.sha256(_json(validation_samples).encode()).hexdigest()
@@ -202,6 +204,7 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
                                 "max_line_search_attempts": line_search_attempts,
                                 "projection_optimizer_mode": projection_optimizer_mode,
                                 "projection_momentum": projection_momentum,
+                                "projection_candidate_update_order": projection_candidate_update_order,
                                 "projection_max_update_families": 5,
                                 "projection_max_composed_refinement_attempts": composed_refinement_attempts},
             "capture_sparse_patches": True, "candidate_storage": "sparse",
@@ -212,7 +215,8 @@ def make_templates(registry, records, *, state_directory, checkpoint, source_has
 
 def _nondefault_optimizer_settings(config):
     defaults = {"epochs": 1, "learning_rate": 0.35, "line_search_attempts": 1,
-                "projection_optimizer_mode": "fixed", "projection_momentum": 0.0}
+                "projection_optimizer_mode": "fixed", "projection_momentum": 0.0,
+                "projection_candidate_update_order": None}
     return any(config.get(name, default) != default for name, default in defaults.items())
 
 
@@ -271,12 +275,14 @@ def run_cycle(config):
                 source_language=config["source_language"], model_variant=config["model_variant"],
                 arrow_feature_weights=config.get("arrow_feature_weights"),
                 shared_targets=config.get("shared_targets"), target_snapshot_id=config.get("target_snapshot_id"),
+                target_shard_max_bytes=config.get("target_shard_max_bytes", 64 * 1024 * 1024),
                 validation_records=validation,
                 composed_refinement_attempts=config.get("composed_refinement_attempts", 0),
                 epochs=config.get("epochs", 1), learning_rate=config.get("learning_rate", 0.35),
                 line_search_attempts=config.get("line_search_attempts", 1),
                 projection_optimizer_mode=config.get("projection_optimizer_mode", "fixed"),
                 projection_momentum=config.get("projection_momentum", 0.0),
+                projection_candidate_update_order=config.get("projection_candidate_update_order"),
             )
             report = run_qualified_incremental_training(
                 registry, templates, state_directory=state / "progress",
@@ -498,6 +504,8 @@ def parser():
                    help="Inference only evaluates immutable local weights; training may create private candidates")
     p.add_argument("--checkpoint", type=Path, default=PINNED)
     p.add_argument("--arrow-feature-weights", type=Path, help="Optional local baseline-bound Arrow IPC weights")
+    p.add_argument("--target-shard-max-bytes", type=int, default=64 * 1024 * 1024,
+                   help="Expanded shared-target shard limit (1..256 MiB); default64 MiB, bound into training jobs")
     p.add_argument("--shared-targets", type=Path,
                    help="Optional local verified target artifact covering all training and validation rows")
     p.add_argument("--target-snapshot-id", help="Exact snapshot identity, required with --shared-targets")
@@ -534,6 +542,10 @@ def parser():
                    help="Candidate attempt bound per update family, including optional momentum trials")
     p.add_argument("--projection-optimizer-mode", choices=["fixed", "guarded_adaptive", "productive_adaptive"], default="fixed",
                    help="Adaptive search requires disjoint validation; productive search requires two attempts; rate/history reset per job")
+    p.add_argument("--projection-candidate-update-order", nargs="+", default=None,
+                   choices=["legal_ir_view_global_logits", "legal_ir_view_logits", "family_logits",
+                            "decoded_embedding", "combined", "decoded_embedding_nonview", "decoded_embedding_structural"],
+                   help="Explicit unique update-family order; default preserves legacy search. Structural decoder updates only six compact heads; all qualification gates still apply.")
     p.add_argument("--projection-momentum", type=float, default=0.0,
                    help="Optional job-local momentum within 0..0.9; requires adaptive search and at least two attempts")
     p.add_argument("--composed-refinement-attempts", type=int, choices=range(4), default=0,
@@ -561,6 +573,10 @@ def main(argv=None):
     args = p.parse_args(argv)
     if not args.input_jsonl and not args.repository_id:
         p.error("supply --input-jsonl and/or --repository-id")
+    if not 1 <= args.target_shard_max_bytes <= 256 * 1024 * 1024:
+        p.error("target-shard-max-bytes must be within 1..256 MiB")
+    if args.target_shard_max_bytes != 64 * 1024 * 1024 and not args.shared_targets:
+        p.error("a nondefault target-shard-max-bytes requires --shared-targets")
     if bool(args.shared_targets) != bool(args.target_snapshot_id):
         p.error("--shared-targets and --target-snapshot-id must be supplied together")
     if args.composed_refinement_attempts and (args.execution_mode != "training" or not args.validation_jsonl):
@@ -576,6 +592,10 @@ def main(argv=None):
         p.error("productive_adaptive requires at least two line-search-attempts")
     if args.projection_optimizer_mode in {"guarded_adaptive", "productive_adaptive"} and not args.validation_jsonl:
         p.error(f"{args.projection_optimizer_mode} requires disjoint --validation-jsonl")
+    if args.projection_candidate_update_order and (
+            len(set(args.projection_candidate_update_order)) != len(args.projection_candidate_update_order)
+            or not args.validation_jsonl):
+        p.error("candidate update order must be unique and requires disjoint --validation-jsonl")
     if args.execution_mode == "inference" and _nondefault_optimizer_settings(vars(args)):
         p.error("optimizer settings require the training execution mode")
     if type(args.workers) is not int or args.workers < 0 or args.workers > 32:

@@ -19,6 +19,7 @@ from .autoencoder_training_worker import TrainingJobSpec, SampleRecord, execute_
 
 SCHEMA = "autoencoder-qualified-incremental-training-v1"
 GATES = ("metric_gate", "semantic_gate", "family_syntax_gate", "lake_gate", "heldout_gate")
+RETRY_POLICY = "metric_only_without_structural_failures_v2"
 
 
 def _text_key(text):
@@ -36,12 +37,24 @@ def _read_artifact(registry, descriptor):
     return json.loads(registry.artifact_path(ref).read_bytes())
 
 
+def _blocking_gates(receipt):
+    gates = receipt.get("gate_results", {})
+    return [name for name in GATES if name != "metric_gate"
+            and gates.get(name, {}).get("passed") is not True]
+
+
 def _disposition(receipt, round_number, max_rounds):
     qualified = all(receipt.get("gate_results", {}).get(name, {}).get("passed") is True for name in GATES)
     if receipt.get("qualified") is not qualified:
         raise inc.IncrementalTrainingError("qualification summary differs from required gates")
-    retry = not qualified and receipt.get("needs_training") is True and round_number < max_rounds
-    status = "qualified" if qualified else "pending" if retry else "training_exhausted" if receipt.get("needs_training") else "needs_repair"
+    # Learned-head updates cannot repair a parser, unsupported Lean rendering,
+    # invalid family syntax or an invalid validation split. Preserve all repair
+    # work, but do not spend identical optimizer rounds on structural blockers.
+    structural = _blocking_gates(receipt)
+    needs_training = receipt.get("needs_training") is True
+    retry = not qualified and not structural and needs_training and round_number < max_rounds
+    status = ("qualified" if qualified else "needs_repair" if structural else
+              "pending" if retry else "training_exhausted" if needs_training else "needs_repair")
     return qualified, retry, status
 
 
@@ -218,7 +231,7 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
             check_cycle_source()
 
     policy = {"max_training_rounds": max_training_rounds, "lake_timeout_seconds": lake_timeout_seconds,
-              "required_gates": list(GATES), "min_cosine": .72, "max_reconstruction_loss": .20,
+              "required_gates": list(GATES), "retry_policy": RETRY_POLICY, "min_cosine": .72, "max_reconstruction_loss": .20,
               "producer_identity": producer_identity, "qualification_samples": qualification_samples,
               "native_producer_manifest": cycle_manifest,
               "control_transport": control_transport,
@@ -352,8 +365,11 @@ def run_qualified_incremental_training(registry, templates, *, state_directory,
                                       "evidence": publication, "qualification_artifact": artifact,
                                       "acceptance": "Publish verified sparse closure and evidence without weakening gates or uploading an unapproved full anchor.",
                                       "admitted": False})
-                if status == "training_exhausted":
-                    tasks.append({"kind": "training_repair", "reason": "bounded_training_rounds_exhausted",
+                if status == "training_exhausted" or (status == "needs_repair" and receipt.get("needs_training") is True):
+                    tasks.append({"kind": "training_repair",
+                                  "reason": ("bounded_training_rounds_exhausted" if status == "training_exhausted"
+                                             else "training_blocked_by_non_metric_qualification"),
+                                  "blocking_gates": _blocking_gates(receipt),
                                   "acceptance": "Meet unchanged absolute metric, semantic, syntax and Lake gates.",
                                   "evidence": receipt.get("metric_gate", {}), "admitted": False})
                 outbox = {"schema_version": "qualification-repair-outbox/v1", "run_id": spec.run_id,

@@ -30,6 +30,8 @@ BRIDGES = ("modal_frame_logic", "deontic_norms", "fol_tdfol", "cec_dcec", "exter
 MAX_INPUT_BYTES = 64 * 1024 * 1024
 MAX_ROWS = 10000
 OVERHEAD_BYTES = 16 * 1024 * 1024
+TARGET_TIMEOUT_ENV = "IPFS_DATASETS_LEGAL_IR_TARGET_TIMEOUT_SECONDS"
+MAX_OBSERVATION_JOURNAL_BYTES = 4 * 1024 * 1024
 _HELPERS = None
 
 
@@ -97,6 +99,11 @@ def plan(args):
     records, inputs, sources = _selection(args)
     selected = {key: [row["sample"] for row in value] for key, value in records.items()}
     selection_sha = hashlib.sha256(_canonical(selected).encode()).hexdigest()
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import _legal_ir_target_timeout_seconds
+    target_timeout = (args.target_timeout_seconds if args.target_timeout_seconds is not None
+                      else _legal_ir_target_timeout_seconds())
+    if not math.isfinite(target_timeout) or not 0 < target_timeout <= 600:
+        raise ValueError("effective target timeout must be finite and within (0,600] seconds")
     return {
         "schema_version": "shared-target-preparation-plan/v1",
         "input_planning_wall_seconds": time.monotonic() - started,
@@ -111,8 +118,16 @@ def plan(args):
         "script_sha256": _helpers()._sha(__file__), "runner_sha256": _helpers()._sha(RUNNER),
         "output_directory": str(args.output_directory),
         "max_output_bytes": args.max_output_bytes, "storage_bytes": args.storage_bytes,
+        "target_shard_max_bytes": args.target_shard_max_bytes,
+        "observation_journal_max_records": sum(map(len, records.values())),
+        "observation_journal_max_bytes": min(MAX_OBSERVATION_JOURNAL_BYTES, args.max_output_bytes),
+        "observation_journal_scope": "Unsealed native generation observations before serialization and final source verification; not reusable targets, qualification or a successful handoff",
         "memory_mb": args.memory_mb, "cpu_slots": 1, "child_process_slots": 3,
         "timeout_seconds": args.timeout_seconds,
+        "target_timeout_seconds": float(target_timeout),
+        "target_timeout_source": "explicit_argument" if args.target_timeout_seconds is not None else "existing_runtime_environment_or_default",
+        "runner_environment": {TARGET_TIMEOUT_ENV: str(float(target_timeout))},
+        "require_complete_targets": args.require_complete_targets,
         "artifact_format": "bundle", "validation_role": "disjoint_repeated_tuning_not_independent_canary",
         "training_executed": False, "model_weights_downloaded": False, "admitted": False,
     }
@@ -123,6 +138,95 @@ def _verify_inputs(config):
         raw = _read_regular(reference["path"], reference["bytes"])
         if len(raw) != reference["bytes"] or hashlib.sha256(raw).hexdigest() != reference["sha256"]:
             raise ValueError("input changed after preparation planning")
+
+
+@contextmanager
+def _target_timeout_environment(value):
+    if type(value) not in (int, float) or not math.isfinite(value) or not 0 < value <= 600:
+        raise ValueError("invalid planned target timeout")
+    previous = os.environ.get(TARGET_TIMEOUT_ENV)
+    os.environ[TARGET_TIMEOUT_ENV] = str(float(value))
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop(TARGET_TIMEOUT_ENV, None)
+        else:
+            os.environ[TARGET_TIMEOUT_ENV] = previous
+
+
+def _verify_target_completeness(preparation, expected):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_target_preparation import target_supervision_completeness
+    complete = target_supervision_completeness(
+        preparation["statuses"], preparation["bridge_report_telemetry"], BRIDGES)
+    if preparation.get("target_completeness") != complete:
+        raise ValueError("target completeness differs from producer observations")
+    if preparation.get("target_timeout_seconds") != expected["target_timeout_seconds"]:
+        raise ValueError("producer target timeout differs from the plan")
+    if preparation.get("target_shard_max_bytes") != expected["target_shard_max_bytes"]:
+        raise ValueError("producer expanded shard bound differs from the plan")
+    if expected["require_complete_targets"] and complete["complete"] is not True:
+        raise ValueError("complete target supervision required; retained targets include timeout, partial or rejected bridge reports")
+    return complete
+
+
+class _ObservationJournal:
+    """Bounded durable observations, never a target cache or success receipt."""
+    def __init__(self, path, *, max_records, max_bytes):
+        if (type(max_records) is not int or not 1 <= max_records <= MAX_ROWS + 32
+                or type(max_bytes) is not int or not 1 <= max_bytes <= MAX_OBSERVATION_JOURNAL_BYTES):
+            raise ValueError("invalid observation journal bounds")
+        self.path, self.max_records, self.max_bytes = Path(path), max_records, max_bytes
+        self.count, self.byte_count, self.samples = 0, 0, set()
+        self.fd = None
+
+    def __enter__(self):
+        self.fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_APPEND, 0o600)
+        try:
+            os.fsync(self.fd)
+            parent = os.open(self.path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                os.fsync(parent)
+            finally:
+                os.close(parent)
+        except BaseException:
+            os.close(self.fd)
+            self.fd = None
+            raise
+        return self
+
+    def append(self, row):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_target_preparation import target_supervision_completeness
+        if self.fd is None or type(row) is not dict or set(row) != {
+                "sample_id", "status", "target_generation_seconds", "bridge_report_telemetry", "admitted"}:
+            raise ValueError("invalid observation journal record")
+        elapsed = row["target_generation_seconds"]
+        if (row["admitted"] is not False or type(elapsed) not in (int, float)
+                or not math.isfinite(elapsed) or elapsed < 0
+                or type(row["sample_id"]) is not str or not row["sample_id"]):
+            raise ValueError("invalid target observation identity, timing or admission")
+        target_supervision_completeness(
+            {row["sample_id"]: row["status"]}, {row["sample_id"]: row["bridge_report_telemetry"]}, BRIDGES)
+        raw = (_canonical(row) + "\n").encode()
+        if (self.count >= self.max_records or self.byte_count + len(raw) > self.max_bytes
+                or row["sample_id"] in self.samples):
+            raise ValueError("observation journal bound exceeded or duplicate sample")
+        remaining = memoryview(raw)
+        while remaining:
+            written = os.write(self.fd, remaining)
+            if written <= 0:
+                raise OSError("observation journal write did not advance")
+            remaining = remaining[written:]
+        os.fsync(self.fd)
+        self.count += 1
+        self.byte_count += len(raw)
+        self.samples.add(row["sample_id"])
+
+    def __exit__(self, exc_type, exc, traceback):
+        if self.fd is not None:
+            os.close(self.fd)
+            self.fd = None
+        return False
 
 
 def _produce(config):
@@ -154,12 +258,18 @@ def _produce(config):
         legal_ir_parallel_workers=1, metric_disk_cache=0, use_sample_memory=False,
     )
     started = time.perf_counter()
-    result = prepare_training_targets(
-        [SampleRecord.from_dict(row) for row in selected["training"]],
-        Path(config["output_directory"]) / "targets.bundle",
-        validation_records=[SampleRecord.from_dict(row) for row in selected["validation"]],
-        training_config=training_config, artifact_format="bundle",
-    )
+    journal_path = Path(config["output_directory"]) / "target-observations.jsonl"
+    with _ObservationJournal(journal_path, max_records=expected["observation_journal_max_records"],
+                             max_bytes=expected["observation_journal_max_bytes"]) as journal:
+        with _target_timeout_environment(expected["target_timeout_seconds"]):
+            result = prepare_training_targets(
+                [SampleRecord.from_dict(row) for row in selected["training"]],
+                Path(config["output_directory"]) / "targets.bundle",
+                validation_records=[SampleRecord.from_dict(row) for row in selected["validation"]],
+                training_config=training_config, artifact_format="bundle",
+                target_shard_max_bytes=expected["target_shard_max_bytes"],
+                _observation_callback=journal.append,
+            )
     duration = time.perf_counter() - started
     _verify_inputs(config)
     if helpers._pin() != expected["pinned_source_sha256"]:
@@ -177,8 +287,13 @@ def _produce(config):
     helpers._write(Path(config["output_directory"]) / "producer.json", {
         "schema_version": "shared-target-preparation-producer/v1", "plan": expected,
         "preparation": result, "producer_call_wall_seconds": duration,
+        "observation_journal": _descriptor(journal_path),
+        "observation_scope": "Native generation observations before serialization and final source verification; never reusable targets, proof or a successful handoff",
         "training_executed": False, "admitted": False,
     })
+    # Preserve the artifact and its exact failure observations before refusing
+    # a training handoff. The owner retains failed-attempt resource evidence.
+    _verify_target_completeness(result, expected)
 
 
 @contextmanager
@@ -280,6 +395,7 @@ def execute(args, expected):
             if producer["plan"] != expected:
                 raise ValueError("producer receipt does not bind requested preparation")
             preparation = producer["preparation"]
+            completeness = _verify_target_completeness(preparation, expected)
             artifact = _descriptor(directory / "targets.bundle")
             if artifact != preparation["artifact"] or artifact["bytes"] > args.max_output_bytes:
                 raise ValueError("prepared artifact changed before handoff")
@@ -295,13 +411,20 @@ def execute(args, expected):
                 "training_job_fields": {
                     "target_snapshot_id": preparation["target_snapshot_id"],
                     "target_snapshot_artifact": artifact,
+                    "target_shard_max_bytes": expected["target_shard_max_bytes"],
                 },
                 "sample_count": preparation["sample_count"],
                 "legal_ir_target_count": preparation["legal_ir_target_count"],
+                "target_completeness": completeness,
+                "target_timeout_seconds": expected["target_timeout_seconds"],
+                "target_shard_max_bytes": expected["target_shard_max_bytes"],
+                "require_complete_targets": expected["require_complete_targets"],
+                "runner_environment": expected["runner_environment"],
                 "target_preparation_wall_seconds": time.monotonic() - started,
                 "preparation_including_input_planning_seconds": expected["input_planning_wall_seconds"] + time.monotonic() - started,
                 "supervision": observation,
-                "runner_arguments": ["--shared-targets", artifact["path"], "--target-snapshot-id", preparation["target_snapshot_id"]],
+                "runner_arguments": ["--shared-targets", artifact["path"], "--target-snapshot-id", preparation["target_snapshot_id"],
+                                     "--target-shard-max-bytes", str(expected["target_shard_max_bytes"])],
                 "measurement_scope": "Includes preparation and supervision; add worker target_load_seconds, complete training and qualification wall time before claiming end-to-end speedup.",
                 "status_scope": "ready means target returned, not bridge acceptance, roundtrip success or Lean admission",
                 "reuse_scope": "Use the same immutable target artifact for every hyperparameter candidate over these training/tuning rows. Workers independently verify bytes, source/configuration and sample content; preparation is outside each optimizer deadline.",
@@ -326,10 +449,16 @@ def parser():
     p.add_argument("--max-input-rows", type=int, default=256)
     p.add_argument("--max-input-bytes", type=int, default=MAX_INPUT_BYTES)
     p.add_argument("--max-output-bytes", type=int, default=256 * 1024 * 1024)
+    p.add_argument("--target-shard-max-bytes", type=int, default=64 * 1024 * 1024,
+                   help="Expanded tagged JSON byte bound per target, at most 256 MiB; independent of compressed max-output-bytes and carried into training_job_fields")
     p.add_argument("--storage-bytes", type=int, default=750_000_000,
                    help="Whole attempt reservation; must cover two bounded bundle files plus receipt overhead")
     p.add_argument("--memory-mb", type=int, default=8192)
     p.add_argument("--timeout-seconds", type=float, default=600)
+    p.add_argument("--target-timeout-seconds", type=float,
+                   help="Explicit per-span bridge target budget, within (0,600]; omitted preserves the existing environment/default. Consumers must apply receipt.runner_environment.")
+    p.add_argument("--require-complete-targets", action="store_true",
+                   help="Refuse the training handoff if any target timed out or any requested bridge report is missing, partial or rejected; retain failure evidence")
     p.add_argument("--resource-ledger", type=Path, default=DEFAULT_LEDGER)
     p.add_argument("--resource-root", type=Path, action="append", default=[])
     p.add_argument("--bridge-names", default=",".join(BRIDGES), help="This command requires all five qualified bridges in canonical order")
@@ -353,10 +482,14 @@ def main(argv=None):
         p.error("input limits must be positive and within 10000 rows / 64 MiB")
     if not 1024 * 1024 <= args.max_output_bytes <= 2 * 1024 * 1024 * 1024:
         p.error("max-output-bytes must be between 1 MiB and 2 GiB")
+    if not 1 <= args.target_shard_max_bytes <= 256 * 1024 * 1024:
+        p.error("target-shard-max-bytes must be between 1 byte and 256 MiB")
     if args.storage_bytes < 2 * args.max_output_bytes + OVERHEAD_BYTES or args.storage_bytes > 50_000_000_000:
         p.error("storage-bytes must cover two maximum bundle files plus 16 MiB and stay within 50 GB")
     if not 512 <= args.memory_mb <= 65536 or not math.isfinite(args.timeout_seconds) or not 1 <= args.timeout_seconds <= 43200:
         p.error("memory or timeout is outside its allowed bound")
+    if args.target_timeout_seconds is not None and (not math.isfinite(args.target_timeout_seconds) or not 0 < args.target_timeout_seconds <= 600):
+        p.error("target-timeout-seconds must be finite and within (0,600]")
     if tuple(args.bridge_names.split(",")) != BRIDGES:
         p.error("all five qualified bridge names in canonical order are required")
     for name in ("input_jsonl", "validation_jsonl", "output_directory", "resource_ledger"):

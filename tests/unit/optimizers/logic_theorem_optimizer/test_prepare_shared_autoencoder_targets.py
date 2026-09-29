@@ -242,7 +242,9 @@ class LedgerFixture(ReservationFixture):
 
 
 @pytest.mark.parametrize("fault", [None, "oversized", "changed_input", "child_failure", "finalization_failure"])
-def test_handoff_requires_intact_artifact_and_preserves_failed_reservation(cli, inputs, monkeypatch, fault):
+@pytest.mark.parametrize("target_shard_max_bytes", [64 * 1024 * 1024, 256 * 1024 * 1024])
+def test_handoff_requires_intact_artifact_and_preserves_failed_reservation(cli, inputs, monkeypatch, fault, target_shard_max_bytes):
+    inputs.target_shard_max_bytes = target_shard_max_bytes
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
     leases = []
     def reserve(*args, **kwargs):
@@ -263,6 +265,19 @@ def test_handoff_requires_intact_artifact_and_preserves_failed_reservation(cli, 
             inputs.input_jsonl.write_text(inputs.input_jsonl.read_text().replace("records", "files"))
         preparation = {"artifact": cli._descriptor(directory / "targets.bundle"),
                        "target_snapshot_id": "fixture-snapshot", "sample_count": 2, "legal_ir_target_count": 2}
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_target_preparation import target_supervision_completeness
+        preparation["statuses"] = {"training": "ready", "validation": "ready"}
+        preparation["bridge_report_telemetry"] = {key: {
+            "report_received": True, "report_accepted": True, "failures": {}, "outer_timeout": None,
+            **{kind + "_bridge_names": list(cli.BRIDGES) if kind != "failed" else []
+               for kind in ("attempted", "implemented", "accepted", "failed")},
+            **{kind + "_bridge_count": len(cli.BRIDGES) if kind != "failed" else 0
+               for kind in ("attempted", "implemented", "accepted", "failed")},
+        } for key in preparation["statuses"]}
+        preparation["target_completeness"] = target_supervision_completeness(
+            preparation["statuses"], preparation["bridge_report_telemetry"], cli.BRIDGES)
+        preparation["target_timeout_seconds"] = config["plan"]["target_timeout_seconds"]
+        preparation["target_shard_max_bytes"] = config["plan"]["target_shard_max_bytes"]
         cli._helpers()._write(directory / "producer.json", {"plan": config["plan"], "preparation": preparation})
         return {"fixture_supervision": True}
     monkeypatch.setattr(cli, "_supervise", producer_boundary)
@@ -278,11 +293,22 @@ def test_handoff_requires_intact_artifact_and_preserves_failed_reservation(cli, 
         assert leases[0].status == "released"
         assert leases[0].finalized_directory == inputs.output_directory
         assert result["runner_arguments"] == ["--shared-targets", str(inputs.output_directory / "targets.bundle"),
-                                               "--target-snapshot-id", "fixture-snapshot"]
+                                               "--target-snapshot-id", "fixture-snapshot",
+                                               "--target-shard-max-bytes", str(inputs.target_shard_max_bytes)]
         assert result["training_job_fields"] == {
             "target_snapshot_id": "fixture-snapshot",
             "target_snapshot_artifact": result["target_artifact"],
+            "target_shard_max_bytes": inputs.target_shard_max_bytes,
         }
+        runner_args = cli._helpers().parser().parse_args([
+            "--state-directory", str(inputs.output_directory / "consumer"),
+            "--input-jsonl", str(inputs.input_jsonl),
+            "--validation-jsonl", str(inputs.validation_jsonl),
+            *result["runner_arguments"],
+        ])
+        assert runner_args.target_shard_max_bytes == target_shard_max_bytes
+        assert runner_args.shared_targets == inputs.output_directory / "targets.bundle"
+        assert runner_args.target_snapshot_id == "fixture-snapshot"
         assert result["legal_ir_target_count"] == 2
         assert result["training_executed"] is result["model_weights_downloaded"] is result["admitted"] is False
         assert result["preparation_including_input_planning_seconds"] >= result["target_preparation_wall_seconds"]

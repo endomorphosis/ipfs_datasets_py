@@ -34,6 +34,9 @@ MAGIC = b"LIRTB01\n"
 _HEADER = struct.Struct(">8sQ")
 DEFAULT_MAX_MANIFEST_BYTES = 16 * 1024 * 1024
 DEFAULT_MAX_SHARD_BYTES = 64 * 1024 * 1024
+# Explicit preparation/job policy ceiling; the low-level codec retains its
+# existing caller-supplied positive-bound API and its narrower default.
+MAX_TARGET_SHARD_BYTES = 256 * 1024 * 1024
 _CODEC = "zlib:legal-ir-target-snapshot-v1-tagged-json"
 _CHUNK = 1024 * 1024
 _NULL_SHA256 = _digest(None)
@@ -403,7 +406,10 @@ def write_target_bundle(path: str | Path, records: Iterable[tuple[Any, Any, str 
                     raise TargetSnapshotError("target document/source text mismatch")
                 raw = _json(_encode(target))
                 if len(raw) > max_shard_bytes:
-                    raise TargetSnapshotError("encoded target exceeds shard byte bound")
+                    raise TargetSnapshotError(
+                        "encoded target exceeds shard byte bound: "
+                        f"encoded_bytes={len(raw)} max_shard_bytes={max_shard_bytes}"
+                    )
                 target_sha256 = _sha(raw)
                 encoding_seconds += time.perf_counter() - started
                 if target_sha256 not in by_hash:

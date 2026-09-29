@@ -502,3 +502,68 @@ def test_productive_cli_zero_momentum_runs_with_validation_and_two_attempts(tmp_
                      "--line-search-attempts", "2"]) == 0
     assert captured[0]["projection_optimizer_mode"] == "productive_adaptive"
     assert captured[0]["projection_momentum"] == 0.0
+
+
+@pytest.mark.parametrize("order", [["decoded_embedding_structural"], ["family_logits", "decoded_embedding_structural"]])
+def test_explicit_candidate_order_reaches_job_policy(tmp_path, monkeypatch, order):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_incremental_training as incremental
+    config = {**_selection_cycle_config(tmp_path, monkeypatch), "projection_candidate_update_order": order}
+    seen = []
+    def capture(registry, templates, **kwargs):
+        template = templates[0]
+        assert list(template.training_config.projection_candidate_update_order) == order
+        assert list(incremental._policy(registry, template)["training_config"]["projection_candidate_update_order"]) == order
+        seen.append(template.canonical_sha256)
+        return {"dispatched_run_ids": []}
+    monkeypatch.setattr(qualified, "run_qualified_incremental_training", capture)
+    cli.run_cycle(config)
+    assert len(seen) == 1
+
+
+@pytest.mark.parametrize("extra", [[], ["--execution-mode", "inference", "--validation-jsonl", "validation"],
+                                   ["--validation-jsonl", "validation", "--projection-candidate-update-order", "family_logits", "family_logits"]])
+def test_candidate_order_invalid_or_inference_never_starts_work(tmp_path, extra):
+    output = tmp_path / 'absent'
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(output), "--input-jsonl", "input",
+                  "--projection-candidate-update-order", "decoded_embedding_structural", *extra])
+    assert not output.exists()
+
+
+def test_candidate_order_cli_choices_match_core_and_default_is_unchanged():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_adaptive_optimizer import PROJECTION_CANDIDATE_NAMES
+    parser = cli.parser()
+    action = next(action for action in parser._actions if action.dest == "projection_candidate_update_order")
+    assert set(action.choices) == PROJECTION_CANDIDATE_NAMES
+    assert action.default is None
+    assert not cli._nondefault_optimizer_settings({})
+    assert cli._nondefault_optimizer_settings({"projection_candidate_update_order": ["decoded_embedding_structural"]})
+
+
+@pytest.mark.parametrize("bound", ["0", "268435457"])
+def test_invalid_target_shard_bound_is_refused_before_intake(tmp_path, bound):
+    output = tmp_path / 'unused'
+    with pytest.raises(SystemExit):
+        cli.main(["--state-directory", str(output), "--input-jsonl", "input", "--target-shard-max-bytes", bound])
+    assert not output.exists()
+
+
+def test_nondefault_shard_budget_reaches_shared_job_and_policy(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_incremental_training as incremental
+    artifact = tmp_path / 'bundle'; artifact.write_bytes(b'bound-test-only')
+    config = {**_selection_cycle_config(tmp_path, monkeypatch), 'shared_targets': str(artifact),
+              'target_snapshot_id': 'bound-test', 'target_shard_max_bytes': 256 * 1024 * 1024}
+    seen = []
+    def capture(registry, templates, **kwargs):
+        template = templates[0]
+        assert template.target_shard_max_bytes == config['target_shard_max_bytes']
+        assert template.to_dict()['target_shard_max_bytes'] == config['target_shard_max_bytes']
+        policy = incremental._policy(registry, template)
+        assert policy['target_shard_max_bytes'] == config['target_shard_max_bytes']
+        seen.append(template)
+        return {'dispatched_run_ids': []}
+    monkeypatch.setattr(qualified, 'run_qualified_incremental_training', capture)
+    cli.run_cycle(config)
+    assert len(seen) == 1
