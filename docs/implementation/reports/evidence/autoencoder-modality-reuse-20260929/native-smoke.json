@@ -1,0 +1,1450 @@
+{
+  "schema": "native-multimodal-feature-smoke/v1",
+  "status": "passed",
+  "source_before": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_projection_features.py": "b91b5ee4a4e8bc6a214d7b7a942212805efe5531b2fb4251e66e9d413639cd14",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_cuda.py": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_modality_contracts.py": "5a6a88054e2b60dbe205625ffcb1d1c798c869ca5801a1ad1f4907467360de7f",
+    "ipfs_datasets_py/logic/formalization/autoencoder/domain_targets.py": "b373c8b26310a761525459880de7fa7ba052e0fde57f1d0cbe2ddd9d2f85b586",
+    "ipfs_datasets_py/logic/formalization/autoencoder/ui_targets.py": "3a510ae3d3e3590250781fbf763dc3767ff635e1dc495bb79ecf75cc54261a80",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features.py": "f6fc15f49ca74a4cf8ebe01b7eea6cf4b9d12612ff7bcb46ae54800e60829d0e"
+  },
+  "source_after": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_projection_features.py": "b91b5ee4a4e8bc6a214d7b7a942212805efe5531b2fb4251e66e9d413639cd14",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_cuda.py": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_modality_contracts.py": "5a6a88054e2b60dbe205625ffcb1d1c798c869ca5801a1ad1f4907467360de7f",
+    "ipfs_datasets_py/logic/formalization/autoencoder/domain_targets.py": "b373c8b26310a761525459880de7fa7ba052e0fde57f1d0cbe2ddd9d2f85b586",
+    "ipfs_datasets_py/logic/formalization/autoencoder/ui_targets.py": "3a510ae3d3e3590250781fbf763dc3767ff635e1dc495bb79ecf75cc54261a80",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features.py": "f6fc15f49ca74a4cf8ebe01b7eea6cf4b9d12612ff7bcb46ae54800e60829d0e"
+  },
+  "domains": [
+    {
+      "domain": "intent_ir",
+      "projection_ids": [
+        "intent-route/action-hoare/v1",
+        "intent-route/facts/v1",
+        "intent-route/intentions/v1",
+        "intent-route/norms/v1",
+        "intent-route/safety/v1",
+        "intent-route/workflow-temporal/v1"
+      ],
+      "variant_id": "modality-a0f37f8eeecb37a45fe51068a80c6e62546279efc05dc4f8297f161d138a0b96",
+      "feature_width": 174,
+      "target_preparation_seconds": 0.1052421829663217,
+      "target_count": 4,
+      "source_purpose": "small_authored_structural_fixtures",
+      "first": {
+        "schema": "native-projection-feature-training/v1",
+        "backend": "native-projection-feature-autoencoder/v1",
+        "contract_sha256": "a0f37f8eeecb37a45fe51068a80c6e62546279efc05dc4f8297f161d138a0b96",
+        "feature_space_sha256": "6847c66615f16a5b4b6cd2f2f06bfff7949ce69b774f0c3f279f40d18a665ec4",
+        "base_state_sha256": null,
+        "training_targets_sha256": "7a5a3e00e4dab20a71a97f74ac7fc9e37ae91a3d1bfa6c3d1953eb66b23e5bb6",
+        "tuning_targets_sha256": "108e644c41971e761dd02a6d78aa1012e1d61f1cb69511e96bbe059029ed64e3",
+        "configuration": {
+          "epochs": 3,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "seed": 1729,
+          "objective": {
+            "reconstruction": "per_projection_native_kernel_mean",
+            "cosine_weight": 0.1,
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "coverage": "training_vocabulary_atoms_only",
+            "l2": 0.0,
+            "qualification": false
+          }
+        },
+        "deadline_enforcement": "cooperative_checks_between_native_operations",
+        "attempted_epochs": 3,
+        "selected_total_epochs": 1,
+        "training_target_count": 2,
+        "tuning_target_count": 2,
+        "before": {
+          "objective": 0.19604364037513733,
+          "projections": {
+            "intent-route/action-hoare/v1": {
+              "reconstruction": 0.016328899189829826,
+              "cosine": 0.8182151913642883,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/facts/v1": {
+              "reconstruction": 0.02200637385249138,
+              "cosine": 1.1011067628860474,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/intentions/v1": {
+              "reconstruction": 0.09391633421182632,
+              "cosine": 1.2989068031311035,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/norms/v1": {
+              "reconstruction": 0.039873428642749786,
+              "cosine": 1.2103379964828491,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/safety/v1": {
+              "reconstruction": 0.10190917551517487,
+              "cosine": 0.9759573936462402,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/workflow-temporal/v1": {
+              "reconstruction": 0.30005374550819397,
+              "cosine": 0.6172143220901489,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "after": {
+          "objective": 0.11209350824356079,
+          "projections": {
+            "intent-route/action-hoare/v1": {
+              "reconstruction": 0.016142375767230988,
+              "cosine": 0.4445044994354248,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/facts/v1": {
+              "reconstruction": 0.018134519457817078,
+              "cosine": 0.5176782608032227,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/intentions/v1": {
+              "reconstruction": 0.08438032120466232,
+              "cosine": 0.8150573372840881,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/norms/v1": {
+              "reconstruction": 0.03279267996549606,
+              "cosine": 0.6557661294937134,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/safety/v1": {
+              "reconstruction": 0.06945083290338516,
+              "cosine": 0.44369304180145264,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/workflow-temporal/v1": {
+              "reconstruction": 0.15322767198085785,
+              "cosine": 0.1076270341873169,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "epochs": [
+          {
+            "epoch": 1,
+            "train_objective": 0.20113569498062134,
+            "tuning_objective": 0.11209350824356079,
+            "gradient_norm": 0.3618503510951996,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "intent-route/action-hoare/v1": {
+                "reconstruction": 0.016142375767230988,
+                "cosine": 0.4445044994354248,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/facts/v1": {
+                "reconstruction": 0.018134519457817078,
+                "cosine": 0.5176782608032227,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/intentions/v1": {
+                "reconstruction": 0.08438032120466232,
+                "cosine": 0.8150573372840881,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/norms/v1": {
+                "reconstruction": 0.03279267996549606,
+                "cosine": 0.6557661294937134,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/safety/v1": {
+                "reconstruction": 0.06945083290338516,
+                "cosine": 0.44369304180145264,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/workflow-temporal/v1": {
+                "reconstruction": 0.15322767198085785,
+                "cosine": 0.1076270341873169,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          },
+          {
+            "epoch": 2,
+            "train_objective": 0.11192473769187927,
+            "tuning_objective": 0.07701274752616882,
+            "gradient_norm": 0.20564281940460205,
+            "selected": false,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "intent-route/action-hoare/v1": {
+                "reconstruction": 0.021877678111195564,
+                "cosine": 0.3109591007232666,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/facts/v1": {
+                "reconstruction": 0.018881019204854965,
+                "cosine": 0.31092751026153564,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/intentions/v1": {
+                "reconstruction": 0.06861570477485657,
+                "cosine": 0.5561418533325195,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/norms/v1": {
+                "reconstruction": 0.026505151763558388,
+                "cosine": 0.400754451751709,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/safety/v1": {
+                "reconstruction": 0.050265081226825714,
+                "cosine": 0.29448795318603516,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/workflow-temporal/v1": {
+                "reconstruction": 0.0836104080080986,
+                "cosine": 0.04994308948516846,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          },
+          {
+            "epoch": 3,
+            "train_objective": 0.07538270205259323,
+            "tuning_objective": 0.0514996312558651,
+            "gradient_norm": 0.17155317962169647,
+            "selected": false,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "intent-route/action-hoare/v1": {
+                "reconstruction": 0.02332579344511032,
+                "cosine": 0.19301652908325195,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/facts/v1": {
+                "reconstruction": 0.018474487587809563,
+                "cosine": 0.17060470581054688,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/intentions/v1": {
+                "reconstruction": 0.053694773465394974,
+                "cosine": 0.3850356340408325,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/norms/v1": {
+                "reconstruction": 0.02082858607172966,
+                "cosine": 0.22920286655426025,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/safety/v1": {
+                "reconstruction": 0.032374728471040726,
+                "cosine": 0.17566406726837158,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/workflow-temporal/v1": {
+                "reconstruction": 0.04196178540587425,
+                "cosine": 0.029852449893951416,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          }
+        ],
+        "improved": true,
+        "stopped_reason": "epoch_budget",
+        "elapsed_seconds": 1.2121851060073823,
+        "train_coverage": [
+          {
+            "projection_id": "intent-route/action-hoare/v1",
+            "known_atoms": 61,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/facts/v1",
+            "known_atoms": 56,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/intentions/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/norms/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/safety/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/action-hoare/v1",
+            "known_atoms": 61,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/facts/v1",
+            "known_atoms": 56,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/intentions/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/norms/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/safety/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          }
+        ],
+        "tuning_coverage": [
+          {
+            "projection_id": "intent-route/action-hoare/v1",
+            "known_atoms": 61,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/facts/v1",
+            "known_atoms": 54,
+            "unknown_atoms": 2
+          },
+          {
+            "projection_id": "intent-route/intentions/v1",
+            "known_atoms": 8,
+            "unknown_atoms": 2
+          },
+          {
+            "projection_id": "intent-route/norms/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/safety/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/action-hoare/v1",
+            "known_atoms": 61,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/facts/v1",
+            "known_atoms": 54,
+            "unknown_atoms": 2
+          },
+          {
+            "projection_id": "intent-route/intentions/v1",
+            "known_atoms": 8,
+            "unknown_atoms": 2
+          },
+          {
+            "projection_id": "intent-route/norms/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/safety/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          }
+        ],
+        "heldout_canary": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "weights_downloaded": false,
+        "lake_executed": false,
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "resumed": {
+        "schema": "native-projection-feature-training/v1",
+        "backend": "native-projection-feature-autoencoder/v1",
+        "contract_sha256": "a0f37f8eeecb37a45fe51068a80c6e62546279efc05dc4f8297f161d138a0b96",
+        "feature_space_sha256": "6847c66615f16a5b4b6cd2f2f06bfff7949ce69b774f0c3f279f40d18a665ec4",
+        "base_state_sha256": "f7ae9ef63eaaddc4f97396cef11661527fb3af415556072c24301cc108964154",
+        "training_targets_sha256": "7a5a3e00e4dab20a71a97f74ac7fc9e37ae91a3d1bfa6c3d1953eb66b23e5bb6",
+        "tuning_targets_sha256": "108e644c41971e761dd02a6d78aa1012e1d61f1cb69511e96bbe059029ed64e3",
+        "configuration": {
+          "epochs": 1,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "seed": 1729,
+          "objective": {
+            "reconstruction": "per_projection_native_kernel_mean",
+            "cosine_weight": 0.1,
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "coverage": "training_vocabulary_atoms_only",
+            "l2": 0.0,
+            "qualification": false
+          }
+        },
+        "deadline_enforcement": "cooperative_checks_between_native_operations",
+        "attempted_epochs": 1,
+        "selected_total_epochs": 1,
+        "training_target_count": 2,
+        "tuning_target_count": 2,
+        "before": {
+          "objective": 0.11209350824356079,
+          "projections": {
+            "intent-route/action-hoare/v1": {
+              "reconstruction": 0.016142375767230988,
+              "cosine": 0.4445044994354248,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/facts/v1": {
+              "reconstruction": 0.018134519457817078,
+              "cosine": 0.5176782608032227,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/intentions/v1": {
+              "reconstruction": 0.08438032120466232,
+              "cosine": 0.8150573372840881,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/norms/v1": {
+              "reconstruction": 0.03279267996549606,
+              "cosine": 0.6557661294937134,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/safety/v1": {
+              "reconstruction": 0.06945083290338516,
+              "cosine": 0.44369304180145264,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/workflow-temporal/v1": {
+              "reconstruction": 0.15322767198085785,
+              "cosine": 0.1076270341873169,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "after": {
+          "objective": 0.11209350824356079,
+          "projections": {
+            "intent-route/action-hoare/v1": {
+              "reconstruction": 0.016142375767230988,
+              "cosine": 0.4445044994354248,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/facts/v1": {
+              "reconstruction": 0.018134519457817078,
+              "cosine": 0.5176782608032227,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/intentions/v1": {
+              "reconstruction": 0.08438032120466232,
+              "cosine": 0.8150573372840881,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/norms/v1": {
+              "reconstruction": 0.03279267996549606,
+              "cosine": 0.6557661294937134,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/safety/v1": {
+              "reconstruction": 0.06945083290338516,
+              "cosine": 0.44369304180145264,
+              "guarded_auxiliary": 0.0
+            },
+            "intent-route/workflow-temporal/v1": {
+              "reconstruction": 0.15322767198085785,
+              "cosine": 0.1076270341873169,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "epochs": [
+          {
+            "epoch": 1,
+            "train_objective": 0.11192473769187927,
+            "tuning_objective": 0.07701274752616882,
+            "gradient_norm": 0.20564281940460205,
+            "selected": false,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "intent-route/action-hoare/v1": {
+                "reconstruction": 0.021877678111195564,
+                "cosine": 0.3109591007232666,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/facts/v1": {
+                "reconstruction": 0.018881019204854965,
+                "cosine": 0.31092751026153564,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/intentions/v1": {
+                "reconstruction": 0.06861570477485657,
+                "cosine": 0.5561418533325195,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/norms/v1": {
+                "reconstruction": 0.026505151763558388,
+                "cosine": 0.400754451751709,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/safety/v1": {
+                "reconstruction": 0.050265081226825714,
+                "cosine": 0.29448795318603516,
+                "guarded_auxiliary": 0.0
+              },
+              "intent-route/workflow-temporal/v1": {
+                "reconstruction": 0.0836104080080986,
+                "cosine": 0.04994308948516846,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          }
+        ],
+        "improved": false,
+        "stopped_reason": "epoch_budget",
+        "elapsed_seconds": 0.020785272121429443,
+        "train_coverage": [
+          {
+            "projection_id": "intent-route/action-hoare/v1",
+            "known_atoms": 61,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/facts/v1",
+            "known_atoms": 56,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/intentions/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/norms/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/safety/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/action-hoare/v1",
+            "known_atoms": 61,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/facts/v1",
+            "known_atoms": 56,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/intentions/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/norms/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/safety/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          }
+        ],
+        "tuning_coverage": [
+          {
+            "projection_id": "intent-route/action-hoare/v1",
+            "known_atoms": 61,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/facts/v1",
+            "known_atoms": 54,
+            "unknown_atoms": 2
+          },
+          {
+            "projection_id": "intent-route/intentions/v1",
+            "known_atoms": 8,
+            "unknown_atoms": 2
+          },
+          {
+            "projection_id": "intent-route/norms/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/safety/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/action-hoare/v1",
+            "known_atoms": 61,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/facts/v1",
+            "known_atoms": 54,
+            "unknown_atoms": 2
+          },
+          {
+            "projection_id": "intent-route/intentions/v1",
+            "known_atoms": 8,
+            "unknown_atoms": 2
+          },
+          {
+            "projection_id": "intent-route/norms/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/safety/v1",
+            "known_atoms": 10,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "intent-route/workflow-temporal/v1",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          }
+        ],
+        "heldout_canary": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "weights_downloaded": false,
+        "lake_executed": false,
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "registration": {
+        "version_id": "sha256:468e8221513dc970aa5f071ca3615f83ce3e209f71a44bf002f6d151934cd49d",
+        "artifact": {
+          "sha256": "5d40a8dc5ea16d22ddd14816a45922de3fbec6360e68f759749cc50e26f886b5",
+          "bytes": 131377
+        },
+        "variant_id": "modality-a0f37f8eeecb37a45fe51068a80c6e62546279efc05dc4f8297f161d138a0b96",
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "inference_state_sha256": "f7ae9ef63eaaddc4f97396cef11661527fb3af415556072c24301cc108964154",
+      "inference_did_not_train": true
+    },
+    {
+      "domain": "security_ir",
+      "projection_ids": [
+        "program.program_ir/v1"
+      ],
+      "variant_id": "modality-f53b1f5c0ce3aaa845060c5d5c2e11fbb8a362cff44310bf363dcbef5c5816c8",
+      "feature_width": 52,
+      "target_preparation_seconds": 0.019377561984583735,
+      "target_count": 4,
+      "source_purpose": "small_authored_structural_fixtures",
+      "first": {
+        "schema": "native-projection-feature-training/v1",
+        "backend": "native-projection-feature-autoencoder/v1",
+        "contract_sha256": "f53b1f5c0ce3aaa845060c5d5c2e11fbb8a362cff44310bf363dcbef5c5816c8",
+        "feature_space_sha256": "61b1a854cda529b5c7ea1590a9ed0bc5b298d995bb5f1c1eaa8b0d3d89b02f23",
+        "base_state_sha256": null,
+        "training_targets_sha256": "c423b8b181439b7f32494bad955e4ed9a2d6769f1ffcfcd09264738d9f68ddab",
+        "tuning_targets_sha256": "9b95d10314b0fa664ae3a0b14e7c726928dcd47cb4ea8f7e1fb83b4b98eafbcf",
+        "configuration": {
+          "epochs": 3,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "seed": 1729,
+          "objective": {
+            "reconstruction": "per_projection_native_kernel_mean",
+            "cosine_weight": 0.1,
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "coverage": "training_vocabulary_atoms_only",
+            "l2": 0.0,
+            "qualification": false
+          }
+        },
+        "deadline_enforcement": "cooperative_checks_between_native_operations",
+        "attempted_epochs": 3,
+        "selected_total_epochs": 3,
+        "training_target_count": 2,
+        "tuning_target_count": 2,
+        "before": {
+          "objective": 0.1206979751586914,
+          "projections": {
+            "program.program_ir/v1": {
+              "reconstruction": 0.019362661987543106,
+              "cosine": 1.0133531093597412,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "after": {
+          "objective": 0.03411883860826492,
+          "projections": {
+            "program.program_ir/v1": {
+              "reconstruction": 0.010199436917901039,
+              "cosine": 0.23919403553009033,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "epochs": [
+          {
+            "epoch": 1,
+            "train_objective": 0.12618772685527802,
+            "tuning_objective": 0.0644766315817833,
+            "gradient_norm": 1.3667901754379272,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "program.program_ir/v1": {
+                "reconstruction": 0.015225713141262531,
+                "cosine": 0.4925091862678528,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          },
+          {
+            "epoch": 2,
+            "train_objective": 0.05268566682934761,
+            "tuning_objective": 0.04459776729345322,
+            "gradient_norm": 0.30468592047691345,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "program.program_ir/v1": {
+                "reconstruction": 0.012212786823511124,
+                "cosine": 0.32384979724884033,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          },
+          {
+            "epoch": 3,
+            "train_objective": 0.028274454176425934,
+            "tuning_objective": 0.03411883860826492,
+            "gradient_norm": 0.16639630496501923,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "program.program_ir/v1": {
+                "reconstruction": 0.010199436917901039,
+                "cosine": 0.23919403553009033,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          }
+        ],
+        "improved": true,
+        "stopped_reason": "epoch_budget",
+        "elapsed_seconds": 0.008437781827524304,
+        "train_coverage": [
+          {
+            "projection_id": "program.program_ir/v1",
+            "known_atoms": 41,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "program.program_ir/v1",
+            "known_atoms": 41,
+            "unknown_atoms": 0
+          }
+        ],
+        "tuning_coverage": [
+          {
+            "projection_id": "program.program_ir/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 11
+          },
+          {
+            "projection_id": "program.program_ir/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 11
+          }
+        ],
+        "heldout_canary": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "weights_downloaded": false,
+        "lake_executed": false,
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "resumed": {
+        "schema": "native-projection-feature-training/v1",
+        "backend": "native-projection-feature-autoencoder/v1",
+        "contract_sha256": "f53b1f5c0ce3aaa845060c5d5c2e11fbb8a362cff44310bf363dcbef5c5816c8",
+        "feature_space_sha256": "61b1a854cda529b5c7ea1590a9ed0bc5b298d995bb5f1c1eaa8b0d3d89b02f23",
+        "base_state_sha256": "519b98d0a6186cb7e30cc2f4fe70c484f1cf1c1336852f6f45409114e3cf9fd0",
+        "training_targets_sha256": "c423b8b181439b7f32494bad955e4ed9a2d6769f1ffcfcd09264738d9f68ddab",
+        "tuning_targets_sha256": "9b95d10314b0fa664ae3a0b14e7c726928dcd47cb4ea8f7e1fb83b4b98eafbcf",
+        "configuration": {
+          "epochs": 1,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "seed": 1729,
+          "objective": {
+            "reconstruction": "per_projection_native_kernel_mean",
+            "cosine_weight": 0.1,
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "coverage": "training_vocabulary_atoms_only",
+            "l2": 0.0,
+            "qualification": false
+          }
+        },
+        "deadline_enforcement": "cooperative_checks_between_native_operations",
+        "attempted_epochs": 1,
+        "selected_total_epochs": 4,
+        "training_target_count": 2,
+        "tuning_target_count": 2,
+        "before": {
+          "objective": 0.03411883860826492,
+          "projections": {
+            "program.program_ir/v1": {
+              "reconstruction": 0.010199436917901039,
+              "cosine": 0.23919403553009033,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "after": {
+          "objective": 0.027951493859291077,
+          "projections": {
+            "program.program_ir/v1": {
+              "reconstruction": 0.00866775307804346,
+              "cosine": 0.1928374171257019,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "epochs": [
+          {
+            "epoch": 1,
+            "train_objective": 0.01779184862971306,
+            "tuning_objective": 0.027951493859291077,
+            "gradient_norm": 0.09696228802204132,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "program.program_ir/v1": {
+                "reconstruction": 0.00866775307804346,
+                "cosine": 0.1928374171257019,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          }
+        ],
+        "improved": true,
+        "stopped_reason": "epoch_budget",
+        "elapsed_seconds": 0.008983670035377145,
+        "train_coverage": [
+          {
+            "projection_id": "program.program_ir/v1",
+            "known_atoms": 41,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "program.program_ir/v1",
+            "known_atoms": 41,
+            "unknown_atoms": 0
+          }
+        ],
+        "tuning_coverage": [
+          {
+            "projection_id": "program.program_ir/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 11
+          },
+          {
+            "projection_id": "program.program_ir/v1",
+            "known_atoms": 30,
+            "unknown_atoms": 11
+          }
+        ],
+        "heldout_canary": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "weights_downloaded": false,
+        "lake_executed": false,
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "registration": {
+        "version_id": "sha256:69d723701a9a36083d8e6f485007885a0dfed5fadd06f0c1460fff147a977970",
+        "artifact": {
+          "sha256": "ec698f7c369b9756f85aef73fee7a9d746b4ea6662a34e0ad2b2252e863d4db0",
+          "bytes": 42052
+        },
+        "variant_id": "modality-f53b1f5c0ce3aaa845060c5d5c2e11fbb8a362cff44310bf363dcbef5c5816c8",
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "inference_state_sha256": "a2a45f8bb2454d6c833cce47c7250261a50ea5ba5a2084dbb4dfae3054971d64",
+      "inference_did_not_train": true
+    },
+    {
+      "domain": "ui_ux_ir",
+      "projection_ids": [
+        "ui_ux_ir:flogic",
+        "ui_ux_ir:event_calculus",
+        "ui_ux_ir:tdfol",
+        "ui_ux_ir:dcec"
+      ],
+      "variant_id": "modality-80a61e6ad15482bb674ab94f2875b4bbad47cf06c3ddf5fff40b35bfd1b8e515",
+      "feature_width": 36,
+      "target_preparation_seconds": 0.04973111115396023,
+      "target_count": 4,
+      "source_purpose": "small_authored_structural_fixtures",
+      "first": {
+        "schema": "native-projection-feature-training/v1",
+        "backend": "native-projection-feature-autoencoder/v1",
+        "contract_sha256": "80a61e6ad15482bb674ab94f2875b4bbad47cf06c3ddf5fff40b35bfd1b8e515",
+        "feature_space_sha256": "02ec757f2437749c70ea4c8d5a9077d2f9a6093793ca4bc29be163612d4eb0d8",
+        "base_state_sha256": null,
+        "training_targets_sha256": "e154251317cf9ae0e94bc44aeb7e6ec9a74c42f6483be0f1ef20f4f0c03187fc",
+        "tuning_targets_sha256": "a3ec8f5322baa6acb4925e72c51e45203178df27eb7ae7daf5ee3f269213e6d4",
+        "configuration": {
+          "epochs": 3,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "seed": 1729,
+          "objective": {
+            "reconstruction": "per_projection_native_kernel_mean",
+            "cosine_weight": 0.1,
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "coverage": "training_vocabulary_atoms_only",
+            "l2": 0.0,
+            "qualification": false
+          }
+        },
+        "deadline_enforcement": "cooperative_checks_between_native_operations",
+        "attempted_epochs": 3,
+        "selected_total_epochs": 3,
+        "training_target_count": 2,
+        "tuning_target_count": 2,
+        "before": {
+          "objective": 0.2465324103832245,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "reconstruction": 0.1620558500289917,
+              "cosine": 0.7888540625572205,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:event_calculus": {
+              "reconstruction": 0.056138090789318085,
+              "cosine": 0.9482025504112244,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:flogic": {
+              "reconstruction": 0.3028528392314911,
+              "cosine": 0.5608705282211304,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:tdfol": {
+              "reconstruction": 0.11870060861110687,
+              "cosine": 1.1658952236175537,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "after": {
+          "objective": 0.06632715463638306,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "reconstruction": 0.04800434783101082,
+              "cosine": 0.023638367652893066,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:event_calculus": {
+              "reconstruction": 0.01698320358991623,
+              "cosine": 0.1661699414253235,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:flogic": {
+              "reconstruction": 0.11716372519731522,
+              "cosine": 0.1417713165283203,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:tdfol": {
+              "reconstruction": 0.03766367956995964,
+              "cosine": 0.1233568787574768,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "epochs": [
+          {
+            "epoch": 1,
+            "train_objective": 0.24343980848789215,
+            "tuning_objective": 0.16818666458129883,
+            "gradient_norm": 0.7059710621833801,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "ui_ux_ir:dcec": {
+                "reconstruction": 0.12479927390813828,
+                "cosine": 0.16500747203826904,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:event_calculus": {
+                "reconstruction": 0.042238011956214905,
+                "cosine": 0.49259471893310547,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:flogic": {
+                "reconstruction": 0.23001538217067719,
+                "cosine": 0.33441853523254395,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:tdfol": {
+                "reconstruction": 0.10323366522789001,
+                "cosine": 0.7325824499130249,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          },
+          {
+            "epoch": 2,
+            "train_objective": 0.16582649946212769,
+            "tuning_objective": 0.10577437281608582,
+            "gradient_norm": 0.4121827483177185,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "ui_ux_ir:dcec": {
+                "reconstruction": 0.08361078053712845,
+                "cosine": 0.04645770788192749,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:event_calculus": {
+                "reconstruction": 0.02574818953871727,
+                "cosine": 0.25398755073547363,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:flogic": {
+                "reconstruction": 0.16933917999267578,
+                "cosine": 0.20995771884918213,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:tdfol": {
+                "reconstruction": 0.06649990379810333,
+                "cosine": 0.26859164237976074,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          },
+          {
+            "epoch": 3,
+            "train_objective": 0.10348369181156158,
+            "tuning_objective": 0.06632715463638306,
+            "gradient_norm": 0.27855896949768066,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "ui_ux_ir:dcec": {
+                "reconstruction": 0.04800434783101082,
+                "cosine": 0.023638367652893066,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:event_calculus": {
+                "reconstruction": 0.01698320358991623,
+                "cosine": 0.1661699414253235,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:flogic": {
+                "reconstruction": 0.11716372519731522,
+                "cosine": 0.1417713165283203,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:tdfol": {
+                "reconstruction": 0.03766367956995964,
+                "cosine": 0.1233568787574768,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          }
+        ],
+        "improved": true,
+        "stopped_reason": "epoch_budget",
+        "elapsed_seconds": 0.012403970118612051,
+        "train_coverage": [
+          {
+            "projection_id": "ui_ux_ir:dcec",
+            "known_atoms": 6,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:event_calculus",
+            "known_atoms": 17,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:flogic",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "known_atoms": 9,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:dcec",
+            "known_atoms": 6,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:event_calculus",
+            "known_atoms": 17,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:flogic",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "known_atoms": 9,
+            "unknown_atoms": 0
+          }
+        ],
+        "tuning_coverage": [
+          {
+            "projection_id": "ui_ux_ir:dcec",
+            "known_atoms": 6,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:event_calculus",
+            "known_atoms": 16,
+            "unknown_atoms": 1
+          },
+          {
+            "projection_id": "ui_ux_ir:flogic",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "known_atoms": 9,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:dcec",
+            "known_atoms": 6,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:event_calculus",
+            "known_atoms": 16,
+            "unknown_atoms": 1
+          },
+          {
+            "projection_id": "ui_ux_ir:flogic",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "known_atoms": 9,
+            "unknown_atoms": 0
+          }
+        ],
+        "heldout_canary": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "weights_downloaded": false,
+        "lake_executed": false,
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "resumed": {
+        "schema": "native-projection-feature-training/v1",
+        "backend": "native-projection-feature-autoencoder/v1",
+        "contract_sha256": "80a61e6ad15482bb674ab94f2875b4bbad47cf06c3ddf5fff40b35bfd1b8e515",
+        "feature_space_sha256": "02ec757f2437749c70ea4c8d5a9077d2f9a6093793ca4bc29be163612d4eb0d8",
+        "base_state_sha256": "30d5b7b574a34bb7df780572a8045e58e7af57ebaa7bcbe5dfec512d161683c0",
+        "training_targets_sha256": "e154251317cf9ae0e94bc44aeb7e6ec9a74c42f6483be0f1ef20f4f0c03187fc",
+        "tuning_targets_sha256": "a3ec8f5322baa6acb4925e72c51e45203178df27eb7ae7daf5ee3f269213e6d4",
+        "configuration": {
+          "epochs": 1,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "seed": 1729,
+          "objective": {
+            "reconstruction": "per_projection_native_kernel_mean",
+            "cosine_weight": 0.1,
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "coverage": "training_vocabulary_atoms_only",
+            "l2": 0.0,
+            "qualification": false
+          }
+        },
+        "deadline_enforcement": "cooperative_checks_between_native_operations",
+        "attempted_epochs": 1,
+        "selected_total_epochs": 4,
+        "training_target_count": 2,
+        "tuning_target_count": 2,
+        "before": {
+          "objective": 0.06632715463638306,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "reconstruction": 0.04800434783101082,
+              "cosine": 0.023638367652893066,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:event_calculus": {
+              "reconstruction": 0.01698320358991623,
+              "cosine": 0.1661699414253235,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:flogic": {
+              "reconstruction": 0.11716372519731522,
+              "cosine": 0.1417713165283203,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:tdfol": {
+              "reconstruction": 0.03766367956995964,
+              "cosine": 0.1233568787574768,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "after": {
+          "objective": 0.04053843393921852,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "reconstruction": 0.021705644205212593,
+              "cosine": 0.016371190547943115,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:event_calculus": {
+              "reconstruction": 0.014470096677541733,
+              "cosine": 0.11316317319869995,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:flogic": {
+              "reconstruction": 0.07717952877283096,
+              "cosine": 0.10224521160125732,
+              "guarded_auxiliary": 0.0
+            },
+            "ui_ux_ir:tdfol": {
+              "reconstruction": 0.018717939034104347,
+              "cosine": 0.06902569532394409,
+              "guarded_auxiliary": 0.0
+            }
+          }
+        },
+        "epochs": [
+          {
+            "epoch": 1,
+            "train_objective": 0.06431395560503006,
+            "tuning_objective": 0.04053843393921852,
+            "gradient_norm": 0.2192368060350418,
+            "selected": true,
+            "deadline_exceeded": false,
+            "projection_metrics": {
+              "ui_ux_ir:dcec": {
+                "reconstruction": 0.021705644205212593,
+                "cosine": 0.016371190547943115,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:event_calculus": {
+                "reconstruction": 0.014470096677541733,
+                "cosine": 0.11316317319869995,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:flogic": {
+                "reconstruction": 0.07717952877283096,
+                "cosine": 0.10224521160125732,
+                "guarded_auxiliary": 0.0
+              },
+              "ui_ux_ir:tdfol": {
+                "reconstruction": 0.018717939034104347,
+                "cosine": 0.06902569532394409,
+                "guarded_auxiliary": 0.0
+              }
+            }
+          }
+        ],
+        "improved": true,
+        "stopped_reason": "epoch_budget",
+        "elapsed_seconds": 0.010915155988186598,
+        "train_coverage": [
+          {
+            "projection_id": "ui_ux_ir:dcec",
+            "known_atoms": 6,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:event_calculus",
+            "known_atoms": 17,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:flogic",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "known_atoms": 9,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:dcec",
+            "known_atoms": 6,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:event_calculus",
+            "known_atoms": 17,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:flogic",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "known_atoms": 9,
+            "unknown_atoms": 0
+          }
+        ],
+        "tuning_coverage": [
+          {
+            "projection_id": "ui_ux_ir:dcec",
+            "known_atoms": 6,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:event_calculus",
+            "known_atoms": 16,
+            "unknown_atoms": 1
+          },
+          {
+            "projection_id": "ui_ux_ir:flogic",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "known_atoms": 9,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:dcec",
+            "known_atoms": 6,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:event_calculus",
+            "known_atoms": 16,
+            "unknown_atoms": 1
+          },
+          {
+            "projection_id": "ui_ux_ir:flogic",
+            "known_atoms": 3,
+            "unknown_atoms": 0
+          },
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "known_atoms": 9,
+            "unknown_atoms": 0
+          }
+        ],
+        "heldout_canary": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "weights_downloaded": false,
+        "lake_executed": false,
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "registration": {
+        "version_id": "sha256:7ce687beba94172ddfa923724419cef04d97a830266d08e7f95642849216a877",
+        "artifact": {
+          "sha256": "dd503dc3059a88b71a8277b1730d97de6199b4f9a42238f2eabcce360bc64788",
+          "bytes": 38070
+        },
+        "variant_id": "modality-80a61e6ad15482bb674ab94f2875b4bbad47cf06c3ddf5fff40b35bfd1b8e515",
+        "qualified": false,
+        "admitted": false,
+        "formalized": false,
+        "promotion_performed": false
+      },
+      "inference_state_sha256": "8c5d69a55a1b1ec7080b6708fc4a305912382f9f129bfec5cbd71457696be30f",
+      "inference_did_not_train": true
+    }
+  ],
+  "new_pretrained_weights_downloaded": false,
+  "actual_host_count": 1,
+  "parallel_execution_tested": false,
+  "huggingface_transfer_tested": false,
+  "heldout_semantic_qualification": false,
+  "lake_executed": false,
+  "qualified": false,
+  "admitted": false,
+  "formalized": false
+}

@@ -1,0 +1,59 @@
+{
+  "schema": "modality-reuse-source-manifest/v1",
+  "base_commit": "cef69a4aa831cbf25d173c0aab151843bc58ed5e",
+  "scope": "local workspace tests and authored-fixture smoke; not a frozen full runtime capsule",
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_modality_contracts.py": {
+      "sha256": "5a6a88054e2b60dbe205625ffcb1d1c798c869ca5801a1ad1f4907467360de7f",
+      "bytes": 20688
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_projection_features.py": {
+      "sha256": "b91b5ee4a4e8bc6a214d7b7a942212805efe5531b2fb4251e66e9d413639cd14",
+      "bytes": 31713
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/domain_targets.py": {
+      "sha256": "b373c8b26310a761525459880de7fa7ba052e0fde57f1d0cbe2ddd9d2f85b586",
+      "bytes": 15447
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/ui_targets.py": {
+      "sha256": "3a510ae3d3e3590250781fbf763dc3767ff635e1dc495bb79ecf75cc54261a80",
+      "bytes": 10272
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_modality_contracts.py": {
+      "sha256": "05e6a03cc8eb9e0c10e0d161040937bb7cbbd00e2f19e435c9c376320c813b28",
+      "bytes": 13375
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features.py": {
+      "sha256": "f6fc15f49ca74a4cf8ebe01b7eea6cf4b9d12612ff7bcb46ae54800e60829d0e",
+      "bytes": 26574
+    },
+    "tests/unit/logic/formalization/test_autoencoder_domain_targets.py": {
+      "sha256": "4c2c92e76108d91cb0d37c338aebb78b8940702348d6676c1d5954c401e44a09",
+      "bytes": 10289
+    },
+    "tests/unit/logic/formalization/autoencoder/test_autoencoder_ui_targets.py": {
+      "sha256": "d7374c5961017f91773193c60e3ea301e77f03607ba9e0987b28047a68789725",
+      "bytes": 9109
+    },
+    "ipfs_datasets_py/logic/security_ir/code_logic_projection.py": {
+      "sha256": "e6328d747d54f26835b8da24c87a9a80eff6951bdc936c87243307574a85788b",
+      "bytes": 14373
+    },
+    "tests/unit/logic/security_ir/test_code_logic_projection.py": {
+      "sha256": "3fd1ace0a98291dcda2955d415257b9e77964bede708754fe8d8a8d2873ad19f",
+      "bytes": 15436
+    },
+    "docs/implementation/reports/AUTOENCODER_MODALITY_REUSE_20260929.md": {
+      "sha256": "bd2a5d282807e207a1172d8addd9dc03a4526aa9d35b05ef3edaf80121ef709b",
+      "bytes": 21660
+    }
+  },
+  "included_existing_workspace_dependency": [
+    "ipfs_datasets_py/logic/security_ir/code_logic_projection.py",
+    "tests/unit/logic/security_ir/test_code_logic_projection.py"
+  ],
+  "remote_nonlegal_training_tested": false,
+  "qualified": false,
+  "admitted": false,
+  "formalized": false
+}

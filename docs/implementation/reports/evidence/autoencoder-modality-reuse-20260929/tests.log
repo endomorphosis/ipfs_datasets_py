@@ -1,0 +1,24 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 189 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_modality_contracts.py . [  0%]
+........................................................                 [ 30%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features.py . [ 30%]
+...........................                                              [ 44%]
+tests/unit/logic/formalization/test_autoencoder_domain_targets.py ...... [ 48%]
+..                                                                       [ 49%]
+tests/unit/logic/formalization/autoencoder/test_autoencoder_ui_targets.py . [ 49%]
+......                                                                   [ 52%]
+tests/unit/logic/security_ir/test_code_logic_projection.py ............. [ 59%]
+.......                                                                  [ 63%]
+tests/unit/duckdb_control/test_autoencoder_registry.py ................. [ 72%]
+....................................................                     [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/modality-reuse-20260929/tests-release.xml -
+============================= 189 passed in 8.74s ==============================
