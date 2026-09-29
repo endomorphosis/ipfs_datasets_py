@@ -1,0 +1,95 @@
+{
+  "admitted": false,
+  "claim_release_performed": false,
+  "excess_bytes": 14051423,
+  "failure": "resources.check_usage after final weight synchronization: attempt storage byte limit exceeded",
+  "formalized": false,
+  "ledger_observation": {
+    "bytes": 2482968,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "a6d08757dfcecbf372e58a6729512855da6bfc01655d33ba9607076dc9799fb2"
+  },
+  "observation_wall_time": 1790707513.412395,
+  "observed_bytes": 194051423,
+  "original_collector_preserved": true,
+  "process_observations": [
+    {
+      "pid": 670430,
+      "present": false
+    },
+    {
+      "pid": 681986,
+      "present": false
+    },
+    {
+      "pid": 713717,
+      "present": false
+    },
+    {
+      "pid": 683392,
+      "present": false
+    },
+    {
+      "pid": 715827,
+      "present": false
+    }
+  ],
+  "reservation_id": "a9c9b8f67c4a449cbd7761fc650c5ed9",
+  "reserved_bytes": 180000000,
+  "retained_claim": {
+    "artifacts_durable_asserted": false,
+    "attempt_directory": {
+      "device": 66306,
+      "inode": 68693550,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/worker-b"
+    },
+    "child": null,
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "created_at": 1790707113.8707833,
+    "external_charges": {},
+    "last_usage": {
+      "additional_requested_bytes": 0,
+      "attempt_bytes": 194051423,
+      "attempt_limit_bytes": 180000000,
+      "charged_bytes": 86224314438,
+      "checked_at": 1790707379.3223307,
+      "external_charged_bytes": 0,
+      "group_rss": {
+        "available": true,
+        "live_processes": 0,
+        "rss_bytes": 0
+      },
+      "inventory": {
+        "apparent_bytes": 55172537222,
+        "entry_count": 382243,
+        "special_file_count": 28,
+        "symlink_count": 4397
+      },
+      "limit_bytes": 87000000000,
+      "memory_limit_bytes": 1073741824,
+      "minimum_filesystem_free_bytes": 140942123008,
+      "observed_apparent_bytes": 55172537222,
+      "outstanding_full_reservations_bytes": 31051777216,
+      "process_slot_estimate_exceeded": false,
+      "reserved_child_process_slots": 1,
+      "scope": "named_roots_only_apparent_bytes",
+      "total_attempt_charged_bytes": 194051423
+    },
+    "memory_mb": 1024,
+    "owner_pid": 670430,
+    "prior_children": [],
+    "reservation_id": "a9c9b8f67c4a449cbd7761fc650c5ed9",
+    "retention_reason": "context_failed",
+    "scheduler_lane": "hammer_lean",
+    "status": "retained",
+    "storage_bytes": 180000000,
+    "workload": "canonical_trainer"
+  },
+  "schema": "native-feature-worker-closeout-diagnosis/v1",
+  "worker_log": {
+    "bytes": 5647,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/worker-b.log",
+    "sha256": "cea95da98b9f976d0b9d6ddec726fb950433a300da34299953425650c93c24de"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "admitted": false,
+  "base_commit": "61733095d3d8499879bf83c311f5a8a7537fa0b3",
+  "elapsed_seconds": 85.6177077931352,
+  "export_hashes_unchanged": true,
+  "formalized": false,
+  "git_pins_unchanged": true,
+  "live_scoped_hashes_unchanged": true,
+  "native_canonical_provenance_qualification": false,
+  "returncode": 0,
+  "scope": "partial exact Git-origin source plus nine explicit feature overlays",
+  "scoped_files": {
+    "ipfs_datasets_py/duckdb_control/autoencoder_span_campaign.py": {
+      "bytes": 45067,
+      "sha256": "5a033f7c5438ec81418f54f232da39b9377efc5f35fbc1c486af8b64f996edf8"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_features.py": {
+      "bytes": 41476,
+      "sha256": "9736086f12c31bd065415a8f99f58b2daaa424ad1345a1adfe533a97de28db24"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_training.py": {
+      "bytes": 35562,
+      "sha256": "4cf2a9b8098824c7d3e8efe299bf3f2c9cf0025d6c3abdb0abe5dfb1c627e050"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_exchange.py": {
+      "bytes": 28164,
+      "sha256": "ed83db190abb0284bc4ed33badf00ecc8c401a81ded452001b46452e81a73b09"
+    },
+    "scripts/ops/legal_ir/run_distributed_autoencoders.py": {
+      "bytes": 26317,
+      "sha256": "ce3532a8922c7924a93f4a26f8ca81177904a2b31592ec2e499eb8e675a751b4"
+    },
+    "tests/unit/duckdb_control/test_autoencoder_span_campaign.py": {
+      "bytes": 41584,
+      "sha256": "f2d03541e6fa8ff0b8ba842ffbf2b359e1f81bce72d975696b53b4d21207cdec"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_features.py": {
+      "bytes": 28727,
+      "sha256": "3bdc8cdfb63bc2f53cddac56c103d8e9d10cdac4e2e5884d90edb8a39f270bcc"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_training.py": {
+      "bytes": 43984,
+      "sha256": "7ed925916bd550170e44a893b02dd68e6d7b597e55c3cd51b56f25d11ca783a3"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_exchange.py": {
+      "bytes": 14066,
+      "sha256": "2bb13c2f0cbccdfa3c2f053e73870fb3ffcf5ef271a35da7dd5d46270adb4ec9"
+    }
+  },
+  "source_export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets",
+  "source_imports": {
+    "ipfs_datasets_py": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/__init__.py",
+    "ipfs_datasets_py.logic.deontic.utils.deontic_parser": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "ipfs_datasets_py.logic.legal_ir.canonical_compiler": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "ipfs_datasets_py.logic.legal_ir.canonical_decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_distributed_features": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_features.py",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_distributed_training": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_training.py",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_feature_exchange": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_exchange.py",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_feature_inputs": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_inputs.py",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_feature_training": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_training.py",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+  },
+  "source_manifest_sha256": "db34fea491f65b67e7a2f93287866a3df7f8601298861661ca2e5b93405e2ca5"
+}

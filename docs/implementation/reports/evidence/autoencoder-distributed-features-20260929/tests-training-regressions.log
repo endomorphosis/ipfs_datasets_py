@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 147 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py . [  0%]
+................................................                         [ 33%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_inputs.py . [ 34%]
+....................                                                     [ 47%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_objective.py . [ 48%]
+........................                                                 [ 64%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_training.py . [ 65%]
+...................................                                      [ 89%]
+tests/unit/optimizers/logic_theorem_optimizer/test_feature_pretraining_cli.py . [ 89%]
+...............                                                          [100%]
+
+============================= 147 passed in 59.98s =============================

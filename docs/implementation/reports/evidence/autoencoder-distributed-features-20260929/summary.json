@@ -1,0 +1,210 @@
+{
+  "schema": "distributed-feature-publication-evidence/v1",
+  "training_purpose": "feature_pretraining",
+  "qualified": false,
+  "admitted": false,
+  "formalized": false,
+  "constitution_formalized": false,
+  "lake_executed_for_feature_training": false,
+  "formalization_gates_unchanged": true,
+  "tests": {
+    "unique_test_count": 306,
+    "working_source_passed": 306,
+    "publication_base_with_scoped_changes": {
+      "tests": 306,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "base_commit": "61733095d3d8499879bf83c311f5a8a7537fa0b3",
+    "scoped_source_files": {
+      "ipfs_datasets_py/duckdb_control/autoencoder_span_campaign.py": {
+        "bytes": 45067,
+        "sha256": "5a033f7c5438ec81418f54f232da39b9377efc5f35fbc1c486af8b64f996edf8"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_features.py": {
+        "bytes": 41476,
+        "sha256": "9736086f12c31bd065415a8f99f58b2daaa424ad1345a1adfe533a97de28db24"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_training.py": {
+        "bytes": 35562,
+        "sha256": "4cf2a9b8098824c7d3e8efe299bf3f2c9cf0025d6c3abdb0abe5dfb1c627e050"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_exchange.py": {
+        "bytes": 28164,
+        "sha256": "ed83db190abb0284bc4ed33badf00ecc8c401a81ded452001b46452e81a73b09"
+      },
+      "scripts/ops/legal_ir/run_distributed_autoencoders.py": {
+        "bytes": 26317,
+        "sha256": "ce3532a8922c7924a93f4a26f8ca81177904a2b31592ec2e499eb8e675a751b4"
+      },
+      "tests/unit/duckdb_control/test_autoencoder_span_campaign.py": {
+        "bytes": 41584,
+        "sha256": "f2d03541e6fa8ff0b8ba842ffbf2b359e1f81bce72d975696b53b4d21207cdec"
+      },
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_features.py": {
+        "bytes": 28727,
+        "sha256": "3bdc8cdfb63bc2f53cddac56c103d8e9d10cdac4e2e5884d90edb8a39f270bcc"
+      },
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_training.py": {
+        "bytes": 43984,
+        "sha256": "7ed925916bd550170e44a893b02dd68e6d7b597e55c3cd51b56f25d11ca783a3"
+      },
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_exchange.py": {
+        "bytes": 14066,
+        "sha256": "2bb13c2f0cbccdfa3c2f053e73870fb3ffcf5ef271a35da7dd5d46270adb4ec9"
+      }
+    },
+    "source_test_scope": "partial exact Git-origin source plus nine explicit feature overlays",
+    "native_canonical_provenance_qualification": false
+  },
+  "first_native_smoke": {
+    "clean_resource_closeout": true,
+    "accepted_epochs": 3,
+    "jobs": 3,
+    "complete_weights": {
+      "bytes": 5555794,
+      "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+    },
+    "generation": 3
+  },
+  "three_epoch_smoke": {
+    "accepted_epochs": 9,
+    "selected_ancestry_epochs": 6,
+    "retained_stale_epochs": 3,
+    "jobs": 3,
+    "generation": 3,
+    "complete_weights": {
+      "bytes": 5554896,
+      "sha256": "9f2081934cbb35c530e068ff90dcce90a26c43dbfa7aef8aadb29930e3c79bb1"
+    },
+    "stale_rebase_verified_count": 1,
+    "clean_unattended_resource_closeout": false,
+    "manual_closeout_completed": true,
+    "original_storage_budget_bytes": 180000000,
+    "retained_worker_bytes": 194051423,
+    "retroactive_budget_pass": false
+  },
+  "parallelism": {
+    "native_worker_process_count": 2,
+    "actual_host_count": 1,
+    "native_transport": "offline_file_backed_hub_simulation",
+    "training_call_overlap_proven": false,
+    "optimizer_cpu_overlap_proven": false,
+    "physical_multi_host_test_performed": false
+  },
+  "live_huggingface_transport": {
+    "same_full_generation_verified": true,
+    "resume_zero_downloads": true,
+    "native_training_performed_in_transfer_test": false,
+    "physical_multi_host_test_performed": false,
+    "full_checkpoint_bytes": 3231074,
+    "epoch_patch_bytes": 13371382,
+    "bandwidth_improvement_demonstrated": false
+  },
+  "source_provenance": {
+    "native_first_capture": {
+      "bytes": 5072776,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/source-capture/capsule/manifest.json",
+      "sha256": "a3b7b74a427f66566c013d05ef8f3ae821382d7d3b0c610ffe2519fea8cd59dd"
+    },
+    "native_three_epoch_capture": {
+      "bytes": 5072779,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/source-capture-r2/capsule/manifest.json",
+      "sha256": "eb0af7c07eab4ff853391e0ee3d4992f8c96919435825d4e715588836685514f"
+    },
+    "native_captured_source_equals_publication_tree": false,
+    "upstream_parser_compiler_preserved": true,
+    "regenerate_shared_targets_for_published_source": true
+  },
+  "limits": [
+    "Repeated tuning is not an independent held-out canary.",
+    "Feature objective improvement is not legal admission or a global-optimum guarantee.",
+    "One DuckDB owner coordinates private Quack clients; workers do not share a writable database file.",
+    "Workers synchronize complete selected weights eventually, after polling and exact verification.",
+    "Independent native worker smoke and live Hub exchange are separate test scopes.",
+    "Source tests use a verified partial export of the publication base with nine scoped changes."
+  ],
+  "artifacts": {
+    "native-one-epoch.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/collected-evidence.json",
+      "sha256": "44ec571e8cba55617734db53a1681014015c616c9f8797fc0d1112d095395afc",
+      "bytes": 164778
+    },
+    "native-three-epochs-before-closeout.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/collected-evidence.json",
+      "sha256": "dbd3e856426693132824d6b9b796a9fb9b2f03dec9234bb2997394efdef2fc32",
+      "bytes": 176655
+    },
+    "native-three-epochs-storage-diagnosis.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/worker-b-closeout-diagnosis.json",
+      "sha256": "dc876e340d2ed3ddb9a44c1c01a9a70c26b647ae62a32f69945fbc3360bfac36",
+      "bytes": 3062
+    },
+    "live-huggingface-exchange.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/hub-exchange-native-r1/transport/result.json",
+      "sha256": "e5e35faf58e6137c62390b99f6436d4dd938402e037fb2083deba0abe565f511",
+      "bytes": 13448
+    },
+    "live-huggingface-resources.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/hub-exchange-native-r1/resource-finalization.json",
+      "sha256": "6599255678e55f9ea93097ff86c9b3a8ee2131f5e71f5c5c8302e1f94ce86be4",
+      "bytes": 4404
+    },
+    "tests-training-regressions.log": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/training-regressions.log",
+      "sha256": "07dcd7c434d888fd5a2ddd6bf87f40a77e67f87d8be28e425fb5fd6871fed4ad",
+      "bytes": 1360
+    },
+    "tests-distributed-transport.log": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/distributed-transport-tests.log",
+      "sha256": "fcdf7362bc5a252f4646e5b33272d2b507f06991c782434df2a45f7853698fbe",
+      "bytes": 851
+    },
+    "tests-native-quack.log": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/campaign-native-quack-tests.log",
+      "sha256": "dfac8772e03d86de85f27ec2f8859eca4c9c66201aacc9d9caf2d941ba5c74ba",
+      "bytes": 663
+    },
+    "tests-distributed-features.log": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/distributed-feature-tests-final.log",
+      "sha256": "fa6a799c2ef077d51dece175d9b70681487e50d50b4c211cd74c3f1b049721d1",
+      "bytes": 679
+    },
+    "native-three-epochs-after-closeout.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/collected-evidence-after-manual-closeout.json",
+      "sha256": "cabd274a25ecbbec68edc12c8c024074298dd48a8c2b7bb85776d51b3a0847a1",
+      "bytes": 179723
+    },
+    "native-three-epochs-manual-closeout.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/worker-b-closeout/result.json",
+      "sha256": "1014a4d9942d21a43501d8e0d60490ac7696ba2dbbc9e24dd33353b2b025efa1",
+      "bytes": 1885
+    },
+    "tests-publication-source.json": {
+      "source": "workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r6/validation.json",
+      "sha256": "0ed51135ef2347cd38c0b231a20065c61c64c5d5929ac2707a769b9ee6f767e0",
+      "bytes": 6147
+    },
+    "tests-publication-source.log": {
+      "source": "workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r6/validator.log",
+      "sha256": "ca4963483f3a73c102bf86ff685f77c171c6997e97250b0393751fb370567307",
+      "bytes": 3621
+    },
+    "tests-publication-source-resources.json": {
+      "source": "workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r6/resources.json",
+      "sha256": "a9e68336e901a908ca3832eaa6874c5588ab4ea0296a1a77e102a9b534831c27",
+      "bytes": 5175
+    },
+    "publication-dependencies.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-dependency-audit.json",
+      "sha256": "a2068dfaa3b9a132dc7455eae3fbe199f13636498f9fab0201ff4b08e7fa66a2",
+      "bytes": 7990
+    },
+    "protected-checkpoint.json": {
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/protected-checkpoint-after.json",
+      "sha256": "51863bfa636109b3d1f477ba7516674baeaf29785a8cc2753d5ade8ee14deb30",
+      "bytes": 297
+    }
+  }
+}

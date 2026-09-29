@@ -1,0 +1,3166 @@
+{
+  "actual_host_count": 1,
+  "admitted": false,
+  "canonical_transitions": [
+    {
+      "advanced": {
+        "admitted": false,
+        "artifact": {
+          "bytes": 3232429,
+          "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+        },
+        "binding_sha256": "32e7aee264173b193173538188db662a729e70860067d63ffb993d2574f63bc0",
+        "campaign_id": "native-feature-distributed-smoke",
+        "command": "AdvanceSpanGeneration",
+        "expected_generation": 1,
+        "expected_version_id": "sha256:39634abbfdce9da83009affcf4d0e939dc0372972cbf907873d2b494fd869d7c",
+        "formalized": false,
+        "generation": 2,
+        "head_promotion_performed": false,
+        "operation_id": "span-advance:b75361ca6de565d809bae47843d43154e4ccd49fc7b4af441fa8d195bd02ba77",
+        "qualified": false,
+        "schema": "ipfs_datasets_py/autoencoder-control@1",
+        "training_purpose": "feature_pretraining",
+        "version_id": "sha256:c6b269609459e41e57b9a5b8a7319d2621953c0786c62497effd87b1f706e933",
+        "weight_reference": {
+          "anchor_reference": {
+            "bytes": 1558,
+            "commit_sha": "81f83a7b46b7c354e7984855cb50ed10dac5e1ee",
+            "kind": "anchor",
+            "materialized_checkpoint": {
+              "bytes": 1558,
+              "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+            },
+            "path_in_repo": "autoformal/uscode/autoencoders/anchors/a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9.state.json",
+            "repository_id": "justicedao/uscode-autoformal-span-cache",
+            "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+          },
+          "bytes": 2745,
+          "commit_sha": "c3e369d39eb06bdd7c4af751867d8443e5e30fb6",
+          "kind": "feature_sparse",
+          "materialized_checkpoint": {
+            "bytes": 3232429,
+            "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+          },
+          "path_in_repo": "autoformal/uscode/feature-pretraining/updates/942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02.json",
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "sha256": "942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02"
+        }
+      },
+      "counts": {
+        "awaiting_verification": 1,
+        "source_completed": 1
+      },
+      "receipt": {
+        "bytes": 13327,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/owner/observations/00000003-139205f440194b68b594167e9ed778b7.json",
+        "sha256": "453d5cb070d888ea48dc6b0f604c113fda8d55e7c5cfa244d4cbdcf930283bdb"
+      },
+      "verified": [
+        {
+          "admitted": false,
+          "command": "CompleteRun",
+          "event_id": "sha256:76ddff9c01862ebbb55f24d74669c19cb50dc5b423edb3c1f74cabbca5af2b34",
+          "operation_id": "span-verify-complete:0f49c93c6700ab7331b63b4a4b3872b5c6f5f1832cc8eb1f5977cd66807fe988",
+          "promoted": false,
+          "run_id": "span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85",
+          "schema": "ipfs_datasets_py/autoencoder-control@1",
+          "span_disposition": "feature_updated",
+          "status": "completed",
+          "version_id": "sha256:c6b269609459e41e57b9a5b8a7319d2621953c0786c62497effd87b1f706e933"
+        }
+      ],
+      "weights": {
+        "artifact": {
+          "bytes": 3232429,
+          "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+        },
+        "generation": 2,
+        "version_id": "sha256:c6b269609459e41e57b9a5b8a7319d2621953c0786c62497effd87b1f706e933",
+        "weight_reference": {
+          "anchor_reference": {
+            "bytes": 1558,
+            "commit_sha": "81f83a7b46b7c354e7984855cb50ed10dac5e1ee",
+            "kind": "anchor",
+            "materialized_checkpoint": {
+              "bytes": 1558,
+              "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+            },
+            "path_in_repo": "autoformal/uscode/autoencoders/anchors/a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9.state.json",
+            "repository_id": "justicedao/uscode-autoformal-span-cache",
+            "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+          },
+          "bytes": 2745,
+          "commit_sha": "c3e369d39eb06bdd7c4af751867d8443e5e30fb6",
+          "kind": "feature_sparse",
+          "materialized_checkpoint": {
+            "bytes": 3232429,
+            "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+          },
+          "path_in_repo": "autoformal/uscode/feature-pretraining/updates/942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02.json",
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "sha256": "942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02"
+        }
+      }
+    },
+    {
+      "advanced": null,
+      "counts": {
+        "queued": 1,
+        "source_completed": 1
+      },
+      "receipt": {
+        "bytes": 11558,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/owner/observations/00000004-bad18ba45c444982afa4a019757138bf.json",
+        "sha256": "5b2e286d08b5b2be8bc58c0f4830ce7231e83c767b7daff4773b0d92677d3778"
+      },
+      "verified": [
+        {
+          "admitted": false,
+          "command": "CompleteRun",
+          "event_id": "sha256:42092205e4c459ea61ce6860a0a761c8a661f906d52492b3fcea623437884a7d",
+          "operation_id": "span-verify-complete:4d623ca8d949c3e3187a15991db300280290c290065a3c6f1a0c9adb7bb2358b",
+          "promoted": false,
+          "run_id": "span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec",
+          "schema": "ipfs_datasets_py/autoencoder-control@1",
+          "span_disposition": "rebase_required",
+          "status": "completed",
+          "version_id": "sha256:5845ab431946aa1e60ac881f9ab2cde74fa60466a38f15c3093361d993e1437c"
+        }
+      ],
+      "weights": {
+        "artifact": {
+          "bytes": 3232429,
+          "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+        },
+        "generation": 2,
+        "version_id": "sha256:c6b269609459e41e57b9a5b8a7319d2621953c0786c62497effd87b1f706e933",
+        "weight_reference": {
+          "anchor_reference": {
+            "bytes": 1558,
+            "commit_sha": "81f83a7b46b7c354e7984855cb50ed10dac5e1ee",
+            "kind": "anchor",
+            "materialized_checkpoint": {
+              "bytes": 1558,
+              "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+            },
+            "path_in_repo": "autoformal/uscode/autoencoders/anchors/a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9.state.json",
+            "repository_id": "justicedao/uscode-autoformal-span-cache",
+            "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+          },
+          "bytes": 2745,
+          "commit_sha": "c3e369d39eb06bdd7c4af751867d8443e5e30fb6",
+          "kind": "feature_sparse",
+          "materialized_checkpoint": {
+            "bytes": 3232429,
+            "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+          },
+          "path_in_repo": "autoformal/uscode/feature-pretraining/updates/942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02.json",
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "sha256": "942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02"
+        }
+      }
+    },
+    {
+      "advanced": {
+        "admitted": false,
+        "artifact": {
+          "bytes": 5555794,
+          "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+        },
+        "binding_sha256": "32e7aee264173b193173538188db662a729e70860067d63ffb993d2574f63bc0",
+        "campaign_id": "native-feature-distributed-smoke",
+        "command": "AdvanceSpanGeneration",
+        "expected_generation": 2,
+        "expected_version_id": "sha256:c6b269609459e41e57b9a5b8a7319d2621953c0786c62497effd87b1f706e933",
+        "formalized": false,
+        "generation": 3,
+        "head_promotion_performed": false,
+        "operation_id": "span-advance:242c58330c834c1622bb659cd7b31ba2d4bf2d4b24812adbf9d43764dcd33498",
+        "qualified": false,
+        "schema": "ipfs_datasets_py/autoencoder-control@1",
+        "training_purpose": "feature_pretraining",
+        "version_id": "sha256:0603dc16a6fb0dab9dd0c753cb780398986278188e32e46a7881968887f56b30",
+        "weight_reference": {
+          "anchor_reference": {
+            "anchor_reference": {
+              "bytes": 1558,
+              "commit_sha": "81f83a7b46b7c354e7984855cb50ed10dac5e1ee",
+              "kind": "anchor",
+              "materialized_checkpoint": {
+                "bytes": 1558,
+                "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+              },
+              "path_in_repo": "autoformal/uscode/autoencoders/anchors/a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9.state.json",
+              "repository_id": "justicedao/uscode-autoformal-span-cache",
+              "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+            },
+            "bytes": 2745,
+            "commit_sha": "c3e369d39eb06bdd7c4af751867d8443e5e30fb6",
+            "kind": "feature_sparse",
+            "materialized_checkpoint": {
+              "bytes": 3232429,
+              "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+            },
+            "path_in_repo": "autoformal/uscode/feature-pretraining/updates/942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02.json",
+            "repository_id": "justicedao/uscode-autoformal-span-cache",
+            "sha256": "942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02"
+          },
+          "bytes": 3249,
+          "commit_sha": "1dc6c49d51f29aedfb7d99778342b06836107bd2",
+          "kind": "feature_sparse",
+          "materialized_checkpoint": {
+            "bytes": 5555794,
+            "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+          },
+          "path_in_repo": "autoformal/uscode/feature-pretraining/updates/0985fc0327297ea1f527fac457299b549a090203927c845c47a7b1630c9f29b8.json",
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "sha256": "0985fc0327297ea1f527fac457299b549a090203927c845c47a7b1630c9f29b8"
+        }
+      },
+      "counts": {
+        "source_completed": 2
+      },
+      "receipt": {
+        "bytes": 14303,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/owner/observations/00000010-c019e897165b4d75a0d79c5a56463224.json",
+        "sha256": "bbc91e30f9a94655d16d6d372b8e4b2f2262f2fa88e200d5e47164f65b62d909"
+      },
+      "verified": [
+        {
+          "admitted": false,
+          "command": "CompleteRun",
+          "event_id": "sha256:ad6af4b75fe23fb7129f572aedef5339de0e6020b7b3858e15628f880634c599",
+          "operation_id": "span-verify-complete:c7c0cc4fa77ea1424d4529ef457a781c235106fd433dd4dad4fea96929925ee2",
+          "promoted": false,
+          "run_id": "span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b",
+          "schema": "ipfs_datasets_py/autoencoder-control@1",
+          "span_disposition": "feature_updated",
+          "status": "completed",
+          "version_id": "sha256:0603dc16a6fb0dab9dd0c753cb780398986278188e32e46a7881968887f56b30"
+        }
+      ],
+      "weights": {
+        "artifact": {
+          "bytes": 5555794,
+          "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+        },
+        "generation": 3,
+        "version_id": "sha256:0603dc16a6fb0dab9dd0c753cb780398986278188e32e46a7881968887f56b30",
+        "weight_reference": {
+          "anchor_reference": {
+            "anchor_reference": {
+              "bytes": 1558,
+              "commit_sha": "81f83a7b46b7c354e7984855cb50ed10dac5e1ee",
+              "kind": "anchor",
+              "materialized_checkpoint": {
+                "bytes": 1558,
+                "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+              },
+              "path_in_repo": "autoformal/uscode/autoencoders/anchors/a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9.state.json",
+              "repository_id": "justicedao/uscode-autoformal-span-cache",
+              "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+            },
+            "bytes": 2745,
+            "commit_sha": "c3e369d39eb06bdd7c4af751867d8443e5e30fb6",
+            "kind": "feature_sparse",
+            "materialized_checkpoint": {
+              "bytes": 3232429,
+              "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+            },
+            "path_in_repo": "autoformal/uscode/feature-pretraining/updates/942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02.json",
+            "repository_id": "justicedao/uscode-autoformal-span-cache",
+            "sha256": "942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02"
+          },
+          "bytes": 3249,
+          "commit_sha": "1dc6c49d51f29aedfb7d99778342b06836107bd2",
+          "kind": "feature_sparse",
+          "materialized_checkpoint": {
+            "bytes": 5555794,
+            "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+          },
+          "path_in_repo": "autoformal/uscode/feature-pretraining/updates/0985fc0327297ea1f527fac457299b549a090203927c845c47a7b1630c9f29b8.json",
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "sha256": "0985fc0327297ea1f527fac457299b549a090203927c845c47a7b1630c9f29b8"
+        }
+      }
+    }
+  ],
+  "constitution_formalized": false,
+  "cross_host_execution_qualified": false,
+  "errors": [],
+  "final_generation": {
+    "artifact": {
+      "bytes": 5555794,
+      "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+    },
+    "generation": 3,
+    "version_id": "sha256:0603dc16a6fb0dab9dd0c753cb780398986278188e32e46a7881968887f56b30",
+    "weight_reference": {
+      "anchor_reference": {
+        "anchor_reference": {
+          "bytes": 1558,
+          "commit_sha": "81f83a7b46b7c354e7984855cb50ed10dac5e1ee",
+          "kind": "anchor",
+          "materialized_checkpoint": {
+            "bytes": 1558,
+            "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+          },
+          "path_in_repo": "autoformal/uscode/autoencoders/anchors/a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9.state.json",
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+        },
+        "bytes": 2745,
+        "commit_sha": "c3e369d39eb06bdd7c4af751867d8443e5e30fb6",
+        "kind": "feature_sparse",
+        "materialized_checkpoint": {
+          "bytes": 3232429,
+          "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+        },
+        "path_in_repo": "autoformal/uscode/feature-pretraining/updates/942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02.json",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "sha256": "942c041747f026cf5dae3c5bc4f4304181b573cf055ecb36dfd4fade89678c02"
+      },
+      "bytes": 3249,
+      "commit_sha": "1dc6c49d51f29aedfb7d99778342b06836107bd2",
+      "kind": "feature_sparse",
+      "materialized_checkpoint": {
+        "bytes": 5555794,
+        "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+      },
+      "path_in_repo": "autoformal/uscode/feature-pretraining/updates/0985fc0327297ea1f527fac457299b549a090203927c845c47a7b1630c9f29b8.json",
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "sha256": "0985fc0327297ea1f527fac457299b549a090203927c845c47a7b1630c9f29b8"
+    }
+  },
+  "formalized": false,
+  "heldout_canary": false,
+  "hf_transport": "offline_file_backed_simulation",
+  "jobs": [
+    {
+      "admitted": false,
+      "after": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.2890474857166878,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.28622607843942255,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.2890474857166878,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.28456805092634585,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.30833568906732545,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.30833568906732545,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.2871470969501586,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.28570805339589095,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0024785770635527195,
+        "sample_count": 2
+      },
+      "assigned_canonical_parent": "sha256:39634abbfdce9da83009affcf4d0e939dc0372972cbf907873d2b494fd869d7c",
+      "assignment_generation": 1,
+      "before": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.19611613513818407,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.19611613513818402,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0025270833813965826,
+        "sample_count": 2
+      },
+      "bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "bridge_on_evaluations": [
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.5522307930514216,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "before_holdout_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 2.047248790040612,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 1,
+          "ontology_capture_seconds": 1.5283945228438824,
+          "prover_flag": false,
+          "sample_count": 1,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "training_cache_prime",
+          "supplied_target_count": 1,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 2.174125079996884,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.101657761959359,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.4780685449950397,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.0914412250276655,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.459426409099251,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        }
+      ],
+      "cache_flag": 0,
+      "cycle_receipt": {
+        "bytes": 25171,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/jobs/span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85/attempt-1/cycles/fcc431d8153645e9a771c15cb3622319/cycle.json",
+        "sha256": "c9b16815e82baa9e49855a97c7052dfa6452a5626d216611a6dc295bc2baad3e"
+      },
+      "feature_disposition": "feature_updated",
+      "formalized": false,
+      "job_result": {
+        "bytes": 24524,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/jobs/span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85/attempt-1/result.json",
+        "sha256": "ef3869c740dbec2615d09fd71ce818be1aaf7441ae15926c114343a87324f53a"
+      },
+      "optimizer_accepted_epochs": 1,
+      "pretraining_seconds": 6.6968118119984865,
+      "projection_backend": "python_sparse_batch",
+      "prover_flag": false,
+      "qualified": false,
+      "remote_assignment_run_id": "span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85",
+      "run_id": "incremental-635ab6bcd0b6feb0efb1b73913f3ea37c0e67fe6097564d6c1a050e5ec228e89",
+      "sample_count": 1,
+      "sample_memory_used": false,
+      "shared_target_supervision": {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "complete": true,
+        "failed_bridge_count": 0,
+        "formalized": false,
+        "returned_accepted_bridge_count": 15,
+        "schema_version": "feature-shared-target-supervision/v1",
+        "scope": "native payload bridge supervision; not semantic qualification or Lean admission",
+        "target_count": 3,
+        "target_sample_ids": [
+          "us-code-36-50106-bb17fee26e3ac266",
+          "us-code-40-3318-429cfc454b54ce35",
+          "us-code-42-8286a-579bf6232e305315"
+        ],
+        "timeout_target_count": 0
+      },
+      "stopped_reason": null,
+      "timing": {
+        "containing_window_end": 1790706563.147978,
+        "containing_window_start": 1790706552.1970234,
+        "first_present_index": 1,
+        "first_present_wall_time": 1790706547.5121984,
+        "last_present_index": 7,
+        "last_present_wall_time": 1790706559.5853078,
+        "original_receipt_mtime": 1790706563.147978,
+        "original_worker_receipt": {
+          "bytes": 189672,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/jobs/span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85/attempt-1/progress/outputs/incremental-635ab6bcd0b6feb0efb1b73913f3ea37c0e67fe6097564d6c1a050e5ec228e89/receipt.json",
+          "sha256": "bd78cad137263b012686d1eaa8e471668e9989c2f4ab153545536b4560b527e4"
+        },
+        "pid": 528895,
+        "pretraining_seconds": 6.6968118119984865,
+        "prior_absent_index": 0,
+        "prior_absent_wall_time": 1790706545.5002115,
+        "process_birth": "127485406",
+        "process_observations": {
+          "bytes": 2344,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/jobs/span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85/attempt-1/cycles/fcc431d8153645e9a771c15cb3622319/process-observations.json",
+          "sha256": "019de9087128845fbfca5687988ad5e03176ab7791280da81570398e1661a8f4"
+        },
+        "timing_assumptions": "Same host wall clock remained stable; original receipt mtime follows training completion. Windows bound training-call occupancy, not CPU or optimizer kernel occupancy.",
+        "training_seconds": 8.128535036928952,
+        "training_window_available": true,
+        "worker_elapsed_seconds": 14.889782193815336
+      },
+      "training_process_pid": 528895,
+      "training_seconds": 8.128535036928952,
+      "tuning_sample_count": 2,
+      "weight_storage": "private_json",
+      "worker_count": 1,
+      "worker_elapsed_seconds": 14.889782193815336,
+      "worker_id": "worker-a",
+      "worker_receipt": {
+        "bytes": 189672,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/jobs/span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85/attempt-1/artifacts/bd/bd78cad137263b012686d1eaa8e471668e9989c2f4ab153545536b4560b527e4",
+        "sha256": "bd78cad137263b012686d1eaa8e471668e9989c2f4ab153545536b4560b527e4"
+      }
+    },
+    {
+      "admitted": false,
+      "after": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.29540931397355147,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.2906051608580194,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.29540931397355147,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.28778195340875456,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.3282523150413728,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.3282523150413728,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.2921734257389778,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.28972309337103885,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0024753953621146785,
+        "sample_count": 2
+      },
+      "assigned_canonical_parent": "sha256:39634abbfdce9da83009affcf4d0e939dc0372972cbf907873d2b494fd869d7c",
+      "assignment_generation": 1,
+      "before": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.19611613513818407,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.19611613513818402,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0025270833813965826,
+        "sample_count": 2
+      },
+      "bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "bridge_on_evaluations": [
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.5166343739256263,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "before_holdout_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.973354548914358,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 1,
+          "ontology_capture_seconds": 1.2812959600705653,
+          "prover_flag": false,
+          "sample_count": 1,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "training_cache_prime",
+          "supplied_target_count": 1,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.8317760729696602,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.0897919479757547,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.4282458920497447,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.0325912570115179,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.3687666580080986,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        }
+      ],
+      "cache_flag": 0,
+      "cycle_receipt": {
+        "bytes": 25170,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec/attempt-1/cycles/80d28a2668df4361b7c00c4b1bd8a3ea/cycle.json",
+        "sha256": "4119c4cb99b54df100cbbea03ad1acb4a0b007dcf57d9455457accf672f90bb8"
+      },
+      "feature_disposition": "feature_updated",
+      "formalized": false,
+      "job_result": {
+        "bytes": 23794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec/attempt-1/result.json",
+        "sha256": "47dc3329e99d755c0aa963d0a0d629b07f6117bf4ea671670cd6f099902c7f1e"
+      },
+      "optimizer_accepted_epochs": 1,
+      "pretraining_seconds": 6.2784374540206045,
+      "projection_backend": "python_sparse_batch",
+      "prover_flag": false,
+      "qualified": false,
+      "remote_assignment_run_id": "span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec",
+      "run_id": "incremental-c0c27bfcecd88483fc7ea8cd2d9446c558cecac5f079e5ba992972e6f007e9ef",
+      "sample_count": 1,
+      "sample_memory_used": false,
+      "shared_target_supervision": {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "complete": true,
+        "failed_bridge_count": 0,
+        "formalized": false,
+        "returned_accepted_bridge_count": 15,
+        "schema_version": "feature-shared-target-supervision/v1",
+        "scope": "native payload bridge supervision; not semantic qualification or Lean admission",
+        "target_count": 3,
+        "target_sample_ids": [
+          "us-code-36-50106-bb17fee26e3ac266",
+          "us-code-42-8286a-579bf6232e305315",
+          "us-code-46-60303-bfa2875bd83d29df"
+        ],
+        "timeout_target_count": 0
+      },
+      "stopped_reason": null,
+      "timing": {
+        "containing_window_end": 1790706570.7249777,
+        "containing_window_start": 1790706560.3735528,
+        "first_present_index": 1,
+        "first_present_wall_time": 1790706556.1162567,
+        "last_present_index": 7,
+        "last_present_wall_time": 1790706568.2381244,
+        "original_receipt_mtime": 1790706570.7249777,
+        "original_worker_receipt": {
+          "bytes": 189247,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec/attempt-1/progress/outputs/incremental-c0c27bfcecd88483fc7ea8cd2d9446c558cecac5f079e5ba992972e6f007e9ef/receipt.json",
+          "sha256": "15326ac4d570dca74a86ecf3a8d47c66438708f21a83619b8584a90be75f7d32"
+        },
+        "pid": 531429,
+        "pretraining_seconds": 6.2784374540206045,
+        "prior_absent_index": 0,
+        "prior_absent_wall_time": 1790706554.0951154,
+        "process_birth": "127486264",
+        "process_observations": {
+          "bytes": 2345,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec/attempt-1/cycles/80d28a2668df4361b7c00c4b1bd8a3ea/process-observations.json",
+          "sha256": "c9b1102f9fcbd3f22085083f27fcc93062736136c284a931f3e5f04606aaefef"
+        },
+        "timing_assumptions": "Same host wall clock remained stable; original receipt mtime follows training completion. Windows bound training-call occupancy, not CPU or optimizer kernel occupancy.",
+        "training_seconds": 7.538061785046011,
+        "training_window_available": true,
+        "worker_elapsed_seconds": 13.885892872000113
+      },
+      "training_process_pid": 531429,
+      "training_seconds": 7.538061785046011,
+      "tuning_sample_count": 2,
+      "weight_storage": "private_json",
+      "worker_count": 1,
+      "worker_elapsed_seconds": 13.885892872000113,
+      "worker_id": "worker-b",
+      "worker_receipt": {
+        "bytes": 189247,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec/attempt-1/artifacts/15/15326ac4d570dca74a86ecf3a8d47c66438708f21a83619b8584a90be75f7d32",
+        "sha256": "15326ac4d570dca74a86ecf3a8d47c66438708f21a83619b8584a90be75f7d32"
+      }
+    },
+    {
+      "admitted": false,
+      "after": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.3805603387886408,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.3734854247310218,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.3805603387886408,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.3693277824598373,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.4289271173573526,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.4289271173573526,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.3757949554611084,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.3721864337302496,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.002429949720751668,
+        "sample_count": 2
+      },
+      "assigned_canonical_parent": "sha256:c6b269609459e41e57b9a5b8a7319d2621953c0786c62497effd87b1f706e933",
+      "assignment_generation": 2,
+      "before": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.2890474857166878,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.28622607843942255,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.2890474857166878,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.28456805092634585,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.30833568906732545,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.30833568906732545,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.2871470969501586,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.28570805339589095,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0024785770635527195,
+        "sample_count": 2
+      },
+      "bridge_names": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "bridge_on_evaluations": [
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.528545687906444,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "before_holdout_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 2.001693328144029,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 1,
+          "ontology_capture_seconds": 1.2764277830719948,
+          "prover_flag": false,
+          "sample_count": 1,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "training_cache_prime",
+          "supplied_target_count": 1,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 1,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.83430832112208,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.0594941151794046,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.395305909914896,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        },
+        {
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "disk_cache_enabled": false,
+          "generated_target_count": 0,
+          "legal_ir_target_count": 2,
+          "ontology_capture_seconds": 1.0742784980684519,
+          "prover_flag": false,
+          "sample_count": 2,
+          "scope": "bridge-on evaluation with reused shared targets; not cold target generation",
+          "stage": "line_search_evaluation",
+          "supplied_target_count": 2,
+          "target_representations": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "wall_seconds": 1.4120251671411097,
+          "worker_count_requested": 1,
+          "worker_count_used": 0
+        }
+      ],
+      "cache_flag": 0,
+      "cycle_receipt": {
+        "bytes": 25166,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b/attempt-1/cycles/e924857cb02a41489687eaba16062495/cycle.json",
+        "sha256": "21b2a8a3f8b80690dfa6e700c27636c351faca031a17e067129c556d73ae5b68"
+      },
+      "feature_disposition": "feature_updated",
+      "formalized": false,
+      "job_result": {
+        "bytes": 24295,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b/attempt-1/result.json",
+        "sha256": "2f9013efd4a7718b3d4b82c6d87e26ad9b6cf8899e5af5e820125d1983384ccd"
+      },
+      "optimizer_accepted_epochs": 1,
+      "pretraining_seconds": 6.3739526679273695,
+      "projection_backend": "python_sparse_batch",
+      "prover_flag": false,
+      "qualified": false,
+      "remote_assignment_run_id": "span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b",
+      "run_id": "incremental-6f2542fb4d3f4662ae32f29620c13070713abc8d2a1b1e4a3a273dcc7f3df650",
+      "sample_count": 1,
+      "sample_memory_used": false,
+      "shared_target_supervision": {
+        "admitted": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "complete": true,
+        "failed_bridge_count": 0,
+        "formalized": false,
+        "returned_accepted_bridge_count": 15,
+        "schema_version": "feature-shared-target-supervision/v1",
+        "scope": "native payload bridge supervision; not semantic qualification or Lean admission",
+        "target_count": 3,
+        "target_sample_ids": [
+          "us-code-36-50106-bb17fee26e3ac266",
+          "us-code-42-8286a-579bf6232e305315",
+          "us-code-46-60303-bfa2875bd83d29df"
+        ],
+        "timeout_target_count": 0
+      },
+      "stopped_reason": null,
+      "timing": {
+        "containing_window_end": 1790706674.3308659,
+        "containing_window_start": 1790706665.4940362,
+        "first_present_index": 2,
+        "first_present_wall_time": 1790706661.1309066,
+        "last_present_index": 7,
+        "last_present_wall_time": 1790706671.2326393,
+        "original_receipt_mtime": 1790706674.3308659,
+        "original_worker_receipt": {
+          "bytes": 189767,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b/attempt-1/progress/outputs/incremental-6f2542fb4d3f4662ae32f29620c13070713abc8d2a1b1e4a3a273dcc7f3df650/receipt.json",
+          "sha256": "e84f7d3e072a2aa0806621d304bed7ac0b439507a010dbdb63ad6a80d5884237"
+        },
+        "pid": 557371,
+        "pretraining_seconds": 6.3739526679273695,
+        "prior_absent_index": 1,
+        "prior_absent_wall_time": 1790706659.1200836,
+        "process_birth": "127496579",
+        "process_observations": {
+          "bytes": 2262,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b/attempt-1/cycles/e924857cb02a41489687eaba16062495/process-observations.json",
+          "sha256": "0d6c9525f208d09ef07fc3952571ec9b3bedb68613cb95b46a4ce82cf32e2c20"
+        },
+        "timing_assumptions": "Same host wall clock remained stable; original receipt mtime follows training completion. Windows bound training-call occupancy, not CPU or optimizer kernel occupancy.",
+        "training_seconds": 7.889045079937205,
+        "training_window_available": true,
+        "worker_elapsed_seconds": 14.36390252201818
+      },
+      "training_process_pid": 557371,
+      "training_seconds": 7.889045079937205,
+      "tuning_sample_count": 2,
+      "weight_storage": "private_json",
+      "worker_count": 1,
+      "worker_elapsed_seconds": 14.36390252201818,
+      "worker_id": "worker-b",
+      "worker_receipt": {
+        "bytes": 189767,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b/attempt-1/artifacts/e8/e84f7d3e072a2aa0806621d304bed7ac0b439507a010dbdb63ad6a80d5884237",
+        "sha256": "e84f7d3e072a2aa0806621d304bed7ac0b439507a010dbdb63ad6a80d5884237"
+      }
+    }
+  ],
+  "lake_executed": false,
+  "live_huggingface_transfer_in_this_run": false,
+  "native_result": {
+    "bytes": 11975,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/result.json",
+    "sha256": "e39a0569d301819912dd15603f73973d04bd3a66f6008e3746f6a2320cc16fa6"
+  },
+  "operational_checks_passed": true,
+  "optimizer_accepted_epochs": 3,
+  "owner_evaluations": [
+    {
+      "accepted_epochs": 1,
+      "after": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.2890474857166878,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.28622607843942255,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.2890474857166878,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.28456805092634585,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.30833568906732545,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.30833568906732545,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.2871470969501586,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.28570805339589095,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0024785770635527195,
+        "sample_count": 2
+      },
+      "assignment_run_id": "span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85",
+      "assignment_sha256": "a0bcd4b9053b0087ba7216c0de7a6af9a5c0707eb7e8b6194e0d399f6e80371e",
+      "base_artifact": {
+        "bytes": 1558,
+        "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+      },
+      "before": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.19611613513818407,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.19611613513818402,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0025270833813965826,
+        "sample_count": 2
+      },
+      "candidate_artifact": {
+        "bytes": 3232429,
+        "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+      },
+      "disposition": "feature_updated",
+      "generation": 1,
+      "objective_delta": 0.1394455321855994,
+      "receipt": {
+        "bytes": 84750,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/owner/verification/1912454ee7dba7ed5ee4391aa464f57d20e808c561e498b59425f08ea4096146/owner-feature-evidence.json",
+        "sha256": "178cb1beecb09c87a08a14855a077c79ed6f0caa304b9963356c574f010c1a12"
+      },
+      "shared_target_supervision_verified": true
+    },
+    {
+      "accepted_epochs": 1,
+      "after": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.3805603387886408,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.3734854247310218,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.3805603387886408,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.3693277824598373,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.4289271173573526,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.4289271173573526,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.3757949554611084,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.3721864337302496,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.002429949720751668,
+        "sample_count": 2
+      },
+      "assignment_run_id": "span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b",
+      "assignment_sha256": "8d1f84d937bf355879fd80c923fa15648af488e8e81cd71be465ce75f7fe4e7c",
+      "base_artifact": {
+        "bytes": 3232429,
+        "sha256": "06d9657ca57c17f5756b62b8e34480a69b112e5f2b7141b94e3fdcc6000de7c1"
+      },
+      "before": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.2890474857166878,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.28622607843942255,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.2890474857166878,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.28456805092634585,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.30833568906732545,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.30833568906732545,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.2871470969501586,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.28570805339589095,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0024785770635527195,
+        "sample_count": 2
+      },
+      "candidate_artifact": {
+        "bytes": 5555794,
+        "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+      },
+      "disposition": "feature_updated",
+      "generation": 2,
+      "objective_delta": 0.13731790695073043,
+      "receipt": {
+        "bytes": 84004,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/owner/verification/5c05fba3acf8a116512cd2416eef67721f7d89cca4846ea2a8f9d124cde5060c/owner-feature-evidence.json",
+        "sha256": "4fb6edf96577d5096ffaf2c39614fc34e45a5701e32731e68cc5deed8bcf042d"
+      },
+      "shared_target_supervision_verified": true
+    },
+    {
+      "accepted_epochs": 1,
+      "after": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.29540931397355147,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.2906051608580194,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.29540931397355147,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.28778195340875456,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.3282523150413728,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.3282523150413728,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.2921734257389778,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.28972309337103885,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0024753953621146785,
+        "sample_count": 2
+      },
+      "assignment_run_id": "span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec",
+      "assignment_sha256": "6468bb21e9a01f2aa4daa9d8f3d08aca3f82aa3114f0ac05279ea4d4ea42cadf",
+      "base_artifact": {
+        "bytes": 1558,
+        "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+      },
+      "before": {
+        "cross_entropy_loss": 2.19722457733622,
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.08651389451584421,
+          "legal_ir_multiview_cross_entropy_loss": 0.13607543048495852,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.0004505932077463542,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 0.47356250100685326,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.0001634439160586032,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0005738731577113465,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5198325687453578,
+          "legal_ir_view_family_cosine_gap_loss": 0.02572921303422182,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.02773248468024514,
+          "legal_ir_view_family_cross_entropy_loss": 1.5890269151739727,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.007058885175058149,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.013681497993036917,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5927586044962977,
+          "legal_ir_view_family_entropy_loss": 1.5612944304937275,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 4.769658492420614e-05,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.0001748894410081303,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.46184098544674546,
+          "legal_ir_view_family_kg_cosine_gap_loss": 0.005695571653293041,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.016651103801162415,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.4216508983899758,
+          "legal_ir_view_family_prover_cosine_gap_loss": 0.0017926011898922178,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007942641520313043,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3779669509064643,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013949321411982352,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.00044674140917141947,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.5222078760282944,
+          "source_decompiled_text_embedding_cosine_loss": 0.08651389451584421,
+          "source_decompiled_text_token_loss": 0.11540600000000001
+        },
+        "legal_ir_target_count": 2,
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998596958601661,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5257236503559408,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4326551021863513,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "decompiler": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 2.0,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "deontic": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.991801946005488,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.6087817640089963,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.5526444128379656,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "external_provers": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9982073988101078,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.3779669509064643,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1215613181477857,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "frame_logic": {
+            "autoencoder_cosine_similarity": 0.19611613513818407,
+            "autoencoder_cosine_similarity_observation_count": 1.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 1.0,
+            "ir_cosine_similarity": 0.9999523034150758,
+            "ir_cosine_similarity_observation_count": 1.0,
+            "ir_cross_entropy_loss": 0.46184098544674546,
+            "ir_cross_entropy_loss_observation_count": 1.0,
+            "sample_count": 1.0,
+            "sample_weight": 0.1736751859101219,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 1.0
+          },
+          "kg": {
+            "autoencoder_cosine_similarity": 0.19611613513818402,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.1972245773362196,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9938838286944445,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.4251528569209935,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.2809160340810108,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          },
+          "tdfol": {
+            "autoencoder_cosine_similarity": 0.19611613513818404,
+            "autoencoder_cosine_similarity_observation_count": 2.0,
+            "autoencoder_cross_entropy_loss": 2.19722457733622,
+            "autoencoder_cross_entropy_loss_observation_count": 2.0,
+            "ir_cosine_similarity": 0.9998729146305803,
+            "ir_cosine_similarity_observation_count": 2.0,
+            "ir_cross_entropy_loss": 0.5305318895174148,
+            "ir_cross_entropy_loss_observation_count": 2.0,
+            "sample_count": 2.0,
+            "sample_weight": 0.4385479468367647,
+            "symbolic_validity_success_rate": 1.0,
+            "symbolic_validity_success_rate_observation_count": 2.0
+          }
+        },
+        "reconstruction_loss": 0.0025270833813965826,
+        "sample_count": 2
+      },
+      "candidate_artifact": {
+        "bytes": 3797328,
+        "sha256": "0f569049f26ff78973ccd0b224d2815f6c9b42aebefd9296f6a03b0b873c3833"
+      },
+      "disposition": "feature_updated",
+      "generation": 1,
+      "objective_delta": 0.1489914562723329,
+      "receipt": {
+        "bytes": 84038,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/owner/verification/d30e6dd13f3ac79d7140f604ad05abd6fa17c6c0600d2a007f34d32c349937c8/owner-feature-evidence.json",
+        "sha256": "4135af6b76a6642c3dec5179009b45aa0764c1aa1a4ff5a055753a1036202023"
+      },
+      "shared_target_supervision_verified": true
+    }
+  ],
+  "parallelism": {
+    "limitation": "Concurrent processes alone do not prove concurrent training; call occupancy does not prove simultaneous optimizer CPU execution.",
+    "pairs": [
+      {
+        "formula": "max(0, duration_a+duration_b - (maximum_containing_end-minimum_containing_start))",
+        "observed_process_lifetime_overlap_seconds_lower_bound": 3.4690511226654053,
+        "optimizer_cpu_overlap_proven": false,
+        "run_ids": [
+          "incremental-635ab6bcd0b6feb0efb1b73913f3ea37c0e67fe6097564d6c1a050e5ec228e89",
+          "incremental-c0c27bfcecd88483fc7ea8cd2d9446c558cecac5f079e5ba992972e6f007e9ef"
+        ],
+        "sum_training_seconds": 15.666596821974963,
+        "training_call_overlap_seconds_lower_bound": 0.0,
+        "training_enclosing_wall_window": [
+          1790706552.1970234,
+          1790706570.7249777
+        ],
+        "worker_pids": [
+          528895,
+          531429
+        ]
+      },
+      {
+        "formula": "max(0, duration_a+duration_b - (maximum_containing_end-minimum_containing_start))",
+        "observed_process_lifetime_overlap_seconds_lower_bound": 0.0,
+        "optimizer_cpu_overlap_proven": false,
+        "run_ids": [
+          "incremental-635ab6bcd0b6feb0efb1b73913f3ea37c0e67fe6097564d6c1a050e5ec228e89",
+          "incremental-6f2542fb4d3f4662ae32f29620c13070713abc8d2a1b1e4a3a273dcc7f3df650"
+        ],
+        "sum_training_seconds": 16.017580116866156,
+        "training_call_overlap_seconds_lower_bound": 0.0,
+        "training_enclosing_wall_window": [
+          1790706552.1970234,
+          1790706674.3308659
+        ],
+        "worker_pids": [
+          528895,
+          557371
+        ]
+      }
+    ],
+    "training_call_overlap_demonstrated": false,
+    "two_workers_produced_native_training": true
+  },
+  "qualified": false,
+  "resource_closeout": {
+    "ledger_snapshot": {
+      "bytes": 2463835,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+      "sha256": "583f7378ce67541617ecc2b2327f00eff0b68bf4caad54409619a3f97ee22bf5"
+    },
+    "owned_native_claims": [
+      {
+        "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/targets",
+        "child": {
+          "birth": "127474027",
+          "pid": 495982
+        },
+        "final_attempt_bytes": 14379209,
+        "owner": null,
+        "reservation_id": "015a62ec882b45d4ac02564172be3861",
+        "status": "released",
+        "storage_bytes": 300000000
+      },
+      {
+        "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/owner",
+        "child": null,
+        "final_attempt_bytes": 43936622,
+        "owner": null,
+        "reservation_id": "249113c78d244500abc1ffbabe119974",
+        "status": "released",
+        "storage_bytes": 180000000
+      },
+      {
+        "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b",
+        "child": null,
+        "final_attempt_bytes": 110154374,
+        "owner": null,
+        "reservation_id": "300e08c5ea774ee4820fe9855b724cbe",
+        "status": "released",
+        "storage_bytes": 150000000
+      },
+      {
+        "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/jobs/span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85/attempt-1",
+        "child": {
+          "birth": "127484793",
+          "pid": 526385
+        },
+        "final_attempt_bytes": 34701736,
+        "owner": null,
+        "reservation_id": "78f36d4ac46a4e2d9522cd1253104529",
+        "status": "released",
+        "storage_bytes": 220000000
+      },
+      {
+        "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a",
+        "child": null,
+        "final_attempt_bytes": 59144275,
+        "owner": null,
+        "reservation_id": "adaa8d09263b44dea1e3c81c92f5f170",
+        "status": "released",
+        "storage_bytes": 150000000
+      },
+      {
+        "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b/attempt-1",
+        "child": {
+          "birth": "127494689",
+          "pid": 551813
+        },
+        "final_attempt_bytes": 41813765,
+        "owner": null,
+        "reservation_id": "c294cc7360254963b68f9d0564f6ffee",
+        "status": "released",
+        "storage_bytes": 220000000
+      },
+      {
+        "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/frozen-run",
+        "child": {
+          "birth": "127472777",
+          "pid": 491384
+        },
+        "final_attempt_bytes": 8262,
+        "owner": null,
+        "reservation_id": "e2414bab55be4c8cae6222175082fd7a",
+        "status": "released",
+        "storage_bytes": 16777216
+      },
+      {
+        "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec/attempt-1",
+        "child": {
+          "birth": "127485645",
+          "pid": 529242
+        },
+        "final_attempt_bytes": 36823811,
+        "owner": null,
+        "reservation_id": "f466cd735db242daa9229c52584237de",
+        "status": "released",
+        "storage_bytes": 220000000
+      }
+    ],
+    "receipts": [
+      {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 398931317,
+        "receipt": {
+          "bytes": 3494,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/source-capture/resources.json",
+          "sha256": "0c495285f42dd8fcbd0f633703daab817dfd970e5e368235389022a6d335b2fe"
+        },
+        "reservation_id": "28755f3f7b1545cd9101c7a53f223c7e",
+        "status": "released"
+      },
+      {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 47564924,
+        "receipt": {
+          "bytes": 4404,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/hub-exchange-native-r1/resource-finalization.json",
+          "sha256": "6599255678e55f9ea93097ff86c9b3a8ee2131f5e71f5c5c8302e1f94ce86be4"
+        },
+        "reservation_id": "cc13d85165b34ede9be08f76544aebb8",
+        "status": "released"
+      },
+      {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 8262,
+        "receipt": {
+          "bytes": 3507,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/frozen-run/resources.json",
+          "sha256": "27659f7088a54deb703383266827404b356b85e778ccab1f0e6bb10cf6c5af78"
+        },
+        "reservation_id": "e2414bab55be4c8cae6222175082fd7a",
+        "status": "released"
+      },
+      {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 14379209,
+        "receipt": {
+          "bytes": 3521,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/targets/resources.json",
+          "sha256": "031457505f3a21d5d77bd7bf255879067513769d9bc8a21f5dc4f43cc0d0934c"
+        },
+        "reservation_id": "015a62ec882b45d4ac02564172be3861",
+        "status": "released"
+      },
+      {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 41813765,
+        "receipt": {
+          "bytes": 3610,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-45faf34ee7088476aa7650dec05441bb32fb965b05889004d476f19b8253930b/attempt-1/cycles/e924857cb02a41489687eaba16062495/resources.json",
+          "sha256": "c2623c9b1d94862d080e69c9d96d35f88b7b67ac4094ea68ae7e6c90fb37e207"
+        },
+        "reservation_id": "c294cc7360254963b68f9d0564f6ffee",
+        "status": "released"
+      },
+      {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 36823811,
+        "receipt": {
+          "bytes": 3609,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/jobs/span-attempt-0f643f0b236b0cfd23baa96456b74347daa3d82589fbeaacb5b53cbad39b88ec/attempt-1/cycles/80d28a2668df4361b7c00c4b1bd8a3ea/resources.json",
+          "sha256": "edaa721970ddc5f559faea9e7c7385c09dc1affe6ef690e91fab71a9e7ec13aa"
+        },
+        "reservation_id": "f466cd735db242daa9229c52584237de",
+        "status": "released"
+      },
+      {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 34701736,
+        "receipt": {
+          "bytes": 3612,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/jobs/span-attempt-75e55fdc2f858fc0923e89a2cf0f51d238faca21866b5fde2c234b2cd7151e85/attempt-1/cycles/fcc431d8153645e9a771c15cb3622319/resources.json",
+          "sha256": "208990efc853eeaca00f96d303d2f9d8f1c6e68ef9c960c4983f60422e430aa4"
+        },
+        "reservation_id": "78f36d4ac46a4e2d9522cd1253104529",
+        "status": "released"
+      }
+    ],
+    "scope": "this smoke, its source capture, and separately identified Hub smoke only; no historical claim reconciliation"
+  },
+  "schema": "native-distributed-feature-evidence/v1",
+  "source_proof": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "captured_git_provenance": {
+      "datasets": {
+        "head": "205bc6ef96c69c3ed9ddcd20ecf0b67f460f1841",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "status_sha256": "0446bf1e2a75aea46277de5c4e0d8b04f8f5526d7a4426862ef98dc361529073",
+        "tracked_diff_sha256": "24a249b17a57c1643975828407c0b7d6d3071010dddc98bf54dd8b4eaf188aa6",
+        "untracked_source_contents": "included in complete captured file inventory"
+      },
+      "jevops": {
+        "head": "e6d54af65c470e702dab797a3bbe90c17b84cfda",
+        "root": "/home/barberb/lift_coding/JevOps",
+        "status_sha256": "0ce54675c0378929707c7f504d51228c794d186560f2bb239de624ea81ca6335",
+        "tracked_diff_sha256": "5614c6967909d0889c1f96cba39201e0935a41667d848b6fd89db3546f408f51",
+        "untracked_source_contents": "included in complete captured file inventory"
+      }
+    },
+    "command_result": {
+      "bytes": 435,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/frozen-run/command-result.json",
+      "sha256": "f803d025707e8678b31b876b1d89dc1895daf99389d0d4531f51bef855496712"
+    },
+    "invocation": {
+      "bytes": 2942,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-invocation.json",
+      "sha256": "38fc928912b53ea453c94df20f62b052399ca3ff39c7787042272d24c3ccfa01"
+    },
+    "manifest": {
+      "bytes": 5072776,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/source-capture/capsule/manifest.json",
+      "sha256": "a3b7b74a427f66566c013d05ef8f3ae821382d7d3b0c610ffe2519fea8cd59dd"
+    },
+    "pretraining_timer_source": {
+      "matching_lines": [
+        1446
+      ],
+      "needle": "\"pretraining_seconds\": train_started - started",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415",
+      "snapshot": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/source-capture/capsule/sources/package/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+    },
+    "process_observation_source": {
+      "matching_lines": [
+        456
+      ],
+      "needle": "def _group_observation",
+      "sha256": "6a69fd04b7b00e4f9b30bba71499e51b5f1c7994397ee59674615a122e45213c",
+      "snapshot": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/source-capture/capsule/sources/scripts/run_incremental_autoencoders.py",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_incremental_autoencoders.py"
+    },
+    "receipt_after_training_source": {
+      "matching_lines": [
+        1554
+      ],
+      "needle": "_write_exclusive(output / \"receipt.json\"",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415",
+      "snapshot": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/source-capture/capsule/sources/package/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+    },
+    "training_timer_source": {
+      "matching_lines": [
+        1371
+      ],
+      "needle": "train_started = time.perf_counter()",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415",
+      "snapshot": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/source-capture/capsule/sources/package/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+    }
+  },
+  "stale_rebase_verified_count": 1,
+  "targets": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "cold_preparation": true,
+    "complete_five_bridge_supervision_count": 4,
+    "disk_cache_flag": 0,
+    "generation_observations": {
+      "bytes": 2817,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/targets/target-observations.jsonl",
+      "sha256": "90ba31ace8225456a0cea07e6ed3d05342e5b06487dfd548bd7e58567b289fe7"
+    },
+    "generation_seconds_per_span": 16.218754075292964,
+    "generation_seconds_sum": 64.87501630117185,
+    "legal_ir_target_count": 4,
+    "not_a_compiler_only_timing": true,
+    "not_model_or_legal_qualification": true,
+    "per_span_generation_seconds": [
+      {
+        "sample_id": "us-code-40-3318-429cfc454b54ce35",
+        "target_generation_seconds": 30.97338023618795
+      },
+      {
+        "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+        "target_generation_seconds": 20.323562507051975
+      },
+      {
+        "sample_id": "us-code-36-50106-bb17fee26e3ac266",
+        "target_generation_seconds": 3.227140200091526
+      },
+      {
+        "sample_id": "us-code-42-8286a-579bf6232e305315",
+        "target_generation_seconds": 10.350933357840404
+      }
+    ],
+    "preparation_wall_seconds": 90.04849849804305,
+    "preparation_wall_seconds_per_span": 22.51212462451076,
+    "process_metric_cache_used": false,
+    "prover_flag": false,
+    "receipt": {
+      "bytes": 5982,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/target-receipt.json",
+      "sha256": "af96a392e841cf030929a18a376efd9a680354ef667bbd2cf69e7470ad40e27a"
+    },
+    "sample_count": 4,
+    "worker_count": 1
+  },
+  "training_job_count": 3,
+  "training_process_pids": [
+    528895,
+    531429,
+    557371
+  ],
+  "validation_role": "repeated_selection_tuning",
+  "workers_final_complete_weights": [
+    {
+      "full_checkpoint": {
+        "bytes": 5555794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/weights/3/a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d.state.json",
+        "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+      },
+      "generation": 3,
+      "installed_receipt": {
+        "bytes": 3223,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-a/weights/current.json",
+        "sha256": "4041cf2cbe16e1bc6cabd0ee3af496b5f9860f553c9a678e7b28cf546c941ea4"
+      },
+      "version_id": "sha256:0603dc16a6fb0dab9dd0c753cb780398986278188e32e46a7881968887f56b30",
+      "worker_id": "worker-a"
+    },
+    {
+      "full_checkpoint": {
+        "bytes": 5555794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/weights/3/a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d.state.json",
+        "sha256": "a3812f620e6a91ef5787f026ef16c16fe96c3b8e1b3a5af0957ba7be25c1fc5d"
+      },
+      "generation": 3,
+      "installed_receipt": {
+        "bytes": 3223,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native/worker-b/weights/current.json",
+        "sha256": "27e0988980059f5d6a5680a99b123500d541254dcaae52eebd854e9d0632f769"
+      },
+      "version_id": "sha256:0603dc16a6fb0dab9dd0c753cb780398986278188e32e46a7881968887f56b30",
+      "worker_id": "worker-b"
+    }
+  ]
+}

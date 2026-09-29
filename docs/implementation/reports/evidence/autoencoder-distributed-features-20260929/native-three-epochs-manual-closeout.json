@@ -1,0 +1,36 @@
+{
+  "admitted": false,
+  "all_artifacts_preserved": true,
+  "all_other_reservations_unchanged": true,
+  "closeout_storage_allocation_bytes": 200000000,
+  "formalized": false,
+  "global_storage_limit_bytes": 87000000000,
+  "ledger_after_amendment": {
+    "bytes": 3316134,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/worker-b-closeout/ledger-after-amendment.json",
+    "sha256": "1f23c782307b10623cc136ba66c1d0fefa3418d1e5e58a287b855fe41f61fc27"
+  },
+  "ledger_after_reconciliation": {
+    "bytes": 3359917,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/worker-b-closeout/ledger-after-reconciliation.json",
+    "sha256": "8afa62da3f24606ca271f665151666c7323aae0ce54d28b6dab97379c910fc8e"
+  },
+  "ledger_before": {
+    "bytes": 3313767,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/worker-b-closeout/ledger-before-amendment.json",
+    "sha256": "cdd8216a829997df2a3d6997755a00f2d5c6311d7743ed690c84f9b3cbbba4c9"
+  },
+  "manual_administrative_closeout": true,
+  "original_budget_passed": false,
+  "original_failed_collector_preserved": true,
+  "original_storage_limit_bytes": 180000000,
+  "reconciliation": {
+    "bytes": 38573,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r2/worker-b-closeout/existing-helper-reconciliation.json",
+    "sha256": "f3ece7d508a3043996900e054839b38975029022468056659f05443d0fca7876"
+  },
+  "reservation_id": "a9c9b8f67c4a449cbd7761fc650c5ed9",
+  "retained_artifact_bytes": 194051423,
+  "schema": "explicit-owned-smoke-closeout-result/v1",
+  "status": "released"
+}

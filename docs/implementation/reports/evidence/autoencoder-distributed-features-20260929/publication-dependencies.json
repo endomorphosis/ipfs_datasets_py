@@ -1,0 +1,106 @@
+{
+  "admitted": false,
+  "formalized": false,
+  "matching_existing_feature_dependencies": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_contracts.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paths.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_operation_journal.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualified_training.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_report_session.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_package_inputs.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_produced_record_projection.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_corpus_export.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_ontology_observation.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_observation.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_merge.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_embeddings.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_import.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_capacity.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_training_request.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_weight_session.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_sparse_shadow.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_training.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_inputs.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_corpus_rows.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_detached_inputs.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_process_worker.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_plan.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_process.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_receipt_set.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_target_session.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_report_preparation.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_qualification_pool.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_job_inputs.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_shadow_evidence.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_batches.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_arrow_inputs.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_training.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_corpus_inputs.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_execution.py",
+    "ipfs_datasets_py/utils/symai_config.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py",
+    "scripts/ops/legal_ir/run_incremental_autoencoders.py"
+  ],
+  "native_smoke_scope": "captured live tree plus explicit provenance, separate from partial exact-origin source tests",
+  "origin_commit": "61733095d3d8499879bf83c311f5a8a7537fa0b3",
+  "relevant_live_origin_differences": [
+    {
+      "live_sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+      "origin_sha256": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+      "path": "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    },
+    {
+      "live_sha256": "6a220bf20aa8bdb24dd14d8b3467554d674cfadd0b44e88f3d019ce0b02afb2a",
+      "origin_sha256": "dc53e7c4875a2afa98e100177c0d70e224e1945048f18993333f72c313529109",
+      "path": "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    },
+    {
+      "live_sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "origin_sha256": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py"
+    },
+    {
+      "live_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "origin_sha256": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py"
+    },
+    {
+      "live_sha256": "daddb94ed2170b1d4be5011c6294e024f705b6d75b2f5c853066b24d3271d929",
+      "origin_sha256": "04959738f30dd88243f5f54b6b4d42957ba21d8e97e000e96c4121daee86dbce",
+      "path": "ipfs_datasets_py/logic/modal/decompiler.py"
+    },
+    {
+      "live_sha256": "bc04009a284d6bfe6e8dc07a7477f704177167980890a0060b6a69a9dc1a5b3d",
+      "origin_sha256": "af33421f46977e1f2bbd4cead4d315954efac5d5827bb44b039107045e8f724b",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+    },
+    {
+      "live_sha256": "2bd0a41ec8e7dbbe5c8c90fb7e7e8bc8ffdd4327edceb06f3532416ebb396c55",
+      "origin_sha256": "045a2a067c9eff2c1963bc0ceaac50ed712f13fadc18f0fc1807e864615032a9",
+      "path": "ipfs_datasets_py/logic/autoformal/worker_budget.py"
+    }
+  ],
+  "scope": "read-only publication dependency audit",
+  "semantic_difference_note": "Origin retains newer copular-passive/comparison/citation handling. The native selected training 46 USC60303 and tuning42 USC8286a contain copular passives, so live-capsule evidence must not be described as exact-origin validation. Regenerate target artifacts for the publication generation.",
+  "unpublished_required_feature_dependencies_outside_scoped_paths": [],
+  "worker_budget_note": "The live modal_autoencoder difference affects automatic default parallelism; this training uses explicit legal_ir_parallel_workers=1."
+}

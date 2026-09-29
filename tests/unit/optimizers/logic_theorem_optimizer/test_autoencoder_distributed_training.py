@@ -74,6 +74,32 @@ def test_installed_generation_hashes_full_bytes_and_resume_reuses_verified_cache
     )
 
 
+def test_feature_generation_uses_separate_downloader_and_verifies_full_bytes(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_feature_exchange as exchange
+    from ipfs_datasets_py.huggingface import autoencoder_incremental_download as qualified
+    old = work.install_generation(generation(b"feature parent"), tmp_path,
+        downloader=checkpoint_downloader(b"feature parent", []))
+    next_generation = generation(b"feature candidate", 2)
+    next_generation["weight_reference"]["kind"] = "feature_sparse"
+    next_generation["weight_reference"]["anchor_reference"] = old["binding"]["weight_reference"]
+    observed = []
+    def download(reference, target, *, local_parent_resolver):
+        assert reference == next_generation["weight_reference"]
+        assert local_parent_resolver(old["materialized_checkpoint"]) == Path(old["checkpoint_path"])
+        observed.append(reference)
+        path = target / "candidate.json"
+        path.write_bytes(b"feature candidate")
+        return {"materialized_checkpoint_path": str(path), "downloaded_bytes": 5,
+                "qualified": False, "admitted": False}
+    monkeypatch.setattr(exchange, "download_feature_update", download)
+    monkeypatch.setattr(qualified, "download_sparse_update", lambda *a, **k: pytest.fail("qualified route"))
+    installed = work.install_generation(next_generation, tmp_path)
+    assert installed["full_weights_verified"] is True
+    assert len(observed) == 1
+    work.install_generation(next_generation, tmp_path)
+    assert len(observed) == 1
+
+
 def test_install_resume_recovers_crash_between_installed_and_current_writes(tmp_path):
     raw = b"complete transport fixture"
     expected = generation(raw)
@@ -325,6 +351,44 @@ def test_cli_reservation_does_not_use_uncovered_state_directory(tmp_path, cli):
     )
     with pytest.raises(work.DistributedTrainingError, match="outside resource ledger"):
         cli._reserve(args)
+
+
+def test_feature_owner_requires_verified_inputs_before_any_execution(tmp_path, cli, monkeypatch):
+    monkeypatch.setattr(cli, "owner", lambda args: pytest.fail("unverified feature owner"))
+    with pytest.raises(SystemExit) as error:
+        cli.main(["owner", "--training-purpose", "feature_pretraining", "--state-directory", str(tmp_path),
+            "--campaign-id", "features", "--worker-id", "one", "--input-jsonl", "input.jsonl",
+            "--validation-jsonl", "validation.jsonl"])
+    assert error.value.code == 2
+
+
+def test_feature_sync_only_needs_no_training_inputs(tmp_path, cli, monkeypatch):
+    observed = []
+    monkeypatch.setattr(cli, "worker", observed.append)
+    assert cli.main(["worker", "--training-purpose", "feature_pretraining", "--state-directory", str(tmp_path),
+        "--connection-file", "connection.json", "--sync-only"]) == 0
+    assert len(observed) == 1 and observed[0].sync_only
+
+
+def test_feature_owner_policy_options_are_explicit_and_bounded(tmp_path, cli, monkeypatch):
+    observed = []
+    monkeypatch.setattr(cli, "owner", observed.append)
+    args = ["owner", "--training-purpose", "feature_pretraining", "--state-directory", str(tmp_path),
+        "--campaign-id", "features", "--worker-id", "one", "--input-jsonl", "input.jsonl",
+        "--validation-jsonl", "validation.jsonl", "--feature-input-manifest", "manifest.json",
+        "--shared-targets", "targets.bundle", "--target-snapshot-id", "sha256:" + "1" * 64]
+    assert cli.main(args) == 0
+    assert observed[0].projection_optimizer_mode == "productive_adaptive"
+    assert observed[0].epochs == 3
+    with pytest.raises(SystemExit):
+        cli.main([*args, "--learning-rate", "nan"])
+    with pytest.raises(SystemExit):
+        cli.main([*args, "--repository-id", work.REPOSITORY])
+    for invalid in (["--epochs", "33"], ["--line-search-attempts", "1"],
+                    ["--projection-momentum", "0.99"], ["--projection-optimizer-mode", "fixed"]):
+        with pytest.raises(SystemExit):
+            cli.main([*args, *invalid])
+    assert len(observed) == 1
 
 
 def qualification_receipt(version, artifact, *, passed, training=None, validation=None):

@@ -51,6 +51,8 @@ def identity():
         normalized = 'JevOps/jevops/statement_lock.py' if key.endswith('/JevOps/jevops/statement_lock.py') else key
         hashes[normalized] = value
     paths = ['ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_training.py',
+             'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_distributed_features.py',
+             'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_exchange.py',
              'ipfs_datasets_py/duckdb_control/autoencoder_span_campaign.py',
              'ipfs_datasets_py/huggingface/autoencoder_incremental_download.py',
              'ipfs_datasets_py/huggingface/autoencoder_span_attempts.py',
@@ -107,7 +109,7 @@ def install_generation(generation, directory, *, downloader=None, advertise_curr
         result = downloader(reference, target)
     elif reference['kind'] == 'anchor':
         result = downloads.download_seed_checkpoint({key: reference[key] for key in ('repository_id','commit_sha','path_in_repo','sha256','bytes')}, target)
-    elif reference['kind'] == 'sparse':
+    elif reference['kind'] in {'sparse', 'feature_sparse'}:
         def local_anchor(expected):
             # Reuse a previously verified complete generation. Numerical work
             # stays local; ordinary updates need only the new sparse closure.
@@ -123,9 +125,13 @@ def install_generation(generation, directory, *, downloader=None, advertise_curr
                 if supplied is not None:
                     return verify_complete_checkpoint(supplied, expected)
             return None
-        result = downloads.download_sparse_update(reference['repository_id'], reference['commit_sha'],
-            reference['path_in_repo'], reference['sha256'], target,
-            anchor_reference=reference['anchor_reference'], local_anchor_resolver=local_anchor)
+        if reference['kind'] == 'feature_sparse':
+            from .autoencoder_feature_exchange import download_feature_update
+            result = download_feature_update(reference, target, local_parent_resolver=local_anchor)
+        else:
+            result = downloads.download_sparse_update(reference['repository_id'], reference['commit_sha'],
+                reference['path_in_repo'], reference['sha256'], target,
+                anchor_reference=reference['anchor_reference'], local_anchor_resolver=local_anchor)
     else:
         raise DistributedTrainingError('unsupported canonical weight transport')
     path = verify_complete_checkpoint(result['materialized_checkpoint_path'], binding['artifact'])

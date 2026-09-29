@@ -55,6 +55,43 @@ def verify_fixture(registry, tmp_path, disposition="qualified"):
     return verify
 
 
+def feature_reference(artifact, parent_reference):
+    return {"kind": "feature_sparse", "repository_id": REPOSITORY, "commit_sha": "d" * 40,
+            "path_in_repo": "autoformal/uscode/feature-pretraining/updates/" + "e" * 64 + ".json",
+            "sha256": "e" * 64, "bytes": 100, "materialized_checkpoint": artifact,
+            "anchor_reference": parent_reference}
+
+
+def feature_campaign(registry, tmp_path, **extra):
+    return campaign(registry, tmp_path, policy={"training_purpose": "feature_pretraining", **extra})
+
+
+def feature_verifier(registry, tmp_path, control, *, updated=True, overrides=None):
+    def verify(assignment, report):
+        parent = registry.get_version(assignment["base_version_id"])["artifact"]
+        artifact = staged(registry, tmp_path, "feature-" + assignment["run_id"]) if updated else parent
+        evidence = staged(registry, tmp_path, "evidence-" + assignment["run_id"])
+        # The synthetic bytes test owner fencing and portable references only;
+        # this fixture does not train, replay real weights or qualify source.
+        result = {"training_purpose": "feature_pretraining", "owner_verified": True,
+                  "qualified": False, "admitted": False, "formalized": False,
+                  "span_disposition": "feature_updated" if updated else "feature_no_update",
+                  "optimizer_accepted_epochs": 2 if updated else 0,
+                  "feature_evidence_artifact": evidence, "sparse_replay_verified": True,
+                  "raw_objective_verified": True, "shared_target_supervision_verified": True,
+                  "weight_reference": feature_reference(artifact, control.seed["weight_reference"])}
+        result.update(overrides or {})
+        return {"artifact": artifact, "result": result}
+    return verify
+
+
+def pending_feature(control, *, worker="worker-a", operation="claim"):
+    ack(control, worker)
+    claimed = control.claim_next(operation, worker)
+    control.report("report-" + operation, worker, claimed["lease"], remote_report())
+    return claimed
+
+
 def test_registration_is_idempotent_and_census_observations_do_not_retrain(tmp_path):
     with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
         control = campaign(registry, tmp_path)
@@ -351,6 +388,252 @@ def test_native_publisher_reference_preserves_closed_descriptor_for_owner_downlo
         result = control.report("report", "worker-a", claim["lease"], ref)
         assert result["report_descriptor"] == ref
         assert control.read(claim["lease"]["run_id"], worker_id="worker-a")["result"]["report_descriptor"] == ref
+
+
+def test_feature_purpose_is_explicit_immutable_and_does_not_change_default_binding(tmp_path):
+    from ipfs_datasets_py.duckdb_control.contracts import canonical_json_bytes
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = campaign(registry, tmp_path)
+        assert control.training_purpose == "formalization"
+        assert control.binding["policy"] == {"fixture": True}
+        assert control.binding_sha256 == hashlib.sha256(canonical_json_bytes(control.binding)).hexdigest()
+        with pytest.raises(RegistryError, match="different payload"):
+            feature_campaign(registry, tmp_path)
+        with pytest.raises(SpanCampaignError, match="invalid training purpose"):
+            campaign(registry, tmp_path, policy={"training_purpose": "skip_gates"})
+
+
+@pytest.mark.parametrize("feature", [False, True])
+def test_owner_result_cannot_cross_campaign_purposes(tmp_path, feature):
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path) if feature else campaign(registry, tmp_path)
+        control.register_records([record()])
+        claimed = pending_feature(control)
+        validator = verify_fixture(registry, tmp_path) if feature else feature_verifier(registry, tmp_path, control)
+        with pytest.raises(SpanCampaignError, match="owner must verify"):
+            control.verify_reports(validator)
+        assert registry.get_run_completion(claimed["lease"]["run_id"]) is None
+        assert control.status()["weights"]["generation"] == 1
+
+
+@pytest.mark.parametrize("overrides", [
+    {"qualified": True}, {"admitted": True}, {"formalized": True}, {"formalized": None},
+    {"owner_verified": False}, {"sparse_replay_verified": False}, {"raw_objective_verified": False},
+    {"shared_target_supervision_verified": False}, {"span_disposition": "qualified"},
+    {"optimizer_accepted_epochs": 0}, {"optimizer_accepted_epochs": True},
+    {"optimizer_accepted_epochs": -1}, {"training_purpose": "formalization"},
+])
+def test_feature_verification_fails_closed_without_exact_owner_evidence(tmp_path, overrides):
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path)
+        control.register_records([record()])
+        claimed = pending_feature(control)
+        with pytest.raises(SpanCampaignError):
+            control.verify_reports(feature_verifier(registry, tmp_path, control, overrides=overrides))
+        assert registry.get_run_completion(claimed["lease"]["run_id"]) is None
+        assert control.status()["counts"] == {"awaiting_verification": 1}
+
+
+def test_feature_owner_evidence_must_exist_unchanged_in_owner_cas(tmp_path):
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path)
+        control.register_records([record()])
+        claimed = pending_feature(control)
+        verifier = feature_verifier(registry, tmp_path, control)
+        def tampered(assignment, report):
+            verified = verifier(assignment, report)
+            registry.artifact_path(verified["result"]["feature_evidence_artifact"]).write_bytes(b"changed")
+            return verified
+        with pytest.raises(RegistryError, match="digest mismatch"):
+            control.verify_reports(tampered)
+        assert registry.get_run_completion(claimed["lease"]["run_id"]) is None
+
+
+def test_feature_no_update_consumes_work_and_holds_canonical_generation(tmp_path):
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path)
+        control.register_records([record()])
+        claim = pending_feature(control)
+        done = control.verify_reports(feature_verifier(registry, tmp_path, control, updated=False))[0]
+        version = registry.get_version(done["version_id"])
+        assert done["span_disposition"] == "feature_no_update"
+        assert version["artifact"] == control.seed["artifact"]
+        assert control.status()["counts"] == {"source_completed": 1}
+        assert control.status()["weights"] == control.seed
+        with pytest.raises(SpanCampaignError, match="feature_updated child"):
+            control.advance_generation("no-update", done["version_id"], expected_generation=1,
+                expected_version_id=control.seed["version_id"], weight_reference=reference(version["artifact"]))
+        assert control.claim_next("remaining", "worker-a")["status"] == "empty"
+        assert control.read(claim["lease"]["run_id"])["result"]["qualified"] is False
+
+
+def test_feature_generation_uses_verified_reference_and_common_ack_without_legal_promotion(tmp_path):
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path)
+        control.register_records([record(), record("Another feature source.")])
+        pending_feature(control)
+        ack(control, "worker-b")
+        done = control.verify_reports(feature_verifier(registry, tmp_path, control))[0]
+        version = registry.get_version(done["version_id"])
+        ref = version["metadata"]["result"]["weight_reference"]
+        with pytest.raises(SpanCampaignError, match="differs from owner-verified"):
+            control.advance_generation("wrong-reference", version["version_id"], expected_generation=1,
+                expected_version_id=control.seed["version_id"], weight_reference={**ref, "commit_sha": "f" * 40})
+        advance = control.advance_generation("advance", version["version_id"], expected_generation=1,
+            expected_version_id=control.seed["version_id"], weight_reference=ref)
+        assert advance == control.advance_generation("advance", version["version_id"], expected_generation=1,
+            expected_version_id=control.seed["version_id"], weight_reference=ref)
+        assert advance["generation"] == 2 and advance["training_purpose"] == "feature_pretraining"
+        assert all(advance[key] is False for key in ("qualified", "admitted", "formalized", "head_promotion_performed"))
+        assert registry.resolve_head("english", "inference") is None
+        assert control.status()["workers_needing_sync"] == ["worker-a", "worker-b"]
+        with pytest.raises(SpanCampaignError, match="acknowledge current"):
+            control.claim_next("stale-worker", "worker-b")
+        with pytest.raises(SpanCampaignError, match="acknowledgement differs"):
+            control.acknowledge_weights("wrong-bytes", "worker-b", 2, version["version_id"], control.seed["artifact"])
+        ack(control, "worker-b")
+        claim = control.claim_next("new-feature", "worker-b")
+        assert claim["assignment"]["base_version_id"] == version["version_id"]
+        assert claim["weights"]["weight_reference"] == ref
+
+
+def test_feature_sparse_reference_is_purpose_scoped_and_binds_immediate_parent(tmp_path):
+    from ipfs_datasets_py.duckdb_control.autoencoder_span_campaign import _weight_reference
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path)
+        control.register_records([record()])
+        pending_feature(control)
+        done = control.verify_reports(feature_verifier(registry, tmp_path, control))[0]
+        version = registry.get_version(done["version_id"])
+        ref = version["metadata"]["result"]["weight_reference"]
+        with pytest.raises(SpanCampaignError, match="kind for training purpose"):
+            _weight_reference(ref, version["artifact"], REPOSITORY)
+        with pytest.raises(SpanCampaignError, match="kind for training purpose"):
+            _weight_reference({**ref, "kind": "sparse"}, version["artifact"], REPOSITORY,
+                              training_purpose="feature_pretraining")
+        without_parent = {key: value for key, value in ref.items() if key != "anchor_reference"}
+        with pytest.raises(SpanCampaignError, match="exact parent"):
+            _weight_reference(without_parent, version["artifact"], REPOSITORY, training_purpose="feature_pretraining")
+        with pytest.raises(SpanCampaignError, match="another parent"):
+            control.advance_generation("wrong-parent", version["version_id"], expected_generation=1,
+                expected_version_id=control.seed["version_id"], weight_reference={**ref, "anchor_reference": reference(version["artifact"])})
+
+
+@pytest.mark.parametrize("verify_together", [False, True])
+def test_feature_stale_sibling_requeues_against_new_parent_without_merging(tmp_path, verify_together):
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path)
+        control.register_records([record("Feature source A."), record("Feature source B.")])
+        first = pending_feature(control)
+        second = pending_feature(control, worker="worker-b")
+        completed = control.verify_reports(feature_verifier(registry, tmp_path, control), max_reports=2 if verify_together else 1)
+        winner = registry.get_version(completed[0]["version_id"])
+        control.advance_generation("advance", winner["version_id"], expected_generation=1,
+            expected_version_id=control.seed["version_id"], weight_reference=winner["metadata"]["result"]["weight_reference"])
+        if verify_together:
+            loser = completed[1]
+            with pytest.raises(SpanCampaignError, match="CAS conflict"):
+                control.requeue_stale_feature_candidate("stale-cas", loser["version_id"], expected_generation=1,
+                                                       expected_version_id=control.seed["version_id"])
+            requeued = control.requeue_stale_feature_candidate("requeue", loser["version_id"], expected_generation=2,
+                                                              expected_version_id=winner["version_id"])
+            assert requeued == control.requeue_stale_feature_candidate("requeue", loser["version_id"], expected_generation=2,
+                                                                      expected_version_id=winner["version_id"])
+            assert requeued["span_disposition"] == "rebase_required"
+        else:
+            loser = control.verify_reports(feature_verifier(registry, tmp_path, control))[0]
+            result = registry.get_run(loser["run_id"])["result"]
+            assert result["span_disposition"] == "rebase_required"
+            assert result["owner_candidate_feature_updated"] is True and result["qualified"] is False
+            assert "owner_candidate_qualified" not in result
+        stale_claim = next(row for row in (first, second) if row["lease"]["run_id"] == loser["run_id"])
+        assert control.status()["counts"] == {"queued": 1, "source_completed": 1}
+        ack(control, "worker-b")
+        resumed = control.claim_next("retry", "worker-b")
+        assert resumed["assignment"]["work_id"] == stale_claim["assignment"]["work_id"]
+        assert resumed["assignment"]["base_version_id"] == winner["version_id"]
+        assert resumed["lease"]["run_id"] != loser["run_id"]
+        assert registry.get_run(loser["run_id"])["status"] == "completed"
+        with pytest.raises(SpanCampaignError, match="stale unselected"):
+            control.requeue_stale_feature_candidate("requeue-winner", winner["version_id"], expected_generation=2,
+                                                   expected_version_id=winner["version_id"])
+
+
+def test_feature_owner_restart_and_lost_completion_are_resumable(tmp_path, monkeypatch):
+    path, artifacts = tmp_path / "owner.db", tmp_path / "artifacts"
+    with AutoencoderRegistry(path, artifacts) as registry:
+        control = feature_campaign(registry, tmp_path)
+        control.register_records([record()])
+        pending_feature(control)
+    with AutoencoderRegistry(path, artifacts) as registry:
+        control = feature_campaign(registry, tmp_path)
+        original = registry.complete_run
+        def lose_reply(*args, **kwargs):
+            original(*args, **kwargs)
+            raise RuntimeError("lost feature completion reply")
+        monkeypatch.setattr(registry, "complete_run", lose_reply)
+        with pytest.raises(RuntimeError, match="lost feature completion"):
+            control.verify_reports(feature_verifier(registry, tmp_path, control))
+    with AutoencoderRegistry(path, artifacts) as registry:
+        control = feature_campaign(registry, tmp_path)
+        def must_not_reverify(*args):
+            pytest.fail("durable owner feature completion must not repeat")
+        done = control.verify_reports(must_not_reverify)[0]
+        assert done["span_disposition"] == "feature_updated"
+        assert control.status()["counts"] == {"source_completed": 1}
+
+
+def test_previously_selected_feature_ancestor_cannot_be_requeued(tmp_path):
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path)
+        control.register_records([record("A"), record("B")])
+        versions = []
+        for index in range(2):
+            pending_feature(control, operation="claim-" + str(index))
+            parent = control.status()["weights"]
+            fixture = feature_verifier(registry, tmp_path, control)
+            def verify(assignment, report):
+                value = fixture(assignment, report)
+                value["result"]["weight_reference"] = feature_reference(value["artifact"], parent["weight_reference"])
+                return value
+            done = control.verify_reports(verify)[0]
+            version = registry.get_version(done["version_id"])
+            control.advance_generation("advance-" + str(index), version["version_id"],
+                expected_generation=parent["generation"], expected_version_id=parent["version_id"],
+                weight_reference=version["metadata"]["result"]["weight_reference"])
+            versions.append(version)
+        with pytest.raises(SpanCampaignError, match="previously selected"):
+            control.requeue_stale_feature_candidate("old-selection", versions[0]["version_id"], expected_generation=3,
+                                                   expected_version_id=versions[1]["version_id"])
+        assert control.status()["counts"] == {"source_completed": 2}
+
+
+@pytest.mark.parametrize("tuning_count", [2, 32])
+def test_feature_compact_verified_384d_tuning_bindings_fit_existing_control_envelopes(tmp_path, tuning_count):
+    from ipfs_datasets_py.duckdb_control.autoencoder_quack_wire import make_reply, MAX_REPLY_BYTES
+    vectors = [[(index + 1) / (coordinate + 2) for coordinate in range(384)] for index in range(tuning_count)]
+    vector_bytes = json.dumps(vectors, sort_keys=True, separators=(",", ":")).encode()
+    policy = {"validation_samples_sha256": hashlib.sha256(vector_bytes).hexdigest(),
+              "validation_sample_count": tuning_count, "embedding_dimension": 384,
+              "verified_tuning_receipt_sha256": "a" * 64,
+              "validation_embedding_hashes": [hashlib.sha256(json.dumps(vector).encode()).hexdigest() for vector in vectors],
+              "source_identity": "b" * 18000}
+    with AutoencoderRegistry(tmp_path / "owner.db", tmp_path / "artifacts") as registry:
+        control = feature_campaign(registry, tmp_path, **policy)
+        sample = {**record(), "sample": {"text": record()["sample"]["text"], "embedding": vectors[0]}}
+        control.register_records([sample])
+        ack(control)
+        claimed = control.claim_next("claim", "worker-a")
+        envelope = SpanCampaignTransportClient._request_envelope("ClaimSpan", {}, "claim")
+        reply = make_reply(envelope, result=claimed)
+        assert len(json.dumps(reply, separators=(",", ":")).encode()) < MAX_REPLY_BYTES
+        assert claimed["assignment"]["policy"] == {"training_purpose": "feature_pretraining", **policy}
+        assert "validation_samples" not in claimed["assignment"]["policy"]
+        control.report("report", "worker-a", claimed["lease"], remote_report())
+        completed = control.verify_reports(feature_verifier(registry, tmp_path, control))[0]
+        read = control.read(completed["run_id"], worker_id="worker-a")
+        assert make_reply(SpanCampaignTransportClient._request_envelope("ReadSpan", {"run_id": completed["run_id"]}, "read"),
+                          result=read)["result"]["result"]["qualified"] is False
 
 
 @pytest.mark.skipif(os.environ.get("IPFS_DATASETS_RUN_NATIVE_STORAGE_PROBE") != "1", reason="explicit isolated native Quack opt-in")

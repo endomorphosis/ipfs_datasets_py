@@ -2,7 +2,8 @@
 
 Only the owner opens DuckDB. Scoped Quack clients exchange bounded assignments,
 leases, and immutable Hub report references. A report is pending evidence until
-an owner-supplied verifier downloads, replays and qualifies it. No network or
+an owner-supplied verifier downloads, replays and checks it for the campaign's
+immutable purpose. Feature pretraining never qualifies or admits a span. No network or
 training starts at import. Native Quack remains loopback; remote hosts use an
 explicit private tunnel. This module never weakens qualification or admits law.
 """
@@ -27,6 +28,7 @@ _HEX = re.compile(r"[0-9a-f]{64}\Z")
 _REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
 _MAX_RECORD = 24 * 1024
 _MAX_OBSERVATION = 8 * 1024 * 1024
+_FEATURE_PURPOSE = "feature_pretraining"
 
 
 class SpanCampaignError(ValueError):
@@ -73,12 +75,15 @@ def _reference(value, repository):
     return _copy(value)
 
 
-def _weight_reference(value, artifact, repository, _depth=0):
+def _weight_reference(value, artifact, repository, _depth=0, *, training_purpose="formalization"):
     _require(_depth <= 8, "weight reference ancestry exceeds depth bound")
     required = {"kind", "repository_id", "commit_sha", "path_in_repo", "sha256", "bytes", "materialized_checkpoint"}
     _require(type(value) is dict and required <= set(value) and not set(value) - required - {"anchor_reference"},
              "weights require an immutable portable reference")
-    _require(value["kind"] in {"anchor", "sparse"}, "invalid weight reference kind")
+    kinds = {"anchor", "feature_sparse"} if training_purpose == _FEATURE_PURPOSE else {"anchor", "sparse"}
+    _require(value["kind"] in kinds, "invalid weight reference kind for training purpose")
+    if value["kind"] == "feature_sparse":
+        _require("anchor_reference" in value, "feature sparse weights require an exact parent reference")
     _require(type(value["bytes"]) is int and 0 < value["bytes"] <= 512 * 1024 * 1024, "invalid weight byte bound")
     _reference({"repository": value["repository_id"], "revision": value["commit_sha"], "path": value["path_in_repo"],
                 "sha256": value["sha256"], "bytes": min(value["bytes"], 16 * 1024 * 1024)}, repository)
@@ -88,7 +93,8 @@ def _weight_reference(value, artifact, repository, _depth=0):
     if "anchor_reference" in value:
         anchor = value["anchor_reference"]
         if type(anchor) is dict and "kind" in anchor:
-            _weight_reference(anchor, _artifact(anchor.get("materialized_checkpoint", {})), repository, _depth + 1)
+            _weight_reference(anchor, _artifact(anchor.get("materialized_checkpoint", {})), repository,
+                              _depth + 1, training_purpose=training_purpose)
             return _copy(value)
         _require(type(anchor) is dict and set(anchor) == {"repository_id", "commit_sha", "path_in_repo", "sha256", "bytes"}, "invalid anchor reference")
         _require(type(anchor["bytes"]) is int and 0 < anchor["bytes"] <= 512 * 1024 * 1024, "invalid anchor byte bound")
@@ -129,10 +135,14 @@ class AutoencoderSpanCampaign:
 
     ``validator(assignment, report_descriptor)`` is a trusted owner callback,
     never a wire argument. It returns ``{'artifact': <owner CAS descriptor>,
-    'result': <owner qualification result>}``. The result must explicitly record
+    'result': <owner verification result>}``. Formalization results explicitly record
     ``admitted=False``, ``owner_verified=True``, and a ``span_disposition`` of
     ``qualified`` or ``needs_repair``. Neither submission nor completion promotes
-    weights. ``advance_generation`` is an explicit, owner-only CAS operation.
+    weights. Explicit ``policy.training_purpose='feature_pretraining'`` instead
+    requires verified raw feature/target/replay evidence and all legal success
+    flags false. It uses a separate, immutable campaign and portable weight kind.
+    ``advance_generation`` is an explicit, owner-only CAS operation; selecting a
+    feature generation never promotes an inference head or formalizes a span.
     """
 
     def __init__(self, registry: AutoencoderRegistry, *, campaign_id: str,
@@ -143,15 +153,23 @@ class AutoencoderSpanCampaign:
         for name, value in (("campaign_id", campaign_id), ("variant_id", variant_id), ("base_version_id", base_version_id)):
             _token(value, name)
         _require(type(policy) is dict, "campaign policy must be an object")
+        self.training_purpose = policy.get("training_purpose", "formalization")
+        _require(type(self.training_purpose) is str and self.training_purpose in {"formalization", _FEATURE_PURPOSE},
+                 "invalid training purpose")
         _require(type(result_repository) is str and _REPOSITORY.fullmatch(result_repository), "invalid result repository")
         version = registry.get_version(base_version_id)
         _require(version["variant_id"] == variant_id, "campaign seed belongs to another variant")
         self.registry, self.campaign_id, self.variant_id = registry, campaign_id, variant_id
         self.result_repository = result_repository
-        reference = _weight_reference(seed_weight_reference, version["artifact"], result_repository)
+        reference = _weight_reference(seed_weight_reference, version["artifact"], result_repository,
+                                      training_purpose=self.training_purpose)
+        # Keep vectors in immutable artifacts or independently verified local
+        # inputs. The registry and wire retain their existing 64/128 KiB bounds.
+        policy_bound = 40 * 1024 if self.training_purpose == _FEATURE_PURPOSE else 16 * 1024
+        binding_bound = 60 * 1024 if self.training_purpose == _FEATURE_PURPOSE else 48 * 1024
         self.binding = _copy({"schema": SCHEMA, "campaign_id": campaign_id, "variant_id": variant_id,
-                              "base_version_id": base_version_id, "policy": _copy(policy, 16 * 1024),
-                              "result_repository": result_repository, "seed_weight_reference": reference})
+                              "base_version_id": base_version_id, "policy": _copy(policy, policy_bound),
+                              "result_repository": result_repository, "seed_weight_reference": reference}, binding_bound)
         self.binding_sha256 = _digest(self.binding)
         self.seed = {"generation": 1, "version_id": base_version_id, "artifact": version["artifact"], "weight_reference": reference}
         registry._mutate("span-campaign-bind:" + _digest(campaign_id), "BindSpanCampaign", self.binding,
@@ -394,7 +412,7 @@ class AutoencoderSpanCampaign:
         completed = []
         for work_id in ids:
             work = self._scope(self.registry.get_run(work_id))
-            pending = _copy(work["result"])
+            pending = _copy(work["result"], 128 * 1024)
             run_id = pending["assignment"]["run_id"]
             run = self._scope(self.registry.get_run(run_id))
             old = self.registry.get_run_completion(run_id)
@@ -404,12 +422,18 @@ class AutoencoderSpanCampaign:
                 self._finish_work(work_id, receipt, disposition)
                 completed.append({**receipt, "span_disposition": disposition})
                 continue
-            verified = validator(_copy(pending["assignment"]), _copy(pending["report_descriptor"]))
+            verified = validator(_copy(pending["assignment"], 128 * 1024), _copy(pending["report_descriptor"]))
             _require(type(verified) is dict and set(verified) == {"artifact", "result"}, "invalid owner verification result")
             artifact = self.registry.verify_artifact(verified["artifact"])
             result = _copy(verified["result"], 16 * 1024)
-            _require(result.get("admitted") is False and result.get("owner_verified") is True
-                     and result.get("span_disposition") in {"qualified", "needs_repair", "training_exhausted"}, "owner must verify exact qualification disposition")
+            if self.training_purpose == _FEATURE_PURPOSE:
+                parent = self.registry.get_version(pending["assignment"]["base_version_id"])
+                self._verify_feature_result(result, artifact, parent["artifact"])
+            else:
+                _require(result.get("training_purpose", "formalization") == "formalization"
+                         and result.get("admitted") is False and result.get("owner_verified") is True
+                         and result.get("span_disposition") in {"qualified", "needs_repair", "training_exhausted"},
+                         "owner must verify exact qualification disposition")
             key = _digest({"run_id": run_id, "pending": pending})
             with self.registry._transaction() as cx:
                 current = self._generation(cx)
@@ -431,7 +455,10 @@ class AutoencoderSpanCampaign:
                 owner_claim = self.registry.claim_run("span-verify-claim:" + _digest(takeover), run_id, owner_worker, 300)
                 lease = owner_claim["lease"]
             if current["version_id"] != pending["assignment"]["base_version_id"]:
-                result = {**result, "span_disposition": "rebase_required", "owner_candidate_qualified": result.get("qualified", False),
+                previous = ({"owner_candidate_feature_updated": result["span_disposition"] == "feature_updated"}
+                            if self.training_purpose == _FEATURE_PURPOSE
+                            else {"owner_candidate_qualified": result.get("qualified", False)})
+                result = {**result, **previous, "span_disposition": "rebase_required",
                           "qualified": False}
             result = {**result, "campaign_id": self.campaign_id, "binding_sha256": self.binding_sha256,
                       "source_assignment": pending["assignment"], "remote_report": pending["report_descriptor"],
@@ -440,6 +467,28 @@ class AutoencoderSpanCampaign:
             self._finish_work(work_id, receipt, result["span_disposition"])
             completed.append({**receipt, "span_disposition": result["span_disposition"]})
         return completed
+
+    def _verify_feature_result(self, result, artifact, parent_artifact):
+        """Check the trusted owner's evidence contract, never worker assertions.
+
+        The owner callback performs raw evaluation, exact sparse replay and
+        target checks. These booleans are not remotely callable authority;
+        its retained evidence must also exist unchanged in the owner's CAS.
+        """
+        _require(result.get("training_purpose") == _FEATURE_PURPOSE
+                 and result.get("owner_verified") is True
+                 and all(result.get(key) is False for key in ("qualified", "admitted", "formalized"))
+                 and result.get("span_disposition") in {"feature_updated", "feature_no_update"},
+                 "owner must verify feature disposition with all legal success flags false")
+        _require(all(result.get(key) is True for key in (
+            "sparse_replay_verified", "raw_objective_verified", "shared_target_supervision_verified")),
+            "feature result requires owner-verified replay, raw objective and shared targets")
+        epochs = result.get("optimizer_accepted_epochs")
+        _require(type(epochs) is int and epochs >= 0, "feature accepted epochs must be a nonnegative integer")
+        updated = result["span_disposition"] == "feature_updated"
+        _require((epochs > 0) == updated and (artifact != parent_artifact) == updated,
+                 "feature disposition, accepted epochs and exact parent artifact differ")
+        self.registry.verify_artifact(result.get("feature_evidence_artifact", {}))
 
     def _finish_work(self, work_id, receipt, disposition):
         payload = {"work_id": work_id, "completion": receipt, "span_disposition": disposition}
@@ -462,7 +511,8 @@ class AutoencoderSpanCampaign:
         completion = self.registry.get_run_completion(producer_run) if type(producer_run) is str else None
         _require(completion is not None and completion["candidate_version"]["version_id"] == version_id,
                  "generation version must be the exact owner-completed candidate")
-        reference = _weight_reference(weight_reference, version["artifact"], self.result_repository)
+        reference = _weight_reference(weight_reference, version["artifact"], self.result_repository,
+                                      training_purpose=self.training_purpose)
         payload = {"campaign_id": self.campaign_id, "binding_sha256": self.binding_sha256,
                    "version_id": version_id, "expected_generation": expected_generation,
                    "expected_version_id": expected_version_id, "weight_reference": reference}
@@ -473,16 +523,77 @@ class AutoencoderSpanCampaign:
             result = version["metadata"].get("result", {})
             run_id = version["metadata"].get("producer_run")
             run = self._scope(self.registry._run(cx, run_id))
+            disposition = "feature_updated" if self.training_purpose == _FEATURE_PURPOSE else "qualified"
             _require(version["variant_id"] == self.variant_id and version["parent_version_id"] == current["version_id"]
                      and run["status"] == "completed" and result == run["result"]
-                     and result.get("owner_verified") is True and result.get("span_disposition") == "qualified"
+                     and result.get("owner_verified") is True and result.get("span_disposition") == disposition
                      and result.get("binding_sha256") == self.binding_sha256,
-                     "generation requires an owner-verified qualified child of current weights")
+                     "generation requires an owner-verified " + disposition + " child of current weights")
             self.registry.verify_artifact(version["artifact"])
+            extra = {}
+            if self.training_purpose == _FEATURE_PURPOSE:
+                self._verify_feature_result(result, version["artifact"], current["artifact"])
+                _require(reference["kind"] == "feature_sparse", "feature updates require a feature sparse reference")
+                anchor = reference["anchor_reference"]
+                parent_artifact = anchor.get("materialized_checkpoint", {key: anchor[key] for key in ("sha256", "bytes")})
+                _require(_artifact(parent_artifact) == current["artifact"], "feature sparse reference has another parent")
+                _require(result.get("weight_reference") == reference, "feature reference differs from owner-verified result")
+                extra = {"training_purpose": _FEATURE_PURPOSE, "qualified": False, "admitted": False}
             return {**payload, "generation": current["generation"] + 1, "artifact": version["artifact"],
-                    "formalized": False, "head_promotion_performed": False}
+                    **extra, "formalized": False, "head_promotion_performed": False}
         return self.registry._mutate("span-advance:" + _digest({"campaign": self.campaign_id, "operation": operation_id}),
                                      "AdvanceSpanGeneration", payload, apply)
+
+    def requeue_stale_feature_candidate(self, operation_id, version_id, *, expected_generation, expected_version_id):
+        """Rebase work whose verified sibling lost canonical feature selection.
+
+        This closes the case where several reports were verified before one was
+        selected. Old attempts and sparse artifacts remain immutable; the next
+        claim requires an acknowledgement and starts from the current full state.
+        """
+        _require(self.training_purpose == _FEATURE_PURPOSE, "stale feature requeue requires feature purpose")
+        _token(operation_id, "operation_id")
+        _require(type(expected_generation) is int and expected_generation >= 1, "invalid expected generation")
+        version = self.registry.get_version(version_id)
+        producer_run = version["metadata"].get("producer_run")
+        completion = self.registry.get_run_completion(producer_run) if type(producer_run) is str else None
+        _require(completion is not None and completion["candidate_version"]["version_id"] == version_id,
+                 "requeue requires an exact owner-completed feature candidate")
+        parent = self.registry.get_version(version["parent_version_id"])
+        payload = {"campaign_id": self.campaign_id, "binding_sha256": self.binding_sha256,
+                   "version_id": version_id, "expected_generation": expected_generation,
+                   "expected_version_id": expected_version_id}
+        def apply(cx):
+            current = self._generation(cx)
+            _require(current["generation"] == expected_generation and current["version_id"] == expected_version_id,
+                     "canonical generation CAS conflict")
+            run = self._scope(self.registry._run(cx, producer_run))
+            result = version["metadata"].get("result", {})
+            _require(run["status"] == "completed" and run["spec"].get("kind") == "generation_attempt"
+                     and result == run["result"] and result.get("binding_sha256") == self.binding_sha256
+                     and version["parent_version_id"] != current["version_id"]
+                     and version_id != current["version_id"], "feature candidate is not a stale unselected child")
+            selected = cx.execute("SELECT 1 FROM autoencoder_control.operations WHERE "
+                "json_extract_string(receipt,'$.command')='AdvanceSpanGeneration' AND "
+                "json_extract_string(receipt,'$.campaign_id')=? AND "
+                "json_extract_string(receipt,'$.binding_sha256')=? AND "
+                "json_extract_string(receipt,'$.version_id')=? LIMIT 1",
+                [self.campaign_id, self.binding_sha256, version_id]).fetchone()
+            _require(selected is None, "previously selected feature generation cannot be requeued")
+            self._verify_feature_result(result, version["artifact"], parent["artifact"])
+            work_id = run["spec"]["work_id"]
+            work = self._scope(self.registry._run(cx, work_id))
+            _require(work["status"] == "source_completed" and
+                     (work["result"] or {}).get("completion") == completion["completion_receipt"],
+                     "stale feature work has already changed")
+            retained = {**payload, "completion": completion["completion_receipt"],
+                        "span_disposition": "rebase_required", "admitted": False, "qualified": False,
+                        "formalized": False, "training_purpose": _FEATURE_PURPOSE}
+            cx.execute("UPDATE autoencoder_control.runs SET status='queued',lease=NULL,result=? WHERE run_id=?",
+                       [_json(retained), work_id])
+            return {**retained, "work_id": work_id, "status": "queued"}
+        return self.registry._mutate("span-requeue-feature:" + _digest({"campaign": self.campaign_id, "operation": operation_id}),
+                                     "RequeueStaleFeatureSpan", payload, apply)
 
 
 class SpanCampaignQuackGateway(_TransientQuackGateway):

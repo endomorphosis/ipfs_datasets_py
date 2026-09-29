@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 84 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_training.py . [  1%]
+..............................................................           [ 75%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_exchange.py . [ 76%]
+....................                                                     [100%]
+
+============================= 84 passed in 19.69s ==============================

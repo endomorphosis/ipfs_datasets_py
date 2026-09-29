@@ -1,0 +1,30 @@
+{"scope": "partial exact Git-origin source plus nine explicit feature overlays", "source_export_reused_without_changes": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets", "tests": ["tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py", "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_inputs.py", "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_objective.py", "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_training.py", "tests/unit/optimizers/logic_theorem_optimizer/test_feature_pretraining_cli.py", "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_training.py", "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_exchange.py", "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_features.py", "tests/unit/duckdb_control/test_autoencoder_span_campaign.py"], "admitted": false}
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r6/pytest-cache
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 306 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_qualified_training.py . [  0%]
+................................................                         [ 16%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_inputs.py . [ 16%]
+....................                                                     [ 22%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_objective.py . [ 23%]
+........................                                                 [ 31%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_training.py . [ 31%]
+...................................                                      [ 42%]
+tests/unit/optimizers/logic_theorem_optimizer/test_feature_pretraining_cli.py . [ 43%]
+...............                                                          [ 48%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_training.py . [ 48%]
+..............................................................           [ 68%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_exchange.py . [ 68%]
+....................                                                     [ 75%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_distributed_features.py . [ 75%]
+...........................                                              [ 84%]
+tests/unit/duckdb_control/test_autoencoder_span_campaign.py ............ [ 88%]
+...................................                                      [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r6/junit.xml -
+======================== 306 passed in 84.93s (0:01:24) ========================
