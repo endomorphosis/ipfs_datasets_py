@@ -1208,7 +1208,36 @@ def codex_main_apply_lock(
     timeout_seconds: Optional[float] = None,
     poll_seconds: float = 0.1,
 ) -> Iterator[None]:
-    """Serialize apply/validate/commit for parallel Codex worktree packets."""
+    """Exclude training readers throughout final apply/validate/commit.
+
+    The older packet lock is retained for compatibility with running workers;
+    the shared canonical lease also coordinates linked worktrees and training.
+    Direct edits bypassing this protocol still fail the source-content guards.
+    """
+    from .autoencoder_source_lease import DEFAULT_TIMEOUT_SECONDS, source_lease
+
+    source_root_value = packet.get("source_repo_root") or packet.get("repo_root")
+    if not source_root_value:
+        yield
+        return
+    limit = DEFAULT_TIMEOUT_SECONDS if timeout_seconds is None else float(timeout_seconds)
+    started = time.monotonic()
+    with source_lease(source_root_value, mode="write", timeout_seconds=limit):
+        with _codex_main_apply_file_lock(
+            packet, timeout_seconds=max(0.0, limit - (time.monotonic() - started)),
+            poll_seconds=poll_seconds,
+        ):
+            yield
+
+
+@contextmanager
+def _codex_main_apply_file_lock(
+    packet: Mapping[str, Any],
+    *,
+    timeout_seconds: Optional[float] = None,
+    poll_seconds: float = 0.1,
+) -> Iterator[None]:
+    """Legacy packet lock, held inside the canonical source writer lease."""
     import fcntl
 
     source_root_value = packet.get("source_repo_root") or packet.get("repo_root")
@@ -15062,8 +15091,12 @@ def apply_codex_worktree_changes_to_main(
     try:
         dirty_files = _dirty_target_files(source_repo_root, target_files)
     except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
-        dirty_files = []
         updated["main_apply_dirty_check_error"] = str(exc)
+        updated["patch_status"] = "main_apply_dirty_check_failed"
+        updated["patch_error"] = "Cannot verify destination edits before applying the patch"
+        updated["main_apply_error"] = updated["patch_error"]
+        _save_packet_if_possible(updated, packet_path)
+        return updated
     if dirty_files:
         updated["main_apply_dirty_files"] = dirty_files
         normalized_repair_mode = str(merge_repair_mode or "off").strip().lower()
