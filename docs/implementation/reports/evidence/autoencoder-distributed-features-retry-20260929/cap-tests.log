@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/external/ipfs_datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 96 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py . [  1%]
+........................................................................ [ 76%]
+....                                                                     [ 80%]
+tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_lock_contention.py . [ 81%]
+..................                                                       [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/resource-headroom-90gb/tests.xml -
+============================== 96 passed in 5.32s ==============================

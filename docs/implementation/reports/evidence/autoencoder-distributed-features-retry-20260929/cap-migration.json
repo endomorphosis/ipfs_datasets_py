@@ -1,0 +1,67 @@
+{
+  "admitted": false,
+  "after_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 86495111960,
+    "inventory": {
+      "apparent_bytes": 55780111960,
+      "entry_count": 399544,
+      "special_file_count": 28,
+      "symlink_count": 4387
+    },
+    "limit_bytes": 90000000000,
+    "minimum_filesystem_free_bytes": 140088455168,
+    "observed_apparent_bytes": 55780111960,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "at": 1790712686.3646405,
+  "authorization": "Explicit user request to increase storage allocation and rerun end-to-end feature smoke; root assigned 87 -> 90 GB.",
+  "automatic_expiry": false,
+  "before_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 86489539959,
+    "inventory": {
+      "apparent_bytes": 55774539959,
+      "entry_count": 399543,
+      "special_file_count": 28,
+      "symlink_count": 4387
+    },
+    "limit_bytes": 87000000000,
+    "minimum_filesystem_free_bytes": 140094795776,
+    "observed_apparent_bytes": 55774539959,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "current_ledger_sha256": "a5a67fb1ef34e8b4d5107c4d9b48f01d81c247ddc9a0a9d9d3dde9e271dcaef0",
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "new_limit_bytes": 90000000000,
+  "new_reservation_created": false,
+  "old_limit_bytes": 87000000000,
+  "only_top_level_limit_changed": true,
+  "outputs_deleted": false,
+  "per_worker_storage_limit_bytes": 50000000000,
+  "previous_ledger_sha256": "983601f3ecd29ba0756d163ceee74c12203d4675c0e6df208bc8c56e4da2092c",
+  "remaining_cap_bytes": 3504888040,
+  "schema": "explicit-campaign-cap-migration/v1",
+  "source_files": [
+    {
+      "after_bytes": 36554,
+      "after_sha256": "15fcce3aba498e502b3c98122e33a748028d6e042795ac101f65a2c5ec3b0475",
+      "bytes": 36545,
+      "matches_origin": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "6c299a5875e15bf6071310a3832fcffcafea40e369dc238622dd9d295179e8fa"
+    },
+    {
+      "after_bytes": 37806,
+      "after_sha256": "700511f8714ea8c4b0dd4b69d5570f4b8d14633b90480a4dddd4134fb943f4ac",
+      "bytes": 37777,
+      "matches_origin": true,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "sha256": "58e7546d1b2366b8799e0a4f23dd6e0e27ab232242961da6fb26fc66b1457d31"
+    }
+  ],
+  "unchanged_reservation_count": 257,
+  "unchanged_reservations_sha256": "b23e6f4ee1641fbb5d3fd0b8f05d6bca0d49ed04babc950ed1bb7cd65084f3f2"
+}

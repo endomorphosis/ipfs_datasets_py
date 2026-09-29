@@ -1,0 +1,112 @@
+{
+  "admitted": false,
+  "approved_override": {
+    "bytes": 36554,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    "purpose": "Approved 90 GB campaign cap, preserving 50 GB per-worker bound",
+    "sha256": "15fcce3aba498e502b3c98122e33a748028d6e042795ac101f65a2c5ec3b0475"
+  },
+  "capture_resource_closeout": [
+    {
+      "claim_id": "69469a6b9fc64b42b5f28ca72f9d0bc2",
+      "receipt": {
+        "bytes": 4400,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-launch-r2/resources.json",
+        "sha256": "43da5a50f4cab234bbcb89dd6f25f7aa0fb1b5a376ea2ce392b37fa8ccb9584c"
+      },
+      "status": "released"
+    },
+    {
+      "claim_id": "f6fba18f5c0942ebafd905f881ce054b",
+      "receipt": {
+        "bytes": 3521,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-root-r2/source-capture-r3/resources.json",
+        "sha256": "6fa0e30b18f649ab51bed82d77a55f0a6135f9349ef292e44e78a6e2de7c068c"
+      },
+      "status": "released"
+    }
+  ],
+  "capture_storage_reservation_bytes": 550000000,
+  "captured_file_count": 10016,
+  "captured_source_bytes": 393193121,
+  "exact_published_blob_file_count": 9842,
+  "file_groups": {
+    "jevops": 166,
+    "legal_ir_scripts": 93,
+    "native_harness": 1,
+    "package": 9756
+  },
+  "formalized": false,
+  "git_metadata_caveat": "Capsule honestly records the older live Git HEAD; independent Git-blob comparison establishes the published source bytes mounted at canonical paths. This audit did not change shared indexes, HEADs or source files.",
+  "git_state": [
+    {
+      "head": "205bc6ef96c69c3ed9ddcd20ecf0b67f460f1841",
+      "head_unchanged": true,
+      "index_sha256": "89acaf1ef77ad2d709ac3798364047bd246a67a3e929fbec648d1671f93ad9a0",
+      "normal_index_unchanged": true,
+      "repository": "/home/barberb/lift_coding/external/ipfs_datasets"
+    },
+    {
+      "head": "a1508e136f129404cdd9db9c21b31193af869646",
+      "head_unchanged": true,
+      "index_sha256": "a251ea2b31cc8bf73532779512694c433d1479ef6a8068dbcc35341e49e79736",
+      "normal_index_unchanged": true,
+      "repository": "/home/barberb/lift_coding"
+    }
+  ],
+  "live_transport_audit": {
+    "different_live_files": [
+      "ipfs_datasets_py/huggingface/autoformal_span_cache.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+    ],
+    "matching_python_files_across_huggingface_duckdb_control_optimizer": 280,
+    "resolution": "Prepared a separate explicitly network-enabled read-only capsule wrapper so authorized Hub replay uses the same captured serialization bytes; this receipt does not claim that later transport has run."
+  },
+  "manifest": {
+    "bytes": 5074630,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-root-r2/source-capture-r3/capsule/manifest.json",
+    "sha256": "7dd31c2da35ee8482a249f06e0d32fb7a5461fa00796d3ec4e91a90c272215eb"
+  },
+  "method": "Independent read-only full captured-file SHA256/size/mode/hardlink verification and Git-blob SHA1 comparison performed earlier in this audit; receipt creation rechecks manifest/source-proof hashes, live HEAD/index pins and protected checkpoint without repeating the package scan.",
+  "new_training_started": false,
+  "other_captured_files": {
+    "finalized_native_harness_files": 1,
+    "full_current_jevops_files": 166,
+    "nested_git_metadata": 6
+  },
+  "protected_checkpoint": {
+    "bytes": 25895338,
+    "inode": 57804548,
+    "nlink": 2,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "published_commit": "db43d80c8f037f7f35305faa56591672be51baf2",
+  "qualified": false,
+  "receipt_created_at": "2026-09-29T20:39:08.299597+00:00",
+  "schema": "independent-published-source-capture-audit/v1",
+  "source_after": {
+    "bytes": 4168,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-launch-r2/source-after.json",
+    "sha256": "b8e30ea150e39f16eea19ab8c440f2df16f93024f814425519bbefbba387fb46"
+  },
+  "source_before": {
+    "bytes": 4168,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-launch-r2/source-before.json",
+    "sha256": "b8e30ea150e39f16eea19ab8c440f2df16f93024f814425519bbefbba387fb46"
+  },
+  "source_before_after_identical": true,
+  "source_byte_ceiling": 450000000,
+  "standard_exclusions": [
+    {
+      "path": "ipfs_datasets_py/logic/CEC/Eng-DCEC/python/EngDCEC.pyc",
+      "reason": "Existing snapshot policy excludes bytecode"
+    },
+    {
+      "commit": "1b657eadf4e87f3ba46e030c3e549854b2454a4e",
+      "path": "ipfs_datasets_py/logic/CEC/ShadowProver/snark",
+      "reason": "Existing uninitialized nested gitlink has no local source bytes; external provers remain disabled"
+    }
+  ],
+  "status": "passed"
+}

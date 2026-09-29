@@ -1,0 +1,36 @@
+{
+  "admitted": false,
+  "harness": {
+    "bytes": 16704,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/control/selected_native_hub_smoke.py",
+    "sha256": "539380964dbe49ba6229587fee2009dd2ed3407baaa7f73602c5123d9c664e2b"
+  },
+  "manifest": {
+    "bytes": 5074630,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-root-r2/source-capture-r3/capsule/manifest.json",
+    "sha256": "7dd31c2da35ee8482a249f06e0d32fb7a5461fa00796d3ec4e91a90c272215eb"
+  },
+  "network": "host",
+  "ordinary_offline_training_runner": false,
+  "runtime_after": {
+    "bytes": 1834,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/control/runtime-after.json",
+    "sha256": "dbb2afbb60196178e9260e69210f546a737ba101f0a063013b31eaad14be157f"
+  },
+  "runtime_before": {
+    "bytes": 1834,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/control/runtime-before.json",
+    "sha256": "dbb2afbb60196178e9260e69210f546a737ba101f0a063013b31eaad14be157f"
+  },
+  "status": "passed",
+  "transport_resources": {
+    "bytes": 3553,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/exchange/resource-finalization.json",
+    "sha256": "ad650ecde9c97e3c10fc53e4ce9d610ec83b4bea5fb7760ce8a27f6bb638ac77"
+  },
+  "transport_result": {
+    "bytes": 28211,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/exchange/transport/result.json",
+    "sha256": "c931d4989aeb70b0ee608519fc3a7074f24549adcfcc6c1d348c47d417778021"
+  }
+}

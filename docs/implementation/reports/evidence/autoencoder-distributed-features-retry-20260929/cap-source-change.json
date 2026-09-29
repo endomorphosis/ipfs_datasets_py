@@ -1,0 +1,26 @@
+{
+  "schema": "explicit-campaign-cap-source-change/v1",
+  "origin_main": "db43d80c8f037f7f35305faa56591672be51baf2",
+  "old_limit_bytes": 87000000000,
+  "new_limit_bytes": 90000000000,
+  "worker_limit_bytes": 50000000000,
+  "paths": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "6c299a5875e15bf6071310a3832fcffcafea40e369dc238622dd9d295179e8fa",
+      "bytes": 36545,
+      "matches_origin": true,
+      "after_sha256": "15fcce3aba498e502b3c98122e33a748028d6e042795ac101f65a2c5ec3b0475",
+      "after_bytes": 36554
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "sha256": "58e7546d1b2366b8799e0a4f23dd6e0e27ab232242961da6fb26fc66b1457d31",
+      "bytes": 37777,
+      "matches_origin": true,
+      "after_sha256": "700511f8714ea8c4b0dd4b69d5570f4b8d14633b90480a4dddd4134fb943f4ac",
+      "after_bytes": 37806
+    }
+  ],
+  "global_ledger_mutated": false
+}

@@ -1,0 +1,26 @@
+{
+  "admitted": false,
+  "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "charged_transport_cache_paths": {
+    "HF_ASSETS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/exchange/hf-assets-cache",
+    "HF_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/exchange/hf-hub-cache",
+    "HF_XET_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/exchange/hf-xet-cache",
+    "TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/exchange"
+  },
+  "frozen_source": {
+    "admitted": false,
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "manifest": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-root-r2/source-capture-r3/capsule/manifest.json",
+    "read_only_mounts_verified": true,
+    "sha256": "7dd31c2da35ee8482a249f06e0d32fb7a5461fa00796d3ec4e91a90c272215eb",
+    "source_bytes": 393193121
+  },
+  "harness_sha256": "539380964dbe49ba6229587fee2009dd2ed3407baaa7f73602c5123d9c664e2b",
+  "network": "host",
+  "ordinary_offline_training_runner": false,
+  "platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+  "purpose": "authorized selected feature checkpoint upload/download only",
+  "python_executable": "/home/barberb/.local/bin/python",
+  "python_prefix": "/usr",
+  "python_version": "3.12.3"
+}

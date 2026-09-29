@@ -1,0 +1,207 @@
+{
+  "accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 87372637038,
+    "inventory": {
+      "apparent_bytes": 56657637038,
+      "entry_count": 413159,
+      "special_file_count": 28,
+      "symlink_count": 4386
+    },
+    "limit_bytes": 90000000000,
+    "minimum_filesystem_free_bytes": 138743574528,
+    "observed_apparent_bytes": 56657637038,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "admitted": false,
+  "all_owned_new_claims_released": true,
+  "all_prior_reservations_identical": true,
+  "current_active_claim_count": 0,
+  "formalized": false,
+  "headroom_bytes": 2627362962,
+  "historical_outstanding_bytes": 30715000000,
+  "ledger_sha256_at_census": "3824c315ca9edd5eef71dc69a791cd8ae297c572d5ea147342f426f86799b357",
+  "new_claim_count": 19,
+  "new_reservation_created": false,
+  "observed_at_unix": 1790714425.3748527,
+  "outputs_deleted": false,
+  "owned_new_claims": [
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/worker-a",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 106805783,
+      "reservation_id": "0e4c4a9939bb44b6898fa0d02397f65c",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 400000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/worker-b",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 188194094,
+      "reservation_id": "2985a1f88b604b0db209953acf969d32",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 400000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-retry-preparation",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 1823835,
+      "reservation_id": "2b0b3ad4f45748e7be541c61431dd681",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 8000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/owner",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 77473866,
+      "reservation_id": "31024bab7d8b49398bb010587b925ad8",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 250000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/worker-b/jobs/span-attempt-5fe6d32b1301171e418fd681c6e32178849fa823827a2237dfb902b5f64eb643/attempt-1",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 59146182,
+      "reservation_id": "4abcdb5b2d834d79ba07da3a5de2eea4",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 250000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/worker-b",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 188187944,
+      "reservation_id": "507bf8317f9f4b6cb0433a44f7a518a2",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 400000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/control",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 38886,
+      "reservation_id": "64fbb70270aa4c3bb073becc01ce1451",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 16000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-launch-r2",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 22238,
+      "reservation_id": "69469a6b9fc64b42b5f28ca72f9d0bc2",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 16000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-launch-r1",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 20034,
+      "reservation_id": "7929b28be80c4db484b6cf2205745c14",
+      "retention_reason": "context_failed",
+      "status": "released",
+      "storage_bytes": 16000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/owner",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 72894489,
+      "reservation_id": "87efa74ceefc4fbd9c1327d0c7f6d487",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 250000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-root-r1/source-capture-r3",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 264,
+      "reservation_id": "8ab7b00834384003926bd12456098a77",
+      "retention_reason": "context_failed",
+      "status": "released",
+      "storage_bytes": 550000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-git-status-probe-r1",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 9542,
+      "reservation_id": "985f2c346a6d4a3db97b221e89262d6d",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 8000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/frozen-run",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 8461,
+      "reservation_id": "9e0b55bc18fe456c8f33f36430b5311f",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 16777216
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/worker-b/jobs/span-attempt-6f494a194cfd488eb36e4925769be62cb9c40a3ad426b83e55025e36ec043300/attempt-1",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 58268320,
+      "reservation_id": "cea2f9eb076840968d3579541ac1e794",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 250000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/targets",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 14380299,
+      "reservation_id": "d8eaabdf756a48fe8e9eb7c18c8a93b1",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 300000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/selected-native-r3-hub-capsule-wrapper/exchange",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 60997365,
+      "reservation_id": "e5127ad307ed45b38b5217a3c679baf8",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 268435456
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/worker-a",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 106799633,
+      "reservation_id": "e5c72e547602417ba713a0491a1d18e4",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 400000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native-r3/worker-a/jobs/span-attempt-96f3b70a64979dc7a5fb64eaa5dad0d922af518a10c7d7f144a91e5330366da7/attempt-1",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 53023264,
+      "reservation_id": "f3c68760e3a740d8a42e6c565d5e648d",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 250000000
+    },
+    {
+      "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-capture-root-r2/source-capture-r3",
+      "attempt_exceeded_reservation": false,
+      "final_total_charged_bytes": 398268464,
+      "reservation_id": "f6fba18f5c0942ebafd905f881ce054b",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 550000000
+    }
+  ],
+  "prior_reservation_count": 257,
+  "qualified": false,
+  "retained_historical_claim_count": 64,
+  "schema": "distributed-feature-retry-final-storage-census/v1",
+  "storage_roots_identical": true
+}

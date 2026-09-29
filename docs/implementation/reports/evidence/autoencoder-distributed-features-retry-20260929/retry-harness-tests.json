@@ -1,0 +1,10 @@
+{
+  "harness": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native_distributed_smoke_e2e_retry.py",
+  "harness_sha256": "27c34af74087d9244e19a746f6f6d750f8bc0f9ee7d1936fe13f0d24258e86df",
+  "production_edits": false,
+  "schema": "native-feature-e2e-retry-harness-test/v1",
+  "test_log_sha256": "9819afba76aec6448e8abc87e0f34128c9eac858e40bf7417caf9627754345d2",
+  "test_script_sha256": "8778553de6b0d228104fa01b4a8862fe73b47c5677d1b714ac2c0b36579184a4",
+  "tests_passed": 11,
+  "training_launched": false
+}

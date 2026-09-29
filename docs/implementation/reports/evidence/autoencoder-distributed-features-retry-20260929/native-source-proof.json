@@ -1,0 +1,83 @@
+{
+  "admitted": false,
+  "export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/publication-source-tests-r1/isolated/external/ipfs_datasets",
+  "exported": {
+    "file_count": 8396,
+    "published_tree": "b06f0c9c6c7dd790de9c4ac9f8cbcc1c5e665d9e02619f4d9faa04aa37be2aab",
+    "regular_file_bytes": 366054230
+  },
+  "harness": {
+    "bytes": 20911,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/native_distributed_smoke_e2e_retry.py",
+    "sha256": "27c34af74087d9244e19a746f6f6d750f8bc0f9ee7d1936fe13f0d24258e86df"
+  },
+  "jevops": {
+    "bytes": 4038213,
+    "file_count": 166,
+    "inventory_sha256": "6c94634b8cb6646ec3da4184e184b05378e8810cce7f2fe8d705f32bc69a76bb"
+  },
+  "published_commit": "db43d80c8f037f7f35305faa56591672be51baf2",
+  "resource_cap_override": {
+    "bytes": 36554,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-retry-preparation/autoencoder_daemon_resources.py",
+    "sha256": "15fcce3aba498e502b3c98122e33a748028d6e042795ac101f65a2c5ec3b0475"
+  },
+  "submodules": [
+    {
+      "commit": "a4beb5b3280595be6b9221cac3c91dd019e6d371",
+      "file_count": 9,
+      "published_tree": "687654cff75abed6c72b47acd8bfe2164e65ff0249d9f62cd45218b5d8aeb58e",
+      "regular_file_bytes": 84501,
+      "relative": "ipfs_datasets_py/logic/CEC/DCEC_Library",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/CEC/DCEC_Library"
+    },
+    {
+      "commit": "df518c21ef81b8001e6db59f5fd70f10cc04ff6c",
+      "file_count": 45,
+      "published_tree": "7f3c9716cdc0dabfc230296910c5c4aeb0b4ba5924785befef7fcec61894d983",
+      "regular_file_bytes": 1899135,
+      "relative": "ipfs_datasets_py/logic/CEC/Eng-DCEC",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/CEC/Eng-DCEC"
+    },
+    {
+      "commit": "3060ede1ac1ec3f8ef9f9c9e41386aed1dbbe7f9",
+      "file_count": 317,
+      "published_tree": "71e7e39834ac69357c49b9298e38be903d110cb3a31c1e7cadd3872231d328b7",
+      "regular_file_bytes": 1102278,
+      "relative": "ipfs_datasets_py/logic/CEC/ShadowProver",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/CEC/ShadowProver"
+    },
+    {
+      "commit": "e0b7650d3e3a403924773f8253e924c719748d36",
+      "file_count": 184,
+      "published_tree": "517a7f298c4ee7026419fa99f859499823842ab9db84428b43614fb85954bfe0",
+      "regular_file_bytes": 5270352,
+      "relative": "ipfs_datasets_py/logic/CEC/Talos",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/CEC/Talos"
+    },
+    {
+      "commit": "d58933631a5362b1e2fdc45254ef620fa231223a",
+      "file_count": 191,
+      "published_tree": "ad5b7a449c41935c0bf85c69f1d1901f2cf1188d5e93d95bcd5e89e66f54068c",
+      "regular_file_bytes": 436114,
+      "relative": "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type"
+    },
+    {
+      "commit": "c1d9b0d517cea022516aab5b5d8fa5e3bc9a65aa",
+      "file_count": 555,
+      "published_tree": "cc6f21874568b58f31c833c9a201b96e09ec64d26710fe55fac0c5b2a4cde567",
+      "regular_file_bytes": 12248341,
+      "relative": "ipfs_datasets_py/multimedia/omni_converter_mk2",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/multimedia/omni_converter_mk2"
+    },
+    {
+      "commit": "0e635cba586e8f6f6ea8126e3b1668b3e675c029",
+      "file_count": 145,
+      "published_tree": "c50f89f9edb1d3d06d2e3dc6645d2315435670968e25c64d183e1862c7e36240",
+      "regular_file_bytes": 1784130,
+      "relative": "ipfs_datasets_py/processors/web_archiving/common_crawl_search_engine",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-features-20260929/published-retry-preparation/common-crawl-published"
+    }
+  ]
+}
