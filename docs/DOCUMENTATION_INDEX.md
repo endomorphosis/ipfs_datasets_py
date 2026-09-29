@@ -64,6 +64,23 @@ Superseded: `DOCUMENTATION_INDEX_COMPLETE.md`, `root_DOCUMENTATION_INDEX.md`
 | [tutorials/security_compliance_tutorial.md](tutorials/security_compliance_tutorial.md) | Compliance-oriented security |
 | [tutorials/](tutorials/) | Tutorial index / remaining leaves |
 
+### Autoencoder training and inference
+
+Start at the [autoencoder handbook](autoencoders/README.md) for path selection
+and environment setup. It distinguishes legal feature/qualified training from
+native UI/UX, Security, and Intent structural feature learning.
+
+| Page | Task |
+| --- | --- |
+| [Native quickstart](autoencoders/native_feature_quickstart.md) | Prepare, train, save, resume, and infer a native model |
+| [Legal training](autoencoders/legal_training.md) | Inputs, bounded optimization, targets, and resume |
+| [Inference and qualification](autoencoders/inference_and_qualification.md) | Read-only inference, gates, and evidence |
+| [Modalities](autoencoders/modalities.md) | Domain-specific logic families, projections, validators, and extension |
+| [Artifacts and inputs](autoencoders/artifacts_and_inputs.md) | Schemas, checkpoints, embedding provenance, and compatibility |
+| [Control plane and sync](autoencoders/control_plane_and_sync.md) | DuckDB, Quack, DuckLake, workers, and Hub exchange |
+| [Operations and troubleshooting](autoencoders/operations_and_troubleshooting.md) | Resources, source drift, profiling, and recovery |
+| [API map](autoencoders/api_map.md) | Task-to-function and task-to-script reference |
+
 ### Examples
 
 | Path | Role |

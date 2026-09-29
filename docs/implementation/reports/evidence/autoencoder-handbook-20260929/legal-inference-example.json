@@ -1,0 +1,22 @@
+{
+  "schema": "autoencoder-documentation-inference-example/v1",
+  "document": "docs/autoencoders/inference_and_qualification.md",
+  "document_sha256": "c90c1ce8808a6946f55d28e04faa912149046492419410b6c3e8fa23e9a29df7",
+  "executed_bash_block_sha256": "81670e19b803fbf6a65926bf261da647d9bef5ea7c0c4a1cfb409267aa9f9a1e",
+  "exit_code": 0,
+  "elapsed_seconds": 0.479054553899914,
+  "report": {
+    "execution_path": "inference",
+    "training_executed": false,
+    "state_changed": false,
+    "sample_count": 1,
+    "legal_ir_target_count": 0,
+    "cosine_similarity": 0.1961161351381841,
+    "reconstruction_loss": 0.5033102321280591,
+    "qualified": false,
+    "admitted": false
+  },
+  "scope": "exact handbook minimal example on pinned live workspace; fresh test-vector model; not published frozen runtime validation or semantic qualification",
+  "downloads_requested": false,
+  "lake_executed": false
+}

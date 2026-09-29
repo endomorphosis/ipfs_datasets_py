@@ -68,6 +68,7 @@ Full audience routes: [index.md](index.md).
 | `api/` | Source-grounded API domain references |
 | `guides/operations/`, `guides/security/`, `guides/installation/`, `guides/deployment/` | Operations, Security, install detail, deploy |
 | `tutorials/`, `examples/` | Workflows and samples |
+| `autoencoders/` | Training, inference, modality adapters, artifacts, and distributed operations |
 | `FEATURES.md`, `GLOSSARY.md`, `CHANGELOG.md`, `faq.md` | Capability matrix, vocabulary, release policy, FAQ |
 | `maintenance/` | IA, authority, coverage, disposition, receipts |
 | Selected root guides (e.g. `CORE_OPERATIONS_GUIDE.md`, `MCP_QUICKSTART.md`, `IPLD_VECTOR_DATABASE_GUIDE.md`) | Product guides still at root until later disposition |

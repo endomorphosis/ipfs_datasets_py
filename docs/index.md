@@ -71,6 +71,7 @@ tool-count marketing claims into this portal.
 | [MCP_CLIENT_WORKFLOW.md](tutorials/MCP_CLIENT_WORKFLOW.md) | MCP client / hierarchical tools |
 | [RETRIEVAL_AND_KNOWLEDGE_WORKFLOW.md](tutorials/RETRIEVAL_AND_KNOWLEDGE_WORKFLOW.md) | Retrieval + knowledge graph path |
 | [LOGIC_AND_PROOF_WORKFLOW.md](tutorials/LOGIC_AND_PROOF_WORKFLOW.md) | Logic / proof surfaces (honest non-proof bounds) |
+| [autoencoders/README.md](autoencoders/README.md) | Autoencoder training, inference, modality adapters, resume, and distributed operations |
 
 Related: [tutorials/](tutorials/), [examples/](examples/), [faq.md](faq.md),
 [GLOSSARY.md](GLOSSARY.md).

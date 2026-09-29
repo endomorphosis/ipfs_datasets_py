@@ -1,0 +1,27 @@
+{
+  "schema": "native-feature-documentation-execution/v1",
+  "script_sha256": "97e3b1216644c8cc8be02398358a8c3a5a77697bd238e095a7a53aa4c08a73a7",
+  "document_sha256": "6f5657e24ebd1d4f525cb3d0e85f8fb4f0207462145d4c0faec0b4b070e945a2",
+  "exit_code": 0,
+  "elapsed_seconds": 2.2533112440723926,
+  "harness_directory": "/tmp/native-feature-doc-validation-ea5gpai2",
+  "summary": {
+    "admitted": false,
+    "attempted_epochs": 3,
+    "child_version_id": "sha256:1034bc423339e1009f3a154a950505c148b6f3535a46ad96a525f6c559ed01f0",
+    "decoded_formulas_generated": false,
+    "formalized": false,
+    "inference_trained": false,
+    "initial_objective": 0.2465324103832245,
+    "output_directory": "/tmp/native-feature-quickstart-kokxj31s",
+    "parent_version_id": "sha256:0b4d0c664748157345354cfd38d5c5197d78eb39d215a9faeae58f83b27d6684",
+    "promotion_performed": false,
+    "qualified": false,
+    "selected_objective": 0.06632715463638306,
+    "selected_total_epochs": 3,
+    "tuning_unknown_atoms": 2,
+    "variant_id": "modality-612872f9bef745cfad60c30799a7593a3058aea8fbd09951967e9e627dddc928"
+  },
+  "retained_file_bytes": 6538139,
+  "cache_files": []
+}

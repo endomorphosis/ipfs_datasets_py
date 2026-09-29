@@ -1,0 +1,223 @@
+{
+  "schema": "autoencoder-handbook-doc-validation/v1",
+  "source_baseline": "3666ebad19422b8345ebe5432a1c02f26d2eba4c",
+  "status": "passed",
+  "documents": 9,
+  "local_links_checked": 146,
+  "code_blocks": [
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 0,
+      "language": "bash",
+      "sha256": "ca5cbdc1e4b6e7e398d217adb8a1f0d91d08918cac5e20e3657122e22919e556"
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 1,
+      "language": "python",
+      "sha256": "321a3e3c757f3aed682e80af32f04a12c2c420a5663d5b1f8f44f6d2557b1f44"
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 2,
+      "language": "mermaid",
+      "sha256": "87bc653fc06a971f5886b3d62e544b6105a96e3204bc24bb5c060843bde02fc1"
+    },
+    {
+      "document": "docs/autoencoders/artifacts_and_inputs.md",
+      "block": 0,
+      "language": "json",
+      "sha256": "174d4f9fd535ac9b00d4904a91b9f517c2a5b5dc96c50a9416594d3836c23fa5"
+    },
+    {
+      "document": "docs/autoencoders/artifacts_and_inputs.md",
+      "block": 1,
+      "language": "text",
+      "sha256": "848f67258243a7295d3e5196025917d2ba9b7e4d27abb3ed496811951316c812"
+    },
+    {
+      "document": "docs/autoencoders/control_plane_and_sync.md",
+      "block": 0,
+      "language": "mermaid",
+      "sha256": "323508d905e205cec3244f392e2bf49fad312ac86a00c63abfd00566789321f5"
+    },
+    {
+      "document": "docs/autoencoders/control_plane_and_sync.md",
+      "block": 1,
+      "language": "bash",
+      "sha256": "9c6c5240fb71bfaf4367035cba972c4a99f57f3eaf07c03a90f9cf22119588c7"
+    },
+    {
+      "document": "docs/autoencoders/control_plane_and_sync.md",
+      "block": 2,
+      "language": "bash",
+      "sha256": "e90dda715182ddb365d9da70b23c32c6eae449de1ee8c9beab3f6a8005a865ac"
+    },
+    {
+      "document": "docs/autoencoders/control_plane_and_sync.md",
+      "block": 3,
+      "language": "text",
+      "sha256": "2bd13e4a9bdb90115c7a9b45ea8846a9acf27a7970cb86b01095bbd42beb135e"
+    },
+    {
+      "document": "docs/autoencoders/control_plane_and_sync.md",
+      "block": 4,
+      "language": "bash",
+      "sha256": "828f09c203924a547b6ca3d5a39f4d12cb5ee75de5ae669cf31454aac3c0e2f8"
+    },
+    {
+      "document": "docs/autoencoders/control_plane_and_sync.md",
+      "block": 5,
+      "language": "bash",
+      "sha256": "c2bad57fa60427e6bf1dde4c1e1cd0fa9b1c671b83f3e06933a1f33e474ec0ba"
+    },
+    {
+      "document": "docs/autoencoders/inference_and_qualification.md",
+      "block": 0,
+      "language": "bash",
+      "sha256": "81670e19b803fbf6a65926bf261da647d9bef5ea7c0c4a1cfb409267aa9f9a1e"
+    },
+    {
+      "document": "docs/autoencoders/inference_and_qualification.md",
+      "block": 1,
+      "language": "python",
+      "sha256": "4c9c7ac7188dc0b86fcaa4c63beaefd71c87a3695574a4a2ced648a03da4151e"
+    },
+    {
+      "document": "docs/autoencoders/inference_and_qualification.md",
+      "block": 2,
+      "language": "python",
+      "sha256": "8957350638ce70c38c5772736fe5e70439adafbc99e1167c2624913b00d77438"
+    },
+    {
+      "document": "docs/autoencoders/inference_and_qualification.md",
+      "block": 3,
+      "language": "python",
+      "sha256": "088d63e3fa89fa8e5c6d8f5eec215bcfcfb3a30b3da83caaf73a8eac07b2309d"
+    },
+    {
+      "document": "docs/autoencoders/inference_and_qualification.md",
+      "block": 4,
+      "language": "bash",
+      "sha256": "6737a05a4fe8202743c201547cd14b3f2f4acfe00a1b71a76613d1af4e7a6c76"
+    },
+    {
+      "document": "docs/autoencoders/legal_training.md",
+      "block": 0,
+      "language": "bash",
+      "sha256": "bade697ae169005c11b33c5bdc0244a63627fc9d356cbb14896e7638690444f0"
+    },
+    {
+      "document": "docs/autoencoders/legal_training.md",
+      "block": 1,
+      "language": "bash",
+      "sha256": "65865915b9596d622799199ef08283ee0845f73a324e4489dd39de0a3286b946"
+    },
+    {
+      "document": "docs/autoencoders/legal_training.md",
+      "block": 2,
+      "language": "bash",
+      "sha256": "8d22766e5da0929de28ee83b7f98f970cdb141b92c4d2ce82995d768482d9e85"
+    },
+    {
+      "document": "docs/autoencoders/legal_training.md",
+      "block": 3,
+      "language": "bash",
+      "sha256": "6b79526e775d863a5e77e54b67af60a69bd413fe785e5d3ea74f8b10f1083688"
+    },
+    {
+      "document": "docs/autoencoders/legal_training.md",
+      "block": 4,
+      "language": "text",
+      "sha256": "574edd5c9f99e835f23e9689731d760bf9334934970471b56130e77af653b364"
+    },
+    {
+      "document": "docs/autoencoders/legal_training.md",
+      "block": 5,
+      "language": "bash",
+      "sha256": "72888dc22b503cda558f1022b0c50b0b3a8ae7e45136af53fc22e6310ca95194"
+    },
+    {
+      "document": "docs/autoencoders/legal_training.md",
+      "block": 6,
+      "language": "bash",
+      "sha256": "dfd2568e07c6306221b4f9e0fb6a1e198dc17d3e891e7c9c01eed107c800b756"
+    },
+    {
+      "document": "docs/autoencoders/native_feature_quickstart.md",
+      "block": 0,
+      "language": "python",
+      "sha256": "97e3b1216644c8cc8be02398358a8c3a5a77697bd238e095a7a53aa4c08a73a7"
+    },
+    {
+      "document": "docs/autoencoders/operations_and_troubleshooting.md",
+      "block": 0,
+      "language": "bash",
+      "sha256": "7abea70b2c7ff6042e0ed62bfe7ba8b4f415fa4c8099037f31c4af039d85b170"
+    },
+    {
+      "document": "docs/autoencoders/operations_and_troubleshooting.md",
+      "block": 1,
+      "language": "bash",
+      "sha256": "97797564eed5a348cc90585452b52f3567de7d910dff776d57baef6cf3a30139"
+    },
+    {
+      "document": "docs/autoencoders/operations_and_troubleshooting.md",
+      "block": 2,
+      "language": "bash",
+      "sha256": "3bac4ca1b3e6e53d50d89a1d1ec528cad192efeb34afbd0f143e85adc0915f11"
+    },
+    {
+      "document": "docs/autoencoders/operations_and_troubleshooting.md",
+      "block": 3,
+      "language": "text",
+      "sha256": "e2a254b19854a78eb3ec64506cb6dbd4a03a749b628f20a66aaec9c75cfd1778"
+    },
+    {
+      "document": "docs/autoencoders/operations_and_troubleshooting.md",
+      "block": 4,
+      "language": "bash",
+      "sha256": "c5b73cc9937998d103cc608dad06cd2c1140d68295b2e5a2806edab74357ebf6"
+    }
+  ],
+  "errors": [],
+  "scope": "relative links and headings, published source links, Python/embedded Python/JSON parsing and bash -n; templates not executed",
+  "files": {
+    "docs/autoencoders/README.md": {
+      "sha256": "42da2ce6b20c2ce50d790e78beb1af9455da5907e435390565b12a10b3fdd384",
+      "bytes": 7248
+    },
+    "docs/autoencoders/api_map.md": {
+      "sha256": "5a8c527e0103fc122ff1d1d55098807a78aafd4203a6c5b73254b8579de1857b",
+      "bytes": 8360
+    },
+    "docs/autoencoders/artifacts_and_inputs.md": {
+      "sha256": "b93f189459c1962ac9dd541486b56ffa94824b39b2b88d3c01b8ce04fd418e69",
+      "bytes": 12129
+    },
+    "docs/autoencoders/control_plane_and_sync.md": {
+      "sha256": "ec093b28365135e963aa6241ad266414e773300631a75ccb6779caf1f3e7cf96",
+      "bytes": 19385
+    },
+    "docs/autoencoders/inference_and_qualification.md": {
+      "sha256": "c90c1ce8808a6946f55d28e04faa912149046492419410b6c3e8fa23e9a29df7",
+      "bytes": 13553
+    },
+    "docs/autoencoders/legal_training.md": {
+      "sha256": "7b9e3cf1c7e4ef1fc38a1fd40932d260329dc634c6194acad71e95c436c16ac3",
+      "bytes": 14849
+    },
+    "docs/autoencoders/modalities.md": {
+      "sha256": "67a8e0b8ba1c0bf9cf52bcc63ed4a1e9d162efc9f930eac453b22d74c486ec4e",
+      "bytes": 14897
+    },
+    "docs/autoencoders/native_feature_quickstart.md": {
+      "sha256": "7fb736c1a049382ae9328a5764f635540deeac01c14af4dc8403731d3fa7f4c0",
+      "bytes": 11162
+    },
+    "docs/autoencoders/operations_and_troubleshooting.md": {
+      "sha256": "172adbd487e00a31d0d690a211fe9df100941afb2ccaa82db8d923fa682673bd",
+      "bytes": 15617
+    }
+  }
+}
