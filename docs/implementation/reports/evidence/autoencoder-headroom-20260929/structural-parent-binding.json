@@ -1,0 +1,17 @@
+{
+  "schema": "structural-patch-parent-binding/v1",
+  "parent": {
+    "bytes": 1558,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/fresh-gte-small-384.state.json",
+    "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9"
+  },
+  "selected_maps_empty": [
+    "compiler_quality_embedding_weights",
+    "logic_signature_embedding_weights",
+    "round_trip_signal_embedding_weights",
+    "decompiler_plan_embedding_weights",
+    "predicate_argument_embedding_weights",
+    "family_embedding_weights"
+  ],
+  "admitted": false
+}

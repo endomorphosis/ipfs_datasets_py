@@ -1,0 +1,34 @@
+{
+  "schema": "explicit-campaign-cap-increase/v1",
+  "at": 1790692271.1616251,
+  "old_limit_bytes": 80000000000,
+  "new_limit_bytes": 85000000000,
+  "prior_records_preserved": 185,
+  "records_sha256_before": "feb2f470050463524db7f7015dd5db12ee2217c633c9d7477f6df8b5d79b48bb",
+  "records_sha256_after": "feb2f470050463524db7f7015dd5db12ee2217c633c9d7477f6df8b5d79b48bb",
+  "ledger_sha256_before": "aafd70547655e0d25c711bd5904188fb47b689b5b7f9e3dc526892265c280669",
+  "ledger_sha256_after": "94cab8a8d3374bfdceff209845905e61883af96dfed30e9eb1074d341da1b701",
+  "only_top_level_limit_changed": true,
+  "accounting": {
+    "observed_apparent_bytes": 49263988111,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "additional_requested_bytes": 0,
+    "charged_bytes": 79978988111,
+    "limit_bytes": 85000000000,
+    "minimum_filesystem_free_bytes": 171450126336,
+    "scope": "named_roots_only_apparent_bytes",
+    "inventory": {
+      "apparent_bytes": 49263988111,
+      "entry_count": 258564,
+      "symlink_count": 3885,
+      "special_file_count": 23
+    }
+  },
+  "headroom_bytes": 5021011889,
+  "smoke_reservation_bytes": 300000000,
+  "outputs_deleted": false,
+  "worker_limits_changed": false,
+  "qualification_changed": false,
+  "new_reservation_created": false,
+  "admitted": false
+}

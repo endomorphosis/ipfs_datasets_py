@@ -1,0 +1,33 @@
+{
+  "schema": "successor-harness-readonly-audit/v1",
+  "at": 1790692339.5896163,
+  "old_package_files": 7837,
+  "current_package_files": 7837,
+  "changed": [
+    {
+      "path": "logic/software_contracts/content.py",
+      "old": "29d40341e09f601375c921758c509ea147d2563fa833fbd6fd0c2bde87aaa069",
+      "current": "a7036a66ec6b476a78cb3e9a2384eaf9dca72cb8c7cf57ed0b25cd3b592720c9"
+    },
+    {
+      "path": "optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "old": "c09272104abb966a881598016bfef66ca077fe8a87a533b6554c324c9ea60ad3",
+      "current": "f11dbb5760563ff157a32788cbea0b16457acab699432f7426313f5399ffebd7"
+    }
+  ],
+  "added": [],
+  "removed": [],
+  "old_artifacts_modified": false,
+  "new_target_preparation_required": true,
+  "old_bundle_reusable_under_new_producer_config": false,
+  "controller_tests": {
+    "passed": 7,
+    "seconds": 0.14,
+    "command": "PYTHONPATH=/home/barberb/lift_coding/external/ipfs_datasets PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/test_validation_binding.py --basetemp=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/harness-unit-tmp"
+  },
+  "ast_parse_files": 4,
+  "training_launched_by_auditor": false,
+  "targets_prepared_by_auditor": false,
+  "canary_model_evaluated": false,
+  "admitted": false
+}

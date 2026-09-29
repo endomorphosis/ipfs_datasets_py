@@ -1,0 +1,20 @@
+{
+  "schema": "campaign-headroom-validation/v1",
+  "resource_tests": {
+    "tests": 87,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 5.79
+  },
+  "controller_tests": {
+    "passed": 7,
+    "seconds": 0.14
+  },
+  "native_training_complete": true,
+  "admitted": false,
+  "overall_smoke_passed": false,
+  "stage_provenance_valid": false,
+  "qualification_admitted": false,
+  "eight_hour_launched": false
+}

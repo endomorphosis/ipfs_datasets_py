@@ -1,0 +1,213 @@
+{
+  "schema": "nonview-proposal-sparse-shape-preflight/v1",
+  "native_training": false,
+  "numeric_update": false,
+  "admitted": false,
+  "pipeline_plan": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/pipeline-plan.json",
+    "sha256": "bd5bcbb0e4c704b78b30f41f3a34f8b321f303efa03a6c1b8d9a0d31e0843b18",
+    "bytes": 18844
+  },
+  "training_input": {
+    "bytes": 60191,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T042818Z/verified-embeddings-r1/training.jsonl",
+    "sha256": "8ed9584552747db9e461dd21e9095f4fc31622ec71aba86ffa47bbe4b4487860"
+  },
+  "target_artifact": {
+    "bytes": 25949430,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/shared-targets/targets.bundle",
+    "sha256": "02cce76ed7ae6ef486037ec775887f3cb0fefe0d4b9bb63bc3b4765260951309"
+  },
+  "target_snapshot_id": "sha256:e0bbb3e6c0a6ee7211954481087fcaa3a5aa4bc9f38d515a183334c8239b33a0",
+  "target_shard_max_bytes": 268435456,
+  "selected_target_records": [
+    {
+      "sample_id": "us-code-50-3114-cc36a2057a2cc4f2",
+      "sample_sha256": "2470b23da7918016a45b0c43ae59ff86367e5d96c0bfd7a6d61c0bcfcf719646",
+      "target_sha256": "a0a201aab6b38cc204ccce78ad27aa6dd4daee3a8df2aca6a000b0f50835b31f",
+      "status": "ready",
+      "expanded_bytes": 36949131
+    },
+    {
+      "sample_id": "us-code-22-2-37b796de116a4487",
+      "sample_sha256": "2186e91197264e2886eb9dd2233bede35dca3cf1ebb8519ec80fdb48fa680651",
+      "target_sha256": "3eab0ced484d53540af2dfa2beb98cb0faf9ac425dadcfd02e80b45b57e3ba01",
+      "status": "ready",
+      "expanded_bytes": 67482571
+    },
+    {
+      "sample_id": "us-code-40-3318-429cfc454b54ce35",
+      "sample_sha256": "7c886cc487923c497862ea059c4bebba6e9f0e71fad51ea73044610ef07077be",
+      "target_sha256": "1778ca62569e07a1ce631e90bcb8ce9ad02688f6c0a64dab4935b166b423178c",
+      "status": "ready",
+      "expanded_bytes": 91141821
+    },
+    {
+      "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+      "sample_sha256": "9dcd48c17af53e2eb628162b32b530698e0569a5f9416c9bd01c0e83cb2d17c2",
+      "target_sha256": "f478992ec6b6c3b3feb4f6ccd369e2f184a39df654afb26f95aa42f0b4728690",
+      "status": "ready",
+      "expanded_bytes": 79214210
+    },
+    {
+      "sample_id": "us-code-42-15963-7baaee5c0500d91e",
+      "sample_sha256": "28aa42c222f7f605ff5f7a8707822a5b69a7529c6d8f9952b92a5105fab20c84",
+      "target_sha256": "e6f294d59afa2d641ad27af0c756aeee707f9ed56d629948dcd921991775d2dd",
+      "status": "ready",
+      "expanded_bytes": 26612709
+    },
+    {
+      "sample_id": "us-code-10-6275-3b7144797fc2e39d",
+      "sample_sha256": "90217615f7ae074dd9030afc02708daea09e3fb93d8ab67b52aefb08bafac3e1",
+      "target_sha256": "af99e5b0263658117014f817b29eb1a73ab763b647d6a56da1bccb09f1887ab6",
+      "status": "ready",
+      "expanded_bytes": 76609462
+    }
+  ],
+  "canary_accessed": false,
+  "tuning_target_graphs_decoded": false,
+  "source": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "sha256": "d19baa8d947f13af265b0871b8324948d4f2a96e79b0f0574cc29d2927f82115"
+  },
+  "training_sample_count": 6,
+  "tuning_targets_used_for_inventory": false,
+  "sample_shapes": [
+    {
+      "sample_id": "us-code-40-3318-429cfc454b54ce35",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 16,
+        "logic_signature_embedding_weights": 95,
+        "round_trip_signal_embedding_weights": 28,
+        "decompiler_plan_embedding_weights": 159,
+        "predicate_argument_embedding_weights": 65,
+        "family_embedding_weights": 3,
+        "semantic_slot_embedding_weights": 1734,
+        "family_semantic_slot_embedding_weights": 10404,
+        "feature_embedding_weights": 3455
+      }
+    },
+    {
+      "sample_id": "us-code-46-60303-bfa2875bd83d29df",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 16,
+        "logic_signature_embedding_weights": 88,
+        "round_trip_signal_embedding_weights": 34,
+        "decompiler_plan_embedding_weights": 213,
+        "predicate_argument_embedding_weights": 74,
+        "family_embedding_weights": 5,
+        "semantic_slot_embedding_weights": 1648,
+        "family_semantic_slot_embedding_weights": 11536,
+        "feature_embedding_weights": 3271
+      }
+    },
+    {
+      "sample_id": "us-code-42-15963-7baaee5c0500d91e",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 16,
+        "logic_signature_embedding_weights": 49,
+        "round_trip_signal_embedding_weights": 29,
+        "decompiler_plan_embedding_weights": 153,
+        "predicate_argument_embedding_weights": 65,
+        "family_embedding_weights": 3,
+        "semantic_slot_embedding_weights": 1124,
+        "family_semantic_slot_embedding_weights": 7868,
+        "feature_embedding_weights": 2499
+      }
+    },
+    {
+      "sample_id": "us-code-22-2-37b796de116a4487",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 16,
+        "logic_signature_embedding_weights": 41,
+        "round_trip_signal_embedding_weights": 29,
+        "decompiler_plan_embedding_weights": 129,
+        "predicate_argument_embedding_weights": 41,
+        "family_embedding_weights": 2,
+        "semantic_slot_embedding_weights": 742,
+        "family_semantic_slot_embedding_weights": 4452,
+        "feature_embedding_weights": 1843
+      }
+    },
+    {
+      "sample_id": "us-code-50-3114-cc36a2057a2cc4f2",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 16,
+        "logic_signature_embedding_weights": 63,
+        "round_trip_signal_embedding_weights": 30,
+        "decompiler_plan_embedding_weights": 201,
+        "predicate_argument_embedding_weights": 76,
+        "family_embedding_weights": 4,
+        "semantic_slot_embedding_weights": 1243,
+        "family_semantic_slot_embedding_weights": 7458,
+        "feature_embedding_weights": 2806
+      }
+    },
+    {
+      "sample_id": "us-code-10-6275-3b7144797fc2e39d",
+      "width": 384,
+      "rows": {
+        "compiler_quality_embedding_weights": 16,
+        "logic_signature_embedding_weights": 95,
+        "round_trip_signal_embedding_weights": 30,
+        "decompiler_plan_embedding_weights": 200,
+        "predicate_argument_embedding_weights": 49,
+        "family_embedding_weights": 5,
+        "semantic_slot_embedding_weights": 3358,
+        "family_semantic_slot_embedding_weights": 26864,
+        "feature_embedding_weights": 5007
+      }
+    }
+  ],
+  "unique_rows_by_component": {
+    "compiler_quality_embedding_weights": 20,
+    "logic_signature_embedding_weights": 187,
+    "round_trip_signal_embedding_weights": 54,
+    "decompiler_plan_embedding_weights": 725,
+    "predicate_argument_embedding_weights": 270,
+    "family_embedding_weights": 6
+  },
+  "unique_total_rows": 1262,
+  "float64_scalar_count": 484608,
+  "encoded_rows_bytes_including_separators": 15369362,
+  "encoded_rows_bytes_by_component": {
+    "compiler_quality_embedding_weights": 243303,
+    "logic_signature_embedding_weights": 2275018,
+    "round_trip_signal_embedding_weights": 656816,
+    "decompiler_plan_embedding_weights": 8833925,
+    "predicate_argument_embedding_weights": 3287572,
+    "family_embedding_weights": 72728,
+    "semantic_slot_embedding_weights": 65382354,
+    "family_semantic_slot_embedding_weights": 486726330,
+    "feature_embedding_weights": 145959699
+  },
+  "envelope_margin_bytes": 65536,
+  "planned_segment_bytes_upper_bound": 15434898,
+  "MAX_PATCH_BYTES": 67108864,
+  "within_patch_bound": true,
+  "scope": "Exact row inventory of six structural maps over all six immutable training samples; no numeric update, fit, evaluation, acceptance or proof. Float64 codec size exact independently of values;65536byte envelope margin.",
+  "elapsed_seconds": 10.461218698881567,
+  "total_process_elapsed_seconds": 11.12638380099088,
+  "sample_preparation_seconds": 0.4234234020113945,
+  "max_rss_kib": 724220,
+  "operator": "decoded_embedding_structural",
+  "normalization": "full original active-head count, without renormalizing selected six heads",
+  "selected_components": [
+    "compiler_quality_embedding_weights",
+    "logic_signature_embedding_weights",
+    "round_trip_signal_embedding_weights",
+    "decompiler_plan_embedding_weights",
+    "predicate_argument_embedding_weights",
+    "family_embedding_weights"
+  ],
+  "excluded_nonview_components": [
+    "semantic_slot_embedding_weights",
+    "family_semantic_slot_embedding_weights",
+    "feature_embedding_weights"
+  ]
+}

@@ -1,0 +1,446 @@
+{
+  "schema": "invalidated-parallel-smoke-observations/v1",
+  "at": 1790692843.5955513,
+  "status": "source_guard_failed_unsealed_diagnostic_observations_only",
+  "overall_smoke_passed": false,
+  "admitted": false,
+  "formalized": false,
+  "promotion_performed": false,
+  "eight_hour_launched": false,
+  "reason": "native stage failed; inspect native.log",
+  "source_drift_audit": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/native-smoke-source-drift-audit.json",
+    "bytes": 829,
+    "sha256": "65b848d04513b850c6726962a4a8b982c43ea6c28d56ec5bd87159e737577e2d"
+  },
+  "stage_failure": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/stages/smoke/stage-failure.json",
+    "bytes": 207,
+    "sha256": "64c7c58b482225b73e700bc4528fe0dd0b1812bf2f134f3e47431dcb8e958ae1"
+  },
+  "stage_complete_seal_exists": false,
+  "shared_preparation": {
+    "target_count": 8,
+    "complete": true,
+    "owner_seconds": 144.82523157005198,
+    "owner_seconds_per_span": 18.103153946256498,
+    "native_generation_seconds": 117.10033170087263,
+    "native_generation_seconds_per_span": 14.637541462609079,
+    "cache_scope": "Cold metric/multiview process caches bypassed and disk cache0; operating-system caches uncontrolled. Successful preparation predates later package drift; old bundle cannot be rebound or consumed by changed producer."
+  },
+  "measurement_policy": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "legal_ir_evaluate_provers": false,
+    "metric_disk_cache": 0,
+    "legal_ir_parallel_workers": 1,
+    "use_sample_memory": false,
+    "projection_update_backend": "python_sparse_batch",
+    "cuda_visible_devices": "",
+    "training_sample_count_per_worker": 6,
+    "tuning_sample_count_per_worker": 2,
+    "worker_count": 2,
+    "worker_evaluation_cache_scope": "Verified supplied shared native targets; zero generation in each recorded evaluation. These are bridge-on evaluations with shared targets, not cold target compilation."
+  },
+  "parallel_dispatch_seconds": 44.74565807916224,
+  "parallel_dispatch_completed_workers": 2,
+  "parallel_dispatch_failed_workers": 0,
+  "cells": [
+    {
+      "cell": "fixed035",
+      "worker_receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/stages/smoke/waves/wave-0000/fixed035/worker/receipt.json",
+        "bytes": 244133,
+        "sha256": "4a7fc53dad120d6f7fb8cbddebbede5db74e431d36d8849f8d464291d174bb72"
+      },
+      "qualification_receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/stages/smoke/waves/wave-0000/fixed035/qualification/qualification.json",
+        "bytes": 2106625,
+        "sha256": "0731a936667735c043e59a87cd5f97f47ce030d61f49e721098926c3078ae7c9"
+      },
+      "accepted_epochs": 1,
+      "effective_learning_rate": 0.175,
+      "line_search_attempt_count": 2,
+      "selected_update": "decoded_embedding_structural",
+      "objective_before": 3.5280103878968796,
+      "objective_after": 2.319657507222759,
+      "committed_objective_improvement": 1.2083528806741204,
+      "legal_ir_view_cross_entropy_delta": 0.0,
+      "training_seconds": 17.24250315199606,
+      "training_seconds_per_training_span": 2.8737505253326767,
+      "worker_wall_seconds": 37.64768523792736,
+      "worker_wall_seconds_per_training_span": 6.274614206321227,
+      "target_load_seconds": 19.69730410980992,
+      "sample_count": 6,
+      "tuning_sample_count": 2,
+      "shared_target_count": 8,
+      "shared_targets_verified": true,
+      "evaluations": [
+        {
+          "stage": "before_holdout_evaluation",
+          "wall_seconds": 1.7507712121587247,
+          "sample_count": 2,
+          "legal_ir_target_count": 2,
+          "wall_seconds_per_span": 0.8753856060793623,
+          "supplied_target_count": 2,
+          "native_evaluation_attempt_count": 0,
+          "generated_target_count": 0,
+          "timeout_fallback_count": 0
+        },
+        {
+          "stage": "training_cache_prime",
+          "wall_seconds": 8.58208621898666,
+          "sample_count": 6,
+          "legal_ir_target_count": 6,
+          "wall_seconds_per_span": 1.4303477031644434,
+          "supplied_target_count": 6,
+          "native_evaluation_attempt_count": 0,
+          "generated_target_count": 0,
+          "timeout_fallback_count": 0
+        },
+        {
+          "stage": "line_search_evaluation",
+          "wall_seconds": 1.4379726129118353,
+          "sample_count": 2,
+          "legal_ir_target_count": 2,
+          "wall_seconds_per_span": 0.7189863064559177,
+          "supplied_target_count": 2,
+          "native_evaluation_attempt_count": 0,
+          "generated_target_count": 0,
+          "timeout_fallback_count": 0
+        },
+        {
+          "stage": "line_search_evaluation",
+          "wall_seconds": 1.4938797829672694,
+          "sample_count": 2,
+          "legal_ir_target_count": 2,
+          "wall_seconds_per_span": 0.7469398914836347,
+          "supplied_target_count": 2,
+          "native_evaluation_attempt_count": 0,
+          "generated_target_count": 0,
+          "timeout_fallback_count": 0
+        }
+      ],
+      "raw_decoder_before_safety_projection": {
+        "before": {
+          "embedding_cosine_similarity_mean": 0.19611613513818404,
+          "reconstruction_loss_mean": 0.0025270833813965826,
+          "observed_sample_count": 2,
+          "used_for_acceptance": false
+        },
+        "after": {
+          "embedding_cosine_similarity_mean": 0.242828511249809,
+          "reconstruction_loss_mean": 0.0025027325665173614,
+          "observed_sample_count": 2,
+          "used_for_acceptance": false
+        }
+      },
+      "reported_after_safety_projection": {
+        "embedding_cosine_similarity": 1.0,
+        "reconstruction_loss": 0.0,
+        "cross_entropy_loss": 2.19722457733622,
+        "legal_ir_target_count": 2
+      },
+      "sparse_patch_artifacts_verified_on_disk": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/stages/smoke/waves/wave-0000/fixed035/worker/accepted-000000.patch.json",
+          "bytes": 15370309,
+          "sha256": "0aa2277d55854cba08faaa3254388882b47644ff7a73d0cdd1d7185b13da0cc8"
+        }
+      ],
+      "sparse_patch_bytes": 15370309,
+      "owner_sparse_replay_verified": true,
+      "owner_sparse_replay_seconds": 2.005795585922897,
+      "owner_compaction_performed": true,
+      "owner_compaction_reasons": [
+        "patch_fraction"
+      ],
+      "owner_candidate_materialized_checkpoint": {
+        "bytes": 4667467,
+        "sha256": "d790e77855998800675cfc684e0d3453d0703188360aaaab3dfab0a2620bd3c9"
+      },
+      "candidate_differs_from_parent": true,
+      "qualification_wall_seconds": 10.228601600974798,
+      "qualification_gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 2
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        }
+      },
+      "qualified": false,
+      "formalized": false,
+      "heldout_canary": false,
+      "heldout_role": "tuning_validation",
+      "qualification_metrics_bridge_off": {
+        "bridge_names": [],
+        "cache_enabled": false,
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "legal_ir_target_count": 0,
+        "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+        "use_sample_memory": false
+      },
+      "syntactically_valid_clause_projections_by_family": {
+        "deontic_cognitive_event_calculus": 11,
+        "deontic_fol": 11,
+        "deontic_temporal_fol": 11,
+        "fol": 11,
+        "frame_logic": 11,
+        "temporal_fol": 11
+      },
+      "real_corpus_lake_rejection_reasons": {
+        "source_semantic_roundtrip_failed": 11
+      }
+    },
+    {
+      "cell": "productive035",
+      "worker_receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/stages/smoke/waves/wave-0000/productive035/worker/receipt.json",
+        "bytes": 250450,
+        "sha256": "b1e519c57b942963ccb4920b1bd0114a880c255df49cc441ba637cd949ef3153"
+      },
+      "qualification_receipt": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/stages/smoke/waves/wave-0000/productive035/qualification/qualification.json",
+        "bytes": 2106615,
+        "sha256": "a254040937e6e890c8f59b9c51fb5a0ae633a9f7b9b957a8075c54137c88904e"
+      },
+      "accepted_epochs": 1,
+      "effective_learning_rate": 0.175,
+      "line_search_attempt_count": 2,
+      "selected_update": "decoded_embedding_structural",
+      "objective_before": 3.5280103878968796,
+      "objective_after": 2.319657507222759,
+      "committed_objective_improvement": 1.2083528806741204,
+      "legal_ir_view_cross_entropy_delta": 0.0,
+      "training_seconds": 18.774015956092626,
+      "training_seconds_per_training_span": 3.129002659348771,
+      "worker_wall_seconds": 40.468183585908264,
+      "worker_wall_seconds_per_training_span": 6.744697264318044,
+      "target_load_seconds": 21.006215292960405,
+      "sample_count": 6,
+      "tuning_sample_count": 2,
+      "shared_target_count": 8,
+      "shared_targets_verified": true,
+      "evaluations": [
+        {
+          "stage": "before_holdout_evaluation",
+          "wall_seconds": 1.8259936249814928,
+          "sample_count": 2,
+          "legal_ir_target_count": 2,
+          "wall_seconds_per_span": 0.9129968124907464,
+          "supplied_target_count": 2,
+          "native_evaluation_attempt_count": 0,
+          "generated_target_count": 0,
+          "timeout_fallback_count": 0
+        },
+        {
+          "stage": "training_cache_prime",
+          "wall_seconds": 9.37732123490423,
+          "sample_count": 6,
+          "legal_ir_target_count": 6,
+          "wall_seconds_per_span": 1.5628868724840383,
+          "supplied_target_count": 6,
+          "native_evaluation_attempt_count": 0,
+          "generated_target_count": 0,
+          "timeout_fallback_count": 0
+        },
+        {
+          "stage": "line_search_evaluation",
+          "wall_seconds": 1.5569471349008381,
+          "sample_count": 2,
+          "legal_ir_target_count": 2,
+          "wall_seconds_per_span": 0.7784735674504191,
+          "supplied_target_count": 2,
+          "native_evaluation_attempt_count": 0,
+          "generated_target_count": 0,
+          "timeout_fallback_count": 0
+        },
+        {
+          "stage": "line_search_evaluation",
+          "wall_seconds": 1.5310130689758807,
+          "sample_count": 2,
+          "legal_ir_target_count": 2,
+          "wall_seconds_per_span": 0.7655065344879404,
+          "supplied_target_count": 2,
+          "native_evaluation_attempt_count": 0,
+          "generated_target_count": 0,
+          "timeout_fallback_count": 0
+        }
+      ],
+      "raw_decoder_before_safety_projection": {
+        "before": {
+          "embedding_cosine_similarity_mean": 0.19611613513818404,
+          "reconstruction_loss_mean": 0.0025270833813965826,
+          "observed_sample_count": 2,
+          "used_for_acceptance": false
+        },
+        "after": {
+          "embedding_cosine_similarity_mean": 0.242828511249809,
+          "reconstruction_loss_mean": 0.0025027325665173614,
+          "observed_sample_count": 2,
+          "used_for_acceptance": false
+        }
+      },
+      "reported_after_safety_projection": {
+        "embedding_cosine_similarity": 1.0,
+        "reconstruction_loss": 0.0,
+        "cross_entropy_loss": 2.19722457733622,
+        "legal_ir_target_count": 2
+      },
+      "sparse_patch_artifacts_verified_on_disk": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/stages/smoke/waves/wave-0000/productive035/worker/accepted-000000.patch.json",
+          "bytes": 15370319,
+          "sha256": "94af98bc7803f3644112983fb281669eda5c873b5458a3fc1b38868f17dcdcfc"
+        }
+      ],
+      "sparse_patch_bytes": 15370319,
+      "owner_sparse_replay_verified": true,
+      "owner_sparse_replay_seconds": 1.9224137619603425,
+      "owner_compaction_performed": true,
+      "owner_compaction_reasons": [
+        "patch_fraction"
+      ],
+      "owner_candidate_materialized_checkpoint": {
+        "bytes": 4667467,
+        "sha256": "d790e77855998800675cfc684e0d3453d0703188360aaaab3dfab0a2620bd3c9"
+      },
+      "candidate_differs_from_parent": true,
+      "qualification_wall_seconds": 10.019445629091933,
+      "qualification_gates": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 2
+        },
+        "lake_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        },
+        "metric_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [
+            "us-code-40-3318-429cfc454b54ce35",
+            "us-code-46-60303-bfa2875bd83d29df",
+            "us-code-42-15963-7baaee5c0500d91e",
+            "us-code-22-2-37b796de116a4487",
+            "us-code-50-3114-cc36a2057a2cc4f2",
+            "us-code-10-6275-3b7144797fc2e39d",
+            "us-code-36-50106-bb17fee26e3ac266",
+            "us-code-42-8286a-579bf6232e305315"
+          ],
+          "passed": false
+        }
+      },
+      "qualified": false,
+      "formalized": false,
+      "heldout_canary": false,
+      "heldout_role": "tuning_validation",
+      "qualification_metrics_bridge_off": {
+        "bridge_names": [],
+        "cache_enabled": false,
+        "legal_ir_evaluate_provers": false,
+        "legal_ir_parallel_workers": 1,
+        "legal_ir_target_count": 0,
+        "scope": "embedding_metrics_only_not_a_legal_ir_evaluate",
+        "use_sample_memory": false
+      },
+      "syntactically_valid_clause_projections_by_family": {
+        "deontic_cognitive_event_calculus": 11,
+        "deontic_fol": 11,
+        "deontic_temporal_fol": 11,
+        "fol": 11,
+        "frame_logic": 11,
+        "temporal_fol": 11
+      },
+      "real_corpus_lake_rejection_reasons": {
+        "source_semantic_roundtrip_failed": 11
+      }
+    }
+  ],
+  "qualification_interpretation": "Metric gate passes existing input-dependent reconstruction safety projection. Raw decoder cosine improves0.196116\u21920.242829, below0.72; diagnostic only, unchanged acceptance.6family syntax projections parse across11clauses per worker, but all8source rows fail aggregate semantics/family/Lake qualification. No proof or global-convergence claim.",
+  "canary_model_evaluated": false,
+  "canary_evidence_paths": [],
+  "semantic_fixture_receipt_exists": false,
+  "actual_fixture_lake_builds": 0,
+  "actual_real_corpus_lake_builds": 0,
+  "lake_scope": "Guard failed after candidate qualification before semantic_regression_gate;11per-worker source-locked Lake records reject source_semantic_roundtrip_failed before invoking Lake. No Legal.lean or Lake build log exists in stage.",
+  "protected_checkpoint_unchanged": true,
+  "corpus_source_identity_verified": false,
+  "canary_global_holdout_verified": false,
+  "eight_hour_qualification_ready": false
+}

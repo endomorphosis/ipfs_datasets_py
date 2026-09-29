@@ -1,0 +1,65 @@
+{
+  "schema": "campaign-headroom-evidence/v1",
+  "old_limit_bytes": 80000000000,
+  "new_limit_bytes": 85000000000,
+  "headroom_at_closeout_bytes": 5320313170,
+  "overall_smoke_passed": false,
+  "admitted": false,
+  "files": [
+    {
+      "path": "cap-migration.json",
+      "bytes": 1299,
+      "sha256": "18bcabb4297feffbc249967c909fce4ada10e3ec726f153a02efadce10e835e9"
+    },
+    {
+      "path": "census-before.json",
+      "bytes": 1200,
+      "sha256": "631ae0aca17435dd81dc2cf04270e2d8fdb73ace97082cb62ea2ed44e46e806b"
+    },
+    {
+      "path": "headroom-successor-publication-review.json",
+      "bytes": 2590,
+      "sha256": "342fa5768987e3509ea2d9dea73125a1a609c90dd02c5fa63a1384652758ea89"
+    },
+    {
+      "path": "native-smoke-invalidated-observations.json",
+      "bytes": 18148,
+      "sha256": "3a9551dcd83afb6593ecbe564a0caf211926995515209877da76fd0ba9a75af8"
+    },
+    {
+      "path": "native-smoke-source-drift-audit.json",
+      "bytes": 829,
+      "sha256": "65b848d04513b850c6726962a4a8b982c43ea6c28d56ec5bd87159e737577e2d"
+    },
+    {
+      "path": "stage-reconciliation.json",
+      "bytes": 7799,
+      "sha256": "2d2576ea69229293ba44846eda872deddde4165454c9dc9b90d365245f528180"
+    },
+    {
+      "path": "structural-parent-binding.json",
+      "bytes": 642,
+      "sha256": "919428590d5c8b5ea2c8f24f0fa6bd572d8f965a730d2169fe5028ea2409af26"
+    },
+    {
+      "path": "structural-sparse-shape.json",
+      "bytes": 8806,
+      "sha256": "a8557ba203c26884f2bad34b889b7123c9be65bad7e375e719dcf43b23b5ddc3"
+    },
+    {
+      "path": "successor-harness-readonly-audit.json",
+      "bytes": 1522,
+      "sha256": "2b2d75b2b016ba3dbdc721955b4a2c9c6ddd98cefd1fce3b4b5f9a002c75a28e"
+    },
+    {
+      "path": "target-preparation.json",
+      "bytes": 2255,
+      "sha256": "9285607f0aa5753227ac96ae3bf6957bd452cd9b2e096885f5674e3b0b547606"
+    },
+    {
+      "path": "validation.json",
+      "bytes": 426,
+      "sha256": "ff08e4ac990d16acf5f2c39a7e24ca0f8c78380a30aacdd69c748c6f183a8d5c"
+    }
+  ]
+}

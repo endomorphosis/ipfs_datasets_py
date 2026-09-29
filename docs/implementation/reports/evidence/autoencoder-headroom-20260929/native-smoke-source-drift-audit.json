@@ -1,0 +1,24 @@
+{
+  "schema": "native-smoke-source-drift-audit/v1",
+  "at": 1790692691.0050743,
+  "source_changes": [
+    {
+      "path": "logic/software_verification/pipeline.py",
+      "old": "107af9270284ecc4d1c32ebcc6635fe353ba2ff8af1aa054e9b3c5f567653bd3",
+      "current": "2103f1d21076e79c381a2daa4ef2a70db44d40ee0a4f499b28332ac5a0c76fb2",
+      "mtime_ns": 1790692679188627195
+    },
+    {
+      "path": "logic/software_verification/source_adapters.py",
+      "old": "dd52c743cd4be34c8bcade66d51c9191615c3978e58c5e72b945c4e8e7cc9d90",
+      "current": "ce961c640f7404fc25c01601680a660bcae5ec033afe465f0bdd5bdc192fdb2f",
+      "mtime_ns": 1790692621839870485
+    }
+  ],
+  "source_additions": [],
+  "source_removals": [],
+  "orchestration_changes": [],
+  "core_changes": {},
+  "protected_checkpoint_unchanged": true,
+  "admitted": false
+}

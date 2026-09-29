@@ -1,0 +1,50 @@
+{
+  "schema": "headroom-successor-publication-readonly-review/v1",
+  "at": 1790692430.6846375,
+  "publication_base": "8b59c5eeb83ab882c6c65da92947ffe62bfe8e16",
+  "cap_files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "before_sha256": "c09272104abb966a881598016bfef66ca077fe8a87a533b6554c324c9ea60ad3",
+      "after_sha256": "f11dbb5760563ff157a32788cbea0b16457acab699432f7426313f5399ffebd7",
+      "origin_sha256": "c09272104abb966a881598016bfef66ca077fe8a87a533b6554c324c9ea60ad3",
+      "before_equals_origin": true
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "before_sha256": "9ad23a89d721e53b57a62b7c53466263b00b16147be1414e2c14242a26e07370",
+      "after_sha256": "41961bf8549b846af50d163774a660106ffe562a1c29829dc520be0149a62fa2",
+      "origin_sha256": "9ad23a89d721e53b57a62b7c53466263b00b16147be1414e2c14242a26e07370",
+      "before_equals_origin": true
+    }
+  ],
+  "safe_scoped_publication": "Both before snapshots exactly equal origin/main8b59c5eeb. Publish only their current reviewed before-to-after delta; recheck hashes before staging and avoid unrelated dirty paths.",
+  "harness_diff_exact": {
+    "run_pipeline": "One85GBledger assertion substitution only.",
+    "native_stage": "Onehandoff relative path substitution only.",
+    "unchanged_training_and_qualification_gates": true,
+    "unchanged_stage_300s_and_drain_180s": true,
+    "unchanged_storage_reservation_300000000": true
+  },
+  "stage_root_checks": {
+    "base_parents_3_is_canonical_root": true,
+    "stage_outputs_derive_from_current_base": true,
+    "artifact_containment_guards_unchanged": true,
+    "completed_stage_resume_and_recovery_guards_unchanged": true,
+    "target_handoff_must_be_in_successor": true,
+    "same_verified_split_bytes": true
+  },
+  "size_helper": {
+    "no_stale_old_bundle_hash_or_directory": true,
+    "verifies_plan_handoff_artifact_identity": true,
+    "requires_complete_targets": true,
+    "verifies_snapshot_and_training_sample_hashes": true,
+    "decodes_training_target_graphs_only": true,
+    "no_numeric_training_or_evaluation": true,
+    "assumption": "Sparse row-size bound assumes fresh selected maps are empty. Native fresh_parent creates this; after plan root should also compare selected maps in the actual parent for a byte-bound corroborating receipt."
+  },
+  "no_source_edits_by_reviewer": true,
+  "no_old_artifact_mutations": true,
+  "no_training_or_preparation_launch_by_reviewer": true,
+  "admitted": false
+}

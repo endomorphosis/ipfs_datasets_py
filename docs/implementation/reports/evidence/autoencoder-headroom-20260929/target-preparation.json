@@ -1,0 +1,72 @@
+{
+  "sample_count": 8,
+  "training_count": 6,
+  "tuning_count": 2,
+  "legal_ir_target_count": 8,
+  "target_completeness": {
+    "admitted": false,
+    "complete": true,
+    "complete_target_count": 8,
+    "incomplete_target_count": 0,
+    "observations": {
+      "us-code-10-6275-3b7144797fc2e39d": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-22-2-37b796de116a4487": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-36-50106-bb17fee26e3ac266": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-40-3318-429cfc454b54ce35": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-42-15963-7baaee5c0500d91e": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-42-8286a-579bf6232e305315": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-46-60303-bfa2875bd83d29df": {
+        "complete": true,
+        "reasons": []
+      },
+      "us-code-50-3114-cc36a2057a2cc4f2": {
+        "complete": true,
+        "reasons": []
+      }
+    },
+    "schema_version": "target-supervision-completeness/v1",
+    "scope": "all requested bridge reports returned and accepted without timeout or exception; not a Lean admission or model qualification",
+    "target_count": 8
+  },
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "provers": false,
+  "metric_disk_cache": 0,
+  "ir_workers": 1,
+  "use_sample_memory": false,
+  "target_generation_seconds": 117.10033170087263,
+  "target_generation_seconds_per_span": 14.637541462609079,
+  "owner_wall_seconds": 144.82523157005198,
+  "artifact": {
+    "bytes": 25949430,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-headroom-20260929T142914Z/shared-targets/targets.bundle",
+    "sha256": "02cce76ed7ae6ef486037ec775887f3cb0fefe0d4b9bb63bc3b4765260951309"
+  },
+  "snapshot_id": "sha256:e0bbb3e6c0a6ee7211954481087fcaa3a5aa4bc9f38d515a183334c8239b33a0",
+  "resource_status": "released",
+  "scope": "cold target generation, not AE evaluate; consumers reuse explicit shared artifact; OS cache warmth uncontrolled",
+  "admitted": false
+}
