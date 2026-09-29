@@ -1,0 +1,65 @@
+{
+  "admitted": false,
+  "applied": true,
+  "artifacts": [
+    {
+      "bytes": 4507,
+      "path": "failure.json",
+      "sha256": "6188ebb814c7f43d0b8282cce7189bd105b9d56906376503ac868377ddcbbaf6"
+    }
+  ],
+  "automatic_expiry": false,
+  "external_charge_disposition": {
+    "isolated-source-checkout": {
+      "checkout_removed_before_reconciliation": true,
+      "current_bytes": 0,
+      "git_worktree_registration_absent": true,
+      "historical_reserved_bytes": 1166777216
+    }
+  },
+  "external_checkout_parent": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/merge-validation-r3",
+  "external_parent_identity": {
+    "device": 66306,
+    "inode": 68433291,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/merge-validation-r3"
+  },
+  "final_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 82668843539,
+    "inventory": {
+      "apparent_bytes": 51953843539,
+      "entry_count": 328360,
+      "special_file_count": 26,
+      "symlink_count": 4180
+    },
+    "limit_bytes": 85000000000,
+    "minimum_filesystem_free_bytes": 138563182592,
+    "observed_apparent_bytes": 51953843539,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "full_claim_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 83894341011,
+    "inventory": {
+      "apparent_bytes": 51953843539,
+      "entry_count": 328360,
+      "special_file_count": 26,
+      "symlink_count": 4180
+    },
+    "limit_bytes": 85000000000,
+    "minimum_filesystem_free_bytes": 138563182592,
+    "observed_apparent_bytes": 51953843539,
+    "outstanding_full_reservations_bytes": 31940497472,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "original_owner_pid": 3256263,
+  "other_reservations_sha256": "9398768cbd670846008674282acaad8c280a79357dec53af29206be6bcdc6b69",
+  "outputs_deleted": false,
+  "preserved_other_reservations_count": 221,
+  "previous_ledger_sha256": "1cad826d36eb0fa339713ef84461d064e7902526d5432bb73971e32f6c31e76f",
+  "previous_record_sha256": "56c74078d3c3268d5b1b5e817cb6c6b92222196c19ad01b716c405a3474157e9",
+  "reconciled_by_pid": 3354328,
+  "reservation_id": "f66ad2230b5a41c1b29bb4b663b29c6a",
+  "schema": "explicit-single-failed-source-merge-reconciliation/v1"
+}

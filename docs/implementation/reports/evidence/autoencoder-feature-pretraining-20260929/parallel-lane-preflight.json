@@ -1,0 +1,32 @@
+{
+  "algorithm_reference": "autoencoder_incremental_training.assignment: SHA256 JSON [lane,batch_identity] modulo lane_count; batch_identity removes run/job/output/base version labels and portable artifact paths",
+  "completed_prior_stream": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r3/feature-training/progress/progress.duckdb",
+  "environment_wrapper_supported_by": "autoencoder_source_snapshot._run_snapshot validates absolute existing argv[0] and _container_entry uses subprocess.Popen(config[argv]) after frozen preflight; /usr/bin/env passes through exact bound argv",
+  "no_dispatch_performed": true,
+  "occupancy": {
+    "2": {
+      "1": 6
+    },
+    "3": {
+      "0": 2,
+      "1": 1,
+      "2": 3
+    },
+    "4": {
+      "1": 3,
+      "3": 3
+    }
+  },
+  "physical_worker_ceiling": 2,
+  "schema": "feature-parallel-lane-preflight/v1",
+  "selected_lane_count": 4,
+  "source_batch_ids": [
+    "1d3625f59e9fea80375d92235dbd68f86d8d49422f55df8323a155dc3b98788b",
+    "56ceb3c96ec5810e393e71170f5d1238a585d9492483b30c75df387ff34163f4",
+    "865212ebbb2193fc8e8f25c96b8748b1e3cea290b6654fa6ad25f72724314a08",
+    "8225e23de12aa4ebe48f1cdff49908e548b2e183a2214cf07e4882caff795da6",
+    "01682319a12011caaaba39c4020ff16b90caf9f1a4be88c364eb6b8193ae7fda",
+    "67b059e1ce25c00cedfddc1c9d8bf9cbecd0f139782832eb649bb97fc0421226"
+  ],
+  "source_unchanged": true
+}

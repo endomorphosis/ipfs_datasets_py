@@ -1,0 +1,180 @@
+{
+  "accepted_epochs": 18,
+  "admitted": false,
+  "bridge_on_evaluate": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "cold_target_generation_included": false,
+    "evaluate_provers": false,
+    "groups": [
+      {
+        "evaluation_count": 6,
+        "legal_ir_target_count_each": 1,
+        "max_seconds": 2.1246335338801146,
+        "mean_seconds": 1.5005677974938105,
+        "median_seconds": 1.7665379755198956,
+        "min_seconds": 0.5685263539198786,
+        "sample_count_each": 1
+      },
+      {
+        "evaluation_count": 42,
+        "legal_ir_target_count_each": 2,
+        "max_seconds": 2.0771065750159323,
+        "mean_seconds": 1.4878201031103908,
+        "median_seconds": 1.4476943230256438,
+        "min_seconds": 1.3467382080852985,
+        "sample_count_each": 2
+      }
+    ],
+    "metric_disk_cache": 0,
+    "parallel_workers_requested": 1,
+    "sample_memory": false,
+    "supplied_shared_targets": true,
+    "target_generation_workers_used": 0
+  },
+  "canary_evaluated": false,
+  "constitution_formalized": false,
+  "formalized": false,
+  "hub_published": false,
+  "lake_build_executed": false,
+  "lane_results": [
+    {
+      "accepted_epochs": 9,
+      "after": {
+        "embedding_cosine_similarity": 0.8435439276885552,
+        "legal_ir_target_count": 2,
+        "reconstruction_loss": 0.0018798290767505902
+      },
+      "batches": 3,
+      "before": {
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "legal_ir_target_count": 2,
+        "reconstruction_loss": 0.0025270833813965826
+      },
+      "head_version_id": "sha256:7c814c57d641d8e5f0a681b49ab98c5d8396e2a17e711383b7fb331786d44afb",
+      "lane": 1
+    },
+    {
+      "accepted_epochs": 9,
+      "after": {
+        "embedding_cosine_similarity": 0.8268949161916875,
+        "legal_ir_target_count": 2,
+        "reconstruction_loss": 0.0018775274070615662
+      },
+      "batches": 3,
+      "before": {
+        "embedding_cosine_similarity": 0.19611613513818404,
+        "legal_ir_target_count": 2,
+        "reconstruction_loss": 0.0025270833813965826
+      },
+      "head_version_id": "sha256:d8aeceb73cf71461b3592ed683ea7891699b37315bd30744a9e06fb021419c20",
+      "lane": 3
+    }
+  ],
+  "logical_lanes": 4,
+  "native_resume_host_seconds": 51.875509401084855,
+  "native_training_host_seconds": 159.5082955728285,
+  "occupied_lanes": [
+    1,
+    3
+  ],
+  "parallel_smoke_passed": true,
+  "physical_training_workers": 2,
+  "qualified": false,
+  "repeated_tuning_samples": 2,
+  "resume_dispatched_jobs": 0,
+  "schema": "feature-pretraining-delivery-summary/v1",
+  "scope": "Native private input-embedding-conditioned residual features on repeated tuning rows; not generalization or compiler distillation evidence.",
+  "source_tests_passed": 668,
+  "storage_cap_bytes": 87000000000,
+  "target_preparation": {
+    "bridge_failure_sample_count": 0,
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "cache_observation": "targets built directly; metric and multiview caches bypassed; OS cache uncontrolled",
+    "elapsed_seconds": 133.3881626049988,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 8,
+    "metric_disk_cache": 0,
+    "metric_process_cache_used": false,
+    "multiview_process_cache_used": false,
+    "preparation_including_input_planning_seconds": 147.66181312710978,
+    "sample_count": 8,
+    "target_completeness": {
+      "admitted": false,
+      "complete": true,
+      "complete_target_count": 8,
+      "incomplete_target_count": 0,
+      "observations": {
+        "us-code-10-6275-3b7144797fc2e39d": {
+          "complete": true,
+          "reasons": []
+        },
+        "us-code-22-2-37b796de116a4487": {
+          "complete": true,
+          "reasons": []
+        },
+        "us-code-36-50106-bb17fee26e3ac266": {
+          "complete": true,
+          "reasons": []
+        },
+        "us-code-40-3318-429cfc454b54ce35": {
+          "complete": true,
+          "reasons": []
+        },
+        "us-code-42-15963-7baaee5c0500d91e": {
+          "complete": true,
+          "reasons": []
+        },
+        "us-code-42-8286a-579bf6232e305315": {
+          "complete": true,
+          "reasons": []
+        },
+        "us-code-46-60303-bfa2875bd83d29df": {
+          "complete": true,
+          "reasons": []
+        },
+        "us-code-50-3114-cc36a2057a2cc4f2": {
+          "complete": true,
+          "reasons": []
+        }
+      },
+      "schema_version": "target-supervision-completeness/v1",
+      "scope": "all requested bridge reports returned and accepted without timeout or exception; not a Lean admission or model qualification",
+      "target_count": 8
+    },
+    "target_generation_seconds": 115.10357802081853,
+    "target_generation_seconds_by_sample": {
+      "us-code-10-6275-3b7144797fc2e39d": 21.264092480996624,
+      "us-code-22-2-37b796de116a4487": 15.749812339898199,
+      "us-code-36-50106-bb17fee26e3ac266": 3.284288264112547,
+      "us-code-40-3318-429cfc454b54ce35": 23.726786643033847,
+      "us-code-42-15963-7baaee5c0500d91e": 5.977384080877528,
+      "us-code-42-8286a-579bf6232e305315": 9.980291046900675,
+      "us-code-46-60303-bfa2875bd83d29df": 20.2502481630072,
+      "us-code-50-3114-cc36a2057a2cc4f2": 14.870675001991913
+    },
+    "target_generation_seconds_per_span": 14.387947252602316,
+    "target_preparation_wall_seconds": 146.9723311138805,
+    "target_snapshot_id": "sha256:99de8b555ed60fca003023a131f1b61a72a6ecfe5296791d0b0a771c4a596aaf",
+    "timeout_fallback_count": 0
+  },
+  "training_samples": 6,
+  "wave_overlap_lower_bounds_seconds": [
+    4.015685789985582,
+    4.374275345122442,
+    5.419909974792972
+  ],
+  "weights_downloaded": false
+}

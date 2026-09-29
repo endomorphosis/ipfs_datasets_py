@@ -1,0 +1,108 @@
+{
+  "schema": "feature-source-candidate-r4/v1",
+  "base": "fb7cd22419f35cfe4273d2e79c3f70e7e6f670c5",
+  "candidate": "3675513ea08cc72d92939dd5448f6797ca00798d",
+  "tree": "374b85e3d0f77af30c2ea8021c350f84dd1f77e7",
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "sha256": "af33421f46977e1f2bbd4cead4d315954efac5d5827bb44b039107045e8f724b",
+      "bytes": 1424465,
+      "live_sha256": "bc04009a284d6bfe6e8dc07a7477f704177167980890a0060b6a69a9dc1a5b3d",
+      "matches_live": false,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "sha256": "6c299a5875e15bf6071310a3832fcffcafea40e369dc238622dd9d295179e8fa",
+      "bytes": 36545,
+      "live_sha256": "6c299a5875e15bf6071310a3832fcffcafea40e369dc238622dd9d295179e8fa",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py": {
+      "sha256": "58e7546d1b2366b8799e0a4f23dd6e0e27ab232242961da6fb26fc66b1457d31",
+      "bytes": 37777,
+      "live_sha256": "58e7546d1b2366b8799e0a4f23dd6e0e27ab232242961da6fb26fc66b1457d31",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415",
+      "bytes": 100140,
+      "live_sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py": {
+      "sha256": "0f76f56a53d67867f2447ef97f63d05db2cce80aaf32c46ef662b64cff398fd2",
+      "bytes": 22784,
+      "live_sha256": "0f76f56a53d67867f2447ef97f63d05db2cce80aaf32c46ef662b64cff398fd2",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_incremental_training.py"
+    },
+    "scripts/ops/legal_ir/run_incremental_autoencoders.py": {
+      "sha256": "6a69fd04b7b00e4f9b30bba71499e51b5f1c7994397ee59674615a122e45213c",
+      "bytes": 46045,
+      "live_sha256": "6a69fd04b7b00e4f9b30bba71499e51b5f1c7994397ee59674615a122e45213c",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/scripts/ops/legal_ir/run_incremental_autoencoders.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_inputs.py": {
+      "sha256": "53816d96b25822801029361ec90055a56081cefb3299d7fce5969c7740e7b1cf",
+      "bytes": 15793,
+      "live_sha256": "53816d96b25822801029361ec90055a56081cefb3299d7fce5969c7740e7b1cf",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_inputs.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_training.py": {
+      "sha256": "d5515f8bd4ff2b426cc80ea964fb6fed8383ee5c8bd152e039df5c27f8ee55ae",
+      "bytes": 27365,
+      "live_sha256": "d5515f8bd4ff2b426cc80ea964fb6fed8383ee5c8bd152e039df5c27f8ee55ae",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_training.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_inputs.py": {
+      "sha256": "e87ea9bb7eca1f08f8eb892ad99e83a94247a5641255bf7ddbfe3921c24aa6dd",
+      "bytes": 13339,
+      "live_sha256": "e87ea9bb7eca1f08f8eb892ad99e83a94247a5641255bf7ddbfe3921c24aa6dd",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_inputs.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_objective.py": {
+      "sha256": "7f7e8d586a1fd1dae09fa7789db8499ffd1a5335b6377d6fb13c14e25e777612",
+      "bytes": 13100,
+      "live_sha256": "7f7e8d586a1fd1dae09fa7789db8499ffd1a5335b6377d6fb13c14e25e777612",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_objective.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_training.py": {
+      "sha256": "07f1f31934c3ad4ffa1a666b5eec3eb2c7b466dc03ae9be8fd4b276d4d702387",
+      "bytes": 22835,
+      "live_sha256": "07f1f31934c3ad4ffa1a666b5eec3eb2c7b466dc03ae9be8fd4b276d4d702387",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_training.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_feature_pretraining_cli.py": {
+      "sha256": "354ea14cefda55cf8321fd93d6bf31109b5e35f7a3caa9ac7718361930b91293",
+      "bytes": 9985,
+      "live_sha256": "354ea14cefda55cf8321fd93d6bf31109b5e35f7a3caa9ac7718361930b91293",
+      "matches_live": true,
+      "export_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4-exports/tests/unit/optimizers/logic_theorem_optimizer/test_feature_pretraining_cli.py"
+    }
+  },
+  "patch_sha256": "634416eeb2376000f34026c05bc93e843dd994d0ec0f46e822721cb6156c76bc",
+  "alternate_index": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-candidate-r4.index",
+  "live_head": "205bc6ef96c69c3ed9ddcd20ecf0b67f460f1841",
+  "ordinary_index_sha256": "89acaf1ef77ad2d709ac3798364047bd246a67a3e929fbec648d1671f93ad9a0",
+  "live_head_preserved": true,
+  "ordinary_index_preserved": true,
+  "excluded_pretask_hunks": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "scope": "worker_budget default parallel workers",
+      "applied_to_source_candidate": false
+    }
+  ],
+  "published": false,
+  "admitted": false,
+  "native_validation": false
+}

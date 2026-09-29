@@ -1,0 +1,27 @@
+{
+  "admitted": false,
+  "command": "PYTHONPATH=. python3 -B -m pytest -q tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py -k 'production_storage_cap or historical_ledger or explicit_top_level_cap'",
+  "frozen": true,
+  "per_worker_limit_unchanged": true,
+  "pytest_seconds": 0.24,
+  "schema": "campaign-cap-focused-validation/v1",
+  "scoped_patch_sha256": "3cf2b4087066dd9e9ac7d5516fbf1f605b554c471db0c4077f0c28f2aa9e5759",
+  "source_edits": [
+    "production cap85GB->87GB only",
+    "cap expectations87GB; 85GB added to historical explicit-migration fixtures"
+  ],
+  "source_files": [
+    {
+      "after_sha256": "6c299a5875e15bf6071310a3832fcffcafea40e369dc238622dd9d295179e8fa",
+      "before_sha256": "f11dbb5760563ff157a32788cbea0b16457acab699432f7426313f5399ffebd7",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"
+    },
+    {
+      "after_sha256": "58e7546d1b2366b8799e0a4f23dd6e0e27ab232242961da6fb26fc66b1457d31",
+      "before_sha256": "41961bf8549b846af50d163774a660106ffe562a1c29829dc520be0149a62fa2",
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py"
+    }
+  ],
+  "tests_deselected": 62,
+  "tests_passed": 13
+}

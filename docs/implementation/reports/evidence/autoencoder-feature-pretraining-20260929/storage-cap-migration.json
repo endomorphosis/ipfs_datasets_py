@@ -1,0 +1,60 @@
+{
+  "admitted": false,
+  "after_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 82669326449,
+    "inventory": {
+      "apparent_bytes": 51954326449,
+      "entry_count": 328364,
+      "special_file_count": 26,
+      "symlink_count": 4180
+    },
+    "limit_bytes": 87000000000,
+    "minimum_filesystem_free_bytes": 137426366464,
+    "observed_apparent_bytes": 51954326449,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "authorization": "Explicit user request to increase headroom; root assigned85->87GB",
+  "automatic_expiry": false,
+  "before_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 82669326449,
+    "inventory": {
+      "apparent_bytes": 51954326449,
+      "entry_count": 328364,
+      "special_file_count": 26,
+      "symlink_count": 4180
+    },
+    "limit_bytes": 85000000000,
+    "minimum_filesystem_free_bytes": 137443540992,
+    "observed_apparent_bytes": 51954326449,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "current_ledger_sha256": "289b8f56c1cedc16a28a49060275fa74c5d8fe5107c60360a5f93fb8e5d38890",
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "new_limit_bytes": 87000000000,
+  "old_limit_bytes": 85000000000,
+  "outputs_deleted": false,
+  "per_worker_storage_limit_bytes": 50000000000,
+  "previous_ledger_sha256": "90c0b58dde541461e98d5f96414dfcc1d254b1c000bbe1783dbf2a3c6aaca68a",
+  "remaining_cap_bytes": 4330673551,
+  "schema": "explicit-campaign-cap-migration/v1",
+  "source_files": [
+    {
+      "after_sha256": "6c299a5875e15bf6071310a3832fcffcafea40e369dc238622dd9d295179e8fa",
+      "before_sha256": "f11dbb5760563ff157a32788cbea0b16457acab699432f7426313f5399ffebd7",
+      "bytes": 36545,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"
+    },
+    {
+      "after_sha256": "58e7546d1b2366b8799e0a4f23dd6e0e27ab232242961da6fb26fc66b1457d31",
+      "before_sha256": "41961bf8549b846af50d163774a660106ffe562a1c29829dc520be0149a62fa2",
+      "bytes": 37777,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py"
+    }
+  ],
+  "unchanged_reservation_count": 222,
+  "unchanged_reservations_sha256": "43420e61aafea0476166c3956db55c21d900d63244fa4d8b926e280deea41f5c"
+}

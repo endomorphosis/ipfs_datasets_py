@@ -1,0 +1,49 @@
+{
+  "admitted": false,
+  "automatic_expiry": false,
+  "final_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 84088555321,
+    "inventory": {
+      "apparent_bytes": 53373555321,
+      "entry_count": 357971,
+      "special_file_count": 28,
+      "symlink_count": 4380
+    },
+    "limit_bytes": 87000000000,
+    "minimum_filesystem_free_bytes": 143574122496,
+    "observed_apparent_bytes": 53373555321,
+    "outstanding_full_reservations_bytes": 30715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "full_claim_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 85088555321,
+    "inventory": {
+      "apparent_bytes": 53373555321,
+      "entry_count": 357971,
+      "special_file_count": 28,
+      "symlink_count": 4380
+    },
+    "limit_bytes": 87000000000,
+    "minimum_filesystem_free_bytes": 143574122496,
+    "observed_apparent_bytes": 53373555321,
+    "outstanding_full_reservations_bytes": 31715000000,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "original_owner_pid": 3452747,
+  "other_reservations_sha256": "075ab929024e31fdf36be2016904c897d417d87bbc24869eb97907d917f8b591",
+  "outputs_deleted": false,
+  "previous_record_sha256": "a881eca794f815f8a466c057de74435f6138fbb7f386db46d1379254e3a1171d",
+  "reconciled_by_pid": 3486560,
+  "reservation_id": "f3cc611b4307499a880cb756f07d79b6",
+  "schema": "explicit-retained-reservation-reconciliation/v1",
+  "retained_artifact_count": 10009,
+  "retained_artifact_bytes": 393771207,
+  "full_receipt": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/capture-r3-reconciliation.json",
+    "bytes": 2289266,
+    "sha256": "6bd894a17032186bded0bcb891b73c6569dc304ca529c574c5cf36790c779509"
+  },
+  "scope": "Compact copy; complete retained artifact inventory remains in referenced original receipt."
+}
