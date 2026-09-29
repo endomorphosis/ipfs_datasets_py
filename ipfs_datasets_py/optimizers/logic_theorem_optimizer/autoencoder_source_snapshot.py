@@ -31,6 +31,7 @@ DEFAULT_MAX_BYTES = 512 * 1024 * 1024
 MAX_FILES = 30_000
 MAX_MANIFEST_BYTES = 16 * 1024 * 1024
 MAX_EXTRA_FILES = 32
+SHARED_MEMORY_BYTES = 64 * 1024 * 1024
 FONT_ALIAS = "static/admin/webfonts"
 FONT_SUFFIXES = {".woff", ".woff2", ".ttf", ".eot"}
 IMAGE = "sha256:33ceb71981b602c1a7443a53469e4dba065f7503eab3078a2d7a57a2ab987517"
@@ -341,7 +342,89 @@ def _mounts():
     for line in Path("/proc/self/mountinfo").read_text().splitlines():
         parts = line.split()
         decode = lambda value: re.sub(r"\\([0-7]{3})", lambda match: chr(int(match[1], 8)), value)
-        result[decode(parts[4])] = {"root": decode(parts[3]), "options": parts[5].split(",")}
+        separator = parts.index("-")
+        result[decode(parts[4])] = {"root": decode(parts[3]), "options": parts[5].split(","),
+                                   "filesystem": parts[separator + 1],
+                                   "super_options": parts[separator + 3].split(",")}
+    return result
+
+
+def _private_shared_memory(host_identity):
+    """Require a bounded private tmpfs, never the host's writable shared memory."""
+    mount = _mounts().get("/dev/shm", {})
+    options = set(mount.get("options", []))
+    if (mount.get("filesystem") != "tmpfs" or mount.get("root") != "/"
+            or not {"rw", "noexec", "nosuid", "nodev"} <= options or "ro" in options):
+        raise SourceSnapshotError("private read-write /dev/shm tmpfs is missing or unsafe")
+    observed = _identity("/dev/shm")
+    if (observed["device"], observed["inode"]) == (host_identity["device"], host_identity["inode"]):
+        raise SourceSnapshotError("shared memory must not expose the host mount")
+    usage = os.statvfs("/dev/shm")
+    capacity = usage.f_frsize * usage.f_blocks
+    if capacity != SHARED_MEMORY_BYTES:
+        raise SourceSnapshotError("private shared memory size differs from its reserved bound")
+    return {"identity": observed, "bytes": capacity, "mount": mount,
+            "private_from_host": True, "charged_to": "wrapper_memory_mb=1024", "admitted": False}
+
+
+def _spawn_probe_child(request, response, lock):
+    with lock:
+        value = request.get(timeout=5)
+        response.put({"token": value, "pid": os.getpid(), "parent_pid": os.getppid()}, timeout=5)
+
+
+def _spawn_semaphore_probe():
+    """Exercise actual spawn SemLocks and bounded queues before expensive work."""
+    import gc
+    import multiprocessing
+    from multiprocessing import resource_tracker
+    context = multiprocessing.get_context("spawn")
+    # CPython's tracker is lazily created by SemLock. Only stop one created by
+    # this isolated preflight; never adopt an already running tracker.
+    tracker = resource_tracker._resource_tracker
+    previous_tracker_pid = tracker._pid
+    request = response = lock = child = None
+    result = {}
+    token = uuid.uuid4().hex
+    started = False
+    try:
+        request, response = context.Queue(maxsize=1), context.Queue(maxsize=1)
+        lock = context.Lock()
+        child = context.Process(target=_spawn_probe_child, args=(request, response, lock))
+        with lock:
+            child.start()
+            started = True
+            request.put(token, timeout=5)
+        received = response.get(timeout=10)
+        child.join(timeout=5)
+        if (child.is_alive() or child.exitcode != 0 or received != {
+                "token": token, "pid": child.pid, "parent_pid": os.getpid()}):
+            raise SourceSnapshotError("spawn queue/lock preflight failed")
+        result.update(start_method="spawn", queue_roundtrip=True, lock_roundtrip=True,
+                      child_pid=child.pid, child_exitcode=child.exitcode, admitted=False)
+    finally:
+        if started and child.is_alive():
+            child.terminate()
+            child.join(timeout=3)
+            if child.is_alive():
+                child.kill()
+                child.join(timeout=3)
+        if child is not None:
+            child.close()
+        for queue in (request, response):
+            if queue is not None:
+                queue.close()
+                # Each queue carries one small fixed-shape message, so the
+                # feeder cannot be blocked by an unconsumed pipe-sized batch.
+                queue.join_thread()
+        request = response = lock = child = queue = None
+        gc.collect()  # Run SemLock finalizers before closing the owned tracker pipe.
+        if previous_tracker_pid is None and tracker._pid is not None:
+            result["owned_tracker_pid"] = tracker._pid
+            tracker._stop()
+            result["owned_tracker_reaped"] = True
+        else:
+            result["existing_tracker_preserved"] = True
     return result
 
 
@@ -483,6 +566,8 @@ def _container_entry(configuration, configuration_sha):
         raise SourceSnapshotError("Python environment or home changed in container")
     if os.environ.get(SCHEDULER_ENV) != config["scheduler_path"]:
         raise SourceSnapshotError("shared scheduler path changed")
+    shared_memory = _private_shared_memory(config["host_shared_memory"])
+    spawn_probe = _spawn_semaphore_probe()
     for identity in config["identities"]:
         if _identity(identity["path"]) != identity:
             raise SourceSnapshotError("host control/runtime inode changed")
@@ -501,6 +586,7 @@ def _container_entry(configuration, configuration_sha):
                          "tree_pin": pinned, "identities": config["identities"], "scheduler_path": config["scheduler_path"],
                          "state_identities": [_identity(path) for path in config["control_state_paths"]],
                          "python_prefix": sys.prefix, "home": str(Path.home()),
+                         "shared_memory": shared_memory, "spawn_semaphore_probe": spawn_probe,
                          "lake_version_only": version.stdout.strip(), "admitted": False}
             _write(run / "preflight.json", preflight)
             deadline = time.monotonic() + 30
@@ -557,7 +643,7 @@ def run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dire
     if not any(root in directory.parents for root in roots):
         raise SourceSnapshotError("launcher attempt must be inside existing charged roots")
     owner = DaemonResourceReservation(ledger, roots=roots, storage_bytes=16 * 1024 * 1024,
-                                     memory_mb=1024, cpu_slots=1, child_process_slots=3,
+                                     memory_mb=1024, cpu_slots=1, child_process_slots=4,
                                      timeout_seconds=0, ledger_lock_timeout_seconds=60)
     with _host_interruptions():
         with owner:
@@ -608,13 +694,15 @@ def _run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dir
               "control_locks": [str(ledger_lock), str(scheduler_lock)],
               "control_state_paths": [str(ledger), str(scheduler)],
               "host_owner": _process(os.getpid()),
+              "host_shared_memory": _identity("/dev/shm"),
               "admitted": False}
     configuration = run / "configuration.json"
     _write(configuration, config)
     configuration_sha = _sha(configuration.read_bytes())
     name = "autoencoder-frozen-" + uuid.uuid4().hex
     command = ["docker", "run", "--pull=never", "--rm", "--name", name, "--network=none", "--read-only",
-               "--pid=host", "--cap-drop=ALL", "--cap-add=SYS_CHROOT", "--mount", "type=bind,src=/,dst=/host,readonly"]
+               "--pid=host", "--cap-drop=ALL", "--cap-add=SYS_CHROOT", "--mount", "type=bind,src=/,dst=/host,readonly",
+               "--tmpfs", f"/host/dev/shm:rw,noexec,nosuid,nodev,size={SHARED_MEMORY_BYTES},mode=1777"]
     for path in paths:
         command += ["--mount", f"type=bind,src={path},dst=/host{path}"]
     capsule = Path(data["capsule"])
@@ -637,6 +725,8 @@ def _run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dir
                                  "source_origin": data["canonical_root"], "source_git": data["git"],
                                  "wrapper_reservation_id": owner.reservation_id,
                                  "wrapper_process_observation": "Docker CLI group; coordinator/training retain their own reservations",
+                                 "private_shared_memory_bytes": SHARED_MEMORY_BYTES,
+                                 "shared_memory_charged_to": "wrapper_memory_mb=1024",
                                  "scheduler_path": str(scheduler), "admitted": False})
     started = time.monotonic()
     process = None
