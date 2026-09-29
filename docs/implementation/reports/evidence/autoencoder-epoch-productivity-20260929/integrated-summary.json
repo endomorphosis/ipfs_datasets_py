@@ -1,0 +1,1153 @@
+{
+  "admitted": false,
+  "arms": [
+    {
+      "accepted_epochs": 5,
+      "arm": "productive_momentum_refined",
+      "arm_wall_seconds_including_owner_and_qualification": 92.58415384800173,
+      "arm_wall_seconds_per_training_span": 11.573019231000217,
+      "artifact": {
+        "bytes": 848241,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/summary.json",
+        "sha256": "cc39ab6d05c85ca72df43486286a39cc93196b75ec835256e0ad8f796f8054ee"
+      },
+      "attempted_epochs": 5,
+      "baseline_final_threshold": null,
+      "bridge_on_evaluations": 51,
+      "candidate_tuning_evaluations": 49,
+      "cold_target_evaluations": [
+        {
+          "cache_empty_at_start": true,
+          "memory_hits": 0,
+          "native_target_attempts": 1,
+          "sample_count": 1,
+          "seconds": 4.44244082598,
+          "seconds_per_span": 4.44244082598,
+          "stage": "before_holdout_evaluation",
+          "target_count": 1
+        },
+        {
+          "cache_empty_at_start": false,
+          "memory_hits": 0,
+          "native_target_attempts": 8,
+          "sample_count": 8,
+          "seconds": 9.487576209009,
+          "seconds_per_span": 1.185947026126125,
+          "stage": "training_cache_prime",
+          "target_count": 8
+        }
+      ],
+      "curve": [
+        {
+          "accepted": null,
+          "committed_objective": 2.694956319408122,
+          "cumulative_training_elapsed_seconds": null,
+          "cumulative_tuning_search_evaluations": 1,
+          "epoch": 0
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.07137594633273459,
+          "candidate_holdout_evaluation_count": 11,
+          "committed_objective": 2.6235803730753875,
+          "cumulative_training_elapsed_seconds": 25.753183149034157,
+          "cumulative_tuning_search_evaluations": 12,
+          "epoch": 1,
+          "epoch_elapsed_seconds": 11.822912347037345,
+          "evaluated_objective": null,
+          "objective_after": 2.6235803730753875,
+          "objective_before": 2.694956319408122,
+          "selected_update": "legal_ir_view_logits+decoded_embedding_refinement:1"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.023454336192101355,
+          "candidate_holdout_evaluation_count": 13,
+          "committed_objective": 2.600126036883286,
+          "cumulative_training_elapsed_seconds": 39.22406751406379,
+          "cumulative_tuning_search_evaluations": 25,
+          "epoch": 2,
+          "epoch_elapsed_seconds": 13.470807307166979,
+          "evaluated_objective": null,
+          "objective_after": 2.600126036883286,
+          "objective_before": 2.6235803730753875,
+          "selected_update": "legal_ir_view_logits+decoded_embedding_refinement:1"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.0016849736870780951,
+          "candidate_holdout_evaluation_count": 11,
+          "committed_objective": 2.598441063196208,
+          "cumulative_training_elapsed_seconds": 52.69513238687068,
+          "cumulative_tuning_search_evaluations": 36,
+          "epoch": 3,
+          "epoch_elapsed_seconds": 13.470974918920547,
+          "evaluated_objective": null,
+          "objective_after": 2.598441063196208,
+          "objective_before": 2.600126036883286,
+          "selected_update": "legal_ir_view_logits+decoded_embedding_refinement:2"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 5.181199946502346e-05,
+          "candidate_holdout_evaluation_count": 7,
+          "committed_objective": 2.598389251196743,
+          "cumulative_training_elapsed_seconds": 64.19318336504512,
+          "cumulative_tuning_search_evaluations": 43,
+          "epoch": 4,
+          "epoch_elapsed_seconds": 11.497964640147984,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 6.5723276843066e-07,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643780889661087,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 4.926422567663735e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 6.572327682086154e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.764378088966109,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 1.6513104196036466e-05,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643939448375363,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 1.248874452863813e-05,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 1.6513104195592376e-05,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643939448375363,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.598389251196743,
+          "objective_before": 2.598441063196208,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 2.0716379074414704e-06,
+          "candidate_holdout_evaluation_count": 7,
+          "committed_objective": 2.5983871795588356,
+          "cumulative_training_elapsed_seconds": 75.55303738894872,
+          "cumulative_tuning_search_evaluations": 50,
+          "epoch": 5,
+          "epoch_elapsed_seconds": 11.35976798995398,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 1.3334941151299518e-08,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643774450682814,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 1.0057087496129213e-08,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 1.3334940707210308e-08,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643774450682814,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 6.5723276843066e-07,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643780889661087,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 4.926422567663735e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 6.572327682086154e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.764378088966109,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.5983871795588356,
+          "objective_before": 2.598389251196743,
+          "selected_update": "legal_ir_view_logits"
+        }
+      ],
+      "disk_cache_hits": 0,
+      "failed_qualification_rows": [
+        {
+          "cosine": 0.19611613513818402,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.22127034275316873,
+          "text": "The officer shall retain the file for at least 20 days."
+        },
+        {
+          "cosine": 0.19611613513818404,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.326040643365787,
+          "text": "The officer shall retain the file for at least 24 days."
+        }
+      ],
+      "final_objective": 2.5983871795588356,
+      "head_productivity": {
+        "combined": {
+          "accepted_attempts": 9,
+          "accepted_candidates_not_selected": 5,
+          "attempts": 10,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.03533221250579377,
+            0.0583807548223656,
+            0.015125846591194314,
+            -1.511530488037201,
+            0.0009710345202531556,
+            0.0014058897651110236,
+            4.214485340359175e-05,
+            5.1658548612998345e-05,
+            1.9957674184389873e-06,
+            2.0026219194058115e-06
+          ],
+          "finite_objective_deltas_range": [
+            -1.511530488037201,
+            0.0583807548223656
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.048789488171,
+            0.062705983714,
+            6.327266399086,
+            0.698693020922,
+            0.105036319127,
+            6.367088589411,
+            0.048789488171,
+            0.056925772065,
+            6.32726639909,
+            0.634286533302,
+            0.095353926163,
+            6.360136226551,
+            0.033464428135,
+            0.02880283322,
+            6.32726639909,
+            0.320931040857,
+            0.048246388922,
+            6.335737842053,
+            0.033464428135,
+            0.023857194555,
+            6.32726639909,
+            0.265822769637,
+            0.039961820751,
+            6.333107279266,
+            0.027230808359,
+            0.007427641004,
+            6.32726639909,
+            0.082761367322,
+            0.012441729241,
+            6.327882822268,
+            0.027024200014,
+            0.006275150547,
+            6.32726639909,
+            0.069919450051,
+            0.010511170784,
+            6.327722258771,
+            0.021296419447,
+            0.001107210012,
+            6.32726639909,
+            0.012336862602,
+            0.00185463229,
+            6.327314634683,
+            0.021296419447,
+            0.000828131322,
+            6.327266399089,
+            0.009227076047,
+            0.001387130078,
+            6.327309173052,
+            0.021296419447,
+            0.00015952329,
+            6.327266399089,
+            0.001777422078,
+            0.000267204433,
+            6.327302496214,
+            0.021296419447,
+            0.00015776025,
+            6.327266399089,
+            0.001757776095,
+            0.000264251002,
+            6.327302490557
+          ],
+          "gradient_norms_range": [
+            0.00015776025,
+            6.367088589411
+          ],
+          "tuning_evaluations": 10,
+          "update_norms": [
+            0.005976712301,
+            0.007681483005,
+            0.775090133888,
+            0.085589895063,
+            0.012866949093,
+            0.779968352203,
+            0.011953424602,
+            0.013946814156,
+            1.550180267777,
+            0.155400200659,
+            0.02336171191,
+            1.558233375505,
+            0.008198784893,
+            0.007056694139,
+            1.550180267777,
+            0.07862810501,
+            0.011820365286,
+            1.552255771303,
+            0.016397569786,
+            0.011690025332,
+            3.100360535554,
+            0.130253157122,
+            0.019581292168,
+            3.10322256684,
+            0.006671548048,
+            0.001819772046,
+            1.550180267777,
+            0.020276534994,
+            0.003048223664,
+            1.550331291456,
+            0.013241858007,
+            0.003074823768,
+            3.100360535554,
+            0.034260530525,
+            0.005150473684,
+            3.100583906798,
+            0.010435245529,
+            0.000542532906,
+            3.100360535554,
+            0.006045062675,
+            0.000908769822,
+            3.100384170995,
+            0.020870491058,
+            0.000811568696,
+            6.200721071107,
+            0.009042534526,
+            0.001359387476,
+            6.200762989591,
+            0.020870491058,
+            0.000156332824,
+            6.200721071107,
+            0.001741873636,
+            0.000261860344,
+            6.20075644629,
+            0.021296419447,
+            0.00015776025,
+            6.327266399089,
+            0.001757776095,
+            0.000264251002,
+            6.327302490557
+          ],
+          "update_norms_range": [
+            0.000156332824,
+            6.327302490557
+          ]
+        },
+        "decoded_embedding": {
+          "accepted_attempts": 0,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 9,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            -1.5327918489416938,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas_range": [
+            -1.5327918489416938,
+            0.0
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.048789488171,
+            0.048789488171,
+            0.04157692574,
+            0.04157692574,
+            0.033464428134,
+            0.033464428135,
+            0.033464428134,
+            0.033464428135,
+            0.027024200014,
+            0.027024200015,
+            0.027024200014,
+            0.027024200015,
+            0.021296419447,
+            0.021296419447,
+            0.021296419447,
+            0.021296419447,
+            0.021296419447,
+            0.021296419447
+          ],
+          "gradient_norms_range": [
+            0.021296419447,
+            0.048789488171
+          ],
+          "tuning_evaluations": 9,
+          "update_norms": [
+            0.00853816043,
+            0.00853816043,
+            0.014551924009,
+            0.014551924009,
+            0.011712549847,
+            0.011712549847,
+            0.023425099694,
+            0.023425099694,
+            0.009458470005,
+            0.009458470005,
+            0.01891694001,
+            0.01891694001,
+            0.014907493613,
+            0.014907493613,
+            0.021296419447,
+            0.021296419447,
+            0.021296419447,
+            0.021296419447
+          ],
+          "update_norms_range": [
+            0.00853816043,
+            0.023425099694
+          ]
+        },
+        "family_logits": {
+          "accepted_attempts": 0,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 7,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_update_zero_ce_and_objective_response": true,
+          "gradient_norms": [
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089
+          ],
+          "gradient_norms_range": [
+            6.327266399089,
+            6.327266399089
+          ],
+          "tuning_evaluations": 7,
+          "update_norms": [
+            2.214543239681,
+            2.214543239681,
+            4.429086479362,
+            4.429086479362,
+            4.429086479362,
+            4.429086479362,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089
+          ],
+          "update_norms_range": [
+            2.214543239681,
+            6.327266399089
+          ]
+        },
+        "legal_ir_view_global_logits": {
+          "accepted_attempts": 8,
+          "accepted_candidates_not_selected": 5,
+          "attempts": 8,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.036708602429685655,
+            0.0601340148949987,
+            0.015574367697238856,
+            0.021609655945474593,
+            0.001432376441670602,
+            0.001597384771741428,
+            4.865783487861819e-05,
+            1.8670300963030684e-06
+          ],
+          "finite_objective_deltas_range": [
+            1.8670300963030684e-06,
+            0.0601340148949987
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.695383312189,
+            0.69538331219,
+            0.628344805734,
+            0.628344805735,
+            0.317914309909,
+            0.317914309907,
+            0.261115343877,
+            0.261115343877,
+            0.06880832228,
+            0.068808322279,
+            0.059630706407,
+            0.059630706407,
+            0.010640241697,
+            0.010640241697,
+            0.002044586674,
+            0.002044586674
+          ],
+          "gradient_norms_range": [
+            0.002044586674,
+            0.69538331219
+          ],
+          "tuning_evaluations": 8,
+          "update_norms": [
+            0.121692079633,
+            0.121692079633,
+            0.219920682007,
+            0.219920682007,
+            0.111270008468,
+            0.111270008468,
+            0.182780740714,
+            0.182780740714,
+            0.048165825596,
+            0.048165825596,
+            0.059630706407,
+            0.059630706407,
+            0.010640241697,
+            0.010640241697,
+            0.002044586674,
+            0.002044586674
+          ],
+          "update_norms_range": [
+            0.002044586674,
+            0.219920682007
+          ]
+        },
+        "legal_ir_view_logits": {
+          "accepted_attempts": 9,
+          "accepted_candidates_not_selected": 3,
+          "attempts": 9,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.04645691393549134,
+            0.07137594633273459,
+            0.01845104578393153,
+            0.023454336192101355,
+            0.001579087694046244,
+            0.0016849736870780951,
+            5.181199946502346e-05,
+            2.0716379074414704e-06,
+            2.0026219194058115e-06
+          ],
+          "finite_objective_deltas_range": [
+            2.0026219194058115e-06,
+            0.07137594633273459
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.060154169006,
+            0.670259316651,
+            0.100761807223,
+            0.680455007627,
+            0.052442425626,
+            0.584329862749,
+            0.087843811374,
+            0.593218451923,
+            0.026535944714,
+            0.295671729151,
+            0.044449091617,
+            0.30016936807,
+            0.020477097454,
+            0.228158104587,
+            0.034299594767,
+            0.231628785798,
+            0.005469608496,
+            0.060943303831,
+            0.009161763633,
+            0.06187035487,
+            0.004547311524,
+            0.050665920324,
+            0.007616738133,
+            0.051436642816,
+            0.000818827813,
+            0.009123404168,
+            0.001371544817,
+            0.009262187527,
+            0.00015776025,
+            0.001757776095,
+            0.000264251002,
+            0.001784514973,
+            0.00015776025,
+            0.001757776095,
+            0.000264251002,
+            0.001784514973
+          ],
+          "gradient_norms_range": [
+            0.00015776025,
+            0.680455007627
+          ],
+          "tuning_evaluations": 9,
+          "update_norms": [
+            0.010526979576,
+            0.117295380414,
+            0.017633316264,
+            0.119079626335,
+            0.018354848969,
+            0.204515451962,
+            0.030745333981,
+            0.207626458173,
+            0.00928758065,
+            0.103485105203,
+            0.015557182066,
+            0.105059278825,
+            0.014333968218,
+            0.159710673211,
+            0.024009716337,
+            0.162140150059,
+            0.003828725947,
+            0.042660312682,
+            0.006413234543,
+            0.043309248409,
+            0.004547311524,
+            0.050665920324,
+            0.007616738133,
+            0.051436642816,
+            0.000818827813,
+            0.009123404168,
+            0.001371544817,
+            0.009262187527,
+            0.00015776025,
+            0.001757776095,
+            0.000264251002,
+            0.001784514973,
+            0.00015776025,
+            0.001757776095,
+            0.000264251002,
+            0.001784514973
+          ],
+          "update_norms_range": [
+            0.00015776025,
+            0.207626458173
+          ]
+        },
+        "legal_ir_view_logits+decoded_embedding_refinement:1": {
+          "accepted_attempts": 2,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 5,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.07137594633273459,
+            0.023454336192101355
+          ],
+          "finite_objective_deltas_range": [
+            0.023454336192101355,
+            0.07137594633273459
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.048789488171,
+            0.104884851251,
+            1.168659725497,
+            0.175687622749,
+            1.187439657819,
+            0.033464428137,
+            0.081908389817,
+            0.912632418349,
+            0.137198379069,
+            0.927119290338,
+            0.02723080836,
+            0.02598463728,
+            0.289519544709,
+            0.043524217903,
+            0.295182388723,
+            0.020907819657,
+            0.004679016074,
+            0.052133738103,
+            0.007837398954,
+            0.05690677978,
+            0.020907819657,
+            0.001342121823,
+            0.015055477394,
+            0.002263328646,
+            0.025898422148
+          ],
+          "gradient_norms_range": [
+            0.001342121823,
+            1.187439657819
+          ],
+          "tuning_evaluations": 2,
+          "update_norms": [
+            0.00853816043,
+            0.018354848969,
+            0.204515451962,
+            0.030745333981,
+            0.207801940118,
+            0.005856274924,
+            0.014333968218,
+            0.159710673211,
+            0.024009716337,
+            0.162245875809,
+            0.004765391463,
+            0.004547311524,
+            0.050665920324,
+            0.007616738133,
+            0.051656918027,
+            0.00365886844,
+            0.000818827813,
+            0.009123404168,
+            0.001371544817,
+            0.009958686461,
+            0.00365886844,
+            0.000234871319,
+            0.002634708544,
+            0.000396082513,
+            0.004532223876
+          ],
+          "update_norms_range": [
+            0.000234871319,
+            0.207801940118
+          ]
+        },
+        "legal_ir_view_logits+decoded_embedding_refinement:2": {
+          "accepted_attempts": 2,
+          "accepted_candidates_not_selected": 1,
+          "attempts": 5,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.023454336192101355,
+            0.0016849736870780951
+          ],
+          "finite_objective_deltas_range": [
+            0.0016849736870780951,
+            0.023454336192101355
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.048789488171,
+            0.209769702503,
+            2.337319450994,
+            0.351375245497,
+            2.373375343551,
+            0.042966961417,
+            0.163816779634,
+            1.825264836697,
+            0.274396758137,
+            1.853528365589,
+            0.026639538114,
+            0.05196927456,
+            0.579039089417,
+            0.087048435806,
+            0.588450650221,
+            0.020907819657,
+            0.009358032149,
+            0.104267476206,
+            0.015674797909,
+            0.107898635632,
+            0.020907819657,
+            0.002684243646,
+            0.030110954789,
+            0.004526657291,
+            0.037033799573
+          ],
+          "gradient_norms_range": [
+            0.002684243646,
+            2.373375343551
+          ],
+          "tuning_evaluations": 2,
+          "update_norms": [
+            0.004269080215,
+            0.018354848969,
+            0.204515451962,
+            0.030745333981,
+            0.207670342561,
+            0.003759609124,
+            0.014333968218,
+            0.159710673211,
+            0.024009716337,
+            0.162183731989,
+            0.002330959585,
+            0.004547311524,
+            0.050665920324,
+            0.007616738133,
+            0.051489431894,
+            0.00182943422,
+            0.000818827813,
+            0.009123404168,
+            0.001371544817,
+            0.009441130618,
+            0.00182943422,
+            0.000234871319,
+            0.002634708544,
+            0.000396082513,
+            0.003240457463
+          ],
+          "update_norms_range": [
+            0.000234871319,
+            0.207670342561
+          ]
+        },
+        "legal_ir_view_logits+decoded_embedding_refinement:3": {
+          "accepted_attempts": 2,
+          "accepted_candidates_not_selected": 2,
+          "attempts": 5,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.023454336192101355,
+            0.0016849736870780951
+          ],
+          "finite_objective_deltas_range": [
+            0.0016849736870780951,
+            0.023454336192101355
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.04878948816,
+            0.419539405006,
+            4.674638901989,
+            0.702750490994,
+            4.745998403186,
+            0.06183692416,
+            0.327633559269,
+            3.650529673394,
+            0.548793516274,
+            3.706576422288,
+            0.026639538103,
+            0.10393854912,
+            1.158078178834,
+            0.174096871611,
+            1.175996460882,
+            0.020178393211,
+            0.018716064297,
+            0.208534952411,
+            0.031349595817,
+            0.212666598568,
+            0.020178393211,
+            0.005368487291,
+            0.060221909577,
+            0.009053314583,
+            0.064378793904
+          ],
+          "gradient_norms_range": [
+            0.005368487291,
+            4.745998403186
+          ],
+          "tuning_evaluations": 2,
+          "update_norms": [
+            0.002134540107,
+            0.018354848969,
+            0.204515451962,
+            0.030745333981,
+            0.207637430139,
+            0.002705365432,
+            0.014333968218,
+            0.159710673211,
+            0.024009716337,
+            0.162162718475,
+            0.001165479792,
+            0.004547311524,
+            0.050665920324,
+            0.007616738133,
+            0.051449845164,
+            0.000882804703,
+            0.000818827813,
+            0.009123404168,
+            0.001371544817,
+            0.009304163687,
+            0.000882804703,
+            0.000234871319,
+            0.002634708544,
+            0.000396082513,
+            0.002816572233
+          ],
+          "update_norms_range": [
+            0.000234871319,
+            0.207637430139
+          ]
+        }
+      },
+      "initial_objective": 2.694956319408122,
+      "memory_cache_hits": 49,
+      "metrics_after": {
+        "cosine": 0.9999999999999999,
+        "deontic_ir_ce": 0.5474942723833913,
+        "deontic_ir_cosine": 0.9999999999027427,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7643774450682814,
+        "ir_view_ce_excess": 1.3334941151299518e-08,
+        "reconstruction_loss": 0.0
+      },
+      "metrics_before": {
+        "cosine": 0.9999999999999999,
+        "deontic_ir_ce": 0.5636167601164468,
+        "deontic_ir_cosine": 0.9946347813357798,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7917594692280547,
+        "ir_view_ce_excess": 0.027382037494714462,
+        "reconstruction_loss": 0.0
+      },
+      "native_target_attempts": 9,
+      "nonnested_profile_seconds": {
+        "before_holdout_evaluation": 4.442440825980157,
+        "line_search_evaluation": 5.282840767875314,
+        "projection_update_batch": 30.907088038977236,
+        "training_cache_prime": 9.487576209008694
+      },
+      "objective_reduction": 0.0965691398492865,
+      "objective_reduction_per_bridge_evaluation": 0.0018935125460644413,
+      "objective_reduction_per_epoch": 0.0193138279698573,
+      "objective_reduction_per_training_second": 0.0012779501426750334,
+      "qualification_gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-synthetic-duration-ablation-20-445b79532d60f8ec",
+            "us-code-synthetic-duration-ablation-24-b28286bd5fec8639"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "qualification_seconds": 7.539869453990832,
+      "qualified": false,
+      "threshold_epoch": null,
+      "threshold_time_reduction_vs_baseline_percent": null,
+      "threshold_training_seconds": null,
+      "training_seconds": 75.56565520400181,
+      "training_seconds_outside_these_profile_phases": 25.445709362160414,
+      "training_seconds_per_span": 9.445706900500227,
+      "training_seconds_reduction_vs_baseline_percent": 0.0,
+      "warm_tuning_evaluation_seconds": {
+        "count": 49,
+        "maximum": 0.28328308207,
+        "mean": 0.11745097972832652,
+        "minimum": 0.076201481977
+      }
+    }
+  ],
+  "audit": {
+    "bytes": 7145,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-audit.json",
+    "sha256": "e0a42fe340cb2169e536e90e55e9e2b47bc323df40fa2d14bb9f7c9e21ce4a26"
+  },
+  "canary_objective_delta_selected_minus_baseline": null,
+  "canary_results": [],
+  "comparative_speed_claim": false,
+  "comparison": {
+    "bytes": 850639,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/comparison.json",
+    "sha256": "1129e4bfe0f25308afeb8150cd7aa5be4bfab5cf0e49f018a56c142cb6551efc"
+  },
+  "configuration": {
+    "backend": "python_sparse_batch",
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "canary_sample_count": 0,
+    "composed_refinement_attempts": 3,
+    "disk_cache": 0,
+    "epochs": 5,
+    "legal_ir_workers": 1,
+    "max_line_search_attempts": 2,
+    "max_seconds": 180,
+    "projection_max_update_families": 5,
+    "provers": false,
+    "sample_count": 8,
+    "temperature": 0,
+    "tuning_sample_count": 1,
+    "use_sample_memory": false
+  },
+  "counts": {
+    "accepted_epochs": 5,
+    "arms": 1,
+    "attempted_epochs": 5,
+    "family_artifacts": 54,
+    "lake_builds": 9,
+    "qualification_rows": 9,
+    "qualified_arms": 0,
+    "requested_epochs": 5
+  },
+  "experiment": "integrated",
+  "global_minimum_claim": false,
+  "limitations": [
+    "One ordered three-arm synthetic benchmark, not a randomized replicated timing study or federal-law canary.",
+    "Inactive family-logit scales keep a ln(9)=2.197224577336 classifier contribution in this configuration; zero total loss is not an attainable target established here.",
+    "Inspect head-productivity ranges for zero-response proposals; reported gradient/update norms are delta-derived, not differentiation through the target-aware projection.",
+    "Target-aware reconstruction projection can return the supplied target embedding. Passing embedding metrics alone would not establish learned text/formula generation.",
+    "Qualification outcomes and exact failing rows above are authoritative; optimized tuning loss alone does not imply reconstruction success.",
+    "Lake admits only the generated locked numeric minimum-duration statements. Family parser success covers the existing atom projection, not full temporal/cognitive/event-law semantics.",
+    "The descriptive baseline-final threshold is not a global-optimum or convergence proof. No weight promotion or Hub upload occurred.",
+    "Selected canary target cache is warm after baseline-reference evaluation; their inference timings are not a matched cold speed comparison.",
+    "Earlier campaign source-drift evidence remains immutable and is not a matched comparator for this experiment."
+  ],
+  "producer_manifest": {
+    "file_count": 7835,
+    "sha256": "3a5445309b3816ee6a023eb91e97c95c1aa8b0974f38609fcfbd6942bd21d95f"
+  },
+  "resource_closeout": {
+    "bytes": 10984,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/resource-closeout-combined.json",
+    "sha256": "45318c0fb19fdf0d05fa8ec37b53ca81487a5404f6d70c27a5a485b1bbd99415"
+  },
+  "schema": "autoencoder-epoch-productivity-summary/v1",
+  "selected_arm": "productive_momentum_refined"
+}

@@ -1,0 +1,30 @@
+{
+  "admitted": false,
+  "audit": {
+    "bytes": 26450,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-audit.json",
+    "sha256": "687465cba9b6c1a711588577aebf8fd023e6db7773c86812283871fc912bc87a"
+  },
+  "comparison": {
+    "bytes": 2535224,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/comparison.json",
+    "sha256": "b3e841dde8a46b249d9f59b6d5b2b53b0e3a66fbc65851f919b51cfc25cd8566"
+  },
+  "data": {
+    "bytes": 1206,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/productivity-curve-data.csv",
+    "sha256": "9ea1c75a55539ca200ffe6029682a7a97c7c262e361e3b3b14c04716bb986092"
+  },
+  "global_minimum_claim": false,
+  "matplotlib_version": "3.10.8",
+  "plot": {
+    "bytes": 99059,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/productivity-curves.svg",
+    "sha256": "237ae894cc82514cb79c3a0a0c862d126fbe9cd89fc49576a185065ce4a32f72"
+  },
+  "qualification_count": 0,
+  "schema": "autoencoder-productivity-plot/v1",
+  "time_axis_scope": "Only actual cumulative_training_elapsed_seconds at completed epoch reports; no fabricated epoch-zero time or nested-profile duration sums.",
+  "trailing_whitespace_normalized_before_hashing": true,
+  "tuning_search_count_scope": "Initial tuning evaluation plus candidate tuning evaluations; separate training-cache prime and final qualification are excluded."
+}

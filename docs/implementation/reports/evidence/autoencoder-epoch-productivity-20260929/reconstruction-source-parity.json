@@ -1,0 +1,251 @@
+{
+  "admitted": false,
+  "before_source": {
+    "bytes": 1395187,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "sha256": "474646fac68afc3f598e7184769399a0babd32b18d481af5ecd8ff9c6ca9971a"
+  },
+  "final_source": {
+    "bytes": 1400654,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325"
+  },
+  "functions": {
+    "_base_logits_for": {
+      "before": {
+        "end_line": 10238,
+        "line": 10216,
+        "normalized_ast_sha256": "325ed737fe844f83c2fc05af276b362d135ca73af1b95d3a9c597911150910aa",
+        "source_snippet_sha256": "79ffd4979967c9b7a47fdd63a1904053f2076c7862076971f9fb48a0208381cf"
+      },
+      "final": {
+        "end_line": 10320,
+        "line": 10298,
+        "normalized_ast_sha256": "325ed737fe844f83c2fc05af276b362d135ca73af1b95d3a9c597911150910aa",
+        "source_snippet_sha256": "79ffd4979967c9b7a47fdd63a1904053f2076c7862076971f9fb48a0208381cf"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_decoded_for": {
+      "before": {
+        "end_line": 8433,
+        "line": 8324,
+        "normalized_ast_sha256": "f34ade8808eb861f4c38e3613be8151367962682a041b0b33d9c07182eb437e3",
+        "source_snippet_sha256": "536086041e3bdb26e2e816c6c734137bbb8c42c751cd6bb64c8536dc62d76cd7"
+      },
+      "final": {
+        "end_line": 8515,
+        "line": 8406,
+        "normalized_ast_sha256": "f34ade8808eb861f4c38e3613be8151367962682a041b0b33d9c07182eb437e3",
+        "source_snippet_sha256": "536086041e3bdb26e2e816c6c734137bbb8c42c751cd6bb64c8536dc62d76cd7"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_embedding_training_error": {
+      "before": {
+        "end_line": 24290,
+        "line": 24264,
+        "normalized_ast_sha256": "3f3ab00caca1819167bd30ec86e29775f4a9444b5ba0e5d27af756dfd898a5a3",
+        "source_snippet_sha256": "16a8ec98e079adee79467db299816acb5c5592168cf1245c747ef00493c29469"
+      },
+      "final": {
+        "end_line": 24372,
+        "line": 24346,
+        "normalized_ast_sha256": "3f3ab00caca1819167bd30ec86e29775f4a9444b5ba0e5d27af756dfd898a5a3",
+        "source_snippet_sha256": "16a8ec98e079adee79467db299816acb5c5592168cf1245c747ef00493c29469"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_evaluation_objective_for_training": {
+      "before": {
+        "end_line": 30577,
+        "line": 30552,
+        "normalized_ast_sha256": "6be7521237e862d2526ce21145339f5cd81104a44a6d29901f6815940ff399db",
+        "source_snippet_sha256": "6765e73e30b0e22b90c597d34c4e183ec586a8b909e27fd870bae63f05cd2a8e"
+      },
+      "final": {
+        "end_line": 30659,
+        "line": 30634,
+        "normalized_ast_sha256": "6be7521237e862d2526ce21145339f5cd81104a44a6d29901f6815940ff399db",
+        "source_snippet_sha256": "6765e73e30b0e22b90c597d34c4e183ec586a8b909e27fd870bae63f05cd2a8e"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_evaluation_regressions_for_training": {
+      "before": {
+        "end_line": 31020,
+        "line": 30972,
+        "normalized_ast_sha256": "4bcc4a7d390b7734d9e349626057e51d338736c6f6235a7d516932db1a2602d8",
+        "source_snippet_sha256": "5e28801f27d6354d804dc70e7b90c6397725d69fbc52c79dea6e4c6ca658ce7a"
+      },
+      "final": {
+        "end_line": 31102,
+        "line": 31054,
+        "normalized_ast_sha256": "4bcc4a7d390b7734d9e349626057e51d338736c6f6235a7d516932db1a2602d8",
+        "source_snippet_sha256": "5e28801f27d6354d804dc70e7b90c6397725d69fbc52c79dea6e4c6ca658ce7a"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_family_distribution_for_embedding": {
+      "before": {
+        "end_line": 9721,
+        "line": 9705,
+        "normalized_ast_sha256": "3060b80c301d54832248b17647fc4d7c5a6967118058152ac67f62f21ad056d8",
+        "source_snippet_sha256": "ad929aced49d3e27483e8d309eef94290be588d56eb69733bb448aece699b4fb"
+      },
+      "final": {
+        "end_line": 9803,
+        "line": 9787,
+        "normalized_ast_sha256": "3060b80c301d54832248b17647fc4d7c5a6967118058152ac67f62f21ad056d8",
+        "source_snippet_sha256": "ad929aced49d3e27483e8d309eef94290be588d56eb69733bb448aece699b4fb"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_head_update_scale": {
+      "before": {
+        "end_line": 22830,
+        "line": 22826,
+        "normalized_ast_sha256": "93c7aa11f3768f507f958472e5fa60a02c1298d93629adbfa7b6d832fd634f83",
+        "source_snippet_sha256": "e5a5be73ea0ac670aabe9c15c99fc4e17ea61ace95c27cb8a6e2f6731213f836"
+      },
+      "final": {
+        "end_line": 22912,
+        "line": 22908,
+        "normalized_ast_sha256": "93c7aa11f3768f507f958472e5fa60a02c1298d93629adbfa7b6d832fd634f83",
+        "source_snippet_sha256": "e5a5be73ea0ac670aabe9c15c99fc4e17ea61ace95c27cb8a6e2f6731213f836"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_initial_embedding_projection": {
+      "before": {
+        "end_line": 8658,
+        "line": 8634,
+        "normalized_ast_sha256": "810edce29bbf550a4a1eefa3c5b62b6b4ebccc25c2fa537600e2d3cdc74c1911",
+        "source_snippet_sha256": "1b392bc9bbcf6c3dd1858a9094336eaaf030c72397bc2e718f0f25904557d901"
+      },
+      "final": {
+        "end_line": 8740,
+        "line": 8716,
+        "normalized_ast_sha256": "810edce29bbf550a4a1eefa3c5b62b6b4ebccc25c2fa537600e2d3cdc74c1911",
+        "source_snippet_sha256": "1b392bc9bbcf6c3dd1858a9094336eaaf030c72397bc2e718f0f25904557d901"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_logits_for": {
+      "before": {
+        "end_line": 10168,
+        "line": 10129,
+        "normalized_ast_sha256": "8f6a719069117be0fa5ba00db30cec339e27f23429005e916660ee74cc1d2a8c",
+        "source_snippet_sha256": "9388e246deadbc7a30352025e8d7b71f772ebe51020aa965a8510a598bb00f28"
+      },
+      "final": {
+        "end_line": 10250,
+        "line": 10211,
+        "normalized_ast_sha256": "8f6a719069117be0fa5ba00db30cec339e27f23429005e916660ee74cc1d2a8c",
+        "source_snippet_sha256": "9388e246deadbc7a30352025e8d7b71f772ebe51020aa965a8510a598bb00f28"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_nudge_decoded_embedding": {
+      "before": {
+        "end_line": 23231,
+        "line": 22978,
+        "normalized_ast_sha256": "38f5c89146e97fab243655ed20e27b4221a0f4ce404d69df97fac5499421dc2a",
+        "source_snippet_sha256": "ee3df2bf10ec3a6bd60a13dd050726cc39549207d212b2205dc60a1664bcdf26"
+      },
+      "final": {
+        "end_line": 23313,
+        "line": 23060,
+        "normalized_ast_sha256": "38f5c89146e97fab243655ed20e27b4221a0f4ce404d69df97fac5499421dc2a",
+        "source_snippet_sha256": "ee3df2bf10ec3a6bd60a13dd050726cc39549207d212b2205dc60a1664bcdf26"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_nudge_family_logits": {
+      "before": {
+        "end_line": 23405,
+        "line": 23233,
+        "normalized_ast_sha256": "1c2f25b159b12ddc30b9bf7efe677f536dfb251269d87b82261bd66da23639aa",
+        "source_snippet_sha256": "d32d3bf46fb83913d3c17dfe5f9b815fc15b11201e401764a774df9270629ac7"
+      },
+      "final": {
+        "end_line": 23487,
+        "line": 23315,
+        "normalized_ast_sha256": "1c2f25b159b12ddc30b9bf7efe677f536dfb251269d87b82261bd66da23639aa",
+        "source_snippet_sha256": "d32d3bf46fb83913d3c17dfe5f9b815fc15b11201e401764a774df9270629ac7"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_reconstruction_safe_projection": {
+      "before": {
+        "end_line": 8610,
+        "line": 8573,
+        "normalized_ast_sha256": "bcab71a35cc495e828d456f606b5e379d86b78d0d7562de941e656bcda43605c",
+        "source_snippet_sha256": "16023a1c2f379c361978d05e2e4c4fab9fe16f65b9c14698807773e675eeda1f"
+      },
+      "final": {
+        "end_line": 8692,
+        "line": 8655,
+        "normalized_ast_sha256": "bcab71a35cc495e828d456f606b5e379d86b78d0d7562de941e656bcda43605c",
+        "source_snippet_sha256": "16023a1c2f379c361978d05e2e4c4fab9fe16f65b9c14698807773e675eeda1f"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_select_codec_feature_keys": {
+      "before": {
+        "end_line": 24563,
+        "line": 24523,
+        "normalized_ast_sha256": "27c844ad1197667b8dce758c2ef418a65a0a19b10245fbeed67ff4e3345caaa9",
+        "source_snippet_sha256": "cf72e30db4ffd1d578ac8f099b2e8e34530a49a8879b813822dc4832335b7c99"
+      },
+      "final": {
+        "end_line": 24645,
+        "line": 24605,
+        "normalized_ast_sha256": "27c844ad1197667b8dce758c2ef418a65a0a19b10245fbeed67ff4e3345caaa9",
+        "source_snippet_sha256": "cf72e30db4ffd1d578ac8f099b2e8e34530a49a8879b813822dc4832335b7c99"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    },
+    "_token_features": {
+      "before": {
+        "end_line": 28379,
+        "line": 28372,
+        "normalized_ast_sha256": "bf005e16255489b4493d5485b54854149ef1c63de82ca80b3c9ab64fb2ee11e9",
+        "source_snippet_sha256": "8d2fc6fa360dc4321c704124720c31146dc6ef470fbc317a2657e96c5c1fcaa0"
+      },
+      "final": {
+        "end_line": 28461,
+        "line": 28454,
+        "normalized_ast_sha256": "bf005e16255489b4493d5485b54854149ef1c63de82ca80b3c9ab64fb2ee11e9",
+        "source_snippet_sha256": "8d2fc6fa360dc4321c704124720c31146dc6ef470fbc317a2657e96c5c1fcaa0"
+      },
+      "normalized_ast_equal": true,
+      "source_snippet_bytes_equal": true
+    }
+  },
+  "historical_audit_source_sha256": "65ecda20797c85a7d13146ef2cdf6c78dd1847ef75b646310e787e63070ba092",
+  "historical_reconstruction_audit": {
+    "bytes": 11353,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/reconstruction-audit.json",
+    "sha256": "17ef5dc1887d262d40f073eb98161f8303f8ed01b643872a342a7e6eae99145e"
+  },
+  "historical_whole_source_binding_is_not_relabelled": true,
+  "model_executed": false,
+  "new_canaries_observed": false,
+  "passed": true,
+  "schema": "reconstruction-source-parity/v1",
+  "scope": "Only listed reconstruction/evaluation functions have unchanged AST semantics. Training search intentionally changes elsewhere; this is not a full-package provenance waiver. Native execution still requires complete before/after package equality."
+}

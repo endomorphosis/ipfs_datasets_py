@@ -1,0 +1,586 @@
+{
+  "admitted": false,
+  "counts": {
+    "bridge_on_tuning_validations": 6,
+    "negative_training_delta": 4,
+    "selected_refinements": 3,
+    "strictly_accepted_trials": 6,
+    "training_screen_rejections": 9,
+    "trials": 15,
+    "zero_training_delta": 5
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "selected_update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+      "trials": [
+        {
+          "accepted": true,
+          "holdout_evaluated": true,
+          "objective_delta": 0.07137594633273459,
+          "pareto_regressions": {},
+          "refinement_attempt": 1,
+          "rejection_reasons": [],
+          "selected_candidate_regressions": {},
+          "strict_accepted": true,
+          "training_after": {
+            "embedding_cosine_similarity": 0.5980580675690921,
+            "reconstruction_loss": 0.1474266426671723
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.4975725844613651,
+            "reconstruction_loss": 0.1968806509012869
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.04945400823411461,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:1"
+        },
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 2,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.39708710135363806,
+            "reconstruction_loss": 0.21355915257730668
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.4975725844613651,
+            "reconstruction_loss": 0.1968806509012869
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": -0.01667850167601978,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:2",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        },
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 3,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.39708710135363806,
+            "reconstruction_loss": 0.2296159141638421
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.4975725844613651,
+            "reconstruction_loss": 0.1968806509012869
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": -0.032735263262555214,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:3",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        }
+      ]
+    },
+    {
+      "epoch": 2,
+      "selected_update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+      "trials": [
+        {
+          "accepted": true,
+          "holdout_evaluated": true,
+          "objective_delta": 0.023454336192101355,
+          "pareto_regressions": {},
+          "refinement_attempt": 1,
+          "rejection_reasons": [],
+          "selected_candidate_regressions": {},
+          "strict_accepted": true,
+          "training_after": {
+            "embedding_cosine_similarity": 0.6985435506768191,
+            "reconstruction_loss": 0.08509237494088925
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.5980580675690921,
+            "reconstruction_loss": 0.1474266426671723
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.06233426772628303,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:1"
+        },
+        {
+          "accepted": true,
+          "holdout_evaluated": true,
+          "objective_delta": 0.023454336192101355,
+          "pareto_regressions": {},
+          "refinement_attempt": 2,
+          "rejection_reasons": [],
+          "selected_candidate_regressions": {},
+          "strict_accepted": true,
+          "training_after": {
+            "embedding_cosine_similarity": 0.5980580675690921,
+            "reconstruction_loss": 0.12584745536161263
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.5980580675690921,
+            "reconstruction_loss": 0.1474266426671723
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.02157918730555966,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:2"
+        },
+        {
+          "accepted": true,
+          "holdout_evaluated": true,
+          "objective_delta": 0.023454336192101355,
+          "pareto_regressions": {},
+          "refinement_attempt": 3,
+          "rejection_reasons": [],
+          "selected_candidate_regressions": {},
+          "strict_accepted": true,
+          "training_after": {
+            "embedding_cosine_similarity": 0.6985435506768191,
+            "reconstruction_loss": 0.08509237494088925
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.5980580675690921,
+            "reconstruction_loss": 0.1474266426671723
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.06233426772628303,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:3"
+        }
+      ]
+    },
+    {
+      "epoch": 3,
+      "selected_update": "legal_ir_view_logits+decoded_embedding_refinement:2",
+      "trials": [
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 1,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.6985435506768191,
+            "reconstruction_loss": 0.08509237494088925
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.6985435506768191,
+            "reconstruction_loss": 0.08509237494088925
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        },
+        {
+          "accepted": true,
+          "holdout_evaluated": true,
+          "objective_delta": 0.0016849736870780951,
+          "pareto_regressions": {},
+          "refinement_attempt": 2,
+          "rejection_reasons": [],
+          "selected_candidate_regressions": {},
+          "strict_accepted": true,
+          "training_after": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.6985435506768191,
+            "reconstruction_loss": 0.08509237494088925
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.057433582096743166,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:2"
+        },
+        {
+          "accepted": true,
+          "holdout_evaluated": true,
+          "objective_delta": 0.0016849736870780951,
+          "pareto_regressions": {},
+          "refinement_attempt": 3,
+          "rejection_reasons": [],
+          "selected_candidate_regressions": {},
+          "strict_accepted": true,
+          "training_after": {
+            "embedding_cosine_similarity": 0.799029033784546,
+            "reconstruction_loss": 0.060394056106701316
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.6985435506768191,
+            "reconstruction_loss": 0.08509237494088925
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.024698318834187938,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:3"
+        }
+      ]
+    },
+    {
+      "epoch": 4,
+      "selected_update": "legal_ir_view_logits",
+      "trials": [
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 1,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.047242654603081254
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": -0.019583861758935162,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        },
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 2,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:2",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        },
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 3,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:3",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        }
+      ]
+    },
+    {
+      "epoch": 5,
+      "selected_update": "legal_ir_view_logits",
+      "trials": [
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 1,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.047242654603081254
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": -0.019583861758935162,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:1",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        },
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 2,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:2",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        },
+        {
+          "accepted": false,
+          "holdout_evaluated": false,
+          "objective_delta": null,
+          "pareto_regressions": {},
+          "refinement_attempt": 3,
+          "rejection_reasons": [
+            "no_training_reconstruction_improvement"
+          ],
+          "strict_accepted": false,
+          "training_after": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_before": {
+            "embedding_cosine_similarity": 0.899514516892273,
+            "reconstruction_loss": 0.02765879284414609
+          },
+          "training_evaluated": true,
+          "training_metric_scope": "bridge_off_reconstruction_only",
+          "training_reconstruction_delta": 0.0,
+          "update": "legal_ir_view_logits+decoded_embedding_refinement:3",
+          "validation_evaluation_skipped_reason": "training_screen_rejected"
+        }
+      ]
+    }
+  ],
+  "integrated_reference": {
+    "bytes": 848241,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/summary.json",
+    "sha256": "cc39ab6d05c85ca72df43486286a39cc93196b75ec835256e0ad8f796f8054ee"
+  },
+  "integrated_training_qualification": {
+    "mean_cosine": 0.799029033784546,
+    "mean_reconstruction_loss": 0.06841387326486946,
+    "passing_rows": 6,
+    "sample_count": 8
+  },
+  "late_bridge_off_screen": {
+    "embedding_cosine_similarity": 0.899514516892273,
+    "reconstruction_loss": 0.02765879284414609
+  },
+  "main_reference": {
+    "bytes": 843771,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/summary.json",
+    "sha256": "383364157f92237523355e200efd2e731065e324dfd6d8743ba58fec21759e2a"
+  },
+  "main_training_qualification": {
+    "mean_cosine": 0.49757258446136504,
+    "mean_reconstruction_loss": 0.1968806509012869,
+    "passing_rows": 3,
+    "sample_count": 8
+  },
+  "notes": [
+    "The bridge-off aggregate training screen is not final bridge-on qualification.",
+    "Screen improvement permits individual-row regressions; every row still needs final qualification.",
+    "Exact causal attribution of the bridge/cache context discrepancy requires a separate controlled replay; this audit does not rerun inference.",
+    "This integration uses three extra refinement trials per epoch; it is not an isolated learning-rate speed comparison.",
+    "No canary was evaluated for the integration and no candidate was promoted."
+  ],
+  "passed": true,
+  "persisting_failures": [
+    24
+  ],
+  "producer_manifest": {
+    "file_count": 7835,
+    "sha256": "3a5445309b3816ee6a023eb91e97c95c1aa8b0974f38609fcfbd6942bd21d95f"
+  },
+  "qualification_rows": {
+    "20": {
+      "integrated": {
+        "cosine": 0.19611613513818402,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.22127034275316873
+      },
+      "main": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      }
+    },
+    "21": {
+      "integrated": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      },
+      "main": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      }
+    },
+    "22": {
+      "integrated": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      },
+      "main": {
+        "cosine": 0.19611613513818407,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.37794123682465003
+      }
+    },
+    "23": {
+      "integrated": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      },
+      "main": {
+        "cosine": 0.196116135138184,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.342003247738783
+      }
+    },
+    "24": {
+      "integrated": {
+        "cosine": 0.19611613513818404,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.326040643365787
+      },
+      "main": {
+        "cosine": 0.19611613513818404,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.326040643365787
+      }
+    },
+    "25": {
+      "integrated": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      },
+      "main": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      }
+    },
+    "26": {
+      "integrated": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      },
+      "main": {
+        "cosine": 0.19611613513818404,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.21600881475501774
+      }
+    },
+    "27": {
+      "integrated": {
+        "cosine": 1.0,
+        "passed": true,
+        "reasons": [],
+        "reconstruction_loss": 0.0
+      },
+      "main": {
+        "cosine": 0.19611613513818402,
+        "passed": false,
+        "reasons": [
+          "embedding_cosine_below_threshold",
+          "reconstruction_loss_above_threshold"
+        ],
+        "reconstruction_loss": 0.3130512645260574
+      }
+    }
+  },
+  "qualification_training_scope": "bridge_on_individual_rows_20_through_27",
+  "read_only_saved_receipts": true,
+  "regressed_durations": [
+    20
+  ],
+  "repaired_durations": [
+    22,
+    23,
+    26,
+    27
+  ],
+  "same_full_producer": true,
+  "schema": "autoencoder-refinement-scope-audit/v1",
+  "worker_reference": {
+    "bytes": 1766316,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/worker/receipt.json",
+    "sha256": "5661ec394599726784dece98abfd22d2cff3513c73a41db171cbe93743a5efe2"
+  }
+}

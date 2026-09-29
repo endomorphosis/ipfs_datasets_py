@@ -1,0 +1,774 @@
+--- a/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py
+@@ -49,6 +49,7 @@
+ from .projection_profiler import ProjectionProfiler
+ from .modal_autoencoder_adaptive_optimizer import (
+     GuardedAdaptiveProjection,
++    exact_finite_evaluation_metrics_equal,
+     nonfinite_evaluation_fields,
+     parameter_step_report,
+     validate_optimizer_options,
+@@ -6647,7 +6648,7 @@
+                 and float(max_seconds) > 0.0
+                 and (
+                     max(0.0, time.perf_counter() - monotonic_started_at)
+-                    if optimizer_mode == "guarded_adaptive" else elapsed_seconds()
++                    if optimizer_mode != "fixed" else elapsed_seconds()
+                 ) >= float(max_seconds)
+             )
+ 
+@@ -6997,8 +6998,9 @@
+             "combined": 0.35,
+         }
+         adaptive_optimizer = (
+-            GuardedAdaptiveProjection(learning_rate, head_learning_rate_scales, projection_momentum)
+-            if optimizer_mode == "guarded_adaptive" else None
++            GuardedAdaptiveProjection(learning_rate, head_learning_rate_scales, projection_momentum,
++                                      mode=optimizer_mode)
++            if optimizer_mode != "fixed" else None
+         )
+ 
+         def append_epoch_report(report: Dict[str, Any]) -> None:
+@@ -7023,6 +7025,8 @@
+                     for key, value in sorted(adaptive_optimizer.reset_reasons.items())
+                     if value != epoch_reset_counts_before.get(key, 0)
+                 }
++            if adaptive_optimizer is not None and adaptive_optimizer.productive:
++                report["productive_flat_seed_advances"] = dict(adaptive_optimizer.flat_seed_advances)
+             epoch_reports.append(report)
+ 
+         line_search_multipliers = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
+@@ -7052,6 +7056,8 @@
+             epoch_evaluation_count_before = candidate_holdout_evaluation_count
+             epoch_phase_counts_before = dict(adaptive_optimizer.phase_counts) if adaptive_optimizer is not None else {}
+             epoch_reset_counts_before = dict(adaptive_optimizer.reset_reasons) if adaptive_optimizer is not None else {}
++            if adaptive_optimizer is not None and adaptive_optimizer.productive:
++                adaptive_optimizer.begin_epoch()
+             if timed_out():
+                 projection_stopped_reason = "projection_timeout"
+                 break
+@@ -7158,6 +7164,9 @@
+                 )
+                 adaptive_rate = adaptive_optimizer.rates[update_name] if adaptive_optimizer is not None else 0.0
+                 plain_fallback = False
++                productive_phase = "warm_start"
++                tried_plain_rates: set[float] = set()
++                duplicate_trials_skipped = 0
+                 refinement_added = False
+ 
+                 def finalize_attempt_report(
+@@ -7377,6 +7386,10 @@
+                         learning_rate * head_scale * float(line_search_multiplier)
+                     )
+                     if adaptive_optimizer is not None:
++                        if adaptive_optimizer.productive and attempt_reports and effective_learning_rate in tried_plain_rates:
++                            duplicate_trials_skipped += 1
++                            adaptive_optimizer.phase_counts["duplicate_plain_rate_skipped"] += 1
++                            break
+                         line_search_multiplier = effective_learning_rate / (learning_rate * head_scale)
+                         is_refinement_attempt = False
+                     emit_progress(
+@@ -7513,9 +7526,12 @@
+                         phase = (
+                             "momentum" if adaptive_step_report.get("momentum_applied") else
+                             "plain_fallback" if plain_fallback else
++                            productive_phase if adaptive_optimizer.productive else
+                             "warm_start" if not attempt_reports else "backoff"
+                         )
+                         adaptive_optimizer.phase_counts[phase] += 1
++                        if adaptive_optimizer.productive and not adaptive_step_report.get("momentum_applied"):
++                            tried_plain_rates.add(effective_learning_rate)
+                         attempt_report["adaptive_optimizer"] = {
+                             **adaptive_step_report, "phase": phase,
+                             "actual_learning_rate": effective_learning_rate,
+@@ -7557,15 +7573,41 @@
+                     ):
+                         best_improved_attempt = attempt_tuple
+                     if adaptive_optimizer is not None:
+-                        if attempt_report.get("strict_accepted"):
+-                            # A complete guarded positive result is sufficient;
+-                            # the next epoch warm-starts this head at a higher rate.
++                        strict_positive = bool(attempt_report.get("strict_accepted"))
++                        if strict_positive and not adaptive_optimizer.productive:
++                            # The original adaptive policy stops this head at its
++                            # first fully guarded positive candidate.
+                             break
+-                        if adaptive_optimizer.history_head == update_name:
++                        exact_flat = bool(
++                            adaptive_optimizer.productive
++                            and objective_delta == 0.0
++                            and not attempt_report.get("pareto_regressions")
++                            and exact_finite_evaluation_metrics_equal(best, after)
++                        )
++                        if adaptive_optimizer.productive:
++                            attempt_report["adaptive_optimizer"]["exact_flat_guard_metrics"] = exact_flat
++                        if not strict_positive and adaptive_optimizer.history_head == update_name:
+                             adaptive_optimizer.reset("candidate_rejected")
+-                        plain_fallback = bool(adaptive_step_report.get("momentum_applied"))
+-                        if not plain_fallback:
++                        plain_fallback = bool(
++                            not strict_positive and adaptive_step_report.get("momentum_applied")
++                        )
++                        if plain_fallback:
++                            productive_phase = "plain_fallback"
++                        elif adaptive_optimizer.productive and (strict_positive or exact_flat):
++                            adaptive_rate = min(1.0, effective_learning_rate * 2.0)
++                            productive_phase = "expand_after_positive" if strict_positive else "expand_after_exact_flat"
++                            if adaptive_rate == effective_learning_rate:
++                                if adaptive_step_report.get("momentum_applied"):
++                                    # Removing carry is a distinct proposal even
++                                    # at the same clamped rate; either may win.
++                                    productive_phase = "plain_at_rate_cap"
++                                else:
++                                    duplicate_trials_skipped += 1
++                                    adaptive_optimizer.phase_counts["clamped_expansion_skipped"] += 1
++                                    break
++                        else:
+                             adaptive_rate = adaptive_optimizer.backoff(update_name, effective_learning_rate)
++                            productive_phase = "backoff"
+                     if (
+                         adaptive_optimizer is None
+                         and not refinement_added
+@@ -7638,13 +7680,47 @@
+                         default=None,
+                     )
+                 chosen = best_improved_attempt or best_attempt
++                if adaptive_optimizer is not None and adaptive_optimizer.productive:
++                    if timed_out():
++                        projection_stopped_reason = "projection_timeout"
++                    search_diagnostics = {
++                        "tried_learning_rates": [trial["effective_learning_rate"] for trial in attempt_reports],
++                        "trial_phases": [trial.get("adaptive_optimizer", {}).get("phase") for trial in attempt_reports],
++                        "duplicate_trials_skipped": duplicate_trials_skipped,
++                        "attempt_budget": effective_max_line_search_attempts,
++                    }
++                    for trial in attempt_reports:
++                        trial["productive_search"] = search_diagnostics
+                 if adaptive_optimizer is not None and attempt_reports:
+                     positive = best_improved_attempt is not None
+                     chosen_rate = (
+                         float(best_improved_attempt[1]["effective_learning_rate"])
+                         if positive else float(attempt_reports[-1]["effective_learning_rate"])
+                     )
+-                    adaptive_optimizer.finish_head(update_name, chosen_rate, positive)
++                    flat_warm_start_rate = None
++                    if (
++                        adaptive_optimizer.productive and not positive
++                        and not projection_stopped_reason
++                        and all(
++                            trial.get("holdout_evaluated") is True
++                            and trial.get("accepted") is False
++                            and trial.get("adaptive_optimizer", {}).get("exact_flat_guard_metrics") is True
++                            and trial.get("adaptive_optimizer", {}).get("momentum_applied") is False
++                            for trial in attempt_reports
++                        )
++                    ):
++                        flat_warm_start_rate = max(float(trial["effective_learning_rate"]) for trial in attempt_reports)
++                    adaptive_optimizer.finish_head(
++                        update_name, chosen_rate, positive, flat_warm_start_rate=flat_warm_start_rate,
++                    )
++                    if adaptive_optimizer.productive:
++                        search_diagnostics.update({
++                            "flat_warm_start_rate": flat_warm_start_rate,
++                            "flat_warm_start_reason": (
++                                "all_completed_plain_trials_exact_finite_flat"
++                                if flat_warm_start_rate is not None else None
++                            ),
++                        })
+                 if chosen is None:
+                     if attempt_tuples:
+                         _score, candidate_report, _after, _candidate_state = max(
+@@ -7960,9 +8036,15 @@
+                 )
+                 if adaptive_optimizer is not None:
+                     if allow_plateau_recovery and epoch < int(epochs):
+-                        epoch_reports[-1]["adaptive_phase"] = "plateau_recovery"
++                        epoch_reports[-1]["adaptive_phase"] = (
++                            adaptive_optimizer.last_plateau_action if adaptive_optimizer.productive else "plateau_recovery"
++                        )
+                         continue
+-                    projection_stopped_reason = "search_stalled"
++                    if adaptive_optimizer.productive and adaptive_optimizer.last_plateau_action == "plateau_exploration":
++                        projection_stopped_reason = "epoch_budget_exhausted"
++                        epoch_reports[-1]["adaptive_phase"] = "plateau_exploration"
++                    else:
++                        projection_stopped_reason = "search_stalled"
+                     epoch_reports[-1]["stopped_reason"] = projection_stopped_reason
+                 break
+ 
+--- a/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py
+@@ -7,6 +7,7 @@
+ 
+ from collections import Counter
+ import math
++import heapq
+ from typing import Any, Iterable, Mapping
+ 
+ 
+@@ -59,13 +60,30 @@
+     return sorted(invalid)
+ 
+ 
++def exact_finite_evaluation_metrics_equal(before: Any, after: Any) -> bool:
++    """Compare raw guarded metrics; flatness is not a proof of head inactivity."""
++    if nonfinite_evaluation_fields(before) or nonfinite_evaluation_fields(after):
++        return False
++    scalar_names = (
++        "sample_count", "legal_ir_target_count", "embedding_cosine_similarity",
++        "cosine_loss", "reconstruction_loss", "cross_entropy_loss",
++        "cross_entropy_excess_loss", "cross_entropy_entropy_loss",
++        "frame_ranking_loss", "symbolic_validity_penalty",
++    )
++    return (
++        all(getattr(before, name) == getattr(after, name) for name in scalar_names)
++        and before.legal_ir_losses == after.legal_ir_losses
++        and before.legal_ir_view_family_metrics == after.legal_ir_view_family_metrics
++    )
++
++
+ def validate_optimizer_options(*, mode: str, momentum: float, epochs: int,
+                                learning_rate: float, max_seconds: float | None,
+                                max_attempts: int | None, l2: float,
+                                prescreen: str, deadband: str,
+                                training: list[Any], validation: list[Any]) -> str:
+-    if not isinstance(mode, str) or mode not in {"fixed", "guarded_adaptive"}:
+-        raise ValueError("projection_optimizer_mode must be fixed or guarded_adaptive")
++    if not isinstance(mode, str) or mode not in {"fixed", "guarded_adaptive", "productive_adaptive"}:
++        raise ValueError("projection_optimizer_mode must be fixed, guarded_adaptive, or productive_adaptive")
+     if isinstance(momentum, bool):
+         raise ValueError("projection_momentum must be a number, not bool")
+     beta = float(momentum)
+@@ -85,6 +103,8 @@
+         raise ValueError("guarded_adaptive requires finite max_seconds in (0, 300]")
+     if type(max_attempts) is not int or not 1 <= max_attempts <= 10:
+         raise ValueError("guarded_adaptive requires explicit max_line_search_attempts from 1 to 10")
++    if mode == "productive_adaptive" and max_attempts < 2:
++        raise ValueError("productive_adaptive requires at least two line-search attempts")
+     if beta and max_attempts < 2:
+         raise ValueError("positive projection_momentum requires at least two line-search attempts")
+     if float(l2) != 0.0:
+@@ -160,7 +180,10 @@
+ class GuardedAdaptiveProjection:
+     """At most five per-head rates and one bounded accepted sparse direction."""
+ 
+-    def __init__(self, learning_rate: float, scales: Mapping[str, float], momentum: float):
++    def __init__(self, learning_rate: float, scales: Mapping[str, float], momentum: float,
++                 *, mode: str = "guarded_adaptive"):
++        self.mode = mode
++        self.productive = mode == "productive_adaptive"
+         self.rates = {head: min(1.0, float(learning_rate) * scale) for head, scale in scales.items()}
+         self.floors = {head: min(rate, max(1.0e-12, rate / 1024.0)) for head, rate in self.rates.items()}
+         self.momentum = float(momentum)
+@@ -170,25 +193,51 @@
+         self.reset_reasons: Counter = Counter()
+         self.plateau_count = 0
+         self.truncated_histories = 0
++        self.history_eligible_count = 0
++        self.history_eligible_norm = 0.0
++        self.history_retained_norm = 0.0
++        self.flat_seed_advances: dict[str, dict[str, float]] = {}
++        self.last_plateau_action: str | None = None
++
++    def begin_epoch(self) -> None:
++        self.flat_seed_advances = {}
++        self.last_plateau_action = None
+ 
+     def reset(self, reason: str) -> None:
+         if self.history:
+             self.reset_reasons[reason] += 1
+         self.history.clear()
+         self.history_head = None
++        self.history_eligible_count = 0
++        self.history_eligible_norm = 0.0
++        self.history_retained_norm = 0.0
+ 
+     def backoff(self, head: str, rate: float) -> float:
+         return max(self.floors[head], min(1.0, rate * 0.5))
+ 
+-    def finish_head(self, head: str, rate: float, accepted: bool) -> None:
+-        self.rates[head] = min(1.0, rate * 1.25) if accepted else self.backoff(head, rate)
++    def finish_head(self, head: str, rate: float, accepted: bool,
++                    *, flat_warm_start_rate: float | None = None) -> None:
++        previous_rate = self.rates[head]
++        self.rates[head] = (
++            flat_warm_start_rate if self.productive and not accepted and flat_warm_start_rate is not None else
++            rate if accepted and self.productive else
++            min(1.0, rate * 1.25) if accepted else self.backoff(head, rate)
++        )
+         self.phase_counts["guarded_positive" if accepted else "head_rejected"] += 1
++        if self.productive and not accepted and flat_warm_start_rate is not None:
++            self.phase_counts["flat_measured_warm_start"] += 1
++            if previous_rate < flat_warm_start_rate < 1.0:
++                self.flat_seed_advances[head] = {"before": previous_rate, "after": flat_warm_start_rate}
+ 
+     def prepare(self, state: Any, patch: Any, *, head: str, allow_momentum: bool,
+                 logit_clip: float) -> dict[str, Any]:
+         report = parameter_step_report(patch)
+         report.update({"momentum_applied": False, "momentum_carry_norm": 0.0,
+                        "momentum_coordinate_count": 0, "momentum_restart_reason": None})
++        if self.productive:
++            report.update({"momentum_fresh_intersection_norm": 0.0,
++                           "momentum_fresh_intersection_coordinate_count": 0,
++                           "momentum_fresh_intersection_norm_coverage": 0.0})
+         if not allow_momentum or not self.momentum or self.history_head != head or not self.history:
+             return report
+         matches = []
+@@ -209,6 +258,15 @@
+             fresh_norm = math.hypot(fresh_norm, fresh)
+             previous_norm = math.hypot(previous_norm, previous_delta)
+             alignment += fresh * previous_delta
++        if self.productive:
++            full_norm = report["parameter_delta_norm"]
++            report.update({
++                "momentum_fresh_intersection_norm": fresh_norm,
++                "momentum_fresh_intersection_coordinate_count": len(matches),
++                "momentum_fresh_intersection_norm_coverage": (
++                    min(1.0, fresh_norm / full_norm) if full_norm > 0.0 else 0.0
++                ),
++            })
+         reason = None
+         if not matches or fresh_norm == 0.0 or previous_norm == 0.0:
+             reason = "no_current_direction_intersection"
+@@ -240,6 +298,11 @@
+     def committed(self, head: str, patch: Any) -> None:
+         self.plateau_count = 0
+         self.reset("selected_patch_replaces_history")
++        if self.productive and head in self.rates:
++            # finish_head stores the best measured successful rate. Only a
++            # selected committed head receives an additional next-epoch growth.
++            self.rates[head] = min(1.0, self.rates[head] * 1.25)
++            self.phase_counts["selected_head_rate_growth"] += 1
+         if not self.momentum:
+             return
+         # A composed update has another objective/step schedule: start its next
+@@ -248,6 +311,27 @@
+             self.reset_reasons["composed_update"] += 1
+             return
+         self.history_head = head
++        if self.productive:
++            def eligible():
++                for key, before, after in _patch_coordinates(patch):
++                    delta = after - before
++                    if not math.isfinite(delta):
++                        continue
++                    self.history_eligible_count += 1
++                    self.history_eligible_norm = math.hypot(self.history_eligible_norm, delta)
++                    # Stable coordinate tie-breaking avoids lexical component
++                    # truncation without depending on mapping insertion order.
++                    tie_key = (key[0], repr(key[1]), repr(key[2]))
++                    yield (-abs(delta), tie_key, key, delta, after)
++            # nsmallest streams its iterable through a bounded heap. It scans
++            # the selected sparse patch only, never the full weight state.
++            selected = heapq.nsmallest(MAX_MOMENTUM_COORDINATES, eligible())
++            if self.history_eligible_count > MAX_MOMENTUM_COORDINATES:
++                self.truncated_histories += 1
++            for _magnitude, _tie, key, delta, after in selected:
++                self.history[key] = (delta, after)
++                self.history_retained_norm = math.hypot(self.history_retained_norm, delta)
++            return
+         for key, before, after in _patch_coordinates(patch):
+             delta = after - before
+             if not math.isfinite(delta):
+@@ -259,13 +343,22 @@
+ 
+     def recover_plateau(self) -> bool:
+         self.reset("plateau")
++        if self.productive and self.flat_seed_advances:
++            # Reusing a measured flat seed leaves a strictly larger untried
++            # rate inside the fixed [floor,1] interval. Continue only within
++            # the caller's existing epoch/attempt/deadline budgets.
++            self.plateau_count = 0
++            self.last_plateau_action = "plateau_exploration"
++            self.phase_counts["plateau_exploration"] += 1
++            return True
+         self.plateau_count += 1
++        self.last_plateau_action = "plateau_recovery" if self.plateau_count <= 1 else "search_stalled"
+         self.phase_counts["plateau_sweep"] += 1
+         return self.plateau_count <= 1
+ 
+     def report(self) -> dict[str, Any]:
+         return {
+-            "projection_optimizer_mode": "guarded_adaptive",
++            "projection_optimizer_mode": self.mode,
+             "projection_optimizer_scope": OPTIMIZER_SCOPE,
+             "projection_momentum": self.momentum,
+             "optimizer_history_persisted": False,
+@@ -279,5 +372,25 @@
+                 "momentum_direction": "selected_committed_parameter_delta",
+                 "validation_gradients_used": False,
+                 "global_minimum_claimed": False,
++                **({
++                    "rate_expansion_factor": 2.0,
++                    "next_epoch_growth_scope": "selected_committed_head_only",
++                    "unselected_positive_warm_start": "best_measured_rate",
++                    "flat_warm_start_policy": "largest_measured_rate_when_all_completed_plain_trials_exact_finite_flat",
++                    "momentum_history_selection": "largest_absolute_accepted_parameter_delta_stable_coordinate_ties",
++                    "momentum_history_eligible_coordinate_count": self.history_eligible_count,
++                    "momentum_history_eligible_parameter_delta_norm": (
++                        self.history_eligible_norm if math.isfinite(self.history_eligible_norm) else None
++                    ),
++                    "momentum_history_retained_parameter_delta_norm": (
++                        self.history_retained_norm if math.isfinite(self.history_retained_norm) else None
++                    ),
++                    "momentum_history_parameter_delta_norm_coverage": (
++                        min(1.0, self.history_retained_norm / self.history_eligible_norm)
++                        if self.history_eligible_norm > 0.0 and math.isfinite(self.history_eligible_norm)
++                        else None
++                    ),
++                    "momentum_history_components": dict(sorted(Counter(key[0] for key in self.history).items())),
++                } if self.productive else {}),
+             },
+         }
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py
+@@ -379,3 +379,349 @@
+     assert "nonfinite_validation_metric" in trial["rejection_reasons"]
+     assert model.state.feature_embedding_weights["embedding"] == [0.0]
+     json.dumps(report, allow_nan=False)
++
++
++def test_productive_adaptive_explores_larger_rate_and_keeps_best_guarded_trial(monkeypatch):
++    fixture = _fixture(monkeypatch)
++    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
++    assert fixture[3]["rates"] == [0.175, 0.35]
++    assert fixture[0].state.legal_ir_view_logits["x"] == 0.35
++    assert report["accepted_epochs"] == 1
++    attempts = _attempts(report)
++    assert [trial["adaptive_optimizer"]["phase"] for trial in attempts] == ["warm_start", "expand_after_positive"]
++    assert all(trial["strict_accepted"] for trial in attempts)
++    assert report["epoch_reports"][0]["objective_delta"] == attempts[1]["objective_delta"]
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.4375
++    assert report["projection_optimizer_mode"] == "productive_adaptive"
++    assert attempts[0]["productive_search"]["tried_learning_rates"] == [0.175, 0.35]
++
++
++def test_productive_exact_flat_metrics_allow_larger_probe_to_escape_plateau(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0 if x <= 0.2 else 0.5)
++    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
++    assert report["accepted_epochs"] == 1
++    assert fixture[3]["rates"] == [0.175, 0.35]
++    attempts = _attempts(report)
++    assert attempts[0]["adaptive_optimizer"]["exact_flat_guard_metrics"] is True
++    assert attempts[1]["adaptive_optimizer"]["phase"] == "expand_after_exact_flat"
++    assert report["after"]["reconstruction_loss"] == 0.5
++
++
++@pytest.mark.parametrize("field", ["family_metric", "flat_loss", "entropy", "target_count"])
++def test_productive_zero_objective_with_changed_raw_guard_metrics_is_not_exact_flat(monkeypatch, field):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0)
++    model = fixture[0]
++    original = model.evaluate
++    def evaluate(rows, **kwargs):
++        result = original(rows, **kwargs)
++        x = model.state.legal_ir_view_logits["x"]
++        if field == "family_metric":
++            return replace(result, legal_ir_view_family_metrics={"deontic": {"ir_cosine_similarity": x}})
++        if field == "flat_loss":
++            # An unselected diagnostic still prevents the exact-flat label.
++            return replace(result, legal_ir_losses={"diagnostic": x})
++        if field == "entropy":
++            return replace(result, cross_entropy_entropy_loss=x)
++        return replace(result, legal_ir_target_count=int(x > 0.0))
++    monkeypatch.setattr(model, "evaluate", evaluate)
++    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
++    assert fixture[3]["rates"] == [0.175, 0.0875]
++    assert all(trial["adaptive_optimizer"]["exact_flat_guard_metrics"] is False for trial in _attempts(report))
++    assert report["accepted_epochs"] == 0
++
++
++@pytest.mark.parametrize("failure", ["regression", "nonfinite", "timeout"])
++def test_productive_larger_trial_failure_preserves_earlier_winner(monkeypatch, failure):
++    def loss(x, calls):
++        if x > 0.2:
++            return float("nan") if failure == "nonfinite" else 5.0
++        return (0.1-x)**2
++    def update(state, rate, calls):
++        state.legal_ir_view_logits["x"] += rate
++        if failure == "timeout" and len(calls["updates"]) == 2:
++            calls["now"] = 61.0
++    fixture = _fixture(monkeypatch, loss=loss, update=update)
++    before = fixture[0].state.to_dict()
++    patches = []
++    def sink(patch, context):
++        patches.append(encode_patch(patch, base_state_identity=context["base_state_identity"],
++                                    result_state_identity=context["result_state_identity"],
++                                    base_version_id="fixture", sequence=len(patches)))
++    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive", accepted_patch_sink=sink)
++    assert report["accepted_epochs"] == 1
++    assert fixture[0].state.legal_ir_view_logits["x"] == 0.175
++    assert len(patches) == 1
++    restored = ma.ModalAutoencoderTrainingState.from_dict(before)
++    replay_patch(restored, patches[0], expected_base_version_id="fixture", expected_sequence=0)
++    assert restored.to_json() == fixture[0].state.to_json()
++    assert fixture[0].state._active_state_transaction is None
++    assert _attempts(report)[0]["strict_accepted"] is True
++    assert _attempts(report)[1]["accepted"] is False
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.21875
++    if failure == "timeout":
++        assert report["stopped_reason"] == "projection_timeout"
++        assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 1
++    else:
++        assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 2
++    json.dumps(report, allow_nan=False)
++
++
++def test_productive_equal_positive_gains_keep_earlier_rate(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0 if x == 0.0 else 0.5)
++    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
++    assert fixture[3]["rates"] == [0.175, 0.35]
++    assert fixture[0].state.legal_ir_view_logits["x"] == 0.175
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.21875
++
++
++def test_productive_growth_only_for_selected_head_unselected_warms_at_measured_rate(monkeypatch):
++    fixture = _fixture(monkeypatch)
++    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive", projection_max_update_families=2)
++    # Both mocked heads have the same effect; stable ordering selects the first.
++    assert report["epoch_reports"][0]["selected_update"] == "legal_ir_view_global_logits"
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.4375
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_logits"] == 0.35
++    assert report["epoch_reports"][0]["adaptive_phase_counts"]["selected_head_rate_growth"] == 1
++    assert report["projection_optimizer"]["next_epoch_growth_scope"] == "selected_committed_head_only"
++
++
++def test_productive_deduplicates_clamped_plain_rates_without_extra_evaluation(monkeypatch):
++    fixture = _fixture(monkeypatch)
++    report = _run(fixture, epochs=1, learning_rate=1.0, max_line_search_attempts=5,
++                  projection_optimizer_mode="productive_adaptive")
++    assert fixture[3]["rates"] == [0.5, 1.0]
++    assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 2
++    assert _attempts(report)[0]["productive_search"]["duplicate_trials_skipped"] == 1
++    assert report["projection_optimizer"]["phase_counts"]["clamped_expansion_skipped"] == 1
++    assert fixture[0].state.legal_ir_view_logits["x"] == 1.0
++
++
++def test_productive_momentum_rejection_prioritizes_same_rate_plain_fallback(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: (0.6-x)**2)
++    report = _run(fixture, epochs=2, projection_optimizer_mode="productive_adaptive", projection_momentum=0.5)
++    assert fixture[3]["rates"] == [0.175, 0.35, 0.4375, 0.4375]
++    attempts = _attempts(report)
++    assert [a["adaptive_optimizer"]["phase"] for a in attempts] == [
++        "warm_start", "expand_after_positive", "momentum", "plain_fallback"]
++    assert [a["accepted"] for a in attempts] == [True, True, False, True]
++    assert report["accepted_epochs"] == 2
++    assert fixture[0].state.legal_ir_view_logits["x"] == pytest.approx(0.7875)
++    assert report["projection_optimizer"]["momentum_reset_reasons"]["candidate_rejected"] == 1
++    assert all(e["candidate_holdout_evaluation_count"] == 2 for e in report["epoch_reports"])
++
++
++@pytest.mark.parametrize("momentum", [0.0, 0.5])
++def test_productive_requires_two_attempts_before_evaluation(monkeypatch, momentum):
++    fixture = _fixture(monkeypatch)
++    with pytest.raises(ValueError, match="productive_adaptive requires at least two"):
++        _run(fixture, max_line_search_attempts=1, projection_optimizer_mode="productive_adaptive", projection_momentum=momentum)
++    assert not fixture[3]["evaluations"]
++
++
++def test_productive_top_delta_history_keeps_dominant_global_updates(monkeypatch):
++    monkeypatch.setattr(policy, "MAX_MOMENTUM_COORDINATES", 4)
++    state = ma.ModalAutoencoderTrainingState(feature_embedding_weights={"flood": [0.0]*10},
++                                            legal_ir_view_logits={"global": 0.0, "dominant": 0.0})
++    transaction = state.transaction(label="controlled").begin()
++    state.feature_embedding_weights["flood"] = [0.01]*10
++    state.legal_ir_view_logits["global"] = 1.0
++    state.legal_ir_view_logits["dominant"] = 2.0
++    patch = transaction.commit()
++    old = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5)
++    new = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5, mode="productive_adaptive")
++    old.committed("head", patch)
++    new.committed("head", patch)
++    assert {key[0] for key in old.history} == {"feature_embedding_weights"}
++    assert {key[1] for key in new.history if key[0] == "legal_ir_view_logits"} == {"global", "dominant"}
++    assert len(new.history) == 4 and new.truncated_histories == 1
++    report = new.report()["projection_optimizer"]
++    assert report["momentum_history_eligible_coordinate_count"] == 12
++    assert report["momentum_history_parameter_delta_norm_coverage"] > 0.999
++    assert report["momentum_history_components"] == {"feature_embedding_weights": 2, "legal_ir_view_logits": 2}
++    trial = state.transaction(label="trial").begin()
++    state.feature_embedding_weights["flood"] = [0.02]*10
++    state.legal_ir_view_logits["global"] += 0.1
++    state.legal_ir_view_logits["dominant"] += 0.2
++    carry = new.prepare(state, trial.capture_patch(), head="head", allow_momentum=True, logit_clip=24.0)
++    assert carry["momentum_applied"]
++    assert carry["momentum_fresh_intersection_norm_coverage"] > 0.99
++    assert carry["momentum_carry_norm"] <= 0.5 * carry["momentum_fresh_intersection_norm"] + 1e-15
++    trial.rollback()
++
++
++def test_productive_top_delta_ties_are_independent_of_mapping_insertion_order(monkeypatch):
++    monkeypatch.setattr(policy, "MAX_MOMENTUM_COORDINATES", 2)
++    histories = []
++    for keys in (("z", "a", "m"), ("m", "z", "a")):
++        state = ma.ModalAutoencoderTrainingState(feature_family_logits={"row": dict.fromkeys(keys, 0.0)})
++        patch = _commit_delta(state, "feature_family_logits", "row", dict.fromkeys(keys, 1.0))
++        controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5, mode="productive_adaptive")
++        controller.committed("head", patch)
++        histories.append(list(controller.history))
++    assert histories[0] == histories[1]
++    assert [key[2] for key in histories[0]] == [("a",), ("m",)]
++
++
++def test_productive_history_excludes_unknown_initialization_and_memory(monkeypatch):
++    monkeypatch.setattr(policy, "MAX_MOMENTUM_COORDINATES", 3)
++    state = ma.ModalAutoencoderTrainingState(feature_family_logits={"old": {"known": 0.0}},
++                                            decoded_embeddings={"memory": [0.0]})
++    transaction = state.transaction(label="controlled").begin()
++    state.feature_family_logits["old"]["known"] = 0.01
++    state.feature_family_logits["old"]["inserted"] = 1000.0
++    state.feature_family_logits["new"] = {"inserted": 1000.0}
++    state.decoded_embeddings["memory"][0] = 1000.0
++    state.proof_auxiliary_head_logits["proof"] = {"score": 1000.0}
++    patch = transaction.commit()
++    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5, mode="productive_adaptive")
++    controller.committed("head", patch)
++    assert list(controller.history) == [("feature_family_logits", "old", ("known",))]
++    assert controller.report()["projection_optimizer"]["momentum_history_eligible_coordinate_count"] == 1
++
++
++@pytest.mark.parametrize("direction,stale,expected", [
++    (-0.1, False, "nonpositive_direction_alignment"),
++    (0.0, False, "no_current_direction_intersection"),
++    (0.1, True, "no_current_direction_intersection"),
++])
++def test_productive_top_delta_keeps_restart_and_stale_state_guards(direction, stale, expected):
++    state = ma.ModalAutoencoderTrainingState(legal_ir_view_logits={"x": 0.0})
++    patch = _commit_delta(state, "legal_ir_view_logits", "x", 1.0)
++    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5, mode="productive_adaptive")
++    controller.committed("head", patch)
++    if stale:
++        _commit_delta(state, "legal_ir_view_logits", "x", 2.0)
++    before = state.to_json()
++    transaction = state.transaction(label="trial").begin()
++    state.legal_ir_view_logits["x"] += direction
++    report = controller.prepare(state, transaction.capture_patch(), head="head", allow_momentum=True, logit_clip=24.0)
++    assert report["momentum_restart_reason"] == expected
++    assert not controller.history
++    assert controller.report()["projection_optimizer"]["momentum_history_eligible_coordinate_count"] == 0
++    transaction.rollback()
++    assert state.to_json() == before
++
++
++@pytest.mark.parametrize("outcome", ["carried_rejected", "carried_best", "plain_best_both_positive"])
++def test_productive_cap_compares_carried_and_plain_once_each_and_retains_best(monkeypatch, outcome):
++    if outcome == "carried_rejected":
++        loss = lambda x, _: (1.6-x)**2
++    elif outcome == "plain_best_both_positive":
++        loss = lambda x, _: (2.1-x)**2
++    else:
++        loss = lambda x, _: 100.0-x
++    fixture = _fixture(monkeypatch, loss=loss)
++    report = _run(fixture, epochs=2, learning_rate=1.0, max_line_search_attempts=5,
++                  projection_optimizer_mode="productive_adaptive", projection_momentum=0.5)
++    second = report["epoch_reports"][1]["candidate_reports"][0]
++    trials = second["attempt_reports"]
++    assert len(trials) == 2
++    assert trials[0]["adaptive_optimizer"]["phase"] == "momentum"
++    assert trials[1]["accepted"] is True
++    assert fixture[3]["rates"] == [0.5, 1.0, 1.0, 1.0]
++    if outcome == "carried_rejected":
++        assert trials[0]["accepted"] is False
++        assert trials[1]["adaptive_optimizer"]["phase"] == "plain_fallback"
++    else:
++        assert trials[0]["accepted"] is True
++        assert trials[1]["adaptive_optimizer"]["phase"] == "plain_at_rate_cap"
++    expected = 2.5 if outcome == "carried_best" else 2.0
++    assert fixture[0].state.legal_ir_view_logits["x"] == expected
++    assert second["productive_search"]["duplicate_trials_skipped"] == 1
++    assert report["epoch_reports"][1]["candidate_holdout_evaluation_count"] == len(trials)
++
++
++
++def test_productive_flat_head_warms_at_largest_measured_rate_across_epochs(monkeypatch):
++    def update(state, rate, calls):
++        if calls["updates"][-1] == ("legal_ir_view_global_logits",):
++            state.legal_ir_view_logits["flat"] += rate
++        else:
++            state.legal_ir_view_logits["x"] += rate
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 100.0-x, update=update)
++    fixture[0].state.legal_ir_view_logits["flat"] = 0.0
++    report = _run(fixture, epochs=3, projection_optimizer_mode="productive_adaptive", projection_max_update_families=2)
++    flat_heads = [epoch["candidate_reports"][0] for epoch in report["epoch_reports"]]
++    assert [head["productive_search"]["tried_learning_rates"] for head in flat_heads] == [
++        [0.175, 0.35], [0.35, 0.7], [0.7, 1.0]]
++    assert [head["productive_search"]["flat_warm_start_rate"] for head in flat_heads] == [0.35, 0.7, 1.0]
++    assert all(head["productive_search"]["flat_warm_start_reason"] ==
++               "all_completed_plain_trials_exact_finite_flat" for head in flat_heads)
++    assert all(len(head["attempt_reports"]) <= 2 for epoch in report["epoch_reports"] for head in epoch["candidate_reports"])
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 1.0
++    assert report["accepted_epochs"] == 3
++
++
++@pytest.mark.parametrize("failure", ["regression", "nonfinite", "timeout"])
++def test_productive_mixed_flat_failure_does_not_reuse_flat_warm_start(monkeypatch, failure):
++    def loss(x, calls):
++        return (float("nan") if failure == "nonfinite" else 2.0) if x > 0.2 else 1.0
++    def update(state, rate, calls):
++        state.legal_ir_view_logits["x"] += rate
++        if failure == "timeout" and len(calls["updates"]) == 2:
++            calls["now"] = 61.0
++    fixture = _fixture(monkeypatch, loss=loss, update=update)
++    before = fixture[0].state.to_json()
++    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
++    head = report["epoch_reports"][0]["candidate_reports"][0]
++    assert head["productive_search"]["tried_learning_rates"] == [0.175, 0.35]
++    assert head["productive_search"]["flat_warm_start_rate"] is None
++    assert head["productive_search"]["flat_warm_start_reason"] is None
++    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.175
++    assert report["accepted_epochs"] == 0
++    assert fixture[0].state.to_json() == before
++    assert len(_attempts(report)) == 2
++    json.dumps(report, allow_nan=False)
++
++
++
++def test_productive_all_flat_epochs_continue_to_untried_rate_and_escape(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0 if x < 0.9 else 0.5)
++    report = _run(fixture, epochs=3, projection_optimizer_mode="productive_adaptive")
++    assert fixture[3]["rates"] == [0.175, 0.35, 0.35, 0.7, 0.7, 1.0]
++    assert [epoch["accepted"] for epoch in report["epoch_reports"]] == [False, False, True]
++    assert [epoch["adaptive_phase"] for epoch in report["epoch_reports"][:2]] == ["plateau_exploration", "plateau_exploration"]
++    assert all(epoch["objective_before"] == epoch["objective_after"] for epoch in report["epoch_reports"][:2])
++    assert fixture[0].state.legal_ir_view_logits["x"] == 1.0
++    assert report["accepted_epochs"] == 1
++    assert report["after"]["reconstruction_loss"] == 0.5
++    assert report["epoch_reports"][1]["productive_flat_seed_advances"] == {
++        "legal_ir_view_global_logits": {"before": 0.35, "after": 0.7}}
++
++
++def test_productive_all_flat_stops_once_measured_rates_reach_cap(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0)
++    before = fixture[0].state.to_json()
++    report = _run(fixture, epochs=32, projection_optimizer_mode="productive_adaptive")
++    assert fixture[3]["rates"] == [0.175, 0.35, 0.35, 0.7, 0.7, 1.0, 1.0]
++    assert len(report["epoch_reports"]) == 4
++    assert report["stopped_reason"] == "search_stalled"
++    assert report["accepted_epochs"] == 0
++    assert fixture[0].state.to_json() == before
++    assert report["projection_optimizer"]["phase_counts"]["plateau_exploration"] == 2
++    assert report["projection_optimizer"]["phase_counts"]["plateau_sweep"] == 2
++    json.dumps(report, allow_nan=False)
++
++
++def test_productive_flat_exploration_respects_requested_epoch_budget(monkeypatch):
++    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0)
++    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
++    assert len(_attempts(report)) == 2
++    assert len(report["epoch_reports"]) == 1
++    assert report["stopped_reason"] == "epoch_budget_exhausted"
++    assert report["accepted_epochs"] == 0
++
++
++
++def test_productive_fully_evaluated_flat_trial_past_deadline_cannot_warm_seed(monkeypatch):
++    def loss(x, calls):
++        if x > 0.2:
++            calls["now"] = 61.0
++        return 1.0
++    fixture = _fixture(monkeypatch, loss=loss)
++    report = _run(fixture, epochs=3, projection_optimizer_mode="productive_adaptive")
++    assert report["stopped_reason"] == "projection_timeout"
++    assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 2
++    head = report["epoch_reports"][0]["candidate_reports"][0]
++    assert head["productive_search"]["flat_warm_start_rate"] is None
++    assert report["accepted_epochs"] == 0

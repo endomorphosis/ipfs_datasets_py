@@ -1,0 +1,210 @@
+{
+  "admitted": false,
+  "arms": [
+    {
+      "accepted_epochs": 5,
+      "arm": "productive_momentum_refined",
+      "attempted_epochs": 5,
+      "bridge_on_evaluation_count": 51,
+      "final_objective": 2.5983871795588356,
+      "gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-synthetic-duration-ablation-20-445b79532d60f8ec",
+            "us-code-synthetic-duration-ablation-24-b28286bd5fec8639"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "initial_objective": 2.694956319408122,
+      "qualified": false,
+      "threshold_first_observed_epoch": null,
+      "threshold_first_observed_training_seconds": null,
+      "training_seconds": 75.56565520400181,
+      "training_seconds_per_span": 9.445706900500227
+    }
+  ],
+  "canary_summary": {
+    "evaluated": false,
+    "reason": "Prespecified integrated diagnostic has no further canary evaluation."
+  },
+  "check_count": 227,
+  "command_wall_seconds": 101.60401233215816,
+  "counts": {
+    "accepted_epochs": 5,
+    "arms": 1,
+    "attempted_epochs": 5,
+    "family_artifacts": 54,
+    "lake_builds": 9,
+    "qualification_rows": 9,
+    "qualified_arms": 0,
+    "requested_epochs": 5
+  },
+  "experiment": "integrated",
+  "failures": [],
+  "global_minimum_claim": false,
+  "passed": true,
+  "producer_manifest": {
+    "file_count": 7835,
+    "sha256": "3a5445309b3816ee6a023eb91e97c95c1aa8b0974f38609fcfbd6942bd21d95f"
+  },
+  "resource_record": {
+    "cleanup_error": null,
+    "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": {
+      "artifacts_durable_asserted": true,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67768333,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined"
+      },
+      "attempt_exceeded_reservation": false,
+      "child": {
+        "birth": "122351841",
+        "pid": 3825113
+      },
+      "child_process_slots": 5,
+      "cpu_slots": 2,
+      "created_at": 1790655211.7390864,
+      "external_charges": {},
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 78098142528,
+        "inventory": {
+          "apparent_bytes": 48583142528,
+          "entry_count": 235953,
+          "special_file_count": 22,
+          "symlink_count": 3784
+        },
+        "limit_bytes": 80000000000,
+        "minimum_filesystem_free_bytes": 196332023808,
+        "observed_apparent_bytes": 48583142528,
+        "outstanding_full_reservations_bytes": 29515000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "final_attempt_bytes": 106764600,
+      "final_external_charged_bytes": 0,
+      "final_total_charged_bytes": 106764600,
+      "finalization_profile": {
+        "global_accounting_seconds": 2.300142167136073,
+        "global_inventory_count": 1,
+        "ledger_lock_wait_seconds": 0.0002571898512542248,
+        "process_check_seconds": 0.022214017109945416,
+        "schema_version": "daemon-resource-finalization-profile/v1",
+        "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+        "strict_attempt_inventory_count": 1,
+        "strict_attempt_inventory_seconds": 0.006069852039217949
+      },
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 106764600,
+        "attempt_limit_bytes": 250000000,
+        "charged_bytes": 78348142528,
+        "checked_at": 1790655311.0236573,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "inventory": {
+          "apparent_bytes": 48583142528,
+          "entry_count": 235953,
+          "special_file_count": 22,
+          "symlink_count": 3784
+        },
+        "limit_bytes": 80000000000,
+        "memory_limit_bytes": 8589934592,
+        "minimum_filesystem_free_bytes": 196332023808,
+        "observed_apparent_bytes": 48583142528,
+        "outstanding_full_reservations_bytes": 29765000000,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 5,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 106764600
+      },
+      "memory_mb": 8192,
+      "owner_pid": 3823747,
+      "prior_children": [],
+      "released_at": 1790655311.0344167,
+      "reservation_id": "c25d711d0de0479dbe5da24c0b2b4eaf",
+      "scheduler_lane": "hammer_lean",
+      "status": "released",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    "reservation_id": "c25d711d0de0479dbe5da24c0b2b4eaf",
+    "resource_lease": {
+      "acquired_at": 1790655211.7572234,
+      "cancelled": true,
+      "child_process_slots": 5,
+      "cpu_slots": 2,
+      "gpu_memory_mb": 0,
+      "lane": "hammer_lean",
+      "lease_id": "39886830af4842c28a136fc916cc55f4",
+      "memory_mb": 8192,
+      "owner_pid": 3823747,
+      "parent_lease_id": null,
+      "released": true,
+      "requires_gpu": false,
+      "unified_memory_mb": 0,
+      "wait_seconds": 5.119945853948593e-07
+    },
+    "roots": [
+      {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "device": 66306,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      {
+        "device": 66306,
+        "inode": 526155,
+        "path": "/tmp/pytest-of-barberb"
+      }
+    ],
+    "scheduler_lane": "hammer_lean",
+    "schema": "daemon-resource-reservations-v1",
+    "status": "released",
+    "storage_limit_bytes": 80000000000,
+    "workload": "canonical_trainer"
+  },
+  "schema": "autoencoder-epoch-productivity-audit/v1",
+  "scope": "Evidence integrity and unchanged qualification policy. Failed qualification arms remain failed; synthetic canaries do not establish federal-law coverage.",
+  "selection": {
+    "admitted": false,
+    "canary_evaluated_before_selection": false,
+    "candidate_version_id": "sha256:53033900c7cbb564373b59f947b3e57077b9a9eadc4d025cd5507a684de4df7d",
+    "promotion_performed": false,
+    "qualified": false,
+    "selected_arm": "productive_momentum_refined",
+    "selection_metric": "final_tuning_objective"
+  }
+}

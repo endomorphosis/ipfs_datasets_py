@@ -1,0 +1,1 @@
+{"admitted":false,"canary_evaluated_before_selection":false,"candidate_version_id":"sha256:6b69a153a6dd3f7de98bc27177b9c1478c0fe5e4cba1511cefe596d22787ee9f","promotion_performed":false,"qualified":false,"selected_arm":"productive_momentum","selection_metric":"final_tuning_objective"}

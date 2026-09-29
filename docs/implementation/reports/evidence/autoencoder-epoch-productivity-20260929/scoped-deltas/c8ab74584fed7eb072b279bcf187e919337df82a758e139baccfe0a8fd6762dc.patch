@@ -1,0 +1,31 @@
+--- a/scripts/ops/legal_ir/run_incremental_autoencoders.py
++++ b/scripts/ops/legal_ir/run_incremental_autoencoders.py
+@@ -532,8 +532,8 @@
+                    help="Initial optimizer learning rate within (0,1]")
+     p.add_argument("--line-search-attempts", type=int, choices=range(1, 11), default=1,
+                    help="Candidate attempt bound per update family, including optional momentum trials")
+-    p.add_argument("--projection-optimizer-mode", choices=["fixed", "guarded_adaptive"], default="fixed",
+-                   help="Adaptive search requires disjoint validation; rate/history reset for each training job")
++    p.add_argument("--projection-optimizer-mode", choices=["fixed", "guarded_adaptive", "productive_adaptive"], default="fixed",
++                   help="Adaptive search requires disjoint validation; productive search requires two attempts; rate/history reset per job")
+     p.add_argument("--projection-momentum", type=float, default=0.0,
+                    help="Optional job-local momentum within 0..0.9; requires adaptive search and at least two attempts")
+     p.add_argument("--composed-refinement-attempts", type=int, choices=range(4), default=0,
+@@ -569,11 +569,13 @@
+         p.error("learning-rate must be finite and within (0,1]")
+     if not math.isfinite(args.projection_momentum) or not 0 <= args.projection_momentum <= 0.9:
+         p.error("projection-momentum must be finite and within 0..0.9")
+-    if args.projection_momentum and (args.projection_optimizer_mode != "guarded_adaptive"
++    if args.projection_momentum and (args.projection_optimizer_mode not in {"guarded_adaptive", "productive_adaptive"}
+                                      or args.line_search_attempts < 2):
+-        p.error("projection momentum requires guarded_adaptive and at least two line-search-attempts")
+-    if args.projection_optimizer_mode == "guarded_adaptive" and not args.validation_jsonl:
+-        p.error("guarded_adaptive requires disjoint --validation-jsonl")
++        p.error("projection momentum requires guarded_adaptive or productive_adaptive and at least two line-search-attempts")
++    if args.projection_optimizer_mode == "productive_adaptive" and args.line_search_attempts < 2:
++        p.error("productive_adaptive requires at least two line-search-attempts")
++    if args.projection_optimizer_mode in {"guarded_adaptive", "productive_adaptive"} and not args.validation_jsonl:
++        p.error(f"{args.projection_optimizer_mode} requires disjoint --validation-jsonl")
+     if args.execution_mode == "inference" and _nondefault_optimizer_settings(vars(args)):
+         p.error("optimizer settings require the training execution mode")
+     if type(args.workers) is not int or args.workers < 0 or args.workers > 32:

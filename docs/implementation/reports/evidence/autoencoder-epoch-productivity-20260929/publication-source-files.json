@@ -1,0 +1,9 @@
+[
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+  "scripts/ops/legal_ir/run_incremental_autoencoders.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py",
+  "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py"
+]

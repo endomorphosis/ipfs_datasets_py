@@ -1,0 +1,17 @@
+{
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+    "after_sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+    "before_sha256": "474646fac68afc3f598e7184769399a0babd32b18d481af5ecd8ff9c6ca9971a",
+    "bytes": 1400654
+  },
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+    "after_sha256": "11c1ff8fb5c9a0c301fec36b3214242bcd9ee4dc2a7be7bbb2ca5cbc7bfc3fb4",
+    "before_sha256": "eafb53a8b88f62f0c8798942455ad3c8cf03cf858bafc2e950e5cb6fb1cc1ee9",
+    "bytes": 20302
+  },
+  "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_adaptive_optimizer.py": {
+    "after_sha256": "f6855dddb8dfb29f40abb80adcdb205203b45d223b8d6aa488691e0b84d8462f",
+    "before_sha256": "b23f8cedef84e2cde6fe7af3479d0b71622b239e98cd3b7fc185d0df336203bd",
+    "bytes": 40206
+  }
+}

@@ -1,0 +1,237 @@
+--- a/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py
++++ b/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py
+@@ -265,21 +265,23 @@
+         if self.projection_max_composed_refinement_attempts and self.l2_regularization != 0.0:
+             raise TrainingJobValidationError("composed refinement currently requires zero l2_regularization")
+         if (type(self.projection_optimizer_mode) is not str
+-                or self.projection_optimizer_mode not in {"fixed", "guarded_adaptive"}):
+-            raise TrainingJobValidationError("projection_optimizer_mode must be fixed or guarded_adaptive")
++                or self.projection_optimizer_mode not in {"fixed", "guarded_adaptive", "productive_adaptive"}):
++            raise TrainingJobValidationError("projection_optimizer_mode must be fixed, guarded_adaptive or productive_adaptive")
+         _number(self.projection_momentum, "projection_momentum")
+         if self.projection_momentum > 0.9:
+             raise TrainingJobValidationError("projection_momentum must be within 0..0.9")
+-        if self.projection_momentum and (self.projection_optimizer_mode != "guarded_adaptive"
++        if self.projection_momentum and (self.projection_optimizer_mode not in {"guarded_adaptive", "productive_adaptive"}
+                                          or self.max_line_search_attempts < 2):
+-            raise TrainingJobValidationError("projection_momentum requires guarded_adaptive and at least two line search attempts")
+-        if self.projection_optimizer_mode == "guarded_adaptive":
++            raise TrainingJobValidationError("projection_momentum requires guarded_adaptive or productive_adaptive and at least two line search attempts")
++        if self.projection_optimizer_mode == "productive_adaptive" and self.max_line_search_attempts < 2:
++            raise TrainingJobValidationError("productive_adaptive requires at least two line search attempts")
++        if self.projection_optimizer_mode in {"guarded_adaptive", "productive_adaptive"}:
+             if self.l2_regularization != 0.0:
+-                raise TrainingJobValidationError("guarded_adaptive currently requires zero l2_regularization")
++                raise TrainingJobValidationError(f"{self.projection_optimizer_mode} currently requires zero l2_regularization")
+             if self.epochs > 32 or self.max_line_search_attempts > 10 or self.learning_rate > 1:
+-                raise TrainingJobValidationError("guarded_adaptive requires epochs <= 32, attempts <= 10 and learning_rate <= 1")
++                raise TrainingJobValidationError(f"{self.projection_optimizer_mode} requires epochs <= 32, attempts <= 10 and learning_rate <= 1")
+             if self.max_seconds > 300:
+-                raise TrainingJobValidationError("guarded_adaptive requires max_seconds <= 300")
++                raise TrainingJobValidationError(f"{self.projection_optimizer_mode} requires max_seconds <= 300")
+ 
+     def projection_kwargs(self) -> dict[str, Any]:
+         return {key: value for key, value in self.to_dict().items()
+@@ -466,11 +468,11 @@
+             validation_texts = {" ".join(row.text.casefold().split()) for row in self.validation_samples}
+             if not validation_texts or training_texts & validation_texts:
+                 raise TrainingJobValidationError("composed refinement requires nonempty disjoint validation_samples")
+-        if self.training_config.projection_optimizer_mode == "guarded_adaptive":
++        if self.training_config.projection_optimizer_mode in {"guarded_adaptive", "productive_adaptive"}:
+             training_texts = {" ".join(row.text.casefold().split()) for row in self.samples}
+             validation_texts = {" ".join(row.text.casefold().split()) for row in self.validation_samples}
+             if not validation_texts or training_texts & validation_texts:
+-                raise TrainingJobValidationError("guarded_adaptive requires nonempty disjoint validation_samples")
++                raise TrainingJobValidationError(f"{self.training_config.projection_optimizer_mode} requires nonempty disjoint validation_samples")
+         if self.schema_version in {CAMPAIGN_SCHEMA_VERSION, INDEXED_SCHEMA_VERSION, PRODUCED_SCHEMA_VERSION, ARROW_INPUT_SCHEMA_VERSION} and not self.validation_samples:
+             # The native optimizer otherwise uses training rows for line search.
+             # Indexed jobs must bind every validation row to the validation split.
+@@ -1427,7 +1429,7 @@
+         "sparse_patch_segments": segments,
+         "sparse_patch_bytes": sum(segment["bytes"] for segment in segments),
+     }
+-    if spec.training_config.projection_optimizer_mode == "guarded_adaptive":
++    if spec.training_config.projection_optimizer_mode in {"guarded_adaptive", "productive_adaptive"}:
+         receipt["projection_optimizer_scope"] = "job_local_reset_per_training_call"
+         receipt["optimizer_history_persisted"] = False
+     if spec.schema_version in {CAMPAIGN_SCHEMA_VERSION, ARROW_INPUT_SCHEMA_VERSION, PRODUCED_SCHEMA_VERSION, INDEXED_SCHEMA_VERSION, SCHEMA_VERSION, SPARSE_SCHEMA_VERSION}:
+--- a/scripts/ops/legal_ir/run_incremental_autoencoders.py
++++ b/scripts/ops/legal_ir/run_incremental_autoencoders.py
+@@ -532,8 +532,8 @@
+                    help="Initial optimizer learning rate within (0,1]")
+     p.add_argument("--line-search-attempts", type=int, choices=range(1, 11), default=1,
+                    help="Candidate attempt bound per update family, including optional momentum trials")
+-    p.add_argument("--projection-optimizer-mode", choices=["fixed", "guarded_adaptive"], default="fixed",
+-                   help="Adaptive search requires disjoint validation; rate/history reset for each training job")
++    p.add_argument("--projection-optimizer-mode", choices=["fixed", "guarded_adaptive", "productive_adaptive"], default="fixed",
++                   help="Adaptive search requires disjoint validation; productive search requires two attempts; rate/history reset per job")
+     p.add_argument("--projection-momentum", type=float, default=0.0,
+                    help="Optional job-local momentum within 0..0.9; requires adaptive search and at least two attempts")
+     p.add_argument("--composed-refinement-attempts", type=int, choices=range(4), default=0,
+@@ -569,11 +569,13 @@
+         p.error("learning-rate must be finite and within (0,1]")
+     if not math.isfinite(args.projection_momentum) or not 0 <= args.projection_momentum <= 0.9:
+         p.error("projection-momentum must be finite and within 0..0.9")
+-    if args.projection_momentum and (args.projection_optimizer_mode != "guarded_adaptive"
++    if args.projection_momentum and (args.projection_optimizer_mode not in {"guarded_adaptive", "productive_adaptive"}
+                                      or args.line_search_attempts < 2):
+-        p.error("projection momentum requires guarded_adaptive and at least two line-search-attempts")
+-    if args.projection_optimizer_mode == "guarded_adaptive" and not args.validation_jsonl:
+-        p.error("guarded_adaptive requires disjoint --validation-jsonl")
++        p.error("projection momentum requires guarded_adaptive or productive_adaptive and at least two line-search-attempts")
++    if args.projection_optimizer_mode == "productive_adaptive" and args.line_search_attempts < 2:
++        p.error("productive_adaptive requires at least two line-search-attempts")
++    if args.projection_optimizer_mode in {"guarded_adaptive", "productive_adaptive"} and not args.validation_jsonl:
++        p.error(f"{args.projection_optimizer_mode} requires disjoint --validation-jsonl")
+     if args.execution_mode == "inference" and _nondefault_optimizer_settings(vars(args)):
+         p.error("optimizer settings require the training execution mode")
+     if type(args.workers) is not int or args.workers < 0 or args.workers > 32:
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py
+@@ -1531,7 +1531,8 @@
+     assert receipt["profile_projection"] is True
+ 
+ 
+-def test_adaptive_optimizer_opt_in_preserves_archived_default_job_identity(tmp_path):
++@pytest.mark.parametrize("mode", ["guarded_adaptive", "productive_adaptive"])
++def test_adaptive_optimizer_opt_in_preserves_archived_default_job_identity(tmp_path, mode):
+     original = worker.TrainingJobSpec.from_dict(_job(tmp_path))
+     archived = original.to_dict()
+     assert "projection_optimizer_mode" not in archived["training_config"]
+@@ -1544,10 +1545,10 @@
+     with_validation = worker.TrainingJobSpec.from_dict({**archived, "validation_samples": [
+         {"title": "5", "section": "2", "text": "The officer shall file reports."}]})
+     adaptive = worker.TrainingJobSpec.from_dict({**with_validation.to_dict(), "training_config": {
+-        **archived["training_config"], "projection_optimizer_mode": "guarded_adaptive",
++        **archived["training_config"], "projection_optimizer_mode": mode,
+         "projection_momentum": 0.5, "epochs": 3, "max_line_search_attempts": 2}})
+     assert adaptive.canonical_sha256 != with_validation.canonical_sha256
+-    assert adaptive.training_config.projection_kwargs()["projection_optimizer_mode"] == "guarded_adaptive"
++    assert adaptive.training_config.projection_kwargs()["projection_optimizer_mode"] == mode
+     assert adaptive.training_config.projection_kwargs()["projection_momentum"] == 0.5
+     assert worker.TrainingJobSpec.from_dict(adaptive.to_dict()).canonical_sha256 == adaptive.canonical_sha256
+ 
+@@ -1581,26 +1582,28 @@
+ 
+ 
+ @pytest.mark.parametrize("validation", [[], [{"title": "6", "section": "2", "text": " THE AGENCY SHALL   RETAIN RECORDS. "}]])
+-def test_adaptive_optimizer_requires_disjoint_validation_before_worker(tmp_path, validation):
++@pytest.mark.parametrize("mode", ["guarded_adaptive", "productive_adaptive"])
++def test_adaptive_optimizer_requires_disjoint_validation_before_worker(tmp_path, validation, mode):
+     with pytest.raises(worker.TrainingJobValidationError, match="disjoint"):
+         worker.TrainingJobSpec.from_dict(_job(tmp_path, validation_samples=validation,
+-            training_config={"projection_optimizer_mode": "guarded_adaptive"}))
+-
+-
+-def test_worker_forwards_job_local_adaptive_settings_without_optimizer_checkpoint_state(tmp_path):
++            training_config={"projection_optimizer_mode": mode, "max_line_search_attempts": 2}))
++
++
++@pytest.mark.parametrize("mode,momentum", [("guarded_adaptive", 0.5), ("productive_adaptive", 0.0), ("productive_adaptive", 0.5)])
++def test_worker_forwards_job_local_adaptive_settings_without_optimizer_checkpoint_state(tmp_path, mode, momentum):
+     calls = []
+     def trainer(model, samples, *, validation_samples, **kwargs):
+         calls.append(kwargs)
+         assert kwargs["epochs"] == 3
+         assert kwargs["learning_rate"] == 0.25
+         assert kwargs["max_line_search_attempts"] == 2
+-        assert kwargs["projection_optimizer_mode"] == "guarded_adaptive"
+-        assert kwargs["projection_momentum"] == 0.5
++        assert kwargs["projection_optimizer_mode"] == mode
++        assert kwargs["projection_momentum"] == momentum
+         return {"accepted_epochs": 0, "stopped_reason": "injected configuration test"}
+     spec = worker.TrainingJobSpec.from_dict(_job(tmp_path, validation_samples=[
+         {"title": "5", "section": "2", "text": "The officer shall file reports."}],
+         training_config={"epochs": 3, "learning_rate": 0.25, "max_line_search_attempts": 2,
+-            "projection_optimizer_mode": "guarded_adaptive", "projection_momentum": 0.5}))
++            "projection_optimizer_mode": mode, "projection_momentum": momentum}))
+     original = Path(spec.base_checkpoint.path).read_bytes()
+     receipt = worker.execute_training_job(spec, trainer=trainer)
+     assert len(calls) == 1
+@@ -1610,3 +1613,30 @@
+     assert Path(spec.base_checkpoint.path).read_bytes() == original
+     candidate = json.loads(Path(receipt["candidate"]["path"]).read_bytes())
+     assert not any("momentum" in key or "optimizer" in key for key in candidate)
++
++
++@pytest.mark.parametrize("updates,reason", [
++    ({"max_line_search_attempts": 1}, "two line search"),
++    ({"epochs": 33}, "epochs"),
++    ({"max_line_search_attempts": 11}, "attempts"),
++    ({"learning_rate": 1.1}, "learning_rate"),
++    ({"max_seconds": 301}, "max_seconds"),
++    ({"l2_regularization": 0.1}, "zero l2"),
++    ({"projection_momentum": float("nan")}, "finite"),
++])
++def test_productive_optimizer_preserves_adaptive_bounds_and_requires_exploration_budget(updates, reason):
++    config = {"projection_optimizer_mode": "productive_adaptive", "max_line_search_attempts": 2, **updates}
++    with pytest.raises(worker.TrainingJobValidationError, match=reason):
++        worker.TrainingConfig(**config)
++
++
++def test_productive_optimizer_is_a_distinct_resume_identity(tmp_path):
++    common = _job(tmp_path, validation_samples=[
++        {"title": "5", "section": "2", "text": "The officer shall file reports."}],
++        training_config={"max_line_search_attempts": 2, "projection_optimizer_mode": "guarded_adaptive"})
++    guarded = worker.TrainingJobSpec.from_dict(common)
++    productive = worker.TrainingJobSpec.from_dict({**common, "training_config": {
++        **common["training_config"], "projection_optimizer_mode": "productive_adaptive"}})
++    assert productive.canonical_sha256 != guarded.canonical_sha256
++    assert worker.TrainingJobSpec.from_dict(productive.to_dict()).canonical_sha256 == productive.canonical_sha256
++    assert productive.training_config.projection_kwargs()["projection_momentum"] == 0.0
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py
+@@ -435,6 +435,8 @@
+ 
+ @pytest.mark.parametrize("options", [
+     ["--projection-optimizer-mode", "guarded_adaptive"],
++    ["--projection-optimizer-mode", "productive_adaptive", "--line-search-attempts", "2"],
++    ["--projection-optimizer-mode", "productive_adaptive", "--validation-jsonl", "validation"],
+     ["--projection-momentum", "0.5"],
+     ["--projection-optimizer-mode", "guarded_adaptive", "--projection-momentum", "0.5", "--validation-jsonl", "validation"],
+ ])
+@@ -450,6 +452,7 @@
+     ("--learning-rate", "0.2", "learning_rate", 0.2),
+     ("--line-search-attempts", "2", "line_search_attempts", 2),
+     ("--projection-optimizer-mode", "guarded_adaptive", "projection_optimizer_mode", "guarded_adaptive"),
++    ("--projection-optimizer-mode", "productive_adaptive", "projection_optimizer_mode", "productive_adaptive"),
+ ])
+ def test_inference_rejects_nondefault_optimizer_cli_and_direct_route(tmp_path, flag, value, key, typed):
+     output = tmp_path / "uncreated"
+@@ -468,18 +471,19 @@
+     assert cli._nondefault_optimizer_settings(vars(args)) is False
+ 
+ 
+-def test_cycle_binds_nondefault_epoch_optimizer_settings_into_job_and_policy(tmp_path, monkeypatch):
++@pytest.mark.parametrize("mode,momentum", [("guarded_adaptive", 0.5), ("productive_adaptive", 0.0), ("productive_adaptive", 0.5)])
++def test_cycle_binds_nondefault_epoch_optimizer_settings_into_job_and_policy(tmp_path, monkeypatch, mode, momentum):
+     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_incremental_training as incremental
+     config = {**_selection_cycle_config(tmp_path, monkeypatch), "epochs": 3, "learning_rate": 0.25,
+-        "line_search_attempts": 2, "projection_optimizer_mode": "guarded_adaptive", "projection_momentum": 0.5}
++        "line_search_attempts": 2, "projection_optimizer_mode": mode, "projection_momentum": momentum}
+     seen = []
+     def capture(registry, templates, **kwargs):
+         template = templates[0]
+         options = template.to_dict()["training_config"]
+         assert options["epochs"] == 3 and options["learning_rate"] == 0.25
+         assert options["max_line_search_attempts"] == 2
+-        assert options["projection_optimizer_mode"] == "guarded_adaptive" and options["projection_momentum"] == 0.5
++        assert options["projection_optimizer_mode"] == mode and options["projection_momentum"] == momentum
+         assert incremental._policy(registry, template)["training_config"] == options
+         assert template.validation_samples and template.samples != template.validation_samples
+         seen.append(template.canonical_sha256)
+@@ -488,3 +492,13 @@
+     receipt = cli.run_cycle(config)
+     assert len(seen) == 1
+     assert receipt["heldout_canary"] is receipt["admitted"] is False
++
++
++def test_productive_cli_zero_momentum_runs_with_validation_and_two_attempts(tmp_path, monkeypatch):
++    captured = []
++    monkeypatch.setattr(cli, "supervised_cycle", lambda config: captured.append(config) or {"ok": True})
++    assert cli.main(["--state-directory", str(tmp_path / "unused"), "--input-jsonl", "input",
++                     "--validation-jsonl", "validation", "--projection-optimizer-mode", "productive_adaptive",
++                     "--line-search-attempts", "2"]) == 0
++    assert captured[0]["projection_optimizer_mode"] == "productive_adaptive"
++    assert captured[0]["projection_momentum"] == 0.0

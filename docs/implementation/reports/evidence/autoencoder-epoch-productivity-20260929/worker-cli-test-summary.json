@@ -1,0 +1,42 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "worker-cli-tests.log": {
+      "bytes": 1531,
+      "sha256": "93361f4b3c489b513738738557a7ea20d8148a862611412922c0f3bc047bb7e5"
+    },
+    "worker-cli-tests.xml": {
+      "bytes": 51006,
+      "sha256": "4c101a833644fc0dfd6cf3ecc8e46280a02830241bc56fd0993c14a6332c4131"
+    }
+  },
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py",
+    "--junitxml=workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/worker-cli-tests.xml"
+  ],
+  "completed_at": "2026-09-29T03:53:55.057530+00:00",
+  "elapsed_seconds": 8.03,
+  "environment_overrides": {
+    "PYTHONPATH": "."
+  },
+  "errors": 0,
+  "exit_code": 0,
+  "failures": 0,
+  "initial_terminal_run_seconds": 8.04,
+  "passed": true,
+  "schema": "focused-worker-cli-tests/v1",
+  "scope": "Focused canonical workspace unit/integration checks; not native optimizer qualification or Lake admission.",
+  "skipped": 0,
+  "source_sha256": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "c28699b7b4d72f57fca207d84efd689c0bface0b05beed64451d5dfaacd59a19",
+    "scripts/ops/legal_ir/run_incremental_autoencoders.py": "a81613f5cac52bc4f445e440b1d97f009c6b80c6ce1ad352c6e6541fc664cf03",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "4c633c5f01f9f657068060076a2aebb0d9d09648ede127d2a7f355d8669d948f",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py": "5a9220ab49dd328b08713d6a9b93a01a4890acc80ce029839f5b8d2d55258ddf"
+  },
+  "tests": 249
+}

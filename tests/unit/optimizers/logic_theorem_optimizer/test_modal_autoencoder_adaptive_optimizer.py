@@ -379,3 +379,349 @@ def test_composed_refinement_rejects_invalid_family_metric_before_objective(monk
     assert "nonfinite_validation_metric" in trial["rejection_reasons"]
     assert model.state.feature_embedding_weights["embedding"] == [0.0]
     json.dumps(report, allow_nan=False)
+
+
+def test_productive_adaptive_explores_larger_rate_and_keeps_best_guarded_trial(monkeypatch):
+    fixture = _fixture(monkeypatch)
+    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
+    assert fixture[3]["rates"] == [0.175, 0.35]
+    assert fixture[0].state.legal_ir_view_logits["x"] == 0.35
+    assert report["accepted_epochs"] == 1
+    attempts = _attempts(report)
+    assert [trial["adaptive_optimizer"]["phase"] for trial in attempts] == ["warm_start", "expand_after_positive"]
+    assert all(trial["strict_accepted"] for trial in attempts)
+    assert report["epoch_reports"][0]["objective_delta"] == attempts[1]["objective_delta"]
+    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.4375
+    assert report["projection_optimizer_mode"] == "productive_adaptive"
+    assert attempts[0]["productive_search"]["tried_learning_rates"] == [0.175, 0.35]
+
+
+def test_productive_exact_flat_metrics_allow_larger_probe_to_escape_plateau(monkeypatch):
+    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0 if x <= 0.2 else 0.5)
+    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
+    assert report["accepted_epochs"] == 1
+    assert fixture[3]["rates"] == [0.175, 0.35]
+    attempts = _attempts(report)
+    assert attempts[0]["adaptive_optimizer"]["exact_flat_guard_metrics"] is True
+    assert attempts[1]["adaptive_optimizer"]["phase"] == "expand_after_exact_flat"
+    assert report["after"]["reconstruction_loss"] == 0.5
+
+
+@pytest.mark.parametrize("field", ["family_metric", "flat_loss", "entropy", "target_count"])
+def test_productive_zero_objective_with_changed_raw_guard_metrics_is_not_exact_flat(monkeypatch, field):
+    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0)
+    model = fixture[0]
+    original = model.evaluate
+    def evaluate(rows, **kwargs):
+        result = original(rows, **kwargs)
+        x = model.state.legal_ir_view_logits["x"]
+        if field == "family_metric":
+            return replace(result, legal_ir_view_family_metrics={"deontic": {"ir_cosine_similarity": x}})
+        if field == "flat_loss":
+            # An unselected diagnostic still prevents the exact-flat label.
+            return replace(result, legal_ir_losses={"diagnostic": x})
+        if field == "entropy":
+            return replace(result, cross_entropy_entropy_loss=x)
+        return replace(result, legal_ir_target_count=int(x > 0.0))
+    monkeypatch.setattr(model, "evaluate", evaluate)
+    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
+    assert fixture[3]["rates"] == [0.175, 0.0875]
+    assert all(trial["adaptive_optimizer"]["exact_flat_guard_metrics"] is False for trial in _attempts(report))
+    assert report["accepted_epochs"] == 0
+
+
+@pytest.mark.parametrize("failure", ["regression", "nonfinite", "timeout"])
+def test_productive_larger_trial_failure_preserves_earlier_winner(monkeypatch, failure):
+    def loss(x, calls):
+        if x > 0.2:
+            return float("nan") if failure == "nonfinite" else 5.0
+        return (0.1-x)**2
+    def update(state, rate, calls):
+        state.legal_ir_view_logits["x"] += rate
+        if failure == "timeout" and len(calls["updates"]) == 2:
+            calls["now"] = 61.0
+    fixture = _fixture(monkeypatch, loss=loss, update=update)
+    before = fixture[0].state.to_dict()
+    patches = []
+    def sink(patch, context):
+        patches.append(encode_patch(patch, base_state_identity=context["base_state_identity"],
+                                    result_state_identity=context["result_state_identity"],
+                                    base_version_id="fixture", sequence=len(patches)))
+    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive", accepted_patch_sink=sink)
+    assert report["accepted_epochs"] == 1
+    assert fixture[0].state.legal_ir_view_logits["x"] == 0.175
+    assert len(patches) == 1
+    restored = ma.ModalAutoencoderTrainingState.from_dict(before)
+    replay_patch(restored, patches[0], expected_base_version_id="fixture", expected_sequence=0)
+    assert restored.to_json() == fixture[0].state.to_json()
+    assert fixture[0].state._active_state_transaction is None
+    assert _attempts(report)[0]["strict_accepted"] is True
+    assert _attempts(report)[1]["accepted"] is False
+    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.21875
+    if failure == "timeout":
+        assert report["stopped_reason"] == "projection_timeout"
+        assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 1
+    else:
+        assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 2
+    json.dumps(report, allow_nan=False)
+
+
+def test_productive_equal_positive_gains_keep_earlier_rate(monkeypatch):
+    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0 if x == 0.0 else 0.5)
+    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
+    assert fixture[3]["rates"] == [0.175, 0.35]
+    assert fixture[0].state.legal_ir_view_logits["x"] == 0.175
+    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.21875
+
+
+def test_productive_growth_only_for_selected_head_unselected_warms_at_measured_rate(monkeypatch):
+    fixture = _fixture(monkeypatch)
+    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive", projection_max_update_families=2)
+    # Both mocked heads have the same effect; stable ordering selects the first.
+    assert report["epoch_reports"][0]["selected_update"] == "legal_ir_view_global_logits"
+    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.4375
+    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_logits"] == 0.35
+    assert report["epoch_reports"][0]["adaptive_phase_counts"]["selected_head_rate_growth"] == 1
+    assert report["projection_optimizer"]["next_epoch_growth_scope"] == "selected_committed_head_only"
+
+
+def test_productive_deduplicates_clamped_plain_rates_without_extra_evaluation(monkeypatch):
+    fixture = _fixture(monkeypatch)
+    report = _run(fixture, epochs=1, learning_rate=1.0, max_line_search_attempts=5,
+                  projection_optimizer_mode="productive_adaptive")
+    assert fixture[3]["rates"] == [0.5, 1.0]
+    assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 2
+    assert _attempts(report)[0]["productive_search"]["duplicate_trials_skipped"] == 1
+    assert report["projection_optimizer"]["phase_counts"]["clamped_expansion_skipped"] == 1
+    assert fixture[0].state.legal_ir_view_logits["x"] == 1.0
+
+
+def test_productive_momentum_rejection_prioritizes_same_rate_plain_fallback(monkeypatch):
+    fixture = _fixture(monkeypatch, loss=lambda x, _: (0.6-x)**2)
+    report = _run(fixture, epochs=2, projection_optimizer_mode="productive_adaptive", projection_momentum=0.5)
+    assert fixture[3]["rates"] == [0.175, 0.35, 0.4375, 0.4375]
+    attempts = _attempts(report)
+    assert [a["adaptive_optimizer"]["phase"] for a in attempts] == [
+        "warm_start", "expand_after_positive", "momentum", "plain_fallback"]
+    assert [a["accepted"] for a in attempts] == [True, True, False, True]
+    assert report["accepted_epochs"] == 2
+    assert fixture[0].state.legal_ir_view_logits["x"] == pytest.approx(0.7875)
+    assert report["projection_optimizer"]["momentum_reset_reasons"]["candidate_rejected"] == 1
+    assert all(e["candidate_holdout_evaluation_count"] == 2 for e in report["epoch_reports"])
+
+
+@pytest.mark.parametrize("momentum", [0.0, 0.5])
+def test_productive_requires_two_attempts_before_evaluation(monkeypatch, momentum):
+    fixture = _fixture(monkeypatch)
+    with pytest.raises(ValueError, match="productive_adaptive requires at least two"):
+        _run(fixture, max_line_search_attempts=1, projection_optimizer_mode="productive_adaptive", projection_momentum=momentum)
+    assert not fixture[3]["evaluations"]
+
+
+def test_productive_top_delta_history_keeps_dominant_global_updates(monkeypatch):
+    monkeypatch.setattr(policy, "MAX_MOMENTUM_COORDINATES", 4)
+    state = ma.ModalAutoencoderTrainingState(feature_embedding_weights={"flood": [0.0]*10},
+                                            legal_ir_view_logits={"global": 0.0, "dominant": 0.0})
+    transaction = state.transaction(label="controlled").begin()
+    state.feature_embedding_weights["flood"] = [0.01]*10
+    state.legal_ir_view_logits["global"] = 1.0
+    state.legal_ir_view_logits["dominant"] = 2.0
+    patch = transaction.commit()
+    old = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5)
+    new = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5, mode="productive_adaptive")
+    old.committed("head", patch)
+    new.committed("head", patch)
+    assert {key[0] for key in old.history} == {"feature_embedding_weights"}
+    assert {key[1] for key in new.history if key[0] == "legal_ir_view_logits"} == {"global", "dominant"}
+    assert len(new.history) == 4 and new.truncated_histories == 1
+    report = new.report()["projection_optimizer"]
+    assert report["momentum_history_eligible_coordinate_count"] == 12
+    assert report["momentum_history_parameter_delta_norm_coverage"] > 0.999
+    assert report["momentum_history_components"] == {"feature_embedding_weights": 2, "legal_ir_view_logits": 2}
+    trial = state.transaction(label="trial").begin()
+    state.feature_embedding_weights["flood"] = [0.02]*10
+    state.legal_ir_view_logits["global"] += 0.1
+    state.legal_ir_view_logits["dominant"] += 0.2
+    carry = new.prepare(state, trial.capture_patch(), head="head", allow_momentum=True, logit_clip=24.0)
+    assert carry["momentum_applied"]
+    assert carry["momentum_fresh_intersection_norm_coverage"] > 0.99
+    assert carry["momentum_carry_norm"] <= 0.5 * carry["momentum_fresh_intersection_norm"] + 1e-15
+    trial.rollback()
+
+
+def test_productive_top_delta_ties_are_independent_of_mapping_insertion_order(monkeypatch):
+    monkeypatch.setattr(policy, "MAX_MOMENTUM_COORDINATES", 2)
+    histories = []
+    for keys in (("z", "a", "m"), ("m", "z", "a")):
+        state = ma.ModalAutoencoderTrainingState(feature_family_logits={"row": dict.fromkeys(keys, 0.0)})
+        patch = _commit_delta(state, "feature_family_logits", "row", dict.fromkeys(keys, 1.0))
+        controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5, mode="productive_adaptive")
+        controller.committed("head", patch)
+        histories.append(list(controller.history))
+    assert histories[0] == histories[1]
+    assert [key[2] for key in histories[0]] == [("a",), ("m",)]
+
+
+def test_productive_history_excludes_unknown_initialization_and_memory(monkeypatch):
+    monkeypatch.setattr(policy, "MAX_MOMENTUM_COORDINATES", 3)
+    state = ma.ModalAutoencoderTrainingState(feature_family_logits={"old": {"known": 0.0}},
+                                            decoded_embeddings={"memory": [0.0]})
+    transaction = state.transaction(label="controlled").begin()
+    state.feature_family_logits["old"]["known"] = 0.01
+    state.feature_family_logits["old"]["inserted"] = 1000.0
+    state.feature_family_logits["new"] = {"inserted": 1000.0}
+    state.decoded_embeddings["memory"][0] = 1000.0
+    state.proof_auxiliary_head_logits["proof"] = {"score": 1000.0}
+    patch = transaction.commit()
+    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5, mode="productive_adaptive")
+    controller.committed("head", patch)
+    assert list(controller.history) == [("feature_family_logits", "old", ("known",))]
+    assert controller.report()["projection_optimizer"]["momentum_history_eligible_coordinate_count"] == 1
+
+
+@pytest.mark.parametrize("direction,stale,expected", [
+    (-0.1, False, "nonpositive_direction_alignment"),
+    (0.0, False, "no_current_direction_intersection"),
+    (0.1, True, "no_current_direction_intersection"),
+])
+def test_productive_top_delta_keeps_restart_and_stale_state_guards(direction, stale, expected):
+    state = ma.ModalAutoencoderTrainingState(legal_ir_view_logits={"x": 0.0})
+    patch = _commit_delta(state, "legal_ir_view_logits", "x", 1.0)
+    controller = policy.GuardedAdaptiveProjection(0.35, {"head": 0.5}, 0.5, mode="productive_adaptive")
+    controller.committed("head", patch)
+    if stale:
+        _commit_delta(state, "legal_ir_view_logits", "x", 2.0)
+    before = state.to_json()
+    transaction = state.transaction(label="trial").begin()
+    state.legal_ir_view_logits["x"] += direction
+    report = controller.prepare(state, transaction.capture_patch(), head="head", allow_momentum=True, logit_clip=24.0)
+    assert report["momentum_restart_reason"] == expected
+    assert not controller.history
+    assert controller.report()["projection_optimizer"]["momentum_history_eligible_coordinate_count"] == 0
+    transaction.rollback()
+    assert state.to_json() == before
+
+
+@pytest.mark.parametrize("outcome", ["carried_rejected", "carried_best", "plain_best_both_positive"])
+def test_productive_cap_compares_carried_and_plain_once_each_and_retains_best(monkeypatch, outcome):
+    if outcome == "carried_rejected":
+        loss = lambda x, _: (1.6-x)**2
+    elif outcome == "plain_best_both_positive":
+        loss = lambda x, _: (2.1-x)**2
+    else:
+        loss = lambda x, _: 100.0-x
+    fixture = _fixture(monkeypatch, loss=loss)
+    report = _run(fixture, epochs=2, learning_rate=1.0, max_line_search_attempts=5,
+                  projection_optimizer_mode="productive_adaptive", projection_momentum=0.5)
+    second = report["epoch_reports"][1]["candidate_reports"][0]
+    trials = second["attempt_reports"]
+    assert len(trials) == 2
+    assert trials[0]["adaptive_optimizer"]["phase"] == "momentum"
+    assert trials[1]["accepted"] is True
+    assert fixture[3]["rates"] == [0.5, 1.0, 1.0, 1.0]
+    if outcome == "carried_rejected":
+        assert trials[0]["accepted"] is False
+        assert trials[1]["adaptive_optimizer"]["phase"] == "plain_fallback"
+    else:
+        assert trials[0]["accepted"] is True
+        assert trials[1]["adaptive_optimizer"]["phase"] == "plain_at_rate_cap"
+    expected = 2.5 if outcome == "carried_best" else 2.0
+    assert fixture[0].state.legal_ir_view_logits["x"] == expected
+    assert second["productive_search"]["duplicate_trials_skipped"] == 1
+    assert report["epoch_reports"][1]["candidate_holdout_evaluation_count"] == len(trials)
+
+
+
+def test_productive_flat_head_warms_at_largest_measured_rate_across_epochs(monkeypatch):
+    def update(state, rate, calls):
+        if calls["updates"][-1] == ("legal_ir_view_global_logits",):
+            state.legal_ir_view_logits["flat"] += rate
+        else:
+            state.legal_ir_view_logits["x"] += rate
+    fixture = _fixture(monkeypatch, loss=lambda x, _: 100.0-x, update=update)
+    fixture[0].state.legal_ir_view_logits["flat"] = 0.0
+    report = _run(fixture, epochs=3, projection_optimizer_mode="productive_adaptive", projection_max_update_families=2)
+    flat_heads = [epoch["candidate_reports"][0] for epoch in report["epoch_reports"]]
+    assert [head["productive_search"]["tried_learning_rates"] for head in flat_heads] == [
+        [0.175, 0.35], [0.35, 0.7], [0.7, 1.0]]
+    assert [head["productive_search"]["flat_warm_start_rate"] for head in flat_heads] == [0.35, 0.7, 1.0]
+    assert all(head["productive_search"]["flat_warm_start_reason"] ==
+               "all_completed_plain_trials_exact_finite_flat" for head in flat_heads)
+    assert all(len(head["attempt_reports"]) <= 2 for epoch in report["epoch_reports"] for head in epoch["candidate_reports"])
+    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 1.0
+    assert report["accepted_epochs"] == 3
+
+
+@pytest.mark.parametrize("failure", ["regression", "nonfinite", "timeout"])
+def test_productive_mixed_flat_failure_does_not_reuse_flat_warm_start(monkeypatch, failure):
+    def loss(x, calls):
+        return (float("nan") if failure == "nonfinite" else 2.0) if x > 0.2 else 1.0
+    def update(state, rate, calls):
+        state.legal_ir_view_logits["x"] += rate
+        if failure == "timeout" and len(calls["updates"]) == 2:
+            calls["now"] = 61.0
+    fixture = _fixture(monkeypatch, loss=loss, update=update)
+    before = fixture[0].state.to_json()
+    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
+    head = report["epoch_reports"][0]["candidate_reports"][0]
+    assert head["productive_search"]["tried_learning_rates"] == [0.175, 0.35]
+    assert head["productive_search"]["flat_warm_start_rate"] is None
+    assert head["productive_search"]["flat_warm_start_reason"] is None
+    assert report["projection_optimizer"]["learning_rates"]["legal_ir_view_global_logits"] == 0.175
+    assert report["accepted_epochs"] == 0
+    assert fixture[0].state.to_json() == before
+    assert len(_attempts(report)) == 2
+    json.dumps(report, allow_nan=False)
+
+
+
+def test_productive_all_flat_epochs_continue_to_untried_rate_and_escape(monkeypatch):
+    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0 if x < 0.9 else 0.5)
+    report = _run(fixture, epochs=3, projection_optimizer_mode="productive_adaptive")
+    assert fixture[3]["rates"] == [0.175, 0.35, 0.35, 0.7, 0.7, 1.0]
+    assert [epoch["accepted"] for epoch in report["epoch_reports"]] == [False, False, True]
+    assert [epoch["adaptive_phase"] for epoch in report["epoch_reports"][:2]] == ["plateau_exploration", "plateau_exploration"]
+    assert all(epoch["objective_before"] == epoch["objective_after"] for epoch in report["epoch_reports"][:2])
+    assert fixture[0].state.legal_ir_view_logits["x"] == 1.0
+    assert report["accepted_epochs"] == 1
+    assert report["after"]["reconstruction_loss"] == 0.5
+    assert report["epoch_reports"][1]["productive_flat_seed_advances"] == {
+        "legal_ir_view_global_logits": {"before": 0.35, "after": 0.7}}
+
+
+def test_productive_all_flat_stops_once_measured_rates_reach_cap(monkeypatch):
+    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0)
+    before = fixture[0].state.to_json()
+    report = _run(fixture, epochs=32, projection_optimizer_mode="productive_adaptive")
+    assert fixture[3]["rates"] == [0.175, 0.35, 0.35, 0.7, 0.7, 1.0, 1.0]
+    assert len(report["epoch_reports"]) == 4
+    assert report["stopped_reason"] == "search_stalled"
+    assert report["accepted_epochs"] == 0
+    assert fixture[0].state.to_json() == before
+    assert report["projection_optimizer"]["phase_counts"]["plateau_exploration"] == 2
+    assert report["projection_optimizer"]["phase_counts"]["plateau_sweep"] == 2
+    json.dumps(report, allow_nan=False)
+
+
+def test_productive_flat_exploration_respects_requested_epoch_budget(monkeypatch):
+    fixture = _fixture(monkeypatch, loss=lambda x, _: 1.0)
+    report = _run(fixture, epochs=1, projection_optimizer_mode="productive_adaptive")
+    assert len(_attempts(report)) == 2
+    assert len(report["epoch_reports"]) == 1
+    assert report["stopped_reason"] == "epoch_budget_exhausted"
+    assert report["accepted_epochs"] == 0
+
+
+
+def test_productive_fully_evaluated_flat_trial_past_deadline_cannot_warm_seed(monkeypatch):
+    def loss(x, calls):
+        if x > 0.2:
+            calls["now"] = 61.0
+        return 1.0
+    fixture = _fixture(monkeypatch, loss=loss)
+    report = _run(fixture, epochs=3, projection_optimizer_mode="productive_adaptive")
+    assert report["stopped_reason"] == "projection_timeout"
+    assert report["epoch_reports"][0]["candidate_holdout_evaluation_count"] == 2
+    head = report["epoch_reports"][0]["candidate_reports"][0]
+    assert head["productive_search"]["flat_warm_start_rate"] is None
+    assert report["accepted_epochs"] == 0

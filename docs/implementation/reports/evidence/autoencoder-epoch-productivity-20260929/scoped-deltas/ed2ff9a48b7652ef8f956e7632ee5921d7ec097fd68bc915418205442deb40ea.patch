@@ -1,0 +1,56 @@
+--- a/tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py
++++ b/tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py
+@@ -435,6 +435,8 @@
+ 
+ @pytest.mark.parametrize("options", [
+     ["--projection-optimizer-mode", "guarded_adaptive"],
++    ["--projection-optimizer-mode", "productive_adaptive", "--line-search-attempts", "2"],
++    ["--projection-optimizer-mode", "productive_adaptive", "--validation-jsonl", "validation"],
+     ["--projection-momentum", "0.5"],
+     ["--projection-optimizer-mode", "guarded_adaptive", "--projection-momentum", "0.5", "--validation-jsonl", "validation"],
+ ])
+@@ -450,6 +452,7 @@
+     ("--learning-rate", "0.2", "learning_rate", 0.2),
+     ("--line-search-attempts", "2", "line_search_attempts", 2),
+     ("--projection-optimizer-mode", "guarded_adaptive", "projection_optimizer_mode", "guarded_adaptive"),
++    ("--projection-optimizer-mode", "productive_adaptive", "projection_optimizer_mode", "productive_adaptive"),
+ ])
+ def test_inference_rejects_nondefault_optimizer_cli_and_direct_route(tmp_path, flag, value, key, typed):
+     output = tmp_path / "uncreated"
+@@ -468,18 +471,19 @@
+     assert cli._nondefault_optimizer_settings(vars(args)) is False
+ 
+ 
+-def test_cycle_binds_nondefault_epoch_optimizer_settings_into_job_and_policy(tmp_path, monkeypatch):
++@pytest.mark.parametrize("mode,momentum", [("guarded_adaptive", 0.5), ("productive_adaptive", 0.0), ("productive_adaptive", 0.5)])
++def test_cycle_binds_nondefault_epoch_optimizer_settings_into_job_and_policy(tmp_path, monkeypatch, mode, momentum):
+     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_qualified_training as qualified
+     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_incremental_training as incremental
+     config = {**_selection_cycle_config(tmp_path, monkeypatch), "epochs": 3, "learning_rate": 0.25,
+-        "line_search_attempts": 2, "projection_optimizer_mode": "guarded_adaptive", "projection_momentum": 0.5}
++        "line_search_attempts": 2, "projection_optimizer_mode": mode, "projection_momentum": momentum}
+     seen = []
+     def capture(registry, templates, **kwargs):
+         template = templates[0]
+         options = template.to_dict()["training_config"]
+         assert options["epochs"] == 3 and options["learning_rate"] == 0.25
+         assert options["max_line_search_attempts"] == 2
+-        assert options["projection_optimizer_mode"] == "guarded_adaptive" and options["projection_momentum"] == 0.5
++        assert options["projection_optimizer_mode"] == mode and options["projection_momentum"] == momentum
+         assert incremental._policy(registry, template)["training_config"] == options
+         assert template.validation_samples and template.samples != template.validation_samples
+         seen.append(template.canonical_sha256)
+@@ -488,3 +492,13 @@
+     receipt = cli.run_cycle(config)
+     assert len(seen) == 1
+     assert receipt["heldout_canary"] is receipt["admitted"] is False
++
++
++def test_productive_cli_zero_momentum_runs_with_validation_and_two_attempts(tmp_path, monkeypatch):
++    captured = []
++    monkeypatch.setattr(cli, "supervised_cycle", lambda config: captured.append(config) or {"ok": True})
++    assert cli.main(["--state-directory", str(tmp_path / "unused"), "--input-jsonl", "input",
++                     "--validation-jsonl", "validation", "--projection-optimizer-mode", "productive_adaptive",
++                     "--line-search-attempts", "2"]) == 0
++    assert captured[0]["projection_optimizer_mode"] == "productive_adaptive"
++    assert captured[0]["projection_momentum"] == 0.0

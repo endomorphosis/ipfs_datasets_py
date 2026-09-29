@@ -49,6 +49,7 @@ from .modal_autoencoder_state_transaction import (
 from .projection_profiler import ProjectionProfiler
 from .modal_autoencoder_adaptive_optimizer import (
     GuardedAdaptiveProjection,
+    exact_finite_evaluation_metrics_equal,
     nonfinite_evaluation_fields,
     parameter_step_report,
     validate_optimizer_options,
@@ -6647,7 +6648,7 @@ class AdaptiveModalAutoencoder:
                 and float(max_seconds) > 0.0
                 and (
                     max(0.0, time.perf_counter() - monotonic_started_at)
-                    if optimizer_mode == "guarded_adaptive" else elapsed_seconds()
+                    if optimizer_mode != "fixed" else elapsed_seconds()
                 ) >= float(max_seconds)
             )
 
@@ -6997,8 +6998,9 @@ class AdaptiveModalAutoencoder:
             "combined": 0.35,
         }
         adaptive_optimizer = (
-            GuardedAdaptiveProjection(learning_rate, head_learning_rate_scales, projection_momentum)
-            if optimizer_mode == "guarded_adaptive" else None
+            GuardedAdaptiveProjection(learning_rate, head_learning_rate_scales, projection_momentum,
+                                      mode=optimizer_mode)
+            if optimizer_mode != "fixed" else None
         )
 
         def append_epoch_report(report: Dict[str, Any]) -> None:
@@ -7023,6 +7025,8 @@ class AdaptiveModalAutoencoder:
                     for key, value in sorted(adaptive_optimizer.reset_reasons.items())
                     if value != epoch_reset_counts_before.get(key, 0)
                 }
+            if adaptive_optimizer is not None and adaptive_optimizer.productive:
+                report["productive_flat_seed_advances"] = dict(adaptive_optimizer.flat_seed_advances)
             epoch_reports.append(report)
 
         line_search_multipliers = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
@@ -7052,6 +7056,8 @@ class AdaptiveModalAutoencoder:
             epoch_evaluation_count_before = candidate_holdout_evaluation_count
             epoch_phase_counts_before = dict(adaptive_optimizer.phase_counts) if adaptive_optimizer is not None else {}
             epoch_reset_counts_before = dict(adaptive_optimizer.reset_reasons) if adaptive_optimizer is not None else {}
+            if adaptive_optimizer is not None and adaptive_optimizer.productive:
+                adaptive_optimizer.begin_epoch()
             if timed_out():
                 projection_stopped_reason = "projection_timeout"
                 break
@@ -7158,6 +7164,9 @@ class AdaptiveModalAutoencoder:
                 )
                 adaptive_rate = adaptive_optimizer.rates[update_name] if adaptive_optimizer is not None else 0.0
                 plain_fallback = False
+                productive_phase = "warm_start"
+                tried_plain_rates: set[float] = set()
+                duplicate_trials_skipped = 0
                 refinement_added = False
 
                 def finalize_attempt_report(
@@ -7377,6 +7386,10 @@ class AdaptiveModalAutoencoder:
                         learning_rate * head_scale * float(line_search_multiplier)
                     )
                     if adaptive_optimizer is not None:
+                        if adaptive_optimizer.productive and attempt_reports and effective_learning_rate in tried_plain_rates:
+                            duplicate_trials_skipped += 1
+                            adaptive_optimizer.phase_counts["duplicate_plain_rate_skipped"] += 1
+                            break
                         line_search_multiplier = effective_learning_rate / (learning_rate * head_scale)
                         is_refinement_attempt = False
                     emit_progress(
@@ -7513,9 +7526,12 @@ class AdaptiveModalAutoencoder:
                         phase = (
                             "momentum" if adaptive_step_report.get("momentum_applied") else
                             "plain_fallback" if plain_fallback else
+                            productive_phase if adaptive_optimizer.productive else
                             "warm_start" if not attempt_reports else "backoff"
                         )
                         adaptive_optimizer.phase_counts[phase] += 1
+                        if adaptive_optimizer.productive and not adaptive_step_report.get("momentum_applied"):
+                            tried_plain_rates.add(effective_learning_rate)
                         attempt_report["adaptive_optimizer"] = {
                             **adaptive_step_report, "phase": phase,
                             "actual_learning_rate": effective_learning_rate,
@@ -7557,15 +7573,41 @@ class AdaptiveModalAutoencoder:
                     ):
                         best_improved_attempt = attempt_tuple
                     if adaptive_optimizer is not None:
-                        if attempt_report.get("strict_accepted"):
-                            # A complete guarded positive result is sufficient;
-                            # the next epoch warm-starts this head at a higher rate.
+                        strict_positive = bool(attempt_report.get("strict_accepted"))
+                        if strict_positive and not adaptive_optimizer.productive:
+                            # The original adaptive policy stops this head at its
+                            # first fully guarded positive candidate.
                             break
-                        if adaptive_optimizer.history_head == update_name:
+                        exact_flat = bool(
+                            adaptive_optimizer.productive
+                            and objective_delta == 0.0
+                            and not attempt_report.get("pareto_regressions")
+                            and exact_finite_evaluation_metrics_equal(best, after)
+                        )
+                        if adaptive_optimizer.productive:
+                            attempt_report["adaptive_optimizer"]["exact_flat_guard_metrics"] = exact_flat
+                        if not strict_positive and adaptive_optimizer.history_head == update_name:
                             adaptive_optimizer.reset("candidate_rejected")
-                        plain_fallback = bool(adaptive_step_report.get("momentum_applied"))
-                        if not plain_fallback:
+                        plain_fallback = bool(
+                            not strict_positive and adaptive_step_report.get("momentum_applied")
+                        )
+                        if plain_fallback:
+                            productive_phase = "plain_fallback"
+                        elif adaptive_optimizer.productive and (strict_positive or exact_flat):
+                            adaptive_rate = min(1.0, effective_learning_rate * 2.0)
+                            productive_phase = "expand_after_positive" if strict_positive else "expand_after_exact_flat"
+                            if adaptive_rate == effective_learning_rate:
+                                if adaptive_step_report.get("momentum_applied"):
+                                    # Removing carry is a distinct proposal even
+                                    # at the same clamped rate; either may win.
+                                    productive_phase = "plain_at_rate_cap"
+                                else:
+                                    duplicate_trials_skipped += 1
+                                    adaptive_optimizer.phase_counts["clamped_expansion_skipped"] += 1
+                                    break
+                        else:
                             adaptive_rate = adaptive_optimizer.backoff(update_name, effective_learning_rate)
+                            productive_phase = "backoff"
                     if (
                         adaptive_optimizer is None
                         and not refinement_added
@@ -7638,13 +7680,47 @@ class AdaptiveModalAutoencoder:
                         default=None,
                     )
                 chosen = best_improved_attempt or best_attempt
+                if adaptive_optimizer is not None and adaptive_optimizer.productive:
+                    if timed_out():
+                        projection_stopped_reason = "projection_timeout"
+                    search_diagnostics = {
+                        "tried_learning_rates": [trial["effective_learning_rate"] for trial in attempt_reports],
+                        "trial_phases": [trial.get("adaptive_optimizer", {}).get("phase") for trial in attempt_reports],
+                        "duplicate_trials_skipped": duplicate_trials_skipped,
+                        "attempt_budget": effective_max_line_search_attempts,
+                    }
+                    for trial in attempt_reports:
+                        trial["productive_search"] = search_diagnostics
                 if adaptive_optimizer is not None and attempt_reports:
                     positive = best_improved_attempt is not None
                     chosen_rate = (
                         float(best_improved_attempt[1]["effective_learning_rate"])
                         if positive else float(attempt_reports[-1]["effective_learning_rate"])
                     )
-                    adaptive_optimizer.finish_head(update_name, chosen_rate, positive)
+                    flat_warm_start_rate = None
+                    if (
+                        adaptive_optimizer.productive and not positive
+                        and not projection_stopped_reason
+                        and all(
+                            trial.get("holdout_evaluated") is True
+                            and trial.get("accepted") is False
+                            and trial.get("adaptive_optimizer", {}).get("exact_flat_guard_metrics") is True
+                            and trial.get("adaptive_optimizer", {}).get("momentum_applied") is False
+                            for trial in attempt_reports
+                        )
+                    ):
+                        flat_warm_start_rate = max(float(trial["effective_learning_rate"]) for trial in attempt_reports)
+                    adaptive_optimizer.finish_head(
+                        update_name, chosen_rate, positive, flat_warm_start_rate=flat_warm_start_rate,
+                    )
+                    if adaptive_optimizer.productive:
+                        search_diagnostics.update({
+                            "flat_warm_start_rate": flat_warm_start_rate,
+                            "flat_warm_start_reason": (
+                                "all_completed_plain_trials_exact_finite_flat"
+                                if flat_warm_start_rate is not None else None
+                            ),
+                        })
                 if chosen is None:
                     if attempt_tuples:
                         _score, candidate_report, _after, _candidate_state = max(
@@ -7960,9 +8036,15 @@ class AdaptiveModalAutoencoder:
                 )
                 if adaptive_optimizer is not None:
                     if allow_plateau_recovery and epoch < int(epochs):
-                        epoch_reports[-1]["adaptive_phase"] = "plateau_recovery"
+                        epoch_reports[-1]["adaptive_phase"] = (
+                            adaptive_optimizer.last_plateau_action if adaptive_optimizer.productive else "plateau_recovery"
+                        )
                         continue
-                    projection_stopped_reason = "search_stalled"
+                    if adaptive_optimizer.productive and adaptive_optimizer.last_plateau_action == "plateau_exploration":
+                        projection_stopped_reason = "epoch_budget_exhausted"
+                        epoch_reports[-1]["adaptive_phase"] = "plateau_exploration"
+                    else:
+                        projection_stopped_reason = "search_stalled"
                     epoch_reports[-1]["stopped_reason"] = projection_stopped_reason
                 break
 

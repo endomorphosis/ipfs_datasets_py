@@ -1,0 +1,26 @@
+{
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+    "after_sha256": "c28699b7b4d72f57fca207d84efd689c0bface0b05beed64451d5dfaacd59a19",
+    "before_sha256": "df04a734bbd96633e594df7f0665e96eafdc9e4f2a6899086209cd98e278f652",
+    "bytes": 94345,
+    "new_file": false
+  },
+  "scripts/ops/legal_ir/run_incremental_autoencoders.py": {
+    "after_sha256": "a81613f5cac52bc4f445e440b1d97f009c6b80c6ce1ad352c6e6541fc664cf03",
+    "before_sha256": "497c8e8daf8fbc24d450402cc9b19ba2e4608cebddcf408e66386c5b8905a9c2",
+    "bytes": 39051,
+    "new_file": false
+  },
+  "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": {
+    "after_sha256": "4c633c5f01f9f657068060076a2aebb0d9d09648ede127d2a7f355d8669d948f",
+    "before_sha256": "605ed10f531ad493fb4d1a1d9cff286971841ec6935d16f631ecf8503050f963",
+    "bytes": 96624,
+    "new_file": false
+  },
+  "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_autoencoders_cli.py": {
+    "after_sha256": "5a9220ab49dd328b08713d6a9b93a01a4890acc80ce029839f5b8d2d55258ddf",
+    "before_sha256": "d222b0b67ea5c6a4fe99cda9a15f90f1ed5f6e5ffdaf35460acea22a1d4c5c6c",
+    "bytes": 29823,
+    "new_file": false
+  }
+}

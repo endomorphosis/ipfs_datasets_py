@@ -1,0 +1,11 @@
+{
+  "harness_sha256": "d56be7b852fc3e9303b88671391e0016fc17e68b093c75c22885b437c1b4299d",
+  "harness_bytes": 37225,
+  "prepared_only": true,
+  "native_launched": false,
+  "command": "PYTHONPATH=. /home/barberb/.local/bin/python workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/run_productivity_benchmark.py --output workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm --memory-mb 8192 --storage-bytes 500000000 --cycle-timeout 900",
+  "optional_command_not_automatically_launched": "PYTHONPATH=. /home/barberb/.local/bin/python workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/run_productivity_benchmark.py --integrated --output workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined --memory-mb 8192 --storage-bytes 250000000 --cycle-timeout 900",
+  "cwd": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "source_freeze_required": true,
+  "admitted": false
+}

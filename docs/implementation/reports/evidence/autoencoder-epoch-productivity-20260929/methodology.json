@@ -1,0 +1,79 @@
+{
+  "admitted": false,
+  "experiment": {
+    "arms": {
+      "baseline_adaptive": {
+        "mode": "guarded_adaptive",
+        "momentum": 0.5
+      },
+      "productive_lr": {
+        "mode": "productive_adaptive",
+        "momentum": 0
+      },
+      "productive_momentum": {
+        "mode": "productive_adaptive",
+        "momentum": 0.5
+      }
+    },
+    "canary_durations": [
+      34,
+      35
+    ],
+    "canary_selection": "sealed using tuning/qualification before canary read; synthetic and seed-pretraining exclusion unknown",
+    "comparison_scope": "Single sequential run per arm; evaluation budget caps equal but consumed work may differ. No universally-fastest claim.",
+    "composed_refinement_attempts": 0,
+    "epochs": 5,
+    "heads": 5,
+    "initial_learning_rate": 0.35,
+    "line_search_attempts_per_head": 2,
+    "max_training_seconds": 180,
+    "qualification": "unchanged all gates; no failed candidate promotion",
+    "same_model_scales": true,
+    "same_objective": true,
+    "same_parent": true,
+    "same_source": true,
+    "training_durations": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ],
+    "tuning_durations": [
+      30
+    ]
+  },
+  "global_minimum_claim": false,
+  "hypotheses": [
+    "First-positive stopping can waste the remaining declared budget when a larger step would improve more.",
+    "Alphabetical momentum history truncation can exclude high-magnitude accepted global coordinates.",
+    "Tuning-objective ranking cannot by itself repair training reconstruction when the tuning row is already on the target-return branch."
+  ],
+  "optimization_goal": "Lower unchanged guarded objective per epoch, per actual candidate evaluation, and per wall second, subject to unchanged qualification gates. No global optimality claim.",
+  "optional_integration": {
+    "arm": "productive_momentum_refined",
+    "automatic_launch": false,
+    "composed_refinement_attempts": 3,
+    "mode": "productive_adaptive",
+    "momentum": 0.5,
+    "no_canary_evaluation": true,
+    "purpose": "Test existing guarded training-reconstruction refinement as a separate integration, not an isolated optimizer speed treatment.",
+    "same_seed": true,
+    "same_train_tuning": true
+  },
+  "production_default": "fixed unchanged; guarded_adaptive preserved; productive_adaptive opt-in",
+  "research_context": [
+    {
+      "observation": "Adaptive stepsize convergence guarantees require assumptions about objective geometry; the convex guarantee does not certify this discontinuous sparse mixed objective.",
+      "url": "https://proceedings.mlr.press/v119/malitsky20a.html"
+    },
+    {
+      "observation": "Adaptive restart can improve accelerated gradient methods under the studied regimes; our parameter-step carry and guarded search are not that algorithm or its theorem.",
+      "url": "https://arxiv.org/abs/1204.3982"
+    }
+  ],
+  "schema": "optimizer-productivity-methodology/v1"
+}

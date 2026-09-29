@@ -1,0 +1,2953 @@
+{
+  "admitted": false,
+  "arms": [
+    {
+      "accepted_epochs": 5,
+      "arm": "baseline_adaptive",
+      "arm_wall_seconds_including_owner_and_qualification": 57.59595139999874,
+      "arm_wall_seconds_per_training_span": 7.199493924999842,
+      "artifact": {
+        "bytes": 835145,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/summary.json",
+        "sha256": "5faaf0baacf3b9e4e6e9620f6d754abf0246f24e76fd71be3fd0f8074e120fc6"
+      },
+      "attempted_epochs": 5,
+      "baseline_final_threshold": 2.5987463955181416,
+      "bridge_on_evaluations": 37,
+      "candidate_tuning_evaluations": 35,
+      "cold_target_evaluations": [
+        {
+          "cache_empty_at_start": true,
+          "memory_hits": 0,
+          "native_target_attempts": 1,
+          "sample_count": 1,
+          "seconds": 4.358194725122,
+          "seconds_per_span": 4.358194725122,
+          "stage": "before_holdout_evaluation",
+          "target_count": 1
+        },
+        {
+          "cache_empty_at_start": false,
+          "memory_hits": 0,
+          "native_target_attempts": 8,
+          "sample_count": 8,
+          "seconds": 9.393779905047,
+          "seconds_per_span": 1.174222488130875,
+          "stage": "training_cache_prime",
+          "target_count": 8
+        }
+      ],
+      "curve": [
+        {
+          "accepted": null,
+          "committed_objective": 2.694956319408122,
+          "cumulative_training_elapsed_seconds": null,
+          "cumulative_tuning_search_evaluations": 1,
+          "epoch": 0
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.04645691393549134,
+          "candidate_holdout_evaluation_count": 7,
+          "committed_objective": 2.6484994054726307,
+          "cumulative_training_elapsed_seconds": 18.33165532699786,
+          "cumulative_tuning_search_evaluations": 8,
+          "epoch": 1,
+          "epoch_elapsed_seconds": 4.579421029891819,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.014150967805890646,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.778528399539231,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.01367418784314356,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.014150967805890202,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.778528399539231,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.027382037494714462,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.026688227914204443,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.02738203749471424,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.791759469228055,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.6484994054726307,
+          "objective_before": 2.694956319408122,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.02821152484071865,
+          "candidate_holdout_evaluation_count": 7,
+          "committed_objective": 2.620287880631912,
+          "cumulative_training_elapsed_seconds": 23.422367641935125,
+          "cumulative_tuning_search_evaluations": 15,
+          "epoch": 2,
+          "epoch_elapsed_seconds": 5.090631737839431,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.006205506915672121,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7705829386490124,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0058157198037050994,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.006205506915671899,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7705829386490126,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.014150967805890646,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.778528399539231,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.01367418784314356,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.014150967805890202,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.778528399539231,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.620287880631912,
+          "objective_before": 2.6484994054726307,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.014873632563899175,
+          "candidate_holdout_evaluation_count": 7,
+          "committed_objective": 2.605414248068013,
+          "cumulative_training_elapsed_seconds": 28.486656876048073,
+          "cumulative_tuning_search_evaluations": 22,
+          "epoch": 3,
+          "epoch_elapsed_seconds": 5.0642037929501384,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0020210664800215383,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7663984982133618,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0017817219135979334,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.0020210664800210942,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7663984982133618,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.006205506915672121,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7705829386490124,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0058157198037050994,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.006205506915671899,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7705829386490126,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.605414248068013,
+          "objective_before": 2.620287880631912,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.005229326608080509,
+          "candidate_holdout_evaluation_count": 7,
+          "committed_objective": 2.6001849214599324,
+          "cumulative_training_elapsed_seconds": 33.519020654959604,
+          "cumulative_tuning_search_evaluations": 29,
+          "epoch": 4,
+          "epoch_elapsed_seconds": 5.032279937993735,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0005296832239252147,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7649071149572655,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.00043331763599108175,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.0005296832239247706,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7649071149572655,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0020210664800215383,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7663984982133618,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0017817219135979334,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.0020210664800210942,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7663984982133618,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.6001849214599324,
+          "objective_before": 2.605414248068013,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.0014385259417908358,
+          "candidate_holdout_evaluation_count": 7,
+          "committed_objective": 2.5987463955181416,
+          "cumulative_training_elapsed_seconds": 38.51215077098459,
+          "cumulative_tuning_search_evaluations": 36,
+          "epoch": 5,
+          "epoch_elapsed_seconds": 4.993048146832734,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.00010850895146652384,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7644859406848068,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 8.37554001973384e-05,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.00010850895146607975,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7644859406848068,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0005296832239252147,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7649071149572655,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.00043331763599108175,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.0005296832239247706,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7649071149572655,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.5987463955181416,
+          "objective_before": 2.6001849214599324,
+          "selected_update": "legal_ir_view_logits"
+        }
+      ],
+      "disk_cache_hits": 0,
+      "failed_qualification_rows": [
+        {
+          "cosine": 0.19611613513818407,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.37794123682465003,
+          "text": "The officer shall retain the file for at least 22 days."
+        },
+        {
+          "cosine": 0.196116135138184,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.342003247738783,
+          "text": "The officer shall retain the file for at least 23 days."
+        },
+        {
+          "cosine": 0.19611613513818404,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.326040643365787,
+          "text": "The officer shall retain the file for at least 24 days."
+        },
+        {
+          "cosine": 0.19611613513818404,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.21600881475501774,
+          "text": "The officer shall retain the file for at least 26 days."
+        },
+        {
+          "cosine": 0.19611613513818402,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.3130512645260574,
+          "text": "The officer shall retain the file for at least 27 days."
+        }
+      ],
+      "final_objective": 2.5987463955181416,
+      "head_productivity": {
+        "combined": {
+          "accepted_attempts": 5,
+          "accepted_candidates_not_selected": 5,
+          "attempts": 5,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.03533221250579377,
+            0.021927891550476808,
+            0.011150267208887232,
+            0.004026877858335887,
+            0.0011347960979160021
+          ],
+          "finite_objective_deltas_range": [
+            0.0011347960979160021,
+            0.03533221250579377
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.048789488171,
+            0.062705983714,
+            6.327266399086,
+            0.698693020922,
+            0.105036319127,
+            6.367088589411,
+            0.04878948817,
+            0.043936489371,
+            6.327266399086,
+            0.489556246936,
+            0.07359624992,
+            6.346943566884,
+            0.04878948817,
+            0.027989949393,
+            6.327266399091,
+            0.311873945819,
+            0.046884812528,
+            6.335371139893,
+            0.048789488172,
+            0.015128389118,
+            6.32726639909,
+            0.168565749894,
+            0.025340922792,
+            6.329768237602,
+            0.041576925741,
+            0.007267498417,
+            6.327266399087,
+            0.080976915878,
+            0.012173468066,
+            6.327937025331
+          ],
+          "gradient_norms_range": [
+            0.007267498417,
+            6.367088589411
+          ],
+          "tuning_evaluations": 5,
+          "update_norms": [
+            0.005976712301,
+            0.007681483005,
+            0.775090133888,
+            0.085589895063,
+            0.012866949093,
+            0.779968352203,
+            0.007470890376,
+            0.006727774935,
+            0.96886266736,
+            0.074963300312,
+            0.011269425769,
+            0.971875733679,
+            0.00933861297,
+            0.005357451251,
+            1.211078334201,
+            0.059694622442,
+            0.008974046148,
+            1.212629632245,
+            0.011673266213,
+            0.003619585287,
+            1.513847917751,
+            0.040330672582,
+            0.006063013754,
+            1.514446502161,
+            0.012434505379,
+            0.002173507217,
+            1.892309897188,
+            0.024217949695,
+            0.003640746675,
+            1.892510462898
+          ],
+          "update_norms_range": [
+            0.002173507217,
+            1.892510462898
+          ]
+        },
+        "decoded_embedding": {
+          "accepted_attempts": 0,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 10,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_update_zero_ce_and_objective_response": true,
+          "gradient_norms": [
+            0.048789488171,
+            0.048789488171,
+            0.048789488171,
+            0.048789488171,
+            0.04878948816,
+            0.048789488171,
+            0.048789488183,
+            0.048789488171,
+            0.052866842423,
+            0.052866842435,
+            0.052866842514,
+            0.052866842435,
+            0.052866842331,
+            0.052866842435,
+            0.052866842331,
+            0.052866842435,
+            0.052866842331,
+            0.052866842435,
+            0.052866843794,
+            0.052866842435
+          ],
+          "gradient_norms_range": [
+            0.04878948816,
+            0.052866843794
+          ],
+          "tuning_evaluations": 10,
+          "update_norms": [
+            0.00853816043,
+            0.00853816043,
+            0.004269080215,
+            0.004269080215,
+            0.002134540107,
+            0.002134540107,
+            0.001067270054,
+            0.001067270054,
+            0.000578231089,
+            0.000578231089,
+            0.000289115545,
+            0.000289115545,
+            0.000144557772,
+            0.000144557772,
+            7.2278886e-05,
+            7.2278886e-05,
+            3.6139443e-05,
+            3.6139443e-05,
+            1.8069722e-05,
+            1.8069722e-05
+          ],
+          "update_norms_range": [
+            1.8069722e-05,
+            0.00853816043
+          ]
+        },
+        "family_logits": {
+          "accepted_attempts": 0,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 10,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_update_zero_ce_and_objective_response": true,
+          "gradient_norms": [
+            6.327266399089,
+            6.327266399089,
+            6.327266399091,
+            6.327266399089,
+            6.327266399086,
+            6.327266399089,
+            6.327266399086,
+            6.327266399089,
+            6.327266399086,
+            6.327266399089,
+            6.327266399086,
+            6.327266399089,
+            6.327266399086,
+            6.327266399089,
+            6.327266399086,
+            6.327266399089,
+            6.327266399086,
+            6.327266399089,
+            6.327266399086,
+            6.327266399089
+          ],
+          "gradient_norms_range": [
+            6.327266399086,
+            6.327266399091
+          ],
+          "tuning_evaluations": 10,
+          "update_norms": [
+            2.214543239681,
+            2.214543239681,
+            1.107271619841,
+            1.107271619841,
+            0.55363580992,
+            0.55363580992,
+            0.27681790496,
+            0.27681790496,
+            0.13840895248,
+            0.13840895248,
+            0.06920447624,
+            0.06920447624,
+            0.03460223812,
+            0.03460223812,
+            0.01730111906,
+            0.01730111906,
+            0.00865055953,
+            0.00865055953,
+            0.004325279765,
+            0.004325279765
+          ],
+          "update_norms_range": [
+            0.004325279765,
+            2.214543239681
+          ]
+        },
+        "legal_ir_view_global_logits": {
+          "accepted_attempts": 5,
+          "accepted_candidates_not_selected": 5,
+          "attempts": 5,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.036708602429685655,
+            0.02272363222030549,
+            0.01152246387315392,
+            0.004150221490305306,
+            0.0011667965125918833
+          ],
+          "finite_objective_deltas_range": [
+            0.0011667965125918833,
+            0.036708602429685655
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.695383312189,
+            0.69538331219,
+            0.486620304649,
+            0.486620304649,
+            0.30956364258,
+            0.309563642582,
+            0.167082824356,
+            0.167082824356,
+            0.080157104612,
+            0.080157104612
+          ],
+          "gradient_norms_range": [
+            0.080157104612,
+            0.69538331219
+          ],
+          "tuning_evaluations": 5,
+          "update_norms": [
+            0.121692079633,
+            0.121692079633,
+            0.106448191642,
+            0.106448191642,
+            0.084646308518,
+            0.084646308518,
+            0.057108387231,
+            0.057108387231,
+            0.034246809832,
+            0.034246809832
+          ],
+          "update_norms_range": [
+            0.034246809832,
+            0.121692079633
+          ]
+        },
+        "legal_ir_view_logits": {
+          "accepted_attempts": 5,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 5,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.04645691393549134,
+            0.02821152484071865,
+            0.014873632563899175,
+            0.005229326608080509,
+            0.0014385259417908358
+          ],
+          "finite_objective_deltas_range": [
+            0.0014385259417908358,
+            0.04645691393549134
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.060154169006,
+            0.670259316651,
+            0.100761807223,
+            0.680455007627,
+            0.041689095991,
+            0.464514462519,
+            0.069831654048,
+            0.471580456043,
+            0.026236587824,
+            0.292336858225,
+            0.043947751892,
+            0.296783763224,
+            0.014012563453,
+            0.15613243729,
+            0.023471790926,
+            0.158507460007,
+            0.006654754533,
+            0.074149262545,
+            0.011147049377,
+            0.075277191791
+          ],
+          "gradient_norms_range": [
+            0.006654754533,
+            0.680455007627
+          ],
+          "tuning_evaluations": 5,
+          "update_norms": [
+            0.010526979576,
+            0.117295380414,
+            0.017633316264,
+            0.119079626335,
+            0.009119489748,
+            0.101612538676,
+            0.015275674323,
+            0.103158224759,
+            0.007174066983,
+            0.079935859671,
+            0.012016963408,
+            0.081151810257,
+            0.004789450399,
+            0.053365579152,
+            0.008022584789,
+            0.054177354495,
+            0.002843217879,
+            0.031679982777,
+            0.004762533303,
+            0.032161886141
+          ],
+          "update_norms_range": [
+            0.002843217879,
+            0.119079626335
+          ]
+        }
+      },
+      "initial_objective": 2.694956319408122,
+      "memory_cache_hits": 35,
+      "metrics_after": {
+        "cosine": 0.9999999999999999,
+        "deontic_ir_ce": 0.5475063953954546,
+        "deontic_ir_cosine": 0.9999946631570005,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7644859406848068,
+        "ir_view_ce_excess": 0.00010850895146652384,
+        "reconstruction_loss": 0.0
+      },
+      "metrics_before": {
+        "cosine": 0.9999999999999999,
+        "deontic_ir_ce": 0.5636167601164468,
+        "deontic_ir_cosine": 0.9946347813357798,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7917594692280547,
+        "ir_view_ce_excess": 0.027382037494714462,
+        "reconstruction_loss": 0.0
+      },
+      "native_target_attempts": 9,
+      "nonnested_profile_seconds": {
+        "before_holdout_evaluation": 4.358194725122303,
+        "line_search_evaluation": 3.9597921147942543,
+        "projection_update_batch": 15.354517349973321,
+        "training_cache_prime": 9.393779905047268
+      },
+      "objective_reduction": 0.09620992388998051,
+      "objective_reduction_per_bridge_evaluation": 0.0026002682132427167,
+      "objective_reduction_per_epoch": 0.019241984777996102,
+      "objective_reduction_per_training_second": 0.0024978161406985656,
+      "qualification_gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-synthetic-duration-ablation-22-529ed713db1dd160",
+            "us-code-synthetic-duration-ablation-23-1683159e259380e0",
+            "us-code-synthetic-duration-ablation-24-b28286bd5fec8639",
+            "us-code-synthetic-duration-ablation-26-14ca4f3d4481b166",
+            "us-code-synthetic-duration-ablation-27-7bb6ad0b459b7abb"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "qualification_seconds": 10.969131018035114,
+      "qualified": false,
+      "threshold_epoch": 5,
+      "threshold_time_reduction_vs_baseline_percent": 0.0,
+      "threshold_training_seconds": 38.51215077098459,
+      "training_seconds": 38.5176163779106,
+      "training_seconds_outside_these_profile_phases": 5.451332282973453,
+      "training_seconds_per_span": 4.814702047238825,
+      "training_seconds_reduction_vs_baseline_percent": 0.0,
+      "warm_tuning_evaluation_seconds": {
+        "count": 35,
+        "maximum": 0.253742265981,
+        "mean": 0.11313691756557143,
+        "minimum": 0.101467384957
+      }
+    },
+    {
+      "accepted_epochs": 5,
+      "arm": "productive_lr",
+      "arm_wall_seconds_including_owner_and_qualification": 65.15389956487343,
+      "arm_wall_seconds_per_training_span": 8.144237445609178,
+      "artifact": {
+        "bytes": 840147,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/summary.json",
+        "sha256": "837f8e14a6ced086b0c58c8e128396241ea064e50cf14eafcc6c5d44408bc595"
+      },
+      "attempted_epochs": 5,
+      "baseline_final_threshold": 2.5987463955181416,
+      "bridge_on_evaluations": 41,
+      "candidate_tuning_evaluations": 39,
+      "cold_target_evaluations": [
+        {
+          "cache_empty_at_start": true,
+          "memory_hits": 0,
+          "native_target_attempts": 1,
+          "sample_count": 1,
+          "seconds": 4.872112939134,
+          "seconds_per_span": 4.872112939134,
+          "stage": "before_holdout_evaluation",
+          "target_count": 1
+        },
+        {
+          "cache_empty_at_start": false,
+          "memory_hits": 0,
+          "native_target_attempts": 8,
+          "sample_count": 8,
+          "seconds": 9.571881697048,
+          "seconds_per_span": 1.196485212131,
+          "stage": "training_cache_prime",
+          "target_count": 8
+        }
+      ],
+      "curve": [
+        {
+          "accepted": null,
+          "committed_objective": 2.694956319408122,
+          "cumulative_training_elapsed_seconds": null,
+          "cumulative_tuning_search_evaluations": 1,
+          "epoch": 0
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.07137594633273459,
+          "candidate_holdout_evaluation_count": 10,
+          "committed_objective": 2.6235803730753875,
+          "cumulative_training_elapsed_seconds": 21.71229339693673,
+          "cumulative_tuning_search_evaluations": 11,
+          "epoch": 1,
+          "epoch_elapsed_seconds": 7.268039189977571,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.007130589543154819,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.771508021276495,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0067233280164253895,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.007130589543154597,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7715080212764953,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.027382037494714462,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.026688227914204443,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.02738203749471424,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.791759469228055,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.6235803730753875,
+          "objective_before": 2.694956319408122,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.0243169879817704,
+          "candidate_holdout_evaluation_count": 10,
+          "committed_objective": 2.599263385093617,
+          "cumulative_training_elapsed_seconds": 29.949017653008923,
+          "cumulative_tuning_search_evaluations": 21,
+          "epoch": 2,
+          "epoch_elapsed_seconds": 8.236643519019708,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.00026092916876319094,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7646383609021035,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.00020768937086379502,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.0002609291687625248,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7646383609021032,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.007130589543154819,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.771508021276495,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0067233280164253895,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.007130589543154597,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7715080212764953,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.599263385093617,
+          "objective_before": 2.6235803730753875,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.0008471434625221264,
+          "candidate_holdout_evaluation_count": 8,
+          "committed_objective": 2.598416241631095,
+          "cumulative_training_elapsed_seconds": 36.95381046994589,
+          "cumulative_tuning_search_evaluations": 29,
+          "epoch": 3,
+          "epoch_elapsed_seconds": 7.004688750952482,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 8.946719604052689e-06,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643863784529443,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 6.742595085595937e-06,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 8.946719603830644e-06,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643863784529445,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.00026092916876319094,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7646383609021035,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.00020768937086379502,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.0002609291687625248,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7646383609021032,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.598416241631095,
+          "objective_before": 2.599263385093617,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 2.7925450898802495e-05,
+          "candidate_holdout_evaluation_count": 6,
+          "committed_objective": 2.598388316180196,
+          "cumulative_training_elapsed_seconds": 43.09681439609267,
+          "cumulative_tuning_search_evaluations": 35,
+          "epoch": 4,
+          "epoch_elapsed_seconds": 6.14291736506857,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 3.6742463582761786e-07,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.764377799157976,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 2.7528795842890474e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 3.6742463516148405e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643777991579759,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 8.946719604052689e-06,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643863784529443,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 6.742595085595937e-06,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 8.946719603830644e-06,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643863784529445,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.598388316180196,
+          "objective_before": 2.598416241631095,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 1.1103867856299132e-06,
+          "candidate_holdout_evaluation_count": 5,
+          "committed_objective": 2.5983872057934105,
+          "cumulative_training_elapsed_seconds": 47.27145458594896,
+          "cumulative_tuning_search_evaluations": 40,
+          "epoch": 5,
+          "epoch_elapsed_seconds": 4.174553435994312,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 2.18844102839455e-08,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643774536177506,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 1.6565682714464458e-08,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 2.188440983985629e-08,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643774536177506,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 3.6742463582761786e-07,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.764377799157976,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 2.7528795842890474e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 3.6742463516148405e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643777991579759,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.5983872057934105,
+          "objective_before": 2.598388316180196,
+          "selected_update": "legal_ir_view_logits"
+        }
+      ],
+      "disk_cache_hits": 0,
+      "failed_qualification_rows": [
+        {
+          "cosine": 0.19611613513818407,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.37794123682465003,
+          "text": "The officer shall retain the file for at least 22 days."
+        },
+        {
+          "cosine": 0.196116135138184,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.342003247738783,
+          "text": "The officer shall retain the file for at least 23 days."
+        },
+        {
+          "cosine": 0.19611613513818404,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.326040643365787,
+          "text": "The officer shall retain the file for at least 24 days."
+        },
+        {
+          "cosine": 0.19611613513818404,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.21600881475501774,
+          "text": "The officer shall retain the file for at least 26 days."
+        },
+        {
+          "cosine": 0.19611613513818402,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.3130512645260574,
+          "text": "The officer shall retain the file for at least 27 days."
+        }
+      ],
+      "final_objective": 2.5983872057934105,
+      "head_productivity": {
+        "combined": {
+          "accepted_attempts": 9,
+          "accepted_candidates_not_selected": 5,
+          "attempts": 9,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.03533221250579377,
+            0.0583807548223656,
+            0.015125846591194314,
+            0.021261360904492488,
+            0.0007012094760958654,
+            0.00084493171160549,
+            2.784112095932656e-05,
+            2.7925450898802495e-05,
+            1.1103867856299132e-06
+          ],
+          "finite_objective_deltas_range": [
+            1.1103867856299132e-06,
+            0.0583807548223656
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.048789488171,
+            0.062705983714,
+            6.327266399086,
+            0.698693020922,
+            0.105036319127,
+            6.367088589411,
+            0.048789488171,
+            0.056925772065,
+            6.32726639909,
+            0.634286533302,
+            0.095353926163,
+            6.360136226551,
+            0.048789488171,
+            0.02880283322,
+            6.32726639909,
+            0.320931040857,
+            0.048246388922,
+            6.335837320309,
+            0.041576925741,
+            0.023857194555,
+            6.32726639909,
+            0.265822769637,
+            0.039961820751,
+            6.33315534181,
+            0.041576925741,
+            0.004461416165,
+            6.32726639909,
+            0.04971035611,
+            0.007473085706,
+            6.327604254103,
+            0.04157692574,
+            0.003294357855,
+            6.327266399089,
+            0.036705714842,
+            0.005518064533,
+            6.327512729116,
+            0.04157692574,
+            0.000608024606,
+            6.327266399089,
+            0.00677464199,
+            0.001018449357,
+            6.327406738032,
+            0.04157692574,
+            0.000601218855,
+            6.327266399089,
+            0.006698803483,
+            0.001007048359,
+            6.327406654813,
+            0.04157692574,
+            0.000116238248,
+            6.327266399089,
+            0.001295136947,
+            0.000194701269,
+            6.327403136721
+          ],
+          "gradient_norms_range": [
+            0.000116238248,
+            6.367088589411
+          ],
+          "tuning_evaluations": 9,
+          "update_norms": [
+            0.005976712301,
+            0.007681483005,
+            0.775090133888,
+            0.085589895063,
+            0.012866949093,
+            0.779968352203,
+            0.011953424602,
+            0.013946814156,
+            1.550180267777,
+            0.155400200659,
+            0.02336171191,
+            1.558233375505,
+            0.011953424602,
+            0.007056694139,
+            1.550180267777,
+            0.07862810501,
+            0.011820365286,
+            1.552280143476,
+            0.020372693613,
+            0.011690025332,
+            3.100360535554,
+            0.130253157122,
+            0.019581292168,
+            3.103246117487,
+            0.020372693613,
+            0.002186093921,
+            3.100360535554,
+            0.024358074494,
+            0.003661811996,
+            3.10052608451,
+            0.040745387225,
+            0.003228470698,
+            6.200721071107,
+            0.035971600545,
+            0.005407703242,
+            6.200962474534,
+            0.040745387225,
+            0.000595864114,
+            6.200721071107,
+            0.00663914915,
+            0.00099808037,
+            6.200858603272,
+            0.04157692574,
+            0.000601218855,
+            6.327266399089,
+            0.006698803483,
+            0.001007048359,
+            6.327406654813,
+            0.04157692574,
+            0.000116238248,
+            6.327266399089,
+            0.001295136947,
+            0.000194701269,
+            6.327403136721
+          ],
+          "update_norms_range": [
+            0.000116238248,
+            6.327406654813
+          ]
+        },
+        "decoded_embedding": {
+          "accepted_attempts": 0,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 8,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_update_zero_ce_and_objective_response": true,
+          "gradient_norms": [
+            0.048789488171,
+            0.048789488171,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574
+          ],
+          "gradient_norms_range": [
+            0.04157692574,
+            0.048789488171
+          ],
+          "tuning_evaluations": 8,
+          "update_norms": [
+            0.00853816043,
+            0.00853816043,
+            0.014551924009,
+            0.014551924009,
+            0.014551924009,
+            0.014551924009,
+            0.029103848018,
+            0.029103848018,
+            0.029103848018,
+            0.029103848018,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574
+          ],
+          "update_norms_range": [
+            0.00853816043,
+            0.04157692574
+          ]
+        },
+        "family_logits": {
+          "accepted_attempts": 0,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 7,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_update_zero_ce_and_objective_response": true,
+          "gradient_norms": [
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089
+          ],
+          "gradient_norms_range": [
+            6.327266399089,
+            6.327266399089
+          ],
+          "tuning_evaluations": 7,
+          "update_norms": [
+            2.214543239681,
+            2.214543239681,
+            4.429086479362,
+            4.429086479362,
+            4.429086479362,
+            4.429086479362,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089
+          ],
+          "update_norms_range": [
+            2.214543239681,
+            6.327266399089
+          ]
+        },
+        "legal_ir_view_global_logits": {
+          "accepted_attempts": 8,
+          "accepted_candidates_not_selected": 5,
+          "attempts": 8,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.036708602429685655,
+            0.0601340148949987,
+            0.015574367697238856,
+            0.021609655945474593,
+            0.0007148707726600811,
+            0.0008007711417281627,
+            2.619944111481587e-05,
+            1.032410357648672e-06
+          ],
+          "finite_objective_deltas_range": [
+            1.032410357648672e-06,
+            0.0601340148949987
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.695383312189,
+            0.69538331219,
+            0.628344805734,
+            0.628344805735,
+            0.317914309909,
+            0.317914309907,
+            0.261115343877,
+            0.261115343877,
+            0.048941348764,
+            0.048941348765,
+            0.042561742506,
+            0.042561742506,
+            0.00780764428,
+            0.00780764428,
+            0.001505062609,
+            0.001505062609
+          ],
+          "gradient_norms_range": [
+            0.001505062609,
+            0.69538331219
+          ],
+          "tuning_evaluations": 8,
+          "update_norms": [
+            0.121692079633,
+            0.121692079633,
+            0.219920682007,
+            0.219920682007,
+            0.111270008468,
+            0.111270008468,
+            0.182780740714,
+            0.182780740714,
+            0.034258944135,
+            0.034258944135,
+            0.042561742506,
+            0.042561742506,
+            0.00780764428,
+            0.00780764428,
+            0.001505062609,
+            0.001505062609
+          ],
+          "update_norms_range": [
+            0.001505062609,
+            0.219920682007
+          ]
+        },
+        "legal_ir_view_logits": {
+          "accepted_attempts": 7,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 7,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.04645691393549134,
+            0.07137594633273459,
+            0.020377604934311844,
+            0.0243169879817704,
+            0.0008471434625221264,
+            2.7925450898802495e-05,
+            1.1103867856299132e-06
+          ],
+          "finite_objective_deltas_range": [
+            1.1103867856299132e-06,
+            0.07137594633273459
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.060154169006,
+            0.670259316651,
+            0.100761807223,
+            0.680455007627,
+            0.052442425626,
+            0.584329862749,
+            0.087843811374,
+            0.593218451923,
+            0.024818382549,
+            0.276533212,
+            0.041571949104,
+            0.280739730718,
+            0.018150663053,
+            0.202233952515,
+            0.030402350301,
+            0.20531030423,
+            0.003256111495,
+            0.036279521515,
+            0.005453993793,
+            0.036831399535,
+            0.000601218855,
+            0.006698803483,
+            0.001007048359,
+            0.006800704273,
+            0.000116238248,
+            0.001295136947,
+            0.000194701269,
+            0.001314838251
+          ],
+          "gradient_norms_range": [
+            0.000116238248,
+            0.680455007627
+          ],
+          "tuning_evaluations": 7,
+          "update_norms": [
+            0.010526979576,
+            0.117295380414,
+            0.017633316264,
+            0.119079626335,
+            0.018354848969,
+            0.204515451962,
+            0.030745333981,
+            0.207626458173,
+            0.010858042365,
+            0.12098328025,
+            0.018187727733,
+            0.122823632189,
+            0.015881830171,
+            0.176954708451,
+            0.026602056513,
+            0.179646516201,
+            0.003256111495,
+            0.036279521515,
+            0.005453993793,
+            0.036831399535,
+            0.000601218855,
+            0.006698803483,
+            0.001007048359,
+            0.006800704273,
+            0.000116238248,
+            0.001295136947,
+            0.000194701269,
+            0.001314838251
+          ],
+          "update_norms_range": [
+            0.000116238248,
+            0.207626458173
+          ]
+        }
+      },
+      "initial_objective": 2.694956319408122,
+      "memory_cache_hits": 39,
+      "metrics_after": {
+        "cosine": 0.9999999999999999,
+        "deontic_ir_ce": 0.5474942745145921,
+        "deontic_ir_cosine": 0.9999999989575786,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7643774536177506,
+        "ir_view_ce_excess": 2.18844102839455e-08,
+        "reconstruction_loss": 0.0
+      },
+      "metrics_before": {
+        "cosine": 0.9999999999999999,
+        "deontic_ir_ce": 0.5636167601164468,
+        "deontic_ir_cosine": 0.9946347813357798,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7917594692280547,
+        "ir_view_ce_excess": 0.027382037494714462,
+        "reconstruction_loss": 0.0
+      },
+      "native_target_attempts": 9,
+      "nonnested_profile_seconds": {
+        "before_holdout_evaluation": 4.87211293913424,
+        "line_search_evaluation": 4.6546837848145515,
+        "projection_update_batch": 20.209684162633494,
+        "training_cache_prime": 9.571881697047502
+      },
+      "objective_reduction": 0.09656911361471154,
+      "objective_reduction_per_bridge_evaluation": 0.0023553442345051597,
+      "objective_reduction_per_epoch": 0.019313822722942308,
+      "objective_reduction_per_training_second": 0.0020426332794517984,
+      "qualification_gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-synthetic-duration-ablation-22-529ed713db1dd160",
+            "us-code-synthetic-duration-ablation-23-1683159e259380e0",
+            "us-code-synthetic-duration-ablation-24-b28286bd5fec8639",
+            "us-code-synthetic-duration-ablation-26-14ca4f3d4481b166",
+            "us-code-synthetic-duration-ablation-27-7bb6ad0b459b7abb"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "qualification_seconds": 10.016037594061345,
+      "qualified": false,
+      "threshold_epoch": 3,
+      "threshold_time_reduction_vs_baseline_percent": 4.04636009633813,
+      "threshold_training_seconds": 36.95381046994589,
+      "training_seconds": 47.27677483088337,
+      "training_seconds_outside_these_profile_phases": 7.968412247253582,
+      "training_seconds_per_span": 5.909596853860421,
+      "training_seconds_reduction_vs_baseline_percent": -22.740655514695973,
+      "warm_tuning_evaluation_seconds": {
+        "count": 39,
+        "maximum": 0.267658350058,
+        "mean": 0.11935086627728204,
+        "minimum": 0.103407858871
+      }
+    },
+    {
+      "accepted_epochs": 5,
+      "arm": "productive_momentum",
+      "arm_wall_seconds_including_owner_and_qualification": 67.70845543500036,
+      "arm_wall_seconds_per_training_span": 8.463556929375045,
+      "artifact": {
+        "bytes": 843771,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/summary.json",
+        "sha256": "383364157f92237523355e200efd2e731065e324dfd6d8743ba58fec21759e2a"
+      },
+      "attempted_epochs": 5,
+      "baseline_final_threshold": 2.5987463955181416,
+      "bridge_on_evaluations": 44,
+      "candidate_tuning_evaluations": 42,
+      "cold_target_evaluations": [
+        {
+          "cache_empty_at_start": true,
+          "memory_hits": 0,
+          "native_target_attempts": 1,
+          "sample_count": 1,
+          "seconds": 4.460327239009,
+          "seconds_per_span": 4.460327239009,
+          "stage": "before_holdout_evaluation",
+          "target_count": 1
+        },
+        {
+          "cache_empty_at_start": false,
+          "memory_hits": 0,
+          "native_target_attempts": 8,
+          "sample_count": 8,
+          "seconds": 9.66552354116,
+          "seconds_per_span": 1.208190442645,
+          "stage": "training_cache_prime",
+          "target_count": 8
+        }
+      ],
+      "curve": [
+        {
+          "accepted": null,
+          "committed_objective": 2.694956319408122,
+          "cumulative_training_elapsed_seconds": null,
+          "cumulative_tuning_search_evaluations": 1,
+          "epoch": 0
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.07137594633273459,
+          "candidate_holdout_evaluation_count": 10,
+          "committed_objective": 2.6235803730753875,
+          "cumulative_training_elapsed_seconds": 21.595560868969187,
+          "cumulative_tuning_search_evaluations": 11,
+          "epoch": 1,
+          "epoch_elapsed_seconds": 7.469440212938935,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.007130589543154819,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.771508021276495,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0067233280164253895,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.007130589543154597,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7715080212764953,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.027382037494714462,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.026688227914204443,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.02738203749471424,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.791759469228055,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.6235803730753875,
+          "objective_before": 2.694956319408122,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.0243169879817704,
+          "candidate_holdout_evaluation_count": 10,
+          "committed_objective": 2.599263385093617,
+          "cumulative_training_elapsed_seconds": 29.830979637103155,
+          "cumulative_tuning_search_evaluations": 21,
+          "epoch": 2,
+          "epoch_elapsed_seconds": 8.235334143042564,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.00026092916876319094,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7646383609021035,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.00020768937086379502,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.0002609291687625248,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7646383609021032,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.007130589543154819,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.771508021276495,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0067233280164253895,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.007130589543154597,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7715080212764953,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.599263385093617,
+          "objective_before": 2.6235803730753875,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 0.0008471434625221264,
+          "candidate_holdout_evaluation_count": 9,
+          "committed_objective": 2.598416241631095,
+          "cumulative_training_elapsed_seconds": 37.58832739293575,
+          "cumulative_tuning_search_evaluations": 30,
+          "epoch": 3,
+          "epoch_elapsed_seconds": 7.757261578924954,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 8.946719604052689e-06,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643863784529443,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 6.742595085595937e-06,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 8.946719603830644e-06,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643863784529445,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.00026092916876319094,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7646383609021035,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.00020768937086379502,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.0002609291687625248,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7646383609021032,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.598416241631095,
+          "objective_before": 2.599263385093617,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 2.7925450898802495e-05,
+          "candidate_holdout_evaluation_count": 7,
+          "committed_objective": 2.598388316180196,
+          "cumulative_training_elapsed_seconds": 44.154141339007765,
+          "cumulative_tuning_search_evaluations": 37,
+          "epoch": 4,
+          "epoch_elapsed_seconds": 6.565725113032386,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 3.6742463582761786e-07,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.764377799157976,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 2.7528795842890474e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 3.6742463516148405e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643777991579759,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 8.946719604052689e-06,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643863784529443,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 6.742595085595937e-06,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 8.946719603830644e-06,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643863784529445,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.598388316180196,
+          "objective_before": 2.598416241631095,
+          "selected_update": "legal_ir_view_logits"
+        },
+        {
+          "accepted": true,
+          "attempted_objective_delta": 1.160869851801749e-06,
+          "candidate_holdout_evaluation_count": 6,
+          "committed_objective": 2.5983871553103444,
+          "cumulative_training_elapsed_seconds": 49.11761423596181,
+          "cumulative_tuning_search_evaluations": 43,
+          "epoch": 5,
+          "epoch_elapsed_seconds": 4.963377824053168,
+          "evaluated_objective": {
+            "after": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 6.068511027024215e-09,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.7643774378018513,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 4.695923538911018e-09,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 6.068510582935005e-09,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643774378018513,
+              "reconstruction_loss": 0.0
+            },
+            "before": {
+              "cross_entropy_excess_loss": 2.1972245773362196,
+              "embedding_cosine_gap": 1.1102230246251565e-16,
+              "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+              "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+              "legal_ir:legal_ir_multiview_total_loss": 0.3288872805440848,
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss": 3.6742463582761786e-07,
+              "legal_ir:legal_ir_view_cross_entropy_loss": 1.764377799157976,
+              "legal_ir:legal_ir_view_family_cosine_gap_loss": 2.7528795842890474e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 3.6742463516148405e-07,
+              "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7643777991579759,
+              "reconstruction_loss": 0.0
+            },
+            "selected_metric_names": [
+              "cross_entropy_excess_loss",
+              "embedding_cosine_gap",
+              "legal_ir:legal_ir_multiview_graph_failure_penalty",
+              "legal_ir:legal_ir_multiview_proof_failure_ratio",
+              "legal_ir:legal_ir_multiview_total_loss",
+              "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_cross_entropy_loss",
+              "legal_ir:legal_ir_view_family_cosine_gap_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+              "legal_ir:legal_ir_view_family_cross_entropy_loss",
+              "reconstruction_loss"
+            ]
+          },
+          "objective_after": 2.5983871553103444,
+          "objective_before": 2.598388316180196,
+          "selected_update": "legal_ir_view_logits"
+        }
+      ],
+      "disk_cache_hits": 0,
+      "failed_qualification_rows": [
+        {
+          "cosine": 0.19611613513818407,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.37794123682465003,
+          "text": "The officer shall retain the file for at least 22 days."
+        },
+        {
+          "cosine": 0.196116135138184,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.342003247738783,
+          "text": "The officer shall retain the file for at least 23 days."
+        },
+        {
+          "cosine": 0.19611613513818404,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.326040643365787,
+          "text": "The officer shall retain the file for at least 24 days."
+        },
+        {
+          "cosine": 0.19611613513818404,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.21600881475501774,
+          "text": "The officer shall retain the file for at least 26 days."
+        },
+        {
+          "cosine": 0.19611613513818402,
+          "reasons": [
+            "embedding_cosine_below_threshold",
+            "reconstruction_loss_above_threshold"
+          ],
+          "reconstruction_loss": 0.3130512645260574,
+          "text": "The officer shall retain the file for at least 27 days."
+        }
+      ],
+      "final_objective": 2.5983871553103444,
+      "head_productivity": {
+        "combined": {
+          "accepted_attempts": 9,
+          "accepted_candidates_not_selected": 5,
+          "attempts": 9,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.03533221250579377,
+            0.0583807548223656,
+            0.015125846591194314,
+            0.021261360904492488,
+            0.0007012094760958654,
+            0.00084493171160549,
+            2.784112095932656e-05,
+            2.7925450898802495e-05,
+            1.1103867856299132e-06
+          ],
+          "finite_objective_deltas_range": [
+            1.1103867856299132e-06,
+            0.0583807548223656
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.048789488171,
+            0.062705983714,
+            6.327266399086,
+            0.698693020922,
+            0.105036319127,
+            6.367088589411,
+            0.048789488171,
+            0.056925772065,
+            6.32726639909,
+            0.634286533302,
+            0.095353926163,
+            6.360136226551,
+            0.048789488171,
+            0.02880283322,
+            6.32726639909,
+            0.320931040857,
+            0.048246388922,
+            6.335837320309,
+            0.041576925741,
+            0.023857194555,
+            6.32726639909,
+            0.265822769637,
+            0.039961820751,
+            6.33315534181,
+            0.041576925741,
+            0.004461416165,
+            6.32726639909,
+            0.04971035611,
+            0.007473085706,
+            6.327604254103,
+            0.04157692574,
+            0.003294357855,
+            6.327266399089,
+            0.036705714842,
+            0.005518064533,
+            6.327512729116,
+            0.04157692574,
+            0.000608024606,
+            6.327266399089,
+            0.00677464199,
+            0.001018449357,
+            6.327406738032,
+            0.04157692574,
+            0.000601218855,
+            6.327266399089,
+            0.006698803483,
+            0.001007048359,
+            6.327406654813,
+            0.04157692574,
+            0.000116238248,
+            6.327266399089,
+            0.001295136947,
+            0.000194701269,
+            6.327403136721
+          ],
+          "gradient_norms_range": [
+            0.000116238248,
+            6.367088589411
+          ],
+          "tuning_evaluations": 9,
+          "update_norms": [
+            0.005976712301,
+            0.007681483005,
+            0.775090133888,
+            0.085589895063,
+            0.012866949093,
+            0.779968352203,
+            0.011953424602,
+            0.013946814156,
+            1.550180267777,
+            0.155400200659,
+            0.02336171191,
+            1.558233375505,
+            0.011953424602,
+            0.007056694139,
+            1.550180267777,
+            0.07862810501,
+            0.011820365286,
+            1.552280143476,
+            0.020372693613,
+            0.011690025332,
+            3.100360535554,
+            0.130253157122,
+            0.019581292168,
+            3.103246117487,
+            0.020372693613,
+            0.002186093921,
+            3.100360535554,
+            0.024358074494,
+            0.003661811996,
+            3.10052608451,
+            0.040745387225,
+            0.003228470698,
+            6.200721071107,
+            0.035971600545,
+            0.005407703242,
+            6.200962474534,
+            0.040745387225,
+            0.000595864114,
+            6.200721071107,
+            0.00663914915,
+            0.00099808037,
+            6.200858603272,
+            0.04157692574,
+            0.000601218855,
+            6.327266399089,
+            0.006698803483,
+            0.001007048359,
+            6.327406654813,
+            0.04157692574,
+            0.000116238248,
+            6.327266399089,
+            0.001295136947,
+            0.000194701269,
+            6.327403136721
+          ],
+          "update_norms_range": [
+            0.000116238248,
+            6.327406654813
+          ]
+        },
+        "decoded_embedding": {
+          "accepted_attempts": 0,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 8,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_update_zero_ce_and_objective_response": true,
+          "gradient_norms": [
+            0.048789488171,
+            0.048789488171,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574
+          ],
+          "gradient_norms_range": [
+            0.04157692574,
+            0.048789488171
+          ],
+          "tuning_evaluations": 8,
+          "update_norms": [
+            0.00853816043,
+            0.00853816043,
+            0.014551924009,
+            0.014551924009,
+            0.014551924009,
+            0.014551924009,
+            0.029103848018,
+            0.029103848018,
+            0.029103848018,
+            0.029103848018,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574,
+            0.04157692574
+          ],
+          "update_norms_range": [
+            0.00853816043,
+            0.04157692574
+          ]
+        },
+        "family_logits": {
+          "accepted_attempts": 0,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 7,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_update_zero_ce_and_objective_response": true,
+          "gradient_norms": [
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089
+          ],
+          "gradient_norms_range": [
+            6.327266399089,
+            6.327266399089
+          ],
+          "tuning_evaluations": 7,
+          "update_norms": [
+            2.214543239681,
+            2.214543239681,
+            4.429086479362,
+            4.429086479362,
+            4.429086479362,
+            4.429086479362,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089,
+            6.327266399089
+          ],
+          "update_norms_range": [
+            2.214543239681,
+            6.327266399089
+          ]
+        },
+        "legal_ir_view_global_logits": {
+          "accepted_attempts": 8,
+          "accepted_candidates_not_selected": 5,
+          "attempts": 8,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.036708602429685655,
+            0.0601340148949987,
+            0.015574367697238856,
+            0.021609655945474593,
+            0.0007148707726600811,
+            0.0008007711417281627,
+            2.619944111481587e-05,
+            1.032410357648672e-06
+          ],
+          "finite_objective_deltas_range": [
+            1.032410357648672e-06,
+            0.0601340148949987
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.695383312189,
+            0.69538331219,
+            0.628344805734,
+            0.628344805735,
+            0.317914309909,
+            0.317914309907,
+            0.261115343877,
+            0.261115343877,
+            0.048941348764,
+            0.048941348765,
+            0.042561742506,
+            0.042561742506,
+            0.00780764428,
+            0.00780764428,
+            0.001505062609,
+            0.001505062609
+          ],
+          "gradient_norms_range": [
+            0.001505062609,
+            0.69538331219
+          ],
+          "tuning_evaluations": 8,
+          "update_norms": [
+            0.121692079633,
+            0.121692079633,
+            0.219920682007,
+            0.219920682007,
+            0.111270008468,
+            0.111270008468,
+            0.182780740714,
+            0.182780740714,
+            0.034258944135,
+            0.034258944135,
+            0.042561742506,
+            0.042561742506,
+            0.00780764428,
+            0.00780764428,
+            0.001505062609,
+            0.001505062609
+          ],
+          "update_norms_range": [
+            0.001505062609,
+            0.219920682007
+          ]
+        },
+        "legal_ir_view_logits": {
+          "accepted_attempts": 10,
+          "accepted_candidates_not_selected": 0,
+          "attempts": 10,
+          "cross_entropy_deltas": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "cross_entropy_deltas_range": [
+            0.0,
+            0.0
+          ],
+          "finite_objective_deltas": [
+            0.04645691393549134,
+            0.07137594633273459,
+            0.020377604934311844,
+            0.0243169879817704,
+            0.0007838907162200925,
+            0.0008471434625221264,
+            2.7761052291630506e-05,
+            2.7925450898802495e-05,
+            1.160869851801749e-06,
+            1.1103867856299132e-06
+          ],
+          "finite_objective_deltas_range": [
+            1.1103867856299132e-06,
+            0.07137594633273459
+          ],
+          "finite_update_zero_ce_and_objective_response": false,
+          "gradient_norms": [
+            0.060154169006,
+            0.670259316651,
+            0.100761807223,
+            0.680455007627,
+            0.052442425626,
+            0.584329862749,
+            0.087843811374,
+            0.593218451923,
+            0.024818382549,
+            0.276533212,
+            0.041571949104,
+            0.280739730718,
+            0.018150663053,
+            0.202233952515,
+            0.030402350301,
+            0.20531030423,
+            0.003256111495,
+            0.036279521515,
+            0.005453993793,
+            0.036831399535,
+            0.003256111495,
+            0.036279521515,
+            0.005453993793,
+            0.036831399535,
+            0.000601218855,
+            0.006698803483,
+            0.001007048359,
+            0.006800704273,
+            0.000601218855,
+            0.006698803483,
+            0.001007048359,
+            0.006800704273,
+            0.000116238248,
+            0.001295136947,
+            0.000194701269,
+            0.001314838251,
+            0.000116238248,
+            0.001295136947,
+            0.000194701269,
+            0.001314838251
+          ],
+          "gradient_norms_range": [
+            0.000116238248,
+            0.680455007627
+          ],
+          "tuning_evaluations": 10,
+          "update_norms": [
+            0.010526979576,
+            0.117295380414,
+            0.017633316264,
+            0.119079626335,
+            0.018354848969,
+            0.204515451962,
+            0.030745333981,
+            0.207626458173,
+            0.010858042365,
+            0.12098328025,
+            0.018187727733,
+            0.122823632189,
+            0.015881830171,
+            0.176954708451,
+            0.026602056513,
+            0.179646516201,
+            0.003256111495,
+            0.036279521515,
+            0.005453993793,
+            0.036831399535,
+            0.003256111495,
+            0.036279521515,
+            0.005453993793,
+            0.036831399535,
+            0.000601218855,
+            0.006698803483,
+            0.001007048359,
+            0.006800704273,
+            0.000601218855,
+            0.006698803483,
+            0.001007048359,
+            0.006800704273,
+            0.000116238248,
+            0.001295136947,
+            0.000194701269,
+            0.001314838251,
+            0.000116238248,
+            0.001295136947,
+            0.000194701269,
+            0.001314838251
+          ],
+          "update_norms_range": [
+            0.000116238248,
+            0.207626458173
+          ]
+        }
+      },
+      "initial_objective": 2.694956319408122,
+      "memory_cache_hits": 42,
+      "metrics_after": {
+        "cosine": 0.9999999999999999,
+        "deontic_ir_ce": 0.5474942721667246,
+        "deontic_ir_cosine": 0.9999999999988465,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7643774378018513,
+        "ir_view_ce_excess": 6.068511027024215e-09,
+        "reconstruction_loss": 0.0
+      },
+      "metrics_before": {
+        "cosine": 0.9999999999999999,
+        "deontic_ir_ce": 0.5636167601164468,
+        "deontic_ir_cosine": 0.9946347813357798,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7917594692280547,
+        "ir_view_ce_excess": 0.027382037494714462,
+        "reconstruction_loss": 0.0
+      },
+      "native_target_attempts": 9,
+      "nonnested_profile_seconds": {
+        "before_holdout_evaluation": 4.46032723900862,
+        "line_search_evaluation": 4.777172082802281,
+        "projection_update_batch": 21.84750452078879,
+        "training_cache_prime": 9.665523541159928
+      },
+      "objective_reduction": 0.09656916409777772,
+      "objective_reduction_per_bridge_evaluation": 0.002194753729494948,
+      "objective_reduction_per_epoch": 0.019313832819555544,
+      "objective_reduction_per_training_second": 0.001965802062731281,
+      "qualification_gate_results": {
+        "family_syntax_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "heldout_gate": {
+          "passed": true,
+          "reason": "",
+          "sample_count": 1
+        },
+        "lake_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        },
+        "metric_gate": {
+          "failed_sample_ids": [
+            "us-code-synthetic-duration-ablation-22-529ed713db1dd160",
+            "us-code-synthetic-duration-ablation-23-1683159e259380e0",
+            "us-code-synthetic-duration-ablation-24-b28286bd5fec8639",
+            "us-code-synthetic-duration-ablation-26-14ca4f3d4481b166",
+            "us-code-synthetic-duration-ablation-27-7bb6ad0b459b7abb"
+          ],
+          "passed": false
+        },
+        "semantic_gate": {
+          "failed_sample_ids": [],
+          "passed": true
+        }
+      },
+      "qualification_seconds": 10.235917882993817,
+      "qualified": false,
+      "threshold_epoch": 3,
+      "threshold_time_reduction_vs_baseline_percent": 2.39878417474636,
+      "threshold_training_seconds": 37.58832739293575,
+      "training_seconds": 49.124561383156106,
+      "training_seconds_outside_these_profile_phases": 8.374033999396488,
+      "training_seconds_per_span": 6.140570172894513,
+      "training_seconds_reduction_vs_baseline_percent": -27.53790603545361,
+      "warm_tuning_evaluation_seconds": {
+        "count": 42,
+        "maximum": 0.120783622144,
+        "mean": 0.11374219244771429,
+        "minimum": 0.106046020985
+      }
+    }
+  ],
+  "audit": {
+    "bytes": 26450,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-audit.json",
+    "sha256": "687465cba9b6c1a711588577aebf8fd023e6db7773c86812283871fc912bc87a"
+  },
+  "canary_objective_delta_selected_minus_baseline": -0.0003750753332552037,
+  "canary_results": [
+    {
+      "arm": "baseline_adaptive",
+      "elapsed_seconds": 5.39829547284171,
+      "metrics": {
+        "cosine": 0.598058067569092,
+        "deontic_ir_ce": 0.5475079065792384,
+        "deontic_ir_cosine": 0.9999940006460298,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.7644905901113468,
+        "ir_view_ce_excess": 0.00011315837800651707,
+        "reconstruction_loss": 0.2249217972844046
+      },
+      "objective": 3.464089159539441,
+      "roles": [
+        "baseline_reference"
+      ],
+      "sample_count": 2,
+      "target_count": 2,
+      "target_observation": {
+        "bridge_module_preloaded_at_start": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+        "disk_cache_enabled": false,
+        "disk_cache_hit_count": 0,
+        "evaluate_provers": false,
+        "generated_target_count": 2,
+        "memory_cache_hit_count": 0,
+        "native_evaluation_attempt_count": 2,
+        "native_evaluation_seconds_sum": 5.0676138701383024,
+        "parallel_workers_requested": 1,
+        "parallel_workers_used": 1,
+        "process_target_cache_empty_at_start": true,
+        "process_target_cache_entries_at_start": 0,
+        "representation_counts": {
+          "cached_summary": 0,
+          "native": 2,
+          "other": 0,
+          "prepared_native": 0
+        },
+        "structural_target_seconds": 0.0011284470092505217,
+        "supplied_target_count": 0,
+        "target_cache_miss_count": 2,
+        "target_count": 2,
+        "target_items_seconds": 5.142183833988383,
+        "target_reduction_seconds": 0.024101753951981664,
+        "timeout_fallback_count": 0,
+        "training_target_seconds_sum": 0.002212716033682227
+      }
+    },
+    {
+      "arm": "productive_momentum",
+      "elapsed_seconds": 0.2432622250635177,
+      "metrics": {
+        "cosine": 0.598058067569092,
+        "deontic_ir_ce": 0.5474943063764879,
+        "deontic_ir_cosine": 0.9999999848314485,
+        "family_ce": 2.1972245773362196,
+        "family_ce_excess": 2.1972245773362196,
+        "ir_view_ce": 1.764377471128397,
+        "ir_view_ce_excess": 3.93950567723067e-08,
+        "reconstruction_loss": 0.2249217972844046
+      },
+      "objective": 3.463714084206186,
+      "roles": [
+        "selected"
+      ],
+      "sample_count": 2,
+      "target_count": 2,
+      "target_observation": {
+        "bridge_module_preloaded_at_start": true,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+        "disk_cache_enabled": false,
+        "disk_cache_hit_count": 0,
+        "evaluate_provers": false,
+        "generated_target_count": 0,
+        "memory_cache_hit_count": 2,
+        "native_evaluation_attempt_count": 0,
+        "native_evaluation_seconds_sum": 0.0,
+        "parallel_workers_requested": 1,
+        "parallel_workers_used": 1,
+        "process_target_cache_empty_at_start": false,
+        "process_target_cache_entries_at_start": 2,
+        "representation_counts": {
+          "cached_summary": 0,
+          "native": 2,
+          "other": 0,
+          "prepared_native": 0
+        },
+        "structural_target_seconds": 0.0004901029169559479,
+        "supplied_target_count": 0,
+        "target_cache_miss_count": 0,
+        "target_count": 2,
+        "target_items_seconds": 9.624101221561432e-05,
+        "target_reduction_seconds": 0.023712516063824296,
+        "timeout_fallback_count": 0,
+        "training_target_seconds_sum": 0.0
+      }
+    }
+  ],
+  "comparative_speed_claim": true,
+  "comparison": {
+    "bytes": 2535224,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/comparison.json",
+    "sha256": "b3e841dde8a46b249d9f59b6d5b2b53b0e3a66fbc65851f919b51cfc25cd8566"
+  },
+  "configuration": {
+    "backend": "python_sparse_batch",
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "canary_sample_count": 2,
+    "composed_refinement_attempts": 0,
+    "disk_cache": 0,
+    "epochs": 5,
+    "legal_ir_workers": 1,
+    "max_line_search_attempts": 2,
+    "max_seconds": 180,
+    "projection_max_update_families": 5,
+    "provers": false,
+    "sample_count": 8,
+    "temperature": 0,
+    "tuning_sample_count": 1,
+    "use_sample_memory": false
+  },
+  "counts": {
+    "accepted_epochs": 15,
+    "arms": 3,
+    "attempted_epochs": 15,
+    "family_artifacts": 162,
+    "lake_builds": 27,
+    "qualification_rows": 27,
+    "qualified_arms": 0,
+    "requested_epochs": 15
+  },
+  "experiment": "main",
+  "global_minimum_claim": false,
+  "limitations": [
+    "One ordered three-arm synthetic benchmark, not a randomized replicated timing study or federal-law canary.",
+    "Inactive family-logit scales keep a ln(9)=2.197224577336 classifier contribution in this configuration; zero total loss is not an attainable target established here.",
+    "Inspect head-productivity ranges for zero-response proposals; reported gradient/update norms are delta-derived, not differentiation through the target-aware projection.",
+    "Target-aware reconstruction projection can return the supplied target embedding. Passing embedding metrics alone would not establish learned text/formula generation.",
+    "Qualification outcomes and exact failing rows above are authoritative; optimized tuning loss alone does not imply reconstruction success.",
+    "Lake admits only the generated locked numeric minimum-duration statements. Family parser success covers the existing atom projection, not full temporal/cognitive/event-law semantics.",
+    "The descriptive baseline-final threshold is not a global-optimum or convergence proof. No weight promotion or Hub upload occurred.",
+    "Selected canary target cache is warm after baseline-reference evaluation; their inference timings are not a matched cold speed comparison.",
+    "Earlier campaign source-drift evidence remains immutable and is not a matched comparator for this experiment."
+  ],
+  "producer_manifest": {
+    "file_count": 7835,
+    "sha256": "3a5445309b3816ee6a023eb91e97c95c1aa8b0974f38609fcfbd6942bd21d95f"
+  },
+  "resource_closeout": {
+    "bytes": 6745,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/resource-closeout.json",
+    "sha256": "5daf4c2cade35cad40ad5faaa6b3e06cb5ffa704b6e63aec703e694d71e78071"
+  },
+  "schema": "autoencoder-epoch-productivity-summary/v1",
+  "selected_arm": "productive_momentum"
+}

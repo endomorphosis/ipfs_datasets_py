@@ -1,0 +1,1602 @@
+{
+  "admitted": false,
+  "arrow_arrays_included": false,
+  "constitution_formalized": false,
+  "databases_included": false,
+  "file_count_excluding_manifest": 311,
+  "files": {
+    "after/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 94345,
+      "sha256": "c28699b7b4d72f57fca207d84efd689c0bface0b05beed64451d5dfaacd59a19",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/after/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+    },
+    "after/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "bytes": 1400654,
+      "sha256": "a0dd75b353253403a690a893fca7692666ab5f6fed91069fc8be49a2a6fd5325",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/after/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+    },
+    "after/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 20302,
+      "sha256": "11c1ff8fb5c9a0c301fec36b3214242bcd9ee4dc2a7be7bbb2ca5cbc7bfc3fb4",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/after/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py"
+    },
+    "after/scripts/ops/legal_ir/run_incremental_autoencoders.py": {
+      "bytes": 39051,
+      "sha256": "a81613f5cac52bc4f445e440b1d97f009c6b80c6ce1ad352c6e6541fc664cf03",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/after/scripts/ops/legal_ir/run_incremental_autoencoders.py"
+    },
+    "audit_productivity.py": {
+      "bytes": 16627,
+      "sha256": "9981936b87900d9a972c9423d8191f1544a6ba4674c2d43c0e3f99c8dd2357a1",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/audit_productivity.py"
+    },
+    "audit_refinement_scopes.py": {
+      "bytes": 6067,
+      "sha256": "41fa8dbdd898fa4b2ed98eea830302c9bfa65aa887db3124dac1062303cf4bde",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/audit_refinement_scopes.py"
+    },
+    "audit_semantic_gates.py": {
+      "bytes": 7664,
+      "sha256": "e5ee0ec31941f8a25389018f4c6595fad6c8dd9a7ea0f9a2bd0a182fd223ae3a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/audit_semantic_gates.py"
+    },
+    "before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 93873,
+      "sha256": "df04a734bbd96633e594df7f0665e96eafdc9e4f2a6899086209cd98e278f652",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+    },
+    "before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "bytes": 1395187,
+      "sha256": "474646fac68afc3f598e7184769399a0babd32b18d481af5ecd8ff9c6ca9971a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+    },
+    "before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 13789,
+      "sha256": "eafb53a8b88f62f0c8798942455ad3c8cf03cf858bafc2e950e5cb6fb1cc1ee9",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/before/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py"
+    },
+    "before/scripts/ops/legal_ir/run_incremental_autoencoders.py": {
+      "bytes": 38727,
+      "sha256": "497c8e8daf8fbc24d450402cc9b19ba2e4608cebddcf408e66386c5b8905a9c2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/before/scripts/ops/legal_ir/run_incremental_autoencoders.py"
+    },
+    "bind_reconstruction_sources.py": {
+      "bytes": 4053,
+      "sha256": "1eb0190cf33ae25f1063492b66cc3fd620b4d03c9789006a2990d5231008439d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/bind_reconstruction_sources.py"
+    },
+    "close_resources.py": {
+      "bytes": 7933,
+      "sha256": "348acd2ff96ae6f817798f286f22a490c7ba1ae8d26f84eac39eb984baad0c46",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/close_resources.py"
+    },
+    "curate_evidence.py": {
+      "bytes": 10286,
+      "sha256": "5e2e5ecb638b726d27407f5a7794f8f4ba4f9f5f6d2a37ce1caa8a76fdd2f70b",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/curate_evidence.py"
+    },
+    "harness-preflight.json": {
+      "bytes": 876,
+      "sha256": "f09f62072d7172e06031b7b72513945e408df707ef8f9e0189cc0c77e23272e1",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/harness-preflight.json"
+    },
+    "harness-ready.json": {
+      "bytes": 1036,
+      "sha256": "52f53440906f42302d07d2043ccb8f184c6ecd80a7c79dcbde650cb2450d4395",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/harness-ready.json"
+    },
+    "integrated-audit.json": {
+      "bytes": 7145,
+      "sha256": "e0a42fe340cb2169e536e90e55e9e2b47bc323df40fa2d14bb9f7c9e21ce4a26",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-audit.json"
+    },
+    "integrated-productive-refined/capacity.json": {
+      "bytes": 989,
+      "sha256": "86ae3183ab793d9355dae3c27868df32685e81a249d7f5789cbb19e694f98654",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/capacity.json"
+    },
+    "integrated-productive-refined/command.json": {
+      "bytes": 1378,
+      "sha256": "08a2c3088d3131e1a0f92e76d0f7fb66b9974557564bd49995aa6fdb087c9247",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/command.json"
+    },
+    "integrated-productive-refined/comparison.json": {
+      "bytes": 850639,
+      "sha256": "1129e4bfe0f25308afeb8150cd7aa5be4bfab5cf0e49f018a56c142cb6551efc",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/comparison.json"
+    },
+    "integrated-productive-refined/effective-environment.json": {
+      "bytes": 349,
+      "sha256": "fa5834a89b1f39c036bf50e47b5068063d5ba119ff7efda815475ccddd336ff6",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/effective-environment.json"
+    },
+    "integrated-productive-refined/native-guard.json": {
+      "bytes": 244,
+      "sha256": "3810b27ac349bde669a0b578ead9a94d8bf6d13af28757b825ea5dd2034ce723",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/native-guard.json"
+    },
+    "integrated-productive-refined/native.log": {
+      "bytes": 8987,
+      "sha256": "6a5ce53f561782ff18985e5ebda1ac58ff239f86860940d3d150f36999c917e5",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/native.log"
+    },
+    "integrated-productive-refined/package-native-begin.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/package-native-begin.json"
+    },
+    "integrated-productive-refined/package-native-end.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/package-native-end.json"
+    },
+    "integrated-productive-refined/package-parent-begin.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/package-parent-begin.json"
+    },
+    "integrated-productive-refined/package-parent-end.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/package-parent-end.json"
+    },
+    "integrated-productive-refined/package-productive_momentum_refined.json": {
+      "bytes": 1108380,
+      "sha256": "5f174e473cf2fd100d8ca72b01c0532a3b073eb7c06d3e437634711049cd1785",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/package-productive_momentum_refined.json"
+    },
+    "integrated-productive-refined/plan.json": {
+      "bytes": 4013,
+      "sha256": "a757aa6fd1a605a6eb830ab985cf5752bd5d157453cd263bcb2d9f0a950231b9",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/plan.json"
+    },
+    "integrated-productive-refined/process-observations.json": {
+      "bytes": 13090,
+      "sha256": "92d837040111d8f29462c94eb04fe078ca7cc3117b38946dd3ef937a4ef5a300",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/process-observations.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/arm-binding.json": {
+      "bytes": 6387,
+      "sha256": "816d52aa8699de417235dbf8b16cae90319f7f82cf07d5fc61bd95252a52fdf2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/arm-binding.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/dispatch.json": {
+      "bytes": 6480,
+      "sha256": "e17e9309a21f255ea1270475f32330ba61826e59e4c33bb4c0bcb09dffed6220",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/dispatch.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/job.json": {
+      "bytes": 4658,
+      "sha256": "0744d62900beba8e91392bf09bb240f9212b43579f194d9c7cd8c05c7a884146",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/job.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/package-begin.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/package-begin.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/package-end.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/package-end.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "7d03267a1cdee41d95256a55fd1f1c9bc9f4a6f02dd95d3923226f38fa9d2fe7",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/heldout-0/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/qualification.json": {
+      "bytes": 779578,
+      "sha256": "25502f3209b495a2c39a40a470cbfe3388f05ae73710890cda43b55ce05a25b8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/qualification.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "b4679dfa899f1c33828e0915590930f5ee0e2db6329f1e4a8ffaeb79d08ba261",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-0/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "a93124de37873b0f6d8733dda83983aca20e8485f4ebefb6686dfd972c409d7e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "0f74b8418dfe1d19b7a01202967a789c9244c9324f44f63075a333507bc35d7f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-1/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "88749153e060b5e748f6d2707bfa949f04281fc70756051eed9cec67a2e44ae8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "cca70de172171bd91ff1f27f282d6161eed66c536cbdd5024863f2acd6303dea",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-2/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "fbde2bbc32ea46233c8b4c17e4c3a190341183eb045e956bff186e554888a10f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "01f582c4a09207509a0ffa0c53b29c35eafaa7a4e0e5ff87caf0403ff2265127",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-3/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "e01311821b948f02155c913c4e5d667e6a3c92959eb9c9367caa502b1f84b300",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "d5a2e6af2ddf9f8aa602760ff3ed24bb27daf719683ebf5738d3c85613ebcc8e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-4/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "c4eb5b4bc33a4f35724354fdbc108a8ea7d97946ea0909bf8e9217a33229ac53",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "98f23c2792c51679e586fcd21090005ce9fc5887e8b9b32560ef18509470ed8b",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-5/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "9e2f4f47218b3a076e529a8e069956b8bf303df0c12370f3406f5be3fe5917e1",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "ca10cc519d1bdb7c8a80a9cc391cfcf0b2cc9a3f5125464ff04fcd3e2fc66332",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-6/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "6805eb6669a8940c5980aaa3704ca8558ef023f46f249c4cfca75088b7d94a21",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/Legal.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/lake-manifest.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "e7debf2e7d66a3712ef256f2f8ef2118efdc3ec8663aa9a617222258de9d1eab",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/lake.log"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/lakefile.lean"
+    },
+    "integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/qualification/training-7/lake-0/lean-toolchain"
+    },
+    "integrated-productive-refined/productive_momentum_refined/summary.json": {
+      "bytes": 848241,
+      "sha256": "cc39ab6d05c85ca72df43486286a39cc93196b75ec835256e0ad8f796f8054ee",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/summary.json"
+    },
+    "integrated-productive-refined/productive_momentum_refined/worker/receipt.json": {
+      "bytes": 1766316,
+      "sha256": "5661ec394599726784dece98abfd22d2cff3513c73a41db171cbe93743a5efe2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/productive_momentum_refined/worker/receipt.json"
+    },
+    "integrated-productive-refined/resources.json": {
+      "bytes": 3552,
+      "sha256": "ebbbc72a9ef11949fcd9aee5207628012988bd93af022d889b2665e5db934995",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/resources.json"
+    },
+    "integrated-productive-refined/selected-canary.json": {
+      "bytes": 765,
+      "sha256": "686bbc3272987adc3608071207b4f0128fa5d3a407022773761f5b30a0493170",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/selected-canary.json"
+    },
+    "integrated-productive-refined/selection-before-canary.json": {
+      "bytes": 293,
+      "sha256": "62db845b1c2479dfb26b124767cbc22cf6fa17e0e4d6352e81417a5280d2e6f9",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-productive-refined/selection-before-canary.json"
+    },
+    "integrated-refinement-scope-audit.json": {
+      "bytes": 20778,
+      "sha256": "4750bfdb0ccb443e1e669312bf3e078f266019441cb334237aebfde386420ad5",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-refinement-scope-audit.json"
+    },
+    "integrated-summary.json": {
+      "bytes": 37980,
+      "sha256": "b7884ba190ddd0a0f711f2ebfa2b8b9dfb329f189c6b4e5112789a6043803dde",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/integrated-summary.json"
+    },
+    "isolated-prepared-imports.json": {
+      "bytes": 109714,
+      "sha256": "829c7cac71c2550f2bef72376f23f2d5b62a18212251f7228e7050065860fc11",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/isolated-prepared-imports.json"
+    },
+    "isolated-prepared-tests.log": {
+      "bytes": 5883,
+      "sha256": "1923aabf8929ca8704a1ef043f1d2d250c2026d3c0ff178e27e668f2ef19c19e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/isolated-prepared-tests.log"
+    },
+    "isolated-prepared-tests.xml": {
+      "bytes": 203392,
+      "sha256": "baba6b9d8d87cdbd9dd196c70007fb2a90d9416a975f2606d76ec07e8dbea05b",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/isolated-prepared-tests.xml"
+    },
+    "main-source-dependency-manifest.json": {
+      "bytes": 635369,
+      "sha256": "b03eb21521e98d3bd0b3c8e8252f92a5b77c301dfd165ec6f8c68ec67d9fae43",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/main-source-dependency-manifest.json"
+    },
+    "main-source-export-manifest.json": {
+      "bytes": 3306904,
+      "sha256": "57f2543207ecf436cf9082a6a3a20fddf9f9c5f3df71bd9d8be9111199097935",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/main-source-export-manifest.json"
+    },
+    "main-source-test-summary.json": {
+      "bytes": 8245,
+      "sha256": "26e8e566583201b30c0730b78640d01c7eaf5417b3119b79d12e8877dd5e94c3",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/main-source-test-summary.json"
+    },
+    "methodology.json": {
+      "bytes": 2952,
+      "sha256": "e895bdd0e89cdedabe23da472b3586afe852d625a3ca2b98ae61e7a347a019a0",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/methodology.json"
+    },
+    "native-audit.json": {
+      "bytes": 26450,
+      "sha256": "687465cba9b6c1a711588577aebf8fd023e6db7773c86812283871fc912bc87a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-audit.json"
+    },
+    "native-three-arm/baseline_adaptive/arm-binding.json": {
+      "bytes": 6377,
+      "sha256": "1c2d715b05ade7164f8ef251dcfa50a6e309b5afa5c3bf5913ae5fc5b0dd8962",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/arm-binding.json"
+    },
+    "native-three-arm/baseline_adaptive/dispatch.json": {
+      "bytes": 6980,
+      "sha256": "a5d16f520bdaea6cfdab8c82ea12c5600e795c84dba09ff18d47f08902d78cdf",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/dispatch.json"
+    },
+    "native-three-arm/baseline_adaptive/job.json": {
+      "bytes": 4551,
+      "sha256": "5a659991db3c5d1d70150a2ce981ca07ba91b934b2f1ae37e7b0926fb465c256",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/job.json"
+    },
+    "native-three-arm/baseline_adaptive/package-begin.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/package-begin.json"
+    },
+    "native-three-arm/baseline_adaptive/package-end.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/package-end.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "87775d6bbdb3c3a594c28c04586542f1cfc2684f873380dc8a847424e5a42e08",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/heldout-0/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/qualification/qualification.json": {
+      "bytes": 780547,
+      "sha256": "a7c338565306dbcab69ddbe33cee5f0e1f8b91018beee8c187c6f9ad7bcc38c6",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/qualification.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-0/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-0/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-0/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-0/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-0/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "c6f513a435271cb95a098c91c6e4536ad664744a7f882c3d182894e09f92792d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-0/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-0/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-0/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-0/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-0/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-1/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "a93124de37873b0f6d8733dda83983aca20e8485f4ebefb6686dfd972c409d7e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-1/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-1/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-1/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-1/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "8052414c5b869213181ee34bf5c9cdefef26971257a0b47428022fe61540ab2e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-1/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-1/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-1/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-1/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-1/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-2/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "88749153e060b5e748f6d2707bfa949f04281fc70756051eed9cec67a2e44ae8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-2/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-2/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-2/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-2/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "942f19c5dc9c78c8b5fe6b4c1d7d07c54fbb0da090be4de98849cfa82c7f0ca4",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-2/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-2/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-2/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-2/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-2/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-3/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "fbde2bbc32ea46233c8b4c17e4c3a190341183eb045e956bff186e554888a10f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-3/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-3/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-3/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-3/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "bb34478ad2a301dc04d4898cd353ab41c4a34f8c9d6bed3d9aa2f77be687551c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-3/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-3/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-3/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-3/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-3/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-4/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "e01311821b948f02155c913c4e5d667e6a3c92959eb9c9367caa502b1f84b300",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-4/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-4/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-4/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-4/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "bb34478ad2a301dc04d4898cd353ab41c4a34f8c9d6bed3d9aa2f77be687551c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-4/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-4/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-4/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-4/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-4/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-5/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "c4eb5b4bc33a4f35724354fdbc108a8ea7d97946ea0909bf8e9217a33229ac53",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-5/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-5/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-5/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-5/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "2ad38a66d1ae4acfb54f763f6984fa4cce443759fb2f008c893d5bdb4e7ae4ae",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-5/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-5/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-5/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-5/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-5/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-6/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "9e2f4f47218b3a076e529a8e069956b8bf303df0c12370f3406f5be3fe5917e1",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-6/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-6/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-6/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-6/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "7d46d334a8343e44cfa8848c2b9f24779f57e13022ae440f8266b45fa986f40c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-6/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-6/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-6/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-6/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-6/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-7/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "6805eb6669a8940c5980aaa3704ca8558ef023f46f249c4cfca75088b7d94a21",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-7/lake-0/Legal.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-7/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-7/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-7/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "20c8fe7a2afb8732bc0e7d8a5cad4c751a4da1f38195d6a60e4c24e49746d4b2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-7/lake-0/lake.log"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-7/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-7/lake-0/lakefile.lean"
+    },
+    "native-three-arm/baseline_adaptive/qualification/training-7/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/qualification/training-7/lake-0/lean-toolchain"
+    },
+    "native-three-arm/baseline_adaptive/summary.json": {
+      "bytes": 835145,
+      "sha256": "5faaf0baacf3b9e4e6e9620f6d754abf0246f24e76fd71be3fd0f8074e120fc6",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/summary.json"
+    },
+    "native-three-arm/baseline_adaptive/worker/receipt.json": {
+      "bytes": 804355,
+      "sha256": "4dae8777173ec96e278d99bf60cc4c8aa881418736a27ef22c1b3d30d26f516f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/baseline_adaptive/worker/receipt.json"
+    },
+    "native-three-arm/capacity.json": {
+      "bytes": 989,
+      "sha256": "1ab74c1fdcdc648f162ec318184e8f460d5e8b7f2d51ccbf9ff1a48febc55ed7",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/capacity.json"
+    },
+    "native-three-arm/command.json": {
+      "bytes": 1348,
+      "sha256": "0dd540bf66fb19ba4f51dbf469ca819d7f8812130899727f9f1dedbb918988e3",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/command.json"
+    },
+    "native-three-arm/comparison.json": {
+      "bytes": 2535224,
+      "sha256": "b3e841dde8a46b249d9f59b6d5b2b53b0e3a66fbc65851f919b51cfc25cd8566",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/comparison.json"
+    },
+    "native-three-arm/effective-environment.json": {
+      "bytes": 349,
+      "sha256": "fa5834a89b1f39c036bf50e47b5068063d5ba119ff7efda815475ccddd336ff6",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/effective-environment.json"
+    },
+    "native-three-arm/native-guard.json": {
+      "bytes": 244,
+      "sha256": "3810b27ac349bde669a0b578ead9a94d8bf6d13af28757b825ea5dd2034ce723",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/native-guard.json"
+    },
+    "native-three-arm/native.log": {
+      "bytes": 24805,
+      "sha256": "c76a08000f9628d8d14d2ab4a1eae3ad628500ca441f43160e6c4ef6e1beedf4",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/native.log"
+    },
+    "native-three-arm/package-baseline_adaptive.json": {
+      "bytes": 1108380,
+      "sha256": "5f174e473cf2fd100d8ca72b01c0532a3b073eb7c06d3e437634711049cd1785",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/package-baseline_adaptive.json"
+    },
+    "native-three-arm/package-native-begin.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/package-native-begin.json"
+    },
+    "native-three-arm/package-native-end.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/package-native-end.json"
+    },
+    "native-three-arm/package-parent-begin.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/package-parent-begin.json"
+    },
+    "native-three-arm/package-parent-end.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/package-parent-end.json"
+    },
+    "native-three-arm/package-productive_lr.json": {
+      "bytes": 1108380,
+      "sha256": "5f174e473cf2fd100d8ca72b01c0532a3b073eb7c06d3e437634711049cd1785",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/package-productive_lr.json"
+    },
+    "native-three-arm/package-productive_momentum.json": {
+      "bytes": 1108380,
+      "sha256": "5f174e473cf2fd100d8ca72b01c0532a3b073eb7c06d3e437634711049cd1785",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/package-productive_momentum.json"
+    },
+    "native-three-arm/plan.json": {
+      "bytes": 4088,
+      "sha256": "04cbe3da578894f5bcc7219880d8dcf430c883868dbc27ded8e46258014ad992",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/plan.json"
+    },
+    "native-three-arm/process-observations.json": {
+      "bytes": 27423,
+      "sha256": "660c11d37770c15f2ba3e63d6c72101f3d2bf3ed6038ee53622de2855a2c0457",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/process-observations.json"
+    },
+    "native-three-arm/productive_lr/arm-binding.json": {
+      "bytes": 6373,
+      "sha256": "cd84ccaa0796fee61352d556de1522a0d667a5e9f2266e8a9e6cd6bd7dce8f33",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/arm-binding.json"
+    },
+    "native-three-arm/productive_lr/dispatch.json": {
+      "bytes": 6963,
+      "sha256": "2034e7ae0e0f36a28d1b7cbb987a438f7074365d3ded4babf243f7d3a1380e7a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/dispatch.json"
+    },
+    "native-three-arm/productive_lr/job.json": {
+      "bytes": 4542,
+      "sha256": "eb7e882c126ccdf18188c4a88049aba2587896712e4cc0aa856f1b2e68b6e60b",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/job.json"
+    },
+    "native-three-arm/productive_lr/package-begin.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/package-begin.json"
+    },
+    "native-three-arm/productive_lr/package-end.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/package-end.json"
+    },
+    "native-three-arm/productive_lr/qualification/heldout-0/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/heldout-0/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/heldout-0/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/heldout-0/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/heldout-0/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "b4679dfa899f1c33828e0915590930f5ee0e2db6329f1e4a8ffaeb79d08ba261",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/heldout-0/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/heldout-0/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/heldout-0/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/heldout-0/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/heldout-0/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/qualification/qualification.json": {
+      "bytes": 780474,
+      "sha256": "a4a0bc2bdc0820ae424879cd736c328a3aac1573452d2233e6833a4d2de78bb2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/qualification.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-0/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-0/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-0/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-0/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-0/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "8a9ce1a733087490a3961a35e54d95b9ce53c7af17dce76c3b16b6d689efb627",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-0/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/training-0/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-0/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-0/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-0/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/qualification/training-1/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "a93124de37873b0f6d8733dda83983aca20e8485f4ebefb6686dfd972c409d7e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-1/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-1/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-1/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-1/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "a98898954872e34999696043bb29b11322cd9735341375eae3ea72835c2b6468",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-1/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/training-1/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-1/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-1/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-1/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/qualification/training-2/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "88749153e060b5e748f6d2707bfa949f04281fc70756051eed9cec67a2e44ae8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-2/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-2/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-2/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-2/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "09838dea122fdbe58fb6622a1247dd3098ba39d56edd55ea8466851b2b4f445d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-2/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/training-2/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-2/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-2/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-2/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/qualification/training-3/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "fbde2bbc32ea46233c8b4c17e4c3a190341183eb045e956bff186e554888a10f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-3/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-3/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-3/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-3/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "3ed3885aa77e0ad1ad02a15a32eabe90860323961704cc34737fbe8c505a10c8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-3/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/training-3/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-3/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-3/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-3/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/qualification/training-4/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "e01311821b948f02155c913c4e5d667e6a3c92959eb9c9367caa502b1f84b300",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-4/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-4/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-4/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-4/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "a54a135f709a5cb26f9b867b7d01517d168cd37c4cce11aa87b485cb34ea76ce",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-4/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/training-4/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-4/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-4/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-4/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/qualification/training-5/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "c4eb5b4bc33a4f35724354fdbc108a8ea7d97946ea0909bf8e9217a33229ac53",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-5/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-5/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-5/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-5/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "367217447369687d2b58bf83200dff856d6e369358ff692f36e44f4ba35fc81e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-5/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/training-5/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-5/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-5/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-5/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/qualification/training-6/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "9e2f4f47218b3a076e529a8e069956b8bf303df0c12370f3406f5be3fe5917e1",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-6/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-6/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-6/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-6/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "2ad38a66d1ae4acfb54f763f6984fa4cce443759fb2f008c893d5bdb4e7ae4ae",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-6/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/training-6/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-6/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-6/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-6/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/qualification/training-7/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "6805eb6669a8940c5980aaa3704ca8558ef023f46f249c4cfca75088b7d94a21",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-7/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-7/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-7/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_lr/qualification/training-7/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "002898c90303dbb3500dd329f511ab070ddee54a9fedd5913ee94a0c138a01fb",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-7/lake-0/lake.log"
+    },
+    "native-three-arm/productive_lr/qualification/training-7/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-7/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_lr/qualification/training-7/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/qualification/training-7/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_lr/summary.json": {
+      "bytes": 840147,
+      "sha256": "837f8e14a6ced086b0c58c8e128396241ea064e50cf14eafcc6c5d44408bc595",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/summary.json"
+    },
+    "native-three-arm/productive_lr/worker/receipt.json": {
+      "bytes": 920058,
+      "sha256": "65853b7b9366274bc08f1b182cb6be77de14aad47d60a5c5ba620316eded37ef",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_lr/worker/receipt.json"
+    },
+    "native-three-arm/productive_momentum/arm-binding.json": {
+      "bytes": 6379,
+      "sha256": "0868553bc74f06f081653caa1f754de73ba033b747227bc52fdb040c484cce8c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/arm-binding.json"
+    },
+    "native-three-arm/productive_momentum/dispatch.json": {
+      "bytes": 6985,
+      "sha256": "8e5481a55c425df1161b9e597598f0c873865931880cae222ff599cac6388cde",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/dispatch.json"
+    },
+    "native-three-arm/productive_momentum/job.json": {
+      "bytes": 4560,
+      "sha256": "ce7ea9392ce269104b131a760f4942bdb80088c9c94c33666bdf446e695b3b5a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/job.json"
+    },
+    "native-three-arm/productive_momentum/package-begin.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/package-begin.json"
+    },
+    "native-three-arm/productive_momentum/package-end.json": {
+      "bytes": 1108506,
+      "sha256": "17d353d840b19b06545d9d722ecd7796fd2a2b1e9d1ad758bf6c22e0bc6a16f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/package-end.json"
+    },
+    "native-three-arm/productive_momentum/qualification/heldout-0/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "2823f3177b4bb9d4988e4fba664eb0be7bfa0b94cbdcc1aa6599123d15ef19bf",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/heldout-0/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/heldout-0/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/heldout-0/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/heldout-0/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "d5884c47025394a817357ac3ee10ba3b52f2de94aaf7570aeb407ad43a57dd2c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/heldout-0/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/heldout-0/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/heldout-0/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/heldout-0/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/heldout-0/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/qualification/qualification.json": {
+      "bytes": 780580,
+      "sha256": "64ed0a3ff030b5e7cb164515857bfe51476f7dd9253212a78c68b8b7e025f0b4",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/qualification.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-0/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-0/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-0/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-0/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-0/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "a98898954872e34999696043bb29b11322cd9735341375eae3ea72835c2b6468",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-0/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/training-0/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-0/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-0/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-0/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/qualification/training-1/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "a93124de37873b0f6d8733dda83983aca20e8485f4ebefb6686dfd972c409d7e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-1/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-1/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-1/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-1/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "c1b0b086156173aa79c9792ce9e99ef203f7fa94fb69c06d15bcd25e77e3d95a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-1/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/training-1/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-1/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-1/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-1/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/qualification/training-2/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "88749153e060b5e748f6d2707bfa949f04281fc70756051eed9cec67a2e44ae8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-2/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-2/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-2/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-2/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "d5a2e6af2ddf9f8aa602760ff3ed24bb27daf719683ebf5738d3c85613ebcc8e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-2/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/training-2/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-2/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-2/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-2/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/qualification/training-3/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "fbde2bbc32ea46233c8b4c17e4c3a190341183eb045e956bff186e554888a10f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-3/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-3/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-3/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-3/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "e9a5a5e868909cd7e99e4f13510c1a88a265c0014e9547ff48b483ad13c159aa",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-3/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/training-3/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-3/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-3/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-3/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/qualification/training-4/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "e01311821b948f02155c913c4e5d667e6a3c92959eb9c9367caa502b1f84b300",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-4/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-4/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-4/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-4/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "2c4c6b824f1170f443251931e84667c73930d00efb0575d3e18222537b84527c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-4/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/training-4/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-4/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-4/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-4/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/qualification/training-5/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "c4eb5b4bc33a4f35724354fdbc108a8ea7d97946ea0909bf8e9217a33229ac53",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-5/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-5/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-5/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-5/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "6370696354b0d71bf67af19ba78b72e6ef12dbf6716d00fe6da08954303234bc",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-5/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/training-5/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-5/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-5/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-5/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/qualification/training-6/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "9e2f4f47218b3a076e529a8e069956b8bf303df0c12370f3406f5be3fe5917e1",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-6/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-6/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-6/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-6/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "266b30a988990bc586e7516c8949382d34d41b7e0a21c629dcbaf95a63351379",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-6/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/training-6/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-6/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-6/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-6/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/qualification/training-7/lake-0/Legal.lean": {
+      "bytes": 169,
+      "sha256": "6805eb6669a8940c5980aaa3704ca8558ef023f46f249c4cfca75088b7d94a21",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-7/lake-0/Legal.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-7/lake-0/lake-manifest.json": {
+      "bytes": 111,
+      "sha256": "a4ff80dc61fc910239bd70c78499e908ff6ae8c2724247537672821acf86e868",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-7/lake-0/lake-manifest.json"
+    },
+    "native-three-arm/productive_momentum/qualification/training-7/lake-0/lake.log": {
+      "bytes": 178,
+      "sha256": "7d03267a1cdee41d95256a55fd1f1c9bc9f4a6f02dd95d3923226f38fa9d2fe7",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-7/lake-0/lake.log"
+    },
+    "native-three-arm/productive_momentum/qualification/training-7/lake-0/lakefile.lean": {
+      "bytes": 77,
+      "sha256": "696caa9342561a7b2ea51941027f28dcdd419bb5dbee07be2af182f4c18fd614",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-7/lake-0/lakefile.lean"
+    },
+    "native-three-arm/productive_momentum/qualification/training-7/lake-0/lean-toolchain": {
+      "bytes": 25,
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/qualification/training-7/lake-0/lean-toolchain"
+    },
+    "native-three-arm/productive_momentum/summary.json": {
+      "bytes": 843771,
+      "sha256": "383364157f92237523355e200efd2e731065e324dfd6d8743ba58fec21759e2a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/summary.json"
+    },
+    "native-three-arm/productive_momentum/worker/receipt.json": {
+      "bytes": 983630,
+      "sha256": "7e85d48692016b0949a8cc938dc003ee850b3e87c00a7ebef1910ac10ee8179e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/productive_momentum/worker/receipt.json"
+    },
+    "native-three-arm/resources.json": {
+      "bytes": 3537,
+      "sha256": "c4741ca506e50cefd4164a48c09b39afbe21767eeb0c823374c43cdd47cf7f54",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/resources.json"
+    },
+    "native-three-arm/selected-canary.json": {
+      "bytes": 34052,
+      "sha256": "3a44225cc269213e467b39e5a4f1a42f9f79804f90f083fffa4a89800d674636",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/selected-canary.json"
+    },
+    "native-three-arm/selection-before-canary.json": {
+      "bytes": 285,
+      "sha256": "a2fd3adc98d7f84ebf65ba7b6feec36bcc9861bd01bd2ba8ffd45f6f590fd408",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/native-three-arm/selection-before-canary.json"
+    },
+    "optimizer-change-manifest.json": {
+      "bytes": 885,
+      "sha256": "bc12299d44a6a56419e442e8f963df429f80bbf704b69f9d87595193c9a907fb",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/optimizer-change-manifest.json"
+    },
+    "optimizer-focused-tests.log": {
+      "bytes": 1645,
+      "sha256": "f8ad78e1a80c73bc323ca6c2b2e8efaf805b27c042f40f9e0d2e17ad8803bfdf",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/optimizer-focused-tests.log"
+    },
+    "optimizer-owned-delta.patch": {
+      "bytes": 44175,
+      "sha256": "65c17706cc5957f26f5af6f871626ba0849718bb08f427ca1f6e4052b0eb0735",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/optimizer-owned-delta.patch"
+    },
+    "optimizer-readiness.json": {
+      "bytes": 1349,
+      "sha256": "9b2dc09a8da4c511ca32e363672e80fb56978e406ee528a648ae0fc737bdef18",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/optimizer-readiness.json"
+    },
+    "plot_productivity.py": {
+      "bytes": 5755,
+      "sha256": "9bad2a45b99e8e1a55688488942cba9bc026a75c2605a218ffa8751ff233b662",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/plot_productivity.py"
+    },
+    "prepare_publication.py": {
+      "bytes": 22536,
+      "sha256": "0cc07b6da0aab55a722d6ea040d5ab04732306955b2d8be1d456c467c1815077",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/prepare_publication.py"
+    },
+    "prepared-integrated-plan.json": {
+      "bytes": 4013,
+      "sha256": "a757aa6fd1a605a6eb830ab985cf5752bd5d157453cd263bcb2d9f0a950231b9",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/prepared-integrated-plan.json"
+    },
+    "prepared-main-plan.json": {
+      "bytes": 4088,
+      "sha256": "04cbe3da578894f5bcc7219880d8dcf430c883868dbc27ded8e46258014ad992",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/prepared-main-plan.json"
+    },
+    "productivity-curve-data.csv": {
+      "bytes": 1206,
+      "sha256": "9ea1c75a55539ca200ffe6029682a7a97c7c262e361e3b3b14c04716bb986092",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/productivity-curve-data.csv"
+    },
+    "productivity-curves.svg": {
+      "bytes": 99059,
+      "sha256": "237ae894cc82514cb79c3a0a0c862d126fbe9cd89fc49576a185065ce4a32f72",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/productivity-curves.svg"
+    },
+    "productivity-plot.json": {
+      "bytes": 1717,
+      "sha256": "6941336b52b3ccf2a3f4022143203af65f40d6bf42ccc5193fc67943f4a54dd0",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/productivity-plot.json"
+    },
+    "productivity-summary.json": {
+      "bytes": 109806,
+      "sha256": "0c3129984593ed304dc98442d12efca4012ab2a3f1ae4b29a5d6fb8ca7aa4f95",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/productivity-summary.json"
+    },
+    "publication-change-manifest.json": {
+      "bytes": 2179,
+      "sha256": "d959632ddbba3e5fd22780a9adaebf7feed350b4b23abd05b066de8188783620",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/publication-change-manifest.json"
+    },
+    "publication-source-files.json": {
+      "bytes": 595,
+      "sha256": "4b3870196ceacbf2a30b33e3a86d2b857d32138620d68ea1f743fc673aafabf1",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/publication-source-files.json"
+    },
+    "push_publication.py": {
+      "bytes": 7990,
+      "sha256": "0e59fe415ef9b5b29e04b4fb03c28dc76ca8d7fcb94d38930b9e68b225473856",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/push_publication.py"
+    },
+    "reconstruction-audit.json": {
+      "bytes": 11353,
+      "sha256": "17ef5dc1887d262d40f073eb98161f8303f8ed01b643872a342a7e6eae99145e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/reconstruction-audit.json"
+    },
+    "reconstruction-source-parity.json": {
+      "bytes": 10933,
+      "sha256": "8003051a2c5e2cf347aa27a5ed24923fe184d990c31f9ea8ba1267a591f62a31",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/reconstruction-source-parity.json"
+    },
+    "resource-budget-plan.json": {
+      "bytes": 686,
+      "sha256": "34e3a7ad89f435b54740945fffabdfe57118e5f830f7c935fd0d304f9bc916a3",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/resource-budget-plan.json"
+    },
+    "resource-closeout-combined.json": {
+      "bytes": 10984,
+      "sha256": "45318c0fb19fdf0d05fa8ec37b53ca81487a5404f6d70c27a5a485b1bbd99415",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/resource-closeout-combined.json"
+    },
+    "resource-closeout-main.json": {
+      "bytes": 6745,
+      "sha256": "5daf4c2cade35cad40ad5faaa6b3e06cb5ffa704b6e63aec703e694d71e78071",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/resource-closeout-main.json"
+    },
+    "resource-closeout.json": {
+      "bytes": 6745,
+      "sha256": "5daf4c2cade35cad40ad5faaa6b3e06cb5ffa704b6e63aec703e694d71e78071",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/resource-closeout.json"
+    },
+    "run_productivity_benchmark.py": {
+      "bytes": 37225,
+      "sha256": "d56be7b852fc3e9303b88671391e0016fc17e68b093c75c22885b437c1b4299d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/run_productivity_benchmark.py"
+    },
+    "scoped-deltas/0903d502cd30294fdf5adf9d93cfee6205f71a21de04800b1228a66302d85d9d.patch": {
+      "bytes": 5154,
+      "sha256": "e57a24cdfcc18d76c4580702d2e3ed4e52b576c049a9fe8fef70922888c145dd",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/scoped-deltas/0903d502cd30294fdf5adf9d93cfee6205f71a21de04800b1228a66302d85d9d.patch"
+    },
+    "scoped-deltas/15cc4e454f9abcd461b109c9bd80e2843a9b8685c3158a38e062a7c25176728d.patch": {
+      "bytes": 11800,
+      "sha256": "c8ab7f670938e289ad0238c7664883b03a59f1fcd6929915ac123c19a098b550",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/scoped-deltas/15cc4e454f9abcd461b109c9bd80e2843a9b8685c3158a38e062a7c25176728d.patch"
+    },
+    "scoped-deltas/9cd15eb5330093036181e07e4c4f3ad78e2c60bd935c9872c383ba2f6612c09a.patch": {
+      "bytes": 20445,
+      "sha256": "fdffe038c790fcfba7bba41ff030a3feae2e4362471c976bc2d3f553c0768e23",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/scoped-deltas/9cd15eb5330093036181e07e4c4f3ad78e2c60bd935c9872c383ba2f6612c09a.patch"
+    },
+    "scoped-deltas/b895ffdf6591c404cf58c6383f1bd0dfa6c4ab9ac3f31db6b972059f5d8f5b4f.patch": {
+      "bytes": 11930,
+      "sha256": "d7bb0d8a3e0c855d92f7bf8be93d32ec971226a5450526416247de31145d5cc8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/scoped-deltas/b895ffdf6591c404cf58c6383f1bd0dfa6c4ab9ac3f31db6b972059f5d8f5b4f.patch"
+    },
+    "scoped-deltas/c8ab74584fed7eb072b279bcf187e919337df82a758e139baccfe0a8fd6762dc.patch": {
+      "bytes": 2760,
+      "sha256": "0b214a6010d04d01c292a91ff22cbf6dbbeaf172c61646fec6b005981410ddcd",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/scoped-deltas/c8ab74584fed7eb072b279bcf187e919337df82a758e139baccfe0a8fd6762dc.patch"
+    },
+    "scoped-deltas/e65771d0c82873b95d10d547aa924e79740dd3fcc2d15a6842f3af962ee88454.patch": {
+      "bytes": 5817,
+      "sha256": "dacc4a7065a2275959e9a01d6c4f5ec62029b3439b995142b9ffb55c943f9020",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/scoped-deltas/e65771d0c82873b95d10d547aa924e79740dd3fcc2d15a6842f3af962ee88454.patch"
+    },
+    "scoped-deltas/ed2ff9a48b7652ef8f956e7632ee5921d7ec097fd68bc915418205442deb40ea.patch": {
+      "bytes": 3681,
+      "sha256": "ed1c085eb798c8535251ae95b39929da92083664d2b27129b4984c6e693c704a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/scoped-deltas/ed2ff9a48b7652ef8f956e7632ee5921d7ec097fd68bc915418205442deb40ea.patch"
+    },
+    "semantic-gates.json": {
+      "bytes": 12937,
+      "sha256": "ef4947c15c914f957bdecb20661fdcf0db8e83927031143660c7e6bcad3a569a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/semantic-gates.json"
+    },
+    "source-scope.json": {
+      "bytes": 278908,
+      "sha256": "f326840351f56fcad54bfa6e0a289d315b4b99fd9f2545eba6f07988362e41b9",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/source-scope.json"
+    },
+    "summarize_productivity.py": {
+      "bytes": 9714,
+      "sha256": "701d9f16010d732c54428cef8d4f8cf70e95574e78970ec2731e02fecea9152e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/summarize_productivity.py"
+    },
+    "test_prepared_main.py": {
+      "bytes": 16788,
+      "sha256": "7821410716f6d151c2722abd3993dec898b9fef02367bd33946b49a8df47b166",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/test_prepared_main.py"
+    },
+    "worker-cli-change-manifest.json": {
+      "bytes": 1228,
+      "sha256": "56712a92322de0dd3d1cc8a667a63803b7fecec41d3adbfcf2c7028f8f1f8169",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/worker-cli-change-manifest.json"
+    },
+    "worker-cli-owned-delta.patch": {
+      "bytes": 17412,
+      "sha256": "75030ae14bf20ae687f458f47fe81028ddc160305549c854a5e185b3fa420674",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/worker-cli-owned-delta.patch"
+    },
+    "worker-cli-test-summary.json": {
+      "bytes": 1762,
+      "sha256": "a0cc02ae8e6559fe9f8f1ceea7c00f97c7da8207f5ed17d3902a54a33b77cd23",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/worker-cli-test-summary.json"
+    },
+    "worker-cli-tests.log": {
+      "bytes": 1531,
+      "sha256": "93361f4b3c489b513738738557a7ea20d8148a862611412922c0f3bc047bb7e5",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/worker-cli-tests.log"
+    },
+    "worker-cli-tests.xml": {
+      "bytes": 51006,
+      "sha256": "4c101a833644fc0dfd6cf3ecc8e46280a02830241bc56fd0993c14a6332c4131",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-epoch-productivity-20260929/worker-cli-tests.xml"
+    }
+  },
+  "global_minimum_claim": false,
+  "lake_build_binaries_included": false,
+  "native_runs": {
+    "integrated-productive-refined": {
+      "matched_comparison_eligible": true,
+      "source_guard": {
+        "admitted": false,
+        "core_unchanged": true,
+        "orchestration_unchanged": true,
+        "producer_manifest": {
+          "file_count": 7835,
+          "sha256": "3a5445309b3816ee6a023eb91e97c95c1aa8b0974f38609fcfbd6942bd21d95f"
+        },
+        "protected_seed_unchanged": true,
+        "source_unchanged": true
+      },
+      "status": "completed"
+    },
+    "native-three-arm": {
+      "matched_comparison_eligible": true,
+      "source_guard": {
+        "admitted": false,
+        "core_unchanged": true,
+        "orchestration_unchanged": true,
+        "producer_manifest": {
+          "file_count": 7835,
+          "sha256": "3a5445309b3816ee6a023eb91e97c95c1aa8b0974f38609fcfbd6942bd21d95f"
+        },
+        "protected_seed_unchanged": true,
+        "source_unchanged": true
+      },
+      "status": "completed"
+    }
+  },
+  "schema": "autoencoder-epoch-productivity-evidence/v1",
+  "scope": "Fixed-parent synthetic-duration optimizer ablation; eight training, one tuning, two experiment-held canaries. Source or timing failures are retained, not relabeled. Qualification outcomes do not establish full federal law or Constitution formalization.",
+  "total_bytes_excluding_manifest": 45100320,
+  "weights_included": false
+}
