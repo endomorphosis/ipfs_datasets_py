@@ -11,16 +11,19 @@ from .span_evidence import DEFAULT_REPOSITORY_ID, SpanEvidenceError
 from .supervisor_queue import SCHEMA as REPAIR_SCHEMA, canonical_bytes
 from .supervisor_todo import SCHEMA as TODO_SCHEMA
 
-CENSUS_SCHEMA = "uscode-autoformal-ae-compiler-census/v2"
+CENSUS_SCHEMA_V2 = "uscode-autoformal-ae-compiler-census/v2"
+CENSUS_SCHEMA = "uscode-autoformal-ae-compiler-census/v3"
 GOAL_EXPORT_SCHEMA = "uscode-autoformal-supervisor-goal-export/v2"
-EXCHANGE_MANIFEST_SCHEMA = "uscode-autoformal-exchange-manifest/v2"
-CENSUS_REPO_DIR = "autoformal/uscode/census"
+EXCHANGE_MANIFEST_SCHEMA_V2 = "uscode-autoformal-exchange-manifest/v2"
+EXCHANGE_MANIFEST_SCHEMA = "uscode-autoformal-exchange-manifest/v3"
+CENSUS_REPO_DIR_V2 = "autoformal/uscode/census"
+CENSUS_REPO_DIR = "autoformal/uscode/census-v3"
 GOALS_REPO_DIR = "autoformal/uscode/goals"
 MANIFEST_REPO_DIR = "autoformal/uscode/exchanges"
 _FORBIDDEN_NAMES = {"resume-checkpoint.parquet", "sealed-spans.parquet"}
 _MAX_BYTES = 64 * 1024 * 1024
 _MAX_ROW_BYTES = 8 * 1024 * 1024
-CENSUS_COLUMNS = (
+CENSUS_COLUMNS_V2 = (
     "schema_version",
     "record_kind",
     "repository_id",
@@ -61,6 +64,31 @@ CENSUS_COLUMNS = (
     "formalized",
     "wrote_compiler",
 )
+# Existing v2 artifacts remain immutable. New observations expose their outputs
+# without requiring consumers to reverse engineer the original input envelope.
+_OUTPUT_JSON_COLUMNS = (
+    "autoencoder_raw_decoder_json",
+    "autoencoder_safety_projected_decoder_json",
+    "embedding_representation_json",
+    "compiler_rules_json",
+    "compiler_components_json",
+    "logic_target_observation_json",
+    "bridge_names_json",
+    "observed_logic_families_json",
+    "observed_logic_views_json",
+)
+CENSUS_COLUMNS = CENSUS_COLUMNS_V2 + (
+    "autoencoder_output_kind",
+    "autoencoder_output_status",
+    "compiler_status",
+    "compiler_reason",
+    "compilation_complete",
+    *_OUTPUT_JSON_COLUMNS,
+)
+_MANIFEST_CENSUS_SCHEMAS = {
+    EXCHANGE_MANIFEST_SCHEMA_V2: (CENSUS_SCHEMA_V2, CENSUS_COLUMNS_V2),
+    EXCHANGE_MANIFEST_SCHEMA: (CENSUS_SCHEMA, CENSUS_COLUMNS),
+}
 GOAL_COLUMNS = (
     "schema_version",
     "record_kind",
@@ -185,6 +213,112 @@ def _autoencoder_text(item):
     )
 
 
+def _explicit_outputs(item, autoencoder_text):
+    """Retain measured decoder outputs separately from source-derived targets."""
+    observation = item.get("autoencoder_observation")
+    observation = observation if isinstance(observation, Mapping) else item
+    raw = observation.get("raw_decoder")
+    projected = observation.get("safety_projected_decoder")
+    representation = observation.get("embedding_representation")
+    target = item.get("logic_target_observation", observation.get("logic_target_observation"))
+    compiler = item.get("compiler_result")
+    compiler = compiler if isinstance(compiler, Mapping) else {}
+    rules = compiler.get("rules")
+    if rules is None:
+        rule = compiler.get("rule")
+        rules = [rule] if isinstance(rule, Mapping) else []
+    if not isinstance(rules, list) or any(not isinstance(rule, Mapping) for rule in rules):
+        raise SpanEvidenceError("compiler rules must be a list of structured rules")
+    components = compiler.get("components", [])
+    if not isinstance(components, list):
+        raise SpanEvidenceError("compiler components must be a list")
+    for label, value in (("raw decoder", raw), ("safety projected decoder", projected),
+                         ("embedding representation", representation), ("logic target", target)):
+        if value is not None and not isinstance(value, Mapping):
+            raise SpanEvidenceError(label + " observation must be an object or null")
+    kind = "embedding_reconstruction" if raw is not None else "text" if autoencoder_text else "unavailable"
+    status = str(observation.get("status") or ("observed" if kind != "unavailable" else "not_observed"))
+    target = dict(target) if target is not None else None
+    bridge_names = target.get("bridge_names", []) if target is not None else []
+    families = target.get("observed_families", []) if target is not None else []
+    views = target.get("observed_views", []) if target is not None else []
+    for label, values in (("bridge names", bridge_names), ("observed logic families", families),
+                          ("observed logic views", views)):
+        if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+            raise SpanEvidenceError(label + " must be a list of strings")
+    complete = compiler.get("compilation_complete")
+    if complete is not None and not isinstance(complete, bool):
+        raise SpanEvidenceError("compiler completeness must be boolean or null")
+    return {
+        "autoencoder_output_kind": kind,
+        "autoencoder_output_status": status,
+        "autoencoder_raw_decoder_json": _json(raw),
+        "autoencoder_safety_projected_decoder_json": _json(projected),
+        "embedding_representation_json": _json(representation),
+        "compiler_status": str(compiler.get("status") or compiler.get("compiler_status")
+                               or ("rule_observed" if rules else "not_observed")),
+        "compiler_reason": str(compiler.get("reason") or compiler.get("error_code")
+                               or item.get("compiler_reason") or ""),
+        "compilation_complete": complete,
+        "compiler_rules_json": _json(rules),
+        "compiler_components_json": _json(components),
+        "logic_target_observation_json": _json(target),
+        "bridge_names_json": _json(bridge_names),
+        "observed_logic_families_json": _json(families),
+        "observed_logic_views_json": _json(views),
+    }
+
+
+def _observation_evidence(row):
+    """Bound goal context while retaining exact, verifiable census retrieval keys.
+
+    Large bridge documents stay in the census. A later supervisor must verify the
+    immutable exchange manifest, find this census hash, and read these columns.
+    Inline context is capped independently of the original input row size.
+    """
+    columns = ("autoencoder_output_kind", "autoencoder_output_status", "compiler_status",
+               "compiler_reason", "compilation_complete", "compiler_decompiled",
+               "autoencoder_text", *_OUTPUT_JSON_COLUMNS)
+    fields = {}
+    remaining = 32 * 1024
+    for name in columns:
+        raw = row[name] if name.endswith("_json") else _json(row[name])
+        encoded = raw.encode("utf-8")
+        field = {"column": name, "sha256": _sha(encoded), "bytes": len(encoded)}
+        if len(encoded) <= min(4096, remaining):
+            field["inline"] = json.loads(raw)
+            remaining -= len(encoded)
+        fields[name] = field
+    return {
+        "schema": "uscode-autoformal-output-evidence/v1",
+        "repository_id": row["repository_id"],
+        "source_span_id": row["source_span_id"],
+        "source_text_sha256": row["source_text_sha256"],
+        "census_sha256": row["census_sha256"],
+        "input_json_sha256": _sha(row["input_json"].encode("utf-8")),
+        "retrieval": {
+            "kind": "immutable_exchange_census",
+            "manifest_directory": MANIFEST_REPO_DIR,
+            "match_column": "census_sha256",
+            "match_value": row["census_sha256"],
+            "input_column": "input_json",
+            "require_manifest_verification": True,
+        },
+        "outputs": fields,
+        "interpretation": {
+            "autoencoder_raw_decoder_json": "Measured learned decoder output; vector diagnostics are not symbolic formulas or semantic qualification.",
+            "autoencoder_safety_projected_decoder_json": "Postprocessed decoder observation; target-conditioned projection is not independent learned output.",
+            "logic_target_observation_json": "Source-derived bridge target, not an autoencoder-generated formal output or proof.",
+            "compiler_rules_json": "Observed deterministic compiler rules; compilation and text roundtrip do not grant admission.",
+            "admission": "Only the source-locked lake build <Lib> validation path can admit; metrics and this dataset are not admission.",
+            "supervisor_work": "Deferred repair context for explicit later import into ipfs_accelerate_py; export executes no task. Preserve the packet acceptance and regression gates.",
+        },
+        "counts_as_validation": False,
+        "admitted": False,
+        "formalized": False,
+    }
+
+
 def compiled_rows_from_evidence(rows):
     result = []
     for row in rows:
@@ -244,6 +378,25 @@ def _strict(item):
         if isinstance(item.get(key), bool):
             return item[key]
     return None
+
+
+def _partial_compilation(compiler):
+    """Distinguish incomplete emitted output from an ordinary full abstention."""
+    if not isinstance(compiler, Mapping) or compiler.get("compilation_complete") is not False:
+        return False
+    if isinstance(compiler.get("rule"), Mapping) or any(
+        isinstance(rule, Mapping) for rule in compiler.get("rules") or []
+    ):
+        return True
+    return any(
+        isinstance(component, Mapping)
+        and (
+            component.get("compilation_complete") is True
+            or component.get("compiler_status", component.get("status"))
+            in {"compiled", "roundtrip_ok", "repeal"}
+        )
+        for component in compiler.get("components") or []
+    )
 
 
 def _row_hash(row):
@@ -332,14 +485,23 @@ def exchange_from_compiled(
             strict_reason = str(
                 compiler_result.get("reason") or compiler_result.get("error_code") or ""
             )
-        if strict is False:
+        partial_compilation = _partial_compilation(compiler_result)
+        missing_autoencoder_evidence = not ae_text or any(value is None for value in scores.values())
+        if partial_compilation:
+            # A historical per-component roundtrip can be true while another
+            # component abstains. Retain that original observation and route the
+            # incomplete source conversion to the existing full repair scope.
+            compared.update(agrees=False, reason="strict_roundtrip_failed")
+            capture["compiler_repair_trigger"] = "incomplete_component_compilation"
+            capture["compiler_compilation_complete"] = False
+        elif strict is False:
             reason = strict_reason or "strict_roundtrip_failed"
             try:
                 approved_edit_scope(reason)
             except RepairQueueError:
                 reason = "compiler_abstain"
             compared.update(agrees=False, reason=reason)
-        elif not ae_text or any(value is None for value in scores.values()):
+        elif missing_autoencoder_evidence:
             compared.update(agrees=False, reason="inference_still_failing")
         provenance = (
             {
@@ -403,6 +565,7 @@ def exchange_from_compiled(
             "admitted": False,
             "formalized": False,
             "wrote_compiler": False,
+            **_explicit_outputs(item, ae_text),
         }
         row["census_sha256"] = _row_hash(row)
         census_rows.append(row)
@@ -413,6 +576,7 @@ def exchange_from_compiled(
             "observed_strict_reason": strict_reason,
             "autoencoder_output_sha256": _sha(ae_text.encode()),
             "comparison_is_not_validation": True,
+            "observation_evidence": _observation_evidence(row),
         }
         needs_goal = (
             compared.get("agrees") is not True
@@ -427,7 +591,7 @@ def exchange_from_compiled(
             code_identity=row["code_identity"],
             model_identity=row["model_identity"],
         )
-        if original_train and not goals.get("training_goals"):
+        if (original_train or (partial_compilation and missing_autoencoder_evidence)) and not goals.get("training_goals"):
             deferred = supervisor_repair_goals(
                 [{**compared, "reason": "inference_still_failing", "agrees": False}],
                 release_id=row["release_id"],
@@ -502,6 +666,7 @@ def _schema(columns):
         "admitted",
         "agrees",
         "compiler_roundtrip",
+        "compilation_complete",
         "strict_compiler_agreement",
         "enqueued",
         "formalized",
@@ -727,6 +892,10 @@ def _validate_goal_rows(rows, census=None):
                 )
             ):
                 raise SpanEvidenceError("goal provenance differs from census")
+            if evidence["schema_version"] == CENSUS_SCHEMA and capture.get(
+                "observation_evidence"
+            ) != _observation_evidence(evidence):
+                raise SpanEvidenceError("goal output context differs from census")
     return {
         "repair_packets": repair_packets,
         "training_goals": training_goals,
@@ -883,12 +1052,14 @@ def load_exchange_bundle(
         manifest = _object(manifest_raw.decode("utf-8"))
     except UnicodeError as exc:
         raise SpanEvidenceError("manifest is not UTF-8") from exc
-    if manifest.get("schema") != EXCHANGE_MANIFEST_SCHEMA:
+    census_version = _MANIFEST_CENSUS_SCHEMAS.get(manifest.get("schema"))
+    if census_version is None:
         raise SpanEvidenceError("unsupported exchange manifest")
+    census_schema, census_columns = census_version
     _flags(manifest)
     _repo_path(manifest.get("path_in_repo") or "")
     tables, paths, used, decoded = {}, {}, len(manifest_raw), 0
-    for kind, columns in (("census", CENSUS_COLUMNS), ("goals", GOAL_COLUMNS)):
+    for kind, columns in (("census", census_columns), ("goals", GOAL_COLUMNS)):
         descriptor = manifest.get(kind)
         if not isinstance(descriptor, Mapping):
             raise SpanEvidenceError("manifest is missing an artifact descriptor")
@@ -920,7 +1091,7 @@ def load_exchange_bundle(
     census = {}
     for row in tables["census"]:
         _flags(row)
-        if row["schema_version"] != CENSUS_SCHEMA or row["record_kind"] != "span":
+        if row["schema_version"] != census_schema or row["record_kind"] != "span":
             raise SpanEvidenceError("unsupported census row")
         if (
             row["repository_id"] != manifest["repository_id"]
@@ -937,6 +1108,11 @@ def load_exchange_bundle(
                     "census JSON evidence exceeds its row byte bound"
                 )
             _object(row[key])
+        if census_schema == CENSUS_SCHEMA:
+            original = _object(row["input_json"])
+            expected_outputs = _explicit_outputs(original, _autoencoder_text(original))
+            if any(row[key] != value for key, value in expected_outputs.items()):
+                raise SpanEvidenceError("explicit output columns differ from original observation")
         census[row["census_sha256"]] = row
     verified = _validate_goal_rows(tables["goals"], census)
     fingerprint = _fingerprint(tables["census"], tables["goals"])
@@ -956,6 +1132,15 @@ def load_exchange_bundle(
 
 
 validate_exchange_manifest = load_exchange_bundle
+
+
+def _census_version_for_rows(rows):
+    schemas = {row.get("schema_version") for row in rows}
+    if not schemas or schemas == {CENSUS_SCHEMA}:
+        return EXCHANGE_MANIFEST_SCHEMA, CENSUS_COLUMNS
+    if schemas == {CENSUS_SCHEMA_V2}:
+        return EXCHANGE_MANIFEST_SCHEMA_V2, CENSUS_COLUMNS_V2
+    raise SpanEvidenceError("census versions must not be mixed within an immutable bundle")
 
 
 def _manifest_for_pair(
@@ -979,9 +1164,11 @@ def _manifest_for_pair(
             else default + "/" + name
         )
 
+    schema, unused_columns = _census_version_for_rows(census_rows)
+    census_directory = CENSUS_REPO_DIR_V2 if schema == EXCHANGE_MANIFEST_SCHEMA_V2 else CENSUS_REPO_DIR
     census_remote = content_path(
         census_path_in_repo,
-        CENSUS_REPO_DIR + "/" + safe,
+        census_directory + "/" + safe,
         "census-" + fingerprint + ".parquet",
     )
     goals_remote = content_path(
@@ -990,7 +1177,7 @@ def _manifest_for_pair(
         "goals-" + fingerprint + ".parquet",
     )
     manifest = {
-        "schema": EXCHANGE_MANIFEST_SCHEMA,
+        "schema": schema,
         "repository_id": repository_id,
         "fingerprint": fingerprint,
         "path_in_repo": MANIFEST_REPO_DIR
@@ -1037,7 +1224,8 @@ def _save_bundle(
         )
     _refuse(census_path)
     _refuse(goals_path)
-    census_written = _write_table(census_rows, Path(census_path), CENSUS_COLUMNS)
+    unused_schema, columns = _census_version_for_rows(census_rows)
+    census_written = _write_table(census_rows, Path(census_path), columns)
     goals_written = _write_table(goals, Path(goals_path), GOAL_COLUMNS)
     manifest = _manifest_for_pair(
         census_written,

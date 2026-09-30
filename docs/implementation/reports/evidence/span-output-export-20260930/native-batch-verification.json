@@ -1,0 +1,85 @@
+{
+  "commit": "0122d4f3197779e8eb17780b26d222935ba98db9",
+  "manifest_path": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-9d6b51421fcfa9095a5c6a95c065bc5ec285e317c81cb0bfd60032eb03433cd0.manifest.json",
+  "admitted": false,
+  "formalized": false,
+  "census": {
+    "row_count": 32,
+    "schema": "uscode-autoformal-ae-compiler-census/v3",
+    "raw_decoder_count": 32,
+    "compiler_rule_count": 1,
+    "verified_logic_documents": 32,
+    "example_compiler_outputs": [
+      {
+        "source_span_id": "uscode-span-14c1bb9013f997f2bd8d6db3dcd3406d01254b099742f70002277bfccac02ccf",
+        "source_text": "4251], as added by subsection (a), shall apply to major defense acquisition programs on and after March 1, 2008.",
+        "compiler_rules_json": "[{\"action\":\"apply\",\"actor\":\"as added by subsection (a)\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"to major defense acquisition programs on and after March\",\"temporal\":[\"march 1\"],\"temporal_records\":[{\"quantity\":null,\"temporal_kind\":\"after_date\",\"value\":\"march 1\"}]}]",
+        "compiler_decompiled": "As added by subsection (a) must apply to major defense acquisition programs on and after March march 1.",
+        "compiler_status": "compiled",
+        "compiler_reason": ""
+      }
+    ],
+    "bridges": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "observed_views": [
+      "cec_dcec.cec_events",
+      "cec_dcec.dcec_formula",
+      "cec_dcec.event_calculus",
+      "cec_dcec.frame_logic",
+      "cec_dcec.neo4j_graph_data",
+      "cec_dcec.proof_trace",
+      "deontic_norms.deontic_decoder_reconstructions",
+      "deontic_norms.deontic_formula_records",
+      "deontic_norms.deontic_graph",
+      "deontic_norms.deontic_ir",
+      "deontic_norms.deontic_ir_slot_provenance",
+      "deontic_norms.deontic_parser_capability",
+      "deontic_norms.deontic_parser_metrics",
+      "deontic_norms.deontic_phase8_quality",
+      "deontic_norms.deontic_proof_obligations",
+      "deontic_norms.deontic_prover_syntax",
+      "deontic_norms.deontic_reconstruction_slot_loss",
+      "deontic_norms.deontic_repair_queue",
+      "deontic_norms.frame_logic",
+      "deontic_norms.neo4j_graph_data",
+      "external_prover_router.frame_logic",
+      "external_prover_router.neo4j_graph_data",
+      "external_prover_router.prover_formulas",
+      "fol_tdfol.frame_logic",
+      "fol_tdfol.neo4j_graph_data",
+      "fol_tdfol.proof_obligations",
+      "fol_tdfol.tdfol_formula",
+      "modal_frame_logic.frame_logic",
+      "modal_frame_logic.modal_ir",
+      "modal_frame_logic.neo4j_graph_data"
+    ]
+  },
+  "goals": {
+    "row_count": 32,
+    "record_kinds": {
+      "repair_packet": 32
+    },
+    "all_deferred": true,
+    "first_packet_keys": [
+      "admitted",
+      "allowed_edit_paths",
+      "board_namespace",
+      "code_identity",
+      "formalized",
+      "model_identity",
+      "preserve",
+      "preserve_rows",
+      "regression_tests",
+      "release_id",
+      "replace",
+      "row",
+      "schema"
+    ]
+  },
+  "verified_remote_sha256": true
+}

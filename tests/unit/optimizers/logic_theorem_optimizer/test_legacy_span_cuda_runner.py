@@ -61,6 +61,31 @@ def test_enqueue_replay_deduplicates_and_conflict_rolls_back_cursor(queue):
     assert runner.meta(db, "section_cursor") == 1
 
 
+def test_recovery_packs_full_logic_documents_losslessly_without_new_inference(queue):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_logic_artifacts import unpack_document
+    from ipfs_datasets_py.logic.autoformal.span_cache_exchange import load_exchange_bundle
+    db, runtime = queue
+    row = source()
+    runner.enqueue(db, {"rows": [row], "next_section": 1})
+    batch_id, _ = runner.select_batch(db, 1)
+    original = receipt(row, batch_id)
+    document = {"views": {"frame": {"payload": {"triples": ["retained triple"] * 10000}}}}
+    original["rows"][0]["logic_target_observation"] = {
+        "status": "captured", "document": document, "learned_output": False, "admitted": False}
+    path = runtime / "receipts" / (batch_id + ".json")
+    runner.atomic(path, original)
+    runner.recover(db, runtime, "fixture-agent")
+    saved = json.loads(path.read_text())
+    assert saved["artifact_reencoding"]["inference_rerun"] is False
+    assert unpack_document(saved["rows"][0]["logic_target_observation"]["document"]) == document
+    assert json.loads((runtime / "artifact-migrations" / (batch_id + ".unpacked.json")).read_text()) == original
+    manifest = db.execute("SELECT manifest FROM batches WHERE id=?", [batch_id]).fetchone()[0]
+    bundle = load_exchange_bundle(manifest)
+    uploaded = json.loads(bundle["census_rows"][0]["logic_target_observation_json"])
+    assert unpack_document(uploaded["document"]) == document
+    assert len(path.read_bytes()) < len(runner.encode(original))
+
+
 def test_interrupted_batch_requeues_without_losing_attempt_count(queue):
     db, runtime = queue
     row = source()

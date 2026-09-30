@@ -18,7 +18,16 @@ def setup(tmp_path, monkeypatch):
     monkeypatch.setattr(module, "_source_snapshot", lambda: dict(source))
     state = SimpleNamespace(feature_embedding_weights={"fixture": [0.1] * 8},
                             architecture_version="fixture")
-    calls = {"evaluate": [], "compile": [], "load": 0}
+    calls = {"evaluate": [], "compile": [], "load": 0, "targets": []}
+
+    def targets(samples, **kwargs):
+        calls["targets"].append(kwargs)
+        kwargs["observation"].update(parallel_workers_used=1, timeout_fallback_count=0)
+        return [(sample.sample_id, SimpleNamespace(bridge_names=module.BRIDGE_NAMES,
+            to_dict=lambda: {"accepted": True}, document=SimpleNamespace(
+                canonical_hash=lambda: "f" * 64,
+                to_dict=lambda: {"views": {"deontic": {"logic_family": "deontic", "payload": {"formula": "O(file)"}}}})))
+            for sample in samples]
 
     class Model:
         backend = "torch_cuda"
@@ -65,7 +74,7 @@ def setup(tmp_path, monkeypatch):
     cuda = SimpleNamespace(reset_peak_memory_stats=lambda: None, synchronize=lambda: None,
                            max_memory_allocated=lambda: 123, max_memory_reserved=lambda: 256)
     deps = SimpleNamespace(tree={"compiler": "fixture"}, state=SimpleNamespace(load_json=load),
-        model=Model, sample=sample, session=lambda: None, compile=compile_one,
+        model=Model, sample=sample, session=lambda: None, compile=compile_one, target_items=targets,
         torch=SimpleNamespace(cuda=cuda))
     monkeypatch.setattr(module, "_dependencies", lambda: deps)
     def profile(torch, callback):
@@ -124,9 +133,17 @@ def test_receipt_records_real_requested_path_and_never_confers_authority(setup):
     assert row["lake"]["status"] == "not_run"
     assert row["raw_decoder"]["safety_projection_used"] is False
     assert row["safety_projected_decoder"]["safety_projection_used"] is True
-    assert setup.calls["evaluate"] == [{"legal_ir_bridge_names": module.BRIDGE_NAMES,
+    observed_kwargs = dict(setup.calls["evaluate"][0])
+    supplied = observed_kwargs.pop("legal_ir_targets")
+    assert list(supplied) == ["one"]
+    assert len(setup.calls["targets"]) == 1
+    assert observed_kwargs == {"legal_ir_bridge_names": module.BRIDGE_NAMES,
         "legal_ir_evaluate_provers": False, "legal_ir_parallel_workers": 1,
-        "use_sample_memory": False, "profile_evaluation": True, "reconstruction_objective": "raw_decoder"}]
+        "use_sample_memory": False, "profile_evaluation": True, "reconstruction_objective": "raw_decoder"}
+    target = row["logic_target_observation"]
+    assert target["status"] == "captured"
+    assert target["document"]["views"]["deontic"]["payload"]["formula"] == "O(file)"
+    assert target["learned_output"] is False and target["admitted"] is False
     assert not worker.model._sample_feature_cache
 
 
@@ -166,6 +183,21 @@ def test_no_targets_is_not_a_successful_ir_evaluation(setup):
         to_dict=lambda: {"sample_count": 1, "legal_ir_target_count": 0})
     with pytest.raises(RuntimeError, match="no legal IR targets"):
         worker.evaluate_batch(setup.rows)
+
+
+def test_incomplete_prepared_targets_fail_before_model_evaluation(setup):
+    setup.deps.target_items = lambda *args, **kwargs: []
+    worker = module.LegacySpanCUDAWorker(setup.checkpoint)
+    with pytest.raises(RuntimeError, match="cover every sample"):
+        worker.evaluate_batch(setup.rows)
+    assert setup.calls["evaluate"] == []
+
+
+def test_summary_only_target_never_fabricates_formal_artifacts():
+    target = SimpleNamespace(bridge_names=(), document=SimpleNamespace(canonical_hash=lambda: "a" * 64))
+    observed = module._logic_target_observation(target)
+    assert observed["status"] == "unavailable" and observed["document"] is None
+    assert observed["learned_output"] is False and observed["admitted"] is False
 
 
 def test_invalid_representation_is_not_silently_adapted(setup):

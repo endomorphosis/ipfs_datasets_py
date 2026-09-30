@@ -234,6 +234,22 @@ Do not edit the queue or copy an open DuckDB file to resume on another host.
 
 ## Publication and interpreting repair work
 
+New batches publish census **v3** under `autoformal/uscode/census-v3/`.
+Raw learned decoder vectors, target-conditioned projected vectors, compiler
+rules and component outcomes, and source-derived bridge documents have
+separate explicit columns. Targets are prepared once and the same objects are
+used for both evaluation and artifact capture. A recorded bridge document is
+not a learned formula or proof. `logic_target_artifact_count` and
+`compiler_rule_count` in live batch metrics report what was actually retained.
+
+Goals remain deferred v2 handoffs. They bind the full source and census hash,
+include bounded inline output context, and provide verified retrieval keys for
+larger artifacts. Export does not enqueue or execute supervisor tasks. Existing
+v2 census bundles remain readable without rewriting their hashes or source
+evidence. See [output access and historical indexing](span_exchange_outputs.md)
+for dataset configurations, field meanings, and backfill commands that require
+no inference or checkpoint download.
+
 The existing exchange outbox stages content-addressed census and deferred goal
 parquets plus their manifest before the queue marks a batch completed. Publication
 appends immutable artifacts to `justicedao/uscode-autoformal-span-cache` and

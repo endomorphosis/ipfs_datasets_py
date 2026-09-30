@@ -1,0 +1,54 @@
+{
+  "commit": "9e94f6a13a855726b6613f649461313242e9e556",
+  "manifest_path": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-58ce185499568991afd02ab5603e1526fc66ccce9944bfec24201e716a6ceed4.manifest.json",
+  "verified_remote_sha256": true,
+  "census": {
+    "row_count": 32,
+    "schema": "uscode-autoformal-ae-compiler-census/v3",
+    "raw_decoder_count": 32,
+    "compiler_rule_count": 2,
+    "verified_logic_documents": 22,
+    "views": [
+      "cec_dcec.cec_events",
+      "cec_dcec.dcec_formula",
+      "cec_dcec.event_calculus",
+      "cec_dcec.frame_logic",
+      "cec_dcec.neo4j_graph_data",
+      "cec_dcec.proof_trace",
+      "deontic_norms.deontic_decoder_reconstructions",
+      "deontic_norms.deontic_formula_records",
+      "deontic_norms.deontic_graph",
+      "deontic_norms.deontic_ir",
+      "deontic_norms.deontic_ir_slot_provenance",
+      "deontic_norms.deontic_parser_capability",
+      "deontic_norms.deontic_parser_metrics",
+      "deontic_norms.deontic_phase8_quality",
+      "deontic_norms.deontic_proof_obligations",
+      "deontic_norms.deontic_prover_syntax",
+      "deontic_norms.deontic_reconstruction_slot_loss",
+      "deontic_norms.deontic_repair_queue",
+      "deontic_norms.frame_logic",
+      "deontic_norms.neo4j_graph_data",
+      "external_prover_router.frame_logic",
+      "external_prover_router.neo4j_graph_data",
+      "external_prover_router.prover_formulas",
+      "fol_tdfol.frame_logic",
+      "fol_tdfol.neo4j_graph_data",
+      "fol_tdfol.proof_obligations",
+      "fol_tdfol.tdfol_formula",
+      "modal_frame_logic.frame_logic",
+      "modal_frame_logic.modal_ir",
+      "modal_frame_logic.neo4j_graph_data"
+    ]
+  },
+  "goals": {
+    "row_count": 32,
+    "record_kinds": {
+      "repair_packet": 31,
+      "training_goal": 1
+    },
+    "all_deferred": true
+  },
+  "admitted": false,
+  "formalized": false
+}

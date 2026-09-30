@@ -1,0 +1,184 @@
+{
+  "checked_utc": "2026-09-30T17:35:03.469742+00:00",
+  "focused_tests": {
+    "passed": 216,
+    "seconds": 8.31
+  },
+  "compiler_gate_validation": {
+    "reported_passed": 29,
+    "includes": [
+      "three required semantics",
+      "empty vocabulary abstention",
+      "repeal",
+      "historical five-case pilot"
+    ]
+  },
+  "historical_index": {
+    "commit": "df7e8af9dd824ab8b364fab1e28646d9dc6267f8",
+    "rows": 32,
+    "inference_rerun": false
+  },
+  "live_service": {
+    "unit": "legacy-cuda-span-census.service",
+    "state": "active",
+    "status": {
+      "admitted": false,
+      "batch_id": "c320a5bd35774798b108a23851a8931e",
+      "batches": {
+        "interrupted": 31,
+        "published": 849,
+        "running": 2
+      },
+      "diagnostic_representation": "mock:stable-sha256/8",
+      "formalized": false,
+      "last_batch_metrics": {
+        "admitted": false,
+        "batch_id": "b098062db9004c55a7372f60d9563c13",
+        "bridges": {
+          "adapter_workers": 1,
+          "disk_cache": false,
+          "evaluate_provers": false,
+          "evaluation_invoked": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "native_target_timeout_seconds": 0.0,
+          "native_timeout_fallback_count": 0,
+          "parallel_workers": 1,
+          "parallel_workers_used": 1,
+          "process_metric_caches_may_be_warm": true,
+          "projected_observation_bridge_names": [],
+          "requested": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "target_count": 32
+        },
+        "campaign": {
+          "batch_id": "b098062db9004c55a7372f60d9563c13",
+          "compiler_workers": 4,
+          "cpu_cuda_overlap": true,
+          "inference_only": true,
+          "progress": {
+            "bytes": 52701179,
+            "path": "autoformal/uscode/resume-checkpoint.parquet",
+            "repository": "justicedao/uscode-autoformal-span-cache",
+            "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+            "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+          },
+          "runner_sha256": "ccbf58a6a84c7e77cf3d6049b6487b6280ffe526975bed60e9aa99d81f6384cd",
+          "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "whole_batch_seconds": 98.88362318393774
+        },
+        "compiler_reason_counts": {
+          "": 2,
+          "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure": 1,
+          "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:unsupported_norm_type": 1,
+          "no_parser_elements": 28
+        },
+        "compiler_roundtrip_count": 2,
+        "compiler_rule_count": 2,
+        "cuda": {
+          "initial_batch_profile": {
+            "cuda_device_time_us": 2470.8530000011087,
+            "cuda_kernel_event_count": 1814,
+            "profiled": true
+          },
+          "peak_allocated_bytes": 3160576,
+          "peak_reserved_bytes": 23068672,
+          "profiled": false
+        },
+        "formalized": false,
+        "legal_ir_losses": {
+          "legal_ir_multiview_acceptance_loss": 0.0,
+          "legal_ir_multiview_cosine_loss": 0.11382364923099669,
+          "legal_ir_multiview_cross_entropy_loss": 0.32326746250294924,
+          "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+          "legal_ir_multiview_graph_failure_penalty": 0.0,
+          "legal_ir_multiview_proof_failure_ratio": 0.0,
+          "legal_ir_multiview_reconstruction_loss": 0.028455918668735154,
+          "legal_ir_multiview_text_reconstruction_loss": 0.0,
+          "legal_ir_multiview_total_loss": 1.0260268846346057,
+          "legal_ir_multiview_view_coverage_loss": 0.0,
+          "legal_ir_view_cross_entropy_excess_loss": 0.22048265720945737,
+          "legal_ir_view_cross_entropy_loss": 1.9929786405708698,
+          "legal_ir_view_entropy_loss": 1.7724959833614125,
+          "legal_ir_view_family_cec_cosine_gap_loss": 0.010507420831533623,
+          "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.06754370649402387,
+          "legal_ir_view_family_cec_cross_entropy_loss": 0.5464996893494911,
+          "legal_ir_view_family_cosine_gap_loss": 0.10942523270534994,
+          "legal_ir_view_family_cross_entropy_excess_loss": 0.22048265720945737,
+          "legal_ir_view_family_cross_entropy_loss": 1.9929786405708698,
+          "legal_ir_view_family_deontic_cosine_gap_loss": 0.003573408589597718,
+          "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.007839667280178311,
+          "legal_ir_view_family_deontic_cross_entropy_loss": 0.5256317026230812,
+          "legal_ir_view_family_entropy_loss": 1.7724959833614125,
+          "legal_ir_view_family_external_provers_cosine_gap_loss": 7.076088745184422e-05,
+          "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.00038465078953814,
+          "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3710666589097205,
+          "legal_ir_view_family_frame_logic_cosine_gap_loss": 0.005539505036351276,
+          "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.03495573248810029,
+          "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.48468616950136245,
+          "legal_ir_view_family_kg_cosine_gap_loss": 6.33590813776258e-05,
+          "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.0003239503888415856,
+          "legal_ir_view_family_kg_cross_entropy_loss": 0.3869202604817661,
+          "legal_ir_view_family_other_cosine_gap_loss": 0.009556999168116562,
+          "legal_ir_view_family_other_cross_entropy_excess_loss": 0.13037323150224014,
+          "legal_ir_view_family_other_cross_entropy_loss": 0.13037323150224014,
+          "legal_ir_view_family_prover_cosine_gap_loss": 7.076088745184422e-05,
+          "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.00038465078953814,
+          "legal_ir_view_family_prover_cross_entropy_loss": 0.3710666589097205,
+          "legal_ir_view_family_tdfol_cosine_gap_loss": 5.0174546218386545e-05,
+          "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.000158995598144019,
+          "legal_ir_view_family_tdfol_cross_entropy_loss": 0.47671490170749925,
+          "source_decompiled_text_embedding_cosine_loss": 0.11382364923099669,
+          "source_decompiled_text_token_loss": 0.1799200875
+        },
+        "logic_target_artifact_count": 31,
+        "sample_count": 32,
+        "timings": {
+          "bridge_on_evaluate_seconds": 34.91450182488188,
+          "compiler_seconds": 0.00013477005995810032,
+          "elapsed_seconds": 36.77992436499335,
+          "producer_guard_seconds": 1.2528106137178838,
+          "projected_observation_seconds": 0.37607743381522596,
+          "sample_preparation_seconds": 0.23610829492099583,
+          "wall_seconds_per_span": 1.1493726364060421
+        }
+      },
+      "overall_timeout_seconds": null,
+      "phase": "cuda_evaluation_and_cpu_prefetch",
+      "pid": 3892278,
+      "prefetched_batch": "8705d98c3fbc40f9b39119924e9081fe",
+      "publication_retry_after": 1790787521.9121895,
+      "schema": "legacy-span-cuda-campaign-status/v1",
+      "training_executed": false,
+      "updated_at": 1790789674.605964,
+      "work": {
+        "done": 27042,
+        "pending": 82,
+        "running": 64
+      }
+    }
+  },
+  "artifact_migration": {
+    "recovered_receipt_without_inference": true,
+    "pre_migration_receipt_retained_locally": true,
+    "recovered_document_count": 22,
+    "recovered_unavailable_document_count": 10,
+    "fresh_batch_document_count": 32,
+    "fresh_batch_sample_count": 32,
+    "encoding": "recursive-zlib-json/v1",
+    "decoded_document_bound_bytes": 16777216
+  },
+  "admitted": false,
+  "formalized": false,
+  "training_executed": false,
+  "goals_enqueued": false
+}

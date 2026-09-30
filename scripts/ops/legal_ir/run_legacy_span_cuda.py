@@ -306,10 +306,41 @@ def validate_receipt(db, batch_id, receipt):
             raise ValueError("receipt source authority mismatch")
 
 
+def pack_receipt_artifacts(receipt):
+    """Upgrade retained uncompressed documents without rerunning their producer."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_logic_artifacts import pack_document
+    rows, changed = [], 0
+    for row in receipt["rows"]:
+        target = row.get("logic_target_observation")
+        if isinstance(target, dict) and isinstance(target.get("document"), dict) and not target.get("document_encoding"):
+            target = {**target, "document": pack_document(target["document"]),
+                      "document_encoding": "recursive-zlib-json/v1"}
+            row = {**row, "logic_target_observation": target}
+            changed += 1
+        rows.append(row)
+    if not changed:
+        return receipt
+    return {**receipt, "rows": rows, "artifact_reencoding": {
+        "schema": "legacy-artifact-reencoding/v1", "document_count": changed,
+        "original_receipt_sha256": hashlib.sha256(encode(receipt)).hexdigest(),
+        "encoding": "recursive-zlib-json/v1", "lossless": True,
+        "inference_rerun": False, "admitted": False}}
+
+
 def stage(db, runtime, batch_id, receipt, agent):
     validate_receipt(db, batch_id, receipt)
     from ipfs_datasets_py.logic.autoformal.span_cache_exchange import publish_compiled_exchange
     path = runtime / "receipts" / (batch_id + ".json")
+    packed = pack_receipt_artifacts(receipt)
+    if packed is not receipt and path.exists():
+        # Retain the pre-migration receipt once for audit. Ordinary new batches
+        # arrive packed; this archive is only for interrupted rollout recovery.
+        archive = runtime / "artifact-migrations"
+        archive.mkdir(exist_ok=True)
+        retained = archive / (batch_id + ".unpacked.json")
+        if not retained.exists():
+            os.link(path, retained)
+    receipt = packed
     atomic(path, receipt)
     staged = publish_compiled_exchange(exchange_rows(receipt), runtime / "outbox", upload=False,
         agent_id=agent, release_id="ipfs-uscode-5016b86a",
@@ -325,6 +356,10 @@ def stage(db, runtime, batch_id, receipt, agent):
             "bridges": receipt.get("bridges"), "cuda": receipt.get("cuda"),
             "timings": receipt.get("timings"), "campaign": receipt.get("campaign"),
             "compiler_roundtrip_count": sum(row["compiler"].get("roundtrip") is True for row in receipt["rows"]),
+            "compiler_rule_count": sum(len(row["compiler"].get("rules") or
+                ([row["compiler"]["rule"]] if row["compiler"].get("rule") else [])) for row in receipt["rows"]),
+            "logic_target_artifact_count": sum(row.get("logic_target_observation", {}).get("status") == "captured"
+                for row in receipt["rows"]),
             "compiler_reason_counts": dict(Counter(str(row["compiler"].get("reason") or "") for row in receipt["rows"])),
             "legal_ir_losses": receipt["raw_evaluation"].get("legal_ir_losses"),
             "admitted": False, "formalized": False})

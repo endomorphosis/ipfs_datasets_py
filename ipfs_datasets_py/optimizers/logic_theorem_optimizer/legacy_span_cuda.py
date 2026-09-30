@@ -38,7 +38,7 @@ def _dependencies():
     tree = require_workspace_logic_tree()
     from ipfs_datasets_py.logic.autoformal import AutoformalSession, compile_span
     from .legal_samples import build_us_code_sample
-    from .modal_autoencoder import AdaptiveModalAutoencoder, ModalAutoencoderTrainingState
+    from .modal_autoencoder import AdaptiveModalAutoencoder, ModalAutoencoderTrainingState, _legal_ir_target_items
     import torch
     package_root = Path(__file__).resolve().parents[2]
     for producer in (AdaptiveModalAutoencoder, ModalAutoencoderTrainingState, build_us_code_sample):
@@ -47,7 +47,44 @@ def _dependencies():
     require_workspace_logic_tree()
     return SimpleNamespace(tree=tree, model=AdaptiveModalAutoencoder,
         state=ModalAutoencoderTrainingState, sample=build_us_code_sample,
-        session=AutoformalSession, compile=compile_span, torch=torch)
+        session=AutoformalSession, compile=compile_span, target_items=_legal_ir_target_items, torch=torch)
+
+
+def _logic_target_observation(target: Any) -> dict[str, Any]:
+    """Retain source-derived logic artifacts separately from learned outputs.
+
+    A target's acceptance flag is adapter telemetry, never Lake admission.
+    Cached summary-only targets must explicitly disclose missing artifacts.
+    """
+    document = getattr(target, "document", None)
+    summary = target.to_dict() if callable(getattr(target, "to_dict", None)) else {}
+    document_hash = summary.get("document_hash") if isinstance(summary, Mapping) else None
+    if document_hash is None and callable(getattr(document, "canonical_hash", None)):
+        document_hash = document.canonical_hash()
+    result = {"schema": "legacy-logic-target-observation/v1", "origin": "source_bridge_target",
+              "learned_output": False, "bridge_names": list(getattr(target, "bridge_names", ())),
+              "document_hash": document_hash, "target_summary": summary,
+              "admitted": False, "formalized": False}
+    if callable(getattr(document, "to_dict", None)):
+        payload = document.to_dict()
+        raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+        payload = json.loads(raw)
+        result["document_bytes"] = len(raw)
+        result["document_sha256"] = hashlib.sha256(raw).hexdigest()
+        if len(raw) <= 16 * 1024 * 1024:
+            from .legacy_span_logic_artifacts import pack_document
+            views = payload.get("views", {})
+            result.update(status="captured", document=pack_document(payload),
+                          document_encoding="recursive-zlib-json/v1", observed_views=sorted(views),
+                          observed_families=sorted({str(view.get("metadata", {}).get("logic_family"))
+                              for view in views.values() if isinstance(view, Mapping)
+                              and view.get("metadata", {}).get("logic_family")}))
+            return result
+        reason = "document_exceeds_16mib_decoded_bound"
+    else:
+        reason = "target_has_no_serializable_document"
+    result.update(status="unavailable", reason=reason, document=None, observed_families=[], observed_views=[])
+    return result
 
 
 def _source_snapshot() -> dict[str, Any]:
@@ -286,6 +323,16 @@ class LegacySpanCUDAWorker:
         evaluate_started = time.perf_counter()
         run_profile = self.cuda_initial_profile is None or profile_cuda is True
         try:
+            # Prepare once, retain full artifacts, and give those same objects to
+            # evaluate. This avoids another parser/bridge pass for publication.
+            target_observation: dict[str, Any] = {}
+            targets = dict(dep.target_items(samples, bridge_names=BRIDGE_NAMES,
+                evaluate_provers=False, legal_ir_targets=None,
+                parallel_workers=self.legal_ir_parallel_workers, observation=target_observation)) if samples else {}
+            if set(targets) != {sample.sample_id for sample in samples}:
+                raise RuntimeError("bridge target preparation did not cover every sample")
+            kwargs["legal_ir_targets"] = targets
+            logic_targets = {sample_id: _logic_target_observation(target) for sample_id, target in targets.items()}
             if not samples:
                 evaluated = SimpleNamespace(to_dict=lambda: {"sample_count": 0, "legal_ir_target_count": 0,
                                                               "decoded_embeddings": {}})
@@ -299,8 +346,8 @@ class LegacySpanCUDAWorker:
                 cuda_observation = {"profiled": False, "initial_batch_profile": self.cuda_initial_profile}
             evaluate_seconds = time.perf_counter() - evaluate_started
             raw = evaluated.to_dict()
-            target_observation = raw.get("evaluation_profile", {}).get("target_observation", {})
-            if samples and (raw.get("sample_count") != len(samples) or int(raw.get("legal_ir_target_count", 0)) <= 0):
+            raw["target_preparation_observation"] = target_observation
+            if samples and (raw.get("sample_count") != len(samples) or int(raw.get("legal_ir_target_count", 0)) != len(samples)):
                 raise RuntimeError("bridge-on inference returned no legal IR targets or incomplete samples")
             projected_started = time.perf_counter()
             projected_vectors = [self.model._decoded_for(sample, use_sample_memory=False,
@@ -341,6 +388,7 @@ class LegacySpanCUDAWorker:
                     "status": "diagnostic_observed",
                     "source_sha256": hashlib.sha256(row["text"].encode()).hexdigest(),
                     "embedding_representation": dict(REPRESENTATION), "compiler": compiled,
+                    "logic_target_observation": logic_targets[sample.sample_id],
                     "raw_decoder": {"embedding": raw_vectors[index], "cosine_similarity": raw_cosines[index],
                                     "reconstruction_loss": raw_losses[index], "safety_projection_used": False},
                     "safety_projected_decoder": {"embedding": projected_vectors[index],

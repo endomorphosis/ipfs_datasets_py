@@ -653,6 +653,11 @@ def compile_span(
     ``vocabulary`` holds atoms projected from a finished autoencoder capture.
     They are added to the parser atoms. They do not replace the compiler.
     A semicolon before and, but, or nor is compiled as a separate clause.
+    ``rules`` preserves every emitted rule, including decompiler failures;
+    ``components`` records their source clauses and individual outcomes.
+    ``compilation_complete`` concerns all components emitting rendered rules,
+    not semantic equivalence or admission. Legacy status and roundtrip fields
+    keep their existing any-component meaning.
     """
 
     pieces = [piece.strip() for piece in _JOINED_CLAUSE_RE.split(text) if piece.strip()]
@@ -660,23 +665,42 @@ def compile_span(
         rendered: list[str] = []
         statuses: list[str] = []
         fields: list[str] = []
+        rules: list[dict[str, Any]] = []
+        components: list[dict[str, Any]] = []
+        compiled_rule = None
         reason = "abstain"
         for index, piece in enumerate(pieces):
+            component_id = f"{span_id}~{index}"
             outcome = compile_span(
                 session,
                 piece,
-                f"{span_id}~{index}",
+                component_id,
                 vocabulary=vocabulary,
                 allow_partial=allow_partial,
             )
+            attempts = [{"span_id": component_id, "allow_partial": allow_partial, **outcome}]
             if outcome.get("compiler_status") not in {"compiled", "repeal"} and outcome.get("fields") and not allow_partial:
+                component_id = f"{span_id}~{index}-partial"
                 outcome = compile_span(
                     session,
                     piece,
-                    f"{span_id}~{index}-partial",
+                    component_id,
                     vocabulary=vocabulary,
                     allow_partial=True,
                 )
+                attempts.append({"span_id": component_id, "allow_partial": True, **outcome})
+            for attempt in attempts:
+                rules.extend(attempt.get("rules") or [])
+            if compiled_rule is None and isinstance(outcome.get("rule"), dict):
+                compiled_rule = dict(outcome["rule"])
+            components.append({
+                "component_index": index,
+                "span_id": component_id,
+                "source_text": piece,
+                **outcome,
+                "attempts": attempts,
+                "admitted": False,
+            })
             for item in outcome.get("fields") or []:
                 if item not in fields:
                     fields.append(str(item))
@@ -687,8 +711,16 @@ def compile_span(
                 reason = str(outcome["reason"])
         if rendered:
             status = "repeal" if set(statuses) == {"repeal"} else "compiled"
-            return {"compiler_status": status, "reason": "", "decompiled": " ".join(rendered), "fields": fields}
-        return {"compiler_status": "abstain", "reason": reason, "decompiled": "", "fields": fields}
+            return {
+                "compiler_status": status, "reason": "", "decompiled": " ".join(rendered), "fields": fields,
+                "rule": compiled_rule, "rules": rules, "components": components,
+                "compilation_complete": all(component.get("compilation_complete", False) for component in components),
+                "admitted": False,
+            }
+        return {
+            "compiler_status": "abstain", "reason": reason, "decompiled": "", "fields": fields,
+            "rules": rules, "components": components, "compilation_complete": False, "admitted": False,
+        }
     parsed = vocabulary_from_clause(text)
     merged = {
         "actors": list((parsed or {}).get("actors") or []),
@@ -710,6 +742,8 @@ def compile_span(
         return {"compiler_status": "abstain", "reason": "no_clause", "decompiled": "", "fields": []}
     parts: list[str] = []
     fields: list[str] = []
+    rules: list[dict[str, Any]] = []
+    components: list[dict[str, Any]] = []
     reason = "abstain"
     for clause_info in clauses:
         clause_id = clause_info["id"]
@@ -732,8 +766,34 @@ def compile_span(
                 parts.append(str(row["decompiled"]))
             elif row.get("reason"):
                 reason = str(row["reason"])
+        roundtrip_report = None
         if any(row.get("status") == "compiled" for row in rows):
-            session.roundtrip_clause(span_id, clause_id)
+            roundtrip_report = session.roundtrip_clause(span_id, clause_id)
+        component_rules = [dict(row["rule"]) for row in rows if isinstance(row.get("rule"), dict)]
+        rules.extend(component_rules)
+        checked_rows = [
+            row.public() for row in session.rows
+            if row.document_id == span_id and row.clause_id == clause_id
+        ]
+        components.append({
+            "component_index": len(components),
+            "span_id": span_id,
+            "clause_id": clause_id,
+            "source_text": clause.text if clause is not None else str(clause_info.get("text") or ""),
+            "source_start": getattr(clause, "start", clause_info.get("start")),
+            "source_end": getattr(clause, "end", clause_info.get("end")),
+            "allow_partial": allow_partial,
+            "compiler_status": "compiled" if any(row.get("status") == "compiled" for row in rows) else "abstain",
+            "compiler_rows": rows,
+            "rows": checked_rows or rows,
+            "rules": component_rules,
+            "roundtrip_report": roundtrip_report,
+            "compilation_complete": bool(rows) and all(
+                row.get("status") == "compiled" and isinstance(row.get("rule"), dict) and bool(row.get("decompiled"))
+                for row in rows
+            ),
+            "admitted": False,
+        })
     compiled_rule = None
     roundtrip = False
     for row in session.rows:
@@ -750,16 +810,24 @@ def compile_span(
             "decompiled": " ".join(parts),
             "fields": fields,
             "rule": compiled_rule,
+            "rules": rules,
+            "components": components,
+            "compilation_complete": all(component["compilation_complete"] for component in components),
             "roundtrip": roundtrip,
+            "admitted": False,
         }
     projected = _project_repeal(text, span_id, fields)
     if projected is not None:
-        return projected
+        return {**projected, "rules": rules, "components": components, "compilation_complete": False}
     return {
         "compiler_status": "abstain",
         "reason": reason,
         "decompiled": "",
         "fields": fields,
+        "rules": rules,
+        "components": components,
+        "compilation_complete": False,
+        "admitted": False,
     }
 
 
