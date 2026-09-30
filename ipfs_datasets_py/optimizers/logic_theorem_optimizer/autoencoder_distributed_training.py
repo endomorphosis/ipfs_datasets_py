@@ -521,7 +521,7 @@ def advance_verified_generation(campaign):
     qualification = json.loads(registry.artifact_path(proof).read_bytes())
     from ...huggingface.autoencoder_span_attempts import _receipt as validate_receipt
     validate_receipt(qualification, result['qualification_version_id'], candidate['artifact'])
-    required = {'metric_gate','semantic_gate','family_syntax_gate','lake_gate','heldout_gate'}
+    required = {'metric_gate','semantic_gate','family_syntax_gate','family_coverage_gate','lake_gate','heldout_gate'}
     if (qualification.get('qualified') is not True or qualification['candidate_artifact'] != candidate['artifact']
             or qualification['candidate_version_id'] != result['qualification_version_id']
             or set(qualification.get('gate_results', {})) != required

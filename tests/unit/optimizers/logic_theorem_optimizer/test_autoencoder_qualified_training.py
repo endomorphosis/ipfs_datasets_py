@@ -15,10 +15,11 @@ from tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_coo
 )
 
 
-def _receipt(artifact, version, *, metric=True, syntax=True, heldout=True):
+def _receipt(artifact, version, *, metric=True, syntax=True, coverage=True, heldout=True):
     gates = {name: {"passed": True} for name in qt.GATES}
     gates["metric_gate"]["passed"] = metric
     gates["family_syntax_gate"]["passed"] = syntax
+    gates["family_coverage_gate"]["passed"] = coverage
     gates["heldout_gate"]["passed"] = heldout
     return {"candidate_version_id": version, "candidate_artifact": {k: artifact[k] for k in ("sha256", "bytes")},
             "gate_results": gates, "metric_gate": gates["metric_gate"],
@@ -744,3 +745,26 @@ def test_old_retry_policy_requires_a_new_stream(tmp_path):
             db.execute("UPDATE stream SET binding=?", [json.dumps(binding)])
         with pytest.raises(IncrementalTrainingError, match="policy binding changed"):
             _run(registry, tmp_path, [])
+
+
+def test_full_family_coverage_failure_stops_optimizer_retries(tmp_path):
+    calls = []
+    def qualify(artifact, version, *args, **kwargs):
+        calls.append(version)
+        receipt = _receipt(artifact, version, coverage=False)
+        receipt["repair_todos"] = [{"kind": "source_repair", "gate": "family_coverage_gate"}]
+        return receipt
+    with AutoencoderRegistry(tmp_path / "owner.duckdb", tmp_path / "artifacts") as registry:
+        spec = _prepare_sparse(registry, tmp_path)
+        result = _run(registry, tmp_path, [spec], qualifier=qualify, max_training_rounds=3)
+        assert len(calls) == 1
+        assert result["qualified_batch_count"] == 0
+        assert result["batch_status_counts"] == {"needs_repair": 1}
+        assert qt._blocking_gates(_receipt({"sha256": "a" * 64, "bytes": 1}, "fixture", coverage=False)) == ["family_coverage_gate"]
+
+
+def test_historical_five_gate_success_cannot_be_reinterpreted_as_qualified():
+    receipt = _receipt({"sha256": "a" * 64, "bytes": 1}, "fixture")
+    receipt["gate_results"].pop("family_coverage_gate")
+    with pytest.raises(IncrementalTrainingError, match="summary"):
+        qt._disposition(receipt, 0, 3)

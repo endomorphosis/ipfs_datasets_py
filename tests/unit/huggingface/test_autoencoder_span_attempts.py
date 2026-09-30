@@ -64,6 +64,7 @@ def case(tmp_path):
                         "passed": False,
                         "reason": "fixture_no_family",
                     },
+                    "family_coverage_gate": {"passed": False, "reason": "fixture_no_coverage"},
                     "lake_gate": {"passed": False, "reason": "fixture_no_lake"},
                     "compiler": {"compiler_status": "abstained"},
                     "admitted": False,
@@ -186,7 +187,8 @@ def test_failed_attempt_retains_source_receipt_and_real_exchange_goals(case):
     assert report["qualification"] == case.receipt
     assert report["repair_todos"] == case.receipt["repair_todos"]
     assert report["source_provenance"] == case.provenance
-    assert len(bundle["repair_packets"]) == 3
+    assert len(bundle["repair_packets"]) == 4
+    assert {item["packet"]["row"]["capture"]["failed_gate"] for item in bundle["repair_packets"]} == set(attempts.GATES[1:-1])
     assert not bundle["training_goals"]
     census = bundle["census_rows"][0]
     assert census["admitted"] is False and census["formalized"] is False
@@ -206,6 +208,7 @@ def test_failed_attempt_retains_source_receipt_and_real_exchange_goals(case):
     )
     for packet in bundle["repair_packets"]:
         capture = packet["packet"]["row"]["capture"]
+        assert capture["observation_evidence"] == attempts.exchange._observation_evidence(census)
         assert capture["qualification_artifact"] == report["qualification_artifact"]
         assert capture["qualification_gate_results"] == case.receipt["gate_results"]
         assert (
@@ -477,3 +480,29 @@ def test_large_retained_provenance_is_referenced_in_bounded_goal_packets(case):
             capture["census_sha256"]
             == loaded["bundle"]["census_rows"][0]["census_sha256"]
         )
+
+
+def test_family_coverage_failure_survives_census_goal_export(case):
+    for row in case.receipt["rows"]:
+        for name in attempts.GATES[1:-1]:
+            row[name]["passed"] = name != "family_coverage_gate"
+    for name in attempts.GATES:
+        case.receipt["gate_results"][name]["passed"] = name != "family_coverage_gate"
+    case.receipt["repair_todos"][0].update(gate="family_coverage_gate",
+        evidence=case.receipt["rows"][0]["family_coverage_gate"])
+    loaded = attempts.load_span_attempt(stage(case)["report_path"])
+    assert not loaded["report"]["qualification"]["qualified"]
+    assert len(loaded["bundle"]["repair_packets"]) == 1
+    capture = loaded["bundle"]["repair_packets"][0]["packet"]["row"]["capture"]
+    assert capture["failed_gate"] == "family_coverage_gate"
+    assert capture["original_gate_evidence"] == case.receipt["rows"][0]["family_coverage_gate"]
+    assert capture["observation_evidence"] == attempts.exchange._observation_evidence(loaded["bundle"]["census_rows"][0])
+
+
+def test_historical_receipt_without_coverage_is_not_silently_upgraded(case):
+    case.receipt["gate_results"].pop("family_coverage_gate")
+    case.receipt.pop("family_coverage_gate")
+    for row in case.receipt["rows"]:
+        row.pop("family_coverage_gate")
+    with pytest.raises(attempts.SpanAttemptError, match="gate evidence|qualification gate"):
+        stage(case)

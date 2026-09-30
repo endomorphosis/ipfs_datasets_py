@@ -25,8 +25,9 @@ declarative API accepts no external evidence or `passed` flag.
 
 The [recorded inventory and three source-bound gate samples](../implementation/reports/evidence/legal-lineages-20260930/logic-output-requirements-inventory.json)
 contains all 35 family descriptors, fourteen code routes, four domain policies
-and ten runtime bindings. All three authored spans compile, but none passes the
-eight-family floor: distinct CEC and propositional exports are missing.
+and ten runtime bindings. At that historical inventory revision all three authored spans compiled, but
+distinct CEC and propositional exports were missing. The follow-up adds those
+restricted syntax projections; complete semantic coverage still fails closed.
 The [validation receipt](../implementation/reports/evidence/legal-lineages-20260930/logic-output-requirements-validation.json)
 records 327 passing tests, including the installed `lake build Legal` numeric
 pattern smoke. It does not claim that every schema has passed Lake.
@@ -52,9 +53,12 @@ richer grammar as evidence for that grammar's distinctive operators.
 
 The canonical registry has no standalone `cec` family. Existing aliases that
 collapse CEC into DCEC do not satisfy two requirements. The new legal family
-gate keeps them distinct. It also records the absence of a full CEC exporter
-and propositional exporter as failures with repair goals. Historical six-family
-syntax diagnostics remain inspectable and explicitly cannot pass the floor.
+gate keeps them distinct. It now validates separate event/FOL and single-attitude propositional cognitive
+fragments for CEC, plus propositional Boolean syntax. Mixed cognitive/event
+nesting remains unsupported. The projections retain their original atom
+bindings and explicitly disclose omitted modality and other semantics. All
+eight syntax checks can pass while `family_coverage_gate` remains false.
+Historical six-family diagnostics cannot pass the floor.
 
 The existing canonical-rule exports are deliberately limited: FOL and TFOL
 projections disclose omitted modality; temporal atoms are often predicates,
@@ -152,9 +156,10 @@ marks Constitution spans `roundtrip_ok`. The generic kernel adapter executes
 `lean --json`; its result alone does not satisfy this campaign's Lake rule.
 
 The working tree also contains an uncommitted Intent Lake projection. It checks
-declaration syntax/types and explicitly omits action/workflow semantics. No
-committed native Security or UI Lake schema renderer was found in this audit.
-These are outstanding implementation requirements, not passing evidence.
+declaration syntax/types and explicitly omits action/workflow semantics. The follow-up now supplies a shared typed structural schema/instance renderer
+for all four domains and binds actual learned runtime outputs to its Lake builds.
+See [native formula training](native_formula_training.md). This closes structural
+typecheck plumbing, not semantic coverage of every family or code route.
 
 Some leaf objects use broader internal authority labels. For example the UI
 TDFOL compiler defaults to `ResultAuthority.PROOF` while constructing string

@@ -18,7 +18,7 @@ from . import autoencoder_training_coordinator as coordinator
 from .autoencoder_training_worker import TrainingJobSpec, SampleRecord, execute_training_job
 
 SCHEMA = "autoencoder-qualified-incremental-training-v1"
-GATES = ("metric_gate", "semantic_gate", "family_syntax_gate", "lake_gate", "heldout_gate")
+GATES = ("metric_gate", "semantic_gate", "family_syntax_gate", "family_coverage_gate", "lake_gate", "heldout_gate")
 RETRY_POLICY = "metric_only_without_structural_failures_v2"
 
 

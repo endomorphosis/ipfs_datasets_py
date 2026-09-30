@@ -11,6 +11,7 @@ through a separate census implementation.
 | --- | --- | --- |
 | Legal `legacy_v1`, `legacy_v1_optimized`, `current_v2` | Complete modal ASTs from the model-guided compiler, or strict typed-deontic compiler rules | These checkpoints have no independent learned formula-token decoder |
 | Legal `source_conditioned_formula_v1` | Independently generated, grammar-validated canonical deontic rule from source text | Freshly trained sequence model; one rule, closed training vocabulary; syntax is not semantic accuracy |
+| Security, Intent, UI/UX `native_formula_v1` | Learned categorical native output records with decoder-aware cross-entropy | Fixed shapes and training vocabulary; compiler structures are inputs, no independent raw-text generation |
 | Security, Intent, UI/UX `native_v1` | Native expressions reconstructed from model output scores and a training-fitted structural head | Input is compiler-prepared structural features; the head supports fixed shapes and known vocabulary |
 | Security, Intent, UI/UX `native_v2` | Same structural readout over the saved v2 numerical decoder | Read-only formal factory; the common v2 training/registry adapter is still separate work |
 
@@ -142,3 +143,5 @@ Actual full output samples are retained in
 and [native trained smoke evidence](../implementation/reports/evidence/legal-lineages-20260930/native-formal-decoder-smoke.json).
 The legal run has no metric bridges and zero legal-IR targets; its timings must
 not be presented as bridge-on legal-IR performance.
+
+For the separately versioned categorical decoder, exact Adam resume and actual decoded-output Lake checks, see [native formula training](native_formula_training.md).

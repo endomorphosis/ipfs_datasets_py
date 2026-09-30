@@ -2,7 +2,8 @@
 
 `ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_runtime_registry`
 provides local `list_runtimes`, `describe_runtime`, `prepare_targets`,
-`open_runtime`, `open_formal_decoder`, `build_native_runtime`, and `load_version` entry points. A bound
+`open_runtime`, `open_formal_decoder`, `build_native_runtime`,
+`build_native_formula_runtime`, and `load_version` entry points. A bound
 runtime has `describe()`, `train()`, `infer()`, and `decode_formal_logic()` methods. Domain and runtime
 version are always explicit; an embedding width or a dataset metadata field
 never chooses executable code.
@@ -13,6 +14,7 @@ never chooses executable code.
 | `legal_ir` | `legacy_v1_optimized` | Opt-in descendant of the same 8D lineage; streamed transaction norms | Same API and objective as legacy, separate runtime profile |
 | `legal_ir` | `current_v2` | Current numerical runtime; explicit 384D vectors; raw-decoder default | Train, evaluate, load local JSON checkpoint with expected SHA-256 |
 | `legal_ir` | `source_conditioned_formula_v1` | Fresh source-GRU/attention/formula-GRU model; source strings | Token-CE training, source-only inference, checkpoint and owner-registry exact Adam resume |
+| `security_ir`, `intent_ir`, `ui_ux_ir` | `native_formula_v1` | Fixed-shape native compiler features; categorical decoder loss | Train, decode, immutable checkpoint/registry resume, separate actual-output Lake evaluation |
 | `security_ir`, `intent_ir`, `ui_ux_ir` | `native_v1` | Native compiler projection features; full-batch Adam v1 | Prepare, train, infer, register candidate, reload and resume |
 | `security_ir`, `intent_ir`, `ui_ux_ir` | `native_v2` | Existing streamed minibatch Adam v2 | Read-only inference/formal readout through `open_formal_decoder`; common training/registry opening still fails explicitly |
 
@@ -188,3 +190,5 @@ state equal to uninterrupted training; cross-domain/version rejection; source
 and metadata mismatches; and both legal facades with explicit local checkpoints.
 They use small authored inputs and synthetic legal vectors, not a semantic
 qualification dataset or an end-to-end legal-IR speed benchmark.
+
+For the separately versioned categorical decoder, exact Adam resume and actual decoded-output Lake checks, see [native formula training](native_formula_training.md).

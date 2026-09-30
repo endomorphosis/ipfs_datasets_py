@@ -342,6 +342,7 @@ def _goal_rows(census, report, selected):
 
     capture = {
         "census_sha256": census["census_sha256"],
+        "observation_evidence": exchange._observation_evidence(census),
         "source_text_sha256": census["source_text_sha256"],
         "qualification_artifact": report["qualification_artifact"],
         "qualification_gate_results": report["qualification"]["gate_results"],

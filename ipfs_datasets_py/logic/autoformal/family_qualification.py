@@ -19,15 +19,10 @@ from typing import Any
 SUPPORTED_SYNTAX_FRAGMENTS = (
     "fol", "deontic_fol", "temporal_fol", "deontic_temporal_fol",
     "deontic_cognitive_event_calculus", "frame_logic",
+    "cognitive_event_calculus", "propositional",
 )
-# Mandatory legal coverage is broader than the current source-bound exports.
-# Keep distinct CEC and propositional requirements visible until their real
-# exporters and strict validators are implemented; never count DCEC as CEC.
-REQUIRED_FAMILIES = (*SUPPORTED_SYNTAX_FRAGMENTS, "cognitive_event_calculus", "propositional")
-_UNAVAILABLE_VALIDATORS = {
-    "cognitive_event_calculus": "cognitive_event_calculus_validator_unavailable",
-    "propositional": "propositional_validator_unavailable",
-}
+# This is a syntax floor over declared fragments, not complete semantic coverage.
+REQUIRED_FAMILIES = SUPPORTED_SYNTAX_FRAGMENTS
 _ALIASES = {
     "first_order_logic": "fol", "deontic": "deontic_fol", "tfol": "temporal_fol",
     "tdfol": "deontic_temporal_fol", "temporal_deontic_fol": "deontic_temporal_fol",
@@ -165,6 +160,120 @@ def _dcec_fragment_shape(node: Any, *, shared: bool, term: bool = False) -> Any:
     return (operator, tuple(shapes))
 
 
+def _walk_shared_ast(root: Any):
+    """Visit every shared-AST child, including extension payload children."""
+    pending = [root]
+    while pending:
+        node = pending.pop()
+        yield node
+        pending.extend(node.arguments)
+        if node.extension is not None:
+            pending.extend(node.extension.children)
+
+
+def _strict_shared_parse(parsed: Any, module: Any, *, parser_name: str, profile: Any) -> dict[str, Any]:
+    if not parsed.ok or parsed.root is None or parsed.diagnostics:
+        codes = ",".join(str(item.code) for item in parsed.diagnostics)
+        raise ValueError("strict_family_parse_failed:" + codes)
+    return {"parser": module.__name__ + "." + parser_name,
+            "parser_source_sha256": hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest(),
+            "parse_profile": profile.to_dict(), "printed": parsed.printed,
+            "consumed_all_input": True, "recovery_used": False}
+
+
+def _strict_propositional(formula: str) -> dict[str, Any]:
+    # The canonical modal frontend has strict Boolean parsing. Restrict its AST
+    # to nullary propositions/connectives; no modal extensions may slip through.
+    module = _module("ipfs_datasets_py.logic.parsers.modal")
+    profile = module.profile_k()
+    parsed = module.parse_modal(formula, profile)
+    receipt = _strict_shared_parse(parsed, module, parser_name="parse_modal", profile=profile)
+    propositions = set()
+    for node in _walk_shared_ast(parsed.root):
+        kind = node.kind.value
+        if kind not in {"predicate", "true", "false", "and", "or", "not", "implies", "iff", "xor"}:
+            raise ValueError("operator_outside_propositional_fragment:" + kind)
+        if node.binders or (kind == "predicate" and node.arguments):
+            raise ValueError("first_order_structure_outside_propositional_fragment")
+        if kind == "predicate":
+            propositions.add(node.symbol)
+    return {**receipt, "qualified_fragment": "nullary_propositions_and_boolean_connectives",
+            "propositions": sorted(propositions), "quantifier_count": 0,
+            "deontic_operator_count": 0, "temporal_operator_count": 0,
+            "cognitive_operator_count": 0, "event_calculus_atom_count": 0}
+
+
+_CEC_COGNITIVE_WORDS = frozenset({"knows", "know", "believes", "believe", "intends", "intend", "intends_to", "intention"})
+_CEC_RESERVED_WORDS = _CEC_COGNITIVE_WORDS | frozenset({
+    "obligated", "obligation", "ought", "must", "permitted", "permission", "may",
+    "forbidden", "prohibition", "prohibited", "forbid", "box", "diamond", "necessary",
+    "possible", "always", "eventually", "next", "until", "since"})
+_CEC_RESERVED_LETTERS = frozenset({"O", "P", "F", "K", "B", "I", "G", "D", "X", "U", "S"})
+_CEC_EVENT_NAMES = frozenset({"happens", "holds_at", "holds", "initiates", "terminates", "releases", "clipped", "initially", "released_at"})
+
+
+def _strict_cec(formula: str) -> dict[str, Any]:
+    """Check declared native CEC fragments, never promote DCEC to plain CEC.
+
+    Existing parsers support event/first-order formulas and, separately,
+    agent-indexed single-attitude cognition over propositions. They do not
+    support their arbitrary composition; such inputs stay explicit failures.
+    """
+    module = _module("ipfs_datasets_py.logic.parsers.event_calculus")
+    profile = module.profile_event_calculus_cognitive()
+    parsed = module.parse_event_calculus(formula, profile)
+    if parsed.ok and parsed.root is not None and not parsed.diagnostics:
+        event_count = quantifier_count = 0
+        for node in _walk_shared_ast(parsed.root):
+            symbol = str(node.symbol)
+            if symbol.casefold() in _CEC_RESERVED_WORDS or symbol in _CEC_RESERVED_LETTERS:
+                raise ValueError("reserved_operator_not_a_cec_predicate:" + symbol)
+            if node.kind.value == "application" and symbol.casefold() in _CEC_EVENT_NAMES:
+                raise ValueError("event_formula_used_as_a_term:" + symbol)
+            if node.kind.value in {"forall", "exists"}:
+                quantifier_count += len(node.binders)
+            if node.extension is not None:
+                if node.extension.payload_schema != "event_calculus.atom/v1":
+                    raise ValueError("operator_outside_cec_event_fragment")
+                event_count += 1
+        return {**_strict_shared_parse(parsed, module, parser_name="parse_event_calculus", profile=profile),
+                "qualified_fragment": "nondeontic_first_order_and_event_atoms",
+                "event_calculus_atom_count": event_count, "cognitive_operator_count": 0,
+                "deontic_operator_count": 0, "quantifier_count": quantifier_count,
+                "composition_limitations": ["combined_cognitive_event_grammar_not_implemented"]}
+    # No text rewriting or operator erasure: ask each existing cognitive profile
+    # to parse the full original input. Exactly one profile must accept it.
+    modal = _module("ipfs_datasets_py.logic.parsers.modal")
+    candidates = []
+    for cognitive_profile in (modal.profile_epistemic(), modal.profile_doxastic(), modal.profile_intention()):
+        cognitive = modal.parse_modal(formula, cognitive_profile)
+        if not cognitive.ok or cognitive.root is None or cognitive.diagnostics:
+            continue
+        count = 0
+        for node in _walk_shared_ast(cognitive.root):
+            if node.extension is not None:
+                payload = node.extension.payload
+                if (node.extension.payload_schema != "modal.operator/v1" or
+                        payload.get("kind") not in {"knows", "believes", "intends"} or
+                        not payload.get("agent")):
+                    raise ValueError("operator_outside_cec_cognitive_fragment")
+                count += 1
+            elif node.kind.value not in {"predicate", "true", "false", "and", "or", "not", "implies", "iff", "xor"}:
+                raise ValueError("node_outside_cec_cognitive_fragment")
+            elif node.kind.value == "predicate" and node.arguments:
+                raise ValueError("term_arguments_outside_cec_cognitive_fragment")
+        if count:
+            candidates.append({**_strict_shared_parse(cognitive, modal, parser_name="parse_modal", profile=cognitive_profile),
+                "qualified_fragment": "agent_indexed_single_attitude_over_propositions",
+                "cognitive_operator_count": count, "event_calculus_atom_count": 0,
+                "deontic_operator_count": 0, "quantifier_count": 0,
+                "composition_limitations": ["combined_cognitive_event_grammar_not_implemented",
+                                            "mixed_cognitive_attitudes_not_implemented"]})
+    if len(candidates) != 1:
+        raise ValueError("cec_outside_supported_native_fragments")
+    return candidates[0]
+
+
 def validate_family_artifact(family: str, formula: str) -> dict[str, Any]:
     """Parse one *unaltered* emitted artifact; success is syntax evidence only.
 
@@ -179,8 +288,6 @@ def validate_family_artifact(family: str, formula: str) -> dict[str, Any]:
         "source_bound": False, "admitted": False, "formalized": False,
     }
     try:
-        if family in _UNAVAILABLE_VALIDATORS:
-            raise ValueError(_UNAVAILABLE_VALIDATORS[family])
         if family not in SUPPORTED_SYNTAX_FRAGMENTS:
             raise ValueError("unsupported_family")
         if not formula.strip():
@@ -189,7 +296,11 @@ def validate_family_artifact(family: str, formula: str) -> dict[str, Any]:
             raise ValueError("artifact_size_limit")
         if "stitch:" in formula or "??" in formula:
             raise ValueError("placeholder_artifact")
-        if family == "frame_logic":
+        if family == "propositional":
+            result.update(_strict_propositional(formula))
+        elif family == "cognitive_event_calculus":
+            result.update(_strict_cec(formula))
+        elif family == "frame_logic":
             module = _module("ipfs_datasets_py.logic.parsers.flogic")
             parsed = module.parse_flogic(formula)
             result["parser"] = module.__name__ + ".parse_flogic"
@@ -373,6 +484,43 @@ def export_canonical_rule_families(
             "temporal_operator_added": False, "event_time_invented": False,
             "semantic_equivalence_checked": False, "admitted": False,
         })
+    original_fol = next(row for row in records if row["target"] == "fol")
+    cec = {**original_fol, "target": "cognitive_event_calculus",
+           "export_schema": "canonical-rule-cec-fragment-syntax/v1",
+           "grammar_fragment": "nondeontic_first_order_fragment",
+           "representation_coverage": {**original_fol["representation_coverage"],
+               "scope": "nondeontic_source_atom_syntax_projection",
+               "complete_family_semantics": False,
+               "composition_limitations": ["no_cognitive_or_event_operator_generated",
+                   "combined_cognitive_event_grammar_not_implemented"]}}
+    records.append(cec)
+    proposition_bindings: dict[str, dict[str, str]] = {}
+
+    def proposition(atom: str) -> str:
+        identifier = "atom_" + _text_digest(atom)
+        proposition_bindings[identifier] = {"source_formula": atom,
+            "canonical_rule_sha256": _digest(canonical),
+            "abstraction": "ground_atom_with_term_structure_hidden"}
+        return identifier
+
+    propositional_body = conjunction([proposition(action_atom), *map(proposition, temporal_atoms)])
+    propositional_guards = ["not " + proposition(atom[4:]) if atom.startswith("not ") else proposition(atom)
+                            for atom in guards]
+    propositional_guard = " and ".join(propositional_guards)
+    propositional_formula = (f"{propositional_guard} -> {propositional_body}"
+                             if propositional_guard else propositional_body)
+    records.append({**original_fol, "target": "propositional", "exported_formula": propositional_formula,
+        "export_schema": "canonical-rule-propositional-abstraction/v1",
+        "grammar_fragment": "ground_atom_propositional_abstraction",
+        "proposition_bindings": proposition_bindings,
+        "projection_omitted_facets": ["modality", "first_order_term_structure"],
+        "representation_coverage": {**original_fol["representation_coverage"],
+            "scope": "propositional_abstraction_with_reversible_atom_bindings",
+            "complete_family_semantics": False,
+            "proposition_count": len(proposition_bindings),
+            "first_order_term_structure_preserved_in_formula": False,
+            "composition_limitations": ["modality_and_term_structure_not_expressed_in_formula",
+                "temporal_atoms_are_uninterpreted_propositions_not_temporal_operators"]}})
     return records
 
 
@@ -422,6 +570,17 @@ def qualify_logic_families(
         "qualification_floor": list(REQUIRED_FAMILIES),
         "full_floor_requested": set(REQUIRED_FAMILIES).issubset(families),
         "full_floor_passed": False,
+        "full_floor_scope": "required_family_syntax_fragments_only",
+        "full_family_semantics_covered": False,
+        "schema_capability_coverage_complete": False,
+        "semantic_qualification_passed": False,
+        "coverage_limitations": [
+            "source_bound_projections_are_not_whole_family_semantics",
+            "canonical_rule_does_not_encode_arbitrary_quantifiers_or_cognition",
+            "temporal_predicates_are_not_temporal_operator_semantics",
+            "cec_and_propositional_projections_omit_deontic_modality",
+            "propositional_abstraction_hides_first_order_term_structure",
+            "separate_source_semantic_and_lake_schema_checks_required"],
         "missing_floor_families": [name for name in REQUIRED_FAMILIES if name not in families],
         "scope": ("mandatory_legal_floor_syntax" if set(REQUIRED_FAMILIES).issubset(families)
                   else "requested_fragment_syntax_diagnostic"),
@@ -462,7 +621,7 @@ def qualify_logic_families(
         record = records.get(_TARGETS.get(family, ""))
         if precondition or record is None:
             reason = precondition or (f"{family}_exporter_missing"
-                                      if family in _UNAVAILABLE_VALIDATORS or family == "temporal_fol"
+                                      if family in {"cognitive_event_calculus", "propositional", "temporal_fol"}
                                       else "unsupported_family_or_missing_export")
             row = {"family": family, "passed": False, "syntax_valid": False,
                    "applicability": "unavailable", "formula": "", "diagnostics": [{"code": reason}]}

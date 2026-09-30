@@ -1,6 +1,7 @@
 """Fail-closed qualification of an immutable autoencoder candidate and its pipeline.
 
-Model embedding reconstruction, deterministic text semantics, family syntax and
+Model embedding reconstruction, deterministic text semantics, family syntax,
+full family/schema coverage and
 source-locked Lake admission are separate observations. An embedding decoder is
 not a text/formula generator. Training acceptance never supplies these gates.
 """
@@ -24,6 +25,8 @@ MIN_COSINE = 0.72
 MAX_RECONSTRUCTION_LOSS = 0.20
 MAX_SAMPLES = 1024
 LEAN_TOOLCHAIN = "leanprover/lean4:v4.26.0"
+STRUCTURAL_GATES = ("semantic_gate", "family_syntax_gate", "family_coverage_gate", "lake_gate")
+ROW_GATES = ("metric_gate", *STRUCTURAL_GATES)
 # Version the actual syntax consumers and their local contracts as well as the
 # top-level exporter. Hash before any family parsing and again before sealing;
 # a parser's self-reported post-import hash alone cannot detect concurrent edits.
@@ -192,7 +195,7 @@ def _structural_gates(sample: Mapping[str, Any], sample_id: str, directory: Path
 
     if _is_constitution(sample):
         failure = {"passed": False, "reason": "constitution_not_formalized", "admitted": False}
-        return {"semantic_gate": failure, "family_syntax_gate": failure, "lake_gate": failure,
+        return {**{name: failure for name in STRUCTURAL_GATES},
                 "compiler": {"compiler_status": "not_evaluated", "reason": "constitution_not_formalized",
                              "roundtrip": False, "admitted": False}}
     session = AutoformalSession()
@@ -225,11 +228,25 @@ def _structural_gates(sample: Mapping[str, Any], sample_id: str, directory: Path
     family_ok = semantic_ok and len(family_rows) == len(rows) and all(
         row.get("passed") is True and row.get("full_floor_passed") is True
         and row.get("schema") == "autoformal-family-qualification/v2" for row in family_rows)
+    coverage_rows = [{"source_id": row.get("source_id"),
+                      "source_sha256": row.get("source_sha256"), "rule_sha256": row.get("rule_sha256"),
+                      "passed": (row.get("full_family_semantics_covered") is True
+                                 and row.get("schema_capability_coverage_complete") is True),
+                      "full_family_semantics_covered": row.get("full_family_semantics_covered") is True,
+                      "schema_capability_coverage_complete": row.get("schema_capability_coverage_complete") is True,
+                      "coverage_limitations": row.get("coverage_limitations", []),
+                      "admitted": False, "formalized": False} for row in family_rows]
+    coverage_ok = family_ok and bool(coverage_rows) and all(row["passed"] for row in coverage_rows)
     lake_ok = semantic_ok and len(lake_rows) == len(rows) and all(
         row.get("passed") is True for row in lake_rows)
     return {"compiler": compiled, "semantic_gate": semantic,
             "family_syntax_gate": {"passed": family_ok, "rows": family_rows, "admitted": False,
                                    "reason": "" if family_ok else "required_family_syntax_failed"},
+            "family_coverage_gate": {"passed": coverage_ok, "rows": coverage_rows,
+                "scope": "required_logic_family_semantics_and_output_schema_coverage",
+                "reason": "" if coverage_ok else "required_family_semantics_or_schema_coverage_incomplete",
+                "syntax_pass_satisfies_coverage": False, "numeric_lake_pass_satisfies_coverage": False,
+                "admitted": False, "formalized": False},
             "lake_gate": {"passed": lake_ok, "rows": lake_rows, "admitted": bool(lake_ok),
                           "reason": "" if lake_ok else "source_locked_lake_gate_failed"}}
 
@@ -359,8 +376,13 @@ def qualify_candidate(candidate_artifact: Mapping[str, Any], candidate_version_i
                 except Exception as exc:
                     failure = {"passed": False, "reason": "qualification_execution_error",
                                "error_type": type(exc).__name__, "error": str(exc)[:2000], "admitted": False}
-                    structure = {"semantic_gate": failure, "family_syntax_gate": failure,
-                                 "lake_gate": failure, "compiler": {"compiler_status": "error"}}
+                    structure = {**{name: failure for name in STRUCTURAL_GATES},
+                                 "compiler": {"compiler_status": "error"}}
+                # Old or incomplete structural producers cannot waive a new gate.
+                for gate in STRUCTURAL_GATES:
+                    if not isinstance(structure.get(gate), Mapping):
+                        structure[gate] = {"passed": False, "reason": "required_gate_evidence_missing",
+                                           "gate": gate, "admitted": False}
                 row = {"sample_id": sample.sample_id, "split": split, "source": input_row,
                        "source_sha256": _sha(sample.text.encode()), "metric_gate": metrics,
                        "model_evaluation_elapsed_seconds": metric_seconds,
@@ -368,16 +390,18 @@ def qualify_candidate(candidate_artifact: Mapping[str, Any], candidate_version_i
                        "decoded_embedding": decoded if isinstance(decoded, list) and all(_finite(v) for v in decoded) else None,
                        "model_generated_text": None, **structure, "formalized": False,
                        "admitted": False}
-                row["qualified"] = all(row[key].get("passed") is True for key in
-                                       ("metric_gate", "semantic_gate", "family_syntax_gate", "lake_gate"))
+                row["qualified"] = all(row[key].get("passed") is True for key in ROW_GATES)
                 records.append(row)
-                for gate in ("semantic_gate", "family_syntax_gate", "lake_gate"):
+                for gate in STRUCTURAL_GATES:
                     if row[gate].get("passed") is not True:
                         todos.append({"kind": "source_repair", "sample_id": sample.sample_id,
                                       "source_text": sample.text, "source_sha256": row["source_sha256"],
                                       "candidate_version_id": candidate_version_id, "gate": gate,
                                       "evidence": row[gate], "admitted": False,
-                                      "acceptance": "Preserve source meaning and pass the unchanged qualification gate."})
+                                      "acceptance": (
+                                          "Supply source-bound evidence of every required family semantics and typed output schema; syntax fragments and numeric Lake theorems cannot substitute for coverage."
+                                          if gate == "family_coverage_gate" else
+                                          "Preserve source meaning and pass the unchanged qualification gate.")})
         if not heldout_valid:
             todos.append({"kind": "validation_data", "gate": "heldout_gate",
                           "reason": "heldout_overlap" if overlap else "heldout_samples_missing",
@@ -387,7 +411,7 @@ def qualify_candidate(candidate_artifact: Mapping[str, Any], candidate_version_i
             raise CandidateQualificationError("qualification producer source changed during evaluation")
         if resolved.state.state_identity_record().to_dict() != candidate_state_identity:
             raise CandidateQualificationError("candidate state changed during qualification")
-        gate_names = ("metric_gate", "semantic_gate", "family_syntax_gate", "lake_gate")
+        gate_names = ROW_GATES
         gates = {name: {"passed": all(row[name].get("passed") is True for row in records),
                         "failed_sample_ids": [row["sample_id"] for row in records if row[name].get("passed") is not True]}
                  for name in gate_names}
@@ -403,6 +427,8 @@ def qualify_candidate(candidate_artifact: Mapping[str, Any], candidate_version_i
                    "sample_count": len(train_samples), "heldout_sample_count": len(hold_samples),
                    "heldout_role": "tuning_validation", "heldout_canary": False,
                    "sample_set_sha256": _sha(_raw({"training": training, "heldout": validation})),
+                   "required_gate_names": [*ROW_GATES, "heldout_gate"],
+                   "gate_policy_version": "family_semantics_and_schema_coverage/v1",
                    "gate_results": gates, **gates,
                    "qualified": all(gate["passed"] for gate in gates.values()),
                    "training_qualified": all(row["qualified"] for row in records if row["split"] == "training"),

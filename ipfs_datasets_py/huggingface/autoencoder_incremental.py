@@ -28,7 +28,7 @@ MAX_UPLOAD_BYTES = 128 * 1024 * 1024
 MAX_RECEIPT_BYTES = 16 * 1024 * 1024
 MAX_MANIFEST_BYTES = 4 * 1024 * 1024
 MAX_FILES = 512
-GATES = ("metric_gate", "semantic_gate", "family_syntax_gate", "lake_gate", "heldout_gate")
+GATES = ("metric_gate", "semantic_gate", "family_syntax_gate", "family_coverage_gate", "lake_gate", "heldout_gate")
 _COMMIT = re.compile(r"[0-9a-f]{40}\Z")
 _LANE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}\Z")
 _LANGUAGE = re.compile(r"[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*\Z")
@@ -123,9 +123,11 @@ def _qualified(receipt: Mapping[str, Any], version: Mapping[str, Any]) -> None:
         semantics = row["semantic_gate"].get("rows", [])
         families = row["family_syntax_gate"].get("rows", [])
         lakes = row["lake_gate"].get("rows", [])
-        if not semantics or len(semantics) != len(families) or len(semantics) != len(lakes):
-            raise IncrementalPublicationError("complete per-clause semantic/syntax/Lake evidence required")
-        for semantic, family, lake in zip(semantics, families, lakes):
+        coverage = row["family_coverage_gate"].get("rows", [])
+        if (not semantics or len(semantics) != len(families) or len(semantics) != len(lakes)
+                or len(semantics) != len(coverage)):
+            raise IncrementalPublicationError("complete per-clause semantic/syntax/coverage/Lake evidence required")
+        for semantic, family, cover, lake in zip(semantics, families, coverage, lakes):
             start, end = semantic.get("start"), semantic.get("end")
             if (type(start) is not int or type(end) is not int or not 0 <= start < end <= len(text)
                     or semantic.get("status") != "roundtrip_ok" or not semantic.get("decompiled")
@@ -140,6 +142,17 @@ def _qualified(receipt: Mapping[str, Any], version: Mapping[str, Any]) -> None:
                                           ensure_ascii=False, allow_nan=False).encode())
             if family.get("canonical_rule") != rule or family.get("rule_sha256") != rule_digest:
                 raise IncrementalPublicationError("family syntax canonical rule binding differs")
+            if (family.get("schema") != "autoformal-family-qualification/v2"
+                    or family.get("passed") is not True or family.get("full_floor_passed") is not True
+                    or family.get("full_family_semantics_covered") is not True
+                    or family.get("schema_capability_coverage_complete") is not True
+                    or cover.get("passed") is not True
+                    or cover.get("full_family_semantics_covered") is not True
+                    or cover.get("schema_capability_coverage_complete") is not True
+                    or cover.get("source_id") != family.get("source_id")
+                    or cover.get("source_sha256") != family.get("source_sha256")
+                    or cover.get("rule_sha256") != rule_digest):
+                raise IncrementalPublicationError("required family semantics/schema coverage evidence missing or unbound")
             for name, artifact in family["families"].items():
                 formula = artifact.get("formula")
                 if (artifact.get("passed") is not True or artifact.get("source_bound") is not True

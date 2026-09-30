@@ -410,6 +410,7 @@ def qualification_receipt(version, artifact, *, passed, training=None, validatio
         "metric_gate",
         "semantic_gate",
         "family_syntax_gate",
+        "family_coverage_gate",
         "lake_gate",
         "heldout_gate",
     )

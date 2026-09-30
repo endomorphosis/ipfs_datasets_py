@@ -21,6 +21,7 @@ SCHEMA = "autoencoder-runtime-interface/v1"
 NATIVE_DOMAINS = ("intent_ir", "security_ir", "ui_ux_ir")
 LEGAL_VERSIONS = ("legacy_v1", "legacy_v1_optimized", "current_v2")
 LEARNED_FORMULA_VERSION = "source_conditioned_formula_v1"
+NATIVE_FORMULA_VERSION = "native_formula_v1"
 MAX_CANDIDATE_BYTES = 32 * 1024 * 1024
 
 
@@ -56,9 +57,26 @@ def describe_runtime(domain, version):
     from .autoencoder_logic_requirements import describe_logic_requirements
     requirements = describe_logic_requirements(domain)
     paths = [("autoencoder_runtime_registry.py", Path(__file__)),
-             ("autoencoder_logic_requirements.py", Path(__file__).with_name("autoencoder_logic_requirements.py"))]
+             ("autoencoder_logic_requirements.py", root / "autoencoder_logic_requirements.py")]
+    if domain in NATIVE_DOMAINS and version == NATIVE_FORMULA_VERSION:
+        paths.extend((name, Path(__file__).with_name(name)) for name in (
+            "native_formula_training.py", "native_formula_checkpoint.py"))
+        paths.append(("native_formal_decoder.py", root / "native_formal_decoder.py"))
+        return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+            "runtime_id": domain + ":" + version, "lineage_id": domain + "/" + version,
+            "input_representation": "native_compiler_structural_features", "dimension": None,
+            "state_schema": "native-formula-checkpoint/v1",
+            "objective_default": "native-path-value-cross-entropy/v1",
+            "capabilities": ["prepare_targets", "train", "infer", "load_checkpoint", "decode_formal_logic",
+                             "register_candidate", "load_version"], "integrated": True,
+            "formal_decoder": {"available": True, "modes": ["learned_fields"], "head_required": True,
+                "trained_neural_decoder": True, "input_is_compiler_targets": True,
+                "independent_learned_formula_decoder": False,
+                "scope": "fixed_shape_native_records_training_path_value_vocabulary"},
+            "source_identity": _source_identity(paths), "qualification_requirements": requirements,
+            **features.FALSE}
     if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
-        paths.extend((name, Path(__file__).with_name(name)) for name in
+        paths.extend((name, root / name) for name in
                      ("legal_formula_learning.py", "legal_formula_codec.py", "legal_formula_checkpoint.py"))
         return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
                 "runtime_id": domain + ":" + version, "lineage_id": version,
@@ -93,7 +111,7 @@ def describe_runtime(domain, version):
                   "capabilities": ["train", "infer", "load_checkpoint", "decode_formal_logic"], "integrated": True,
                   "formal_decoder": {"available": True, "modes": ["guided_compiler", "canonical_compiler"],
                                      "independent_learned_formula_decoder": False, "head_required": False}}
-        paths.append(("legal_formal_decoder.py", Path(__file__).with_name("legal_formal_decoder.py")))
+        paths.append(("legal_formal_decoder.py", root / "legal_formal_decoder.py"))
     else:
         _require(domain in NATIVE_DOMAINS, "unknown modality domain")
         _require(version in ("native_v1", "native_v2"), "unknown native runtime version")
@@ -110,7 +128,7 @@ def describe_runtime(domain, version):
                   "formal_decoder": {"available": True, "modes": ["reconstructed_features"],
                                      "head_required": True, "factory": "open_formal_decoder",
                                      "input_is_compiler_targets": True}}
-        paths.append(("native_formal_decoder.py", Path(__file__).with_name("native_formal_decoder.py")))
+        paths.append(("native_formal_decoder.py", root / "native_formal_decoder.py"))
         if not integrated:
             result["unsupported_reason"] = ("Streamed v2 has its own minibatch/Adam state. Its exact modality "
                 "contract and registry resume adapter are not implemented by this interface.")
@@ -127,7 +145,7 @@ def list_runtimes():
               else (namespace / version / "__init__.py")).is_file()]
     return [describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION)] + [
         describe_runtime(domain, version) for domain in NATIVE_DOMAINS
-        for version in ("native_v1", "native_v2")]
+        for version in ("native_v1", "native_v2", NATIVE_FORMULA_VERSION)]
 
 
 def _target_adapter(domain):
@@ -348,10 +366,78 @@ class LearnedFormulaRuntime:
         return {**result, "runtime_id": "legal_ir:" + LEARNED_FORMULA_VERSION}
 
 
+class NativeFormulaRuntime:
+    """Separate categorical decoder training, exact resume and inference paths.
+
+    Inputs are typed compiler projections. Reconstructed records are learned;
+    this runtime does not independently translate raw text to logic.
+    """
+    def __init__(self, domain, *, checkpoint, expected_sha256=None):
+        from . import native_formula_training as learning
+        _require(domain in NATIVE_DOMAINS, "unknown native domain")
+        if isinstance(checkpoint, (str, Path)):
+            self._checkpoint = learning.load_checkpoint(checkpoint, expected_sha256=expected_sha256)
+        else:
+            _require(expected_sha256 is None, "in-memory checkpoints do not accept a file hash")
+            learning.validate_checkpoint(checkpoint)
+            self._checkpoint = _copy(checkpoint)
+        _require(self._checkpoint["domain_id"] == domain, "checkpoint belongs to another domain")
+        self._domain, self._result, self._parent_version_id = domain, None, None
+
+    @property
+    def checkpoint(self):
+        return _copy(self._checkpoint)
+
+    def describe(self):
+        from . import native_formula_training as learning
+        return {**describe_runtime(self._domain, NATIVE_FORMULA_VERSION),
+            "checkpoint_sha256": learning.checkpoint_digest(self._checkpoint),
+            "parent_version_id": self._parent_version_id, "checkpoint_present": True,
+            "trained_checkpoint_present": self._checkpoint["latest"]["progress"]["optimizer_steps"] > 0}
+
+    def train(self, samples, *, validation_samples, **options):
+        from . import native_formula_training as learning
+        _require(self._result is None, "register the pending candidate before training another version")
+        _require("checkpoint" not in options, "resume checkpoint is bound to this runtime")
+        result = learning.train_native_formula(self._checkpoint, samples, validation_samples, **options)
+        # A deadline-only observation must not strand a runtime behind a
+        # pending candidate which has no optimizer update to register.
+        if result["report"]["training_executed"]:
+            self._checkpoint, self._result = _copy(result["checkpoint"]), _copy(result)
+        return result
+
+    def decode_formal_logic(self, samples, *, mode="learned_fields", selected=True):
+        from . import native_formula_training as learning
+        _require(mode == "learned_fields", "native formula runtime supports only learned_fields mode")
+        return learning.infer_native_formula(self._checkpoint, samples, selected=selected)
+
+    def infer(self, samples, *, selected=True):
+        return self.decode_formal_logic(samples, selected=selected)
+
+    def register_candidate(self, registry, directory):
+        from .native_formula_checkpoint import register_candidate
+        _require(self._result is not None, "train a candidate before registering it")
+        result = register_candidate(registry, self._result, directory, parent_version_id=self._parent_version_id)
+        self._parent_version_id, self._result = result["version_id"], None
+        return {**result, "runtime_id": self._domain + ":" + NATIVE_FORMULA_VERSION}
+
+
+def build_native_formula_runtime(domain, training_targets, *, validation_samples, projection_ids,
+                                 latent_width=16, learning_rate=.01, batch_size=8, seed=1729):
+    """Create a new explicit formula lineage; never migrate historical weights."""
+    from .native_formula_training import build_native_formula_checkpoint
+    checkpoint = build_native_formula_checkpoint(domain, training_targets, validation_samples,
+        projection_ids=projection_ids, latent_width=latent_width, learning_rate=learning_rate,
+        batch_size=batch_size, seed=seed)
+    return NativeFormulaRuntime(domain, checkpoint=checkpoint)
+
+
 def open_runtime(domain, version, **binding):
     """Select explicitly. Dimensions, source metadata, and filenames never dispatch."""
     descriptor = describe_runtime(domain, version)
     _require(descriptor["integrated"], descriptor.get("unsupported_reason", "runtime is not integrated"))
+    if domain in NATIVE_DOMAINS and version == NATIVE_FORMULA_VERSION:
+        return NativeFormulaRuntime(domain, **binding)
     if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
         return LearnedFormulaRuntime(**binding)
     if domain == "legal_ir":
@@ -363,7 +449,8 @@ def build_native_runtime(domain, version, training_targets, *, projection_ids, i
                          with_formal_decoder=True):
     """Build a v1 basis from training only; excluded native views remain recorded."""
     descriptor = describe_runtime(domain, version)
-    _require(domain in NATIVE_DOMAINS and descriptor["integrated"], "native version is not integrated")
+    _require(domain in NATIVE_DOMAINS and version == "native_v1",
+             "this builder requires native_v1; use build_native_formula_runtime for decoder training")
     adapter, _ = _target_adapter(domain)
     space = features.build_feature_space(domain, projection_ids, training_targets)
     contract = features.build_native_feature_contract(space, ir_schema=ir_schema,
@@ -405,6 +492,12 @@ def load_version(registry, version_id, *, domain, version):
         from .legal_formula_checkpoint import load_registered_candidate
         saved = load_registered_candidate(registry, version_id)
         runtime = LearnedFormulaRuntime(checkpoint=saved["checkpoint"])
+        runtime._parent_version_id = version_id
+        return runtime
+    if domain in NATIVE_DOMAINS and version == NATIVE_FORMULA_VERSION:
+        from .native_formula_checkpoint import load_registered_candidate
+        saved = load_registered_candidate(registry, version_id)
+        runtime = NativeFormulaRuntime(domain, checkpoint=saved["checkpoint"])
         runtime._parent_version_id = version_id
         return runtime
     row = registry.get_version(version_id)
@@ -494,4 +587,5 @@ def open_formal_decoder(domain, version, **binding):
 __all__ = ["RuntimeVersionError", "list_runtimes", "describe_runtime", "prepare_targets",
            "open_runtime", "build_native_runtime", "load_version", "open_formal_decoder",
            "NativeRuntime", "LegalRuntime", "StreamedFormalRuntime", "LearnedFormulaRuntime",
-           "LEARNED_FORMULA_VERSION"]
+           "LEARNED_FORMULA_VERSION", "NATIVE_FORMULA_VERSION", "NativeFormulaRuntime",
+           "build_native_formula_runtime"]

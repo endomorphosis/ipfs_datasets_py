@@ -9,6 +9,8 @@ import pytest
 
 from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
 from ipfs_datasets_py.huggingface import autoencoder_incremental as pub
+from ipfs_datasets_py.logic.autoformal import family_qualification
+_REAL_FAMILY_QUALIFIER = family_qualification.qualify_logic_families
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_candidate_qualification as qualification
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import ModalAutoencoderTrainingState
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_patch_codec import encode_patch
@@ -59,6 +61,16 @@ def fake_lake(rule, *, roundtrip_ok, output_directory, timeout_seconds, statemen
 
 def evidence(registry, root, version_id, monkeypatch):
     monkeypatch.setattr(qualification, "_lake_gate", fake_lake)
+    # Transport fixtures explicitly simulate a future completed coverage checker.
+    # Actual current exports are partial and must remain unqualified in production.
+    def fake_family_coverage(*args, **kwargs):
+        report = _REAL_FAMILY_QUALIFIER(*args, **kwargs)
+        assert not report["full_family_semantics_covered"]
+        assert not report["schema_capability_coverage_complete"]
+        report.update(full_family_semantics_covered=True, schema_capability_coverage_complete=True,
+                      unit_test_transport_only=True)
+        return report
+    monkeypatch.setattr(family_qualification, "qualify_logic_families", fake_family_coverage)
     lock, _, lock_sha = qualification._statement_lock()
     rows = []
     for index, days in enumerate((20, 30)):
@@ -175,11 +187,16 @@ def test_lane_head_requires_owner_policy_and_exact_compare_swap(package):
         pub.publish_sparse_update(path, upload=True, promote_lane=True, owner_head_validator=lambda _: True, api=hub)
 
 
-@pytest.mark.parametrize("change", ["metric", "family", "lake", "version", "qualified"])
+@pytest.mark.parametrize("change", ["metric", "family", "coverage_gate", "coverage_clause", "coverage_binding", "family_semantics", "schema_coverage", "lake", "version", "qualified"])
 def test_missing_or_false_native_evidence_rejected(package, change):
     receipt = deepcopy(package.receipt)
     if change == "metric": receipt["rows"][0]["metric_gate"]["embedding_cosine_similarity"] = .71
     elif change == "family": receipt["rows"][0]["family_syntax_gate"]["rows"][0]["families"].pop("fol")
+    elif change == "coverage_gate": receipt["gate_results"].pop("family_coverage_gate")
+    elif change == "coverage_clause": receipt["rows"][0]["family_coverage_gate"]["rows"].clear()
+    elif change == "coverage_binding": receipt["rows"][0]["family_coverage_gate"]["rows"][0]["rule_sha256"] = "0" * 64
+    elif change == "family_semantics": receipt["rows"][0]["family_syntax_gate"]["rows"][0].pop("full_family_semantics_covered")
+    elif change == "schema_coverage": receipt["rows"][0]["family_syntax_gate"]["rows"][0]["schema_capability_coverage_complete"] = False
     elif change == "lake": receipt["rows"][0]["lake_gate"]["rows"][0]["returncode"] = 1
     elif change == "version": receipt["candidate_version_id"] = "wrong"
     else: receipt["qualified"] = False

@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import re
 
 import pytest
 
@@ -382,60 +384,148 @@ def test_identical_duplicate_temporal_sidecars_preserve_existing_export_contract
     assert report["admitted"] is report["formalized"] is False
 
 
-def test_mandatory_eight_family_floor_fails_on_unimplemented_distinct_exports():
+def test_mandatory_eight_family_syntax_floor_does_not_qualify_full_semantics():
     report = qualification.qualify_logic_families(TEXT, RULE, source_id="full-floor")
     assert report["schema"] == "autoformal-family-qualification/v2"
     assert report["scope"] == "mandatory_legal_floor_syntax"
+    assert report["full_floor_scope"] == "required_family_syntax_fragments_only"
     assert report["full_floor_requested"] is True
     assert report["missing_floor_families"] == []
     assert len(report["qualification_floor"]) == len(report["families"]) == 8
-    assert report["passed"] is report["full_floor_passed"] is False
-    assert all(report["families"][family]["passed"] for family in HISTORICAL_SIX_FRAGMENTS)
-    missing = {"cognitive_event_calculus", "propositional"}
-    assert {goal["family"] for goal in report["goals"]} == missing
-    for family in missing:
-        row = report["families"][family]
-        assert row["applicability"] == "unavailable"
-        assert row["diagnostics"] == [{"code": f"{family}_exporter_missing"}]
-        assert not row["formula"] and row["syntax_valid"] is False
-        assert row["admitted"] is row["formalized"] is False
-        goal = next(item for item in report["goals"] if item["family"] == family)
-        assert goal["source_sha256"] == report["source_sha256"]
-        assert goal["rule_sha256"] == report["rule_sha256"]
-        assert goal["work_kind"] == "compiler_family_export_repair"
+    assert report["passed"] is report["full_floor_passed"] is True
+    assert all(row["passed"] for row in report["families"].values())
+    assert report["goals"] == []
+    assert report["full_family_semantics_covered"] is False
+    assert report["schema_capability_coverage_complete"] is False
+    assert report["semantic_qualification_passed"] is False
+    assert report["coverage_limitations"]
     assert report["admitted"] is report["formalized"] is False
 
 
-def test_cec_and_dcec_are_distinct_requirements_and_never_share_a_pass():
+def test_cec_and_dcec_exports_keep_distinct_deontic_scope():
     report = qualification.qualify_logic_families(TEXT, RULE, required_families=("cec", "dcec"))
     assert report["required_families"] == ["cognitive_event_calculus", "deontic_cognitive_event_calculus"]
-    assert report["families"]["cognitive_event_calculus"]["passed"] is False
-    assert report["families"]["deontic_cognitive_event_calculus"]["passed"] is True
-    assert report["passed"] is report["full_floor_passed"] is False
+    cec, dcec = report["families"].values()
+    assert cec["passed"] is dcec["passed"] is True
+    assert cec["export_record"]["projection_omitted_facets"] == ["modality"]
+    assert cec["representation_coverage"]["deontic_operator_count"] == 0
+    assert dcec["representation_coverage"]["deontic_operator_count"] == 1
+    assert qualification.validate_family_artifact("cec", dcec["formula"])["passed"] is False
+    assert report["passed"] is True and report["full_floor_passed"] is False
 
 
-@pytest.mark.parametrize(("family", "canonical"), [
-    ("cec", "cognitive_event_calculus"),
-    ("cognitive_event_calculus", "cognitive_event_calculus"),
-    ("propositional", "propositional"),
-    ("propositional_logic", "propositional"),
-    ("pl", "propositional"),
+@pytest.mark.parametrize("formula", [
+    "p", "p and not q -> r", "true or false", "(p or q) iff (r and not s)",
 ])
-def test_missing_strict_validator_cannot_fall_through_to_a_different_grammar(family, canonical):
-    report = qualification.validate_family_artifact(family, "O(Happens(retain,t0))")
-    assert report["family"] == canonical
+def test_propositional_strict_parser_accepts_only_boolean_fragment(formula):
+    report = qualification.validate_family_artifact("propositional_logic", formula)
+    assert report["passed"] and report["consumed_all_input"]
+    assert report["qualified_fragment"] == "nullary_propositions_and_boolean_connectives"
+    assert report["deontic_operator_count"] == report["quantifier_count"] == 0
+    assert report["admitted"] is report["semantic_equivalence_checked"] is False
+
+
+@pytest.mark.parametrize("formula", [
+    "", "p @", "p trailing", "p and", "(p or)", "Retain(x)",
+    "forall x. Retain(x)", "exists x. Retain(x)", "O(p)", "F(p)",
+    "box p", "always(p)", "knows[alice] p", "happens(e,t)",
+])
+def test_propositional_rejects_quantifiers_predicate_terms_and_other_families(formula):
+    report = qualification.validate_family_artifact("pl", formula)
+    assert report["family"] == "propositional"
     assert report["passed"] is report["syntax_valid"] is False
-    assert report["diagnostics"][0]["code"] == f"{canonical}_validator_unavailable"
-    assert "parser" not in report
+    assert report["diagnostics"]
 
 
-def test_unimplemented_export_cannot_gain_a_pass_from_injected_existing_syntax(monkeypatch):
-    monkeypatch.setattr(qualification, "_export_rule", lambda *args: [
-        {"target": "cognitive_event_calculus", "exported_formula": "O(Happens(retain,t0))"},
-        {"target": "propositional", "exported_formula": "O(Happens(retain,t0))"},
-    ])
-    report = qualification.qualify_logic_families(
-        TEXT, RULE, required_families=("cognitive_event_calculus", "propositional"))
+@pytest.mark.parametrize(("formula", "events", "cognition"), [
+    ("Retain(officer,records)", 0, 0),
+    ("happens(e,t) and holds_at(f,t)", 2, 0),
+    ("initiates(e,f,t) -> holds_at(f,t)", 2, 0),
+    ("forall x:agent. Person(x) -> happens(e,t)", 1, 0),
+    ("knows[alice] p", 0, 1),
+    ("believes[alice] (p -> q)", 0, 1),
+    ("intends[alice] (p and q)", 0, 1),
+    ("knows[alice] knows[bob] p", 0, 2),
+])
+def test_cec_accepts_explicit_native_event_or_cognitive_fragments(formula, events, cognition):
+    report = qualification.validate_family_artifact("cec", formula)
+    assert report["passed"] and report["consumed_all_input"]
+    assert report["family"] == "cognitive_event_calculus"
+    assert report["event_calculus_atom_count"] == events
+    assert report["cognitive_operator_count"] == cognition
+    assert report["deontic_operator_count"] == 0
+    assert "combined_cognitive_event_grammar_not_implemented" in report["composition_limitations"]
+    assert report["admitted"] is report["semantic_equivalence_checked"] is False
+    if cognition:
+        assert "[alice]" in report["printed"]
+        assert report["qualified_fragment"] == "agent_indexed_single_attitude_over_propositions"
+
+
+@pytest.mark.parametrize("formula", [
+    "happens(e)", "happens(e,t,extra)", "happens(e,t) @", "happens(e,t) trailing",
+    "happens(e,t) and", "O(happens(e,t))", "P(report)", "F(report)",
+    "obligation(report)", "forall x:agent. O(Report(x))", "not O(report)",
+    "Retain(Happens(e,t))", "knows(p)", "knows p", "K(alice,p)",
+    "knows[alice] p @", "knows[alice] p trailing", "knows[alice] O(p)",
+    "knows[alice] Happens(e,t)", "knows[alice] believes[bob] p",
+])
+def test_cec_rejects_deontic_malformed_and_unimplemented_compositions(formula):
+    report = qualification.validate_family_artifact("cec", formula)
+    assert report["passed"] is report["syntax_valid"] is False
+    assert report["diagnostics"]
+    assert report["admitted"] is False
+
+
+def test_new_projections_bind_source_atoms_and_disclose_every_abstraction():
+    rule = {**RULE, "conditions": ["authorized"], "exceptions": ["emergency"],
+            "temporal": ["within 10 days"]}
+    sidecar = [{"temporal_kind": "within_duration", "quantity": 10, "value": "10 days"}]
+    report = qualification.qualify_logic_families(TEXT, {**rule, "temporal_records": sidecar})
+    assert report["passed"]
+    fol, cec, prop = (report["families"][name] for name in ("fol", "cognitive_event_calculus", "propositional"))
+    assert cec["formula"] == fol["formula"]
+    assert cec["representation_coverage"]["complete_family_semantics"] is False
+    assert cec["representation_coverage"]["event_calculus_atom_count"] == 0
+    assert cec["representation_coverage"]["cognitive_operator_count"] == 0
+    bindings = prop["export_record"]["proposition_bindings"]
+    reconstructed = re.sub(r"atom_[0-9a-f]{64}", lambda match: bindings[match.group()]["source_formula"], prop["formula"])
+    assert reconstructed == fol["formula"]
+    assert all(symbol == "atom_" + hashlib.sha256(binding["source_formula"].encode()).hexdigest()
+               for symbol, binding in bindings.items())
+    assert all(binding["canonical_rule_sha256"] == report["rule_sha256"] for binding in bindings.values())
+    assert prop["export_record"]["projection_omitted_facets"] == ["modality", "first_order_term_structure"]
+    assert prop["representation_coverage"]["first_order_term_structure_preserved_in_formula"] is False
+    assert any("within_duration(" in binding["source_formula"] for binding in bindings.values())
+    assert any("exception_emergency" in binding["source_formula"] for binding in bindings.values())
+    for row in (cec, prop):
+        assert row["source_bound"] is True
+        assert row["source_sha256"] == report["source_sha256"]
+        assert row["rule_sha256"] == report["rule_sha256"]
+        assert row["export_record"]["canonical_rule"] == rule
+        assert row["export_record"]["atom_bindings"] == fol["export_record"]["atom_bindings"]
+        assert row["admitted"] is row["semantic_equivalence_checked"] is False
+
+
+def test_original_six_complete_export_records_are_byte_preserved():
+    # Captured from the original six-row exporter before this change. Covers
+    # source IDs, bindings, conditions, exceptions and both typed duration kinds.
+    rule = {"modality": "O", "actor": "Company A", "action": "submit", "object": "backup report",
+            "conditions": ["approved", "account-number"], "exceptions": ["emergency"],
+            "temporal": ["at least 20 days", "within 10 days"]}
+    records = qualification.export_canonical_rule_families(rule, source_id="preservation-case", temporal_records=[
+        {"temporal_kind": "minimum_duration", "quantity": 20, "value": "at least 20 days"},
+        {"temporal_kind": "within_duration", "quantity": 10, "value": "10 days"}])
+    raw = json.dumps(records[:6], sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
+    assert len(records) == 8
+    assert hashlib.sha256(raw).hexdigest() == "5240ae1b23671c4d3e576eb9e70fe1e88c611a7d238cfd6864a1516935116770"
+
+
+def test_missing_new_export_still_fails_closed_with_a_specific_goal(monkeypatch):
+    original = qualification._export_rule
+    monkeypatch.setattr(qualification, "_export_rule", lambda *args: [row for row in original(*args)
+        if row["target"] != "cognitive_event_calculus"])
+    report = qualification.qualify_logic_families(TEXT, RULE)
     assert report["passed"] is report["full_floor_passed"] is False
-    assert all(row["passed"] is False for row in report["families"].values())
-    assert all("validator_unavailable" in row["diagnostics"][0]["code"] for row in report["families"].values())
+    goal = next(item for item in report["goals"] if item["family"] == "cognitive_event_calculus")
+    assert goal["diagnostics"] == [{"code": "cognitive_event_calculus_exporter_missing"}]
+    assert goal["source_sha256"] == report["source_sha256"]

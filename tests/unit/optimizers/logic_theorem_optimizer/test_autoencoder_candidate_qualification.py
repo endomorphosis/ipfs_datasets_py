@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -78,7 +79,7 @@ def _sample(text="The agency shall retain records.", section="1"):
 def _failed_structure(*args, **kwargs):
     failure = {"passed": False, "reason": "test_structural_gap", "admitted": False}
     return {"compiler": {"compiler_status": "abstain"}, "semantic_gate": failure,
-            "family_syntax_gate": failure, "lake_gate": failure}
+            "family_syntax_gate": failure, "family_coverage_gate": failure, "lake_gate": failure}
 
 
 def test_exact_checkpoint_bytes_required(tmp_path):
@@ -219,6 +220,7 @@ def test_constitution_never_enters_roundtrip_or_lake(tmp_path, monkeypatch):
     result = q._structural_gates(sample, "constitution", tmp_path, lock, 30)
     assert not result["compiler"]["roundtrip"]
     assert not result["semantic_gate"]["passed"]
+    assert not result["family_coverage_gate"]["passed"]
     assert not result["lake_gate"]["admitted"]
     assert result["semantic_gate"]["reason"] == "constitution_not_formalized"
 
@@ -282,9 +284,12 @@ def test_current_eight_family_gaps_block_qualification_even_with_a_lake_observat
                                 "floor-gap", tmp_path, lock, 30)
     row = result["family_syntax_gate"]["rows"][0]
     assert row["full_floor_requested"]
-    assert not row["full_floor_passed"]
-    assert {goal["family"] for goal in row["goals"]} >= {"cognitive_event_calculus", "propositional"}
-    assert not result["family_syntax_gate"]["passed"]
+    assert row["full_floor_passed"] and result["family_syntax_gate"]["passed"]
+    assert result["lake_gate"]["passed"]
+    assert not row["full_family_semantics_covered"]
+    assert not row["schema_capability_coverage_complete"]
+    assert not result["family_coverage_gate"]["passed"]
+    assert result["family_coverage_gate"]["reason"] == "required_family_semantics_or_schema_coverage_incomplete"
 
 
 def test_real_source_minimum_runs_lake_legal(tmp_path):
@@ -307,3 +312,78 @@ def test_real_source_minimum_runs_lake_legal(tmp_path):
     assert result["formalized"] is False
     assert (tmp_path / "lake/Legal.lean").exists()
     assert "Built Legal" in (tmp_path / "lake/lake.log").read_text()
+
+
+@pytest.mark.parametrize("semantic,schema,expected", [
+    (None, None, False), (True, None, False), (None, True, False),
+    (False, True, False), (True, False, False), (1, True, False),
+    (True, "true", False), (True, True, True),
+])
+def test_family_coverage_requires_both_exact_boolean_observations(tmp_path, monkeypatch, semantic, schema, expected):
+    from ipfs_datasets_py.logic.autoformal import family_qualification
+    report = {"schema": "autoformal-family-qualification/v2", "passed": True, "full_floor_passed": True}
+    if semantic is not None:
+        report["full_family_semantics_covered"] = semantic
+    if schema is not None:
+        report["schema_capability_coverage_complete"] = schema
+    monkeypatch.setattr(family_qualification, "qualify_logic_families", lambda *a, **k: report)
+    monkeypatch.setattr(q, "_lake_gate", lambda *a, **k: {"passed": True, "admitted": False})
+    lock, _, _ = q._statement_lock()
+    result = q._structural_gates(_sample("The officer shall retain the file for at least 20 days."),
+                                "coverage-booleans", tmp_path, lock, 30)
+    assert result["family_syntax_gate"]["passed"]
+    assert result["family_coverage_gate"]["passed"] is expected
+    assert result["family_coverage_gate"]["admitted"] is False
+    assert result["family_coverage_gate"]["numeric_lake_pass_satisfies_coverage"] is False
+
+
+def _passing_metric_evaluation(model, samples, **kwargs):
+    sample = samples[0]
+    return SimpleNamespace(to_dict=lambda: {"sample_count": 1,
+        "embedding_cosine_similarity": .9, "reconstruction_loss": .1,
+        "decoded_embeddings": {sample.sample_id: list(sample.embedding_vector)}})
+
+
+def test_eight_syntax_passes_and_numeric_lake_do_not_qualify_candidate(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_paths
+    monkeypatch.setattr(autoencoder_paths, "gated_evaluate", _passing_metric_evaluation)
+    monkeypatch.setattr(q, "_lake_gate", lambda *a, **k: {"passed": True, "admitted": False})
+    result = q.qualify_candidate(_candidate(tmp_path), "coverage-gap-version",
+        [_sample("The officer shall retain the file for at least 20 days.")], tmp_path / "qualification",
+        heldout_samples=[_sample("The officer shall retain the file for at least 30 days.", section="2")],
+        model_config={"compute_device": "python"})
+    assert result["qualified"] is result["training_qualified"] is False
+    assert result["needs_training"] is False
+    assert result["gate_policy_version"] == "family_semantics_and_schema_coverage/v1"
+    assert set(result["required_gate_names"]) == set(result["gate_results"])
+    assert not result["family_coverage_gate"]["passed"]
+    assert len(result["family_coverage_gate"]["failed_sample_ids"]) == 2
+    assert all(value["passed"] for name, value in result["gate_results"].items() if name != "family_coverage_gate")
+    assert {todo["gate"] for todo in result["repair_todos"]} == {"family_coverage_gate"}
+    for row in result["rows"]:
+        assert row["qualified"] is False and row["family_syntax_gate"]["passed"]
+        assert row["lake_gate"]["passed"] and not row["family_coverage_gate"]["passed"]
+        coverage = row["family_coverage_gate"]["rows"][0]
+        family = row["family_syntax_gate"]["rows"][0]
+        assert coverage["source_sha256"] == family["source_sha256"]
+        assert coverage["rule_sha256"] == family["rule_sha256"]
+        assert coverage["coverage_limitations"]
+
+
+@pytest.mark.parametrize("error", [False, True])
+def test_missing_coverage_or_structural_exception_remains_durable_failure(tmp_path, monkeypatch, error):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_paths
+    monkeypatch.setattr(autoencoder_paths, "gated_evaluate", _passing_metric_evaluation)
+    def incomplete(*args, **kwargs):
+        if error:
+            raise RuntimeError("fixture failure")
+        return {"compiler": {"compiler_status": "compiled"},
+                **{gate: {"passed": True, "admitted": False} for gate in ("semantic_gate", "family_syntax_gate", "lake_gate")}}
+    monkeypatch.setattr(q, "_structural_gates", incomplete)
+    result = q.qualify_candidate(_candidate(tmp_path), "missing-coverage-version", [_sample()],
+        tmp_path / "qualification", model_config={"compute_device": "python"})
+    row = result["rows"][0]
+    assert row["qualified"] is result["qualified"] is False
+    assert not row["family_coverage_gate"]["passed"]
+    assert row["family_coverage_gate"]["reason"] == ("qualification_execution_error" if error else "required_gate_evidence_missing")
+    assert any(todo["gate"] == "family_coverage_gate" for todo in result["repair_todos"])

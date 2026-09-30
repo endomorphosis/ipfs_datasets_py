@@ -91,3 +91,14 @@ one shared DuckDB file across machines.
 
 See [operations](operations_and_troubleshooting.md) for troubleshooting and
 bounded validation commands. Dated reports provide deeper run-specific evidence.
+
+## Categorical native formulas and Lake execution
+
+- `autoencoder_runtime_registry.build_native_formula_runtime`: initialize a separate Intent/Security/UI formula lineage.
+- `native_formula_training`: bounded categorical loss, native readout selection, exact Adam resume and exclusive checkpoint files.
+- `native_formula_checkpoint`: immutable single-owner DuckDB versions and exact parent verification.
+- `autoencoder_decoded_schema.validate_decoded_outputs`: actual learned inference followed by source/checkpoint-bound structural Lake checks.
+- `autoencoder_schema_lake`: typed output emitter, `lake build DecoderSchema`, immutable execution verification.
+- `scripts/ops/autoencoder/train_native_formula.py`: corpus JSON to candidate, decoder outputs and retained Lake reports.
+
+See [inputs, bounds, commands and remaining limits](native_formula_training.md).
