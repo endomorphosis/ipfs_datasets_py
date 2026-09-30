@@ -184,6 +184,111 @@ def _jaccard(left: Sequence[str], right: Sequence[str]) -> float:
     return len(left_set & right_set) / len(left_set | right_set)
 
 
+def _prefix_length(size: int, threshold: float) -> int:
+    """How many rarest shingles a set must index at this Jaccard threshold.
+
+    Any pair at or above ``threshold`` shares one of those shingles. A longer
+    prefix only adds candidates; it does not drop a pair the full scan would keep.
+    """
+
+    if size <= 0:
+        return 0
+    required = math.ceil((threshold * size) - 1e-12)
+    if required < 1:
+        required = 1
+    if required > size:
+        required = size
+    return size - required + 1
+
+
+def _sizes_can_meet(left: int, right: int, threshold: float) -> bool:
+    if left > right:
+        left, right = right, left
+    return left >= (threshold * right) - 1e-12
+
+
+def _iter_shingle_block_pairs(
+    signatures: Sequence[Sequence[str]],
+    threshold: float,
+):
+    """Yield index pairs that share a Jaccard prefix shingle.
+
+    Posting lists store every document that contains the shingle. Probes use
+    only each document's rarest prefix, so a frequent shingle is not expanded
+    unless it is among those rare tokens. Equal signatures are included when
+    both rows are passed in; callers may chain exact copies separately.
+    """
+
+    counts: dict[str, int] = defaultdict(int)
+    unique: list[tuple[str, ...]] = []
+    for signature in signatures:
+        tokens = tuple(signature)
+        unique.append(tokens)
+        for token in tokens:
+            counts[token] += 1
+    prefixes: list[tuple[str, ...]] = []
+    indexed: set[str] = set()
+    for tokens in unique:
+        if not tokens:
+            prefixes.append(())
+            continue
+        ordered = tuple(sorted(tokens, key=lambda token: (counts[token], token)))
+        prefix = ordered[: _prefix_length(len(ordered), threshold)]
+        prefixes.append(prefix)
+        indexed.update(prefix)
+    postings: dict[str, list[int]] = defaultdict(list)
+    for index, tokens in enumerate(unique):
+        for token in tokens:
+            if token in indexed:
+                postings[token].append(index)
+    sizes = [len(tokens) for tokens in unique]
+    stamp = [0] * len(unique)
+    epoch = 0
+    for index, prefix in enumerate(prefixes):
+        if not prefix:
+            continue
+        epoch += 1
+        for token in prefix:
+            for other in postings[token]:
+                if other <= index or stamp[other] == epoch:
+                    continue
+                if not _sizes_can_meet(sizes[index], sizes[other], threshold):
+                    continue
+                stamp[other] = epoch
+                yield index, other
+
+
+def _must_link_near_duplicates(
+    examples: Sequence[Any],
+    threshold: float,
+) -> list[tuple[str, str]]:
+    """Return spanning edges for pairs whose Jaccard meets ``threshold``.
+
+    Identical nonempty signatures form a chain. Distinct signatures are compared
+    through one representative, using the prefix index. Empty signatures are not
+    linked: their Jaccard is zero.
+    """
+
+    by_signature: dict[tuple[str, ...], list[Any]] = defaultdict(list)
+    for example in examples:
+        signature = tuple(example.near_duplicate_signature)
+        if signature:
+            by_signature[signature].append(example)
+    links: list[tuple[str, str]] = []
+    representatives: list[Any] = []
+    for signature in sorted(by_signature):
+        members = sorted(by_signature[signature], key=lambda item: item.sample_id)
+        representatives.append(members[0])
+        for previous, current in zip(members, members[1:]):
+            links.append((previous.sample_id, current.sample_id))
+    signatures = [tuple(item.near_duplicate_signature) for item in representatives]
+    sample_ids = [item.sample_id for item in representatives]
+    for left, right in _iter_shingle_block_pairs(signatures, threshold):
+        if _jaccard(signatures[left], signatures[right]) >= threshold:
+            links.append((sample_ids[left], sample_ids[right]))
+    return links
+
+
 def _repository_key(uri: str) -> str:
     text = _text(uri)
     if not text:
@@ -929,16 +1034,11 @@ def build_intent_splits(
         lambda item: (item.generation_family_id,) if item.generation_family_id else (),
     ):
         _union_values(union_find, examples, values)
-    for index, left in enumerate(examples):
-        for right in examples[index + 1 :]:
-            if (
-                _jaccard(
-                    left.near_duplicate_signature,
-                    right.near_duplicate_signature,
-                )
-                >= resolved.near_duplicate_jaccard_threshold
-            ):
-                union_find.union(left.sample_id, right.sample_id)
+    for left_id, right_id in _must_link_near_duplicates(
+        examples,
+        resolved.near_duplicate_jaccard_threshold,
+    ):
+        union_find.union(left_id, right_id)
 
     groups: dict[str, list[IntentSplitExample]] = defaultdict(list)
     for example in examples:
@@ -1026,24 +1126,13 @@ def validate_intent_splits(
         add(kind, key, sample_ids)
 
     threshold = float(resolved.metadata.get("near_duplicate_jaccard_threshold", 0.80))
-    for index, left in enumerate(resolved.examples):
-        for right in resolved.examples[index + 1 :]:
-            similarity = _jaccard(left.near_duplicate_signature, right.near_duplicate_signature)
-            if (
-                similarity >= threshold
-                and assignments[left.sample_id] != assignments[right.sample_id]
-            ):
-                add(
-                    "near_duplicate",
-                    _digest(
-                        {
-                            "left": left.sample_id,
-                            "right": right.sample_id,
-                            "threshold": threshold,
-                        }
-                    ),
-                    (left.sample_id, right.sample_id),
-                )
+    for left_id, right_id in _must_link_near_duplicates(resolved.examples, threshold):
+        if assignments[left_id] != assignments[right_id]:
+            add(
+                "near_duplicate",
+                _digest({"left": left_id, "right": right_id, "threshold": threshold}),
+                (left_id, right_id),
+            )
 
     unique = {(item.kind, item.key, item.partitions): item for item in violations}
     ordered = tuple(sorted(unique.values(), key=lambda item: (item.kind, item.key)))

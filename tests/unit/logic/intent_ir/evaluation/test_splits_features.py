@@ -21,6 +21,9 @@ from ipfs_datasets_py.logic.intent_ir.evaluation.splits import (
     IntentSplitExample,
     IntentSplitLeakageError,
     IntentSplitManifest,
+    _iter_shingle_block_pairs,
+    _jaccard,
+    _must_link_near_duplicates,
     build_intent_splits,
     require_leakage_safe_splits,
     require_retrieval_partition_fence,
@@ -358,6 +361,70 @@ def test_retrieval_fence_rejects_cross_partition_unknown_and_snapshot_candidates
         "query_graph_snapshot_mismatch",
         "graph_snapshot_mismatch",
     }
+
+
+def test_shingle_index_links_the_same_pairs_as_a_full_scan() -> None:
+    import random
+
+    vocabulary = [f"{index:016x}" for index in range(24)]
+    rng = random.Random(1729)
+    signatures: list[tuple[str, ...]] = []
+    for _ in range(36):
+        size = rng.randint(0, 7)
+        signatures.append(tuple(sorted(rng.sample(vocabulary, size))))
+    signatures.append(signatures[3])
+    for threshold in (0.5, 0.8, 1.0):
+        found = set(_iter_shingle_block_pairs(signatures, threshold))
+        for left in range(len(signatures)):
+            for right in range(left + 1, len(signatures)):
+                if _jaccard(signatures[left], signatures[right]) >= threshold:
+                    assert (left, right) in found
+
+    samples = [
+        _record(f"row-{index}", text=" ".join(f"w{token}" for token in signature))
+        for index, signature in enumerate(signatures)
+    ]
+    # Distinct identity fields keep repository and source unions from masking the shingles.
+    manifest = build_intent_splits(samples, IntentSplitConfig(seed="blocking", near_duplicate_jaccard_threshold=0.8))
+    examples = [IntentSplitExample.from_sample(sample) for sample in samples]
+    examples.sort(key=lambda item: item.sample_id)
+    parent = {item.sample_id: item.sample_id for item in examples}
+
+    def find(value: str) -> str:
+        while parent[value] != value:
+            parent[value] = parent[parent[value]]
+            value = parent[value]
+        return value
+
+    def union(left: str, right: str) -> None:
+        left_root, right_root = find(left), find(right)
+        if left_root == right_root:
+            return
+        if right_root < left_root:
+            left_root, right_root = right_root, left_root
+        parent[right_root] = left_root
+
+    for left_index, left in enumerate(examples):
+        for right in examples[left_index + 1 :]:
+            if _jaccard(left.near_duplicate_signature, right.near_duplicate_signature) >= 0.8:
+                union(left.sample_id, right.sample_id)
+    for left_id, right_id in _must_link_near_duplicates(examples, 0.8):
+        assert find(left_id) == find(right_id)
+        assert manifest.assignments[left_id] == manifest.assignments[right_id]
+
+
+def test_near_duplicate_family_follows_one_held_out_member() -> None:
+    manifest = build_intent_splits(
+        [
+            _record("copy-finance", domain="finance", text="Publish the quarterly ledger by Friday."),
+            _record("copy-general", domain="general", text="Publish the quarterly ledger by Friday."),
+            _record("unrelated", domain="general", text="Calibrate the kilnquartz crucible before dawn."),
+        ],
+        IntentSplitConfig(seed="family", held_out_domains=("finance",)),
+    )
+    assert manifest.assignments["copy-finance"] == HELD_OUT_DOMAIN_PARTITION
+    assert manifest.assignments["copy-general"] == HELD_OUT_DOMAIN_PARTITION
+    assert manifest.assignments["unrelated"] != HELD_OUT_DOMAIN_PARTITION
 
 
 def test_split_contracts_are_immutable_and_round_trip_canonically() -> None:
