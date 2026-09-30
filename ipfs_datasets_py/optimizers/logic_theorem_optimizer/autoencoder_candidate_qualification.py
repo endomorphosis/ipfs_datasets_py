@@ -223,7 +223,8 @@ def _structural_gates(sample: Mapping[str, Any], sample_id: str, directory: Path
                          output_directory=directory / f"lake-{index}",
                          timeout_seconds=lake_timeout_seconds, statement_lock=statement_lock))
     family_ok = semantic_ok and len(family_rows) == len(rows) and all(
-        row.get("passed") is True for row in family_rows)
+        row.get("passed") is True and row.get("full_floor_passed") is True
+        and row.get("schema") == "autoformal-family-qualification/v2" for row in family_rows)
     lake_ok = semantic_ok and len(lake_rows) == len(rows) and all(
         row.get("passed") is True for row in lake_rows)
     return {"compiler": compiled, "semantic_gate": semantic,

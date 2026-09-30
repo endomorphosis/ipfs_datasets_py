@@ -12,6 +12,7 @@ belong to their named backend; they are not interchangeable across backends.
 | I need to… | Start here |
 | --- | --- |
 | Select a version across Legal, Security, Intent and UI/UX | [Versioned runtime interface](versioned_runtime_interface.md) |
+| Inspect required logic families, decoder losses and Lake coverage | [Logic output requirements and inventory](logic_output_requirements.md) |
 | Obtain formal ASTs or reconstruct native expressions from model scores | [Formal logic decoders](formal_logic_decoders.md) |
 | Train a source-only learned formula decoder | [Learned legal formula training](learned_legal_formula_training.md) |
 | Recover historical 8D training optimizations | [Legacy speed history and selective ports](legacy_speed_history.md) |

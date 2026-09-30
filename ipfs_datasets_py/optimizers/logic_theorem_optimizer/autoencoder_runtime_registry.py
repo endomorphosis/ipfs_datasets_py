@@ -52,7 +52,11 @@ def _source_identity(paths):
 def describe_runtime(domain, version):
     """Describe an exact selection; never infer a version from vector width."""
     root = _optimizer_root()
-    paths = [("autoencoder_runtime_registry.py", Path(__file__))]
+    _require(domain == "legal_ir" or domain in NATIVE_DOMAINS, "unknown modality domain")
+    from .autoencoder_logic_requirements import describe_logic_requirements
+    requirements = describe_logic_requirements(domain)
+    paths = [("autoencoder_runtime_registry.py", Path(__file__)),
+             ("autoencoder_logic_requirements.py", Path(__file__).with_name("autoencoder_logic_requirements.py"))]
     if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
         paths.extend((name, Path(__file__).with_name(name)) for name in
                      ("legal_formula_learning.py", "legal_formula_codec.py", "legal_formula_checkpoint.py"))
@@ -66,7 +70,8 @@ def describe_runtime(domain, version):
                 "formal_decoder": {"available": True, "modes": ["learned"],
                     "independent_learned_formula_decoder": True, "head_required": True,
                     "scope": "single_typed_deontic_rule_training_vocabulary"},
-                "source_identity": _source_identity(paths), **features.FALSE}
+                "source_identity": _source_identity(paths),
+                "qualification_requirements": requirements, **features.FALSE}
     if domain == "legal_ir":
         _require(version in LEGAL_VERSIONS, "unknown legal runtime version")
         namespace = root / "autoencoder_lineages"
@@ -111,7 +116,7 @@ def describe_runtime(domain, version):
                 "contract and registry resume adapter are not implemented by this interface.")
     return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
             "runtime_id": domain + ":" + version, "source_identity": _source_identity(paths),
-            **result, **features.FALSE}
+            **result, "qualification_requirements": requirements, **features.FALSE}
 
 
 def list_runtimes():

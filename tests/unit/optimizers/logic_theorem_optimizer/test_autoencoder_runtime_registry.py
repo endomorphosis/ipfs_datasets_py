@@ -10,6 +10,21 @@ import sys
 
 import pytest
 
+
+def test_every_runtime_exposes_unfulfilled_lake_and_logic_requirements():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_runtime_registry
+    descriptions = autoencoder_runtime_registry.list_runtimes()
+    assert {row["domain"] for row in descriptions} == {"legal_ir", "intent_ir", "security_ir", "ui_ux_ir"}
+    for row in descriptions:
+        requirements = row["qualification_requirements"]
+        assert requirements["domain"] == row["domain"]
+        assert len(requirements["logic_floor"]) == 8
+        assert requirements["lake_schema_requirement"]["required"]
+        assert requirements["qualification_gaps"]
+        assert requirements["qualified"] is requirements["admitted"] is False
+        if row["domain"] == "security_ir":
+            assert len(requirements["software_routes"]) == 14
+
 from ipfs_datasets_py.duckdb_control.autoencoder_registry import AutoencoderRegistry
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_projection_features as features
 

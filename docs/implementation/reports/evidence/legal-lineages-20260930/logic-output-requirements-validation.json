@@ -1,0 +1,33 @@
+{
+  "actual_lake_smoke_test": "test_real_source_minimum_runs_lake_legal",
+  "admitted": false,
+  "all_schema_lake_qualification_complete": false,
+  "base_commit": "43ad58936cc4d01f4f8750ec61be2f8a9585859c",
+  "constitution_roundtrip_ok_assigned": false,
+  "failed": 0,
+  "feature_learning_remains_unqualified": true,
+  "formalized": false,
+  "full_eight_family_export_coverage": false,
+  "inventory_sha256": "e5d8c79dca8dd2749634ec33c97299dbcd1c8cf75157ba7189b95ec42e03e84b",
+  "junit_sha256": "74c607468b08ebfc2122f19a2ba5709c24e6f09d642bd11213c006c3e98c1086",
+  "lake_smoke_command": [
+    "lake",
+    "build",
+    "Legal"
+  ],
+  "lake_smoke_scope": "existing_source_locked_numeric_pattern_only",
+  "qualified": false,
+  "schema": "autoencoder-logic-floor-validation/v1",
+  "skipped": 0,
+  "source_files": {
+    "ipfs_datasets_py/logic/autoformal/family_qualification.py": "41d3639518a7decd95be7fde618fa8870548e741f2b396ad7b5c82d6ce549d39",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py": "6768a6340421a1ca2dfe9a157109749fc874a23c34ef3eb8f272f67f399b05b9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_logic_requirements.py": "ab7218d711c64fba0ae2048f80c0b3ad02eac265ed29d71a7253086e1ff4a2e3",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py": "7702a15387623b648a09202642e75353bd164d8fcb06f4f8535fe346d036ecc2",
+    "tests/unit/logic/test_family_qualification.py": "9c1144e3abea09bf8d73d2ed9dbab54dfd10822d163bf337db2c07852062c50c",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_candidate_qualification.py": "f5b989282bac810ccbc6f5d6abf8ea28f1337145b01e603b3dd37d14aa19a2fd",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_logic_requirements.py": "c05e55d143db0e49c5c74e352cdfe5245260b2023d5c5941a53d49a5728671be",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_runtime_registry.py": "f88bd362d01f5218d22f996e900bb6f9236953746d8f6c3dcda28a506cb92b2e"
+  },
+  "test_cases_passed": 327
+}

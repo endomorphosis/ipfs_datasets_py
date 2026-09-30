@@ -13,6 +13,11 @@ existing embedding runtimes. The separate `source_conditioned_formula_v1`
 accepts source strings and generates learned formula candidates. See
 [training, checkpoint resume and CLI](learned_legal_formula_training.md).
 
+For source-derived output requirements use
+`autoencoder_logic_requirements.describe_logic_requirements(domain, contains_code=True)`
+for code-bearing inputs, or inspect a runtime descriptor's `qualification_requirements`.
+See the [logic-family, Lake and loss inventory](logic_output_requirements.md).
+
 ## Native modalities
 
 | Task | Entry point | Guide |

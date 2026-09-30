@@ -8,6 +8,21 @@ import pytest
 from ipfs_datasets_py.logic.autoformal import family_qualification as qualification
 
 
+# Explicit historical fragment diagnostics are narrower than the legal floor.
+HISTORICAL_SIX_FRAGMENTS = (
+    "fol", "deontic_fol", "temporal_fol", "deontic_temporal_fol",
+    "deontic_cognitive_event_calculus", "frame_logic",
+)
+
+
+def _historical_fragment_diagnostic(*args, **kwargs):
+    report = qualification.qualify_logic_families(
+        *args, required_families=HISTORICAL_SIX_FRAGMENTS, **kwargs)
+    assert report["scope"] == "requested_fragment_syntax_diagnostic"
+    assert report["full_floor_requested"] is report["full_floor_passed"] is False
+    return report
+
+
 TEXT = "The officer shall retain records."
 RULE = {
     "modality": "O", "actor": "officer", "action": "retain", "object": "records",
@@ -65,13 +80,13 @@ def test_empty_recovery_wrong_dialect_and_unknown_families_fail_closed(family, f
 
 
 def test_all_canonical_exports_are_bound_and_legacy_dialect_failures_are_retained():
-    report = qualification.qualify_logic_families(TEXT, RULE, source_id="officer-records")
-    assert set(report["families"]) == set(qualification.REQUIRED_FAMILIES)
+    report = _historical_fragment_diagnostic(TEXT, RULE, source_id="officer-records")
+    assert set(report["families"]) == set(HISTORICAL_SIX_FRAGMENTS)
     assert report["passed"] is True
     assert report["source_sha256"] == hashlib.sha256(TEXT.encode()).hexdigest()
     assert report["canonical_rule"] == RULE
     assert report["projection_only"] is True
-    for family in qualification.REQUIRED_FAMILIES:
+    for family in HISTORICAL_SIX_FRAGMENTS:
         row = report["families"][family]
         assert row["source_sha256"] == report["source_sha256"]
         assert row["rule_sha256"] == report["rule_sha256"]
@@ -91,7 +106,7 @@ def test_all_canonical_exports_are_bound_and_legacy_dialect_failures_are_retaine
 
 
 def test_temporal_projection_discloses_modality_loss_and_adds_no_time_operator():
-    report = qualification.qualify_logic_families(TEXT, RULE)
+    report = _historical_fragment_diagnostic(TEXT, RULE)
     parent = report["families"]["deontic_temporal_fol"]
     child = report["families"]["temporal_fol"]
     assert "DeonticFormula" in parent["ast_classes"]
@@ -121,8 +136,8 @@ def test_empty_required_set_does_not_vacuously_pass():
 def test_parser_supplied_temporal_sidecar_is_retained_without_altering_rule():
     sidecar = [{"temporal_kind": "minimum_duration", "quantity": 20, "value": "at least 20 days"}]
     rule = {**RULE, "temporal": ["at least 20 days"]}
-    report = qualification.qualify_logic_families(TEXT, {**rule, "temporal_records": sidecar})
-    base = qualification.qualify_logic_families(TEXT, rule)
+    report = _historical_fragment_diagnostic(TEXT, {**rule, "temporal_records": sidecar})
+    base = _historical_fragment_diagnostic(TEXT, rule)
     assert report["temporal_records"] == sidecar
     assert report["canonical_rule"] == rule
     assert report["rule_sha256"] == base["rule_sha256"]
@@ -176,7 +191,7 @@ def test_real_compiler_gate_spans_have_six_native_syntax_exports(text):
     session = AutoformalSession()
     compiled = compile_span(session, text, "gate")
     assert compiled["compiler_status"] == "compiled"
-    report = qualification.qualify_logic_families(text, compiled["rule"], source_id="gate")
+    report = _historical_fragment_diagnostic(text, compiled["rule"], source_id="gate")
     assert report["passed"] is True
     assert report["admitted"] is False
     assert report["formalized"] is False
@@ -239,7 +254,7 @@ def test_reordered_temporal_records_bind_quantities_to_canonical_frame_atoms():
     rule = {**RULE, "temporal": ["20 days", "10 days"]}
     sidecars = [{"temporal_kind": "minimum_duration", "value": "20 days", "quantity": 20},
                 {"temporal_kind": "minimum_duration", "value": "10 days", "quantity": 10}]
-    reports = [qualification.qualify_logic_families(TEXT, {**rule, "temporal_records": records})
+    reports = [_historical_fragment_diagnostic(TEXT, {**rule, "temporal_records": records})
                for records in (sidecars, list(reversed(sidecars)))]
     frames = [report["families"]["frame_logic"] for report in reports]
     assert all(report["passed"] for report in reports)
@@ -255,7 +270,7 @@ def test_reordered_temporal_records_bind_quantities_to_canonical_frame_atoms():
 
 
 def test_partial_temporal_typing_keeps_untyped_atoms_and_the_typed_atom_index():
-    report = qualification.qualify_logic_families(TEXT, {
+    report = _historical_fragment_diagnostic(TEXT, {
         **RULE, "temporal": ["10 days", "20 days", "before review"],
         "temporal_records": [{"temporal_kind": "minimum_duration", "value": "20 days", "quantity": 20}],
     })
@@ -276,7 +291,7 @@ def test_partial_temporal_typing_keeps_untyped_atoms_and_the_typed_atom_index():
 
 
 def test_within_and_minimum_records_retain_distinct_kinds_after_sorting():
-    report = qualification.qualify_logic_families(TEXT, {
+    report = _historical_fragment_diagnostic(TEXT, {
         **RULE, "temporal": ["within 10 days", "20 days"],
         "temporal_records": [
             {"temporal_kind": "within_duration", "value": "10 days", "quantity": 10},
@@ -294,7 +309,7 @@ def test_within_and_minimum_records_retain_distinct_kinds_after_sorting():
 
 
 def test_representation_coverage_does_not_claim_temporal_event_or_cognitive_semantics():
-    report = qualification.qualify_logic_families(TEXT, RULE)
+    report = _historical_fragment_diagnostic(TEXT, RULE)
     for family, row in report["families"].items():
         coverage = row["representation_coverage"]
         assert coverage == row["export_record"]["representation_coverage"]
@@ -325,7 +340,7 @@ def test_multiple_real_compiled_clauses_keep_separate_source_and_duration_bindin
     reports = []
     for row, expected_quantity in zip(session.rows, (20, 30)):
         clause = session.documents.clause(row.document_id, row.clause_id)
-        report = qualification.qualify_logic_families(clause.text, row.rule, source_id=row.clause_id)
+        report = _historical_fragment_diagnostic(clause.text, row.rule, source_id=row.clause_id)
         reports.append(report)
         assert row.status == "roundtrip_ok" and report["passed"] is True
         assert report["source_sha256"] == hashlib.sha256(clause.text.encode()).hexdigest()
@@ -357,7 +372,7 @@ def test_conflicting_known_temporal_sidecars_fail_closed_for_the_same_canonical_
 
 def test_identical_duplicate_temporal_sidecars_preserve_existing_export_contract():
     record = {"temporal_kind": "minimum_duration", "quantity": 20, "value": "20 days"}
-    report = qualification.qualify_logic_families(TEXT, {**RULE, "temporal": ["20 days"], "temporal_records": [record, dict(record)]})
+    report = _historical_fragment_diagnostic(TEXT, {**RULE, "temporal": ["20 days"], "temporal_records": [record, dict(record)]})
     assert report["passed"] is True
     frame = report["families"]["frame_logic"]
     assert frame["representation_coverage"]["typed_duration_record_count"] == 2
@@ -365,3 +380,62 @@ def test_identical_duplicate_temporal_sidecars_preserve_existing_export_contract
     assert frame["formula"].count('temporal_kind(0)->"minimum_duration"') == 2
     assert frame["formula"].count('temporal_quantity(0)->20') == 2
     assert report["admitted"] is report["formalized"] is False
+
+
+def test_mandatory_eight_family_floor_fails_on_unimplemented_distinct_exports():
+    report = qualification.qualify_logic_families(TEXT, RULE, source_id="full-floor")
+    assert report["schema"] == "autoformal-family-qualification/v2"
+    assert report["scope"] == "mandatory_legal_floor_syntax"
+    assert report["full_floor_requested"] is True
+    assert report["missing_floor_families"] == []
+    assert len(report["qualification_floor"]) == len(report["families"]) == 8
+    assert report["passed"] is report["full_floor_passed"] is False
+    assert all(report["families"][family]["passed"] for family in HISTORICAL_SIX_FRAGMENTS)
+    missing = {"cognitive_event_calculus", "propositional"}
+    assert {goal["family"] for goal in report["goals"]} == missing
+    for family in missing:
+        row = report["families"][family]
+        assert row["applicability"] == "unavailable"
+        assert row["diagnostics"] == [{"code": f"{family}_exporter_missing"}]
+        assert not row["formula"] and row["syntax_valid"] is False
+        assert row["admitted"] is row["formalized"] is False
+        goal = next(item for item in report["goals"] if item["family"] == family)
+        assert goal["source_sha256"] == report["source_sha256"]
+        assert goal["rule_sha256"] == report["rule_sha256"]
+        assert goal["work_kind"] == "compiler_family_export_repair"
+    assert report["admitted"] is report["formalized"] is False
+
+
+def test_cec_and_dcec_are_distinct_requirements_and_never_share_a_pass():
+    report = qualification.qualify_logic_families(TEXT, RULE, required_families=("cec", "dcec"))
+    assert report["required_families"] == ["cognitive_event_calculus", "deontic_cognitive_event_calculus"]
+    assert report["families"]["cognitive_event_calculus"]["passed"] is False
+    assert report["families"]["deontic_cognitive_event_calculus"]["passed"] is True
+    assert report["passed"] is report["full_floor_passed"] is False
+
+
+@pytest.mark.parametrize(("family", "canonical"), [
+    ("cec", "cognitive_event_calculus"),
+    ("cognitive_event_calculus", "cognitive_event_calculus"),
+    ("propositional", "propositional"),
+    ("propositional_logic", "propositional"),
+    ("pl", "propositional"),
+])
+def test_missing_strict_validator_cannot_fall_through_to_a_different_grammar(family, canonical):
+    report = qualification.validate_family_artifact(family, "O(Happens(retain,t0))")
+    assert report["family"] == canonical
+    assert report["passed"] is report["syntax_valid"] is False
+    assert report["diagnostics"][0]["code"] == f"{canonical}_validator_unavailable"
+    assert "parser" not in report
+
+
+def test_unimplemented_export_cannot_gain_a_pass_from_injected_existing_syntax(monkeypatch):
+    monkeypatch.setattr(qualification, "_export_rule", lambda *args: [
+        {"target": "cognitive_event_calculus", "exported_formula": "O(Happens(retain,t0))"},
+        {"target": "propositional", "exported_formula": "O(Happens(retain,t0))"},
+    ])
+    report = qualification.qualify_logic_families(
+        TEXT, RULE, required_families=("cognitive_event_calculus", "propositional"))
+    assert report["passed"] is report["full_floor_passed"] is False
+    assert all(row["passed"] is False for row in report["families"].values())
+    assert all("validator_unavailable" in row["diagnostics"][0]["code"] for row in report["families"].values())

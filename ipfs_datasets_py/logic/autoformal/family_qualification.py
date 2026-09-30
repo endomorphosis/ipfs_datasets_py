@@ -16,20 +16,30 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-REQUIRED_FAMILIES = (
+SUPPORTED_SYNTAX_FRAGMENTS = (
     "fol", "deontic_fol", "temporal_fol", "deontic_temporal_fol",
     "deontic_cognitive_event_calculus", "frame_logic",
 )
+# Mandatory legal coverage is broader than the current source-bound exports.
+# Keep distinct CEC and propositional requirements visible until their real
+# exporters and strict validators are implemented; never count DCEC as CEC.
+REQUIRED_FAMILIES = (*SUPPORTED_SYNTAX_FRAGMENTS, "cognitive_event_calculus", "propositional")
+_UNAVAILABLE_VALIDATORS = {
+    "cognitive_event_calculus": "cognitive_event_calculus_validator_unavailable",
+    "propositional": "propositional_validator_unavailable",
+}
 _ALIASES = {
     "first_order_logic": "fol", "deontic": "deontic_fol", "tfol": "temporal_fol",
     "tdfol": "deontic_temporal_fol", "temporal_deontic_fol": "deontic_temporal_fol",
-    "cec": "deontic_cognitive_event_calculus", "dcec": "deontic_cognitive_event_calculus",
+    "cec": "cognitive_event_calculus", "dcec": "deontic_cognitive_event_calculus",
     "deontic_cec": "deontic_cognitive_event_calculus", "flogic": "frame_logic",
+    "propositional_logic": "propositional", "pl": "propositional",
 }
 _TARGETS = {
     "fol": "fol", "deontic_fol": "deontic_fol", "temporal_fol": "temporal_fol",
     "deontic_temporal_fol": "deontic_temporal_fol",
     "deontic_cognitive_event_calculus": "deontic_cec", "frame_logic": "frame_logic",
+    "cognitive_event_calculus": "cognitive_event_calculus", "propositional": "propositional",
 }
 MAX_ARTIFACT_BYTES = 262_144
 
@@ -169,7 +179,9 @@ def validate_family_artifact(family: str, formula: str) -> dict[str, Any]:
         "source_bound": False, "admitted": False, "formalized": False,
     }
     try:
-        if family not in REQUIRED_FAMILIES:
+        if family in _UNAVAILABLE_VALIDATORS:
+            raise ValueError(_UNAVAILABLE_VALIDATORS[family])
+        if family not in SUPPORTED_SYNTAX_FRAGMENTS:
             raise ValueError("unsupported_family")
         if not formula.strip():
             raise ValueError("empty_artifact")
@@ -406,7 +418,13 @@ def qualify_logic_families(
     families = list(dict.fromkeys(_ALIASES.get(name, name) for name in required_families))
     source_sha = _text_digest(source_text)
     report: dict[str, Any] = {
-        "schema": "autoformal-family-qualification/v1", "source_id": source_id,
+        "schema": "autoformal-family-qualification/v2", "source_id": source_id,
+        "qualification_floor": list(REQUIRED_FAMILIES),
+        "full_floor_requested": set(REQUIRED_FAMILIES).issubset(families),
+        "full_floor_passed": False,
+        "missing_floor_families": [name for name in REQUIRED_FAMILIES if name not in families],
+        "scope": ("mandatory_legal_floor_syntax" if set(REQUIRED_FAMILIES).issubset(families)
+                  else "requested_fragment_syntax_diagnostic"),
         "source_sha256": source_sha, "rule_sha256": None, "passed": False,
         "required_families": families, "families": {}, "goals": [],
         "semantic_equivalence_checked": False, "projection_only": True,
@@ -443,7 +461,9 @@ def qualify_logic_families(
     for family in families:
         record = records.get(_TARGETS.get(family, ""))
         if precondition or record is None:
-            reason = precondition or ("temporal_fol_exporter_missing" if family == "temporal_fol" else "unsupported_family_or_missing_export")
+            reason = precondition or (f"{family}_exporter_missing"
+                                      if family in _UNAVAILABLE_VALIDATORS or family == "temporal_fol"
+                                      else "unsupported_family_or_missing_export")
             row = {"family": family, "passed": False, "syntax_valid": False,
                    "applicability": "unavailable", "formula": "", "diagnostics": [{"code": reason}]}
         else:
@@ -468,6 +488,9 @@ def qualify_logic_families(
                 "acceptance": "The exact source-bound export must parse without recovery, placeholders, skipped families, or altered acceptance criteria; syntax is not semantic equivalence or Lake admission.",
             })
     report["passed"] = bool(families) and all(row["passed"] is True for row in report["families"].values())
+    report["full_floor_passed"] = (report["full_floor_requested"] and report["passed"]
+                                   and all(report["families"][name]["passed"] is True
+                                           for name in REQUIRED_FAMILIES))
     report["diagnostics"] = [{"code": precondition}] if precondition else []
     return report
 

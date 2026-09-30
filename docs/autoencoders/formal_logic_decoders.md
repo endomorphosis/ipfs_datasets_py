@@ -18,7 +18,9 @@ All paths preserve the domain's projection descriptors. They do not translate
 every domain into legal deontic logic or claim that every downstream logic
 backend accepts their output. None grants proof, qualification or formalization.
 Only the separate source-bound `lake build <Lib>` path can grant a Lean admit.
-The Constitution remains unformalized.
+The Constitution remains unformalized. The [mandatory logic/Lake requirements](logic_output_requirements.md)
+set an eight-family schema capability floor and additional typed code routes.
+The current decoder methods do not yet satisfy this complete coverage policy.
 
 For actual formula-token learning, use the separate
 [learned formula training guide](learned_legal_formula_training.md). Its

@@ -29,6 +29,12 @@ interface can use it. Direct native v2 callers retain their existing API.
 The [formal-output API](formal_logic_decoders.md) supports a separate read-only
 v2 session with an explicitly bound state, feature space and decoder head.
 
+Every runtime descriptor now includes `qualification_requirements`. These are
+[versioned requirements](logic_output_requirements.md), including the eight-family
+floor, actual Lake schema checks and decoder-aware losses. They report outstanding
+gaps and confer no validation or admission. Existing feature-state identities remain
+unchanged; their structural training does not acquire missing validators.
+
 ## Inspect and select
 
 Run from the canonical repository with `PYTHONPATH` set to that directory.

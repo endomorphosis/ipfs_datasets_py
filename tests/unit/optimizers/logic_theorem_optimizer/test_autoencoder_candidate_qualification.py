@@ -255,6 +255,38 @@ def test_generic_norm_fingerprint_is_not_legal_gate(tmp_path):
     assert not result["admitted"]
 
 
+@pytest.mark.parametrize("schema,full_floor", [
+    ("autoformal-family-qualification/v1", None),
+    ("autoformal-family-qualification/v1", True),
+    ("autoformal-family-qualification/v2", False),
+])
+def test_subset_or_historical_family_success_cannot_qualify(tmp_path, monkeypatch, schema, full_floor):
+    from ipfs_datasets_py.logic.autoformal import family_qualification
+    fragment = {"schema": schema, "passed": True}
+    if full_floor is not None:
+        fragment["full_floor_passed"] = full_floor
+    monkeypatch.setattr(family_qualification, "qualify_logic_families", lambda *a, **k: fragment)
+    monkeypatch.setattr(q, "_lake_gate", lambda *a, **k: {"passed": True, "admitted": False})
+    lock, _, _ = q._statement_lock()
+    result = q._structural_gates(_sample("The officer shall retain the file for at least 20 days."),
+                                "subset-rejected", tmp_path, lock, 30)
+    assert result["semantic_gate"]["passed"]
+    assert result["family_syntax_gate"]["rows"] == [fragment]
+    assert result["family_syntax_gate"]["passed"] is False
+
+
+def test_current_eight_family_gaps_block_qualification_even_with_a_lake_observation(tmp_path, monkeypatch):
+    monkeypatch.setattr(q, "_lake_gate", lambda *a, **k: {"passed": True, "admitted": False})
+    lock, _, _ = q._statement_lock()
+    result = q._structural_gates(_sample("The officer shall retain the file for at least 20 days."),
+                                "floor-gap", tmp_path, lock, 30)
+    row = result["family_syntax_gate"]["rows"][0]
+    assert row["full_floor_requested"]
+    assert not row["full_floor_passed"]
+    assert {goal["family"] for goal in row["goals"]} >= {"cognitive_event_calculus", "propositional"}
+    assert not result["family_syntax_gate"]["passed"]
+
+
 def test_real_source_minimum_runs_lake_legal(tmp_path):
     if not (Path.home() / ".elan/toolchains/leanprover--lean4---v4.26.0/bin/lake").is_file():
         pytest.skip("qualified Lean toolchain is not installed")
