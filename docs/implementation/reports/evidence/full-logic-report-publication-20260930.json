@@ -1,0 +1,100 @@
+{
+  "report": {
+    "bytes": 3959482,
+    "sha256": "43a822841e7192587a190bf56381bc55cdb1249a97ff3fa0a8a876d90bd75e90",
+    "verified": true
+  },
+  "original": {
+    "bytes": 73673016,
+    "sha256": "93001fc3773aa5180b52caad379b323d9e83415ed1f12e028724175d94cb3fc5",
+    "verified": true,
+    "span_count": 32
+  },
+  "manifest": {
+    "bytes": 26688,
+    "sha256": "0f2431a7c4746625fdbf693b312447f138d7ff4b820774ed4990dc334caa84ed",
+    "verified": true
+  },
+  "repository_id": "justicedao/uscode-autoformal-span-cache",
+  "report_commit": "4f7922a2188c111e30841a08769f0f989d0b7c61",
+  "dataset_card_commit": "009f612ce449bb454d948a171b9b5d36a4209bc4",
+  "admitted": false,
+  "formalized": false,
+  "local_original_retained": true,
+  "counts": {
+    "compiler_rule_count": 2,
+    "guided_formula_count": 0,
+    "projected_decoder_vector_count": 32,
+    "raw_decoder_vector_count": 32,
+    "sample_count": 32,
+    "source_bridge_document_count": 22,
+    "source_bridge_document_identity_unverified_count": 0,
+    "source_bridge_document_identity_verified_count": 22,
+    "source_bridge_document_unavailable_count": 10,
+    "span_count": 32
+  },
+  "actual_view_names": [
+    "cec_dcec.cec_events",
+    "cec_dcec.dcec_formula",
+    "cec_dcec.event_calculus",
+    "cec_dcec.frame_logic",
+    "cec_dcec.neo4j_graph_data",
+    "cec_dcec.proof_trace",
+    "deontic_norms.deontic_decoder_reconstructions",
+    "deontic_norms.deontic_formula_records",
+    "deontic_norms.deontic_graph",
+    "deontic_norms.deontic_ir",
+    "deontic_norms.deontic_ir_slot_provenance",
+    "deontic_norms.deontic_parser_capability",
+    "deontic_norms.deontic_parser_metrics",
+    "deontic_norms.deontic_phase8_quality",
+    "deontic_norms.deontic_proof_obligations",
+    "deontic_norms.deontic_prover_syntax",
+    "deontic_norms.deontic_reconstruction_slot_loss",
+    "deontic_norms.deontic_repair_queue",
+    "deontic_norms.frame_logic",
+    "deontic_norms.neo4j_graph_data",
+    "external_prover_router.frame_logic",
+    "external_prover_router.neo4j_graph_data",
+    "external_prover_router.prover_formulas",
+    "fol_tdfol.frame_logic",
+    "fol_tdfol.neo4j_graph_data",
+    "fol_tdfol.proof_obligations",
+    "fol_tdfol.tdfol_formula",
+    "modal_frame_logic.frame_logic",
+    "modal_frame_logic.modal_ir",
+    "modal_frame_logic.neo4j_graph_data"
+  ],
+  "bridges": {
+    "adapter_workers": 1,
+    "disk_cache": false,
+    "evaluate_provers": false,
+    "evaluation_invoked": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "native_target_timeout_seconds": 0.0,
+    "native_timeout_fallback_count": 0,
+    "parallel_workers": 1,
+    "parallel_workers_used": 1,
+    "process_metric_caches_may_be_warm": true,
+    "projected_observation_bridge_names": [],
+    "requested": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "target_count": 32
+  },
+  "manifest_path_in_repo": "autoformal/uscode/reports/v1/manifests/0f2431a7c4746625fdbf693b312447f138d7ff4b820774ed4990dc334caa84ed.json",
+  "report_path_in_repo": "autoformal/uscode/reports/v1/reports/43a822841e7192587a190bf56381bc55cdb1249a97ff3fa0a8a876d90bd75e90.json.gz",
+  "focused_test_count": 8,
+  "test_file": "tests/unit/logic/test_publish_legacy_logic_reports.py",
+  "inference_rerun": false,
+  "training_executed": false
+}
