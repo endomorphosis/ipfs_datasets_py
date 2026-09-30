@@ -13,7 +13,7 @@
       "lineage_id": "legacy_hub_v1",
       "role": "immutable_distillation_teacher",
       "source_baseline_commit": "ddf6b79467b68159650df81befc288c8553df664",
-      "source_branch": "autoencoder/legacy-v1",
+      "source_branch": "main",
       "source_snapshot_tag": "autoencoder/legacy-v1-ddf6b794",
       "source_baseline_meaning": "User-selected historical runtime reference; not the recorded producer of the Hub weights.",
       "artifact_namespace": "autoencoders/legal/legacy_hub_v1",
@@ -57,7 +57,17 @@
           "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
           "meaning": "restart12 small diagnostic checkpoint; not this teacher"
         }
-      ]
+      ],
+      "historical_source_branch": "autoencoder/legacy-v1",
+      "runtime_namespace": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1",
+      "runtime_dimension": 8,
+      "vendored_runtime": {
+        "source_revision": "ddf6b79467b68159650df81befc288c8553df664",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot",
+        "manifest_sha256": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+        "module_count": 23,
+        "shared_external_boundary": "Canonical workspace typed compiler/parser/decompiler, bridges, proof feedback and checkpoint contracts remain current; this is not a complete historical pipeline replay."
+      }
     },
     "current_legal_v2": {
       "lineage_id": "current_legal_v2",
@@ -134,7 +144,9 @@
           }
         ],
         "evidence": "docs/implementation/reports/evidence/legal-lineages-20260930/checkpoint-audit.json"
-      }
+      },
+      "runtime_namespace": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.current_v2",
+      "runtime_dimension": 384
     }
   },
   "distillation": {
@@ -163,5 +175,5 @@
     "formula_distillation": "Compiler/bridge targets retain producer provenance and defects; vectors and guided compiler agreement do not establish independent learned formulas.",
     "original_checkpoints_unchanged": true
   },
-  "operational_scope": "This catalog and checkpoint preflight do not modify or automatically select existing live runners, shared database heads, Hub checkpoints, or inference qualification. Runtime compatibility requires a separate pinned replay."
+  "operational_scope": "Both executable namespaces live on main. Public runtime APIs check sample/state dimensions, separate state classes, and require explicit local checkpoint hashes. Existing runners retain their current imports until explicitly migrated. No automatic weight transfer or qualification."
 }

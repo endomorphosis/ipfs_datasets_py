@@ -1,0 +1,118 @@
+{
+  "schema": "legal-autoencoder-side-by-side-smoke/v1",
+  "same_process": true,
+  "observations": [
+    {
+      "profile": "legacy_hub_v1",
+      "description": {
+        "lineage_id": "legacy_hub_v1",
+        "dimension": 8,
+        "expected_embedding_dimension": 8,
+        "implementation_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_autoencoder",
+        "training_state_class": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_autoencoder.ModalAutoencoderTrainingState",
+        "loaded_architecture_version": "proof_aware_auxiliary_heads_v2",
+        "checkpoint_identity": {
+          "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+          "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+          "size_bytes": 398209746,
+          "raw_declared_architecture_version": null,
+          "loaded_architecture_version": "proof_aware_auxiliary_heads_v2",
+          "compatibility_architecture_relabelled": true,
+          "exact_published_legacy_teacher": true,
+          "read_only_checkpoint_load": true,
+          "lineage_ancestry_verified": false
+        },
+        "raw_declared_architecture_version": null,
+        "checkpoint_loader_formats": [
+          "json"
+        ],
+        "implementation_scope": "historical numerical/helper snapshot; shared current canonical compiler, bridges, and proof infrastructure",
+        "shared_canonical_logic_modules": {
+          "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+          "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+          "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+        },
+        "independent_formula_decoder": false,
+        "semantic_embedding_verified": false,
+        "semantic_qualification": false,
+        "admitted": false
+      },
+      "load_and_validation_seconds": 15.256075672106817,
+      "bridge_off_fixture_evaluate_seconds": 0.38873207103461027,
+      "sample_count": 1,
+      "legal_ir_target_count": 0,
+      "decoded_dimension": 8,
+      "all_decoded_values_finite": true
+    },
+    {
+      "profile": "current_legal_v2",
+      "description": {
+        "lineage_id": "current_legal_v2",
+        "dimension": 384,
+        "expected_embedding_dimension": 384,
+        "implementation_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder",
+        "training_state_class": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder.ModalAutoencoderTrainingState",
+        "loaded_architecture_version": "proof_aware_auxiliary_heads_v2",
+        "checkpoint_identity": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+          "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+          "size_bytes": 7204344,
+          "raw_declared_architecture_version": "proof_aware_auxiliary_heads_v2",
+          "loaded_architecture_version": "proof_aware_auxiliary_heads_v2",
+          "compatibility_architecture_relabelled": false,
+          "exact_published_legacy_teacher": false,
+          "read_only_checkpoint_load": true,
+          "lineage_ancestry_verified": false
+        },
+        "raw_declared_architecture_version": "proof_aware_auxiliary_heads_v2",
+        "checkpoint_loader_formats": [
+          "json"
+        ],
+        "implementation_scope": "current numerical implementation; shared current canonical compiler, bridges, and proof infrastructure",
+        "shared_canonical_logic_modules": {
+          "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+          "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+          "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+        },
+        "independent_formula_decoder": false,
+        "semantic_embedding_verified": false,
+        "semantic_qualification": false,
+        "admitted": false
+      },
+      "load_and_validation_seconds": 0.23912654491141438,
+      "bridge_off_fixture_evaluate_seconds": 0.27013070811517537,
+      "sample_count": 1,
+      "legal_ir_target_count": 0,
+      "decoded_dimension": 384,
+      "all_decoded_values_finite": true
+    }
+  ],
+  "peak_rss_kib": 2127520,
+  "representation": "explicit synthetic fixtures; no semantic-vector quality claim",
+  "bridge_names": [],
+  "provers": false,
+  "disk_cache": false,
+  "bridge_workers": 1,
+  "sample_memory": false,
+  "training_executed_on_real_checkpoints": false,
+  "weights_downloaded": false,
+  "checkpoint_files_written": false,
+  "admitted": false,
+  "qualification": false,
+  "lake_executed": false,
+  "notes": "Zero legal IR targets: these are checkpoint/inference plumbing checks, not IR performance or semantic qualification. Tiny training is separately covered by tests.",
+  "inspected_source_files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py",
+      "sha256": "2db1ca445df723013604dc85098bb4a90f343d31e7b26211360b2ca3456bf8e2"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py",
+      "sha256": "9f45d9769613f146b47037491c4796f40a56d75b4907e5ed455391e91d4f91d6"
+    }
+  ]
+}

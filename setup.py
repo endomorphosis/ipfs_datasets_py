@@ -332,6 +332,7 @@ setup(
             "logic/software_contracts/semantic_governor/schemas/*.json",
             "logic/software_contracts/semantic_state/schemas/*.json",
             "logic/ui_ux_ir/ui_ux_ir.schema.json",
+            "optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/MANIFEST.json",
         ],
     },
     include_package_data=True,

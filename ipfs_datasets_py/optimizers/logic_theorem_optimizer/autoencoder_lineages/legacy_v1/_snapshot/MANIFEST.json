@@ -1,0 +1,525 @@
+{
+  "files": [
+    {
+      "frozen_dependencies": [],
+      "module": "frame_bm25_selector",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 77959,
+      "source_git_blob": "14df4dd2b2e0496d06a3f7d823ef96164f40b9b0",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
+      "source_sha256": "612d472efaf9cb5bb2f57914125d9fc87cde3a55f14dc5a105cc80f268df430a",
+      "vendored_bytes": 77959,
+      "vendored_path": "frame_bm25_selector.py",
+      "vendored_sha256": "612d472efaf9cb5bb2f57914125d9fc87cde3a55f14dc5a105cc80f268df430a"
+    },
+    {
+      "frozen_dependencies": [
+        "snapshot_evaluator"
+      ],
+      "module": "legal_ir_family_evaluator",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 42137,
+      "source_git_blob": "53d7123051e1a1b9737edeb8928dfe57a579286c",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "source_sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab",
+      "vendored_bytes": 42137,
+      "vendored_path": "legal_ir_family_evaluator.py",
+      "vendored_sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    {
+      "frozen_dependencies": [
+        "legal_ir_family_evaluator"
+      ],
+      "module": "legal_ir_grammar_decoder",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 146870,
+      "source_git_blob": "446ea6eb734d8586a060f64fc56bf198e312aabe",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "source_sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+      "vendored_bytes": 146870,
+      "vendored_path": "legal_ir_grammar_decoder.py",
+      "vendored_sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    {
+      "frozen_dependencies": [
+        "legal_ir_family_evaluator"
+      ],
+      "module": "legal_ir_semantic_metrics",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 75349,
+      "source_git_blob": "0ce0aa248a3b747cd539680f6e2177ffd8e927a0",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py",
+      "source_sha256": "cee46ad09daae3ae74cd359e8e25fb9fd592eee92c59730d42caf30db60c38da",
+      "vendored_bytes": 75349,
+      "vendored_path": "legal_ir_semantic_metrics.py",
+      "vendored_sha256": "cee46ad09daae3ae74cd359e8e25fb9fd592eee92c59730d42caf30db60c38da"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_ir",
+        "modal_registry"
+      ],
+      "module": "legal_modal_parser",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 160181,
+      "source_git_blob": "af00f209e18c3b40e0c9bd1892c9456451ac3638",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+      "source_sha256": "5415bf565171b17db1d4a03c715e974645a59018addb852cf67fc3c71d462406",
+      "vendored_bytes": 160181,
+      "vendored_path": "legal_modal_parser.py",
+      "vendored_sha256": "5415bf565171b17db1d4a03c715e974645a59018addb852cf67fc3c71d462406"
+    },
+    {
+      "frozen_dependencies": [
+        "frame_bm25_selector",
+        "legal_modal_parser",
+        "modal_ir"
+      ],
+      "module": "legal_samples",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 5865,
+      "source_git_blob": "009980aaeb9209e5ddaeb262034fe061a2fce317",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py",
+      "source_sha256": "51ce99dc83279c570bc57334c1cdc4cb72fa4b94c5b8c81101bb6252f0a614de",
+      "vendored_bytes": 5865,
+      "vendored_path": "legal_samples.py",
+      "vendored_sha256": "51ce99dc83279c570bc57334c1cdc4cb72fa4b94c5b8c81101bb6252f0a614de"
+    },
+    {
+      "frozen_dependencies": [
+        "legal_ir_grammar_decoder",
+        "legal_samples",
+        "modal_autoencoder_checkpoint",
+        "modal_autoencoder_cuda",
+        "modal_autoencoder_feature_capacity",
+        "modal_autoencoder_legacy_distillation",
+        "modal_autoencoder_state_migration",
+        "modal_autoencoder_state_transaction",
+        "modal_autoencoder_state_version",
+        "modal_autoencoder_tensor_state",
+        "modal_registry",
+        "projection_profiler",
+        "prover_integration"
+      ],
+      "module": "modal_autoencoder",
+      "relocation_edits": [
+        {
+          "after": "from ipfs_datasets_py.logic.integration.reasoning.legal_ir_view_contracts import",
+          "before": "from ...logic.integration.reasoning.legal_ir_view_contracts import",
+          "reason": "retain original canonical external import boundary"
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.prover_integration import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import",
+          "reason": "isolate absolute optimizer dependency"
+        },
+        {
+          "after": "repo_root = Path(__file__).resolve().parents[6]",
+          "before": "repo_root = Path(__file__).resolve().parents[3]",
+          "reason": "preserve repository root after three namespace levels"
+        },
+        {
+          "after": "package_root = Path(__file__).resolve().parents[5]",
+          "before": "package_root = Path(__file__).resolve().parents[2]",
+          "reason": "fingerprint the real canonical package and its shared bridges"
+        },
+        {
+          "after": "return repo_root / \"workspace\" / \"test-logs\" / \"legal-ir-metric-cache\" / \"legacy-v1\"",
+          "before": "return repo_root / \"workspace\" / \"test-logs\" / \"legal-ir-metric-cache\"",
+          "reason": "separate the default legacy disk target cache"
+        }
+      ],
+      "shared_canonical_imports": [
+        {
+          "line": 25760,
+          "module": "ipfs_datasets_py.logic.modal.decompiler_repairs",
+          "names": [
+            "repair_decompiler_round_trip"
+          ]
+        },
+        {
+          "line": 27066,
+          "module": "ipfs_datasets_py.logic.bridge",
+          "names": [
+            "evaluate_legal_ir_multiview"
+          ]
+        },
+        {
+          "line": 28407,
+          "module": "ipfs_datasets_py.logic.integration.reasoning.legal_ir_view_contracts",
+          "names": [
+            "legal_ir_view_contracts"
+          ]
+        },
+        {
+          "line": 28968,
+          "module": "ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback",
+          "names": [
+            "ProofFeedbackVersions"
+          ]
+        },
+        {
+          "line": 28984,
+          "module": "ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback",
+          "names": [
+            "LegalIRProofFeedbackRecord",
+            "ProofFeedbackPartition"
+          ]
+        }
+      ],
+      "source_bytes": 1352250,
+      "source_git_blob": "26c65bdfa1b1a7f3f40b151bc5ac7a3b9fc9fd55",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "source_sha256": "b56316f756a36cfbcbe7070207678090d5e1c8beebe2ef4710ddd6732ddd045d",
+      "vendored_bytes": 1352319,
+      "vendored_path": "modal_autoencoder.py",
+      "vendored_sha256": "5f504f08854a239eda60c588d78766681818f724b7b59f1851f46a4fdc2129bd"
+    },
+    {
+      "frozen_dependencies": [],
+      "module": "modal_autoencoder_batching",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 31941,
+      "source_git_blob": "f6aa6f38dd4efb80aeb5c878d4e48086acb2d34b",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_batching.py",
+      "source_sha256": "6538fc6f4bf3c7e7ba94c7ef8b4fa00833ca4f728b4bf90a2684096b2f70dc5a",
+      "vendored_bytes": 31941,
+      "vendored_path": "modal_autoencoder_batching.py",
+      "vendored_sha256": "6538fc6f4bf3c7e7ba94c7ef8b4fa00833ca4f728b4bf90a2684096b2f70dc5a"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_autoencoder",
+        "modal_autoencoder_state_version"
+      ],
+      "module": "modal_autoencoder_checkpoint",
+      "relocation_edits": [],
+      "shared_canonical_imports": [
+        {
+          "line": 30,
+          "module": "ipfs_datasets_py.logic.formalization.checkpoints",
+          "names": [
+            "IR_CHECKPOINT_ID_PREFIX",
+            "IR_CHECKPOINT_MANIFEST_SCHEMA",
+            "IR_CHECKPOINT_POINTER_SCHEMA",
+            "IRCheckpointLifecycleError",
+            "IRCheckpointManifest",
+            "IRCheckpointPointer",
+            "IRCheckpointPromotionError",
+            "IRCheckpointSideOutcome",
+            "IRCheckpointValidationError",
+            "IRPromotionManifest",
+            "MODAL_STATE_LEGACY_KIND",
+            "verify_ir_checkpoint_manifest",
+            "verify_lifecycle_transition"
+          ]
+        }
+      ],
+      "source_bytes": 81068,
+      "source_git_blob": "f281a0d9328e174ef0878075e0e28e800b261bfb",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py",
+      "source_sha256": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474",
+      "vendored_bytes": 81068,
+      "vendored_path": "modal_autoencoder_checkpoint.py",
+      "vendored_sha256": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_autoencoder_batching",
+        "modal_autoencoder_tensor_state"
+      ],
+      "module": "modal_autoencoder_cuda",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 69046,
+      "source_git_blob": "6479dd0fdb7ee2e27da8bcc7313ca99b4619e430",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_cuda.py",
+      "source_sha256": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1",
+      "vendored_bytes": 69046,
+      "vendored_path": "modal_autoencoder_cuda.py",
+      "vendored_sha256": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1"
+    },
+    {
+      "frozen_dependencies": [
+        "legal_ir_semantic_metrics",
+        "modal_autoencoder_tensor_state"
+      ],
+      "module": "modal_autoencoder_factorized_heads",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 58859,
+      "source_git_blob": "d9ad9b356d92837715321f6fae8b473c5ea57a56",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_factorized_heads.py",
+      "source_sha256": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+      "vendored_bytes": 58859,
+      "vendored_path": "modal_autoencoder_factorized_heads.py",
+      "vendored_sha256": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_autoencoder"
+      ],
+      "module": "modal_autoencoder_feature_capacity",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 33363,
+      "source_git_blob": "ce35877ce215bbc5d9fd31222c53fc229b50082c",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_feature_capacity.py",
+      "source_sha256": "76608ad29c95cf3178fc59d7c76c6c7f4ca5b9907b338f9558c88d3d8a3b93ba",
+      "vendored_bytes": 33363,
+      "vendored_path": "modal_autoencoder_feature_capacity.py",
+      "vendored_sha256": "76608ad29c95cf3178fc59d7c76c6c7f4ca5b9907b338f9558c88d3d8a3b93ba"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_autoencoder"
+      ],
+      "module": "modal_autoencoder_legacy_distillation",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 77762,
+      "source_git_blob": "610b4db7163db7b378632759ba463bc995a6abcc",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_legacy_distillation.py",
+      "source_sha256": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee",
+      "vendored_bytes": 77762,
+      "vendored_path": "modal_autoencoder_legacy_distillation.py",
+      "vendored_sha256": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_autoencoder",
+        "modal_autoencoder_checkpoint",
+        "modal_autoencoder_factorized_heads",
+        "modal_autoencoder_tensor_state"
+      ],
+      "module": "modal_autoencoder_state_migration",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 34031,
+      "source_git_blob": "ca3030555f71b3e281f96a8da7961d31f8e6545f",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_migration.py",
+      "source_sha256": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2",
+      "vendored_bytes": 34031,
+      "vendored_path": "modal_autoencoder_state_migration.py",
+      "vendored_sha256": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2"
+    },
+    {
+      "frozen_dependencies": [],
+      "module": "modal_autoencoder_state_transaction",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 14718,
+      "source_git_blob": "cebe81b18f132dba7a5ade2da6cd1a77c9386837",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py",
+      "source_sha256": "d86a5721643bab9a51d1587aef117f925c53ebcdd8fd767964cacbd7859b810b",
+      "vendored_bytes": 14718,
+      "vendored_path": "modal_autoencoder_state_transaction.py",
+      "vendored_sha256": "d86a5721643bab9a51d1587aef117f925c53ebcdd8fd767964cacbd7859b810b"
+    },
+    {
+      "frozen_dependencies": [],
+      "module": "modal_autoencoder_state_version",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 21389,
+      "source_git_blob": "26d0ffce40835b71cf274e644b80925317514f07",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "source_sha256": "f38530f5a8a10cd5969447e16e7d6a86542b8e9eeeb2d2a2dab69454ab250fc2",
+      "vendored_bytes": 21389,
+      "vendored_path": "modal_autoencoder_state_version.py",
+      "vendored_sha256": "f38530f5a8a10cd5969447e16e7d6a86542b8e9eeeb2d2a2dab69454ab250fc2"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_autoencoder_state_migration"
+      ],
+      "module": "modal_autoencoder_tensor_state",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 51791,
+      "source_git_blob": "48ba02bcfce72c64b3a70ebaa0aa3fb284dde452",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_tensor_state.py",
+      "source_sha256": "ee81537f1af3c3ca939f371cc9e4384adb317d6c7803dac22271d5dce0948d3f",
+      "vendored_bytes": 51791,
+      "vendored_path": "modal_autoencoder_tensor_state.py",
+      "vendored_sha256": "ee81537f1af3c3ca939f371cc9e4384adb317d6c7803dac22271d5dce0948d3f"
+    },
+    {
+      "frozen_dependencies": [],
+      "module": "modal_ir",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 7283,
+      "source_git_blob": "62e7701bae4b2b5fb5c4196cea2580933c458c93",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+      "source_sha256": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743",
+      "vendored_bytes": 7283,
+      "vendored_path": "modal_ir.py",
+      "vendored_sha256": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_registry"
+      ],
+      "module": "modal_prover_router",
+      "relocation_edits": [],
+      "shared_canonical_imports": [
+        {
+          "line": 74,
+          "module": "ipfs_datasets_py.logic.TDFOL.modal_tableaux",
+          "names": [
+            "ModalLogicType",
+            "prove_modal_formula"
+          ]
+        }
+      ],
+      "source_bytes": 6445,
+      "source_git_blob": "7b47493906c6e66f3253de0b742ed4f3a9020630",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_prover_router.py",
+      "source_sha256": "46fe3a0a83b8e0e86c9bbb9dbfab15a2a4a8401fbe661bd58b512a93ffd47388",
+      "vendored_bytes": 6445,
+      "vendored_path": "modal_prover_router.py",
+      "vendored_sha256": "46fe3a0a83b8e0e86c9bbb9dbfab15a2a4a8401fbe661bd58b512a93ffd47388"
+    },
+    {
+      "frozen_dependencies": [],
+      "module": "modal_registry",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 519367,
+      "source_git_blob": "573d23777a29a2e29e125ea16a6ae8417d407e75",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+      "source_sha256": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a",
+      "vendored_bytes": 519367,
+      "vendored_path": "modal_registry.py",
+      "vendored_sha256": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a"
+    },
+    {
+      "frozen_dependencies": [],
+      "module": "projection_profiler",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 10801,
+      "source_git_blob": "6a152d4d394a36b185475db59329a47b7c37f25e",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/projection_profiler.py",
+      "source_sha256": "c5c5179cce6df49f694523b999f61cc8a842fa71424af956893400d574e3b4e8",
+      "vendored_bytes": 10801,
+      "vendored_path": "projection_profiler.py",
+      "vendored_sha256": "c5c5179cce6df49f694523b999f61cc8a842fa71424af956893400d574e3b4e8"
+    },
+    {
+      "frozen_dependencies": [
+        "modal_prover_router"
+      ],
+      "module": "prover_integration",
+      "relocation_edits": [
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_prover_router import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import",
+          "reason": "isolate absolute optimizer dependency"
+        }
+      ],
+      "shared_canonical_imports": [
+        {
+          "line": 173,
+          "module": "ipfs_datasets_py.logic.external_provers.smt.z3_prover_bridge",
+          "names": [
+            "Z3ProverBridge"
+          ]
+        },
+        {
+          "line": 181,
+          "module": "ipfs_datasets_py.logic.external_provers.smt.cvc5_prover_bridge",
+          "names": [
+            "CVC5ProverBridge"
+          ]
+        },
+        {
+          "line": 189,
+          "module": "ipfs_datasets_py.logic.external_provers.interactive.lean_prover_bridge",
+          "names": [
+            "LeanProverBridge"
+          ]
+        },
+        {
+          "line": 197,
+          "module": "ipfs_datasets_py.logic.external_provers.interactive.coq_prover_bridge",
+          "names": [
+            "CoqProverBridge"
+          ]
+        },
+        {
+          "line": 205,
+          "module": "ipfs_datasets_py.logic.external_provers.neural.symbolicai_prover_bridge",
+          "names": [
+            "SymbolicAIProverBridge"
+          ]
+        },
+        {
+          "line": 220,
+          "module": "ipfs_datasets_py.logic.external_provers.proof_cache",
+          "names": [
+            "ProofCache"
+          ]
+        },
+        {
+          "line": 495,
+          "module": "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+          "names": [
+            "DeonticFormula",
+            "DeonticOperator",
+            "Predicate",
+            "TemporalFormula",
+            "TemporalOperator"
+          ]
+        }
+      ],
+      "source_bytes": 26522,
+      "source_git_blob": "d1d1423263486c06cbbf0787630d132c723609a0",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py",
+      "source_sha256": "5c338d236cde845371d0efec9ddc43d2d858142f46e068b818e28dc8da37db8b",
+      "vendored_bytes": 26563,
+      "vendored_path": "prover_integration.py",
+      "vendored_sha256": "5417a7a5da2d3fb8eb3cc3b40e4db11b8e6d592d67f3808c0cbfd0dc5f13c1cb"
+    },
+    {
+      "frozen_dependencies": [],
+      "module": "snapshot_evaluator",
+      "relocation_edits": [],
+      "shared_canonical_imports": [],
+      "source_bytes": 38995,
+      "source_git_blob": "a0f72635842cdcb22b333ada6ff782f1fcbfd419",
+      "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "source_sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6",
+      "vendored_bytes": 38995,
+      "vendored_path": "snapshot_evaluator.py",
+      "vendored_sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    }
+  ],
+  "isolation": {
+    "admission": "lake build <Lib> only; model metrics and bridge syntax are not admission",
+    "external_bridges_provers_proof_feedback_checkpoint_contracts": "shared canonical workspace logic tree",
+    "independent_learned_formula_decoder": false,
+    "internal_modal_parser_registry_ir": "frozen in this namespace",
+    "legacy_checkpoint_requires_explicit_verified_local_path": true,
+    "module_aliases": false,
+    "new_lineage_fallback": false,
+    "numerics_state_checkpoint_helpers": "frozen transitive optimizer closure",
+    "typed_deontic_compiler_decompiler_parser": "shared canonical workspace logic tree"
+  },
+  "module_count": 23,
+  "runtime_package": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot",
+  "schema_version": "legacy-autoencoder-vendored-runtime/v1",
+  "snapshot_init_sha256": "6e694ea02e8530c8fc207fd82769b1f29a13b3ceac504e902f8b26202bda26b4",
+  "source_bytes": 2943992,
+  "source_package": "ipfs_datasets_py.optimizers.logic_theorem_optimizer",
+  "source_revision": "ddf6b79467b68159650df81befc288c8553df664",
+  "vendored_module_bytes": 2944102
+}

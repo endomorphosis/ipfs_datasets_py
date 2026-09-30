@@ -9,8 +9,8 @@ backend does not change a checkpoint's ancestry.
 
 | Identity | Code reference | Weights and role |
 | --- | --- | --- |
-| `legacy_hub_v1` | Branch `autoencoder/legacy-v1`; immutable source tag `autoencoder/legacy-v1-ddf6b794` at `ddf6b79467b68159650df81befc288c8553df664` | Complete 398,209,746-byte June Hub checkpoint, 1,205,336 reusable rows; frozen teacher |
-| `current_legal_v2` | `main`; catalog baseline `485adbbe7032a1445b6b2322eab539c448094b22` | Explicit student checkpoint and parent chain; current legal feature training, including raw reconstruction and parallel sparse updates |
+| `legacy_hub_v1` | `main`: `autoencoder_lineages/legacy_v1`; frozen from `ddf6b79467b68159650df81befc288c8553df664`, with the historical branch/tag also retained | Complete 398,209,746-byte June Hub checkpoint, 1,205,336 reusable rows; frozen teacher |
+| `current_legal_v2` | `main`: `autoencoder_lineages/current_v2`; delegates to the evolving current implementation | Explicit student checkpoint and parent chain; current legal feature training, including raw reconstruction and parallel sparse updates |
 
 These are artifact/runtime lineages, not claims of two unrelated neural
 architectures. Both legal paths use `AdaptiveModalAutoencoder`, an additive
@@ -33,6 +33,78 @@ The full teacher is distinct from restart12 (25,895,338 bytes, `1446cb18…`) an
 from the July accepted port (`1c615f7c…`). That port retained 209,759 rows and
 omitted 995,577. The complete teacher remains available; omitted rows have not
 been restored to students merely by recording this catalog.
+
+## Both implementations on main
+
+The executable entry points now sit next to each other under
+[`autoencoder_lineages`](../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages).
+
+| Import | Numerical implementation | Required vector width |
+| --- | --- | ---: |
+| `autoencoder_lineages.legacy_v1` | Historical model plus 23-module dependency closure from `ddf6b794`, isolated state/checkpoint/optimizer helpers and caches | 8 |
+| `autoencoder_lineages.current_v2` | Current `modal_autoencoder.py`, retaining its existing imports for other callers | 384 |
+
+These dimensions are enforced profiles; they are not claims that vector width
+alone defines an architecture or verifies semantic embeddings. The current
+profile uses the raw-decoder objective by default. The legacy profile retains
+historical safety-projected reconstruction behavior.
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages import (
+    legacy_v1, current_v2,
+)
+
+# Existing local files, explicitly verified. No downloads or weight saves.
+teacher = legacy_v1.load_checkpoint(
+    "/absolute/path/legal-ir-autoencoder-canonical.state.json",
+    expected_sha256="7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+)
+student = current_v2.load_checkpoint(
+    "/absolute/path/selected-384-dimensional-student.json",
+    expected_sha256="<exact 64-character student SHA-256>",
+)
+print(teacher.describe())
+print(student.describe())
+```
+
+The convenience loaders accept materialized JSON checkpoints, including the
+actual retained teacher and student files. They fail on missing files, hash
+mismatch, nonfinite/mixed-width embedding rows, and unsupported formats. They
+record stored versus loaded architecture labels so the historical compatibility
+upgrade remains visible. They do not save an upgraded checkpoint. A hash and
+width check still does not establish complete training ancestry.
+
+For private training experiments, each namespace exports its own `Autoencoder`
+and `TrainingState`. Cross-lineage state objects are rejected. `encode`,
+`decode`, `evaluate`, and `train_generalizable_projection` reject mismatched
+input widths; validation rows are checked before training begins. Both namespaces
+can coexist in one process without replacing the current model's module entry.
+Semantic input receipts and the existing runner qualification/resource gates
+remain separate requirements for production training.
+
+The frozen snapshot includes the historical internal modal parser, registry and
+IR classes needed by its feature model. **The typed deontic parser, canonical
+compiler/decompiler and external bridge/proof boundary remain the current
+canonical workspace tree.** Model construction invokes the existing tree pin.
+This is an isolated historical numerical runtime with explicit shared services,
+not a whole-pipeline September replay. Neither namespace substitutes HACC.
+
+The [snapshot manifest](../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/MANIFEST.json)
+records original Git blobs, hashes, dependencies and all six relocation edits.
+Those edits change imports, package/repository roots and the default legacy disk
+cache location; they do not rewrite the historical optimization algorithm.
+Regenerate or verify from already-local Git objects with:
+
+```sh
+python3 scripts/ops/legal_ir/vendor_legacy_autoencoder.py \
+  --output-dir ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot \
+  --verify
+```
+
+Historical Git objects must be available for regeneration. Ordinary imports and
+checkpoint loading need only the checked-in files, with no Git access.
+Existing campaign runners retain their prior imports until explicitly migrated;
+adding these namespaces does not reroute a running census to different numerics.
 
 ## What worked historically
 
@@ -152,8 +224,9 @@ admit. The Constitution is not formalized.
 
 ## Scope of this preservation
 
-This change pins source references, preserves checkpoint identity, adds an
-offline identity guard, and records verified existing evidence. It does not
+The original preservation pinned source references and checkpoint identity.
+The follow-up adds both executable runtime namespaces to main, with dimension
+and state isolation at their public interfaces. It does not
 claim historical/runtime parity, architecture superiority, a completed
 cross-dimension distillation, or new semantic qualification. No weights were
 downloaded, rewritten or bulk-transferred.
@@ -163,3 +236,23 @@ legacy teacher and both retained newer student files, and rejected the teacher
 when selected as `current_legal_v2`. The [identity smoke](../implementation/reports/evidence/legal-lineages-20260930/identity-smoke.json)
 and [remote source-reference verification](../implementation/reports/evidence/legal-lineages-20260930/source-preservation.json)
 record that scope. These checks performed no inference or training.
+
+## Side-by-side implementation validation
+
+The installed runtime and identity suites passed **63 tests**, including an
+accepted bounded training epoch for each profile on explicit synthetic vectors,
+state isolation, and invalid width/hash/number rejection. Source regeneration
+matched all 23 frozen modules and their recorded relocation edits exactly.
+
+A [real-checkpoint smoke](../implementation/reports/evidence/legal-lineages-20260930/side-by-side-runtime-smoke.json)
+loaded the complete 398 MB teacher and the retained 7.2 MB student into one
+process. Each returned finite vectors of its required width; neither input file
+was saved or rewritten. The process peaked at approximately 2,078 MiB RSS.
+Inputs were synthetic fixtures, with no metric bridges, provers, disk cache or
+sample memory. Each evaluation therefore had zero legal-IR targets: these checks
+establish runtime plumbing, not IR performance or legal quality. The real
+checkpoints were not trained.
+
+The existing census rotated to a new producer generation after the package
+addition and restarted automatically. Its existing current-runtime imports and
+checkpoint selection were preserved; no automatic lineage switch occurred.

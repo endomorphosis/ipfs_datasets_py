@@ -1,0 +1,170 @@
+{
+  "schema": "legal-autoencoder-side-by-side-validation/v1",
+  "legacy_source_revision": "ddf6b79467b68159650df81befc288c8553df664",
+  "snapshot_manifest_sha256": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+  "vendor_regeneration_verified": true,
+  "implementation_files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/__init__.py",
+      "sha256": "db75b8af69d26fe099e6e9c5245c197ffa6b4db86824aecc24334d397584100e",
+      "bytes": 574
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py",
+      "sha256": "9f45d9769613f146b47037491c4796f40a56d75b4907e5ed455391e91d4f91d6",
+      "bytes": 12411
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/current_v2/__init__.py",
+      "sha256": "c56a5ae87ece7c31ab5d257a87fb93e501a2e63d1df131f21f22d432e589c3eb",
+      "bytes": 1796
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/__init__.py",
+      "sha256": "bdbe2843741514298d49ce2c5ed8aab1c1aeb447b8cae515c81aaa7e0f02dae6",
+      "bytes": 1994
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/__init__.py",
+      "sha256": "6e694ea02e8530c8fc207fd82769b1f29a13b3ceac504e902f8b26202bda26b4",
+      "bytes": 358
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/frame_bm25_selector.py",
+      "sha256": "612d472efaf9cb5bb2f57914125d9fc87cde3a55f14dc5a105cc80f268df430a",
+      "bytes": 77959
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab",
+      "bytes": 42137
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+      "bytes": 146870
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_semantic_metrics.py",
+      "sha256": "cee46ad09daae3ae74cd359e8e25fb9fd592eee92c59730d42caf30db60c38da",
+      "bytes": 75349
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_modal_parser.py",
+      "sha256": "5415bf565171b17db1d4a03c715e974645a59018addb852cf67fc3c71d462406",
+      "bytes": 160181
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_samples.py",
+      "sha256": "51ce99dc83279c570bc57334c1cdc4cb72fa4b94c5b8c81101bb6252f0a614de",
+      "bytes": 5865
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder.py",
+      "sha256": "5f504f08854a239eda60c588d78766681818f724b7b59f1851f46a4fdc2129bd",
+      "bytes": 1352319
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_batching.py",
+      "sha256": "6538fc6f4bf3c7e7ba94c7ef8b4fa00833ca4f728b4bf90a2684096b2f70dc5a",
+      "bytes": 31941
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_checkpoint.py",
+      "sha256": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474",
+      "bytes": 81068
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_cuda.py",
+      "sha256": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1",
+      "bytes": 69046
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_factorized_heads.py",
+      "sha256": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+      "bytes": 58859
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_feature_capacity.py",
+      "sha256": "76608ad29c95cf3178fc59d7c76c6c7f4ca5b9907b338f9558c88d3d8a3b93ba",
+      "bytes": 33363
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_legacy_distillation.py",
+      "sha256": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee",
+      "bytes": 77762
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_migration.py",
+      "sha256": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2",
+      "bytes": 34031
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_transaction.py",
+      "sha256": "d86a5721643bab9a51d1587aef117f925c53ebcdd8fd767964cacbd7859b810b",
+      "bytes": 14718
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_version.py",
+      "sha256": "f38530f5a8a10cd5969447e16e7d6a86542b8e9eeeb2d2a2dab69454ab250fc2",
+      "bytes": 21389
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_tensor_state.py",
+      "sha256": "ee81537f1af3c3ca939f371cc9e4384adb317d6c7803dac22271d5dce0948d3f",
+      "bytes": 51791
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_ir.py",
+      "sha256": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743",
+      "bytes": 7283
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_prover_router.py",
+      "sha256": "46fe3a0a83b8e0e86c9bbb9dbfab15a2a4a8401fbe661bd58b512a93ffd47388",
+      "bytes": 6445
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_registry.py",
+      "sha256": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a",
+      "bytes": 519367
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/projection_profiler.py",
+      "sha256": "c5c5179cce6df49f694523b999f61cc8a842fa71424af956893400d574e3b4e8",
+      "bytes": 10801
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/prover_integration.py",
+      "sha256": "5417a7a5da2d3fb8eb3cc3b40e4db11b8e6d592d67f3808c0cbfd0dc5f13c1cb",
+      "bytes": 26563
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6",
+      "bytes": 38995
+    }
+  ],
+  "tests": {
+    "passed": 63,
+    "wall_seconds": 3.18,
+    "suites": [
+      "tests/unit/logic/test_autoencoder_lineage_runtimes.py",
+      "tests/unit/logic/test_autoencoder_lineage_guard.py"
+    ],
+    "tiny_synthetic_training_accepted_both_lineages": true
+  },
+  "setuptools_manifest_discovery_verified": true,
+  "real_checkpoint_smoke": {
+    "path": "docs/implementation/reports/evidence/legal-lineages-20260930/side-by-side-runtime-smoke.json",
+    "sha256": "5c24fe6365450e5edcee6fe6338f948da8c57b2de98696f3df7cfacd13910d86"
+  },
+  "numerical_state_and_cache_isolation": true,
+  "canonical_compiler_boundary": "current workspace tree; original tree pin retained",
+  "existing_runner_autoencoder_selection_changed": false,
+  "source_installation": "new package directory staged outside watched tree and renamed atomically",
+  "weights_downloaded": false,
+  "weights_files_changed": false,
+  "admitted": false,
+  "qualified": false
+}
