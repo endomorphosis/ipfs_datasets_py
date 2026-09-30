@@ -145,7 +145,7 @@ def test_incompatible_adapter_and_override_resume_are_rejected(native_case):
 def test_registry_rejects_promoted_metadata_and_forged_parent(tmp_path, monkeypatch):
     train, tune = [native_fixtures._ui(1)], [native_fixtures._ui(2)]
     runtime = interface.build_native_runtime("ui_ux_ir", "native_v1", train,
-        projection_ids=["ui_ux_ir:flogic"], ir_schema="ui_ux_ir/fixture-v1")
+        projection_ids=["ui_ux_ir:flogic"], ir_schema="ui_ux_ir/fixture-v1", with_formal_decoder=False)
     runtime.train(train, validation_samples=tune, epochs=1)
     with AutoencoderRegistry(tmp_path / "control.duckdb", tmp_path / "artifacts") as registry:
         registered = runtime.register_candidate(registry, tmp_path / "first")

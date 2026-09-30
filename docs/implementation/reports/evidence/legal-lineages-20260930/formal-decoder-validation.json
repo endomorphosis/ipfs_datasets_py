@@ -1,0 +1,63 @@
+{
+  "admitted": false,
+  "base_commit": "a39bb50fe04823a923dd71ac010e3749c185c80d",
+  "canonical_repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "configuration": {
+    "existing_checkpoint_overwritten": false,
+    "lake_executed": false,
+    "legal_ir_metric_disk_cache": false,
+    "native_numerical_backends_changed": false,
+    "weights_downloaded": false
+  },
+  "created_at": "2026-09-30T21:20:25.140107+00:00",
+  "files_sha256": {
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py": "98c8c61a385a1167e396d5140f18b48465f15147ae8603bf9edaf4d183f714b6",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py": "fd6398f99392c3ced783520e59077df4d26c020e6fb3cdc0c87a5fff53a928b9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formal_decoder.py": "65340477a924d9934162d3a445aaa7412a94c9de037dbd1bce32a86df3708a30",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/native_formal_checkpoint.py": "bd72dc48fa4b87ff84f2686b32763f398d668a2448ef397a18dfe588cdc042dc",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/native_formal_decoder.py": "2668c089615e0e26cdd9391517cdf94769b17189b661dc9b6db9cc3e4c22a10c"
+  },
+  "formalized": false,
+  "frozen_snapshot": {
+    "manifest_sha256": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+    "module_count": 23,
+    "verified": true
+  },
+  "known_limits": [
+    "Legal checkpoints have no independent learned formula token decoder; guided compiler is attributed and diagnostic.",
+    "Guided prohibition O versus canonical F remains an exposed compiler conflict.",
+    "Native readout consumes compiler targets and supports fixed shapes and training vocabulary only.",
+    "Native v2 common training/registry integration is not added."
+  ],
+  "qualified": false,
+  "schema": "versioned-formal-decoder-validation/v1",
+  "smoke_receipts": [
+    "formal-decoder-smoke.json",
+    "native-formal-decoder-smoke.json"
+  ],
+  "tests": {
+    "failed": 0,
+    "files": [
+      "tests/unit/logic/test_autoencoder_lineage_runtimes.py",
+      "tests/unit/logic/test_legacy_autoencoder_streamed_norms.py",
+      "tests/unit/logic/test_autoformal_speed_semantics.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_runtime_registry.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_modality_contracts.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features_v2.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formal_decoder.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_native_formal_decoder.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_native_formal_checkpoint.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_formal_runtime.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_native_formal_runtime_factory.py"
+    ],
+    "log_sha256": "c711203d54917e65db36f67e1ed42adaa5fa0c8e36d240f5b2d0df0ca3d703c4",
+    "passed": 307,
+    "pytest_seconds": 25.45,
+    "skipped": 0
+  },
+  "validation_scope": "installed workspace; unrelated concurrent edits excluded from this change; source hashes below are listed files only"
+}

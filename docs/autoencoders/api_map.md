@@ -5,6 +5,11 @@
 This maps tasks to public entrypoints. Start with the linked guide rather than
 following internal class calls. Linked modules own validation and defaults.
 
+For formal outputs across the versioned models, use
+`autoencoder_runtime_registry.open_formal_decoder(...).decode_formal_logic(...)`.
+See [formal decoder modes, persistence and limitations](formal_logic_decoders.md).
+Vector `decode()` and numerical `infer()` keep their original meanings.
+
 ## Native modalities
 
 | Task | Entry point | Guide |

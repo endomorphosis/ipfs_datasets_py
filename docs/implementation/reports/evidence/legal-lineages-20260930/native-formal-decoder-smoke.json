@@ -1,0 +1,1115 @@
+{
+  "admitted": false,
+  "canonical_logic_tree": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "compute_device": "cpu",
+  "created_at": "2026-09-30T21:18:45.490409+00:00",
+  "cuda_visible_devices": "",
+  "decoder_implementation_sha256": "2668c089615e0e26cdd9391517cdf94769b17189b661dc9b6db9cc3e4c22a10c",
+  "fixture_source": {
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features.py",
+    "sha256": "f6fc15f49ca74a4cf8ebe01b7eea6cf4b9d12612ff7bcb46ae54800e60829d0e"
+  },
+  "formalized": false,
+  "heldout_semantic_qualification": false,
+  "implementation_scope": "staged new decoder; canonical installed native numerical backends and typed target compilers",
+  "independent_text_to_logic": false,
+  "lake_executed": false,
+  "legal_ir_bridge_names": [],
+  "legal_ir_speed_baseline": false,
+  "legal_ir_target_count": 0,
+  "new_neural_decoder_trained": false,
+  "numeric_dtype": "float64",
+  "oracle_coordinates_used": false,
+  "promotion_performed": false,
+  "provers_evaluated": false,
+  "qualified": false,
+  "results": [
+    {
+      "admitted": false,
+      "artifact": {
+        "bytes": 46431,
+        "path": "workspace/test-logs/native-formal-decoder-smoke-20260930T211843Z/security_ir.json",
+        "sha256": "01f9b3452dcd89895d23345270adffb27fc37c36f96c3702a91a2bd63658c492"
+      },
+      "contract_sha256": "a81e5c0dd6ef8835fd77147d7d8cb486f097ef2fb0d0bccfbb577e674f4f0395",
+      "decode_sample_count": 1,
+      "decode_sample_partition": "training_in_sample_authored_fixture",
+      "decoder_sha256": "b33e57e036b4d7af42a18fc6fd1713677479317946717143e273dd1621f94c37",
+      "decoding": {
+        "abstained_projection_count": 0,
+        "admitted": false,
+        "coverage": [
+          {
+            "known_atoms": 41,
+            "projection_id": "program.program_ir/v1",
+            "unknown_atoms": 0
+          }
+        ],
+        "decoded_formulas_generated": true,
+        "decoded_projection_count": 1,
+        "decoder_kind": "deterministic_structural_readout_of_model_reconstruction",
+        "decoder_sha256": "b33e57e036b4d7af42a18fc6fd1713677479317946717143e273dd1621f94c37",
+        "domain_id": "security_ir",
+        "execution_authority": false,
+        "feature_space_sha256": "d570e0438565dce5723bc31db077b08641bb08be090575829db951e96ecb7bc0",
+        "formalized": false,
+        "independent_text_to_logic": false,
+        "input_representation": "native_compiler_projection_features_not_raw_text",
+        "lake_executed": false,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "qualified": false,
+        "rows": [
+          {
+            "projections": [
+              {
+                "admitted": false,
+                "execution_authority": false,
+                "expression": {
+                  "commands": [
+                    {
+                      "attributes": {},
+                      "command_id": "cmd:return",
+                      "effects": {
+                        "allocates": [],
+                        "deallocates": [],
+                        "nondeterministic": false,
+                        "performs_io": false,
+                        "raises": [],
+                        "reads": [],
+                        "synchronizes": false,
+                        "writes": []
+                      },
+                      "evaluation_order": [
+                        "expr:one"
+                      ],
+                      "expression_ids": [
+                        "expr:one"
+                      ],
+                      "kind": "return",
+                      "source_ref_ids": [
+                        "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                      ],
+                      "span_ids": [],
+                      "target_symbol_ids": [],
+                      "undefined_behavior": []
+                    }
+                  ],
+                  "expressions": [
+                    {
+                      "attributes": {
+                        "value": 1
+                      },
+                      "evaluation_order": [],
+                      "expression_id": "expr:one",
+                      "kind": "literal",
+                      "operand_ids": [],
+                      "operator": "",
+                      "source_ref_ids": [
+                        "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                      ],
+                      "span_ids": [],
+                      "symbol_ids": [],
+                      "type_ref": "integer"
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "cfg": {
+                        "blocks": [
+                          {
+                            "block_id": "block:one",
+                            "command_ids": [
+                              "cmd:return"
+                            ],
+                            "source_ref_ids": [
+                              "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                            ],
+                            "span_ids": []
+                          }
+                        ],
+                        "edges": [],
+                        "entry_block_id": "block:one",
+                        "exceptional_exit_block_ids": [],
+                        "graph_id": "cfg:one",
+                        "normal_exit_block_ids": [
+                          "block:one"
+                        ]
+                      },
+                      "declared_exceptions": [],
+                      "effects": {
+                        "allocates": [],
+                        "deallocates": [],
+                        "nondeterministic": false,
+                        "performs_io": false,
+                        "raises": [],
+                        "reads": [],
+                        "synchronizes": false,
+                        "writes": []
+                      },
+                      "exception_symbol_ids": [],
+                      "function_id": "function:one",
+                      "local_symbol_ids": [],
+                      "name": "one",
+                      "parameter_symbol_ids": [],
+                      "purity": "unknown",
+                      "result_symbol_id": "",
+                      "return_type": "integer",
+                      "source_ref_ids": [
+                        "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                      ],
+                      "span_ids": []
+                    }
+                  ],
+                  "global_symbol_ids": [],
+                  "metadata": {},
+                  "program_id": "bafkreig5g763pzyo6nbsdqcwijdw2tlfvlkfl3nwxwdgfhl23dzjbhzrmi",
+                  "schema_version": "program-ir/v1",
+                  "sources": [
+                    {
+                      "container_sha256": "",
+                      "container_uri": "",
+                      "content_cid": "bafkreia4linb7yyxyxbmtjbitnd37xyagxd7q5p2irhl4xburnbacrdobq",
+                      "content_sha256": "973e6f8bbcc464997bc91f3a033ee9c317275760c1cd8a9581d76953acff8bf6",
+                      "license_expression": "",
+                      "metadata": {},
+                      "ref_id": "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua",
+                      "review_status": "unreviewed",
+                      "source_id": "one.py",
+                      "source_revision": "authored-fixture-1",
+                      "source_uri": "code-unit:bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                    }
+                  ],
+                  "spans": [],
+                  "symbols": []
+                },
+                "family_syntax_checked": false,
+                "formalized": false,
+                "lake_executed": false,
+                "logic_family": "program",
+                "notation_kind": null,
+                "producer_id": "security-code-logic-projection",
+                "profile": "program_ir",
+                "projection_id": "program.program_ir/v1",
+                "promotion_performed": false,
+                "proof_authority": false,
+                "properties": [],
+                "qualified": false,
+                "readable_notation": null,
+                "reason": null,
+                "representation_kind": "native_typed_document",
+                "source_binding_verified": false,
+                "source_provenance": "predicted_fields_unverified",
+                "source_semantics_verified": false,
+                "status": "decoded_candidate",
+                "typed_expression": {
+                  "content_digest": "913fab05d8ac96eb26272b68556ced860e6dd8c9751101cb6a62ac6433fa1c07",
+                  "expression_id": "expr:sv:program:bafkreig5g763pzyo6nbsdqcwijdw2tlfvlkfl3nwxwdgfhl23dzjbhzrmi",
+                  "family": {
+                    "interface": "LogicIdentityNamespaces@1",
+                    "namespace": "family",
+                    "schema_version": "logic-identity-namespaces/v1",
+                    "value": "program",
+                    "version": "1.0.0"
+                  },
+                  "interface": "TypedExpression@1",
+                  "metadata": {
+                    "bridge": "SoftwareVerificationSyntaxBridge@1",
+                    "domain_identity": "bafkreig5g763pzyo6nbsdqcwijdw2tlfvlkfl3nwxwdgfhl23dzjbhzrmi",
+                    "kind": "program",
+                    "source_identities": [
+                      "973e6f8bbcc464997bc91f3a033ee9c317275760c1cd8a9581d76953acff8bf6",
+                      "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua",
+                      "code-unit:bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                    ],
+                    "view_role": ""
+                  },
+                  "profile": {
+                    "interface": "LogicIdentityNamespaces@1",
+                    "namespace": "profile",
+                    "schema_version": "logic-identity-namespaces/v1",
+                    "value": "program_ir",
+                    "version": "1.0.0"
+                  },
+                  "root": {
+                    "arguments": [],
+                    "binders": [],
+                    "extension": {
+                      "children": [],
+                      "family": {
+                        "interface": "LogicIdentityNamespaces@1",
+                        "namespace": "family",
+                        "schema_version": "logic-identity-namespaces/v1",
+                        "value": "program",
+                        "version": "1.0.0"
+                      },
+                      "features": [
+                        "program.ir",
+                        "software_verification.program"
+                      ],
+                      "interface": "LogicExtensionNode@1",
+                      "metadata": {},
+                      "node_id": "node:sv:program:bafkreig5g763pzyo6nbsdqcwijdw2tlfvlkfl3nwxwdgfhl23dzjbhzrmi:ext",
+                      "payload": {
+                        "bridge_interface": "SoftwareVerificationSyntaxBridge@1",
+                        "bridge_version": "1.0.0",
+                        "document": {
+                          "commands": [
+                            {
+                              "attributes": {},
+                              "command_id": "cmd:return",
+                              "effects": {
+                                "allocates": [],
+                                "deallocates": [],
+                                "nondeterministic": false,
+                                "performs_io": false,
+                                "raises": [],
+                                "reads": [],
+                                "synchronizes": false,
+                                "writes": []
+                              },
+                              "evaluation_order": [
+                                "expr:one"
+                              ],
+                              "expression_ids": [
+                                "expr:one"
+                              ],
+                              "kind": "return",
+                              "source_ref_ids": [
+                                "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                              ],
+                              "span_ids": [],
+                              "target_symbol_ids": [],
+                              "undefined_behavior": []
+                            }
+                          ],
+                          "expressions": [
+                            {
+                              "attributes": {
+                                "value": 1
+                              },
+                              "evaluation_order": [],
+                              "expression_id": "expr:one",
+                              "kind": "literal",
+                              "operand_ids": [],
+                              "operator": "",
+                              "source_ref_ids": [
+                                "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                              ],
+                              "span_ids": [],
+                              "symbol_ids": [],
+                              "type_ref": "integer"
+                            }
+                          ],
+                          "functions": [
+                            {
+                              "cfg": {
+                                "blocks": [
+                                  {
+                                    "block_id": "block:one",
+                                    "command_ids": [
+                                      "cmd:return"
+                                    ],
+                                    "source_ref_ids": [
+                                      "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                                    ],
+                                    "span_ids": []
+                                  }
+                                ],
+                                "edges": [],
+                                "entry_block_id": "block:one",
+                                "exceptional_exit_block_ids": [],
+                                "graph_id": "cfg:one",
+                                "normal_exit_block_ids": [
+                                  "block:one"
+                                ]
+                              },
+                              "declared_exceptions": [],
+                              "effects": {
+                                "allocates": [],
+                                "deallocates": [],
+                                "nondeterministic": false,
+                                "performs_io": false,
+                                "raises": [],
+                                "reads": [],
+                                "synchronizes": false,
+                                "writes": []
+                              },
+                              "exception_symbol_ids": [],
+                              "function_id": "function:one",
+                              "local_symbol_ids": [],
+                              "name": "one",
+                              "parameter_symbol_ids": [],
+                              "purity": "unknown",
+                              "result_symbol_id": "",
+                              "return_type": "integer",
+                              "source_ref_ids": [
+                                "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                              ],
+                              "span_ids": []
+                            }
+                          ],
+                          "global_symbol_ids": [],
+                          "metadata": {},
+                          "program_id": "bafkreig5g763pzyo6nbsdqcwijdw2tlfvlkfl3nwxwdgfhl23dzjbhzrmi",
+                          "schema_version": "program-ir/v1",
+                          "sources": [
+                            {
+                              "container_sha256": "",
+                              "container_uri": "",
+                              "content_cid": "bafkreia4linb7yyxyxbmtjbitnd37xyagxd7q5p2irhl4xburnbacrdobq",
+                              "content_sha256": "973e6f8bbcc464997bc91f3a033ee9c317275760c1cd8a9581d76953acff8bf6",
+                              "license_expression": "",
+                              "metadata": {},
+                              "ref_id": "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua",
+                              "review_status": "unreviewed",
+                              "source_id": "one.py",
+                              "source_revision": "authored-fixture-1",
+                              "source_uri": "code-unit:bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                            }
+                          ],
+                          "spans": [],
+                          "symbols": []
+                        },
+                        "domain_identity": "bafkreig5g763pzyo6nbsdqcwijdw2tlfvlkfl3nwxwdgfhl23dzjbhzrmi",
+                        "domain_schema": "program-ir/v1",
+                        "kind": "program",
+                        "schema_version": "program.program_ir/v1",
+                        "source_identities": [
+                          "973e6f8bbcc464997bc91f3a033ee9c317275760c1cd8a9581d76953acff8bf6",
+                          "bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua",
+                          "code-unit:bafkreibzixrqz5yjx2sx2m5yalx4vw6xgw7nzhkuo23uh25y6xifb455ua"
+                        ],
+                        "view_role": ""
+                      },
+                      "payload_schema": "program.program_ir/v1",
+                      "profile": {
+                        "interface": "LogicIdentityNamespaces@1",
+                        "namespace": "profile",
+                        "schema_version": "logic-identity-namespaces/v1",
+                        "value": "program_ir",
+                        "version": "1.0.0"
+                      },
+                      "schema_version": "syntax-logic-extension-node/v1"
+                    },
+                    "kind": "extension",
+                    "metadata": {},
+                    "node_id": "node:sv:program:bafkreig5g763pzyo6nbsdqcwijdw2tlfvlkfl3nwxwdgfhl23dzjbhzrmi",
+                    "schema_version": "syntax-logic-node/v1",
+                    "sort": {
+                      "arguments": [],
+                      "kind": "bool",
+                      "name": "Bool",
+                      "schema_version": "syntax-logic-sort/v1"
+                    },
+                    "symbol": ""
+                  },
+                  "schema_version": "syntax-typed-expression/v1",
+                  "signature": {
+                    "family": {
+                      "interface": "LogicIdentityNamespaces@1",
+                      "namespace": "family",
+                      "schema_version": "logic-identity-namespaces/v1",
+                      "value": "program",
+                      "version": "1.0.0"
+                    },
+                    "features": [
+                      "program.ir",
+                      "software_verification.program"
+                    ],
+                    "interface": "LogicSignature@1",
+                    "metadata": {
+                      "bridge": "SoftwareVerificationSyntaxBridge@1",
+                      "domain": "software_verification",
+                      "kind": "program"
+                    },
+                    "profile": {
+                      "interface": "LogicIdentityNamespaces@1",
+                      "namespace": "profile",
+                      "schema_version": "logic-identity-namespaces/v1",
+                      "value": "program_ir",
+                      "version": "1.0.0"
+                    },
+                    "schema_version": "syntax-logic-signature/v1",
+                    "signature_id": "sig:sv:program",
+                    "sorts": [
+                      {
+                        "arguments": [],
+                        "kind": "bool",
+                        "name": "Bool",
+                        "schema_version": "syntax-logic-sort/v1"
+                      }
+                    ],
+                    "symbols": []
+                  }
+                },
+                "validation_scope": "native_typed_document_and_exact_syntax_extension_replay",
+                "validator": "SoftwareVerificationSyntaxBridge@1",
+                "view_role": null
+              }
+            ],
+            "source_digest": "ad941b63726b1c48c62e8cb99055663c107ef5220fc962b9ad65b405e3d77001"
+          }
+        ],
+        "schema": "native-projection-formula-decoding/v1",
+        "source_binding_verified": false,
+        "source_input_conditioned": true,
+        "source_semantics_verified": false,
+        "state_sha256": "7e9179441270ce5562847aac8f6600efd5b864918e04a135393947720b284b52",
+        "status": "decoded",
+        "trained_neural_decoder": false,
+        "training_executed": false
+      },
+      "domain": "security_ir",
+      "feature_space_sha256": "d570e0438565dce5723bc31db077b08641bb08be090575829db951e96ecb7bc0",
+      "formalized": false,
+      "model_inference": {
+        "admitted": false,
+        "contract_sha256": "a81e5c0dd6ef8835fd77147d7d8cb486f097ef2fb0d0bccfbb577e674f4f0395",
+        "coverage": [
+          {
+            "known_atoms": 41,
+            "projection_id": "program.program_ir/v1",
+            "unknown_atoms": 0
+          }
+        ],
+        "decoded_formulas_generated": false,
+        "feature_space_sha256": "d570e0438565dce5723bc31db077b08641bb08be090575829db951e96ecb7bc0",
+        "formalized": false,
+        "promotion_performed": false,
+        "qualified": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "rows": [
+          {
+            "latent": [
+              0.44098794816626186,
+              -0.3645794241637945,
+              0.11002217031306119,
+              0.14954030637346744
+            ],
+            "reconstructed_projection_features": {
+              "program.program_ir/v1": [
+                0.23894963287824214,
+                0.1895865277655896,
+                0.13702146902421736,
+                0.12986276606073194,
+                0.19390422471063717,
+                0.18598870502263998,
+                0.1474396941413166,
+                0.1535694710867415,
+                0.22844001990703447,
+                0.1485826128052686,
+                0.19742711114863193,
+                0.1260962013821197,
+                0.12039696164814659,
+                0.1525594062121025,
+                0.19434512452616748,
+                0.15890998340418167,
+                0.22044232237692152,
+                0.13883827862026754,
+                0.22243915179330578,
+                0.11486281547385532,
+                0.13727866073774728,
+                0.1702092492252996,
+                0.21366552915889545,
+                0.14130812801091935,
+                0.15206445175696598,
+                0.17364530855622853,
+                0.1922752449839879,
+                0.17870133949235043,
+                0.1363978665782968,
+                0.17808013800045247,
+                0.16240845067169873,
+                0.17082332689152346,
+                0.23488921351543549,
+                0.11076228563157337,
+                0.12465246207395707,
+                0.15161131421690976,
+                0.16909855698974519,
+                0.1818889841954084,
+                0.16958398758506898,
+                0.1772972810593434,
+                0.14344715719852136
+              ]
+            },
+            "source_digest": "ad941b63726b1c48c62e8cb99055663c107ef5220fc962b9ad65b405e3d77001"
+          }
+        ],
+        "schema": "native-projection-feature-inference/v1",
+        "state_sha256": "7e9179441270ce5562847aac8f6600efd5b864918e04a135393947720b284b52",
+        "training_executed": false
+      },
+      "projection_ids": [
+        "program.program_ir/v1"
+      ],
+      "qualified": false,
+      "state_sha256": "7e9179441270ce5562847aac8f6600efd5b864918e04a135393947720b284b52",
+      "timing_seconds": {
+        "fit_structural_head": 0.0030761370435357094,
+        "native_target_preparation": 0.016570815118029714,
+        "numeric_inference_and_structural_decode": 0.005667115794494748,
+        "numeric_training": 1.3052095549646765
+      },
+      "training": {
+        "after": {
+          "objective": 0.022174816578626633,
+          "projections": {
+            "program.program_ir/v1": {
+              "cosine": 0.15117603540420532,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.00705721415579319
+            }
+          }
+        },
+        "attempted_epochs": 16,
+        "backend": "native-projection-feature-autoencoder/v1",
+        "before": {
+          "objective": 0.125868558883667,
+          "projections": {
+            "program.program_ir/v1": {
+              "cosine": 1.012125015258789,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.024656061083078384
+            }
+          }
+        },
+        "configuration": {
+          "epochs": 16,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "objective": {
+            "cosine_weight": 0.1,
+            "coverage": "training_vocabulary_atoms_only",
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "l2": 0.0,
+            "qualification": false,
+            "reconstruction": "per_projection_native_kernel_mean"
+          },
+          "seed": 1729
+        },
+        "heldout_canary": false,
+        "improved": true,
+        "lake_executed": false,
+        "selected_total_epochs": 16,
+        "stopped_reason": "epoch_budget",
+        "training_target_count": 1,
+        "tuning_target_count": 1,
+        "weights_downloaded": false
+      },
+      "training_sample_count": 1,
+      "training_source_digests": [
+        "ad941b63726b1c48c62e8cb99055663c107ef5220fc962b9ad65b405e3d77001"
+      ],
+      "tuning_sample_count": 1,
+      "tuning_source_digests": [
+        "921ae3d3a7ccd21d5eb98aa9b29ecc162f85c6de99ca6ade17b8ce760d3131bc"
+      ],
+      "zero_weight_control": {
+        "admitted": false,
+        "decoded_projection_count": 0,
+        "formalized": false,
+        "qualified": false,
+        "reasons": [
+          "nonpositive_or_insufficient_leaf_score"
+        ],
+        "state_sha256": "0162a1efb6b8315bb719ff80f2f695b275806fb2187995208d63fa2eb25d8bda",
+        "status": "abstained"
+      }
+    },
+    {
+      "admitted": false,
+      "artifact": {
+        "bytes": 34439,
+        "path": "workspace/test-logs/native-formal-decoder-smoke-20260930T211843Z/intent_ir.json",
+        "sha256": "7120afdceea591e9b47f72aa310b850d2303063687c2c52dbf4faeff7fcb883b"
+      },
+      "contract_sha256": "4241f3ed3f91398ee9337e14531ce05f740e1eedb2dbed6581e82e10a9cd6b8d",
+      "decode_sample_count": 1,
+      "decode_sample_partition": "training_in_sample_authored_fixture",
+      "decoder_sha256": "1ea86b20d301e75183bb103f8001dab46efaf99a97e5278fa7290c7358ddd7e4",
+      "decoding": {
+        "abstained_projection_count": 0,
+        "admitted": false,
+        "coverage": [
+          {
+            "known_atoms": 30,
+            "projection_id": "intent-route/norms/v1",
+            "unknown_atoms": 0
+          }
+        ],
+        "decoded_formulas_generated": true,
+        "decoded_projection_count": 1,
+        "decoder_kind": "deterministic_structural_readout_of_model_reconstruction",
+        "decoder_sha256": "1ea86b20d301e75183bb103f8001dab46efaf99a97e5278fa7290c7358ddd7e4",
+        "domain_id": "intent_ir",
+        "execution_authority": false,
+        "feature_space_sha256": "c7ed8d1c5bfbc460f7c88fccabaca440409606fd2b160292bc65fad1fba7f4d9",
+        "formalized": false,
+        "independent_text_to_logic": false,
+        "input_representation": "native_compiler_projection_features_not_raw_text",
+        "lake_executed": false,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "qualified": false,
+        "rows": [
+          {
+            "projections": [
+              {
+                "admitted": false,
+                "execution_authority": false,
+                "expression": [
+                  {
+                    "body": {
+                      "arguments": [
+                        "execution"
+                      ],
+                      "confidence": 1.0,
+                      "grounding": "grounded",
+                      "modality": "required",
+                      "predicate": "offline_only",
+                      "review_status": "trusted_fixture",
+                      "statement_kind": "invariant",
+                      "text": "No external network contact is made"
+                    },
+                    "kind": "intention_deontic_formula",
+                    "operator": "required"
+                  },
+                  {
+                    "body": {
+                      "arguments": [
+                        "report_inputs"
+                      ],
+                      "confidence": 1.0,
+                      "grounding": "grounded",
+                      "modality": "required",
+                      "predicate": "available",
+                      "review_status": "trusted_fixture",
+                      "statement_kind": "precondition",
+                      "text": "Local report inputs are available"
+                    },
+                    "kind": "intention_deontic_formula",
+                    "operator": "required"
+                  },
+                  {
+                    "body": {
+                      "arguments": [
+                        "status_report"
+                      ],
+                      "confidence": 1.0,
+                      "grounding": "grounded",
+                      "modality": "required",
+                      "predicate": "nonempty",
+                      "review_status": "trusted_fixture",
+                      "statement_kind": "verification",
+                      "text": "The report is present and non-empty"
+                    },
+                    "kind": "intention_deontic_formula",
+                    "operator": "required"
+                  }
+                ],
+                "family_syntax_checked": false,
+                "formalized": false,
+                "lake_executed": false,
+                "logic_family": "deontic",
+                "notation_kind": "native_intent_record_not_backend_formula",
+                "producer_id": "intent-formalization-compiler",
+                "profile": "default",
+                "projection_id": "intent-route/norms/v1",
+                "promotion_performed": false,
+                "proof_authority": false,
+                "properties": [],
+                "qualified": false,
+                "readable_notation": "required(offline_only(\"execution\"))\nrequired(available(\"report_inputs\"))\nrequired(nonempty(\"status_report\"))",
+                "reason": null,
+                "representation_kind": "domain_structured_formula",
+                "source_binding_verified": false,
+                "source_provenance": "predicted_fields_unverified",
+                "source_semantics_verified": false,
+                "status": "decoded_candidate",
+                "typed_expression": null,
+                "validation_scope": "native_record_fields_and_operators_not_source_entailment",
+                "validator": "native-intent-record-shape/v1",
+                "view_role": null
+              }
+            ],
+            "source_digest": "025d8291be6efdaba95c6efeb16c6f3d57181f6914301232c6be105cf7cc6382"
+          }
+        ],
+        "schema": "native-projection-formula-decoding/v1",
+        "source_binding_verified": false,
+        "source_input_conditioned": true,
+        "source_semantics_verified": false,
+        "state_sha256": "73cc68ef25f99e392efd6e4bfc6ca1deed77505c1f5f4751e06c06b78ba4c3dc",
+        "status": "decoded",
+        "trained_neural_decoder": false,
+        "training_executed": false
+      },
+      "domain": "intent_ir",
+      "feature_space_sha256": "c7ed8d1c5bfbc460f7c88fccabaca440409606fd2b160292bc65fad1fba7f4d9",
+      "formalized": false,
+      "model_inference": {
+        "admitted": false,
+        "contract_sha256": "4241f3ed3f91398ee9337e14531ce05f740e1eedb2dbed6581e82e10a9cd6b8d",
+        "coverage": [
+          {
+            "known_atoms": 30,
+            "projection_id": "intent-route/norms/v1",
+            "unknown_atoms": 0
+          }
+        ],
+        "decoded_formulas_generated": false,
+        "feature_space_sha256": "c7ed8d1c5bfbc460f7c88fccabaca440409606fd2b160292bc65fad1fba7f4d9",
+        "formalized": false,
+        "promotion_performed": false,
+        "qualified": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "rows": [
+          {
+            "latent": [
+              0.3423582120377709,
+              0.016467875609704394,
+              0.29936093673095915,
+              0.18227474377695277
+            ],
+            "reconstructed_projection_features": {
+              "intent-route/norms/v1": [
+                0.16154354786382188,
+                0.1354574641770947,
+                0.17549733890033764,
+                0.19441851221078166,
+                0.16630512388342963,
+                0.17189376557429267,
+                0.14429236432386616,
+                0.19243092434724013,
+                0.15540618620010502,
+                0.18443308082282248,
+                0.17486979318086265,
+                0.17917153200166222,
+                0.189658386613484,
+                0.16341236740269252,
+                0.16686544549185997,
+                0.14254543464735425,
+                0.1545980604182493,
+                0.18463826019232735,
+                0.1745035013812993,
+                0.1575391716735954,
+                0.2204592657971578,
+                0.1949805549602527,
+                0.14003528677917915,
+                0.179121309457433,
+                0.182478413836613,
+                0.1481100671275776,
+                0.1970643297075839,
+                0.17568812236797343,
+                0.1988171869792828,
+                0.2011826620224616
+              ]
+            },
+            "source_digest": "025d8291be6efdaba95c6efeb16c6f3d57181f6914301232c6be105cf7cc6382"
+          }
+        ],
+        "schema": "native-projection-feature-inference/v1",
+        "state_sha256": "73cc68ef25f99e392efd6e4bfc6ca1deed77505c1f5f4751e06c06b78ba4c3dc",
+        "training_executed": false
+      },
+      "projection_ids": [
+        "intent-route/norms/v1"
+      ],
+      "qualified": false,
+      "state_sha256": "73cc68ef25f99e392efd6e4bfc6ca1deed77505c1f5f4751e06c06b78ba4c3dc",
+      "timing_seconds": {
+        "fit_structural_head": 0.0028962150681763887,
+        "native_target_preparation": 0.07640731590799987,
+        "numeric_inference_and_structural_decode": 0.003993093967437744,
+        "numeric_training": 0.015874789794906974
+      },
+      "training": {
+        "after": {
+          "objective": 0.0011723802890628576,
+          "projections": {
+            "intent-route/norms/v1": {
+              "cosine": 0.006784558296203613,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.0004939244245178998
+            }
+          }
+        },
+        "attempted_epochs": 16,
+        "backend": "native-projection-feature-autoencoder/v1",
+        "before": {
+          "objective": 0.12726257741451263,
+          "projections": {
+            "intent-route/norms/v1": {
+              "cosine": 0.9396411180496216,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.03329845890402794
+            }
+          }
+        },
+        "configuration": {
+          "epochs": 16,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "objective": {
+            "cosine_weight": 0.1,
+            "coverage": "training_vocabulary_atoms_only",
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "l2": 0.0,
+            "qualification": false,
+            "reconstruction": "per_projection_native_kernel_mean"
+          },
+          "seed": 1729
+        },
+        "heldout_canary": false,
+        "improved": true,
+        "lake_executed": false,
+        "selected_total_epochs": 7,
+        "stopped_reason": "epoch_budget",
+        "training_target_count": 1,
+        "tuning_target_count": 1,
+        "weights_downloaded": false
+      },
+      "training_sample_count": 1,
+      "training_source_digests": [
+        "025d8291be6efdaba95c6efeb16c6f3d57181f6914301232c6be105cf7cc6382"
+      ],
+      "tuning_sample_count": 1,
+      "tuning_source_digests": [
+        "500239d44049094bebaf5108c8343fe67c99cc848bef092d3a98f574d86798c3"
+      ],
+      "zero_weight_control": {
+        "admitted": false,
+        "decoded_projection_count": 0,
+        "formalized": false,
+        "qualified": false,
+        "reasons": [
+          "nonpositive_or_insufficient_leaf_score"
+        ],
+        "state_sha256": "ae2ef732536cc4ccf342c0ee804568e8bf364fe99ae0049323d35b84470cee5a",
+        "status": "abstained"
+      }
+    },
+    {
+      "admitted": false,
+      "artifact": {
+        "bytes": 14340,
+        "path": "workspace/test-logs/native-formal-decoder-smoke-20260930T211843Z/ui_ux_ir.json",
+        "sha256": "b5258ae806b856e5d5c5e811d3e22c9a3a7a31b22f2cf68ed54853aaec8befbc"
+      },
+      "contract_sha256": "a9c544930af52d62b6ddb10ea89e722c761f7258d90049f831be863768788593",
+      "decode_sample_count": 1,
+      "decode_sample_partition": "training_in_sample_authored_fixture",
+      "decoder_sha256": "d5a6f31f76ada320f71a077d1934a6b6eae167539a5d8e4825740a7f85e800a5",
+      "decoding": {
+        "abstained_projection_count": 0,
+        "admitted": false,
+        "coverage": [
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 0
+          }
+        ],
+        "decoded_formulas_generated": true,
+        "decoded_projection_count": 1,
+        "decoder_kind": "deterministic_structural_readout_of_model_reconstruction",
+        "decoder_sha256": "d5a6f31f76ada320f71a077d1934a6b6eae167539a5d8e4825740a7f85e800a5",
+        "domain_id": "ui_ux_ir",
+        "execution_authority": false,
+        "feature_space_sha256": "a55070ebbce135f14abb0a37ce67309cd12f4518a5e3547fc28c205f231794f6",
+        "formalized": false,
+        "independent_text_to_logic": false,
+        "input_representation": "native_compiler_projection_features_not_raw_text",
+        "lake_executed": false,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "qualified": false,
+        "rows": [
+          {
+            "projections": [
+              {
+                "admitted": false,
+                "execution_authority": false,
+                "expression": {
+                  "facts": [
+                    {
+                      "args": [
+                        "delete",
+                        "button"
+                      ],
+                      "predicate": "ui_component",
+                      "source_ref_ids": []
+                    }
+                  ]
+                },
+                "family_syntax_checked": false,
+                "formalized": false,
+                "lake_executed": false,
+                "logic_family": "frame_logic",
+                "notation_kind": "native_ui_record_not_backend_formula",
+                "producer_id": "ui-ux-ir/flogic@1",
+                "profile": "ui-flogic-compilation/v1",
+                "projection_id": "ui_ux_ir:flogic",
+                "promotion_performed": false,
+                "proof_authority": false,
+                "properties": [],
+                "qualified": false,
+                "readable_notation": "ui_component(\"delete\", \"button\").",
+                "reason": null,
+                "representation_kind": "domain_structured_formula",
+                "source_binding_verified": false,
+                "source_provenance": "predicted_fields_unverified",
+                "source_semantics_verified": false,
+                "status": "decoded_candidate",
+                "typed_expression": null,
+                "validation_scope": "native_record_fields_and_closed_operators",
+                "validator": "native-ui-record-shape/v1",
+                "view_role": "structural_components"
+              }
+            ],
+            "source_digest": "de02b23981bb309d55a283507c240b1d678c024087a92c15fb37de67944c89b9"
+          }
+        ],
+        "schema": "native-projection-formula-decoding/v1",
+        "source_binding_verified": false,
+        "source_input_conditioned": true,
+        "source_semantics_verified": false,
+        "state_sha256": "62c0698a8e88202ce05f8e3f00205286c8ec8ecdbd1e8655a172711c3b2ee1ab",
+        "status": "decoded",
+        "trained_neural_decoder": false,
+        "training_executed": false
+      },
+      "domain": "ui_ux_ir",
+      "feature_space_sha256": "a55070ebbce135f14abb0a37ce67309cd12f4518a5e3547fc28c205f231794f6",
+      "formalized": false,
+      "model_inference": {
+        "admitted": false,
+        "contract_sha256": "a9c544930af52d62b6ddb10ea89e722c761f7258d90049f831be863768788593",
+        "coverage": [
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 0
+          }
+        ],
+        "decoded_formulas_generated": false,
+        "feature_space_sha256": "a55070ebbce135f14abb0a37ce67309cd12f4518a5e3547fc28c205f231794f6",
+        "formalized": false,
+        "promotion_performed": false,
+        "qualified": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "rows": [
+          {
+            "latent": [
+              0.4920768357924763,
+              -0.2538352771472418,
+              0.5596159252308835,
+              0.5953622654970953
+            ],
+            "reconstructed_projection_features": {
+              "ui_ux_ir:flogic": [
+                0.4857221027791243,
+                0.5944680904330255,
+                0.6729181847209348
+              ]
+            },
+            "source_digest": "de02b23981bb309d55a283507c240b1d678c024087a92c15fb37de67944c89b9"
+          }
+        ],
+        "schema": "native-projection-feature-inference/v1",
+        "state_sha256": "62c0698a8e88202ce05f8e3f00205286c8ec8ecdbd1e8655a172711c3b2ee1ab",
+        "training_executed": false
+      },
+      "projection_ids": [
+        "ui_ux_ir:flogic"
+      ],
+      "qualified": false,
+      "state_sha256": "62c0698a8e88202ce05f8e3f00205286c8ec8ecdbd1e8655a172711c3b2ee1ab",
+      "timing_seconds": {
+        "fit_structural_head": 0.0014417958445847034,
+        "native_target_preparation": 0.1151040920522064,
+        "numeric_inference_and_structural_decode": 0.0023152309004217386,
+        "numeric_training": 0.01272685918956995
+      },
+      "training": {
+        "after": {
+          "objective": 0.006792241241782904,
+          "projections": {
+            "ui_ux_ir:flogic": {
+              "cosine": 0.00851583480834961,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.005940657574683428
+            }
+          }
+        },
+        "attempted_epochs": 16,
+        "backend": "native-projection-feature-autoencoder/v1",
+        "before": {
+          "objective": 0.36514562368392944,
+          "projections": {
+            "ui_ux_ir:flogic": {
+              "cosine": 0.46831750869750977,
+              "guarded_auxiliary": 3.236241900594905e-05,
+              "reconstruction": 0.31828150153160095
+            }
+          }
+        },
+        "configuration": {
+          "epochs": 16,
+          "latent_width": 4,
+          "learning_rate": 0.02,
+          "max_seconds": 60.0,
+          "objective": {
+            "cosine_weight": 0.1,
+            "coverage": "training_vocabulary_atoms_only",
+            "guarded_auxiliary": "native_norm_ratio_penalty",
+            "l2": 0.0,
+            "qualification": false,
+            "reconstruction": "per_projection_native_kernel_mean"
+          },
+          "seed": 1729
+        },
+        "heldout_canary": false,
+        "improved": true,
+        "lake_executed": false,
+        "selected_total_epochs": 10,
+        "stopped_reason": "epoch_budget",
+        "training_target_count": 1,
+        "tuning_target_count": 1,
+        "weights_downloaded": false
+      },
+      "training_sample_count": 1,
+      "training_source_digests": [
+        "de02b23981bb309d55a283507c240b1d678c024087a92c15fb37de67944c89b9"
+      ],
+      "tuning_sample_count": 1,
+      "tuning_source_digests": [
+        "8295a2393adfe7d198cd6521a725ae50e6166983dad721521c108ff90a21649e"
+      ],
+      "zero_weight_control": {
+        "admitted": false,
+        "decoded_projection_count": 0,
+        "formalized": false,
+        "qualified": false,
+        "reasons": [
+          "nonpositive_or_insufficient_leaf_score"
+        ],
+        "state_sha256": "84e0c96f20a463eed809f68111e9661f47122dc01529709c5434855aba553017",
+        "status": "abstained"
+      }
+    }
+  ],
+  "run_id": "native-formal-decoder-smoke-20260930T211843Z",
+  "schema": "native-formal-decoder-smoke/v1",
+  "seed": 1729,
+  "source_input_conditioned": true,
+  "structural_readout_trainable_parameter_count": 0,
+  "training_executed": true,
+  "weights_downloaded": false
+}

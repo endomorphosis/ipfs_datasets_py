@@ -70,7 +70,10 @@ def describe_runtime(domain, version):
                   "input_representation": "explicit_8d_vectors" if legacy else "explicit_384d_vectors",
                   "dimension": 8 if legacy else 384, "state_schema": "modal-autoencoder-state/json",
                   "objective_default": "historical_reconstruction" if legacy else "raw_decoder",
-                  "capabilities": ["train", "infer", "load_checkpoint"], "integrated": True}
+                  "capabilities": ["train", "infer", "load_checkpoint", "decode_formal_logic"], "integrated": True,
+                  "formal_decoder": {"available": True, "modes": ["guided_compiler", "canonical_compiler"],
+                                     "independent_learned_formula_decoder": False, "head_required": False}}
+        paths.append(("legal_formal_decoder.py", Path(__file__).with_name("legal_formal_decoder.py")))
     else:
         _require(domain in NATIVE_DOMAINS, "unknown modality domain")
         _require(version in ("native_v1", "native_v2"), "unknown native runtime version")
@@ -82,8 +85,12 @@ def describe_runtime(domain, version):
                   "input_representation": "native_compiler_structural_features",
                   "dimension": None, "state_schema": "native-projection-feature-state/" + version[-2:],
                   "objective_default": "native-projection-reconstruction/v1",
-                  "capabilities": ["prepare_targets", "train", "infer", "register_candidate", "load_version"]
-                                  if integrated else [], "integrated": integrated}
+                  "capabilities": ["prepare_targets", "train", "infer", "register_candidate", "load_version", "decode_formal_logic"]
+                                  if integrated else [], "integrated": integrated,
+                  "formal_decoder": {"available": True, "modes": ["reconstructed_features"],
+                                     "head_required": True, "factory": "open_formal_decoder",
+                                     "input_is_compiler_targets": True}}
+        paths.append(("native_formal_decoder.py", Path(__file__).with_name("native_formal_decoder.py")))
         if not integrated:
             result["unsupported_reason"] = ("Streamed v2 has its own minibatch/Adam state. Its exact modality "
                 "contract and registry resume adapter are not implemented by this interface.")
@@ -137,7 +144,7 @@ class NativeRuntime:
     Training selects a private candidate. Inference never trains. Registry
     publication records ancestry, but does not promote a qualified model head.
     """
-    def __init__(self, domain, *, contract, feature_space, state=None):
+    def __init__(self, domain, *, contract, feature_space, state=None, decoder_head=None):
         _require(type(contract) is ModalityContract, "typed modality contract required")
         _require(contract.domain == domain, "contract belongs to another domain")
         self._descriptor = describe_runtime(domain, "native_v1")
@@ -155,6 +162,10 @@ class NativeRuntime:
             features._validate_state(contract, self._space, self._state)
         self._parent_version_id = None
         self._result = None
+        self._decoder_head = None if decoder_head is None else _copy(decoder_head)
+        if self._decoder_head is not None:
+            from .native_formal_decoder import validate_decoder
+            validate_decoder(self._space, self._decoder_head)
 
     def _verify_adapter(self):
         contract = self.contract
@@ -164,9 +175,24 @@ class NativeRuntime:
                  "installed native target adapter differs from contract")
 
     def describe(self):
+        variant_id = self.contract.variant_id
+        if self._decoder_head is not None:
+            from .native_formal_checkpoint import formal_variant_id
+            variant_id = formal_variant_id(self.contract, self._decoder_head)
         return {**_copy(self._descriptor), "contract": self.contract.to_dict(),
-                "contract_sha256": self.contract.sha256, "variant_id": self.contract.variant_id,
-                "parent_version_id": self._parent_version_id}
+                "contract_sha256": self.contract.sha256, "variant_id": variant_id,
+                "numerical_variant_id": self.contract.variant_id,
+                "parent_version_id": self._parent_version_id,
+                "decoder_head_sha256": None if self._decoder_head is None else features.digest(self._decoder_head),
+                "decoder_head_present": self._decoder_head is not None}
+
+    @property
+    def feature_space(self):
+        return _copy(self._space)
+
+    @property
+    def decoder_head(self):
+        return None if self._decoder_head is None else _copy(self._decoder_head)
 
     @property
     def state(self):
@@ -176,6 +202,9 @@ class NativeRuntime:
         _require(self._result is None, "register the pending candidate before training another version")
         _require("base_state" not in options, "resume state is bound to this runtime; use load_version")
         self._verify_adapter()
+        if self._decoder_head is not None:
+            from .native_formal_decoder import validate_decoder
+            validate_decoder(self._space, self._decoder_head)
         adapter = self._adapters.resolve(self.contract, required_capabilities=("train",))
         options.setdefault("latent_width", int(self.contract.state_codec.version.split("latent-")[1]))
         result = adapter.train(samples, validation_samples, base_state=self._state, **options)
@@ -191,15 +220,30 @@ class NativeRuntime:
     def register_candidate(self, registry, directory):
         _require(self._result is not None, "train a candidate before registering it")
         self._verify_adapter()
-        result = features.register_feature_candidate(registry, self.contract, self._space, self._result,
-                                                    directory, parent_version_id=self._parent_version_id)
+        if self._decoder_head is None:
+            result = features.register_feature_candidate(registry, self.contract, self._space, self._result,
+                                                        directory, parent_version_id=self._parent_version_id)
+        else:
+            from .native_formal_checkpoint import register_formal_candidate
+            result = register_formal_candidate(registry, self.contract, self._space, self._result,
+                self._decoder_head, directory, parent_version_id=self._parent_version_id)
         self._parent_version_id = result["version_id"]
         self._result = None
         return {**result, "runtime_id": self._descriptor["runtime_id"]}
 
+    def decode_formal_logic(self, samples, *, decoder_head=None, mode="reconstructed_features"):
+        """Decode model scores using a fitted structural head; never substitute input targets."""
+        _require(mode == "reconstructed_features", "native decoder mode must be reconstructed_features")
+        head = self._decoder_head if decoder_head is None else _copy(decoder_head)
+        if head is None:
+            return _missing_head(self.contract.domain, "native_v1")
+        from .native_formal_decoder import decode_formal_features, validate_decoder
+        validate_decoder(self._space, head)
+        return decode_formal_features(self._space, head, self.infer(samples))
+
 
 class LegalRuntime:
-    """Common entry points over a selected legal facade; no formula decoder added."""
+    """Legal features and explicitly attributed compiler-backed formal candidates."""
     def __init__(self, version, *, checkpoint=None, expected_sha256=None, **model_options):
         self._descriptor = describe_runtime("legal_ir", version)
         # The module name is selected solely from the closed local enum above.
@@ -219,6 +263,10 @@ class LegalRuntime:
     def infer(self, samples, **options):
         return self.model.evaluate(samples, **options)
 
+    def decode_formal_logic(self, samples, *, mode="guided_compiler", **options):
+        from .legal_formal_decoder import decode_legal_formulas
+        return decode_legal_formulas(self.model, samples, mode=mode, **options)
+
 
 def open_runtime(domain, version, **binding):
     """Select explicitly. Dimensions, source metadata, and filenames never dispatch."""
@@ -229,7 +277,8 @@ def open_runtime(domain, version, **binding):
     return NativeRuntime(domain, **binding)
 
 
-def build_native_runtime(domain, version, training_targets, *, projection_ids, ir_schema, latent_width=4):
+def build_native_runtime(domain, version, training_targets, *, projection_ids, ir_schema, latent_width=4,
+                         with_formal_decoder=True):
     """Build a v1 basis from training only; excluded native views remain recorded."""
     descriptor = describe_runtime(domain, version)
     _require(domain in NATIVE_DOMAINS and descriptor["integrated"], "native version is not integrated")
@@ -237,7 +286,12 @@ def build_native_runtime(domain, version, training_targets, *, projection_ids, i
     space = features.build_feature_space(domain, projection_ids, training_targets)
     contract = features.build_native_feature_contract(space, ir_schema=ir_schema,
         adapter_sha256=hashlib.sha256(Path(adapter.__file__).read_bytes()).hexdigest(), latent_width=latent_width)
-    return open_runtime(domain, version, contract=contract, feature_space=space)
+    _require(type(with_formal_decoder) is bool, "with_formal_decoder must be boolean")
+    head = None
+    if with_formal_decoder:
+        from .native_formal_decoder import train_formal_decoder
+        head = train_formal_decoder(space, training_targets)
+    return open_runtime(domain, version, contract=contract, feature_space=space, decoder_head=head)
 
 
 def _read_candidate(registry, version):
@@ -266,6 +320,16 @@ def load_version(registry, version_id, *, domain, version):
     descriptor = describe_runtime(domain, version)
     _require("load_version" in descriptor["capabilities"], "runtime lacks registry load_version")
     row = registry.get_version(version_id)
+    if "decoder_head_sha256" in row["metadata"]:
+        from .native_formal_checkpoint import FormalCandidateError, load_formal_candidate
+        try:
+            saved = load_formal_candidate(registry, version_id, domain)
+        except FormalCandidateError as exc:
+            raise RuntimeVersionError(str(exc)) from exc
+        runtime = open_runtime(domain, version, contract=saved["contract"], feature_space=saved["feature_space"],
+                               state=saved["state"], decoder_head=saved["decoder_head"])
+        runtime._parent_version_id = version_id
+        return runtime
     saved = _read_candidate(registry, row)
     contract = ModalityContract.from_dict(saved["contract"])
     _require(row["variant_id"] == contract.variant_id, "registry variant differs from candidate contract")
@@ -291,5 +355,54 @@ def load_version(registry, version_id, *, domain, version):
     return runtime
 
 
+def _missing_head(domain, version):
+    return {"schema": "autoencoder-formal-decoder-unavailable/v1", "domain": domain,
+            "runtime_version": version, "status": "decoder_head_required", "rows": [],
+            "formula_count": 0, "decoded_formulas_generated": False,
+            "reason": "Fit train_formal_decoder on the original training targets and pass its head explicitly; this checkpoint has no structural decoder schema.",
+            **features.FALSE}
+
+
+class StreamedFormalRuntime:
+    """Read-only v2 decoding; the v2 training/registry adapter remains separate."""
+    def __init__(self, domain, *, feature_space, state, decoder_head=None):
+        from . import autoencoder_projection_features_v2 as backend
+        _require(domain in NATIVE_DOMAINS and feature_space.get("domain_id") == domain,
+                 "streamed feature space belongs to another domain")
+        self._space, self._state = _copy(feature_space), _copy(state)
+        backend._validate_state(self._space, self._state)
+        self._domain = domain
+        self._head = None if decoder_head is None else _copy(decoder_head)
+        if self._head is not None:
+            from .native_formal_decoder import validate_decoder
+            validate_decoder(self._space, self._head)
+
+    def describe(self):
+        return {**describe_runtime(self._domain, "native_v2"), "session_capabilities": ["infer", "decode_formal_logic"],
+                "decoder_head_present": self._head is not None,
+                "state_sha256": features.digest(self._state), "feature_space_sha256": features.digest(self._space)}
+
+    def infer(self, samples):
+        from .autoencoder_projection_features_v2 import infer_streamed_projection_features
+        return infer_streamed_projection_features(self._space, self._state, samples)
+
+    def decode_formal_logic(self, samples, *, decoder_head=None, mode="reconstructed_features"):
+        _require(mode == "reconstructed_features", "native decoder mode must be reconstructed_features")
+        head = self._head if decoder_head is None else _copy(decoder_head)
+        if head is None:
+            return _missing_head(self._domain, "native_v2")
+        from .native_formal_decoder import infer_and_decode_native_v2
+        return infer_and_decode_native_v2(self._space, self._state, head, samples)
+
+
+def open_formal_decoder(domain, version, **binding):
+    """One explicit formal-output factory, including the v2 read-only decoder."""
+    describe_runtime(domain, version)  # closed trusted-local dispatch
+    if domain in NATIVE_DOMAINS and version == "native_v2":
+        return StreamedFormalRuntime(domain, **binding)
+    return open_runtime(domain, version, **binding)
+
+
 __all__ = ["RuntimeVersionError", "list_runtimes", "describe_runtime", "prepare_targets",
-           "open_runtime", "build_native_runtime", "load_version", "NativeRuntime", "LegalRuntime"]
+           "open_runtime", "build_native_runtime", "load_version", "open_formal_decoder",
+           "NativeRuntime", "LegalRuntime", "StreamedFormalRuntime"]

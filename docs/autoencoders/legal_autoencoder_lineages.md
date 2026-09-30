@@ -90,6 +90,12 @@ can coexist in one process without replacing the current model's module entry.
 Semantic input receipts and the existing runner qualification/resource gates
 remain separate requirements for production training.
 
+Both facades also expose `decode_formal_logic(samples, mode="guided_compiler")`.
+This returns attributed compiler-guided ASTs and diagnostic canonical comparisons;
+the original `decode()` still returns vectors. An independent learned formula
+decoder is absent from these checkpoints. See [formal decoder modes and
+known conflicts](formal_logic_decoders.md#legal-formulas).
+
 The frozen snapshot includes the historical internal modal parser, registry and
 IR classes needed by its feature model. **The typed deontic parser, canonical
 compiler/decompiler and external bridge/proof boundary remain the current

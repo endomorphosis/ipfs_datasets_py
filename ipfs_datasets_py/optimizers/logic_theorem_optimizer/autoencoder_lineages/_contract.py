@@ -178,10 +178,16 @@ class LineageModelContract:
             "implementation_scope": self._implementation_scope,
             "shared_canonical_logic_modules": dict(self._logic_tree),
             "independent_formula_decoder": False,
+            "formal_logic_decoder_modes": ["guided_compiler", "canonical_compiler"],
             "semantic_embedding_verified": False,
             "semantic_qualification": False,
             "admitted": False,
         }
+
+    def decode_formal_logic(self, samples, *, mode="guided_compiler", **options):
+        """Emit explicit compiler-backed candidates; this is separate from vector decode()."""
+        from ..legal_formal_decoder import decode_legal_formulas
+        return decode_legal_formulas(self, samples, mode=mode, **options)
 
 
 def _identity(info):

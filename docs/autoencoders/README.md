@@ -12,6 +12,7 @@ belong to their named backend; they are not interchangeable across backends.
 | I need to… | Start here |
 | --- | --- |
 | Select a version across Legal, Security, Intent and UI/UX | [Versioned runtime interface](versioned_runtime_interface.md) |
+| Obtain formal ASTs or reconstruct native expressions from model scores | [Formal logic decoders](formal_logic_decoders.md) |
 | Recover historical 8D training optimizations | [Legacy speed history and selective ports](legacy_speed_history.md) |
 | Try native UI/UX learning from real compiler output | [Runnable native quickstart](native_feature_quickstart.md) |
 | Train UI DOM/IDL bindings, resume, and choose HF datasets | [UI training, datasets and bindings](ui_datasets_and_bindings.md) |
@@ -35,7 +36,7 @@ See [legal autoencoder lineages](legal_autoencoder_lineages.md) to preserve the 
 | Legal feature pretraining | Verified local semantic embedding rows, provenance manifest, legal target supervision | Selected feature checkpoint; qualification flags false | Existing legal feature-mode parallel and exchange infrastructure |
 | Legal inference | Immutable legal checkpoint and inference input/validation rows | Scores and evidence; no optimizer update | Separate execution route and state directory |
 | Native IR structural training | UI/UX, Security, or Intent compiler envelopes, training-only basis, fixed tuning panel | Numerical state, Adam moments, isolated DuckDB candidate | Bounded local API; nonlegal fleet/HF/Arrow state integration remains separate |
-| Native IR feature inference | Same native contract, basis, saved state, compatible targets | Latent vectors and reconstructed feature blocks | Read-only numerical inference; no executable formula decoding |
+| Native IR feature inference | Same native contract, basis, saved state, compatible targets | Latent vectors and reconstructed feature blocks | Read-only numerical inference; explicit formal readout also requires a version-bound structural head |
 
 The registry and contracts are reusable. The legal worker frontend, target
 cache, checkpoint codec, and Hub exchange do not become modality-neutral by
