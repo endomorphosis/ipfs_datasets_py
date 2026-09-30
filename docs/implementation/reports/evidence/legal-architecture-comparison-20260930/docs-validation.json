@@ -1,0 +1,45 @@
+{
+  "schema": "legal-autoencoder-architecture-doc-validation/v1",
+  "source_baseline": "290f53edbcdc3bc893e7f7df434ea050c1e55b61",
+  "status": "passed",
+  "documents": 2,
+  "source_files_checked": 21,
+  "local_links_checked": 31,
+  "code_blocks": [
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 0,
+      "language": "bash",
+      "sha256": "ca5cbdc1e4b6e7e398d217adb8a1f0d91d08918cac5e20e3657122e22919e556"
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 1,
+      "language": "python",
+      "sha256": "321a3e3c757f3aed682e80af32f04a12c2c420a5663d5b1f8f44f6d2557b1f44"
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 2,
+      "language": "mermaid",
+      "sha256": "87bc653fc06a971f5886b3d62e544b6105a96e3204bc24bb5c060843bde02fc1"
+    }
+  ],
+  "errors": [],
+  "scope": "relative links and headings, published source links, Python/shell/JSON syntax, metadata invariants and inspected-source hashes; no training, model evaluation or rendered Mermaid validation",
+  "model_quality_validation": false,
+  "files": {
+    "docs/autoencoders/README.md": {
+      "sha256": "c4ab4fe7e154f6d99ddf78bcbbf774692585421ae320342e4a14f04d92400f90",
+      "bytes": 7756
+    },
+    "docs/autoencoders/legal_architecture_comparison.md": {
+      "sha256": "c3e8803c82639abba98e9be4dc16db7c246a7b1281147120f1b6fa3e11518a7c",
+      "bytes": 18685
+    },
+    "docs/implementation/reports/evidence/legal-architecture-comparison-20260930/source-inventory.json": {
+      "sha256": "92e57875993867db02f47dd5d61760634fc2e768fab64b2d6033cd66f5f9b03a",
+      "bytes": 11831
+    }
+  }
+}

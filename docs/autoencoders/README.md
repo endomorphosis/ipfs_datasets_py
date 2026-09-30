@@ -15,6 +15,7 @@ belong to their named backend; they are not interchangeable across backends.
 | Train UI DOM/IDL bindings, resume, and choose HF datasets | [UI training, datasets and bindings](ui_datasets_and_bindings.md) |
 | Implement React action, handler, state and typed-call capture | [React capture specification and implementation plan](react_capture_spec.md) |
 | Train or resume the legal autoencoder, including feature mode | [Legal training](legal_training.md) |
+| Compare legacy and current legal architectures and quality evidence | [Legal architecture comparison](legal_architecture_comparison.md) |
 | Score a checkpoint without training, or understand qualification | [Inference and qualification](inference_and_qualification.md) |
 | Add UI/UX, Security, Intent, or another IR | [Modality adapters and validation](modalities.md) |
 | Know which files, vectors, manifests, and checkpoints are required | [Artifacts and inputs](artifacts_and_inputs.md) |

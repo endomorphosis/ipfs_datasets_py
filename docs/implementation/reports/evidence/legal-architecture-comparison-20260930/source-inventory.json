@@ -1,0 +1,257 @@
+{
+  "schema": "legal-autoencoder-architecture-audit/v1",
+  "as_of": "2026-09-30",
+  "scope": "Read-only source and metadata audit, not a fresh model-quality benchmark",
+  "current_published_commit": "290f53edbcdc3bc893e7f7df434ea050c1e55b61",
+  "live_head": "205bc6ef96c69c3ed9ddcd20ecf0b67f460f1841",
+  "hub_revision": "94ca549d102e3e31781370aec1247f91365440eb",
+  "hub_manifest": {
+    "url": "https://huggingface.co/datasets/justicedao/legal-ir-autoencoder-checkpoints/resolve/94ca549d102e3e31781370aec1247f91365440eb/checkpoints/20260630T221836Z/manifest.json",
+    "sha256": "487bb6ccfec671141fefba7600faad99c0dcef14c5f5a2a2cf80b125c240fcfd",
+    "bytes": 9735,
+    "canonical_state": {
+      "compatibility_adapter": "ModalAutoencoderTrainingState.load_json(path).generalizable_copy()",
+      "generalizable_entry_count": 1205336,
+      "merge_mode": "weighted_union",
+      "relative_path": "checkpoints/20260630T221836Z/state/legal-ir-autoencoder-canonical.state.json",
+      "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+      "size_bytes": 398209746,
+      "source_count": 10,
+      "total_merge_weight": 4.747726556
+    },
+    "source_records_architectures": [
+      "legacy_dense_v1",
+      "legacy_dense_v1",
+      "legacy_unknown",
+      "legacy_unknown",
+      "legacy_unknown",
+      "legacy_unknown",
+      "legacy_unknown",
+      "legacy_unknown",
+      "legacy_unknown",
+      "legacy_dense_v1"
+    ]
+  },
+  "hub_smoke_metadata": [
+    {
+      "url": "https://huggingface.co/datasets/justicedao/legal-ir-autoencoder-checkpoints/resolve/94ca549d102e3e31781370aec1247f91365440eb/checkpoints/20260630T221836Z/smoke/legal-ir-canonical-default-smoke-20260630T215431Z.summary",
+      "bytes": 62777,
+      "sha256": "838ebe0edb145b08d3217b623f9cdf1fc5cfbcc145e258eccfc5c5f9b860b3d4",
+      "bridge_observations": [
+        {
+          "field_path": "$.latest_feature_projection_report.after.legal_ir_losses",
+          "value": {}
+        },
+        {
+          "field_path": "$.latest_feature_projection_report.after.legal_ir_target_count",
+          "value": 0
+        },
+        {
+          "field_path": "$.latest_feature_projection_report.before.legal_ir_losses",
+          "value": {}
+        },
+        {
+          "field_path": "$.latest_feature_projection_report.before.legal_ir_target_count",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "url": "https://huggingface.co/datasets/justicedao/legal-ir-autoencoder-checkpoints/resolve/94ca549d102e3e31781370aec1247f91365440eb/checkpoints/20260630T221836Z/smoke/legal-ir-canonical-paired-smoke2-20260630T215800Z-autoencoder.summary",
+      "bytes": 69679,
+      "sha256": "9be49e0e54510756136cef06db67e39ffaef5d5342936f03c4b16777855d3e1e",
+      "bridge_observations": [
+        {
+          "field_path": "$.latest_feature_projection_report.after.legal_ir_losses",
+          "value": {}
+        },
+        {
+          "field_path": "$.latest_feature_projection_report.after.legal_ir_target_count",
+          "value": 0
+        },
+        {
+          "field_path": "$.latest_feature_projection_report.before.legal_ir_losses",
+          "value": {}
+        },
+        {
+          "field_path": "$.latest_feature_projection_report.before.legal_ir_target_count",
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "historical_source": {
+    "commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "sha256": "b85db89c7100c2efcd2276e0904b410f51b7052649dbd7fd2c40829773c1e9d4",
+    "bytes": 1104795
+  },
+  "inspected_sources": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "bc04009a284d6bfe6e8dc07a7477f704177167980890a0060b6a69a9dc1a5b3d",
+      "bytes": 1424633,
+      "equals_published_baseline": false,
+      "published_sha256": "af33421f46977e1f2bbd4cead4d315954efac5d5827bb44b039107045e8f724b"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+      "sha256": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a",
+      "bytes": 519367,
+      "equals_published_baseline": true,
+      "published_sha256": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415",
+      "bytes": 100140,
+      "equals_published_baseline": true,
+      "published_sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_feature_training.py",
+      "sha256": "d5515f8bd4ff2b426cc80ea964fb6fed8383ee5c8bd152e039df5c27f8ee55ae",
+      "bytes": 27365,
+      "equals_published_baseline": true,
+      "published_sha256": "d5515f8bd4ff2b426cc80ea964fb6fed8383ee5c8bd152e039df5c27f8ee55ae"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py",
+      "sha256": "0ecba6ffffa24804417d9d834192e53c71edf62d780169134615ac82d6db3674",
+      "bytes": 26425,
+      "equals_published_baseline": true,
+      "published_sha256": "0ecba6ffffa24804417d9d834192e53c71edf62d780169134615ac82d6db3674"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524",
+      "bytes": 21228,
+      "equals_published_baseline": true,
+      "published_sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_factorized_heads.py",
+      "sha256": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+      "bytes": 58859,
+      "equals_published_baseline": true,
+      "published_sha256": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_migration.py",
+      "sha256": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2",
+      "bytes": 34031,
+      "equals_published_baseline": true,
+      "published_sha256": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_feature_transfer.py",
+      "sha256": "6101b36ad84a7ebb1abd3f72c8bc1bcd1d91b3b246af45f15d0378578b37266d",
+      "bytes": 20205,
+      "equals_published_baseline": true,
+      "published_sha256": "6101b36ad84a7ebb1abd3f72c8bc1bcd1d91b3b246af45f15d0378578b37266d"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_projection_features.py",
+      "sha256": "b91b5ee4a4e8bc6a214d7b7a942212805efe5531b2fb4251e66e9d413639cd14",
+      "bytes": 31713,
+      "equals_published_baseline": true,
+      "published_sha256": "b91b5ee4a4e8bc6a214d7b7a942212805efe5531b2fb4251e66e9d413639cd14"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/family_qualification.py",
+      "sha256": "6df7456a31e369f81140d5055c01b03765420e9fff829ce7e9184b12208d7c87",
+      "bytes": 26466,
+      "equals_published_baseline": true,
+      "published_sha256": "6df7456a31e369f81140d5055c01b03765420e9fff829ce7e9184b12208d7c87"
+    },
+    {
+      "path": "scripts/ops/legal_ir/run_incremental_autoencoders.py",
+      "sha256": "6a69fd04b7b00e4f9b30bba71499e51b5f1c7994397ee59674615a122e45213c",
+      "bytes": 46045,
+      "equals_published_baseline": true,
+      "published_sha256": "6a69fd04b7b00e4f9b30bba71499e51b5f1c7994397ee59674615a122e45213c"
+    },
+    {
+      "path": "scripts/ops/legal_ir/evaluate_autoencoder_feature_transfer.py",
+      "sha256": "d05df6ab6fc50007f5e04a638923b09607a8ac5bcd4d0701f6b9ee43950cacfb",
+      "bytes": 17783,
+      "equals_published_baseline": true,
+      "published_sha256": "d05df6ab6fc50007f5e04a638923b09607a8ac5bcd4d0701f6b9ee43950cacfb"
+    },
+    {
+      "path": "docs/implementation/reports/LEGAL_IR_LEGACY_FEATURE_INVENTORY.md",
+      "sha256": "0eb191a8f131cf8be61d411814e7b218d70f42240325c3a21fc7a893484c825d",
+      "bytes": 8443,
+      "equals_published_baseline": true,
+      "published_sha256": "0eb191a8f131cf8be61d411814e7b218d70f42240325c3a21fc7a893484c825d"
+    },
+    {
+      "path": "docs/implementation/reports/AUTOENCODER_CONVERGENCE_20260929.md",
+      "sha256": "af1931183e664fbcee801fac520b372d213af2dab0bddacb53b695979e2fb3ff",
+      "bytes": 15828,
+      "equals_published_baseline": true,
+      "published_sha256": "af1931183e664fbcee801fac520b372d213af2dab0bddacb53b695979e2fb3ff"
+    },
+    {
+      "path": "docs/implementation/reports/AUTOENCODER_EPOCH_PRODUCTIVITY_20260929.md",
+      "sha256": "e3ce47b026d437a6ef9d34f908ee26411733c25eedadada4e01433e260667eb7",
+      "bytes": 16489,
+      "equals_published_baseline": true,
+      "published_sha256": "e3ce47b026d437a6ef9d34f908ee26411733c25eedadada4e01433e260667eb7"
+    },
+    {
+      "path": "docs/implementation/reports/AUTOENCODER_FEATURE_PRETRAINING_20260929.md",
+      "sha256": "4e9f30650e2b2ff27acdc728e4599bdab627e50915587543e7b1d31bec47def7",
+      "bytes": 10883,
+      "equals_published_baseline": true,
+      "published_sha256": "4e9f30650e2b2ff27acdc728e4599bdab627e50915587543e7b1d31bec47def7"
+    },
+    {
+      "path": "docs/implementation/reports/AUTOENCODER_SEARCH_20260929.md",
+      "sha256": "878ce2b6b99c3d636a6f661b13541e07caf645ac6503e7ea54ac7a4cf925bfcf",
+      "bytes": 10853,
+      "equals_published_baseline": true,
+      "published_sha256": "878ce2b6b99c3d636a6f661b13541e07caf645ac6503e7ea54ac7a4cf925bfcf"
+    },
+    {
+      "path": "docs/implementation/reports/AUTOENCODER_DISTRIBUTED_FEATURES_RETRY_20260929.md",
+      "sha256": "cc458a96c14adbbeb7d6f7cb2d062c9c3442bffb4b739ac79234157becf3c7b0",
+      "bytes": 6585,
+      "equals_published_baseline": true,
+      "published_sha256": "cc458a96c14adbbeb7d6f7cb2d062c9c3442bffb4b739ac79234157becf3c7b0"
+    },
+    {
+      "path": "docs/implementation/reports/AUTOENCODER_MODALITY_REUSE_20260929.md",
+      "sha256": "bd2a5d282807e207a1172d8addd9dc03a4526aa9d35b05ef3edaf80121ef709b",
+      "bytes": 21660,
+      "equals_published_baseline": true,
+      "published_sha256": "bd2a5d282807e207a1172d8addd9dc03a4526aa9d35b05ef3edaf80121ef709b"
+    },
+    {
+      "path": "docs/implementation/reports/legal_autoformal_speed.md",
+      "sha256": "2be227f3154905b67ded7aac9065ccacbbc9d071167cd9ad7e34dbb8290f0288",
+      "bytes": 7629,
+      "equals_published_baseline": true,
+      "published_sha256": "2be227f3154905b67ded7aac9065ccacbbc9d071167cd9ad7e34dbb8290f0288"
+    }
+  ],
+  "protected_checkpoint": {
+    "path": "workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "bytes": 25895338,
+    "declared_architecture": null,
+    "embedding_row_widths": [
+      8
+    ]
+  },
+  "weights_downloaded": false,
+  "training_executed": false,
+  "fresh_heldout_evaluation_executed": false,
+  "model_state_changed": false,
+  "known_limits": [
+    "Historical merged runs do not each have independently pinned architecture/provenance in the Hub manifest.",
+    "Referenced July transfer and canary JSONs unavailable at their documented local Portland paths; inventory report inspected.",
+    "Current published architecture and available capabilities are not a live campaign activation receipt.",
+    "Feature quality, independent text/formula generation and full legal semantic preservation are not established by this audit."
+  ]
+}
