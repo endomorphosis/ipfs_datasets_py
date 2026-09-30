@@ -1,0 +1,388 @@
+{
+  "status": "verified_uploaded",
+  "published_batches": 7,
+  "processed_spans": 98,
+  "admitted": false,
+  "formalized": false,
+  "training_executed": false,
+  "batches": [
+    {
+      "batch_id": "365ddcf81e424f7689af3c248be62e86",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "4a09f310229708528e8eedd6a8f727989ca0b852",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "fcf599d7070f4f541a776ba936fa52ecfb910216a49e025214e39ebdf5f6eeaf",
+        "formalized": false,
+        "manifest": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/outbox/exchange-fcf599d7070f4f541a776ba936fa52ecfb910216a49e025214e39ebdf5f6eeaf.manifest.json",
+          "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-fcf599d7070f4f541a776ba936fa52ecfb910216a49e025214e39ebdf5f6eeaf.manifest.json"
+        },
+        "manifest_sha256": "1f8ee660e4a030ef41675bc8668b9257f6fe4f0ea13f6ee341ff97ab77ec669b",
+        "parent_commit": "4b0f2f0923588e1e3023a2e3b19323daced7b775",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "cleanup_status": "evicted",
+      "remote_verification": {
+        "commit_sha": "4a09f310229708528e8eedd6a8f727989ca0b852",
+        "files": [
+          {
+            "bytes": 1112,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "34024f921b06dd714b390f74d1ead8c5d2d0a05d",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-fcf599d7070f4f541a776ba936fa52ecfb910216a49e025214e39ebdf5f6eeaf.manifest.json",
+            "sha256": "1f8ee660e4a030ef41675bc8668b9257f6fe4f0ea13f6ee341ff97ab77ec669b",
+            "verified_digest": "34024f921b06dd714b390f74d1ead8c5d2d0a05d"
+          },
+          {
+            "bytes": 26601,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "e740e5c4a111ab09cacfd52bd631425e9791373a",
+            "kind": "census",
+            "path_in_repo": "autoformal/uscode/census/legacy-cuda-census/census-fcf599d7070f4f541a776ba936fa52ecfb910216a49e025214e39ebdf5f6eeaf.parquet",
+            "sha256": "849b2ba729d25ed6c597421fa54cea95b522cce57b4d1af470db3a3a43e5a648",
+            "verified_digest": "849b2ba729d25ed6c597421fa54cea95b522cce57b4d1af470db3a3a43e5a648"
+          },
+          {
+            "bytes": 24249,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "d09746b0bc592dfeeaabe4590a33e7afabcaa98b",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/goals/legacy-cuda-census/goals-fcf599d7070f4f541a776ba936fa52ecfb910216a49e025214e39ebdf5f6eeaf.parquet",
+            "sha256": "2b0c856fb91861a259ebe06173ae6016a852c48e4d00000c8e69b95040ec34a7",
+            "verified_digest": "2b0c856fb91861a259ebe06173ae6016a852c48e4d00000c8e69b95040ec34a7"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    },
+    {
+      "batch_id": "c220e56288dd47ab9910e43bbd69c9f1",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "01befccf9a9b225b0b87797b32dee3b55d577c9c",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "e1287b169d5e27733445d3ecabeddda655d44f03b87fe9a7c65212068608dbdc",
+        "formalized": false,
+        "manifest": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/outbox/exchange-e1287b169d5e27733445d3ecabeddda655d44f03b87fe9a7c65212068608dbdc.manifest.json",
+          "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-e1287b169d5e27733445d3ecabeddda655d44f03b87fe9a7c65212068608dbdc.manifest.json"
+        },
+        "manifest_sha256": "80818bfa680c32fee2e0e8d88654868590f055bb180d49202516b019ee265522",
+        "parent_commit": "4a09f310229708528e8eedd6a8f727989ca0b852",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "cleanup_status": "evicted",
+      "remote_verification": {
+        "commit_sha": "01befccf9a9b225b0b87797b32dee3b55d577c9c",
+        "files": [
+          {
+            "bytes": 1112,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "cf90afbac062fa42f86389e0b5e80bf9e7702203",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-e1287b169d5e27733445d3ecabeddda655d44f03b87fe9a7c65212068608dbdc.manifest.json",
+            "sha256": "80818bfa680c32fee2e0e8d88654868590f055bb180d49202516b019ee265522",
+            "verified_digest": "cf90afbac062fa42f86389e0b5e80bf9e7702203"
+          },
+          {
+            "bytes": 40864,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "bc92e49ed12bae96a35e3d2e3f3a6ba7eb34f688",
+            "kind": "census",
+            "path_in_repo": "autoformal/uscode/census/legacy-cuda-census/census-e1287b169d5e27733445d3ecabeddda655d44f03b87fe9a7c65212068608dbdc.parquet",
+            "sha256": "e6b34fab941c96a8cacdc06a7ef5f8e2c9cb2ef487fa1ef3fb097198f0b4b6ab",
+            "verified_digest": "e6b34fab941c96a8cacdc06a7ef5f8e2c9cb2ef487fa1ef3fb097198f0b4b6ab"
+          },
+          {
+            "bytes": 29527,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "89c19c97ac5d3e980176f5d9affde9d0012c67d0",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/goals/legacy-cuda-census/goals-e1287b169d5e27733445d3ecabeddda655d44f03b87fe9a7c65212068608dbdc.parquet",
+            "sha256": "234f21412842a97cb2f2157ca003e68c207a78a9a12a0816c63afb9a87d9b2ca",
+            "verified_digest": "234f21412842a97cb2f2157ca003e68c207a78a9a12a0816c63afb9a87d9b2ca"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    },
+    {
+      "batch_id": "0d6dab34824445c999e17be2daec25bd",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "9cf9bd2cd8556589f98519e8f002217a7d9023e6",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "4db6ccb9644173ea80ea70771aa37fcaeee1c155fe38a78cbead9f0eea8476fe",
+        "formalized": false,
+        "manifest": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/outbox/exchange-4db6ccb9644173ea80ea70771aa37fcaeee1c155fe38a78cbead9f0eea8476fe.manifest.json",
+          "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-4db6ccb9644173ea80ea70771aa37fcaeee1c155fe38a78cbead9f0eea8476fe.manifest.json"
+        },
+        "manifest_sha256": "ec06f48b33ec34155d6a533bdf3a14ff66a9cf0da2a2390336b47e641c16e345",
+        "parent_commit": "01befccf9a9b225b0b87797b32dee3b55d577c9c",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "cleanup_status": "evicted",
+      "remote_verification": {
+        "commit_sha": "9cf9bd2cd8556589f98519e8f002217a7d9023e6",
+        "files": [
+          {
+            "bytes": 1112,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "6e31be00ed39a24cee9c3c207db737bbe20bb587",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-4db6ccb9644173ea80ea70771aa37fcaeee1c155fe38a78cbead9f0eea8476fe.manifest.json",
+            "sha256": "ec06f48b33ec34155d6a533bdf3a14ff66a9cf0da2a2390336b47e641c16e345",
+            "verified_digest": "6e31be00ed39a24cee9c3c207db737bbe20bb587"
+          },
+          {
+            "bytes": 39743,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "8e9912caca0c9a54c1cebd118c52a27ca95e246b",
+            "kind": "census",
+            "path_in_repo": "autoformal/uscode/census/legacy-cuda-census/census-4db6ccb9644173ea80ea70771aa37fcaeee1c155fe38a78cbead9f0eea8476fe.parquet",
+            "sha256": "ea57bf72d7f8bdd46b83e9433b49597faf750af623cbcc55917def21139e97f1",
+            "verified_digest": "ea57bf72d7f8bdd46b83e9433b49597faf750af623cbcc55917def21139e97f1"
+          },
+          {
+            "bytes": 27737,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "d899e0a507b84971cb0d000f75cd1776daaa44db",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/goals/legacy-cuda-census/goals-4db6ccb9644173ea80ea70771aa37fcaeee1c155fe38a78cbead9f0eea8476fe.parquet",
+            "sha256": "f913e9043174e8e55675655bc27bde34e3b61b658057c0acd55fa2a862d0c289",
+            "verified_digest": "f913e9043174e8e55675655bc27bde34e3b61b658057c0acd55fa2a862d0c289"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    },
+    {
+      "batch_id": "3c52307d7fa24affada4a2d477eea35a",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "4deee559bf2d73efa01d39f22325c284afd6c229",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "16b9b08f9e24f71d3bafb38a829258024c30cd8729389dbfad9313de6625dcca",
+        "formalized": false,
+        "manifest": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/outbox/exchange-16b9b08f9e24f71d3bafb38a829258024c30cd8729389dbfad9313de6625dcca.manifest.json",
+          "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-16b9b08f9e24f71d3bafb38a829258024c30cd8729389dbfad9313de6625dcca.manifest.json"
+        },
+        "manifest_sha256": "1ad5eedd2bc3c5de8f23251498b5b0a4c436923109f4b117850077807bb9f7f7",
+        "parent_commit": "9cf9bd2cd8556589f98519e8f002217a7d9023e6",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "cleanup_status": "evicted",
+      "remote_verification": {
+        "commit_sha": "4deee559bf2d73efa01d39f22325c284afd6c229",
+        "files": [
+          {
+            "bytes": 1112,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "2541d607583686491be9b6024e5309abfab071ee",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-16b9b08f9e24f71d3bafb38a829258024c30cd8729389dbfad9313de6625dcca.manifest.json",
+            "sha256": "1ad5eedd2bc3c5de8f23251498b5b0a4c436923109f4b117850077807bb9f7f7",
+            "verified_digest": "2541d607583686491be9b6024e5309abfab071ee"
+          },
+          {
+            "bytes": 40265,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "aafd212eafbf294e306a36ee243986f2200d2a39",
+            "kind": "census",
+            "path_in_repo": "autoformal/uscode/census/legacy-cuda-census/census-16b9b08f9e24f71d3bafb38a829258024c30cd8729389dbfad9313de6625dcca.parquet",
+            "sha256": "55d5f39408b10ce6e6e71d38ea194e854f1211fa0a33bffb67829314c6b93017",
+            "verified_digest": "55d5f39408b10ce6e6e71d38ea194e854f1211fa0a33bffb67829314c6b93017"
+          },
+          {
+            "bytes": 28961,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "ec08895d73688fc069112f8e97e6461d7eac3201",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/goals/legacy-cuda-census/goals-16b9b08f9e24f71d3bafb38a829258024c30cd8729389dbfad9313de6625dcca.parquet",
+            "sha256": "b85d2a7ef294a4985d37368fff149cd00760c49d7fb0dda1a0c0e0543b693b98",
+            "verified_digest": "b85d2a7ef294a4985d37368fff149cd00760c49d7fb0dda1a0c0e0543b693b98"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    },
+    {
+      "batch_id": "06b5d579a40349cead060a512c0c4ab7",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "3b6b294c94b576d210e9d8ff43004ba636718cca",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "045b975f24033ed55da644ecab2217903594da34ec17756ef9e484d3ce6a313e",
+        "formalized": false,
+        "manifest": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/outbox/exchange-045b975f24033ed55da644ecab2217903594da34ec17756ef9e484d3ce6a313e.manifest.json",
+          "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-045b975f24033ed55da644ecab2217903594da34ec17756ef9e484d3ce6a313e.manifest.json"
+        },
+        "manifest_sha256": "6b8c6498647d00aaaa2cc1bfc960def45f29b621921d5d88306b10eab1f387af",
+        "parent_commit": "4deee559bf2d73efa01d39f22325c284afd6c229",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "cleanup_status": "evicted",
+      "remote_verification": {
+        "commit_sha": "3b6b294c94b576d210e9d8ff43004ba636718cca",
+        "files": [
+          {
+            "bytes": 1112,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "8b4df223b31117e20ce7a2a55deb1d0617b190d0",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-045b975f24033ed55da644ecab2217903594da34ec17756ef9e484d3ce6a313e.manifest.json",
+            "sha256": "6b8c6498647d00aaaa2cc1bfc960def45f29b621921d5d88306b10eab1f387af",
+            "verified_digest": "8b4df223b31117e20ce7a2a55deb1d0617b190d0"
+          },
+          {
+            "bytes": 41222,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "f2ce6b140fb785cf16c3f6ada5c2b3d76b4ffd27",
+            "kind": "census",
+            "path_in_repo": "autoformal/uscode/census/legacy-cuda-census/census-045b975f24033ed55da644ecab2217903594da34ec17756ef9e484d3ce6a313e.parquet",
+            "sha256": "0556d233f8649af34e3e0b238ef9876fab06ff7888d781f189eddef966e23aea",
+            "verified_digest": "0556d233f8649af34e3e0b238ef9876fab06ff7888d781f189eddef966e23aea"
+          },
+          {
+            "bytes": 30261,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "9e69cd91a768099237cf899c3b7b20bd242d9e54",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/goals/legacy-cuda-census/goals-045b975f24033ed55da644ecab2217903594da34ec17756ef9e484d3ce6a313e.parquet",
+            "sha256": "14e4d5bd7704545a6823b0074d53c6d6d4cf2ceb900f7ab19639576ee7807af0",
+            "verified_digest": "14e4d5bd7704545a6823b0074d53c6d6d4cf2ceb900f7ab19639576ee7807af0"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    },
+    {
+      "batch_id": "ff5af1264d9849998357e2837d2c0e54",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "da4f799d2bbeab7aed376a08a814ea0d9c14425c",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "d5e403b694ae11dd9c2861ac60f11208001ce2d2421bc0d1403d3102cbb41b41",
+        "formalized": false,
+        "manifest": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/outbox/exchange-d5e403b694ae11dd9c2861ac60f11208001ce2d2421bc0d1403d3102cbb41b41.manifest.json",
+          "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-d5e403b694ae11dd9c2861ac60f11208001ce2d2421bc0d1403d3102cbb41b41.manifest.json"
+        },
+        "manifest_sha256": "38f84236ebc16170e04aaaddd690fab5781bb7fe0697a6d1d79d121715d0d61b",
+        "parent_commit": "6cbef33ebafea88f6c3a858fd9c04abf9cfa4a51",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "cleanup_status": "evicted",
+      "remote_verification": {
+        "commit_sha": "da4f799d2bbeab7aed376a08a814ea0d9c14425c",
+        "files": [
+          {
+            "bytes": 1115,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "07dcff3d70779de0225b6fc0041cd95213384f2a",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-d5e403b694ae11dd9c2861ac60f11208001ce2d2421bc0d1403d3102cbb41b41.manifest.json",
+            "sha256": "38f84236ebc16170e04aaaddd690fab5781bb7fe0697a6d1d79d121715d0d61b",
+            "verified_digest": "07dcff3d70779de0225b6fc0041cd95213384f2a"
+          },
+          {
+            "bytes": 112516,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "8e7235c3790fe952576c70cbf744f78b5a555313",
+            "kind": "census",
+            "path_in_repo": "autoformal/uscode/census/legacy-cuda-census/census-d5e403b694ae11dd9c2861ac60f11208001ce2d2421bc0d1403d3102cbb41b41.parquet",
+            "sha256": "7ef1292e2a840eeeb610033bb8fde49200c89f19872162cf87ecdfe728b12e89",
+            "verified_digest": "7ef1292e2a840eeeb610033bb8fde49200c89f19872162cf87ecdfe728b12e89"
+          },
+          {
+            "bytes": 57557,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "43f3aec5f943f07d7bd7d62cca513f27948fdf3a",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/goals/legacy-cuda-census/goals-d5e403b694ae11dd9c2861ac60f11208001ce2d2421bc0d1403d3102cbb41b41.parquet",
+            "sha256": "2684aae5ace1a642dbb5e87d54ad470a70a0c093ad220d91d2843c50071e7c8a",
+            "verified_digest": "2684aae5ace1a642dbb5e87d54ad470a70a0c093ad220d91d2843c50071e7c8a"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    },
+    {
+      "batch_id": "dbd110427e2842f5bf13dbe2d194067b",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "54df3d138d8bb594522c8e7fa01e9febb1111674",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "3c08363e85144e0a0b1eca1b940a083d16a6dbf73e8a1ba493dc00c3d0908805",
+        "formalized": false,
+        "manifest": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/outbox/exchange-3c08363e85144e0a0b1eca1b940a083d16a6dbf73e8a1ba493dc00c3d0908805.manifest.json",
+          "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-3c08363e85144e0a0b1eca1b940a083d16a6dbf73e8a1ba493dc00c3d0908805.manifest.json"
+        },
+        "manifest_sha256": "710773c9972acede35e332322bcc31d41fde095b36c9d1440a15f4284d24c3d0",
+        "parent_commit": "38ca43a2253258e7706eb7381aab34c23fd031c2",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "cleanup_status": "evicted",
+      "remote_verification": {
+        "commit_sha": "54df3d138d8bb594522c8e7fa01e9febb1111674",
+        "files": [
+          {
+            "bytes": 1115,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "eb7f74ddab5ab0ec10a2bc4084017e6f8b00e9e5",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/exchanges/legacy-cuda-census/exchange-3c08363e85144e0a0b1eca1b940a083d16a6dbf73e8a1ba493dc00c3d0908805.manifest.json",
+            "sha256": "710773c9972acede35e332322bcc31d41fde095b36c9d1440a15f4284d24c3d0",
+            "verified_digest": "eb7f74ddab5ab0ec10a2bc4084017e6f8b00e9e5"
+          },
+          {
+            "bytes": 113602,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "e3b415ec7266680c5e0b6bfabf9178b1e61beeb1",
+            "kind": "census",
+            "path_in_repo": "autoformal/uscode/census/legacy-cuda-census/census-3c08363e85144e0a0b1eca1b940a083d16a6dbf73e8a1ba493dc00c3d0908805.parquet",
+            "sha256": "20e9027574b469a7c40cbf39f5640e59781678f2b7f766403ad7b124546a2e73",
+            "verified_digest": "20e9027574b469a7c40cbf39f5640e59781678f2b7f766403ad7b124546a2e73"
+          },
+          {
+            "bytes": 57588,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "b30fd8493bf919931ca664d1b36636dfb8151bf8",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/goals/legacy-cuda-census/goals-3c08363e85144e0a0b1eca1b940a083d16a6dbf73e8a1ba493dc00c3d0908805.parquet",
+            "sha256": "17b46875a93f2052339b7795bbd1a331c5c27df81a701d4132940e06d0b3bad0",
+            "verified_digest": "17b46875a93f2052339b7795bbd1a331c5c27df81a701d4132940e06d0b3bad0"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    }
+  ]
+}

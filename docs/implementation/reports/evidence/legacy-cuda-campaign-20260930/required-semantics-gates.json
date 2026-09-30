@@ -1,0 +1,186 @@
+{
+  "admitted": false,
+  "cache_bytecode_written": false,
+  "cases": [
+    {
+      "case": "deadline",
+      "checks": {
+        "admitted_false": true,
+        "compiler_compiled": true,
+        "deadline_text": true,
+        "empty_vocabulary_abstains": true,
+        "exception_text": true,
+        "nonrenderable": true,
+        "obligation": true,
+        "parser_string_atoms": true,
+        "within_duration": true
+      },
+      "compile_span_seconds": 0.06646148092113435,
+      "decompiled": "Company A must submit backup report within 10 days unless emergency.",
+      "lean_pattern": null,
+      "passed": true,
+      "rule": {
+        "action": "submit",
+        "actor": "Company A",
+        "conditions": [],
+        "exceptions": [
+          "emergency"
+        ],
+        "modality": "O",
+        "object": "backup report",
+        "temporal": [
+          "within 10 days"
+        ],
+        "temporal_records": [
+          {
+            "quantity": 10,
+            "temporal_kind": "within_duration",
+            "value": "10 days"
+          }
+        ]
+      },
+      "text": "Company A shall submit backup report within 10 days unless emergency.",
+      "vocabulary": {
+        "actions": [
+          "submit"
+        ],
+        "actors": [
+          "Company A"
+        ],
+        "objects": [
+          "backup report"
+        ],
+        "qualifiers": [
+          "emergency",
+          "within 10 days"
+        ]
+      },
+      "vocabulary_seconds": 0.1191424960270524,
+      "wall_seconds_per_span": 0.18560397694818676
+    },
+    {
+      "case": "prohibition",
+      "checks": {
+        "admitted_false": true,
+        "compiler_compiled": true,
+        "empty_vocabulary_abstains": true,
+        "parser_string_atoms": true,
+        "prohibition": true
+      },
+      "compile_span_seconds": 0.045542401960119605,
+      "decompiled": "Agency must not disclose records.",
+      "lean_pattern": null,
+      "passed": true,
+      "rule": {
+        "action": "disclose",
+        "actor": "agency",
+        "conditions": [],
+        "exceptions": [],
+        "modality": "F",
+        "object": "records",
+        "temporal": []
+      },
+      "text": "The agency shall not disclose records.",
+      "vocabulary": {
+        "actions": [
+          "disclose"
+        ],
+        "actors": [
+          "agency"
+        ],
+        "objects": [
+          "records"
+        ],
+        "qualifiers": []
+      },
+      "vocabulary_seconds": 0.0051033999770879745,
+      "wall_seconds_per_span": 0.05064580193720758
+    },
+    {
+      "case": "minimum",
+      "checks": {
+        "admitted_false": true,
+        "compiler_compiled": true,
+        "empty_vocabulary_abstains": true,
+        "minimum_20": true,
+        "no_lost_quantity": true,
+        "parser_string_atoms": true,
+        "quantity_text": true,
+        "rendered_threshold": true,
+        "threshold_pattern": true
+      },
+      "compile_span_seconds": 0.048278120812028646,
+      "decompiled": "Officer must retain the file for at least 20 days.",
+      "lean_pattern": {
+        "fail": 19,
+        "kind": "threshold",
+        "meet": 20
+      },
+      "passed": true,
+      "rule": {
+        "action": "retain",
+        "actor": "officer",
+        "conditions": [],
+        "exceptions": [],
+        "modality": "O",
+        "object": "the file for at least 20 days",
+        "temporal": [
+          "20 days"
+        ],
+        "temporal_records": [
+          {
+            "quantity": 20,
+            "temporal_kind": "minimum_duration",
+            "value": "20 days"
+          }
+        ]
+      },
+      "text": "The officer shall retain the file for at least 20 days.",
+      "vocabulary": {
+        "actions": [
+          "retain"
+        ],
+        "actors": [
+          "officer"
+        ],
+        "objects": [
+          "the file for at least 20 days"
+        ],
+        "qualifiers": [
+          "20 days"
+        ]
+      },
+      "vocabulary_seconds": 0.005133159924298525,
+      "wall_seconds_per_span": 0.05341128073632717
+    }
+  ],
+  "created_at": 1790753628.155588,
+  "elapsed_seconds": 0.45196144515648484,
+  "formalized": false,
+  "gpu_used": false,
+  "lake_executed": false,
+  "model_used": false,
+  "passed": true,
+  "schema": "legacy-cuda-required-semantics-gates/v1",
+  "source_sha256_after": {
+    "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py": "81d9f1553f7b4bbd0771aedc057377d3690d00249cabbdd381cee075bb26d5ca",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+  },
+  "source_sha256_before": {
+    "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py": "81d9f1553f7b4bbd0771aedc057377d3690d00249cabbdd381cee075bb26d5ca",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+  },
+  "source_unchanged": true,
+  "tree": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "weights_downloaded": false
+}

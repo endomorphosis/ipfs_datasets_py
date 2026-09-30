@@ -1,0 +1,321 @@
+{
+  "schema": "legacy-cuda-deployment/v1",
+  "observed_at": 1790754133.3673873,
+  "service": {
+    "RuntimeMaxUSec": "infinity",
+    "MainPID": "3810009",
+    "NRestarts": "0",
+    "ExecMainStartTimestamp": "Wed 2026-09-30 07:40:00 UTC",
+    "TasksCurrent": "33",
+    "CPUQuotaPerSecUSec": "6s",
+    "MemoryMax": "15032385536",
+    "ActiveState": "active",
+    "SubState": "running"
+  },
+  "unit": "legacy-cuda-span-census.service",
+  "runtime_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime",
+  "unit_sha256": "d6de527ea9967758283c952dbc02f1cc4dd45c3f2041e26b23c5e5fdf716282c",
+  "runner_sha256": "f5c8f209781971c78455eb7037a115f18358ba5136a1a4a6429d9b048de72e1e",
+  "status": {
+    "admitted": false,
+    "batch_id": "671e9c42c0124c93ad01a236ff860c51",
+    "batches": {
+      "interrupted": 2,
+      "published": 9,
+      "running": 2
+    },
+    "diagnostic_representation": "mock:stable-sha256/8",
+    "formalized": false,
+    "last_batch_metrics": {
+      "admitted": false,
+      "batch_id": "47d39d9505f84138a9bb904509f51dca",
+      "bridges": {
+        "adapter_workers": 1,
+        "disk_cache": false,
+        "evaluate_provers": false,
+        "evaluation_invoked": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "native_target_timeout_seconds": 0.0,
+        "native_timeout_fallback_count": 0,
+        "parallel_workers": 1,
+        "parallel_workers_used": 1,
+        "process_metric_caches_may_be_warm": true,
+        "projected_observation_bridge_names": [],
+        "requested": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "target_count": 32
+      },
+      "campaign": {
+        "batch_id": "47d39d9505f84138a9bb904509f51dca",
+        "compiler_workers": 4,
+        "cpu_cuda_overlap": true,
+        "inference_only": true,
+        "progress": {
+          "bytes": 52701179,
+          "path": "autoformal/uscode/resume-checkpoint.parquet",
+          "repository": "justicedao/uscode-autoformal-span-cache",
+          "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+          "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+        },
+        "runner_sha256": "f5c8f209781971c78455eb7037a115f18358ba5136a1a4a6429d9b048de72e1e",
+        "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "whole_batch_seconds": 85.01988744200207
+      },
+      "compiler_reason_counts": {
+        "": 3,
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references": 1,
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references,procedure": 2,
+        "no_parser_elements": 26
+      },
+      "compiler_roundtrip_count": 2,
+      "cuda": {
+        "initial_batch_profile": {
+          "cuda_device_time_us": 2455.2899999395013,
+          "cuda_kernel_event_count": 1791,
+          "profiled": true
+        },
+        "peak_allocated_bytes": 1857024,
+        "peak_reserved_bytes": 23068672,
+        "profiled": false
+      },
+      "formalized": false,
+      "legal_ir_losses": {
+        "legal_ir_multiview_acceptance_loss": 0.0,
+        "legal_ir_multiview_cosine_loss": 0.13628357592713403,
+        "legal_ir_multiview_cross_entropy_loss": 0.37593290029422516,
+        "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+        "legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir_multiview_reconstruction_loss": 0.034070896696628904,
+        "legal_ir_multiview_text_reconstruction_loss": 0.0,
+        "legal_ir_multiview_total_loss": 1.0644490025984408,
+        "legal_ir_multiview_view_coverage_loss": 0.0,
+        "legal_ir_view_cross_entropy_excess_loss": 0.22600806150438463,
+        "legal_ir_view_cross_entropy_loss": 1.994985386988882,
+        "legal_ir_view_entropy_loss": 1.7689773254844974,
+        "legal_ir_view_family_cec_cosine_gap_loss": 0.01039044344364531,
+        "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.06691161748673978,
+        "legal_ir_view_family_cec_cross_entropy_loss": 0.5448833717408665,
+        "legal_ir_view_family_cosine_gap_loss": 0.11478675264388426,
+        "legal_ir_view_family_cross_entropy_excess_loss": 0.22600806150438452,
+        "legal_ir_view_family_cross_entropy_loss": 1.994985386988882,
+        "legal_ir_view_family_deontic_cosine_gap_loss": 0.0045557528609649865,
+        "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.010855121104846682,
+        "legal_ir_view_family_deontic_cross_entropy_loss": 0.5208345488512959,
+        "legal_ir_view_family_entropy_loss": 1.7689773254844976,
+        "legal_ir_view_family_external_provers_cosine_gap_loss": 9.816733233856956e-05,
+        "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.0005538062566925028,
+        "legal_ir_view_family_external_provers_cross_entropy_loss": 0.36965795683098024,
+        "legal_ir_view_family_frame_logic_cosine_gap_loss": 0.005785119548410947,
+        "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.036256377202914664,
+        "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.48863309503507785,
+        "legal_ir_view_family_kg_cosine_gap_loss": 9.570852251501033e-05,
+        "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.0005023649685188779,
+        "legal_ir_view_family_kg_cross_entropy_loss": 0.38611408096267363,
+        "legal_ir_view_family_other_cosine_gap_loss": 0.009556614031067289,
+        "legal_ir_view_family_other_cross_entropy_excess_loss": 0.1303707340733617,
+        "legal_ir_view_family_other_cross_entropy_loss": 0.1303707340733617,
+        "legal_ir_view_family_prover_cosine_gap_loss": 9.816733233856956e-05,
+        "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.0005538062566925028,
+        "legal_ir_view_family_prover_cross_entropy_loss": 0.36965795683098024,
+        "legal_ir_view_family_tdfol_cosine_gap_loss": 0.0015252811866398631,
+        "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.003113257613728765,
+        "legal_ir_view_family_tdfol_cross_entropy_loss": 0.4839319800568835,
+        "source_decompiled_text_embedding_cosine_loss": 0.13628357592713403,
+        "source_decompiled_text_token_loss": 0.172154275
+      },
+      "sample_count": 32,
+      "timings": {
+        "bridge_on_evaluate_seconds": 43.44303958397359,
+        "compiler_seconds": 0.00016000098548829556,
+        "elapsed_seconds": 45.477771014906466,
+        "producer_guard_seconds": 1.2689585101325065,
+        "projected_observation_seconds": 0.4820162069518119,
+        "sample_preparation_seconds": 0.28341736691072583,
+        "wall_seconds_per_span": 1.421180344215827
+      }
+    },
+    "overall_timeout_seconds": null,
+    "phase": "cuda_evaluation_and_cpu_prefetch",
+    "pid": 3811818,
+    "prefetched_batch": "c9a93187339d4858b1e55e50b55c294e",
+    "publication_retry_after": 1790753130.0912268,
+    "schema": "legacy-span-cuda-campaign-status/v1",
+    "training_executed": false,
+    "updated_at": 1790754121.6990657,
+    "work": {
+      "done": 162,
+      "pending": 221,
+      "running": 64
+    }
+  },
+  "owner": {
+    "engine_pid": 3811818,
+    "overall_timeout_seconds": null,
+    "pid": 3810009,
+    "reservation_id": "3910d81afb074342b5d3b013815296aa"
+  },
+  "cuda_ready": {
+    "allocator_admission": {
+      "allocated_bytes": 0,
+      "allocator_fraction": 0.016435181208681485,
+      "allocator_fraction_set": true,
+      "budget_bytes": 2147483648,
+      "cuda_version": "13.0",
+      "device": 0,
+      "device_name": "NVIDIA GB10",
+      "free_bytes": 12712214528,
+      "host_global_gpu_reservation": false,
+      "observed_at": 1790754011.986896,
+      "other_cuda_allocators_limited": false,
+      "reserved_bytes": 0,
+      "safety_bytes": 2147483648,
+      "scope": "resident_worker_pytorch_allocator_and_observed_device_memory",
+      "torch_version": "2.13.0+cu130",
+      "total_bytes": 130663825408
+    },
+    "cuda": {
+      "admission": false,
+      "allocated_bytes": 0,
+      "budget_bytes": 2147483648,
+      "cuda_version": "13.0",
+      "device": 0,
+      "device_name": "NVIDIA GB10",
+      "enforcement": "cooperative_lock_and_polled_telemetry_not_device_quota",
+      "free_bytes": 10945499136,
+      "host_global_gpu_reservation": false,
+      "observed_at": 1790754022.5139878,
+      "reserved_bytes": 0,
+      "safety_bytes": 2147483648,
+      "scope": "campaign_owner_allocator_and_observed_device_free_memory",
+      "torch_version": "2.13.0+cu130",
+      "total_bytes": 130663825408
+    },
+    "pid": 3812188,
+    "source": {
+      "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+      "python_file_count": 7908,
+      "sha256": "f78598ebdf63de287e34bd10797851af73ecbe91f80cdd2bba736238a85802a9"
+    }
+  },
+  "resources": {
+    "attempt_bytes": 56643342,
+    "checked_at": 1790754132.4083426,
+    "external_charged_bytes": 0,
+    "full_ledger_check": false,
+    "group_rss": {
+      "available": true,
+      "live_processes": 7,
+      "rss_bytes": 4283834368
+    },
+    "host_global_gpu_reservation": false,
+    "owner_and_child_rss_bytes": 4326825984,
+    "scope": "owned_runtime_and_process_group"
+  },
+  "publication_events": [
+    {
+      "at": 1790753828.0723865,
+      "batch_id": "dbd110427e2842f5bf13dbe2d194067b",
+      "commit": "54df3d138d8bb594522c8e7fa01e9febb1111674",
+      "event": "published"
+    },
+    {
+      "at": 1790753828.3401778,
+      "batch_id": "dbd110427e2842f5bf13dbe2d194067b",
+      "commit": "54df3d138d8bb594522c8e7fa01e9febb1111674",
+      "deleted_bytes": 314808,
+      "event": "verified_publication_cleanup"
+    },
+    {
+      "admitted": false,
+      "at": 1790753828.484058,
+      "batch_id": "dbd110427e2842f5bf13dbe2d194067b",
+      "event": "batch_complete",
+      "samples": 32,
+      "wall_seconds": 71.8857401011046,
+      "work": {
+        "done": 98,
+        "pending": 80,
+        "running": 32
+      }
+    },
+    {
+      "at": 1790754072.4493194,
+      "batch_id": "cfad7c22409a48e7b731c0f4f8344398",
+      "commit": "915635642ff27dfc20558b2d55232902382a7cb9",
+      "event": "published"
+    },
+    {
+      "at": 1790754072.7313755,
+      "batch_id": "cfad7c22409a48e7b731c0f4f8344398",
+      "commit": "915635642ff27dfc20558b2d55232902382a7cb9",
+      "deleted_bytes": 298138,
+      "event": "verified_publication_cleanup"
+    },
+    {
+      "admitted": false,
+      "at": 1790754072.8812718,
+      "batch_id": "cfad7c22409a48e7b731c0f4f8344398",
+      "event": "batch_complete",
+      "samples": 32,
+      "wall_seconds": 46.85972022404894,
+      "work": {
+        "done": 130,
+        "pending": 48,
+        "running": 32
+      }
+    },
+    {
+      "at": 1790754120.7865162,
+      "batch_id": "47d39d9505f84138a9bb904509f51dca",
+      "commit": "b138de510929026583784c4e57fca0e6e8abe3bf",
+      "event": "published"
+    },
+    {
+      "at": 1790754121.0718133,
+      "batch_id": "47d39d9505f84138a9bb904509f51dca",
+      "commit": "b138de510929026583784c4e57fca0e6e8abe3bf",
+      "deleted_bytes": 310004,
+      "event": "verified_publication_cleanup"
+    },
+    {
+      "admitted": false,
+      "at": 1790754121.2308652,
+      "batch_id": "47d39d9505f84138a9bb904509f51dca",
+      "event": "batch_complete",
+      "samples": 32,
+      "wall_seconds": 85.01988744200207,
+      "work": {
+        "done": 162,
+        "pending": 16,
+        "running": 32
+      }
+    }
+  ],
+  "mode": "legacy_mock_diagnostic",
+  "training_executed": false,
+  "learned_formula_generation": false,
+  "admitted": false,
+  "formalized": false,
+  "semantic_qualified": false,
+  "source_identity": "full canonical working-tree Python digest; clean-origin equivalence not asserted",
+  "resume_test": {
+    "completed_before_controlled_stop": 98,
+    "interrupted_batches": 2,
+    "completed_after_restart": 162
+  },
+  "checkpoints": {
+    "legacy": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+    "restart12": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  }
+}

@@ -1,0 +1,796 @@
+{
+  "runs": [
+    {
+      "campaign": {
+        "batch_id": "0d6dab34824445c999e17be2daec25bd",
+        "compiler_workers": 4,
+        "cpu_cuda_overlap": false,
+        "inference_only": true,
+        "progress": {
+          "bytes": 52701179,
+          "path": "autoformal/uscode/resume-checkpoint.parquet",
+          "repository": "justicedao/uscode-autoformal-span-cache",
+          "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+          "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+        },
+        "runner_sha256": "f0da63247d72125bbe5efa09012b9155b670798f5bb35ca684dc5d7ac60b06e1",
+        "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "whole_batch_seconds": 24.125638059107587
+      },
+      "checkpoint": {
+        "bytes": 398209746,
+        "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+        "runtime_loaded_architecture": "proof_aware_auxiliary_heads_v2",
+        "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "vector_dimensions": 8,
+        "vector_table_counts": {
+          "compiler_quality_embedding_weights": 57,
+          "decoded_embeddings": 0,
+          "decompiler_plan_embedding_weights": 12640,
+          "family_embedding_weights": 8,
+          "family_legal_ir_view_embedding_weights": 42,
+          "family_semantic_slot_embedding_weights": 70470,
+          "family_semantic_slot_legal_ir_view_embedding_weights": 284034,
+          "feature_embedding_weights": 170821,
+          "legal_ir_view_embedding_weights": 6,
+          "logic_signature_embedding_weights": 1777,
+          "predicate_argument_embedding_weights": 9394,
+          "round_trip_signal_embedding_weights": 124,
+          "semantic_slot_embedding_weights": 14014,
+          "semantic_slot_legal_ir_view_embedding_weights": 57187
+        }
+      },
+      "sample_count": 8,
+      "requested_span_count": 8,
+      "producer_source": {
+        "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+        "python_file_count": 7908,
+        "sha256": "e861e3d563b41984d595507838f4e6dc764dd3793468c82d466aef67242aa7b9"
+      },
+      "compute_backend": {
+        "autoencoder_compute_backend": "torch_cuda",
+        "autoencoder_compute_device": "cuda",
+        "autoencoder_compute_device_request": "cuda"
+      },
+      "bridges": {
+        "disk_cache": false,
+        "evaluate_provers": false,
+        "evaluation_invoked": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "parallel_workers": 1,
+        "process_metric_caches_may_be_warm": true,
+        "projected_observation_bridge_names": [],
+        "requested": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "target_count": 8
+      },
+      "cuda": {
+        "initial_batch_profile": {
+          "cuda_device_time_us": 3718.0929999854416,
+          "cuda_kernel_event_count": 518,
+          "profiled": true
+        },
+        "peak_allocated_bytes": 318464,
+        "peak_reserved_bytes": 2097152,
+        "profiled": false
+      },
+      "timings": {
+        "bridge_on_evaluate_seconds": 6.6689241549465805,
+        "compiler_seconds": 5.353591404855251e-05,
+        "elapsed_seconds": 8.041332920081913,
+        "producer_guard_seconds": 1.2507698852568865,
+        "projected_observation_seconds": 0.0609699790365994,
+        "sample_preparation_seconds": 0.06046939501538873,
+        "wall_seconds_per_span": 1.0051666150102392
+      },
+      "training_executed": false,
+      "admitted": false,
+      "formalized": false,
+      "semantic_qualified": false,
+      "raw_evaluation_profile": {
+        "model_metrics_seconds": 0.13911176309920847,
+        "ontology_capture_seconds": 0.1276177540421486,
+        "sample_count": 8,
+        "schema_version": "autoencoder-evaluation-profile/v1",
+        "scope": "wall_time_observation_not_an_objective_or_admission",
+        "target_observation": {
+          "bridge_module_preloaded_at_start": true,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "generated_target_count": 5,
+          "memory_cache_hit_count": 3,
+          "native_evaluation_attempt_count": 5,
+          "native_evaluation_seconds_sum": 6.126564664999023,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": false,
+          "process_target_cache_entries_at_start": 7,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 8,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "structural_target_seconds": 0.0012225750833749771,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 5,
+          "target_count": 8,
+          "target_items_seconds": 6.290464387042448,
+          "target_reduction_seconds": 0.11024573701433837,
+          "timeout_fallback_count": 0,
+          "training_target_seconds_sum": 0.004950778093189001
+        },
+        "target_payload_seconds": 6.402018556138501,
+        "total_seconds": 6.668751097051427
+      },
+      "compiler_reason_counts": {
+        "no_parser_elements": 8
+      },
+      "compiler_roundtrip_count": 0,
+      "source_spans": [
+        {
+          "source_span_id": "uscode-span-12169215b156987f8c014a702fc748d1d8cc646b89b05d8020f5960c80f2b367",
+          "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-1471e2c5a918f4c4f3b7f0215c7b28ea13feab39b59beb520261069d5af4d978",
+          "source_sha256": "2fb78bda73dabb056a0206bd8203ae27db3d984c22542647b03456e68bde333a",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-06be1582f5a3892210c68fc92c5a44040228d6367a3b513cbb464b204aa5dd14",
+          "source_sha256": "f825af640352a66a5e0b595c3ad74fc9b71dc9b9a4bc271c1618471e2b731111",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-107386b6c6c18e623e5521abf405080db541829eb2d5353a838be8814a2c0443",
+          "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-0a529e0216f3021707338c1090fc050a5f320742032a2b20fd025f7bb20bcb55",
+          "source_sha256": "74cda467f6ebc9891fa24c8b09c3fa17d63da9c28d50da6e4fe3fc7b755b09bd",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-11c9a2141360d1613f43cbf9c57970ab083e8433cd1b0c707e1a0a9389ac302c",
+          "source_sha256": "f56b3363d0c0316d22939e150cfc8c3a24722d794c686a8b22a90a4c196ad4d9",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-09af6e13d279624c28772c1ba3fd7605fc62e5400fcb3c8f30793c40adfb759d",
+          "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-11368714907766dd8b726eb5d282b83f47d852389e20e22fa80d375860f10131",
+          "source_sha256": "500c9d6801189ac295818501bc421e12a30efee075854363e60565afccd98263",
+          "legal_id": "usc:us:1:1"
+        }
+      ]
+    },
+    {
+      "campaign": {
+        "batch_id": "365ddcf81e424f7689af3c248be62e86",
+        "compiler_workers": 2,
+        "cpu_cuda_overlap": false,
+        "inference_only": true,
+        "progress": {
+          "bytes": 52701179,
+          "path": "autoformal/uscode/resume-checkpoint.parquet",
+          "repository": "justicedao/uscode-autoformal-span-cache",
+          "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+          "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+        },
+        "runner_sha256": "f0da63247d72125bbe5efa09012b9155b670798f5bb35ca684dc5d7ac60b06e1",
+        "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "whole_batch_seconds": 10.797788484022021
+      },
+      "checkpoint": {
+        "bytes": 398209746,
+        "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+        "runtime_loaded_architecture": "proof_aware_auxiliary_heads_v2",
+        "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "vector_dimensions": 8,
+        "vector_table_counts": {
+          "compiler_quality_embedding_weights": 57,
+          "decoded_embeddings": 0,
+          "decompiler_plan_embedding_weights": 12640,
+          "family_embedding_weights": 8,
+          "family_legal_ir_view_embedding_weights": 42,
+          "family_semantic_slot_embedding_weights": 70470,
+          "family_semantic_slot_legal_ir_view_embedding_weights": 284034,
+          "feature_embedding_weights": 170821,
+          "legal_ir_view_embedding_weights": 6,
+          "logic_signature_embedding_weights": 1777,
+          "predicate_argument_embedding_weights": 9394,
+          "round_trip_signal_embedding_weights": 124,
+          "semantic_slot_embedding_weights": 14014,
+          "semantic_slot_legal_ir_view_embedding_weights": 57187
+        }
+      },
+      "sample_count": 2,
+      "requested_span_count": 2,
+      "producer_source": {
+        "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+        "python_file_count": 7908,
+        "sha256": "e861e3d563b41984d595507838f4e6dc764dd3793468c82d466aef67242aa7b9"
+      },
+      "compute_backend": {
+        "autoencoder_compute_backend": "torch_cuda",
+        "autoencoder_compute_device": "cuda",
+        "autoencoder_compute_device_request": "cuda"
+      },
+      "bridges": {
+        "disk_cache": false,
+        "evaluate_provers": false,
+        "evaluation_invoked": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "parallel_workers": 1,
+        "process_metric_caches_may_be_warm": true,
+        "projected_observation_bridge_names": [],
+        "requested": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "target_count": 2
+      },
+      "cuda": {
+        "cuda_device_time_us": 3050.6600000038743,
+        "cuda_kernel_event_count": 158,
+        "peak_allocated_bytes": 353280,
+        "peak_reserved_bytes": 2097152,
+        "profiled": true
+      },
+      "timings": {
+        "bridge_on_evaluate_seconds": 8.030072478111833,
+        "compiler_seconds": 2.9807910323143005e-05,
+        "elapsed_seconds": 9.365559754194692,
+        "producer_guard_seconds": 1.2624451878946275,
+        "projected_observation_seconds": 0.0417106410022825,
+        "sample_preparation_seconds": 0.031124276807531714,
+        "wall_seconds_per_span": 4.682779877097346
+      },
+      "training_executed": false,
+      "admitted": false,
+      "formalized": false,
+      "semantic_qualified": false,
+      "raw_evaluation_profile": {
+        "model_metrics_seconds": 0.6015356001444161,
+        "ontology_capture_seconds": 0.11592171899974346,
+        "sample_count": 2,
+        "schema_version": "autoencoder-evaluation-profile/v1",
+        "scope": "wall_time_observation_not_an_objective_or_admission",
+        "target_observation": {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "generated_target_count": 2,
+          "memory_cache_hit_count": 0,
+          "native_evaluation_attempt_count": 2,
+          "native_evaluation_seconds_sum": 6.5490256489720196,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 2,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "structural_target_seconds": 0.012282924959436059,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 2,
+          "target_count": 2,
+          "target_items_seconds": 6.665081096813083,
+          "target_reduction_seconds": 0.04331181105226278,
+          "timeout_fallback_count": 0,
+          "training_target_seconds_sum": 0.0027015518862754107
+        },
+        "target_payload_seconds": 6.720740074990317,
+        "total_seconds": 7.438200386008248
+      },
+      "compiler_reason_counts": {
+        "no_parser_elements": 2
+      },
+      "compiler_roundtrip_count": 0,
+      "source_spans": [
+        {
+          "source_span_id": "uscode-span-0c577e3141e1751b488366e6a7c502374769e9f04754d164b6d20d89a1c49f32",
+          "source_sha256": "141227bc73a1a2f692c48a4b02514778a5e7b9c73fd524a1609c20ffa8cc21bc",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-0bfecb38f9fc0f17091bb92955ef8a133d669bc265be96eebc08f13908e45c07",
+          "source_sha256": "aa82a87713e17a0cc7bad13abb4cb89a60990e14cc8eee031b10524eea3bfbdb",
+          "legal_id": "usc:us:1:1"
+        }
+      ]
+    },
+    {
+      "campaign": {
+        "batch_id": "c220e56288dd47ab9910e43bbd69c9f1",
+        "compiler_workers": 4,
+        "cpu_cuda_overlap": true,
+        "inference_only": true,
+        "progress": {
+          "bytes": 52701179,
+          "path": "autoformal/uscode/resume-checkpoint.parquet",
+          "repository": "justicedao/uscode-autoformal-span-cache",
+          "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+          "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+        },
+        "runner_sha256": "f0da63247d72125bbe5efa09012b9155b670798f5bb35ca684dc5d7ac60b06e1",
+        "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "whole_batch_seconds": 18.674921866972
+      },
+      "checkpoint": {
+        "bytes": 398209746,
+        "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+        "runtime_loaded_architecture": "proof_aware_auxiliary_heads_v2",
+        "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "vector_dimensions": 8,
+        "vector_table_counts": {
+          "compiler_quality_embedding_weights": 57,
+          "decoded_embeddings": 0,
+          "decompiler_plan_embedding_weights": 12640,
+          "family_embedding_weights": 8,
+          "family_legal_ir_view_embedding_weights": 42,
+          "family_semantic_slot_embedding_weights": 70470,
+          "family_semantic_slot_legal_ir_view_embedding_weights": 284034,
+          "feature_embedding_weights": 170821,
+          "legal_ir_view_embedding_weights": 6,
+          "logic_signature_embedding_weights": 1777,
+          "predicate_argument_embedding_weights": 9394,
+          "round_trip_signal_embedding_weights": 124,
+          "semantic_slot_embedding_weights": 14014,
+          "semantic_slot_legal_ir_view_embedding_weights": 57187
+        }
+      },
+      "sample_count": 8,
+      "requested_span_count": 8,
+      "producer_source": {
+        "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+        "python_file_count": 7908,
+        "sha256": "e861e3d563b41984d595507838f4e6dc764dd3793468c82d466aef67242aa7b9"
+      },
+      "compute_backend": {
+        "autoencoder_compute_backend": "torch_cuda",
+        "autoencoder_compute_device": "cuda",
+        "autoencoder_compute_device_request": "cuda"
+      },
+      "bridges": {
+        "disk_cache": false,
+        "evaluate_provers": false,
+        "evaluation_invoked": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "parallel_workers": 1,
+        "process_metric_caches_may_be_warm": true,
+        "projected_observation_bridge_names": [],
+        "requested": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "target_count": 8
+      },
+      "cuda": {
+        "cuda_device_time_us": 3718.0929999854416,
+        "cuda_kernel_event_count": 518,
+        "peak_allocated_bytes": 353280,
+        "peak_reserved_bytes": 2097152,
+        "profiled": true
+      },
+      "timings": {
+        "bridge_on_evaluate_seconds": 14.54136102204211,
+        "compiler_seconds": 4.6975910663604736e-05,
+        "elapsed_seconds": 15.981310977833346,
+        "producer_guard_seconds": 1.2451504829805344,
+        "projected_observation_seconds": 0.10364986304193735,
+        "sample_preparation_seconds": 0.0909214960411191,
+        "wall_seconds_per_span": 1.9976638722291682
+      },
+      "training_executed": false,
+      "admitted": false,
+      "formalized": false,
+      "semantic_qualified": false,
+      "raw_evaluation_profile": {
+        "model_metrics_seconds": 0.6807227390818298,
+        "ontology_capture_seconds": 0.3233582640532404,
+        "sample_count": 8,
+        "schema_version": "autoencoder-evaluation-profile/v1",
+        "scope": "wall_time_observation_not_an_objective_or_admission",
+        "target_observation": {
+          "bridge_module_preloaded_at_start": false,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+          "disk_cache_enabled": false,
+          "disk_cache_hit_count": 0,
+          "evaluate_provers": false,
+          "generated_target_count": 7,
+          "memory_cache_hit_count": 1,
+          "native_evaluation_attempt_count": 7,
+          "native_evaluation_seconds_sum": 12.518840163946152,
+          "parallel_workers_requested": 1,
+          "parallel_workers_used": 1,
+          "process_target_cache_empty_at_start": true,
+          "process_target_cache_entries_at_start": 0,
+          "representation_counts": {
+            "cached_summary": 0,
+            "native": 8,
+            "other": 0,
+            "prepared_native": 0
+          },
+          "structural_target_seconds": 0.004583765985444188,
+          "supplied_target_count": 0,
+          "target_cache_miss_count": 7,
+          "target_count": 8,
+          "target_items_seconds": 12.818419958930463,
+          "target_reduction_seconds": 0.15052416594699025,
+          "timeout_fallback_count": 0,
+          "training_target_seconds_sum": 0.007100964896380901
+        },
+        "target_payload_seconds": 12.97361590899527,
+        "total_seconds": 13.977699904004112
+      },
+      "compiler_reason_counts": {
+        "no_parser_elements": 8
+      },
+      "compiler_roundtrip_count": 0,
+      "source_spans": [
+        {
+          "source_span_id": "uscode-span-0c8997d840159c8c147fc6e781f72f52be4add7f77894b783aed3aba08ea92a9",
+          "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-0f39cda20929a5d868dfb5ebad8249b20f4f6e96e19320398822979e59cc2f7e",
+          "source_sha256": "eccca625817e0594b802e2504b7db5fc7f9d5d043fed31e7169357e0bd650606",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-0c6b890701892383df5bdc0617f6b18cb2f5c56b5b9172ed53b662fb1ca6486b",
+          "source_sha256": "c6d61a157d4b70f2d55a3220d2a7bd1f19aff8dab7d686ad7151a2572f82ff7b",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-1c0fec4cbe9d7eeb00d865d303290750b79583a08eb1e787fca2138451e14027",
+          "source_sha256": "3ce80bbc3acf86fa0fd4fb39fcbbae9e35296b3aeea667e7b932756facd4ca57",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-0e4b7be26b48c6723b87a556b2dcfc488be72fadaf29b0034202dd8765022860",
+          "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-1811e8be5fbdaafb0815bc926722f3e8e624bee701614c5f82686ec667b3edb9",
+          "source_sha256": "362084d7e4ed3762d7418845e07d0ffe96b644e2debc4a50be9bdd4a84d444b9",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-0494ecaaaf9beadd54fc87feac1a5be74627ba3a0c2298bb1dffe48f76e03885",
+          "source_sha256": "36e8fa2ede5fd640d715f839f70ac3e6519689e3d6bdcd91d41d810235fff6cd",
+          "legal_id": "usc:us:1:1"
+        },
+        {
+          "source_span_id": "uscode-span-19f762c36f8d79a963228a20d65e8cb9691e98c808c1852fecc6d911d8b41a55",
+          "source_sha256": "45f9e887b1ddf20ecd85673d055220864908a2c1aae65d335a4b765272fe07b7",
+          "legal_id": "usc:us:1:1"
+        }
+      ]
+    }
+  ],
+  "measurement_scope": "legacy mock8D inference diagnostic, no held-out or semantic qualification",
+  "failed_attempts": [
+    "directory ending .py mistaken for file (fixed)",
+    "source parquet row-group1.17GB exceeded256MiB default (explicit2GiB bound within12GiB reservation)",
+    "publication inherited TRANSFORMERS_OFFLINE; explicit HF_HUB_OFFLINE=0 fixed; remote upload pending"
+  ],
+  "continuous_first_batch": {
+    "batch_id": "dbd110427e2842f5bf13dbe2d194067b",
+    "sample_count": 32,
+    "bridges": {
+      "requested": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "evaluation_invoked": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "target_count": 32,
+      "evaluate_provers": false,
+      "disk_cache": false,
+      "parallel_workers": 1,
+      "parallel_workers_used": 1,
+      "adapter_workers": 1,
+      "native_target_timeout_seconds": 0.0,
+      "native_timeout_fallback_count": 0,
+      "process_metric_caches_may_be_warm": true,
+      "projected_observation_bridge_names": []
+    },
+    "cuda": {
+      "profiled": true,
+      "cuda_kernel_event_count": 1936,
+      "cuda_device_time_us": 5385.871000207961,
+      "peak_allocated_bytes": 2870272,
+      "peak_reserved_bytes": 23068672
+    },
+    "timings": {
+      "elapsed_seconds": 61.36992996814661,
+      "wall_seconds_per_span": 1.9178103115045815,
+      "sample_preparation_seconds": 0.3338116188533604,
+      "bridge_on_evaluate_seconds": 58.97747342311777,
+      "projected_observation_seconds": 0.78139598085545,
+      "compiler_seconds": 0.0001721631269901991,
+      "producer_guard_seconds": 1.276825660141185
+    },
+    "campaign": {
+      "batch_id": "dbd110427e2842f5bf13dbe2d194067b",
+      "progress": {
+        "repository": "justicedao/uscode-autoformal-span-cache",
+        "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+        "path": "autoformal/uscode/resume-checkpoint.parquet",
+        "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+        "bytes": 52701179
+      },
+      "runner_sha256": "eac282a2f11a6165dd7e9e7960748120631de68a91971f706ea3e4aaf6086024",
+      "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "compiler_workers": 4,
+      "cpu_cuda_overlap": true,
+      "whole_batch_seconds": 71.8857401011046,
+      "inference_only": true
+    },
+    "compiler_roundtrip_count": 1,
+    "compiler_reason_counts": {
+      "no_parser_elements": 26,
+      "": 2,
+      "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type": 3,
+      "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:recipient": 1
+    },
+    "legal_ir_losses": {
+      "legal_ir_multiview_acceptance_loss": 0.0,
+      "legal_ir_multiview_cosine_loss": 0.11887324353840899,
+      "legal_ir_multiview_cross_entropy_loss": 0.32232208133066625,
+      "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+      "legal_ir_multiview_graph_failure_penalty": 0.0,
+      "legal_ir_multiview_proof_failure_ratio": 0.0,
+      "legal_ir_multiview_reconstruction_loss": 0.029718317812252343,
+      "legal_ir_multiview_text_reconstruction_loss": 0.0,
+      "legal_ir_multiview_total_loss": 0.9610595174935037,
+      "legal_ir_multiview_view_coverage_loss": 0.0,
+      "legal_ir_view_cross_entropy_excess_loss": 0.2224142306454481,
+      "legal_ir_view_cross_entropy_loss": 1.9945109114509747,
+      "legal_ir_view_entropy_loss": 1.7720966808055265,
+      "legal_ir_view_family_cec_cosine_gap_loss": 0.010395973109148793,
+      "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.06691286340159797,
+      "legal_ir_view_family_cec_cross_entropy_loss": 0.5448201640434348,
+      "legal_ir_view_family_cosine_gap_loss": 0.11096563655512709,
+      "legal_ir_view_family_cross_entropy_excess_loss": 0.22241423064544807,
+      "legal_ir_view_family_cross_entropy_loss": 1.9945109114509747,
+      "legal_ir_view_family_deontic_cosine_gap_loss": 0.0036717868997706363,
+      "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.008147749805498367,
+      "legal_ir_view_family_deontic_cross_entropy_loss": 0.5261830007737612,
+      "legal_ir_view_family_entropy_loss": 1.7720966808055265,
+      "legal_ir_view_family_external_provers_cosine_gap_loss": 6.690818607941323e-05,
+      "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.00036342234060197237,
+      "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3715985177333522,
+      "legal_ir_view_family_frame_logic_cosine_gap_loss": 0.005939163297648441,
+      "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.03706738186938293,
+      "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.49108163891256573,
+      "legal_ir_view_family_kg_cosine_gap_loss": 0.00012341249103921606,
+      "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.0006380422690382345,
+      "legal_ir_view_family_kg_cross_entropy_loss": 0.3875794483866966,
+      "legal_ir_view_family_other_cosine_gap_loss": 0.009556436331579939,
+      "legal_ir_view_family_other_cross_entropy_excess_loss": 0.1303695806566959,
+      "legal_ir_view_family_other_cross_entropy_loss": 0.1303695806566959,
+      "legal_ir_view_family_prover_cosine_gap_loss": 6.690818607941323e-05,
+      "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.00036342234060197237,
+      "legal_ir_view_family_prover_cross_entropy_loss": 0.3715985177333522,
+      "legal_ir_view_family_tdfol_cosine_gap_loss": 9.997731876200053e-05,
+      "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.0003300727765173355,
+      "legal_ir_view_family_tdfol_cross_entropy_loss": 0.47200858762014875,
+      "source_decompiled_text_embedding_cosine_loss": 0.11887324353840899,
+      "source_decompiled_text_token_loss": 0.1675001875
+    },
+    "admitted": false,
+    "formalized": false
+  },
+  "publication_status": "verified_uploaded",
+  "four_target_threads": {
+    "samples_per_batch": 8,
+    "bridge_seconds": [
+      18.29870692291297,
+      12.019766604993492
+    ],
+    "requested_workers": 4,
+    "used_workers": 4,
+    "native_timeout_fallback_count": 0,
+    "comparison": "different spans; not a matched speed experiment",
+    "deployed_workers": 1
+  },
+  "latest_32_span_smoke": {
+    "samples": 32,
+    "whole_batch_seconds": 60.486101880902424,
+    "wall_seconds_per_span": 1.8901906837782008,
+    "commit_sha": "da4f799d2bbeab7aed376a08a814ea0d9c14425c",
+    "admitted": false
+  },
+  "after_resume_batch": {
+    "admitted": false,
+    "batch_id": "47d39d9505f84138a9bb904509f51dca",
+    "bridges": {
+      "adapter_workers": 1,
+      "disk_cache": false,
+      "evaluate_provers": false,
+      "evaluation_invoked": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "native_target_timeout_seconds": 0.0,
+      "native_timeout_fallback_count": 0,
+      "parallel_workers": 1,
+      "parallel_workers_used": 1,
+      "process_metric_caches_may_be_warm": true,
+      "projected_observation_bridge_names": [],
+      "requested": [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router"
+      ],
+      "target_count": 32
+    },
+    "campaign": {
+      "batch_id": "47d39d9505f84138a9bb904509f51dca",
+      "compiler_workers": 4,
+      "cpu_cuda_overlap": true,
+      "inference_only": true,
+      "progress": {
+        "bytes": 52701179,
+        "path": "autoformal/uscode/resume-checkpoint.parquet",
+        "repository": "justicedao/uscode-autoformal-span-cache",
+        "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+        "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+      },
+      "runner_sha256": "f5c8f209781971c78455eb7037a115f18358ba5136a1a4a6429d9b048de72e1e",
+      "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "whole_batch_seconds": 85.01988744200207
+    },
+    "compiler_reason_counts": {
+      "": 3,
+      "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references": 1,
+      "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:cross_references,procedure": 2,
+      "no_parser_elements": 26
+    },
+    "compiler_roundtrip_count": 2,
+    "cuda": {
+      "initial_batch_profile": {
+        "cuda_device_time_us": 2455.2899999395013,
+        "cuda_kernel_event_count": 1791,
+        "profiled": true
+      },
+      "peak_allocated_bytes": 1857024,
+      "peak_reserved_bytes": 23068672,
+      "profiled": false
+    },
+    "formalized": false,
+    "legal_ir_losses": {
+      "legal_ir_multiview_acceptance_loss": 0.0,
+      "legal_ir_multiview_cosine_loss": 0.13628357592713403,
+      "legal_ir_multiview_cross_entropy_loss": 0.37593290029422516,
+      "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+      "legal_ir_multiview_graph_failure_penalty": 0.0,
+      "legal_ir_multiview_proof_failure_ratio": 0.0,
+      "legal_ir_multiview_reconstruction_loss": 0.034070896696628904,
+      "legal_ir_multiview_text_reconstruction_loss": 0.0,
+      "legal_ir_multiview_total_loss": 1.0644490025984408,
+      "legal_ir_multiview_view_coverage_loss": 0.0,
+      "legal_ir_view_cross_entropy_excess_loss": 0.22600806150438463,
+      "legal_ir_view_cross_entropy_loss": 1.994985386988882,
+      "legal_ir_view_entropy_loss": 1.7689773254844974,
+      "legal_ir_view_family_cec_cosine_gap_loss": 0.01039044344364531,
+      "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.06691161748673978,
+      "legal_ir_view_family_cec_cross_entropy_loss": 0.5448833717408665,
+      "legal_ir_view_family_cosine_gap_loss": 0.11478675264388426,
+      "legal_ir_view_family_cross_entropy_excess_loss": 0.22600806150438452,
+      "legal_ir_view_family_cross_entropy_loss": 1.994985386988882,
+      "legal_ir_view_family_deontic_cosine_gap_loss": 0.0045557528609649865,
+      "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.010855121104846682,
+      "legal_ir_view_family_deontic_cross_entropy_loss": 0.5208345488512959,
+      "legal_ir_view_family_entropy_loss": 1.7689773254844976,
+      "legal_ir_view_family_external_provers_cosine_gap_loss": 9.816733233856956e-05,
+      "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.0005538062566925028,
+      "legal_ir_view_family_external_provers_cross_entropy_loss": 0.36965795683098024,
+      "legal_ir_view_family_frame_logic_cosine_gap_loss": 0.005785119548410947,
+      "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.036256377202914664,
+      "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.48863309503507785,
+      "legal_ir_view_family_kg_cosine_gap_loss": 9.570852251501033e-05,
+      "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.0005023649685188779,
+      "legal_ir_view_family_kg_cross_entropy_loss": 0.38611408096267363,
+      "legal_ir_view_family_other_cosine_gap_loss": 0.009556614031067289,
+      "legal_ir_view_family_other_cross_entropy_excess_loss": 0.1303707340733617,
+      "legal_ir_view_family_other_cross_entropy_loss": 0.1303707340733617,
+      "legal_ir_view_family_prover_cosine_gap_loss": 9.816733233856956e-05,
+      "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.0005538062566925028,
+      "legal_ir_view_family_prover_cross_entropy_loss": 0.36965795683098024,
+      "legal_ir_view_family_tdfol_cosine_gap_loss": 0.0015252811866398631,
+      "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.003113257613728765,
+      "legal_ir_view_family_tdfol_cross_entropy_loss": 0.4839319800568835,
+      "source_decompiled_text_embedding_cosine_loss": 0.13628357592713403,
+      "source_decompiled_text_token_loss": 0.172154275
+    },
+    "sample_count": 32,
+    "timings": {
+      "bridge_on_evaluate_seconds": 43.44303958397359,
+      "compiler_seconds": 0.00016000098548829556,
+      "elapsed_seconds": 45.477771014906466,
+      "producer_guard_seconds": 1.2689585101325065,
+      "projected_observation_seconds": 0.4820162069518119,
+      "sample_preparation_seconds": 0.28341736691072583,
+      "wall_seconds_per_span": 1.421180344215827
+    }
+  }
+}

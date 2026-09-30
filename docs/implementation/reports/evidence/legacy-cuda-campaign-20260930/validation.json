@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "tests": 103,
+  "seconds": 4.505,
+  "scope": "legacy CUDA worker, intake, queue, resource and publication tests; no semantic qualification",
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_cuda.py": "b274cc248efbb340c4bbc2260b9f85c0b9df44a20bac81f193a9746eb1871596",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py": "66078eb3d047386aaad35f13710ad8628dc842f83b80e894be411dd6492ea9fe",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_campaign_resources.py": "5516d9af4276521a9103bc2105e63021e8db6d8a9ede26b66ed738733c0788f8",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_publication.py": "124a50491ad640c795ccbff00aa0c6e592c407c3a89ee4a1bac2044d88a7b8ee",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_cuda.py": "684f611c4b5c08fcb18f621c2f766cb792b5c17c47bf4d267578f039616bc62d",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_intake.py": "e166a9bac1a56aa459e9b9618e315638e11f983b7a014c455da823f988eb940b",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_campaign_resources.py": "ed6bab98ce1ebd898b6c25a52399625e2e47930abf2795c6f003caef2db4d7f2",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_publication.py": "82255dfdaa76111c5c309571633ec93fb4cd91da39506f3e53371d49120411e4",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_cuda_runner.py": "3f6b3bd99c0dfa54dfa0859c5c8c8d06030a687bfcac6ff52637ae890504b1d4",
+    "scripts/ops/legal_ir/run_legacy_span_cuda.py": "f5c8f209781971c78455eb7037a115f18358ba5136a1a4a6429d9b048de72e1e",
+    "docs/autoencoders/legacy_cuda_span_campaign.md": "98b0ca387f7d38d0b14e15f28919f9dd5fd22ae75862e425638e90b7619f7cb1",
+    "configs/autoencoders/legacy-cuda-span-census.service": "d6de527ea9967758283c952dbc02f1cc4dd45c3f2041e26b23c5e5fdf716282c"
+  },
+  "admitted": false,
+  "formalized": false
+}

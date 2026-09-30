@@ -1,0 +1,51 @@
+{
+  "admitted": false,
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "-m",
+    "pytest",
+    "-q",
+    "--noconftest",
+    "-p",
+    "no:cacheprovider",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+    "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_all_frozen_t1_outputs_match_selected_benchmark_adapter"
+  ],
+  "elapsed_seconds": 2.9686858989298344,
+  "exit_code": 0,
+  "formalized": false,
+  "gpu_used": false,
+  "lake_executed": false,
+  "model_used": false,
+  "passed": true,
+  "schema": "legacy-cuda-five-case-pilot-tests/v1",
+  "selected_tests": [
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_cases_complete_with_measured_partial_disclosure",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_pilot_parity_is_noninferior_to_selected_replacement_arm",
+    "tests/integration/logic/test_canonical_semantic_roundtrip.py::test_original_typed_deontic_pilot_keeps_forward_and_cycle_thresholds",
+    "tests/unit/logic/legal_ir/test_canonical_compiler.py::test_frozen_cases_reproduce_selected_adapter_l1_identity",
+    "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_all_frozen_t1_outputs_match_selected_benchmark_adapter"
+  ],
+  "source_sha256_after": {
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py": "b53132370e69680894285db17be810217bb7e4e26a4573f22aa248912a80dd38",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "tests/fixtures/semantic_roundtrip/pilot_cases.json": "6d34cdd1392d3a9964f04e4260f722e076ba7b96c3cdd2fc59749460756cf167"
+  },
+  "source_sha256_before": {
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py": "b53132370e69680894285db17be810217bb7e4e26a4573f22aa248912a80dd38",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "tests/fixtures/semantic_roundtrip/pilot_cases.json": "6d34cdd1392d3a9964f04e4260f722e076ba7b96c3cdd2fc59749460756cf167"
+  },
+  "source_unchanged": true,
+  "stderr": "",
+  "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0\nbenchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)\nrootdir: /home/barberb/lift_coding/external/ipfs_datasets\nconfigfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)\nplugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function\ncollected 5 items\n\ntests/integration/logic/test_canonical_semantic_roundtrip.py ...         [ 60%]\ntests/unit/logic/legal_ir/test_canonical_compiler.py .                   [ 80%]\ntests/unit/logic/legal_ir/test_canonical_decompiler.py .                 [100%]\n\n============================== 5 passed in 2.35s ===============================\n",
+  "weights_downloaded": false
+}
