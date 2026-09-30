@@ -1,0 +1,82 @@
+{
+  "admitted": false,
+  "commit": "28c6bdb833a9e1309db4b01018e588aa427a05f4",
+  "committed_native_smoke_artifact": "decoder-completion-clean-release-smoke.json",
+  "committed_native_smoke_sha256": "34ef31626b8536921fb3ad88d08928f20802ebb0aabb968e77583b527c5ef264",
+  "deduplicated_test_counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 583,
+    "skipped": 0
+  },
+  "fixture_note": "Initial errors were only omitted tracked sparse-checkout fixture files; rerun passed with no source edits.",
+  "hub_uploads": false,
+  "jevops_symlink_target": "/home/barberb/lift_coding/JevOps",
+  "legal_heldout_checkpoint_smoke": "Not rerun: no canonical checkpoint copied into isolated checkout; clean unit API tests include Lake schema gates.",
+  "native_smoke": {
+    "intent_ir": {
+      "admitted": false,
+      "qualified": false,
+      "resume_recorded": true,
+      "schema_checks_complete": true,
+      "schema_pass_count": 2,
+      "training_cross_entropy_after": 0.0007879213205336101,
+      "training_cross_entropy_before": 0.6993713872250912
+    },
+    "security_ir": {
+      "admitted": false,
+      "qualified": false,
+      "resume_recorded": false,
+      "schema_checks_complete": true,
+      "schema_pass_count": 2,
+      "training_cross_entropy_after": 0.0005076486766308255,
+      "training_cross_entropy_before": 0.6933288290202765
+    },
+    "ui_ux_ir": {
+      "admitted": false,
+      "qualified": false,
+      "resume_recorded": false,
+      "schema_checks_complete": true,
+      "schema_pass_count": 2,
+      "training_cross_entropy_after": 0.009445418976844176,
+      "training_cross_entropy_before": 0.696538114219115
+    }
+  },
+  "native_smoke_report": "/home/barberb/lift_coding/.decoder-release-validation/20260930T233813Z-c2a7a95f/external/ipfs_datasets/workspace/release-validation-smoke/report.json",
+  "native_smoke_wall_seconds": 24.10723565192893,
+  "production_files_changed": false,
+  "qualified": false,
+  "redundant_complete_run": "Canceled by request; not included in test evidence.",
+  "root": "/home/barberb/lift_coding/.decoder-release-validation/20260930T233813Z-c2a7a95f",
+  "scope": "isolated_sparse_release_validation",
+  "semantic_qualification": false,
+  "sparse_fixture_expansions": [
+    "scripts/ops/legal_ir",
+    "benchmarks/semantic_roundtrip/constructors"
+  ],
+  "status": "passed",
+  "test_runs": [
+    {
+      "errors": 20,
+      "failed": 2,
+      "junit": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/decoder-completion-staging/release-validation-tests.xml",
+      "junit_sha256": "7069b484dd77a9603d2281f7fe8e21327678e27f4d6a77c7869dbcbbc4f8aa92",
+      "name": "tests",
+      "passed": 561,
+      "skipped": 0
+    },
+    {
+      "errors": 0,
+      "failed": 0,
+      "junit": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/decoder-completion-staging/release-validation-retry.xml",
+      "junit_sha256": "a81d320963c394c898ae324230bbd56c6990aa18412b0dd79115ee76f51b633b",
+      "name": "retry",
+      "passed": 22,
+      "skipped": 0
+    }
+  ],
+  "tracked_worktree_clean": true,
+  "tracked_worktree_status": "",
+  "weights_downloaded": false,
+  "worktree": "/home/barberb/lift_coding/.decoder-release-validation/20260930T233813Z-c2a7a95f/external/ipfs_datasets"
+}

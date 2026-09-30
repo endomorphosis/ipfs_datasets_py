@@ -35,6 +35,12 @@ weights using them. Decoding plus structural Lake checks took 13.687 seconds.
 All 12 outputs passed their structural schema builds; only **11/12** exactly
 matched their expected canonical rules.
 
+One actual learned output for “The agency shall not retain the file.” was:
+
+```text
+F(retain(agency, "the file"))
+```
+
 For “The officer shall retain the file for at least 20 days unless emergency.”,
 the decoder retained the minimum duration but dropped the emergency exception.
 Both expected and actual rules are retained in the report. That is a semantic
@@ -67,3 +73,5 @@ this change. Those files are not swept into this commit.
 See [training commands, bounds and remaining implementation gaps](native_formula_training.md).
 
 The [installed validation receipt](../implementation/reports/evidence/legal-lineages-20260930/decoder-completion-validation.json) records **580 passing tests in 84.03 seconds**, including the existing semantic gates, compiler/decompiler pilot, historical lineages, actual Lake builds, source-drift rejection and exact resume.
+
+A subsequent [isolated release validation](../implementation/reports/evidence/legal-lineages-20260930/decoder-completion-clean-release-validation.json) checked exact code commit `28c6bdb833a9e1309db4b01018e588aa427a05f4`: **583/583 tests passed**, plus all three native CLIs and Intent resume. The initial sparse checkout omitted tracked test fixtures; those files were restored from that commit and the 22 affected cases passed on retry without source changes. [Full clean-release native outputs](../implementation/reports/evidence/legal-lineages-20260930/decoder-completion-clean-release-smoke.json) are retained separately. The existing legal held-out checkpoint smoke above belongs to the canonical shared working tree; the isolated suite independently exercised actual trained legal/native schema APIs.
