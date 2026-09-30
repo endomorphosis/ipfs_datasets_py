@@ -1,0 +1,94 @@
+{
+  "schema": "ui-react-capture-spec-validation/v1",
+  "source_baseline": "3ea970167c58fa28dc964caa52e43fe2ad95c8d6",
+  "status": "passed",
+  "documents": 5,
+  "backlog_tasks": 13,
+  "dependency_graph": "acyclic including conditional dependencies",
+  "local_links_checked": 56,
+  "code_blocks": [
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 0,
+      "language": "bash",
+      "sha256": "ca5cbdc1e4b6e7e398d217adb8a1f0d91d08918cac5e20e3657122e22919e556"
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 1,
+      "language": "python",
+      "sha256": "321a3e3c757f3aed682e80af32f04a12c2c420a5663d5b1f8f44f6d2557b1f44"
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 2,
+      "language": "mermaid",
+      "sha256": "87bc653fc06a971f5886b3d62e544b6105a96e3204bc24bb5c060843bde02fc1"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 0,
+      "language": "mermaid",
+      "sha256": "ba06ab3e59c7da80d0dc0274c53150af5125878e762cd7d5586cb4ddb90f7568"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 1,
+      "language": "bash",
+      "sha256": "3ab024821570b169ae5614a6d4cf2fb2ef2679d5524f8f98193cade373b4a877"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 2,
+      "language": "bash",
+      "sha256": "8b00ca9480d789e3669dc3df05992f530f0423cfe58e56edabd144776a298021"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 3,
+      "language": "bash",
+      "sha256": "3066f50c7f5d68c6b7be67695f47c2b88b5a512204f793f2b89863c72ec9c8f1"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 4,
+      "language": "bash",
+      "sha256": "8b47f0233c86ffdb730a2008d14aefc0000fe6ad93f8f46e8bcee3a081160e1e"
+    },
+    {
+      "document": "docs/autoencoders/react_capture_spec.md",
+      "block": 0,
+      "language": "mermaid",
+      "sha256": "c4c3ad24f79f334cb366ebf962c74832c0eba90e72ebd7c2257baf39858d53db"
+    }
+  ],
+  "errors": [],
+  "scope": "relative links and headings, published source links, Python/embedded Python/JSON parsing, bash -n, backlog IDs/dependencies/acceptance parity; examples not executed and Mermaid not rendered",
+  "implementation_validation": false,
+  "files": {
+    "docs/autoencoders/README.md": {
+      "sha256": "862b43dfb4e1feac6569c2332ee384c31dad0d6ef3f5811458b06808db3c87c9",
+      "bytes": 7616
+    },
+    "docs/autoencoders/ui_datasets_and_bindings.md": {
+      "sha256": "96a281330b5965ae55f4c459f536c3f6538e6e34085bcee33caaba0ee796fee2",
+      "bytes": 32629
+    },
+    "docs/autoencoders/react_capture_spec.md": {
+      "sha256": "f751f0ce6715deb0f633bb1b2e21abec91438c9719662ed2c5081f53ee06ac86",
+      "bytes": 25644
+    },
+    "docs/autoencoders/react_trace_contract.md": {
+      "sha256": "5b9594a14f2746abedf30be815c758b6aa07d954ecee19d0959bc04e76101f01",
+      "bytes": 27150
+    },
+    "docs/autoencoders/react_capture_implementation.md": {
+      "sha256": "178d3b821e0eaa1ca27fdbf7f450c83b6b25af789e77c1e05b95f70dac024a2c",
+      "bytes": 24672
+    },
+    "docs/autoencoders/react_capture_work_items.json": {
+      "sha256": "e48e585f32114ff6ac0cd524fccd007e58e4022c8caefbc412826b5ebb5a6473",
+      "bytes": 12773
+    }
+  }
+}

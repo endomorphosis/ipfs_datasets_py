@@ -1,0 +1,329 @@
+{
+  "schema_version": "ui-react-implementation-plan/v1",
+  "status": "proposed",
+  "as_of": "2026-09-30",
+  "source_baseline": "3ea970167c58fa28dc964caa52e43fe2ad95c8d6",
+  "spec_documents": [
+    "react_capture_spec.md",
+    "react_trace_contract.md",
+    "react_capture_implementation.md"
+  ],
+  "path_base": "dataset_repository",
+  "execution_authorized_by_this_manifest": false,
+  "supervisor_jobs_enqueued": false,
+  "milestones": [
+    {
+      "id": "M1",
+      "required_tasks": [
+        "R00",
+        "R01",
+        "R02",
+        "R03",
+        "R04"
+      ]
+    },
+    {
+      "id": "M2",
+      "required_tasks": [
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09"
+      ]
+    },
+    {
+      "id": "M3",
+      "required_tasks": [
+        "R10",
+        "R12"
+      ]
+    },
+    {
+      "id": "M4",
+      "required_tasks": [
+        "R11"
+      ],
+      "optional": true
+    }
+  ],
+  "constraints": [
+    "Canonical external/ipfs_datasets tree only; preserve shared work and archived checkpoints.",
+    "No pretrained weight download, context increase, Mathlib import or nonzero temperature.",
+    "Feature envelopes retain false authority flags; qualification is separate evidence.",
+    "Legal admission remains an actual source-locked lake build; no Constitution formalization.",
+    "One owner per mutable catalog; private optimizer state; immutable data and complete model generations.",
+    "No capture, service, training, upload or supervisor execution is initiated by this plan."
+  ],
+  "tasks": [
+    {
+      "id": "R00",
+      "status": "not_started",
+      "title": "Pin sources, exclusions and resource inputs",
+      "area": "source_inventory",
+      "milestone": "M1",
+      "dependencies": [],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "configs/ui_ux_ir/capture-pilot.json",
+        "examples/ui_ux_ir/react_capture_fixture/source-manifest.json"
+      ],
+      "acceptance_id": "A00",
+      "acceptance_requirements": "Exact source/build/dependency/file digests and existing ledger admission plan; train/tune/test exclusion manifest; benchmark answer metadata separated; no moving revision or bulk-download assumption",
+      "optional": false
+    },
+    {
+      "id": "R01",
+      "status": "not_started",
+      "title": "Freeze trace schemas and projection descriptors",
+      "area": "contracts",
+      "milestone": "M1",
+      "dependencies": [
+        "R00"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "schemas/ui_ux_ir/react_trace/",
+        "ipfs_datasets_py/logic/ui_ux_ir/source_adapters/react_trace.py"
+      ],
+      "acceptance_id": "A01",
+      "acceptance_requirements": "Python/TypeScript agree on golden canonical bytes and hashes; reject unknown fields/kinds, duplicate keys, invalid numbers, oversized/deep values, wrong evidence class and invalid graph references; fixtures cover every record kind",
+      "optional": false
+    },
+    {
+      "id": "R02",
+      "status": "not_started",
+      "title": "Capture React boundaries without changing callback semantics",
+      "area": "react_recorder",
+      "milestone": "M1",
+      "dependencies": [
+        "R01"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "typescript/ui-react-trace/"
+      ],
+      "acceptance_id": "A02",
+      "acceptance_requirements": "Original called exactly once; same `this`, arguments, return/Promise identity and synchronous throw object; closure behavior retained; no new Promise observers; nested handlers, propagation/prevention, IME/input, StrictMode/remount, explicit async context and recorder-failure cases",
+      "optional": false
+    },
+    {
+      "id": "R03",
+      "status": "not_started",
+      "title": "Run an owned deterministic capture harness",
+      "area": "capture_harness",
+      "milestone": "M1",
+      "dependencies": [
+        "R00",
+        "R01",
+        "R02"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "examples/ui_ux_ir/react_capture_fixture/",
+        "scripts/ops/ui_ux_ir/capture_react_traces.py"
+      ],
+      "acceptance_id": "A03",
+      "acceptance_requirements": "One driver per episode; recorder installed before application code; recognized frames/epochs only; zero/many handlers, no-op/batched updates, out-of-order requests, unmount/navigation, timeout and missing state remain explicit; instrumented and recorder-disabled application assertions agree",
+      "optional": false
+    },
+    {
+      "id": "R04",
+      "status": "not_started",
+      "title": "Commit sealed trace shards and corpus snapshots",
+      "area": "corpus_control",
+      "milestone": "M1",
+      "dependencies": [
+        "R01"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "ipfs_datasets_py/logic/ui_ux_ir/capture/collector.py",
+        "ipfs_datasets_py/logic/ui_ux_ir/capture/shards.py",
+        "ipfs_datasets_py/duckdb_control/ui_trace_catalog.py"
+      ],
+      "acceptance_id": "A04",
+      "acceptance_requirements": "Crash/restart before and after every shard seal/commit/ack; same ID/same payload deduplicates, changed payload conflicts; no partial shard visibility; lost acknowledgements reconcile the original operation; expired lease cannot acknowledge; missing intervals retained",
+      "optional": false
+    },
+    {
+      "id": "R05",
+      "status": "not_started",
+      "title": "Import a bounded pinned ComponentBench corpus",
+      "area": "corpus_adapters",
+      "milestone": "M2",
+      "dependencies": [
+        "R00",
+        "R01",
+        "R04"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "ipfs_datasets_py/logic/ui_ux_ir/source_adapters/componentbench.py",
+        "scripts/ops/ui_ux_ir/import_ui_trace_corpus.py"
+      ],
+      "acceptance_id": "A05",
+      "acceptance_requirements": "Source revision and split preserved; coordinate/operation conversion covered; imported actions never gain fabricated React/IDL evidence; evaluator fields and hidden success nodes excluded; equivalent content cannot cross splits by changing IDs/revisions",
+      "optional": false
+    },
+    {
+      "id": "R06",
+      "status": "not_started",
+      "title": "Execute and reconcile authenticated fixture IDL calls",
+      "area": "typed_executor",
+      "milestone": "M2",
+      "dependencies": [
+        "R01",
+        "R02"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "ipfs_datasets_py/logic/ui_ux_ir/runtime/idl_executor.py",
+        "ipfs_datasets_py/logic/ui_ux_ir/runtime/invocation_ledger.py"
+      ],
+      "acceptance_id": "A06",
+      "acceptance_requirements": "All non-ALLOW outcomes yield zero dispatches; altered args under same request ID, wrong backend/tenant/CID/method, stale/revoked policy and authorization replay fail; committed effect with lost response reconciles the original operation after authorization expiry; deduplication expiry blocks unsupported automatic retries; stale results cannot mutate newer state",
+      "optional": false
+    },
+    {
+      "id": "R07",
+      "status": "not_started",
+      "title": "Prepare deterministic trace windows and shared targets",
+      "area": "target_preparation",
+      "milestone": "M2",
+      "dependencies": [
+        "R01",
+        "R04"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "ipfs_datasets_py/logic/formalization/autoencoder/ui_trace_training_inputs.py",
+        "ipfs_datasets_py/logic/formalization/autoencoder/ui_trace_targets.py",
+        "scripts/ops/ui_ux_ir/prepare_ui_trace_targets.py"
+      ],
+      "acceptance_id": "A07",
+      "acceptance_requirements": "Identical source/profile produces identical targets; frozen trainable descriptor set matches supported backend families; every feature maps to source evidence or declared normalization; deterministic windows retain bounded prior-state/ancestor/request closure; timing overlap never becomes causality; missing required view rejected; failures remain valid narrower observations; no invented norms or mental states",
+      "optional": false
+    },
+    {
+      "id": "R08",
+      "status": "not_started",
+      "title": "Integrate native training, exact resume and separate inference",
+      "area": "native_training",
+      "milestone": "M2",
+      "dependencies": [
+        "R03",
+        "R07"
+      ],
+      "conditional_dependencies": [
+        {
+          "profile": "imported_source",
+          "dependencies": [
+            "R05"
+          ]
+        },
+        {
+          "profile": "joined_typed_call",
+          "dependencies": [
+            "R06"
+          ]
+        }
+      ],
+      "proposed_outputs": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/ui_feature_training.py",
+        "scripts/ops/ui_ux_ir/run_ui_feature_training.py"
+      ],
+      "acceptance_id": "A08",
+      "acceptance_requirements": "Exact native train/resume/infer closure; fixed basis/tuning/optimizer and cumulative exclusions; inference performs no optimizer update or candidate creation and leaves weights unchanged; per-view losses/coverage and attempted/selected work recorded; controlled resource failure retains recoverable artifacts",
+      "optional": false
+    },
+    {
+      "id": "R09",
+      "status": "not_started",
+      "title": "Evaluate frozen effects and scoped qualification",
+      "area": "evaluation",
+      "milestone": "M2",
+      "dependencies": [
+        "R03",
+        "R07",
+        "R08"
+      ],
+      "conditional_dependencies": [
+        {
+          "profile": "imported_source",
+          "dependencies": [
+            "R05"
+          ]
+        },
+        {
+          "profile": "joined_typed_call",
+          "dependencies": [
+            "R06"
+          ]
+        }
+      ],
+      "proposed_outputs": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/ui_trace_qualification.py"
+      ],
+      "acceptance_id": "A09",
+      "acceptance_requirements": "Independent frozen replay checks actual declared effects and negative cases; syntax/runtime/semantic/feature statuses stay distinct; no evaluation answer in feature inputs; unsupported source gate remains false; quality report states which generalization split was tested",
+      "optional": false
+    },
+    {
+      "id": "R10",
+      "status": "not_started",
+      "title": "Coordinate native full-state generations across machines",
+      "area": "distributed_control",
+      "milestone": "M3",
+      "dependencies": [
+        "R04",
+        "R08",
+        "R09"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "schemas/ui_ux_ir/native_exchange/"
+      ],
+      "acceptance_id": "A10",
+      "acceptance_requirements": "Two real machines plus disconnect/restart: one current claim/fence can complete; replay original operation after uncertain response; verify exact full generation before acknowledgement; lost/duplicate/stale acknowledgements reconcile without regressing installed generation after restart; stale-parent candidates retained/requeued; wrong-codec or changed-basis jobs rejected before training",
+      "optional": false
+    },
+    {
+      "id": "R11",
+      "status": "not_started",
+      "title": "Optimize native transport with measured Arrow and sparse codecs",
+      "area": "native_state_codec",
+      "milestone": "M4",
+      "dependencies": [
+        "R08",
+        "R10"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "schemas/ui_ux_ir/native_state/"
+      ],
+      "acceptance_id": "A11",
+      "acceptance_requirements": "Full and optimized codecs reconstruct identical logical state and continue equivalent training within the declared deterministic-runtime profile; corrupt/missing/overlapping patches, wrong parent/shape/dtype/optimizer and overlong ancestry rejected; measured copy/transfer savings exceed added overhead",
+      "optional": true
+    },
+    {
+      "id": "R12",
+      "status": "not_started",
+      "title": "Release and restore UI corpus and native model packages",
+      "area": "huggingface_exchange",
+      "milestone": "M3",
+      "dependencies": [
+        "R04",
+        "R09",
+        "R10"
+      ],
+      "conditional_dependencies": [],
+      "proposed_outputs": [
+        "ipfs_datasets_py/huggingface/ui_trace_exchange.py"
+      ],
+      "acceptance_id": "A12",
+      "acceptance_requirements": "Offline release restores the exact data/model closure on another machine; no implicit job/lease/authority restoration; interrupted upload/pull resumes by verified immutable descriptors; exact Hub commit and consumer receipt recorded; dry-run publication has no network writes",
+      "optional": false
+    }
+  ]
+}

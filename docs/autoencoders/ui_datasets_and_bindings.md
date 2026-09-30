@@ -1,7 +1,10 @@
 # UI datasets, typed bindings, and an ingestion plan
 
-Start with a bounded sample of paired HTML, screenshots, and actions from
-Multimodal-Mind2Web or WebLINX. Add backend schema examples as a separate source.
+For React actions and actual handler/state observations, start with the
+[React capture specification](react_capture_spec.md): controlled authored
+fixtures, then a pinned ComponentBench environment. For broader browser
+workflows, use bounded HTML/action samples from Multimodal-Mind2Web or WebLINX.
+Add backend schema examples as a separate source.
 Join the two only when an application supplies an explicit, versioned binding
 between a UI component/action and a backend method. A screenshot, successful
 navigation trace, or matching method name does not establish that binding.
@@ -26,6 +29,7 @@ labels, licenses, or coordinate conventions.
 
 | Role | Dataset and evidence | Splits and access | Adapter implications |
 | --- | --- | --- | --- |
+| React environment and frozen evaluation | [TianchenGuan/ComponentBench](https://huggingface.co/datasets/TianchenGuan/ComponentBench), with the [runnable application and trace schema](https://github.com/TianchenGuan/ComponentBench): React component tasks, browser actions and programmatic checks. | Pin application and data revisions independently; inspect selected files and source terms before collection. Keep official tasks/reference trajectories frozen for evaluation. | Existing traces do not provide complete React handler, committed-state or backend-call evidence. Add explicit instrumentation, author separate training scenarios, and exclude hidden evaluator data. Follow the [trace contract](react_trace_contract.md). |
 | Starter: web components and actions | [osunlp/Multimodal-Mind2Web](https://huggingface.co/datasets/osunlp/Multimodal-Mind2Web): aligned screenshots, raw/cleaned HTML, task/action IDs, operations, DOM candidates, and action sequences. | Train: 7,775 actions/1,009 tasks; `test_task`: 1,339/177; `test_website`: 1,019/142; `test_domain`: 4,060/694. Card declares OpenRAIL and a research-purpose disclaimer. Total release: 13.6 GB. | Prefer raw HTML when cleaning removes a labeled target. Training images can have rendering defects. `backend_node_id` identifies a browser DOM node; it is not a backend API identifier. Preserve original operation labels as well as normalized labels. |
 | Starter: dialogue and event sequences | [McGill-NLP/WebLINX-full](https://huggingface.co/datasets/McGill-NLP/WebLINX-full), with a [formatted companion](https://huggingface.co/datasets/McGill-NLP/WebLINX): raw HTML, screenshots, dialogue/action replay and element bounding boxes. | Full-data splits: `train`, `valid`, `test_iid`, `test_vis`, `test_cat`, `test_geo`, `test_web`. CC-BY-NC-SA-4.0 plus third-party-content terms. | The authors support [retrieval of selected demonstrations](https://mcgill-nlp.github.io/weblinx/docs/), avoiding a bulk download. Preserve episode order and dialogue speaker. Keep original WebLINX and the BrowserGym-derived 1.1 release as different dataset versions. |
 | Separate backend-schema training | [Salesforce/xlam-function-calling-60k](https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k): 60,000 synthetic examples with a query, tool descriptions/typed parameters, and named calls with arguments. | CC-BY-4.0; access currently requires acknowledgment of license/citation conditions. Create a documented training/tuning partition by tool/schema identity rather than assuming an author-supplied evaluation split. | Useful for learning typed call structure. There are no paired UI observations. The [published answer schema](https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k/blob/main/README.md?code=true) contains calls, not evidence of deployed execution or committed effects. Do not relabel tool parameters as verified application IDL. |
