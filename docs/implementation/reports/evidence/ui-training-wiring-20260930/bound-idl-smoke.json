@@ -1,0 +1,66 @@
+{
+  "schema": "ui-bound-idl-smoke/v1",
+  "authored_fixture": true,
+  "policy_and_confirmation": "authored_local_test_values_not_real_world_grants",
+  "source_sha256": "16349ac0becbc37bb4678fa39a039214b706fc1ef3ae585ed8a325cbbc3debd8",
+  "target_digest": "e7ea602ba08f78687627aeb011f68cb0c66643492a18efdd6890351c38c5a4c9",
+  "request": {
+    "schema_version": "ui-ux-ir/idl-runtime-projection@1",
+    "kind": "request_declaration",
+    "invocation_request": {
+      "action_id": "delete_record",
+      "actor_id": "actor:fixture",
+      "binding_id": "binding:delete",
+      "confirmation_class": "confirm",
+      "declaration_digest": "e7ea602ba08f78687627aeb011f68cb0c66643492a18efdd6890351c38c5a4c9",
+      "event_id": "click:delete",
+      "expected_effect_ids": [],
+      "intent_action_id": "",
+      "intent_document_id": "",
+      "interface": "UIInvocationRequest@1",
+      "invocation_template_cid": "",
+      "mcp_idl_interface_cid": "bafkreiflqpkuya34kzukry3bssb6e6b3dkdy4oe33zw3ekfj47gdbxucpe",
+      "mcp_idl_method_name": "delete_record",
+      "policy_norm_id": "policy:fixture",
+      "program_target_kind": "mcp_idl_interface_method_schema",
+      "program_target_ref": "mcp:bafkreiflqpkuya34kzukry3bssb6e6b3dkdy4oe33zw3ekfj47gdbxucpe#delete_record",
+      "projection_id": "projection:authored-fixture",
+      "request_id": "med-b353b314a72a50845cefee1f",
+      "risk_class": "high",
+      "schema_version": "ui-runtime-mediator/v1",
+      "state_version": 0
+    },
+    "decision_id": "med-7c077271703294acdde1244b",
+    "descriptor_sha256": "ab83d54c037c5668a8e3619483e2783b1a878e389bde6db228a9e7cc30de8279",
+    "input_schema_sha256": "9ff3ee43b110dfd4590c0174ccf9146e9cb3e38fa9a4bf49ba5904c7a292d352",
+    "output_schema_sha256": "17fd499dac7e12f72afea7fcf7ac0e76342429975387513d7ef081ce874cf3b8",
+    "arguments": {
+      "record_id": "fixture-record"
+    },
+    "arguments_sha256": "5d600989185aaff28d6cde5050e497e736d3b6fc4ad16171ce286d02dd27b997",
+    "execution_grant": null,
+    "transport_executed": false
+  },
+  "result": {
+    "schema_version": "ui-ux-ir/idl-runtime-projection@1",
+    "kind": "result_schema_evidence",
+    "request_id": "med-b353b314a72a50845cefee1f",
+    "request_sha256": "9eae8955c6c784226c8b6565b04a162833cb8c648fa626e0c8db6edef0331460",
+    "interface_cid": "bafkreiflqpkuya34kzukry3bssb6e6b3dkdy4oe33zw3ekfj47gdbxucpe",
+    "method_name": "delete_record",
+    "arguments_sha256": "5d600989185aaff28d6cde5050e497e736d3b6fc4ad16171ce286d02dd27b997",
+    "output_schema_sha256": "17fd499dac7e12f72afea7fcf7ac0e76342429975387513d7ef081ce874cf3b8",
+    "result": {
+      "deleted": true
+    },
+    "result_sha256": "1b70b1c98c544d975c39049311ab1d24ed1d87aedc2874bdc946d39bd421b4b8",
+    "schema_validated": true,
+    "backend_authenticated": false,
+    "execution_grant": null,
+    "state_mutation_applied": false
+  },
+  "transport_executed": false,
+  "qualified": false,
+  "admitted": false,
+  "formalized": false
+}

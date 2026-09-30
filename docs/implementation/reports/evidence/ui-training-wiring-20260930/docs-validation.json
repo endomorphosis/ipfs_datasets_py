@@ -1,0 +1,81 @@
+{
+  "schema": "autoencoder-handbook-doc-validation/v1",
+  "source_baseline": "3d517cd04c7f711b679a358e7dc1c2877b193dcd",
+  "status": "passed",
+  "documents": 5,
+  "local_links_checked": 102,
+  "code_blocks": [
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 0,
+      "language": "bash",
+      "sha256": "ca5cbdc1e4b6e7e398d217adb8a1f0d91d08918cac5e20e3657122e22919e556"
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 1,
+      "language": "python",
+      "sha256": "321a3e3c757f3aed682e80af32f04a12c2c420a5663d5b1f8f44f6d2557b1f44"
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "block": 2,
+      "language": "mermaid",
+      "sha256": "87bc653fc06a971f5886b3d62e544b6105a96e3204bc24bb5c060843bde02fc1"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 0,
+      "language": "mermaid",
+      "sha256": "ba06ab3e59c7da80d0dc0274c53150af5125878e762cd7d5586cb4ddb90f7568"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 1,
+      "language": "bash",
+      "sha256": "3ab024821570b169ae5614a6d4cf2fb2ef2679d5524f8f98193cade373b4a877"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 2,
+      "language": "bash",
+      "sha256": "8b00ca9480d789e3669dc3df05992f530f0423cfe58e56edabd144776a298021"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 3,
+      "language": "bash",
+      "sha256": "3066f50c7f5d68c6b7be67695f47c2b88b5a512204f793f2b89863c72ec9c8f1"
+    },
+    {
+      "document": "docs/autoencoders/ui_datasets_and_bindings.md",
+      "block": 4,
+      "language": "bash",
+      "sha256": "8b47f0233c86ffdb730a2008d14aefc0000fe6ad93f8f46e8bcee3a081160e1e"
+    }
+  ],
+  "errors": [],
+  "scope": "relative links and headings, source links (new files selected for publication), Python/embedded Python/JSON parsing and bash -n; templates not executed",
+  "files": {
+    "docs/autoencoders/README.md": {
+      "sha256": "b7a80cde7efc65cf4024b56e5927d9c10cfb63ec62dc228774effa3f4efd1bfe",
+      "bytes": 7471
+    },
+    "docs/autoencoders/api_map.md": {
+      "sha256": "82366ed8951501c606b6c9f6b7595d9606c429348457aa9870f46e439d1f3ebe",
+      "bytes": 9182
+    },
+    "docs/autoencoders/ui_datasets_and_bindings.md": {
+      "sha256": "f86955493e13d5621bdaefc109d7f70ff286c90c6c28079fb294fa0dd1f86c2c",
+      "bytes": 31706
+    },
+    "examples/ui_ux_ir/training/README.md": {
+      "sha256": "b111ba9596687878b6cc0f87a274d761f7ca6d080ab71c0ceeca3301470f0f1d",
+      "bytes": 1196
+    },
+    "docs/implementation/reports/UI_FEATURE_TRAINING_20260930.md": {
+      "sha256": "62e5e634614efeab7657aabc408f4ddfd9804d39fb26e555a5469ddb04168afd",
+      "bytes": 7031
+    }
+  }
+}

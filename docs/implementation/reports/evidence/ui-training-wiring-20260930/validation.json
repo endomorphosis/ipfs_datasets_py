@@ -1,0 +1,27 @@
+{
+  "schema": "ui-training-validation/v1",
+  "status": "passed",
+  "tests_passed": 175,
+  "junit_time_seconds": 9.035,
+  "tested_files": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/ui_training_inputs.py": "39d892919e5e5108c589c35d9e586bd4eb294e93146a3174d271dc084398dd9f",
+    "ipfs_datasets_py/logic/ui_ux_ir/runtime/idl_projection.py": "20ea93e46469a5bb37fcf27bc89d01c9ed2f03e745a7db6b34f854608fa9fd8d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/ui_feature_training.py": "68b4def5dc234354903fee900f92da86dd5280b8ddb3f8d00e00e9446a60cee3",
+    "scripts/ops/ui_ux_ir/run_ui_feature_training.py": "b1b8d64eb19b8a1956eba2eecf85b62e174b82a0dcf4deca09ea41c513381d5e",
+    "tests/unit/logic/formalization/autoencoder/test_ui_training_inputs.py": "eb7675cfee34ac04c18252b73030a20187d636d688621656546cfbf50c721a64",
+    "tests/unit/logic/ui_ux_ir/test_idl_projection.py": "9f752aa3393ab6377f8d8ec86bfd72cefb507a926e17649882d6afc0a8b6c15b",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_ui_feature_training.py": "ce7ad2884b627fc7d0e554932b5172325f68186f2e3584e873f44c73183806d5",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_ui_feature_cli_resources.py": "63cce32c97e678a64a4ceeb2cbc1f33fa30adfdea57fbcc17e12ecdfa30afad7",
+    "examples/ui_ux_ir/training/inference.jsonl": "2dcabde881e8894aa7f56bb1f9b0f5e7c5a96145ff2509ce88f89ef5aa595059",
+    "examples/ui_ux_ir/training/train-001.jsonl": "4eff4f55ca663053c9d1d96010c4a0a7d101f65f4e032c4ff9b0986da1ff4d6d",
+    "examples/ui_ux_ir/training/train-002.jsonl": "4c407a38f77ceb2d7b4fc03b86b8ad5d01f4c5581a2c595ce7f49f874535cb6c",
+    "examples/ui_ux_ir/training/tuning.jsonl": "d01951981488032fd9c6fd4762c5dec0dd368ccf6e866f9c60913e909f037b31"
+  },
+  "native_training_resume_inference": "passed",
+  "local_idl_boundary_smokes": "passed",
+  "protected_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "source_tree": "external/ipfs_datasets",
+  "qualified": false,
+  "admitted": false,
+  "formalized": false
+}

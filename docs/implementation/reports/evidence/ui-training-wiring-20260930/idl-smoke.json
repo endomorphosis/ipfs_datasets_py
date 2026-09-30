@@ -1,0 +1,84 @@
+{
+  "schema": "ui-idl-local-boundary-smoke/v1",
+  "authored_fixture": true,
+  "real_world_trace": false,
+  "request": {
+    "schema_version": "ui-ux-ir/idl-runtime-projection@1",
+    "kind": "request_declaration",
+    "invocation_request": {
+      "action_id": "action:mcp:list_items",
+      "actor_id": "actor:human",
+      "binding_id": "bind:mcp:list_items",
+      "confirmation_class": "none",
+      "declaration_digest": "decl:abc",
+      "event_id": "event:1",
+      "expected_effect_ids": [],
+      "intent_action_id": "",
+      "intent_document_id": "",
+      "interface": "UIInvocationRequest@1",
+      "invocation_template_cid": "",
+      "mcp_idl_interface_cid": "bafkreigc766jvjnmqzru3s7abwsb4hmc6wj37qc3hnae22odctaogg3e2a",
+      "mcp_idl_method_name": "list_items",
+      "policy_norm_id": "policy:list",
+      "program_target_kind": "mcp_idl_interface_method_schema",
+      "program_target_ref": "mcp:bafkreigc766jvjnmqzru3s7abwsb4hmc6wj37qc3hnae22odctaogg3e2a#list_items",
+      "projection_id": "projection:web",
+      "request_id": "med-6e75fbfe82dd8af8a6f2e9d8",
+      "risk_class": "medium",
+      "schema_version": "ui-runtime-mediator/v1",
+      "state_version": 3
+    },
+    "decision_id": "med-232fb6220726eef18482e9a4",
+    "descriptor_sha256": "c2ffbc9aa5ac86634dcbe00da41e1d82f593bfc05b3b404d69c314c0e31b64d0",
+    "input_schema_sha256": "fd7a5f07e1203624366bd3428b09b1b62d94e6889f9f9fb538bc5e581cd001ab",
+    "output_schema_sha256": "0b8d86dc1739bbcd2418ad3f6b35baffd608cd8abc0a290ef81526d1cf13368d",
+    "arguments": {
+      "limit": 2
+    },
+    "arguments_sha256": "649c187d840a97ceebfecf4a5e8a1121655263c52487be7d5cd1970fe17e1bd3",
+    "execution_grant": null,
+    "transport_executed": false
+  },
+  "result": {
+    "schema_version": "ui-ux-ir/idl-runtime-projection@1",
+    "kind": "result_schema_evidence",
+    "request_id": "med-6e75fbfe82dd8af8a6f2e9d8",
+    "request_sha256": "064407d2026d0162496ddbae38eb212503644c984cb49b55f454f07714e87cb7",
+    "interface_cid": "bafkreigc766jvjnmqzru3s7abwsb4hmc6wj37qc3hnae22odctaogg3e2a",
+    "method_name": "list_items",
+    "arguments_sha256": "649c187d840a97ceebfecf4a5e8a1121655263c52487be7d5cd1970fe17e1bd3",
+    "output_schema_sha256": "0b8d86dc1739bbcd2418ad3f6b35baffd608cd8abc0a290ef81526d1cf13368d",
+    "result": {
+      "items": [
+        "one"
+      ]
+    },
+    "result_sha256": "f6e0e58be7b663328cd26115e32853a76743379b838a34bc0a0257b1bc21fb98",
+    "schema_validated": true,
+    "backend_authenticated": false,
+    "execution_grant": null,
+    "state_mutation_applied": false
+  },
+  "negative_cases": {
+    "invalid_arguments": {
+      "rejected": true,
+      "error_type": "UIIRValidationError"
+    },
+    "wrong_result_correlation": {
+      "rejected": true,
+      "error_type": "UIIRValidationError"
+    },
+    "invalid_result": {
+      "rejected": true,
+      "error_type": "UIIRValidationError"
+    },
+    "denied_policy": {
+      "rejected": true,
+      "error_type": "UIIRValidationError"
+    }
+  },
+  "transport_executed": false,
+  "qualified": false,
+  "admitted": false,
+  "formalized": false
+}

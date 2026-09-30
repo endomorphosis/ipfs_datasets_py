@@ -1,0 +1,712 @@
+{
+  "schema": "ui-native-training-smoke/v1",
+  "status": "passed",
+  "authored_fixtures": true,
+  "real_world_semantic_quality_measured": false,
+  "backend": "native structural CPU torch Adam",
+  "numerical_threads": 1,
+  "worker_count": 1,
+  "target_cache": "none; native targets prepared per attempt",
+  "external_provers": false,
+  "legal_bridge_evaluation": false,
+  "weights_downloaded": false,
+  "hf_transfer_executed": false,
+  "transport_executed": false,
+  "heldout_canary": false,
+  "attempts": {
+    "train-001": {
+      "result": {
+        "admitted": false,
+        "after": {
+          "objective": 0.089572012424469,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "cosine": 0.028639674186706543,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.14053617417812347
+            },
+            "ui_ux_ir:event_calculus": {
+              "cosine": 0.140913724899292,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.02077522501349449
+            },
+            "ui_ux_ir:flogic": {
+              "cosine": 0.3738982677459717,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.13487179577350616
+            },
+            "ui_ux_ir:interface_bindings": {
+              "cosine": 0.05518007278442383,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.008378617465496063
+            },
+            "ui_ux_ir:tdfol": {
+              "cosine": 0.40355533361434937,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.04307951778173447
+            }
+          }
+        },
+        "attempted_epochs": 3,
+        "before": {
+          "objective": 0.2638010084629059,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "cosine": 0.8160547018051147,
+              "guarded_auxiliary": 0.00013469050463754684,
+              "reconstruction": 0.3291163742542267
+            },
+            "ui_ux_ir:event_calculus": {
+              "cosine": 0.9566785097122192,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.055852267891168594
+            },
+            "ui_ux_ir:flogic": {
+              "cosine": 1.6730799674987793,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.25196558237075806
+            },
+            "ui_ux_ir:interface_bindings": {
+              "cosine": 1.3728699684143066,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.05669537931680679
+            },
+            "ui_ux_ir:tdfol": {
+              "cosine": 0.7909361124038696,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.06427875906229019
+            }
+          }
+        },
+        "formalized": false,
+        "heldout_canary": false,
+        "improved": true,
+        "operation": "training",
+        "parent_version_id": null,
+        "projection_ids": [
+          "ui_ux_ir:dcec",
+          "ui_ux_ir:event_calculus",
+          "ui_ux_ir:flogic",
+          "ui_ux_ir:interface_bindings",
+          "ui_ux_ir:tdfol"
+        ],
+        "promotion_performed": false,
+        "qualified": false,
+        "registration": {
+          "admitted": false,
+          "artifact": {
+            "bytes": 68473,
+            "sha256": "3e8c5086965965cf21e86966bf040c01b49ec95413334cdecd9ad3c1840ffdfd"
+          },
+          "formalized": false,
+          "promotion_performed": false,
+          "qualified": false,
+          "variant_id": "modality-979fcde07841659569d7063fe1b26037729d90c06ebe32ab3eec9b4ea5784214",
+          "version_id": "sha256:0fc1de917d5c5df17246c43d77877fa84d24dbb4b6cfca94f6ca1e3393dd6de0"
+        },
+        "schema": "ui-feature-batch/v1",
+        "selected_total_epochs": 3,
+        "target_preparation_seconds": 0.30178992194123566,
+        "training_executed": true,
+        "training_seconds": 0.6628206621389836,
+        "training_target_count": 2,
+        "transport_executed": false,
+        "tuning_coverage": [
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:dcec",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 16,
+            "projection_id": "ui_ux_ir:event_calculus",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 20,
+            "projection_id": "ui_ux_ir:interface_bindings",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 9,
+            "projection_id": "ui_ux_ir:tdfol",
+            "unknown_atoms": 3
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:dcec",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 16,
+            "projection_id": "ui_ux_ir:event_calculus",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 20,
+            "projection_id": "ui_ux_ir:interface_bindings",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 9,
+            "projection_id": "ui_ux_ir:tdfol",
+            "unknown_atoms": 3
+          }
+        ],
+        "tuning_target_count": 2,
+        "wall_seconds": 1.031339081004262,
+        "weights_downloaded": false
+      },
+      "worker": {
+        "deadline_enforcement": "owner_polling_terminates_owned_group",
+        "isolated_process_group": true,
+        "memory_enforcement": "owned_process_group_rss_checks",
+        "observed_peak_group_processes": 1,
+        "observed_peak_group_rss_bytes": 25747456,
+        "registry_access": "serialized_exclusive_owner_including_inference",
+        "resource_checks": 3,
+        "schema": "ui-feature-worker-resources/v1",
+        "wall_limit_seconds": 180.0,
+        "wall_seconds": 14.541422259062529,
+        "worker_birth": "130988783",
+        "worker_pid": 753937
+      },
+      "resource_status": "released",
+      "reservation_id": "346e275eafeb4fb8bedc5de177bb5327",
+      "final_total_charged_bytes": 4942808
+    },
+    "resume-002": {
+      "result": {
+        "admitted": false,
+        "after": {
+          "objective": 0.06524549424648285,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "cosine": 0.016202449798583984,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.09736495465040207
+            },
+            "ui_ux_ir:event_calculus": {
+              "cosine": 0.08773702383041382,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.011956047266721725
+            },
+            "ui_ux_ir:flogic": {
+              "cosine": 0.2818373441696167,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.10873951017856598
+            },
+            "ui_ux_ir:interface_bindings": {
+              "cosine": 0.0341644287109375,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.0036878385581076145
+            },
+            "ui_ux_ir:tdfol": {
+              "cosine": 0.2918441891670227,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.03330056369304657
+            }
+          }
+        },
+        "attempted_epochs": 1,
+        "before": {
+          "objective": 0.089572012424469,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "cosine": 0.028639674186706543,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.14053617417812347
+            },
+            "ui_ux_ir:event_calculus": {
+              "cosine": 0.140913724899292,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.02077522501349449
+            },
+            "ui_ux_ir:flogic": {
+              "cosine": 0.3738982677459717,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.13487179577350616
+            },
+            "ui_ux_ir:interface_bindings": {
+              "cosine": 0.05518007278442383,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.008378617465496063
+            },
+            "ui_ux_ir:tdfol": {
+              "cosine": 0.40355533361434937,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.04307951778173447
+            }
+          }
+        },
+        "formalized": false,
+        "heldout_canary": false,
+        "improved": true,
+        "operation": "training",
+        "parent_version_id": "sha256:0fc1de917d5c5df17246c43d77877fa84d24dbb4b6cfca94f6ca1e3393dd6de0",
+        "projection_ids": [
+          "ui_ux_ir:dcec",
+          "ui_ux_ir:event_calculus",
+          "ui_ux_ir:flogic",
+          "ui_ux_ir:interface_bindings",
+          "ui_ux_ir:tdfol"
+        ],
+        "promotion_performed": false,
+        "qualified": false,
+        "registration": {
+          "admitted": false,
+          "artifact": {
+            "bytes": 66531,
+            "sha256": "1232015ad1a426f9ee7c0233c034597afab80ab6f92bdfb66965ea5c478d98f0"
+          },
+          "formalized": false,
+          "promotion_performed": false,
+          "qualified": false,
+          "variant_id": "modality-979fcde07841659569d7063fe1b26037729d90c06ebe32ab3eec9b4ea5784214",
+          "version_id": "sha256:8267d68200ab4d87118a39bfe8f506b749ffe84c156e6a572b49e87f39d96e2b"
+        },
+        "schema": "ui-feature-batch/v1",
+        "selected_total_epochs": 4,
+        "target_preparation_seconds": 0.2794880219735205,
+        "training_executed": true,
+        "training_seconds": 0.6104913400486112,
+        "training_target_count": 1,
+        "transport_executed": false,
+        "tuning_coverage": [
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:dcec",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 16,
+            "projection_id": "ui_ux_ir:event_calculus",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 20,
+            "projection_id": "ui_ux_ir:interface_bindings",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 9,
+            "projection_id": "ui_ux_ir:tdfol",
+            "unknown_atoms": 3
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:dcec",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 16,
+            "projection_id": "ui_ux_ir:event_calculus",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 20,
+            "projection_id": "ui_ux_ir:interface_bindings",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 9,
+            "projection_id": "ui_ux_ir:tdfol",
+            "unknown_atoms": 3
+          }
+        ],
+        "tuning_target_count": 2,
+        "wall_seconds": 0.9442877168767154,
+        "weights_downloaded": false
+      },
+      "worker": {
+        "deadline_enforcement": "owner_polling_terminates_owned_group",
+        "isolated_process_group": true,
+        "memory_enforcement": "owned_process_group_rss_checks",
+        "observed_peak_group_processes": 1,
+        "observed_peak_group_rss_bytes": 25415680,
+        "registry_access": "serialized_exclusive_owner_including_inference",
+        "resource_checks": 3,
+        "schema": "ui-feature-worker-resources/v1",
+        "wall_limit_seconds": 180.0,
+        "wall_seconds": 14.587664479156956,
+        "worker_birth": "130994928",
+        "worker_pid": 770266
+      },
+      "resource_status": "released",
+      "reservation_id": "1011d25ec1484fd192625ea597503a5d",
+      "final_total_charged_bytes": 7759283
+    },
+    "watchdog-train-003": {
+      "result": {
+        "admitted": false,
+        "after": {
+          "objective": 0.045216791331768036,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "cosine": 0.010279178619384766,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.061237502843141556
+            },
+            "ui_ux_ir:event_calculus": {
+              "cosine": 0.05094039440155029,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.006036601960659027
+            },
+            "ui_ux_ir:flogic": {
+              "cosine": 0.20813238620758057,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.08427277952432632
+            },
+            "ui_ux_ir:interface_bindings": {
+              "cosine": 0.01961803436279297,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.0021485495381057262
+            },
+            "ui_ux_ir:tdfol": {
+              "cosine": 0.19747710227966309,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.02374381572008133
+            }
+          }
+        },
+        "attempted_epochs": 1,
+        "before": {
+          "objective": 0.06524549424648285,
+          "projections": {
+            "ui_ux_ir:dcec": {
+              "cosine": 0.016202449798583984,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.09736495465040207
+            },
+            "ui_ux_ir:event_calculus": {
+              "cosine": 0.08773702383041382,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.011956047266721725
+            },
+            "ui_ux_ir:flogic": {
+              "cosine": 0.2818373441696167,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.10873951017856598
+            },
+            "ui_ux_ir:interface_bindings": {
+              "cosine": 0.0341644287109375,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.0036878385581076145
+            },
+            "ui_ux_ir:tdfol": {
+              "cosine": 0.2918441891670227,
+              "guarded_auxiliary": 0.0,
+              "reconstruction": 0.03330056369304657
+            }
+          }
+        },
+        "formalized": false,
+        "heldout_canary": false,
+        "improved": true,
+        "operation": "training",
+        "parent_version_id": "sha256:8267d68200ab4d87118a39bfe8f506b749ffe84c156e6a572b49e87f39d96e2b",
+        "projection_ids": [
+          "ui_ux_ir:dcec",
+          "ui_ux_ir:event_calculus",
+          "ui_ux_ir:flogic",
+          "ui_ux_ir:interface_bindings",
+          "ui_ux_ir:tdfol"
+        ],
+        "promotion_performed": false,
+        "qualified": false,
+        "registration": {
+          "admitted": false,
+          "artifact": {
+            "bytes": 66459,
+            "sha256": "a085de8bc1189706edb1078bce3d73369e35efba01375fe04a15343d075e25c4"
+          },
+          "formalized": false,
+          "promotion_performed": false,
+          "qualified": false,
+          "variant_id": "modality-979fcde07841659569d7063fe1b26037729d90c06ebe32ab3eec9b4ea5784214",
+          "version_id": "sha256:a95349fffe39b9daa4d33308c52d40ca759c0e9a43086ae8e385786d16d49edd"
+        },
+        "schema": "ui-feature-batch/v1",
+        "selected_total_epochs": 5,
+        "target_preparation_seconds": 0.2805497469380498,
+        "training_executed": true,
+        "training_seconds": 0.6135294260457158,
+        "training_target_count": 1,
+        "transport_executed": false,
+        "tuning_coverage": [
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:dcec",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 16,
+            "projection_id": "ui_ux_ir:event_calculus",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 20,
+            "projection_id": "ui_ux_ir:interface_bindings",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 9,
+            "projection_id": "ui_ux_ir:tdfol",
+            "unknown_atoms": 3
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:dcec",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 16,
+            "projection_id": "ui_ux_ir:event_calculus",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 20,
+            "projection_id": "ui_ux_ir:interface_bindings",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 9,
+            "projection_id": "ui_ux_ir:tdfol",
+            "unknown_atoms": 3
+          }
+        ],
+        "tuning_target_count": 2,
+        "wall_seconds": 0.9516819389536977,
+        "weights_downloaded": false
+      },
+      "worker": {
+        "deadline_enforcement": "independent_watchdog_terminates_owned_group",
+        "isolated_process_group": true,
+        "memory_enforcement": "independent_watchdog_owned_process_group_rss_checks",
+        "memory_limit_bytes": 4294967296,
+        "memory_peak_scope": "sampled_group_rss_not_kernel_peak_short_excursions_may_be_missed",
+        "observed_peak_group_processes": 1,
+        "observed_peak_group_rss_bytes": 764907520,
+        "registry_access": "serialized_exclusive_owner_including_inference",
+        "resource_checks": 3,
+        "schema": "ui-feature-worker-resources/v1",
+        "wall_limit_seconds": 180.0,
+        "wall_seconds": 17.45204095891677,
+        "watchdog_interval_seconds": 0.05,
+        "watchdog_samples": 92,
+        "worker_birth": "131019924",
+        "worker_pid": 830480
+      },
+      "resource_status": "released",
+      "reservation_id": "ede6bc22b6534aa5b2f03ecc18187bfd",
+      "final_total_charged_bytes": 7692265
+    },
+    "infer-004": {
+      "result": {
+        "admitted": false,
+        "contract_sha256": "979fcde07841659569d7063fe1b26037729d90c06ebe32ab3eec9b4ea5784214",
+        "coverage": [
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:dcec",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 16,
+            "projection_id": "ui_ux_ir:event_calculus",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 3,
+            "projection_id": "ui_ux_ir:flogic",
+            "unknown_atoms": 1
+          },
+          {
+            "known_atoms": 20,
+            "projection_id": "ui_ux_ir:interface_bindings",
+            "unknown_atoms": 0
+          },
+          {
+            "known_atoms": 9,
+            "projection_id": "ui_ux_ir:tdfol",
+            "unknown_atoms": 3
+          }
+        ],
+        "decoded_formulas_generated": false,
+        "feature_space_sha256": "9ebe39b46ccccac18970b20a1f7077ee0a55005af10590cdaf7567d3a687a54f",
+        "formalized": false,
+        "promotion_performed": false,
+        "qualified": false,
+        "representation": "native_compiler_structural_features_not_semantic_text_embeddings",
+        "rows": [
+          {
+            "latent": [
+              -0.22209000184542807,
+              0.7830005820627258,
+              -0.049486114128890674,
+              0.8469206101485346
+            ],
+            "reconstructed_projection_features": {
+              "ui_ux_ir:dcec": [
+                0.2694522935671874,
+                0.3851161091032474,
+                0.3494085870491097
+              ],
+              "ui_ux_ir:event_calculus": [
+                0.26196712367595304,
+                0.19260339848989225,
+                0.20811829424679512,
+                0.21637831710762312,
+                0.19831815963857058,
+                0.13300092785379064,
+                0.25919096616522247,
+                0.22850625783371678,
+                0.27250415128239747,
+                0.11548896901624303,
+                0.0977592525112143,
+                0.05802149555862989,
+                0.2690256846319339,
+                0.1566639078039697,
+                0.22224439146536815,
+                0.20107296175964762,
+                0.14135214140855532,
+                0.21636133366326482
+              ],
+              "ui_ux_ir:flogic": [
+                0.41674787855984696,
+                0.05493184039802528,
+                0.312611650678974,
+                0.11452365836420254,
+                0.19861401931532965
+              ],
+              "ui_ux_ir:interface_bindings": [
+                0.2618817202240276,
+                0.2159787258746739,
+                0.23395260129245435,
+                0.14206080536054783,
+                0.26530567802984156,
+                0.21827712693032483,
+                0.2812737002552339,
+                0.2824600956974888,
+                0.2374571442620093,
+                0.2424652020854427,
+                0.2278625941130325,
+                0.16641151745019478,
+                0.28284616868575996,
+                0.26234717586323075,
+                0.17263818760200922,
+                0.17365656613864067,
+                0.22987710598035482,
+                0.2564615160991868,
+                0.28699721133429185,
+                0.1395963843423106
+              ],
+              "ui_ux_ir:tdfol": [
+                0.12546045775770343,
+                0.2719569042214597,
+                0.1006477581332301,
+                0.18353837564009431,
+                0.39130430706734537,
+                0.23669843580223765,
+                0.18496360443755466,
+                0.14613193087237947,
+                -0.006960919054682033,
+                0.1705291927821862,
+                0.23565147481395718,
+                0.23837666925036718,
+                0.12764525306415828,
+                0.25232878811286036,
+                0.04312580838271476
+              ]
+            },
+            "source_digest": "1053232c61b3abdde825461650ef12210b0cdfa1eff80113e6c9e9c79233c281"
+          }
+        ],
+        "schema": "native-projection-feature-inference/v1",
+        "state_sha256": "7296ffbe6d98274e86effa6d2493d647d9e27b05659046036eb4bbaa1949adb9",
+        "training_executed": false,
+        "transport_executed": false,
+        "ui_batch_schema": "ui-feature-batch/v1",
+        "version_id": "sha256:a95349fffe39b9daa4d33308c52d40ca759c0e9a43086ae8e385786d16d49edd"
+      },
+      "worker": {
+        "deadline_enforcement": "independent_watchdog_terminates_owned_group",
+        "isolated_process_group": true,
+        "memory_enforcement": "independent_watchdog_owned_process_group_rss_checks",
+        "memory_limit_bytes": 4294967296,
+        "memory_peak_scope": "sampled_group_rss_not_kernel_peak_short_excursions_may_be_missed",
+        "observed_peak_group_processes": 1,
+        "observed_peak_group_rss_bytes": 638312448,
+        "registry_access": "serialized_exclusive_owner_including_inference",
+        "resource_checks": 3,
+        "schema": "ui-feature-worker-resources/v1",
+        "wall_limit_seconds": 180.0,
+        "wall_seconds": 16.818360507953912,
+        "watchdog_interval_seconds": 0.05,
+        "watchdog_samples": 81,
+        "worker_birth": "131024575",
+        "worker_pid": 840457
+      },
+      "resource_status": "released",
+      "reservation_id": "0e428a3e6e3d43bfacb48f186b8274fd",
+      "final_total_charged_bytes": 5607797
+    }
+  },
+  "cli_wall_times": {
+    "resume-cli": {
+      "elapsed_seconds": 43.546228823950514,
+      "returncode": 0
+    },
+    "watchdog-train-cli": {
+      "elapsed_seconds": 46.43383673601784,
+      "returncode": 0
+    },
+    "infer-cli": {
+      "elapsed_seconds": 45.86216139490716,
+      "returncode": 0
+    }
+  },
+  "inference_immutability": {
+    "artifact_files": {
+      "artifacts/12/1232015ad1a426f9ee7c0233c034597afab80ab6f92bdfb66965ea5c478d98f0": "1232015ad1a426f9ee7c0233c034597afab80ab6f92bdfb66965ea5c478d98f0",
+      "artifacts/3e/3e8c5086965965cf21e86966bf040c01b49ec95413334cdecd9ad3c1840ffdfd": "3e8c5086965965cf21e86966bf040c01b49ec95413334cdecd9ad3c1840ffdfd",
+      "artifacts/a0/a085de8bc1189706edb1078bce3d73369e35efba01375fe04a15343d075e25c4": "a085de8bc1189706edb1078bce3d73369e35efba01375fe04a15343d075e25c4"
+    },
+    "unchanged": true,
+    "inferred_version": "sha256:a95349fffe39b9daa4d33308c52d40ca759c0e9a43086ae8e385786d16d49edd"
+  },
+  "protected_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "qualified": false,
+  "admitted": false,
+  "formalized": false
+}

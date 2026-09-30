@@ -10,6 +10,9 @@ following internal class calls. Linked modules own validation and defaults.
 | Task | Entry point | Guide |
 | --- | --- | --- |
 | Prepare UI compiler views | [ui_targets.py](../../ipfs_datasets_py/logic/formalization/autoencoder/ui_targets.py): `prepare_ui_targets` | [Modalities](modalities.md) |
+| Prepare explicit DOM/IDL training rows | [ui_training_inputs.py](../../ipfs_datasets_py/logic/formalization/autoencoder/ui_training_inputs.py): `prepare_ui_training_row` | [UI datasets and bindings](ui_datasets_and_bindings.md) |
+| Train, resume or infer from local UI JSONL | [run_ui_feature_training.py](../../scripts/ops/ui_ux_ir/run_ui_feature_training.py); [ui_feature_training.py](../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/ui_feature_training.py) | [UI commands and fixtures](ui_datasets_and_bindings.md#bounded-local-commands) |
+| Validate mediated IDL request/result data | [idl_projection.py](../../ipfs_datasets_py/logic/ui_ux_ir/runtime/idl_projection.py): `project_idl_request`, `project_idl_result` | [UI binding boundaries](ui_datasets_and_bindings.md#local-route-and-current-boundaries) |
 | Prepare Intent routes or Security source-bound declarations | [domain_targets.py](../../ipfs_datasets_py/logic/formalization/autoencoder/domain_targets.py): `prepare_intent_targets`, `prepare_security_targets` | [Modalities](modalities.md) |
 | Bind exact Security source and native model | [code_logic_projection.py](../../ipfs_datasets_py/logic/security_ir/code_logic_projection.py): `CodeLogicEvidence` | [Modalities](modalities.md) |
 | Validate/load native targets | `DomainTargetEnvelope.from_dict`, `.to_dict`, `.digest` | [Artifacts](artifacts_and_inputs.md) |

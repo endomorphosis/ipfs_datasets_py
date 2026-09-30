@@ -1,8 +1,10 @@
 # Autoencoder inference and training handbook
 
 Use this handbook to choose a supported execution path, prepare its inputs,
-run or resume it, and interpret the evidence. It covers published dataset commit
-`3666ebad19422b8345ebe5432a1c02f26d2eba4c` (2026-09-29). Examples and defaults
+run or resume it, and interpret the evidence. Its core API baseline is dataset
+commit `3666ebad19422b8345ebe5432a1c02f26d2eba4c` (2026-09-29), with the
+[UI DOM/IDL training additions](ui_datasets_and_bindings.md) dated 2026-09-30.
+Examples and defaults
 belong to their named backend; they are not interchangeable across backends.
 
 ## Choose a task
@@ -10,6 +12,7 @@ belong to their named backend; they are not interchangeable across backends.
 | I need to… | Start here |
 | --- | --- |
 | Try native UI/UX learning from real compiler output | [Runnable native quickstart](native_feature_quickstart.md) |
+| Train UI DOM/IDL bindings, resume, and choose HF datasets | [UI training, datasets and bindings](ui_datasets_and_bindings.md) |
 | Train or resume the legal autoencoder, including feature mode | [Legal training](legal_training.md) |
 | Score a checkpoint without training, or understand qualification | [Inference and qualification](inference_and_qualification.md) |
 | Add UI/UX, Security, Intent, or another IR | [Modality adapters and validation](modalities.md) |
