@@ -11,6 +11,8 @@ belong to their named backend; they are not interchangeable across backends.
 
 | I need to… | Start here |
 | --- | --- |
+| Select a version across Legal, Security, Intent and UI/UX | [Versioned runtime interface](versioned_runtime_interface.md) |
+| Recover historical 8D training optimizations | [Legacy speed history and selective ports](legacy_speed_history.md) |
 | Try native UI/UX learning from real compiler output | [Runnable native quickstart](native_feature_quickstart.md) |
 | Train UI DOM/IDL bindings, resume, and choose HF datasets | [UI training, datasets and bindings](ui_datasets_and_bindings.md) |
 | Implement React action, handler, state and typed-call capture | [React capture specification and implementation plan](react_capture_spec.md) |

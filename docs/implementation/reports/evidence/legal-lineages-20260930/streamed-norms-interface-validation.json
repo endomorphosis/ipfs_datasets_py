@@ -1,0 +1,61 @@
+{
+  "admitted": false,
+  "bridge_comparison": {
+    "baseline_receipt": "streamed-norms-baseline-bridge.json",
+    "canonical_sources_equal": true,
+    "inference_speedup_claimed": false,
+    "metrics_exactly_equal": true,
+    "optimized_receipt": "streamed-norms-optimized-bridge.json",
+    "sample_count_each": 3,
+    "target_count_each": 3,
+    "vectors": "explicit synthetic diagnostics"
+  },
+  "constitution_formalized": false,
+  "created_at": "2026-09-30T20:47:19.100288+00:00",
+  "frozen_snapshot": {
+    "manifest_sha256": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+    "modules": 23,
+    "source_bytes": 2943992,
+    "verified": true
+  },
+  "independent_formula_decoder_added": false,
+  "lake_build_run": false,
+  "native_domains_tested": [
+    "security_ir",
+    "intent_ir",
+    "ui_ux_ir"
+  ],
+  "native_lifecycle": "typed target dispatch; train; infer; register; close/reopen DuckDB; reload; train; child version; reload",
+  "pytest": {
+    "command": "PYTHONPATH=$PWD PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/unit/logic/test_autoencoder_lineage_runtimes.py tests/unit/logic/test_autoencoder_lineage_guard.py tests/unit/logic/test_legacy_autoencoder_streamed_norms.py tests/unit/logic/test_autoformal_speed_semantics.py tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_runtime_registry.py tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_modality_contracts.py tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features.py tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features_v2.py",
+    "log_sha256": "d88dc0f52d72d1157596782d0a65917e1845318e5ae669c975796aea54bc8999",
+    "passed": 201,
+    "seconds": 11.82
+  },
+  "qualified": false,
+  "resume_adam_state_matches_uninterrupted": true,
+  "schema": "legacy-speed-and-versioned-interface-validation/v1",
+  "source_base_commit": "cabe25a820afe7190a20f690c1dca9d39ddbeca1",
+  "source_hashes": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/__init__.py": "98f6bbf681246b373d7bbe669518dccb75e3431916dba9f379cbd97458d1bc20",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1_optimized.py": "9066261aeb75033e7259df9ddfde694147e19acb47a9a15d3671d0d8736873c3",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py": "8ec9b0c18c74c94334c0f70721f0e29c6986243afc98f249c8a375e73ab55e1f",
+    "scripts/ops/legal_ir/benchmark_legacy_streamed_norms.py": "fae5fbb8da3412c63b61f68bff7946a374e45d4432a853a9e8b4890b15eaccd3",
+    "scripts/ops/legal_ir/measure_legacy_runtime_bridges.py": "0edf963dff8af6d46d169bbde6005e2e2785abde4797ecaf0c08be83b4eefb3e",
+    "tests/unit/logic/test_autoencoder_lineage_guard.py": "c64dd2a176c79fa76dd9c7ecf4d428691ba5ffb653a1441086130c4d43892828",
+    "tests/unit/logic/test_autoencoder_lineage_runtimes.py": "915cb0da9eb1a9e27532dbc34ed6deb65d874e384fa0018aec1f9afd432ecc54",
+    "tests/unit/logic/test_autoformal_speed_semantics.py": "c6d04bb31cdabab33348a28422ae4310c6366f3c8e6ec5d019b2c260f48b9a09",
+    "tests/unit/logic/test_legacy_autoencoder_streamed_norms.py": "cd83ae3c1a1c55104d127dada12a9bfccdece406569a7242adb526577832ed95",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_modality_contracts.py": "05e6a03cc8eb9e0c10e0d161040937bb7cbbd00e2f19e435c9c376320c813b28",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features.py": "f6fc15f49ca74a4cf8ebe01b7eea6cf4b9d12612ff7bcb46ae54800e60829d0e",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_projection_features_v2.py": "5bf44078fc973933198980e3ba3f5575dbd1dc67e629a4c04d2abb5dc431fbf1",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_runtime_registry.py": "d58510de339a17bba3dfbf179c2dfd8b3c105693e3395d01023e14b4b0f13a18"
+  },
+  "tree": "canonical shared checkout; unrelated uncommitted dependencies present",
+  "unsupported_by_common_interface": [
+    "native_v2 contract/registry resume",
+    "nonlegal fleet transport",
+    "nonlegal Quack/Arrow/HuggingFace state exchange"
+  ],
+  "weights_downloaded": false
+}

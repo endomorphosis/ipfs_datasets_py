@@ -1,0 +1,295 @@
+"""Explicit runtime versions over the existing legal and native feature APIs.
+
+This is trusted local dispatch, not a plugin loader or a migration service.
+Native versions reuse exact modality contracts and the single-owner DuckDB
+registry. A registered candidate, reconstructed vector, or compiler target
+does not acquire qualification, inference promotion, or proof authority.
+"""
+from __future__ import annotations
+
+import hashlib
+import importlib
+import json
+from pathlib import Path
+import re
+
+from . import autoencoder_projection_features as features
+from .autoencoder_modality_contracts import ModalityAdapterRegistry, ModalityContract
+
+
+SCHEMA = "autoencoder-runtime-interface/v1"
+NATIVE_DOMAINS = ("intent_ir", "security_ir", "ui_ux_ir")
+LEGAL_VERSIONS = ("legacy_v1", "legacy_v1_optimized", "current_v2")
+MAX_CANDIDATE_BYTES = 32 * 1024 * 1024
+
+
+class RuntimeVersionError(ValueError):
+    """Unknown runtime, incompatible version, or unsupported interface operation."""
+
+
+def _require(condition, message):
+    if not condition:
+        raise RuntimeVersionError(message)
+
+
+def _copy(value):
+    return json.loads(json.dumps(value, sort_keys=True, allow_nan=False))
+
+
+def _optimizer_root():
+    return Path(features.__file__).resolve().parent
+
+
+def _source_identity(paths):
+    # A limited, inspectable identity. This is deliberately not advertised as
+    # provenance for transitive dependencies or the complete compiler tree.
+    rows = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in paths}
+    return {"files": rows, "sha256": features.digest(rows),
+            "scope": "listed_runtime_files_only_not_transitive_dependency_provenance"}
+
+
+def describe_runtime(domain, version):
+    """Describe an exact selection; never infer a version from vector width."""
+    root = _optimizer_root()
+    paths = [("autoencoder_runtime_registry.py", Path(__file__))]
+    if domain == "legal_ir":
+        _require(version in LEGAL_VERSIONS, "unknown legal runtime version")
+        namespace = root / "autoencoder_lineages"
+        profile = (namespace / (version + ".py") if version == "legacy_v1_optimized"
+                   else namespace / version / "__init__.py")
+        _require(profile.is_file(), "runtime profile is not installed: " + version)
+        paths.extend([("autoencoder_lineages/" + str(profile.relative_to(namespace)), profile),
+                      ("autoencoder_lineages/_contract.py", namespace / "_contract.py")])
+        legacy = version != "current_v2"
+        if legacy:
+            paths.append(("autoencoder_lineages/legacy_v1/_snapshot/MANIFEST.json",
+                          namespace / "legacy_v1/_snapshot/MANIFEST.json"))
+        else:
+            paths.append(("modal_autoencoder.py", root / "modal_autoencoder.py"))
+        result = {"lineage_id": "legacy_hub_v1" if legacy else "current_legal_v2",
+                  "input_representation": "explicit_8d_vectors" if legacy else "explicit_384d_vectors",
+                  "dimension": 8 if legacy else 384, "state_schema": "modal-autoencoder-state/json",
+                  "objective_default": "historical_reconstruction" if legacy else "raw_decoder",
+                  "capabilities": ["train", "infer", "load_checkpoint"], "integrated": True}
+    else:
+        _require(domain in NATIVE_DOMAINS, "unknown modality domain")
+        _require(version in ("native_v1", "native_v2"), "unknown native runtime version")
+        module_name = "autoencoder_projection_features" + ("_v2" if version == "native_v2" else "")
+        paths.extend([(module_name + ".py", root / (module_name + ".py")),
+                      ("modal_autoencoder_cuda.py", root / "modal_autoencoder_cuda.py")])
+        integrated = version == "native_v1"
+        result = {"lineage_id": domain + "/native_projection_features",
+                  "input_representation": "native_compiler_structural_features",
+                  "dimension": None, "state_schema": "native-projection-feature-state/" + version[-2:],
+                  "objective_default": "native-projection-reconstruction/v1",
+                  "capabilities": ["prepare_targets", "train", "infer", "register_candidate", "load_version"]
+                                  if integrated else [], "integrated": integrated}
+        if not integrated:
+            result["unsupported_reason"] = ("Streamed v2 has its own minibatch/Adam state. Its exact modality "
+                "contract and registry resume adapter are not implemented by this interface.")
+    return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+            "runtime_id": domain + ":" + version, "source_identity": _source_identity(paths),
+            **result, **features.FALSE}
+
+
+def list_runtimes():
+    """List installed profiles, with unavailable integrations clearly marked."""
+    namespace = _optimizer_root() / "autoencoder_lineages"
+    legal = [version for version in LEGAL_VERSIONS if
+             ((namespace / (version + ".py")) if version == "legacy_v1_optimized"
+              else (namespace / version / "__init__.py")).is_file()]
+    return [describe_runtime("legal_ir", version) for version in legal] + [
+        describe_runtime(domain, version) for domain in NATIVE_DOMAINS
+        for version in ("native_v1", "native_v2")]
+
+
+def _target_adapter(domain):
+    from ...logic.formalization.autoencoder import domain_targets, ui_targets
+    _require(domain in NATIVE_DOMAINS, "native target preparation requires a native domain")
+    if domain == "ui_ux_ir":
+        return ui_targets, ui_targets.prepare_ui_targets
+    return domain_targets, {"intent_ir": domain_targets.prepare_intent_targets,
+                            "security_ir": domain_targets.prepare_security_targets}[domain]
+
+
+def prepare_targets(domain, version, **inputs):
+    """Delegate to the domain's typed compiler/validator, preserving its views."""
+    descriptor = describe_runtime(domain, version)
+    _require("prepare_targets" in descriptor["capabilities"], "runtime lacks prepare_targets")
+    return _target_adapter(domain)[1](**inputs)
+
+
+class _NativeAdapter:
+    def __init__(self, contract, space):
+        self.contract, self.space = contract, _copy(space)
+
+    def train(self, samples, validation_samples, **options):
+        return features.train_projection_features(self.contract, self.space, samples,
+                                                  validation_samples, **options)
+
+    def evaluate(self, state, samples):
+        return features.infer_projection_features(self.contract, self.space, state, samples)
+
+
+class NativeRuntime:
+    """One exact domain, feature basis, objective, validator policy and state codec.
+
+    Training selects a private candidate. Inference never trains. Registry
+    publication records ancestry, but does not promote a qualified model head.
+    """
+    def __init__(self, domain, *, contract, feature_space, state=None):
+        _require(type(contract) is ModalityContract, "typed modality contract required")
+        _require(contract.domain == domain, "contract belongs to another domain")
+        self._descriptor = describe_runtime(domain, "native_v1")
+        self.contract, self._space = contract, _copy(feature_space)
+        features._contract(contract, self._space)
+        _require(contract.adapter.identifier == "native-domain-target-adapter" and contract.adapter.version == "1"
+                 and contract.optimizer.version == "1"
+                 and re.fullmatch(r"1:latent-([1-9]|[1-5][0-9]|6[0-4])", contract.state_codec.version),
+                 "implementation version labels differ from native_v1")
+        self._verify_adapter()
+        self._adapters = ModalityAdapterRegistry()
+        self._adapters.register(contract, _NativeAdapter(contract, self._space), capabilities=("train", "evaluate"))
+        self._state = None if state is None else _copy(state)
+        if state is not None:
+            features._validate_state(contract, self._space, self._state)
+        self._parent_version_id = None
+        self._result = None
+
+    def _verify_adapter(self):
+        contract = self.contract
+        domain = contract.domain
+        adapter, _ = _target_adapter(domain)
+        _require(contract.adapter.sha256 == hashlib.sha256(Path(adapter.__file__).read_bytes()).hexdigest(),
+                 "installed native target adapter differs from contract")
+
+    def describe(self):
+        return {**_copy(self._descriptor), "contract": self.contract.to_dict(),
+                "contract_sha256": self.contract.sha256, "variant_id": self.contract.variant_id,
+                "parent_version_id": self._parent_version_id}
+
+    @property
+    def state(self):
+        return None if self._state is None else _copy(self._state)
+
+    def train(self, samples, *, validation_samples, **options):
+        _require(self._result is None, "register the pending candidate before training another version")
+        _require("base_state" not in options, "resume state is bound to this runtime; use load_version")
+        self._verify_adapter()
+        adapter = self._adapters.resolve(self.contract, required_capabilities=("train",))
+        options.setdefault("latent_width", int(self.contract.state_codec.version.split("latent-")[1]))
+        result = adapter.train(samples, validation_samples, base_state=self._state, **options)
+        self._result, self._state = _copy(result), _copy(result["state"])
+        return result
+
+    def infer(self, samples, **options):
+        _require(not options, "native inference does not accept training or legal evaluation options")
+        _require(self._state is not None, "native inference requires a trained or loaded state")
+        self._verify_adapter()
+        return self._adapters.resolve(self.contract, required_capabilities=("evaluate",)).evaluate(self._state, samples)
+
+    def register_candidate(self, registry, directory):
+        _require(self._result is not None, "train a candidate before registering it")
+        self._verify_adapter()
+        result = features.register_feature_candidate(registry, self.contract, self._space, self._result,
+                                                    directory, parent_version_id=self._parent_version_id)
+        self._parent_version_id = result["version_id"]
+        self._result = None
+        return {**result, "runtime_id": self._descriptor["runtime_id"]}
+
+
+class LegalRuntime:
+    """Common entry points over a selected legal facade; no formula decoder added."""
+    def __init__(self, version, *, checkpoint=None, expected_sha256=None, **model_options):
+        self._descriptor = describe_runtime("legal_ir", version)
+        # The module name is selected solely from the closed local enum above.
+        namespace = importlib.import_module(__package__ + ".autoencoder_lineages." + version)
+        if checkpoint is None:
+            _require(expected_sha256 is None, "checkpoint hash supplied without a checkpoint")
+            self.model = namespace.Autoencoder(**model_options)
+        else:
+            self.model = namespace.load_checkpoint(checkpoint, expected_sha256=expected_sha256, **model_options)
+
+    def describe(self):
+        return {**_copy(self._descriptor), "model": self.model.describe()}
+
+    def train(self, samples, *, validation_samples=None, **options):
+        return self.model.train_generalizable_projection(samples, validation_samples=validation_samples, **options)
+
+    def infer(self, samples, **options):
+        return self.model.evaluate(samples, **options)
+
+
+def open_runtime(domain, version, **binding):
+    """Select explicitly. Dimensions, source metadata, and filenames never dispatch."""
+    descriptor = describe_runtime(domain, version)
+    _require(descriptor["integrated"], descriptor.get("unsupported_reason", "runtime is not integrated"))
+    if domain == "legal_ir":
+        return LegalRuntime(version, **binding)
+    return NativeRuntime(domain, **binding)
+
+
+def build_native_runtime(domain, version, training_targets, *, projection_ids, ir_schema, latent_width=4):
+    """Build a v1 basis from training only; excluded native views remain recorded."""
+    descriptor = describe_runtime(domain, version)
+    _require(domain in NATIVE_DOMAINS and descriptor["integrated"], "native version is not integrated")
+    adapter, _ = _target_adapter(domain)
+    space = features.build_feature_space(domain, projection_ids, training_targets)
+    contract = features.build_native_feature_contract(space, ir_schema=ir_schema,
+        adapter_sha256=hashlib.sha256(Path(adapter.__file__).read_bytes()).hexdigest(), latent_width=latent_width)
+    return open_runtime(domain, version, contract=contract, feature_space=space)
+
+
+def _read_candidate(registry, version):
+    from ...duckdb_control.autoencoder_registry import SCHEMA as REGISTRY_SCHEMA, content_identity
+    expected_version = content_identity({"schema": REGISTRY_SCHEMA, **{
+        key: version[key] for key in ("variant_id", "artifact", "metadata", "parent_version_id")}})
+    _require(version["version_id"] == expected_version, "registry version content identity differs")
+    artifact = registry.verify_artifact(version["artifact"])
+    _require(artifact["bytes"] <= MAX_CANDIDATE_BYTES, "native candidate exceeds interface byte bound")
+    with registry.artifact_path(artifact).open("rb") as stream:
+        raw = stream.read(MAX_CANDIDATE_BYTES + 1)
+    _require(len(raw) == artifact["bytes"] and hashlib.sha256(raw).hexdigest() == artifact["sha256"],
+             "candidate changed after artifact verification")
+    saved = json.loads(raw)
+    _require(type(saved) is dict and set(saved) == {"contract", "feature_space", "state", "report"},
+             "unsupported native candidate envelope")
+    return saved
+
+
+def load_version(registry, version_id, *, domain, version):
+    """Verify and reload a native candidate from the existing DuckDB registry.
+
+    The caller selects the expected domain/version. Metadata cannot select
+    imports, replace projections, migrate Adam state, or raise authority.
+    """
+    descriptor = describe_runtime(domain, version)
+    _require("load_version" in descriptor["capabilities"], "runtime lacks registry load_version")
+    row = registry.get_version(version_id)
+    saved = _read_candidate(registry, row)
+    contract = ModalityContract.from_dict(saved["contract"])
+    _require(row["variant_id"] == contract.variant_id, "registry variant differs from candidate contract")
+    manifest = registry.get_variant(row["variant_id"])["manifest"]
+    _require(manifest == contract.registry_manifest(), "registry modality manifest differs from candidate")
+    _require(row["metadata"] == {"contract_sha256": contract.sha256,
+             "training_purpose": "feature_pretraining", **features.FALSE}, "candidate metadata differs")
+    report, state = saved["report"], saved["state"]
+    _require(report["contract_sha256"] == contract.sha256
+             and report["feature_space_sha256"] == features.digest(saved["feature_space"])
+             and all(report.get(key) is False for key in features.FALSE), "candidate report identity or authority differs")
+    parent_id = row["parent_version_id"]
+    if parent_id is None:
+        _require(report["base_state_sha256"] is None, "resumed candidate lacks a registry parent")
+    else:
+        parent = registry.get_version(parent_id)
+        _require(parent["variant_id"] == row["variant_id"], "parent belongs to another variant")
+        parent_saved = _read_candidate(registry, parent)
+        _require(features.digest(parent_saved["state"]) == report["base_state_sha256"],
+                 "candidate numerical parent differs from registry parent")
+    runtime = open_runtime(domain, version, contract=contract, feature_space=saved["feature_space"], state=state)
+    runtime._parent_version_id = row["version_id"]
+    return runtime
+
+
+__all__ = ["RuntimeVersionError", "list_runtimes", "describe_runtime", "prepare_targets",
+           "open_runtime", "build_native_runtime", "load_version", "NativeRuntime", "LegalRuntime"]

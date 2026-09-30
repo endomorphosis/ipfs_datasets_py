@@ -5,6 +5,14 @@ The legacy teacher and current legal students now have separate identities in
 Keep both. An architecture tag, a compatibility load, or a faster execution
 backend does not change a checkpoint's ancestry.
 
+The [common versioned interface](versioned_runtime_interface.md) selects these
+legal profiles alongside Security, Intent and UI/UX native models. Within the
+legacy lineage, `legacy_v1_optimized` is an opt-in runtime profile that streams
+transaction norm accounting. The frozen `legacy_v1` remains the comparison
+baseline; this speed port preserves its objective, search and acceptance rules.
+See the [history audit](legacy_speed_history.md) for retained optimizations and
+the separately scoped ports still needed.
+
 ## The two lines
 
 | Identity | Code reference | Weights and role |

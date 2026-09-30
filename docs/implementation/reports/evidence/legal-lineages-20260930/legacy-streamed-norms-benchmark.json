@@ -1,0 +1,137 @@
+{
+  "admitted": false,
+  "bridge_names": [],
+  "bridge_off_training": {
+    "accepted_epochs": 1,
+    "epochs": 2,
+    "exact_report_parity_excluding_timings": true,
+    "exact_weight_parity": true,
+    "frozen": {
+      "median_wall_seconds": 0.8680303660221398,
+      "median_wall_seconds_per_input_span": 0.14467172767035663,
+      "wall_seconds": [
+        0.8680303660221398,
+        0.8546429160051048,
+        0.823198382044211,
+        0.8781071151606739,
+        0.875047184061259
+      ]
+    },
+    "legal_ir_target_count": 0,
+    "optimized": {
+      "median_wall_seconds": 0.8085192011203617,
+      "median_wall_seconds_per_input_span": 0.13475320018672696,
+      "wall_seconds": [
+        0.8201749150175601,
+        0.7861110649537295,
+        0.8301473271567374,
+        0.8085192011203617,
+        0.8030510770622641
+      ]
+    },
+    "result_state_sha256": "d6ec63f974534aa909332285976e9cbe2c0d9f6483fc5b8569d569d0ee31a658",
+    "sample_count": 3,
+    "speedup": 1.0736051349421434,
+    "validation_sample_count": 3
+  },
+  "bridge_on_evaluate": {
+    "reason": "evaluation implementation is unchanged; this measures training bookkeeping only",
+    "status": "not_run"
+  },
+  "canonical_logic_origins": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "cold_legal_ir_run": null,
+  "created_at": "2026-09-30T20:40:53.723774+00:00",
+  "device": "cpu",
+  "dimension": 8,
+  "frozen_batch_method_sha256": "d4c122f79fb533e233ed3173f3e35307f3096122e9ed3088ad7abd0ed72cfdd0",
+  "legal_ir_parallel_workers": 1,
+  "lineage_id": "legacy_hub_v1",
+  "metric_disk_cache": false,
+  "norm_accounting": {
+    "compiler_facing_head_rows": 300,
+    "exact_report_parity": true,
+    "frozen": {
+      "median_wall_seconds": 0.01481187017634511,
+      "peak_python_allocation_bytes": 1498262,
+      "wall_seconds": [
+        0.015212372178211808,
+        0.01481187017634511,
+        0.014808253850787878,
+        0.014530027052387595,
+        0.02227918989956379
+      ]
+    },
+    "optimized": {
+      "median_wall_seconds": 0.001513252966105938,
+      "peak_python_allocation_bytes": 54484,
+      "wall_seconds": [
+        0.001536614028736949,
+        0.0014928048476576805,
+        0.0015150769613683224,
+        0.001492468873038888,
+        0.001513252966105938
+      ]
+    },
+    "report": {
+      "finite": true,
+      "gradient_norm": 34.641016151377,
+      "gradient_norms_by_family": {
+        "deontic": 34.6410161514
+      },
+      "gradient_norms_by_head": {
+        "feature_legal_ir_view_logits": 34.6410161514
+      },
+      "head_family_gradient_norms": {
+        "compiler_facing_legal_ir_view": 34.6410161514
+      },
+      "head_family_update_norms": {
+        "compiler_facing_legal_ir_view": 0.346410161514
+      },
+      "learning_rate": 0.01,
+      "nonzero_gradient": true,
+      "nonzero_update": true,
+      "scalar_update_counts_by_head": {
+        "feature_legal_ir_view_logits": 300
+      },
+      "schema_version": "legal-ir-trainable-objective-head-norms-v1",
+      "trainable_head_families": {
+        "decompiler_plan_embedding_weights": "decompiler",
+        "decompiler_plan_family_logits": "decompiler",
+        "decompiler_plan_legal_ir_view_logits": "decompiler",
+        "family_semantic_slot_legal_ir_view_logits": "semantic_slot",
+        "feature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+        "legal_ir_view_family_logits": "compiler_facing_legal_ir_view",
+        "legal_ir_view_logits": "compiler_facing_legal_ir_view",
+        "logic_signature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+        "predicate_argument_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+        "proof_auxiliary_head_logits": "proof",
+        "round_trip_signal_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+        "semantic_slot_legal_ir_view_family_logits": "semantic_slot",
+        "semantic_slot_legal_ir_view_logits": "semantic_slot"
+      },
+      "update_norm": 0.346410161514,
+      "update_norms_by_family": {
+        "deontic": 0.346410161514
+      },
+      "update_norms_by_head": {
+        "feature_legal_ir_view_logits": 0.346410161514
+      }
+    },
+    "speedup": 9.788099219432278,
+    "unrelated_embedding_rows": 3000
+  },
+  "port_revision": "03bf05a51992bd70c2e6f225e656babe9b0dfa2e",
+  "profile_source_sha256": "9066261aeb75033e7259df9ddfde694147e19acb47a9a15d3671d0d8736873c3",
+  "provers": false,
+  "repeats": 5,
+  "runtime_profile": "legacy-v1-streamed-norms/v1",
+  "schema": "legacy-streamed-norms-benchmark/v1",
+  "scope": "synthetic optimizer bookkeeping diagnostic; not legal-IR speed or semantic qualification",
+  "semantic_qualification": false,
+  "source_revision": "ddf6b79467b68159650df81befc288c8553df664",
+  "use_sample_memory": false
+}
