@@ -1,5 +1,22 @@
 ---
 configs:
+  - config_name: formal_logic_text
+    data_files:
+      - split: train
+        path: autoformal/uscode/formula-text/v1/*/formulas.parquet
+  - config_name: paired_spans
+    default: true
+    data_files:
+      - split: train
+        path: autoformal/uscode/paired-v1/paired_spans/**/*.parquet
+  - config_name: deferred_goals
+    data_files:
+      - split: train
+        path: autoformal/uscode/paired-v1/goals/**/*.parquet
+  - config_name: evidence_artifacts
+    data_files:
+      - split: train
+        path: autoformal/uscode/paired-v1/artifacts/**/*.parquet
   - config_name: retained_outputs_v1
     data_files:
       - split: train
@@ -18,166 +35,175 @@ configs:
         path: autoformal/uscode/goals/**/*.parquet
 ---
 
-# US Code autoformalization observations and deferred repair goals
+# Paired US Code conversions, diagnostic census and deferred repair goals
 
-This repository contains source-backed observations from the legal autoencoder
-and deterministic compiler, plus portable goals for later review by an
-`ipfs_accelerate_py` agent supervisor. It is a work-in-progress evidence corpus.
-An uploaded observation, compiled rule, decompiled sentence, reconstruction
-score, or bridge target does not establish formalization. Lake admission
-requires a separate source-bound `lake build <Lib>` receipt. The Constitution
-is not formalized.
+## Read the actual formula strings
 
-## Choose a dataset configuration
+Select **[formal_logic_text](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/viewer/formal_logic_text/train)** for source text
+and emitted formula text as the first columns, or read the **[annotated examples](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/bf95253007ce123fb44a551806f4e29e9a30834b/autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/EXAMPLES.md)**.
+This is a fixed audit of the four archived reports below, not a live count of the
+whole corpus. [JSONL](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/bf95253007ce123fb44a551806f4e29e9a30834b/autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/formulas.jsonl),
+[Parquet](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/bf95253007ce123fb44a551806f4e29e9a30834b/autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/formulas.parquet), and
+[manifest](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/bf95253007ce123fb44a551806f4e29e9a30834b/autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/manifest.json) are pinned to an immutable commit.
 
-| Configuration | Read this for |
-| --- | --- |
-| `retained_outputs_v1` | Queryable historical autoencoder vectors, compiler rules and decompiled text, metrics, and links to deferred goals |
-| `census_v3` | New complete census observations, with explicit autoencoder/compiler columns and captured source-derived logic targets |
-| `census_v2` | Original historical observations; complete retained outputs remain in `input_json` |
-| `supervisor_goals_v2` | Full repair packets and training goals, source context, acceptance criteria, and evidence hashes |
+For source `116–283, §1847(d)(1)(D)(i), redesignated pars.`, the stored strings include:
 
-Each configuration has a separate schema. The `train` split name is a storage
-label and does not assert qualification for training. The progress ledger and
-older operational tables are not included in these observation configurations.
+```text
+Lifecycle(N1847, RedesignatedPars)
+LifecycleState(sym_1847(), redesignated_pars())
+O(redesignated_pars(n_1847))
+```
+
+These disagree: the last expression introduces an obligation into an amendment-history
+fragment. Another source, `L.`, produces `O(l(actor))`; that is a conversion failure,
+even though the producer's syntax flag is true. The operative 10 U.S.C. 4873 example
+in the linked audit has an omitted condition and canonical `action="to"`.
+
+The 56-span audit has **372 formula occurrences** from 45 available documents,
+with repeats preserved. **41 of 45 TDFOL records use the text fallback**; eleven
+documents are unavailable. These counts are not successful formalizations.
+The formula rows retain exact strings, JSON pointers, source-report revisions,
+fallback provenance and reported validation/omission/blocker evidence. Unknown
+fallback status is null, not a claim that the output avoided fallback.
+
+These are source compiler/bridge outputs. The legacy autoencoder has **no learned
+formula decoder**; the guided compiler path emits ASTs. None of this sample has
+Lake admission or qualification as a correct/gold semantic training target.
+Failed outputs remain useful diagnostic evidence and potential repair-training
+examples. The readable view supplements the full reports and linked paired data.
+
+New observations use three linked tables. Historical files remain available;
+no original observations or goal packets are removed by this migration.
+
+| Configuration | Content | Join key |
+| --- | --- | --- |
+| `paired_spans` (default) | Source text; raw and projected autoencoder vectors; guided and direct compiler formulas; canonical typed compiler results; comparison; provenance; Lake status | `observation_id`, `source.span_id`, `goal_ids` |
+| `deferred_goals` | Disagreement, compiler failure and capability records; source/observation bindings; immutable packet/task references | `goal_id`, `observation_ids` |
+| `evidence_artifacts` | Losslessly compressed complete producer receipts, source bridge documents, compiler components, original packets and tasks | `artifact_sha256` |
+
+`uscode-paired-span-bundle/v1` manifests under
+`autoformal/uscode/paired-v1/manifests/` bind all three tables by exact SHA-256,
+size, row count and immutable repository paths. Read a pinned commit when
+comparing runs. The `train` split is a storage label, not a training-quality gate.
 
 ```python
 from datasets import load_dataset
-
-observations = load_dataset(
-    "justicedao/uscode-autoformal-span-cache",
-    "retained_outputs_v1",
-    split="train",
-    streaming=True,
-    revision="<immutable-commit-sha>",
-)
-for row in observations:
-    if row["compiler_rule_count"]:
-        print(row["source_span_id"], row["compiler_rules_json"])
+rows = load_dataset('justicedao/uscode-autoformal-span-cache', 'paired_spans',
+                    split='train', streaming=True, revision='<immutable-commit>')
+for row in rows:
+    print(row['source']['span_id'], row['comparison']['status'],
+          row['compiler']['canonical_formal_outputs'], row['goal_ids'])
 ```
 
-Use an immutable commit revision when comparing runs or importing evidence.
-Multiple observations of the same source may have different compiler/model
-identities. Join goals by `census_sha256`; retain `source_span_id`,
-`source_text_sha256`, `code_identity`, and `model_identity` as provenance.
+## What is being compared
 
-## What the autoencoder emitted
+The local legacy autoencoder emits eight-dimensional diagnostic vectors and
+compiler guidance. Its input representation is `mock:stable-sha256/8`, with
+no verified semantic embedding provenance. It has no learned legal formula
+decoder. The explicitly labeled **autoencoder-guided compiler** converts the
+original text using that learned guidance. The direct deterministic modal
+compiler processes the same source without that guidance. Both native formula
+collections are stored, with their exact payloads and origin labels.
 
-The legacy CUDA campaign reconstructs eight-dimensional diagnostic vectors.
-The input representation is `mock:stable-sha256/8`; it has no verified semantic
-embedding provenance. Its raw decoder embedding, cosine similarity, and
-reconstruction loss are distinct from its target-conditioned safety-projected
-embedding and scores. These observations do not establish legal understanding.
+Their agreement is **diagnostic, not independent validation**. The current
+comparison checks exact AST sequences including metadata; it does not prove
+semantic equivalence. Counts, ordering, polarity, temporal fields, conditions,
+exceptions and duplicate components are not silently discarded. Missing outputs,
+partial collections and incompatible representations have explicit statuses.
+`complete` means the emitted collection was captured; it does not establish
+that the compiler represented every legal meaning in the source.
 
-The model does not emit legal formulas or reconstructed legal sentences in
-this campaign. Empty `autoencoder_text` and `autoencoder_compiled` remain empty.
-Compiler formulas and source-derived target documents are retained under their
-own names, never relabeled as learned model outputs. This campaign performs
-diagnostic inference, not training or weight publication.
+`compiler.canonical_formal_outputs` separately retains actual typed-deontic
+compiler results. Its abstentions and completeness remain visible even when
+the two modal paths agree. `syntax_status=not_checked` remains explicit for
+native modal ASTs that have no independently invoked syntax validator.
+Bridge names are requested adapters; they are not proof that all logic
+families compiled or passed their validators.
 
-## Compiler and logic artifacts
+No result in this diagnostic campaign grants admission. `admitted=false`,
+`formalized=false`, and Lake `not_run` stay explicit. A separate source-bound
+`lake build <Lib>` receipt is the only Lean admission. The Constitution is not
+formalized and must never receive `roundtrip_ok` here.
 
-`compiler_rules_json` exposes retained structured rules.
-`compiler_components_json` in census v3 preserves individual clause outcomes;
-`compilation_complete` distinguishes a complete compilation from partial
-evidence. `compiler_status`, `compiler_reason`, and `compiler_decompiled` expose
-success, abstention, and text reconstruction. The full original observation
-and producer context remain in `input_json`.
+## Complete evidence and later supervisor import
 
-`logic_target_observation_json` captures the independent source-derived target
-used during evaluation. `bridge_names_json` reports adapters invoked;
-`observed_logic_views_json` records actual view names and
-`observed_logic_families_json` records explicitly declared family metadata.
-These fields do not certify that every requested logic family compiled or
-passed a syntax validator. External prover evaluation is disabled in this
-legacy diagnostic campaign.
+Every batch archives its full original producer receipt once. Rows point into
+that content-addressed artifact for bridge documents and compiler components.
+It retains source text, direct/guided native documents, guidance, raw evaluation,
+failures, scores, source/checkpoint hashes and execution configuration. No target
+is relabeled as a learned formula. Artifact rows encode exact bytes as base64
+of zlib data and record the uncompressed SHA-256 and size.
 
-Large graph payloads inside newly captured target documents use the lossless
-`recursive-zlib-json/v1` document encoding. Compact formal views stay readable;
-compressed nested payloads retain their exact uncompressed byte lengths and
-SHA-256 digests. The canonical checkout provides `unpack_document` in
-`ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_logic_artifacts`
-to reconstruct and verify the full document within explicit bounds. Packing
-does not discard graph evidence or convert a target into model output.
+The canonical package's `logic.autoformal.paired_span_census` provides
+`load_paired_census_bundle()` and `decode_artifact()` with explicit expansion
+bounds and hash verification. Nested `recursive-zlib-json/v1` bridge payloads
+use `optimizers.logic_theorem_optimizer.legacy_span_logic_artifacts.unpack_document`.
 
-From the canonical checkout, decode a retained observation with:
+Goals remain dataset records with `enqueued=false`. The existing
+`scripts/ops/legal_ir/import_span_cache_exchange.py` validates either new paired
+bundles or historical exchange bundles. Its default is a review plan. It can
+later import sealed packet/task pairs to a machine-local supervisor database;
+capability gaps without such packets stay preserved descriptive deferrals.
+Publishing a goal never executes it or authorizes source edits.
 
-```python
-import json
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_logic_artifacts import (
-    DOCUMENT_ENCODING, unpack_document,
-)
+## Bounded processing and resume
 
-observation = json.loads(row["logic_target_observation_json"])
-document = observation.get("document") if observation else None
-if document is not None and observation.get("document_encoding") == DOCUMENT_ENCODING:
-    document = unpack_document(document, max_decoded_bytes=16 * 1024 * 1024)
-```
+One resident CUDA model serves a hardware-bounded CPU compiler pool. At most
+two batches overlap. Full target/report caches are disabled for this isolated
+campaign; chunked compiler work checks the pinned source generation before and
+after each chunk. One controller writes the local DuckDB progress queue.
+Interrupted work is requeued; immutable Hub uploads use parent-commit checks.
+Local batch evidence is removed only after all four remote files are verified
+at the exact publication commit. Other machines can read immutable bundles and
+later reimport goals; this inference campaign does not synchronize or train weights.
 
-The helper verifies each compressed field and the aggregate decoded document
-bound. The indexer itself preserves the packed observation without expanding it.
+The five bridge adapters are `modal_frame_logic`, `deontic_norms`, `fol_tdfol`,
+`cec_dcec`, and `external_prover_router`. Provers are off, disk cache is off,
+sample memory is off, temperature is zero. Per-batch receipts record worker
+counts, target counts and wall times. A target count of zero is not a faster
+legal-IR evaluation.
 
-Older v2 exports may contain a target hash without the full target document.
-Historical indexing cannot recover artifacts that were never recorded. Those
-derived rows explicitly report `logic_target_availability=not_recorded_in_source`.
+## Historical schemas
 
-## Deferred compiler-improvement goals
+The four existing configurations (`retained_outputs_v1`, `census_v3`,
+`census_v2`, and `supervisor_goals_v2`) preserve previous observations and goals.
+They are separate from the default paired schema. Older vector-only observations
+cannot be retrospectively treated as guided conversions. Some older records
+retain only target hashes; absent evidence is not reconstructed or invented.
+The original dataset card is retained in the canonical source repository at
+`docs/datasets/uscode_autoformal_span_cache_historical_card.md`.
 
-`supervisor_goals_v2` stores `packet_json`, `task_json`, packet/task hashes, and
-the associated `census_sha256`. New packets retain observation context and
-references needed to review compiler errors alongside autoencoder diagnostics.
-The goals remain `handoff_status=dataset`, `enqueued=false`; publishing them
-does not execute a supervisor task or authorize a source change.
+## Published full reports and measured sample
 
-The canonical repository's `scripts/ops/legal_ir/import_span_cache_exchange.py`
-validates an exact exchange manifest before planning a later import. An explicit
-native import creates review-only blocked work. Dataset-supplied commands are
-not automatically adopted as validation commands. Existing admission and
-compiler acceptance requirements still apply.
+Four lossless original receipts preserve 56 span observations, 45 captured
+source logic documents, raw/projected vectors, three canonical compiler rules,
+and all available failures, metrics and provenance. Eleven documents were
+not captured by the producer limits (ten historical 4 MiB omissions and one
+new 16 MiB omission); their identities and reasons remain explicit.
 
-## Immutable bundles and historical backfill
+| Receipt | Spans | Captured documents | Full report | Manifest |
+| --- | ---: | ---: | --- | --- |
+| Historical | 32 | 22 | [gzip JSON](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/4f7922a2188c111e30841a08769f0f989d0b7c61/autoformal/uscode/reports/v1/reports/43a822841e7192587a190bf56381bc55cdb1249a97ff3fa0a8a876d90bd75e90.json.gz) | [hashes and inventory](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/4f7922a2188c111e30841a08769f0f989d0b7c61/autoformal/uscode/reports/v1/manifests/0f2431a7c4746625fdbf693b312447f138d7ff4b820774ed4990dc334caa84ed.json) |
+| Paired smoke 1 | 8 | 7 | [gzip JSON](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/48cd0a5b666a8ef6cbaf259e9f1cc94792740e8b/autoformal/uscode/reports/v1/reports/49f60d4504a5b8df4d87b0c57eca52eecebdfbcbe5e52c1b74070de960d946fc.json.gz) | [hashes and inventory](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/48cd0a5b666a8ef6cbaf259e9f1cc94792740e8b/autoformal/uscode/reports/v1/manifests/376e7def7c18e0851908190de9dae6d5535eba0efd46e09d45b4fede75d36c18.json) |
+| Paired smoke 2 | 8 | 8 | [gzip JSON](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/45acc122f3f9c11da46c039e057a38ab5054a699/autoformal/uscode/reports/v1/reports/5fe4185488765685d8b4449f2bfbc1fab8d56f853ef333d0bab3ef06a98e812e.json.gz) | [hashes and inventory](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/45acc122f3f9c11da46c039e057a38ab5054a699/autoformal/uscode/reports/v1/manifests/93d2f5a4779f6888bdf8938607e5a8990dbf019f00cf003faa704fc2d56d40f9.json) |
+| Paired smoke 3 | 8 | 8 | [gzip JSON](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/f1ff72b4b171fca4ac63a44e4f263982e9129f03/autoformal/uscode/reports/v1/reports/fae864238b8c34e19aecaada1aa650fe7d5c7828c7eb5869c1ec40ae066366f9.json.gz) | [hashes and inventory](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/f1ff72b4b171fca4ac63a44e4f263982e9129f03/autoformal/uscode/reports/v1/manifests/141c0182a532d30d0beb1886dcaa7071fd65aa5441a8ee9da92e85264630b0ea.json) |
 
-Exchange manifests under `autoformal/uscode/exchanges/` bind a census parquet
-and a goals parquet using exact hashes and row counts. Derived output manifests
-under `autoformal/uscode/outputs/` bind their output parquet and the original
-manifest/census/goals at a pinned commit. Derived tables never replace the
-original evidence, progress ledger, or weights.
+The new paired sample contains 24 spans, 15 guided modal ASTs and 15 direct
+modal ASTs. Nine rows have diagnostic AST agreement; 15 have no formulas from
+either path and do not count as agreement. Twenty-three source-bound compiler
+repair goals were retained. A remote import smoke validated seven goals from
+one bundle in plan-only mode; nothing was enqueued or executed.
 
-The first historical output index contains 32 observations, including one
-retained compiler rule, and was published at
-[`df7e8af9dd824ab8b364fab1e28646d9dc6267f8`](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/commit/df7e8af9dd824ab8b364fab1e28646d9dc6267f8).
-Its [queryable parquet](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/df7e8af9dd824ab8b364fab1e28646d9dc6267f8/autoformal/uscode/outputs/retained-output-index/outputs-1423fd643d03e8a25cbcd78ba4916ad0e083d999649e44633db8de9d7a56d5dd.parquet)
-exposes the already retained evidence without rerunning inference. This is a
-bounded sample, not a count of all conversions in the repository.
+Three batches of eight used one resident CUDA model, four CPU compiler workers
+and one bridge worker. Bridge-on evaluation wall times were 19.28, 9.34 and
+9.50 seconds, with eight targets in every batch. Worker wall times were 3.82,
+1.99 and 2.11 seconds per span, including the two codec paths. Both large
+process report caches stayed empty between batches; the disk cache and provers
+were disabled. Other parser/runtime caches may warm. Sampled peak process-group
+memory was 3.57 GiB. These are measured sample costs, not a matched speedup
+comparison or evidence of legal qualification.
 
-The backfill command is
-`scripts/ops/legal_ir/index_span_exchange_outputs.py`. It processes explicit
-pinned manifests within byte and row caps, validates hashes and source closure,
-and optionally appends content-addressed tables with a parent-commit CAS.
-No model loading, weight download, inference, training, or goal execution occurs
-during indexing. `inference_executed=false` in a derived index describes that
-indexing operation; the original producer execution remains in its retained
-observation.
-
-## Complete archived logic reports
-
-A full 32-span legacy CUDA report is preserved byte for byte as
-[a standard gzip JSON file](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/4f7922a2188c111e30841a08769f0f989d0b7c61/autoformal/uscode/reports/v1/reports/43a822841e7192587a190bf56381bc55cdb1249a97ff3fa0a8a876d90bd75e90.json.gz)
-with a [verified manifest](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/4f7922a2188c111e30841a08769f0f989d0b7c61/autoformal/uscode/reports/v1/manifests/0f2431a7c4746625fdbf693b312447f138d7ff4b820774ed4990dc334caa84ed.json).
-The report contains 32 raw and projected decoder observations, two compiler
-rules, and 22 complete captured logic documents (30 views each, 660 view records).
-Ten additional documents were omitted by the historical 4 MiB export bound;
-their source identities and missing-document reasons remain in the report.
-
-The original JSON is 73,673,016 bytes; its lossless gzip file is 3,959,482 bytes.
-Both remote artifacts were verified at commit `4f7922a2188c111e30841a08769f0f989d0b7c61`, and the downloaded
-archive was decompressed and checked against the exact original SHA-256
-`93001fc3773aa5180b52caad379b323d9e83415ed1f12e028724175d94cb3fc5`. All 22 available inner document hashes also verify
-using their historical JSON serialization.
-
-Read it with `json.loads(gzip.decompress(report_bytes))`. Each span's full
-source-derived document is under `rows[i].logic_target_observation.document`;
-its `views` contains the full captured payloads for the five bridge adapters.
-Autoencoder outputs, compiler results, metrics, errors and provenance remain
-in the same original receipt. This archived batch has no guided compiler
-outputs and grants no Lake admission or training qualification.
+Read a downloaded gzip report with `json.loads(gzip.decompress(report_bytes))`.
+Packed bridge documents additionally use the documented lossless document
+unpacker. File and inner-document hashes verified for every available document;
+the historical archive was also downloaded and reconstructed byte for byte.

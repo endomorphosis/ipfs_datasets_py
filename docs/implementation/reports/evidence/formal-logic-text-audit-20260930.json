@@ -1,0 +1,87 @@
+{
+  "schema": "formal-logic-text-visibility-audit/v1",
+  "date": "2026-09-30",
+  "repository_id": "justicedao/uscode-autoformal-span-cache",
+  "publication_commit": "bf95253007ce123fb44a551806f4e29e9a30834b",
+  "prefix": "autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c",
+  "counts": {
+    "available_document_count": 45,
+    "fallback_formula_occurrence_count": 328,
+    "formula_row_count": 372,
+    "identity_verified_document_count": 45,
+    "source_span_observations": 56,
+    "unavailable_document_count": 11
+  },
+  "verified_files": [
+    {
+      "path_in_repo": "autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/formulas.jsonl",
+      "sha256": "b2b4accfe96d135e0453a0c1d744184081eccf78e39186c3c126504a6f42557e",
+      "bytes": 710024,
+      "verification": "git_blob_sha1_and_size"
+    },
+    {
+      "path_in_repo": "autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/formulas.parquet",
+      "sha256": "23b093517b36ba43c8adcb9489d53aca1f12b99fa714e1df25daacdd201da06e",
+      "bytes": 32802,
+      "verification": "lfs_sha256_and_size"
+    },
+    {
+      "path_in_repo": "autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/EXAMPLES.md",
+      "sha256": "78ec6407b6d5895a8f2ba87bce1dbc9d77f6bc66d77fa937a8f30a6dfc1e25e2",
+      "bytes": 4349,
+      "verification": "git_blob_sha1_and_size"
+    },
+    {
+      "path_in_repo": "autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/manifest.json",
+      "sha256": "1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c",
+      "bytes": 2674,
+      "verification": "git_blob_sha1_and_size"
+    }
+  ],
+  "dataset_card": {
+    "repo_id": "justicedao/uscode-autoformal-span-cache",
+    "commit_sha": "ad3b263d5988611afb530a2b533d5e85ad39b2fc",
+    "parent_commit": "bf95253007ce123fb44a551806f4e29e9a30834b",
+    "README_sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+    "verified_download": true,
+    "formula_data_commit": "bf95253007ce123fb44a551806f4e29e9a30834b",
+    "formula_prefix": "autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c"
+  },
+  "remote_parquet_verification": {
+    "verified_remote_download": true,
+    "rows": 372,
+    "distinct_string_count": 144,
+    "tdfol_record_count": 45,
+    "fallback_tdfol_records": 41,
+    "first_samples": [
+      {
+        "source_text": "L.",
+        "formula_text": "O(l(actor))",
+        "view_name": "fol_tdfol.tdfol_formula"
+      },
+      {
+        "source_text": "116\u2013283, \u00a71847(d)(1)(D)(i), redesignated pars.",
+        "formula_text": "O(redesignated_pars(n_1847))",
+        "view_name": "fol_tdfol.tdfol_formula"
+      }
+    ]
+  },
+  "viewer_status": "HTTP 500: response not ready yet; immutable files available and verified",
+  "tests": {
+    "command": "PYTHONPATH=$PWD python3 -m pytest -q tests/unit/logic/test_export_report_formula_text.py",
+    "passed": 10
+  },
+  "independent_audit": {
+    "tdfol_records": 45,
+    "tdfol_text_fallback_records": 41,
+    "compiler_reported_compiled": 3,
+    "compiler_reported_abstained": 53,
+    "compiler_compiled_count_is_not_semantic_success": true
+  },
+  "inference_executed": false,
+  "weights_downloaded": false,
+  "lake_executed": false,
+  "admitted": false,
+  "learned_formula_generation": false,
+  "notes": "Fixed view of four archived reports. Occurrence counts include duplicate strings. Diagnostics and repair evidence are not gold semantic targets."
+}
