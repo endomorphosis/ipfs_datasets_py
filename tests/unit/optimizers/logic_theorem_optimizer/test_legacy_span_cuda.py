@@ -137,6 +137,9 @@ def test_receipt_records_real_requested_path_and_never_confers_authority(setup):
     supplied = observed_kwargs.pop("legal_ir_targets")
     assert list(supplied) == ["one"]
     assert len(setup.calls["targets"]) == 1
+    assert setup.calls["targets"][0]["use_process_cache"] is False
+    assert result["process_target_cache"]["enabled"] is False
+    assert result["process_target_cache"]["batch_cleanup"]["entries_after"] == 0
     assert observed_kwargs == {"legal_ir_bridge_names": module.BRIDGE_NAMES,
         "legal_ir_evaluate_provers": False, "legal_ir_parallel_workers": 1,
         "use_sample_memory": False, "profile_evaluation": True, "reconstruction_objective": "raw_decoder"}
@@ -338,3 +341,104 @@ def test_changed_timeout_or_nested_parallelism_refused(setup, monkeypatch, varia
     monkeypatch.setenv(variable, value)
     with pytest.raises(RuntimeError, match="policy changed"):
         worker.evaluate_batch(setup.rows)
+
+
+def test_compiler_chunk_hashes_generation_once_and_preserves_each_result(setup, monkeypatch):
+    from ipfs_datasets_py.logic import autoformal
+    from ipfs_datasets_py.logic.autoformal import tree_pin
+    monkeypatch.setattr(module, "_CPU_PRODUCER_SOURCE", None)
+    snapshots = []
+    monkeypatch.setattr(module, "_source_snapshot", lambda: snapshots.append(1) or dict(setup.source))
+    monkeypatch.setattr(tree_pin, "require_workspace_logic_tree", lambda: {})
+    def compile_one(session, text, span_id):
+        if span_id == "bad":
+            raise ValueError("private detail")
+        return {"status": "compiled", "rule": {"actor": "agency"}, "admitted": True}
+    monkeypatch.setattr(autoformal, "compile_span", compile_one)
+    rows = [setup.rows[0], {**setup.rows[0], "source_span_id": "bad"},
+            {**setup.rows[0], "source_span_id": "constitution", "constitution_source": True}]
+    result = module.compile_source_batch(rows, expected_source_sha256=setup.source["sha256"])
+    assert len(snapshots) == 2
+    assert [r["source_span_id"] for r in result] == ["one", "bad", "constitution"]
+    assert result[1]["compiler"]["error_type"] == "ValueError"
+    assert "private detail" not in str(result)
+    assert result[2]["compiler"]["roundtrip_ok"] is False
+    assert all(r["compiler"]["admitted"] is False for r in result)
+    assert all(r["producer_source"] == setup.source for r in result)
+
+
+def test_compiler_chunk_rejects_all_results_on_generation_change(setup, monkeypatch):
+    from ipfs_datasets_py.logic import autoformal
+    from ipfs_datasets_py.logic.autoformal import tree_pin
+    monkeypatch.setattr(module, "_CPU_PRODUCER_SOURCE", None)
+    monkeypatch.setattr(tree_pin, "require_workspace_logic_tree", lambda: {})
+    calls = []
+    def compile_one(*args):
+        calls.append(1)
+        setup.source["sha256"] = "b" * 64
+        return {"status": "compiled"}
+    monkeypatch.setattr(autoformal, "compile_span", compile_one)
+    rows = [setup.rows[0], {**setup.rows[0], "source_span_id": "two"}]
+    with pytest.raises(RuntimeError, match="source changed"):
+        module.compile_source_batch(rows)
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("count", [0, 9])
+def test_compiler_chunk_bound_before_source_scan(setup, monkeypatch, count):
+    monkeypatch.setattr(module, "_source_snapshot", lambda: pytest.fail("invalid chunk scanned source"))
+    with pytest.raises(ValueError, match="one and eight"):
+        module.compile_source_batch(setup.rows * count)
+
+
+def test_compiler_chunk_rejects_duplicate_ids_before_source_scan(setup, monkeypatch):
+    monkeypatch.setattr(module, "_source_snapshot", lambda: pytest.fail("invalid chunk scanned source"))
+    with pytest.raises(ValueError, match="duplicate"):
+        module.compile_source_batch(setup.rows * 2)
+
+
+def test_owned_cache_cleanup_runs_after_failed_evaluation(setup, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_autoencoder as modal
+    from ipfs_datasets_py.logic.bridge import multiview as bridge
+    cache = {"preexisting": object()}
+    reports = {"old-report": object()}
+    monkeypatch.setattr(modal, "_LEGAL_IR_TARGET_CACHE", cache)
+    monkeypatch.setattr(bridge, "_MULTIVIEW_EVALUATION_CACHE", reports)
+    worker = module.LegacySpanCUDAWorker(setup.checkpoint)
+    assert not cache
+    assert not reports
+    assert worker.target_cache_startup["entries_cleared"] == 1
+    assert worker.target_cache_startup["bridge_report_entries_cleared"] == 1
+    def fail(*args, **kwargs):
+        cache["incidental"] = object()
+        reports["incidental-report"] = object()
+        raise RuntimeError("fixture failure")
+    worker.model.evaluate = fail
+    with pytest.raises(RuntimeError, match="fixture failure"):
+        worker.evaluate_batch(setup.rows)
+    assert not cache
+    assert not reports
+
+
+def test_guided_compiler_reuses_model_and_observes_before_cache_cleanup(setup, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_guided_compiler as guided
+    owners, observed = [], []
+    class Guided:
+        def __init__(self, model, *, model_identity):
+            assert model_identity == {"sha256": module.LEGACY_SHA256, "bytes": module.LEGACY_BYTES}
+            owners.append(model)
+            self.model = model
+        def observe(self, sample):
+            assert self.model._sample_feature_cache
+            observed.append(sample.sample_id)
+            return {"origin": "autoencoder_guided_compiler", "independent_learned_output": False,
+                    "guided_formal_outputs": [{"formula": "O(file)"}]}
+    monkeypatch.setattr(guided, "GuidedLegacyCompiler", Guided)
+    worker = module.LegacySpanCUDAWorker(setup.checkpoint, guided_compiler=True)
+    result = worker.evaluate_batch(setup.rows)
+    assert owners == [worker.model]
+    assert observed == ["one"]
+    assert result["guided_compiler_enabled"] is True
+    assert result["rows"][0]["guided_compiler_observation"]["guided_formal_outputs"] == [{"formula": "O(file)"}]
+    assert result["rows"][0]["learned_formula_generation"] is False
+    assert not worker.model._sample_feature_cache

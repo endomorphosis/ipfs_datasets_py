@@ -27996,7 +27996,10 @@ def _legal_ir_target_items(
     legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]],
     parallel_workers: Optional[int] = None,
     observation: Optional[Dict[str, Any]] = None,
+    use_process_cache: bool = True,
 ) -> List[tuple[str, Any]]:
+    if type(use_process_cache) is not bool:
+        raise ValueError("use_process_cache must be a bool")
     observation_lock = threading.Lock() if observation is not None else None
     if observation is not None:
         with _LEGAL_IR_TARGET_CACHE_LOCK:
@@ -28007,6 +28010,8 @@ def _legal_ir_target_items(
             "parallel_workers_requested": parallel_workers,
             "parallel_workers_used": 0,
             "disk_cache_enabled": _legal_ir_target_disk_cache_enabled(),
+            "process_target_cache_enabled": use_process_cache,
+            "native_bridge_report_cache_enabled": use_process_cache,
             "process_target_cache_entries_at_start": cache_entries,
             "process_target_cache_empty_at_start": cache_entries == 0,
             "bridge_module_preloaded_at_start": "ipfs_datasets_py.logic.bridge" in sys.modules,
@@ -28030,6 +28035,8 @@ def _legal_ir_target_items(
 
     def finish(items: List[tuple[str, Any]]) -> List[tuple[str, Any]]:
         if observation is not None:
+            with _LEGAL_IR_TARGET_CACHE_LOCK:
+                observation["process_target_cache_entries_at_end"] = len(_LEGAL_IR_TARGET_CACHE)
             prepared_module = sys.modules.get(
                 "ipfs_datasets_py.optimizers.logic_theorem_optimizer._autoencoder_prepared_targets"
             )
@@ -28080,18 +28087,21 @@ def _legal_ir_target_items(
             bridge_names=names,
             evaluate_provers=evaluate_provers,
         )
-        with _LEGAL_IR_TARGET_CACHE_LOCK:
-            cached = _LEGAL_IR_TARGET_CACHE.get(cache_key)
+        cached = None
+        if use_process_cache:
+            with _LEGAL_IR_TARGET_CACHE_LOCK:
+                cached = _LEGAL_IR_TARGET_CACHE.get(cache_key)
         if cached is not None:
             count("memory_cache_hit_count")
             return sample.sample_id, cached
         cached = _read_legal_ir_target_disk_cache(cache_key)
         if cached is not None:
             count("disk_cache_hit_count")
-            with _LEGAL_IR_TARGET_CACHE_LOCK:
-                if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
-                    _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
-                _LEGAL_IR_TARGET_CACHE[cache_key] = cached
+            if use_process_cache:
+                with _LEGAL_IR_TARGET_CACHE_LOCK:
+                    if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
+                        _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
+                    _LEGAL_IR_TARGET_CACHE[cache_key] = cached
             return sample.sample_id, cached
         count("target_cache_miss_count")
         count("native_evaluation_attempt_count")
@@ -28102,6 +28112,7 @@ def _legal_ir_target_items(
                 report = _evaluate_legal_ir_multiview_with_timeout(
                     evaluate_legal_ir_multiview,
                     timeout_seconds=timeout_seconds,
+                    cache=use_process_cache,
                     text=sample.text,
                     bridge_names=names,
                     document_id=sample.sample_id,
@@ -28126,11 +28137,14 @@ def _legal_ir_target_items(
                 cache_key=cache_key,
                 timeout_seconds=timeout_seconds,
             )
-        with _LEGAL_IR_TARGET_CACHE_LOCK:
-            if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
-                _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
-            _LEGAL_IR_TARGET_CACHE[cache_key] = target
-        _write_legal_ir_target_disk_cache(cache_key, target)
+        if use_process_cache:
+            with _LEGAL_IR_TARGET_CACHE_LOCK:
+                if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
+                    _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
+                _LEGAL_IR_TARGET_CACHE[cache_key] = target
+            _write_legal_ir_target_disk_cache(cache_key, target)
+        else:
+            _write_legal_ir_target_disk_cache(cache_key, target, use_process_cache=False)
         return sample.sample_id, target
 
     worker_count = _legal_ir_parallel_worker_count(
@@ -28368,6 +28382,8 @@ def _normalise_legal_ir_target_cache_payload(
 def _write_legal_ir_target_disk_cache_payload(
     cache_key: str,
     payload: Mapping[str, Any],
+    *,
+    use_process_cache: bool = True,
 ) -> bool:
     path = _legal_ir_target_disk_cache_path(cache_key)
     normalized_payload = _normalise_legal_ir_target_cache_payload(payload)
@@ -28392,7 +28408,7 @@ def _write_legal_ir_target_disk_cache_payload(
         )
         os.replace(tmp_path, path)
         cached_target = _legal_ir_target_from_cache_payload(normalized_payload)
-        if cached_target is not None:
+        if cached_target is not None and use_process_cache:
             with _LEGAL_IR_TARGET_CACHE_LOCK:
                 if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
                     _LEGAL_IR_TARGET_CACHE.pop(next(iter(_LEGAL_IR_TARGET_CACHE)), None)
@@ -28460,13 +28476,18 @@ def _read_legal_ir_target_disk_cache(cache_key: str) -> Optional[Any]:
     return target
 
 
-def _write_legal_ir_target_disk_cache(cache_key: str, target: Any) -> None:
+def _write_legal_ir_target_disk_cache(
+    cache_key: str, target: Any, *, use_process_cache: bool = True,
+) -> None:
     if _legal_ir_target_is_timeout_fallback(target):
         return
     payload = _legal_ir_target_cache_payload(target)
     if payload is None:
         return
-    _write_legal_ir_target_disk_cache_payload(cache_key, payload)
+    if use_process_cache:
+        _write_legal_ir_target_disk_cache_payload(cache_key, payload)
+    else:
+        _write_legal_ir_target_disk_cache_payload(cache_key, payload, use_process_cache=False)
 
 
 def _sample_content_cache_id(sample: LegalSample) -> str:

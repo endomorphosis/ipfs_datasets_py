@@ -4,6 +4,10 @@
 No task is executed, claimed, or made schedulable. The original packet and todo
 are retained verbatim as content-addressed JSON; dataset-supplied commands never
 become native validation commands. Each machine uses its own native database.
+Legacy census/goals bundles and paired spans/goals/artifacts bundles are both
+supported. Paired capability/review gaps without sealed native packet/task
+artifacts remain in retained evidence and are reported as descriptive deferrals.
+Only verified portable packet/task pairs can enter the native review plan.
 """
 
 from __future__ import annotations
@@ -24,6 +28,8 @@ DEFAULT_REPOSITORY = "justicedao/uscode-autoformal-span-cache"
 DEFAULT_MAX_BYTES = 64 * 1024 * 1024
 DEFAULT_MAX_ROWS = 1000
 MAX_MANIFEST_BYTES = 1024 * 1024
+PAIRED_MANIFEST_SCHEMA = "uscode-paired-span-bundle/v1"
+PAIRED_TABLES = ("paired_spans", "goals", "artifacts")
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _REVISION = re.compile(r"[0-9a-f]{40}\Z")
 
@@ -107,7 +113,7 @@ def download_bundle(
     max_bytes: int,
     fetch: Callable[..., Path] | None = None,
 ) -> Path:
-    """Fetch exactly one manifest and its two parquet objects at a full commit.
+    """Fetch one manifest and exactly its declared tables at a full commit.
 
     Size metadata is checked before each download. Neither repo-wide snapshots
     nor model/checkpoint files are downloaded.
@@ -156,10 +162,15 @@ def download_bundle(
     if manifest.get("repository_id") != repository_id:
         raise ImportError("manifest repository does not match the requested repository")
     total = manifest_path.stat().st_size
-    for kind in ("census", "goals"):
-        descriptor = manifest.get(kind)
+    paired = manifest.get("schema") == PAIRED_MANIFEST_SCHEMA
+    descriptors = manifest.get("tables") if paired else manifest
+    kinds = PAIRED_TABLES if paired else ("census", "goals")
+    if not isinstance(descriptors, dict) or (paired and set(descriptors) != set(PAIRED_TABLES)):
+        raise ImportError("paired manifest must bind exactly paired_spans, goals and artifacts")
+    for kind in kinds:
+        descriptor = descriptors.get(kind)
         if not isinstance(descriptor, dict):
-            raise ImportError("manifest must bind census and goals descriptors")
+            raise ImportError("manifest is missing its " + kind + " descriptor")
         filename = _repo_path(str(descriptor.get("path_in_repo") or ""))
         if not filename.endswith(".parquet"):
             raise ImportError("exchange objects must be parquet files")
@@ -325,22 +336,34 @@ def _persist(directory: Path, raw: str, digest: str) -> Path:
 def retain_bundle_evidence(
     *,
     manifest_path: Path,
-    census_path: Path,
+    census_path: Path | None = None,
     goals_path: Path,
+    paired_spans_path: Path | None = None,
+    artifacts_path: Path | None = None,
     directory: Path,
     max_bytes: int,
     expected_sha256: Mapping[str, str],
 ) -> dict[str, Any]:
-    """Keep the exact verified census, goal parquet and manifest on this machine.
+    """Keep the exact verified manifest and closed table set on this machine.
 
     The content-addressed locators travel into both native goal and task bodies;
     loss of the input staging directory does not discard the full IR census.
     """
-    files = (
-        ("manifest", manifest_path, ".json"),
-        ("census", census_path, ".parquet"),
-        ("goals", goals_path, ".parquet"),
-    )
+    if paired_spans_path is not None or artifacts_path is not None:
+        if census_path is not None or paired_spans_path is None or artifacts_path is None:
+            raise ImportError("paired evidence requires exactly three tables and its manifest")
+        files = (("manifest", manifest_path, ".json"),
+                 ("paired_spans", paired_spans_path, ".parquet"),
+                 ("goals", goals_path, ".parquet"),
+                 ("artifacts", artifacts_path, ".parquet"))
+    else:
+        if census_path is None:
+            raise ImportError("legacy evidence requires census and goals tables")
+        files = (("manifest", manifest_path, ".json"),
+                 ("census", census_path, ".parquet"),
+                 ("goals", goals_path, ".parquet"))
+    if set(expected_sha256) != {kind for kind, _, _ in files}:
+        raise ImportError("retained evidence hashes do not close the exact bundle")
     if sum(path.stat().st_size for _, path, _ in files) > max_bytes:
         raise ImportError("retained bundle exceeds byte bound")
     result = {}
@@ -395,11 +418,9 @@ def _body_conflict(
     origin = json.loads(str(body.get("exchange_origin_json") or "{}"))
     bundle = origin.get("evidence_bundle")
     if bundle is not None:
-        if not isinstance(bundle, dict) or set(bundle) != {
-            "manifest",
-            "census",
-            "goals",
-        }:
+        expected = ({"manifest", *PAIRED_TABLES} if origin.get("bundle_schema") == PAIRED_MANIFEST_SCHEMA
+                    else {"manifest", "census", "goals"})
+        if not isinstance(bundle, dict) or set(bundle) != expected:
             raise ImportError("existing native row has incomplete bundle evidence")
         for artifact in bundle.values():
             if not isinstance(artifact, dict):
@@ -736,10 +757,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             "output already contains an import receipt; choose a new observation directory"
         )
     binding = _pin_logic()
-    from ipfs_datasets_py.logic.autoformal.span_cache_exchange import (
-        load_exchange_bundle,
-    )
-
     args.output.mkdir(parents=True, exist_ok=True)
     staging = (args.staging_directory or args.output / "download").resolve()
     packet_directory = (args.packet_directory or args.output / "packets").resolve()
@@ -753,11 +770,40 @@ def main(argv: Sequence[str] | None = None) -> int:
             max_bytes=args.max_bytes,
         )
     assert manifest_path is not None
-    manifest_digest = _digest(_manifest_bytes(manifest_path))
-    loaded = load_exchange_bundle(
-        manifest_path, max_bytes=args.max_bytes, max_rows=args.max_rows
-    )
-    if loaded["manifest_sha256"] != manifest_digest:
+    manifest_raw = _manifest_bytes(manifest_path)
+    manifest_digest = _digest(manifest_raw)
+    captured_manifest = json.loads(manifest_raw)
+    if not isinstance(captured_manifest, dict):
+        raise ImportError("manifest must be an object")
+    paired = captured_manifest.get("schema") == PAIRED_MANIFEST_SCHEMA
+    if paired:
+        from ipfs_datasets_py.logic.autoformal.paired_span_census import load_paired_census_bundle
+        loaded = load_paired_census_bundle(
+            manifest_path, max_bytes=args.max_bytes, max_rows=args.max_rows
+        )
+        goal_rows = loaded["portable_goal_rows"]
+        descriptors = loaded["manifest"]["tables"]
+        table_paths = loaded["table_paths"]
+        retention_paths = {kind + "_path": Path(table_paths[kind]) for kind in PAIRED_TABLES}
+        fingerprint = loaded["manifest"]["fingerprint"]
+        # Capability/review gaps lack sealed native packet/task artifacts.
+        # Retain them in the goals table and make the deferral visible; do not
+        # manufacture executable work from descriptive census entries.
+        descriptive_goals = [goal for goal in loaded["goals"]
+                             if goal.get("packet_artifact_sha256") is None]
+    else:
+        from ipfs_datasets_py.logic.autoformal.span_cache_exchange import load_exchange_bundle
+        loaded = load_exchange_bundle(
+            manifest_path, max_bytes=args.max_bytes, max_rows=args.max_rows
+        )
+        goal_rows = loaded["goal_rows"]
+        descriptors = {kind: loaded["manifest"][kind] for kind in ("census", "goals")}
+        retention_paths = {kind + "_path": Path(loaded[kind + "_path"]) for kind in descriptors}
+        fingerprint = loaded["fingerprint"]
+        descriptive_goals = []
+    if (loaded["manifest_sha256"] != manifest_digest
+            or _digest(_manifest_bytes(manifest_path)) != manifest_digest
+            or loaded["manifest"] != captured_manifest):
         raise ImportError(
             "manifest changed between initial capture and bundle validation"
         )
@@ -766,18 +812,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             "verified manifest repository differs from requested repository"
         )
     plan = plan_import(
-        loaded["goal_rows"], shard_count=args.shard_count, shard_index=args.shard_index
+        goal_rows, shard_count=args.shard_count, shard_index=args.shard_index
     )
     retained = retain_bundle_evidence(
         manifest_path=manifest_path,
-        census_path=Path(loaded["census_path"]),
-        goals_path=Path(loaded["goals_path"]),
+        **retention_paths,
         directory=args.output / "evidence",
         max_bytes=args.max_bytes,
         expected_sha256={
             "manifest": manifest_digest,
-            "census": loaded["manifest"]["census"]["sha256"],
-            "goals": loaded["manifest"]["goals"]["sha256"],
+            **{kind: descriptor["sha256"] for kind, descriptor in descriptors.items()},
         },
     )
     origin = {
@@ -787,7 +831,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "manifest_path": retained["manifest"]["path"],
         "manifest_sha256": manifest_digest,
         "evidence_bundle": retained,
-        "fingerprint": loaded["fingerprint"],
+        "fingerprint": fingerprint,
+        "bundle_schema": loaded["manifest"].get("schema"),
     }
     receipt = {key: value for key, value in plan.items() if key != "entries"}
     receipt.update(
@@ -801,6 +846,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         formalized=False,
         wrote_compiler=False,
         task_cids=[entry["task_cid"] for entry in plan["entries"]],
+        deferred_descriptive_goal_count=len(descriptive_goals),
+        deferred_descriptive_goals=[{"goal_id": goal["goal_id"],
+            "record_kind": goal["record_kind"],
+            "reason": "retained_without_sealed_native_packet_and_task"}
+            for goal in descriptive_goals],
     )
     if args.materialize:
         receipt["accelerate_binding"] = _pin_accelerate(args.accelerate_root)

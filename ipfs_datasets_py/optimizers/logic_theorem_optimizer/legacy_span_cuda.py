@@ -15,6 +15,7 @@ import math
 import os
 from pathlib import Path
 import stat
+import sys
 import time
 from types import SimpleNamespace
 from typing import Any
@@ -118,9 +119,26 @@ def _constitution_skip() -> dict[str, Any]:
             "admitted": False, "formalized": False, "learned_formula_generation": False}
 
 
-def compile_source_span(span: Mapping[str, Any], *, expected_source_sha256: str | None = None) -> dict[str, Any]:
-    """Independent CPU-pool task. Returns evidence only; never runs Lake."""
+def compile_source_batch(spans: Sequence[Mapping[str, Any]], *,
+                         expected_source_sha256: str | None = None) -> list[dict[str, Any]]:
+    """Compile one bounded CPU task under a single producer-generation guard.
+
+    All results are rejected if the source changes during the chunk. A compiler
+    abstention or exception remains per-span evidence, and no result runs Lake.
+    Chunking avoids two complete source-tree hashes for every short sentence.
+    """
     global _CPU_PRODUCER_SOURCE
+    if not isinstance(spans, (list, tuple)) or not 1 <= len(spans) <= 8:
+        raise ValueError("compiler chunk must contain between one and eight spans")
+    identifiers = set()
+    for span in spans:
+        if (not isinstance(span, Mapping)
+                or any(not isinstance(span.get(key), str) or not span[key].strip()
+                       for key in ("text", "source_span_id"))
+                or len(span["text"]) > 16000 or len(span["source_span_id"]) > 1024
+                or span["source_span_id"] in identifiers):
+            raise ValueError("compiler chunk contains invalid, oversized or duplicate spans")
+        identifiers.add(span["source_span_id"])
     before = _source_snapshot()
     if _CPU_PRODUCER_SOURCE is not None and _CPU_PRODUCER_SOURCE != before:
         raise RuntimeError("persistent compiler process requires a new producer generation")
@@ -130,19 +148,57 @@ def compile_source_span(span: Mapping[str, Any], *, expected_source_sha256: str 
     from ipfs_datasets_py.logic.autoformal.tree_pin import require_workspace_logic_tree
     require_workspace_logic_tree()
     from ipfs_datasets_py.logic.autoformal import AutoformalSession, compile_span
-    text, span_id = str(span["text"]), str(span["source_span_id"])
-    if _is_constitution(span):
-        result = _constitution_skip()
-    else:
-        try:
-            result = dict(compile_span(AutoformalSession(), text, span_id))
-        except Exception as error:
-            result = {"status": "error", "error_type": type(error).__name__}
+    observations = []
+    for span in spans:
+        text, span_id = span["text"], span["source_span_id"]
+        if _is_constitution(span):
+            result = _constitution_skip()
+        else:
+            try:
+                result = dict(compile_span(AutoformalSession(), text, span_id))
+            except Exception as error:
+                result = {"status": "error", "error_type": type(error).__name__}
+        result.update(admitted=False, formalized=False, learned_formula_generation=False)
+        observations.append({"source_span_id": span_id,
+            "source_sha256": hashlib.sha256(text.encode()).hexdigest(),
+            "producer_source": dict(before), "compiler": result})
     if _source_snapshot() != before:
         raise RuntimeError("compiler source changed during span observation")
-    result.update(admitted=False, formalized=False, learned_formula_generation=False)
-    return {"source_span_id": span_id, "source_sha256": hashlib.sha256(text.encode()).hexdigest(),
-            "producer_source": before, "compiler": result}
+    return observations
+
+
+def compile_source_span(span: Mapping[str, Any], *, expected_source_sha256: str | None = None) -> dict[str, Any]:
+    """Single-span compatibility entry point for the guarded CPU task."""
+    return compile_source_batch([span], expected_source_sha256=expected_source_sha256)[0]
+
+
+def _owned_process_target_cache(*, clear: bool = False) -> dict[str, int]:
+    """Observe/clear this isolated worker's target and bridge-report caches.
+
+    This must not be used on a model shared with training or another caller.
+    Module lookup also keeps CPU-only protocol fixtures free of model imports.
+    """
+    module = sys.modules.get(__package__ + ".modal_autoencoder")
+    result = {"entries_before": 0, "entries_after": 0, "entries_cleared": 0,
+              "bridge_report_entries_before": 0, "bridge_report_entries_after": 0,
+              "bridge_report_entries_cleared": 0}
+    if module is not None:
+        with module._LEGAL_IR_TARGET_CACHE_LOCK:
+            before = len(module._LEGAL_IR_TARGET_CACHE)
+            if clear:
+                module._LEGAL_IR_TARGET_CACHE.clear()
+            result.update(entries_before=before, entries_after=len(module._LEGAL_IR_TARGET_CACHE),
+                          entries_cleared=before if clear else 0)
+    bridge = sys.modules.get("ipfs_datasets_py.logic.bridge.multiview")
+    if bridge is not None:
+        with bridge._MULTIVIEW_EVALUATION_CACHE_LOCK:
+            before = len(bridge._MULTIVIEW_EVALUATION_CACHE)
+            if clear:
+                bridge._MULTIVIEW_EVALUATION_CACHE.clear()
+            result.update(bridge_report_entries_before=before,
+                bridge_report_entries_after=len(bridge._MULTIVIEW_EVALUATION_CACHE),
+                bridge_report_entries_cleared=before if clear else 0)
+    return result
 
 
 def _digest(path: Path) -> str:
@@ -221,7 +277,7 @@ class LegacySpanCUDAWorker:
 
     def __init__(self, checkpoint: str | Path, *, mode: str = MODE,
                  max_batch_size: int = 32, max_text_chars: int = 16000,
-                 legal_ir_parallel_workers: int = 1):
+                 legal_ir_parallel_workers: int = 1, guided_compiler: bool = False):
         if mode != MODE:
             raise ValueError("full legacy state requires explicit legacy_mock_diagnostic mode")
         if (type(max_batch_size) is not int or not 1 <= max_batch_size <= 128
@@ -229,6 +285,8 @@ class LegacySpanCUDAWorker:
             raise ValueError("invalid bounded batch limits")
         if type(legal_ir_parallel_workers) is not int or not 1 <= legal_ir_parallel_workers <= 8:
             raise ValueError("legal_ir_parallel_workers must be between one and eight")
+        if type(guided_compiler) is not bool:
+            raise ValueError("guided_compiler must be a bool")
         self.path = Path(checkpoint).absolute()
         self.identity = _identity(self.path)
         if _digest(self.path) != LEGACY_SHA256:
@@ -240,6 +298,7 @@ class LegacySpanCUDAWorker:
         os.environ["IPFS_DATASETS_LEGAL_IR_ADAPTER_WORKERS"] = "1"
         self.source_identity = _source_snapshot()
         self.dependencies = _dependencies()
+        self.target_cache_startup = _owned_process_target_cache(clear=True)
         state = self.dependencies.state.load_json(self.path)
         if _identity(self.path) != self.identity or _digest(self.path) != LEGACY_SHA256:
             raise ValueError("legacy checkpoint changed during load")
@@ -249,6 +308,11 @@ class LegacySpanCUDAWorker:
             raise RuntimeError("legacy CUDA worker refuses CPU fallback: " + str(self.model.compute_backend))
         if _source_snapshot() != self.source_identity:
             raise RuntimeError("producer source changed while loading legacy model")
+        self.guided_compiler = None
+        if guided_compiler:
+            from .legacy_span_guided_compiler import GuidedLegacyCompiler
+            self.guided_compiler = GuidedLegacyCompiler(self.model,
+                model_identity={"sha256": LEGACY_SHA256, "bytes": LEGACY_BYTES})
         self.model_config = _defaults(self.model, self.dependencies.model)
         self.max_batch_size, self.max_text_chars = max_batch_size, max_text_chars
         self.legal_ir_parallel_workers = legal_ir_parallel_workers
@@ -322,13 +386,16 @@ class LegacySpanCUDAWorker:
                       profile_evaluation=True, reconstruction_objective="raw_decoder")
         evaluate_started = time.perf_counter()
         run_profile = self.cuda_initial_profile is None or profile_cuda is True
+        process_cache_before = _owned_process_target_cache()
+        result = None
         try:
             # Prepare once, retain full artifacts, and give those same objects to
             # evaluate. This avoids another parser/bridge pass for publication.
             target_observation: dict[str, Any] = {}
             targets = dict(dep.target_items(samples, bridge_names=BRIDGE_NAMES,
                 evaluate_provers=False, legal_ir_targets=None,
-                parallel_workers=self.legal_ir_parallel_workers, observation=target_observation)) if samples else {}
+                parallel_workers=self.legal_ir_parallel_workers, observation=target_observation,
+                use_process_cache=False)) if samples else {}
             if set(targets) != {sample.sample_id for sample in samples}:
                 raise RuntimeError("bridge target preparation did not cover every sample")
             kwargs["legal_ir_targets"] = targets
@@ -379,15 +446,18 @@ class LegacySpanCUDAWorker:
                     output_rows.append({**row, "source_sha256": hashlib.sha256(row["text"].encode()).hexdigest(),
                         "status": "sample_preparation_error", "error_type": sample_errors[row["source_span_id"]],
                         "compiler": compiled, "raw_decoder": None, "safety_projected_decoder": None,
+                        "guided_compiler_observation": None,
                         "embedding_representation": dict(REPRESENTATION), "admitted": False, "formalized": False,
                         "semantic_qualified": False, "learned_formula_generation": False,
                         "lake": {"status": "not_run", "admitted": False}})
                     continue
                 index, sample = samples_by_span[row["source_span_id"]]
+                guided = self.guided_compiler.observe(sample) if self.guided_compiler is not None else None
                 output_rows.append({**row, "sample_id": sample.sample_id,
                     "status": "diagnostic_observed",
                     "source_sha256": hashlib.sha256(row["text"].encode()).hexdigest(),
                     "embedding_representation": dict(REPRESENTATION), "compiler": compiled,
+                    "guided_compiler_observation": guided,
                     "logic_target_observation": logic_targets[sample.sample_id],
                     "raw_decoder": {"embedding": raw_vectors[index], "cosine_similarity": raw_cosines[index],
                                     "reconstruction_loss": raw_losses[index], "safety_projection_used": False},
@@ -430,10 +500,19 @@ class LegacySpanCUDAWorker:
                     "projected_observation_seconds": projected_seconds,
                     "compiler_seconds": compiler_seconds, "producer_guard_seconds": guard_seconds},
                 "use_sample_memory": False, "training_executed": False,
+                "guided_compiler_enabled": self.guided_compiler is not None,
                 "admitted": False, "formalized": False, "semantic_qualified": False,
                 "heldout_canary": False, "temperature": 0}
-            return json.loads(json.dumps(receipt, allow_nan=False))
+            result = json.loads(json.dumps(receipt, allow_nan=False))
+            return result
         finally:
             # Bound live per-sample bookkeeping without touching any learned weights.
             for name in ("_sample_feature_cache", "_legal_ir_loss_target_cache", "_legal_ir_view_target_cache"):
                 getattr(self.model, name, {}).clear()
+            cleanup = _owned_process_target_cache(clear=True)
+            if result is not None:
+                result["process_target_cache"] = {"enabled": False,
+                    "native_bridge_report_cache_enabled": False,
+                    "startup": dict(self.target_cache_startup),
+                    "before_batch": process_cache_before, "batch_cleanup": cleanup,
+                    "scope": "isolated_legacy_worker_only"}

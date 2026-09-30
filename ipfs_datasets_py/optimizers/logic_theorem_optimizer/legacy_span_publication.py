@@ -131,6 +131,10 @@ def _published(db, batch_id):
 
 
 def _prepare(root, batch_id, manifest_path, publication, receipt_sha):
+    manifest_raw, _ = _snapshot(Path(manifest_path))
+    if json.loads(manifest_raw).get("schema") == "uscode-paired-span-bundle/v1":
+        from .paired_span_publication import prepare_cleanup
+        return prepare_cleanup(root, batch_id, manifest_path, publication, receipt_sha)
     fingerprint = publication.get("fingerprint", "")
     if not re.fullmatch(r"[0-9a-f]{64}", fingerprint):
         raise ValueError("invalid exchange fingerprint")
@@ -189,8 +193,10 @@ def _verify_remote(plan, api):
     if _field(info, "sha") != revision:
         raise ValueError("Hub did not resolve the exact immutable publication commit")
     expected = {item["path_in_repo"]: item for item in plan["remote_files"]}
-    if len(expected) != 3:
-        raise ValueError("publication closure must contain exactly three artifacts")
+    kinds = [item.get("kind") for item in plan["remote_files"]]
+    required = {"manifest", "paired_spans", "goals", "artifacts"} if "paired_spans" in kinds else {"manifest", "census", "goals"}
+    if len(expected) != len(required) or len(kinds) != len(required) or set(kinds) != required:
+        raise ValueError("publication closure must contain exactly its declared artifacts")
     observed = api.get_paths_info(repo_id=REPOSITORY, repo_type="dataset", revision=revision,
                                   paths=list(expected))
     verified = []

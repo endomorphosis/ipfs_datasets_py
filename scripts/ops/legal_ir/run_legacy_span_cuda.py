@@ -94,7 +94,7 @@ def _cpu_init():
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 
-def _gpu_init(checkpoint, runtime, batch_size, bridge_workers):
+def _gpu_init(checkpoint, runtime, batch_size, bridge_workers, guided_compiler=False):
     global GPU, DEVICE, ALLOCATOR_ADMISSION
     environment()
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import CudaDeviceBudget, admit_cuda_device
@@ -103,12 +103,19 @@ def _gpu_init(checkpoint, runtime, batch_size, bridge_workers):
     DEVICE.__enter__()
     ALLOCATOR_ADMISSION = admit_cuda_device()
     GPU = LegacySpanCUDAWorker(checkpoint, mode="legacy_mock_diagnostic", max_batch_size=batch_size,
-                               legal_ir_parallel_workers=bridge_workers)
+                               legal_ir_parallel_workers=bridge_workers, guided_compiler=guided_compiler)
 
 
 def _gpu_ready():
     return {"pid": os.getpid(), "source": GPU.source_identity, "cuda": DEVICE.check(),
-            "allocator_admission": ALLOCATOR_ADMISSION}
+            "allocator_admission": ALLOCATOR_ADMISSION, "resident_mb": resident_mb()}
+
+
+def resident_mb():
+    for line in Path("/proc/self/status").read_text().splitlines():
+        if line.startswith("VmRSS:"):
+            return (int(line.split()[1]) + 1023) // 1024
+    raise RuntimeError("resident memory telemetry is unavailable")
 
 
 def _gpu_evaluate(rows, compiled):
@@ -122,6 +129,11 @@ def _gpu_evaluate(rows, compiled):
 def _compile(row, source_sha):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import compile_source_span
     return compile_source_span(row, expected_source_sha256=source_sha)
+
+
+def _compile_batch(rows, source_sha):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import compile_source_batch
+    return compile_source_batch(rows, expected_source_sha256=source_sha)
 
 
 def remote_progress():
@@ -342,10 +354,24 @@ def stage(db, runtime, batch_id, receipt, agent):
             os.link(path, retained)
     receipt = packed
     atomic(path, receipt)
-    staged = publish_compiled_exchange(exchange_rows(receipt), runtime / "outbox", upload=False,
-        agent_id=agent, release_id="ipfs-uscode-5016b86a",
-        code_identity="sha256:" + receipt["producer_source"]["sha256"],
-        model_identity="legacy-mock-diagnostic:sha256:" + receipt["checkpoint"]["sha256"])
+    if receipt.get("campaign", {}).get("publication_format") == "paired":
+        from ipfs_datasets_py.logic.autoformal.paired_span_census import build_paired_census, write_paired_census_bundle
+        observations = exchange_rows(receipt)
+        for observation, original in zip(observations, receipt["rows"]):
+            guided = original.get("guided_compiler_observation") or {}
+            observation["model_formal_outputs"] = guided.get("guided_formal_outputs", [])
+            observation["direct_formal_outputs"] = guided.get("direct_formal_outputs", [])
+            observation["model_formal_output_provenance"] = guided.get("model_formal_output_provenance", {})
+            observation["direct_formal_output_provenance"] = guided.get("direct_formal_output_provenance", {})
+        built = build_paired_census(observations, original_receipt=receipt, agent_id=agent,
+            code_identity="sha256:" + receipt["producer_source"]["sha256"],
+            model_identity="legacy-mock-diagnostic:sha256:" + receipt["checkpoint"]["sha256"])
+        staged = write_paired_census_bundle(built, runtime / "outbox")
+    else:
+        staged = publish_compiled_exchange(exchange_rows(receipt), runtime / "outbox", upload=False,
+            agent_id=agent, release_id="ipfs-uscode-5016b86a",
+            code_identity="sha256:" + receipt["producer_source"]["sha256"],
+            model_identity="legacy-mock-diagnostic:sha256:" + receipt["checkpoint"]["sha256"])
     db.execute("BEGIN")
     try:
         db.execute("UPDATE batches SET status='staged',manifest=?,receipt_sha256=? WHERE id=?",
@@ -412,7 +438,12 @@ def publish_pending(db, upload, runtime=None):
     api = ObservedHubAPI()
     for batch_id, path in db.execute("SELECT id,manifest FROM batches WHERE status='staged' LIMIT 2").fetchall():
         try:
-            receipt = publish_exchange_manifest(path, upload=True, api=api)
+            manifest_kind = json.loads(Path(path).read_bytes()).get("schema")
+            if manifest_kind == "uscode-paired-span-bundle/v1":
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.paired_span_publication import publish_paired_manifest
+                receipt = publish_paired_manifest(path, upload=True, api=api)
+            else:
+                receipt = publish_exchange_manifest(path, upload=True, api=api)
         except Exception as error:
             event("publication_deferred", batch_id=batch_id, error=type(error).__name__)
             break
@@ -543,13 +574,16 @@ def engine(args):
     context = multiprocessing.get_context("spawn")
     try:
         with ProcessPoolExecutor(1, mp_context=context, initializer=_gpu_init,
-                initargs=(str(args.checkpoint), str(runtime), args.batch_size, args.bridge_workers)) as gpu, \
+                initargs=(str(args.checkpoint), str(runtime), args.batch_size, args.bridge_workers, args.guided_compiler)) as gpu, \
              ProcessPoolExecutor(args.compiler_workers, mp_context=context, initializer=_cpu_init) as cpu:
             ready = gpu.submit(_gpu_ready).result()
             atomic(runtime / "cuda-ready.json", ready)
             event("cuda_ready", **ready)
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_capacity import legacy_span_capacity_plan
+            fixed_resident = max(4096, ready["resident_mb"] + resident_mb() + 256)
+            latest_capacity = {}
             def take_work():
-                nonlocal exhausted
+                nonlocal exhausted, latest_capacity
                 if storage_backpressure(runtime, args.storage_bytes):
                     status(db, runtime, phase="waiting_for_verified_publication_storage")
                     return None
@@ -566,13 +600,30 @@ def engine(args):
                     status(db, runtime, phase="hydrating", section_cursor=batch["next_section"], intake_counts=batch["counts"])
                 if STOP:
                     return None
-                selected = select_batch(db, args.batch_size)
+                latest_capacity = legacy_span_capacity_plan(
+                    requested_compiler_workers=args.compiler_workers, requested_batch_size=args.batch_size,
+                    memory_budget_mb=args.memory_mb, cpu_budget=args.compiler_workers + args.bridge_workers + 1,
+                    process_budget=args.compiler_workers + 4, fixed_resident_mb=fixed_resident,
+                    already_resident_mb=min(fixed_resident, ready["resident_mb"] + resident_mb()),
+                    pending_span_count=db.execute("SELECT count(*) FROM work WHERE status='pending'").fetchone()[0],
+                    bridge_workers=args.bridge_workers)
+                if not latest_capacity["compiler_workers"]:
+                    atomic(runtime / "capacity.json", latest_capacity)
+                    status(db, runtime, phase="waiting_for_hardware_headroom", capacity=latest_capacity)
+                    return None
+                dispatch_size = min(latest_capacity["batch_size"], 8 * latest_capacity["compiler_workers"])
+                latest_capacity["dispatched_batch_limit"] = dispatch_size
+                atomic(runtime / "capacity.json", latest_capacity)
+                selected = select_batch(db, dispatch_size)
                 if selected is None:
                     return None
                 batch_id, rows = selected
                 started = time.monotonic()
-                futures = [cpu.submit(_compile, row, ready["source"]["sha256"]) for row in rows]
-                return batch_id, rows, futures, started
+                size = latest_capacity["compiler_chunk_size"]
+                chunks = [rows[offset:offset + size] for offset in range(0, len(rows), size)]
+                # The pool owns only bounded chunks; at most two batches overlap.
+                futures = [cpu.submit(_compile_batch, chunk, ready["source"]["sha256"]) for chunk in chunks]
+                return batch_id, rows, futures, started, latest_capacity
 
             pending = None
             while not STOP and (args.max_batches == 0 or completed < args.max_batches):
@@ -581,13 +632,16 @@ def engine(args):
                     pending = take_work()
                 if pending is None:
                     pressure = storage_backpressure(runtime, args.storage_bytes)
-                    status(db, runtime, phase="waiting_for_verified_publication_storage" if pressure else "waiting_for_source_updates", section_cursor=meta(db, "section_cursor"))
+                    hardware_wait = latest_capacity and not latest_capacity["compiler_workers"]
+                    status(db, runtime, phase="waiting_for_verified_publication_storage" if pressure else
+                           "waiting_for_hardware_headroom" if hardware_wait else "waiting_for_source_updates",
+                           section_cursor=meta(db, "section_cursor"))
                     if args.max_batches:
                         break
                     sleep_until_poll(args.poll_seconds)
                     if STOP:
                         break
-                    if pressure:
+                    if pressure or hardware_wait:
                         continue
                     try:
                         latest = remote_progress()
@@ -608,9 +662,9 @@ def engine(args):
                     except Exception as error:
                         event("source_poll_deferred", error=type(error).__name__)
                     continue
-                batch_id, rows, futures, started = pending
+                batch_id, rows, futures, started, batch_capacity = pending
                 status(db, runtime, phase="compiling", batch_id=batch_id, compiler_workers=args.compiler_workers)
-                compiled = {row["source_span_id"]: future.result() for row, future in zip(rows, futures)}
+                compiled = {row["source_span_id"]: row for future in futures for row in future.result()}
                 gpu_future = gpu.submit(_gpu_evaluate, rows, compiled)
                 # A bounded second batch compiles while the first uses CUDA.
                 pending = take_work() if args.max_batches == 0 or completed + 1 < args.max_batches else None
@@ -628,6 +682,8 @@ def engine(args):
                 receipt["campaign"] = {"batch_id": batch_id, "progress": descriptor,
                     "runner_sha256": RUNNER_SHA256,
                     "source_sha256": SOURCE_SHA, "compiler_workers": args.compiler_workers,
+                    "capacity": batch_capacity, "publication_format": args.publication_format,
+                    "guided_compiler": args.guided_compiler,
                     "cpu_cuda_overlap": pending is not None,
                     "whole_batch_seconds": time.monotonic() - started, "inference_only": True}
                 stage(db, runtime, batch_id, receipt, args.agent_id)
@@ -663,6 +719,8 @@ def arguments(argv=None):
     p.add_argument("--agent-id", default="legacy-cuda-census")
     p.add_argument("--upload", action="store_true")
     p.add_argument("--publish-only", action="store_true", help="deliver retained batches without loading the model")
+    p.add_argument("--publication-format", choices=("paired", "exchange"), default="paired")
+    p.add_argument("--guided-compiler", action="store_true", help="record a diagnostic model-guided compiler comparison")
     p.add_argument("--_engine", action="store_true", help=argparse.SUPPRESS)
     args = p.parse_args(argv)
     if not 1 <= args.compiler_workers <= 8 or not 1 <= args.bridge_workers <= 8 or not 1 <= args.batch_size <= 32 or args.max_batches < 0 or not 1 <= args.poll_seconds <= 3600:

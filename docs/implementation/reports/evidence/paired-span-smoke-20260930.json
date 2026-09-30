@@ -1,0 +1,1819 @@
+{
+  "batches": [
+    {
+      "admitted": false,
+      "artifact_status": {
+        "captured": 7,
+        "unavailable": 1
+      },
+      "batch_number": 1,
+      "bridges": {
+        "adapter_workers": 1,
+        "disk_cache": false,
+        "evaluate_provers": false,
+        "evaluation_invoked": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "native_target_timeout_seconds": 0.0,
+        "native_timeout_fallback_count": 0,
+        "parallel_workers": 1,
+        "parallel_workers_used": 1,
+        "process_metric_caches_may_be_warm": true,
+        "projected_observation_bridge_names": [],
+        "requested": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "target_count": 8
+      },
+      "campaign": {
+        "batch_id": "2ad3ea5cb72544a6a2765c5cd4f0a73b",
+        "capacity": {
+          "admitted": false,
+          "attempts": [
+            {
+              "batch_size": 8,
+              "compiler_workers": 4,
+              "limits": {
+                "affinity_cpu_count": 18,
+                "available_memory_mb": 309,
+                "hardware_cpu_count": 18,
+                "pending_passes": 416,
+                "requested_workers": 4,
+                "reservation_cpu": 4,
+                "reservation_memory": 56,
+                "reservation_process_slots": 5
+              },
+              "reasons": []
+            }
+          ],
+          "batch_size": 8,
+          "compiler_chunk_size": 2,
+          "compiler_workers": 4,
+          "dispatched_batch_limit": 8,
+          "estimated_group_memory_mb": 5632,
+          "estimates": {
+            "already_resident_mb": 2492,
+            "fixed_resident_mb": 4096,
+            "per_compiler_memory_mb": 128,
+            "per_span_working_set_mb": 64,
+            "safety_mb": 512
+          },
+          "max_inflight_batches": 2,
+          "max_submitted_compiler_tasks": 8,
+          "model_owners": 1,
+          "reasons": [],
+          "reservation_acquired": false,
+          "schema": "legacy-span-dispatch-capacity/v1",
+          "scope": "dispatch_inside_existing_reservation",
+          "telemetry": {
+            "affinity_cpu_count": 20,
+            "available_memory_mb": 42213,
+            "cgroup_cpu_count": null,
+            "cgroup_memory_remaining_mb": null,
+            "hardware_cpu_count": 20,
+            "load_average": 10.271484375,
+            "probe_errors": []
+          }
+        },
+        "compiler_workers": 4,
+        "cpu_cuda_overlap": true,
+        "guided_compiler": true,
+        "inference_only": true,
+        "progress": {
+          "bytes": 52701179,
+          "path": "autoformal/uscode/resume-checkpoint.parquet",
+          "repository": "justicedao/uscode-autoformal-span-cache",
+          "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+          "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+        },
+        "publication_format": "paired",
+        "runner_sha256": "29e941b41c9b0106c65c26fdf503dbc90bf11e942d2f8dc7934411201370fe1d",
+        "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "whole_batch_seconds": 32.46801892411895
+      },
+      "checkpoint": {
+        "bytes": 398209746,
+        "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+        "runtime_loaded_architecture": "proof_aware_auxiliary_heads_v2",
+        "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "vector_dimensions": 8,
+        "vector_table_counts": {
+          "compiler_quality_embedding_weights": 57,
+          "decoded_embeddings": 0,
+          "decompiler_plan_embedding_weights": 12640,
+          "family_embedding_weights": 8,
+          "family_legal_ir_view_embedding_weights": 42,
+          "family_semantic_slot_embedding_weights": 70470,
+          "family_semantic_slot_legal_ir_view_embedding_weights": 284034,
+          "feature_embedding_weights": 170821,
+          "legal_ir_view_embedding_weights": 6,
+          "logic_signature_embedding_weights": 1777,
+          "predicate_argument_embedding_weights": 9394,
+          "round_trip_signal_embedding_weights": 124,
+          "semantic_slot_embedding_weights": 14014,
+          "semantic_slot_legal_ir_view_embedding_weights": 57187
+        }
+      },
+      "compiler_reasons": {
+        "": 1,
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure": 1,
+        "no_parser_elements": 6
+      },
+      "compiler_rule_count": 1,
+      "compute_backend": {
+        "autoencoder_compute_backend": "torch_cuda",
+        "autoencoder_compute_device": "cuda",
+        "autoencoder_compute_device_request": "cuda"
+      },
+      "cuda": {
+        "cuda_device_time_us": 770.3120000009949,
+        "cuda_kernel_event_count": 494,
+        "peak_allocated_bytes": 955904,
+        "peak_reserved_bytes": 2097152,
+        "profiled": true
+      },
+      "direct_formula_count": 7,
+      "embedding_representation": {
+        "algorithm": "SHA256(normalized_text)[:16] seed; Python Random.uniform(-1,1); round6",
+        "constituent_training_representation_verified": false,
+        "dimensions": 8,
+        "embedding_model": "mock:stable-sha256",
+        "historical_runtime_commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+        "semantic_embeddings": false
+      },
+      "formalized": false,
+      "guided_compiler_enabled": true,
+      "guided_formula_count": 7,
+      "guided_status": {
+        "captured": 8
+      },
+      "lake_status_counts": {
+        "not_run": 8
+      },
+      "logic_tree": {
+        "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+        "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+      },
+      "process_target_cache": {
+        "batch_cleanup": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        },
+        "before_batch": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        },
+        "enabled": false,
+        "native_bridge_report_cache_enabled": false,
+        "scope": "isolated_legacy_worker_only",
+        "startup": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        }
+      },
+      "producer_source": {
+        "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+        "python_file_count": 7916,
+        "sha256": "15e73447e9a5a7b222836d89a088c33e9bdf422429a0a89afeff9ecab1977729"
+      },
+      "raw_decoder_count": 8,
+      "receipt": {
+        "bytes": 30911519,
+        "path": "workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/receipts/2ad3ea5cb72544a6a2765c5cd4f0a73b.json",
+        "sha256": "3ca36729333750bd302f87e2ef3d33c53861c9ec51ead06f4ff733925da21c51"
+      },
+      "requested_span_count": 8,
+      "sample_count": 8,
+      "semantic_qualified": false,
+      "source_spans": [
+        {
+          "legal_id": "usc:us:10:4842",
+          "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+          "source_span_id": "uscode-span-0fd5333535fde1e6f5959a9ac02deb40091abed5039d8c56ed0de111870271eb",
+          "text": "L."
+        },
+        {
+          "legal_id": "usc:us:10:4864",
+          "source_sha256": "50396cc2a85fe40890e9a9bbf2f2993aacad62ea6b6e3d6a2bd896947045fbbf",
+          "source_span_id": "uscode-span-13cea0f9cc059201958094227a93bbc7141127122ed480353d8c8a9adf134c93",
+          "text": "4864(e)], shall apply with respect to solicitations for contracts issued after the expiration of the 120-day period beginning on the date of the enactment of this Act [Oct."
+        },
+        {
+          "legal_id": "usc:us:10:4862",
+          "source_sha256": "a675a235b5e2e7d3d09110289aea298c86d22c882102a76694b6d748a0e3abe7",
+          "source_span_id": "uscode-span-1a3bcae1a3d0f6de584d62baacff63544a072f7581edbd8e7ddfd230be7d480b",
+          "text": "3388; Pub."
+        },
+        {
+          "legal_id": "usc:us:10:4873",
+          "source_sha256": "5fe1161e17ca2c2dd60df84b28f292f5e60201caa8ffc0f84041684cc2448efd",
+          "source_span_id": "uscode-span-12e27cca693c89b19e111ce06593fe144ed4d6c2f1f74f4b112ac6f0b57db926",
+          "text": "(3) In carrying out this section, the Secretary shall, to the maximum extent practicable, avoid imposing contractual certification requirements with respect to the acquisition of commercial products, commercial services, or commercially available off-the-shelf items."
+        },
+        {
+          "legal_id": "usc:us:10:4864",
+          "source_sha256": "8ff168414165583d9e5cfaf9d9db40123519167dcc44a36a6c0bbaffd2c276d9",
+          "source_span_id": "uscode-span-0c119711ad5660653b84695a7b33568a71943edc6b267ddfdcaa39b1c76886d5",
+          "text": "100\u2013456, \u00a7822, added subsec."
+        },
+        {
+          "legal_id": "usc:us:10:4863",
+          "source_sha256": "4821d210813e4995c65c80bccfe4fa2519b7043119b57289485491366eba14cf",
+          "source_span_id": "uscode-span-0f872170873e6e84fa8d379c4d37e5c7b7c15edbecd6e791ad271ce203b12173",
+          "text": "110\u2013181, div."
+        },
+        {
+          "legal_id": "usc:us:10:4864",
+          "source_sha256": "57d78377efd0f334d2e12e2aecf904e24bed7b8faaf338f74f807df94618922b",
+          "source_span_id": "uscode-span-085cf708dd4f1a612592071d0f7abb3399eaae7601e739f9f169cf148d6cdb17",
+          "text": "Pub."
+        },
+        {
+          "legal_id": "usc:us:10:4864",
+          "source_sha256": "e35accc600bf99b24efb3b8c409187bd12fabbb61d8a145150b373f5b69c4273",
+          "source_span_id": "uscode-span-1cece65839b05653e7de6538226536d80eff05ffa7495c6385fbefba9f51c769",
+          "text": "2017 \u2014Subsec."
+        }
+      ],
+      "target_observation": {
+        "bridge_module_preloaded_at_start": false,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+        "disk_cache_enabled": false,
+        "disk_cache_hit_count": 0,
+        "evaluate_provers": false,
+        "generated_target_count": 8,
+        "memory_cache_hit_count": 0,
+        "native_bridge_report_cache_enabled": false,
+        "native_evaluation_attempt_count": 8,
+        "native_evaluation_seconds_sum": 15.285882147960365,
+        "parallel_workers_requested": 1,
+        "parallel_workers_used": 1,
+        "process_target_cache_empty_at_start": true,
+        "process_target_cache_enabled": false,
+        "process_target_cache_entries_at_end": 0,
+        "process_target_cache_entries_at_start": 0,
+        "representation_counts": {
+          "cached_summary": 0,
+          "native": 8,
+          "other": 0,
+          "prepared_native": 0
+        },
+        "supplied_target_count": 0,
+        "target_cache_miss_count": 8,
+        "target_count": 8,
+        "timeout_fallback_count": 0,
+        "training_target_seconds_sum": 0.0077436629217118025
+      },
+      "temperature": 0,
+      "timings": {
+        "bridge_on_evaluate_seconds": 19.281480099074543,
+        "compiler_seconds": 9.853220091201365,
+        "elapsed_seconds": 30.57426617993042,
+        "producer_guard_seconds": 1.261438820278272,
+        "projected_observation_seconds": 0.10898307105526328,
+        "sample_preparation_seconds": 0.06895683403126895,
+        "wall_seconds_per_span": 3.8217832724913023
+      },
+      "training_executed": false,
+      "unavailable_artifacts": [
+        {
+          "document_bytes": 18678464,
+          "document_sha256": "2b641c083d26b4afac328c9e883165f7c6dd30ab724e21af6f11132cc19e2a27",
+          "reason": "document_exceeds_16mib_decoded_bound",
+          "source_span_id": "uscode-span-13cea0f9cc059201958094227a93bbc7141127122ed480353d8c8a9adf134c93",
+          "status": "unavailable"
+        }
+      ],
+      "use_sample_memory": false
+    },
+    {
+      "admitted": false,
+      "artifact_status": {
+        "captured": 8
+      },
+      "batch_number": 2,
+      "bridges": {
+        "adapter_workers": 1,
+        "disk_cache": false,
+        "evaluate_provers": false,
+        "evaluation_invoked": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "native_target_timeout_seconds": 0.0,
+        "native_timeout_fallback_count": 0,
+        "parallel_workers": 1,
+        "parallel_workers_used": 1,
+        "process_metric_caches_may_be_warm": true,
+        "projected_observation_bridge_names": [],
+        "requested": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "target_count": 8
+      },
+      "campaign": {
+        "batch_id": "40deac30da45428682f552c5a47b8520",
+        "capacity": {
+          "admitted": false,
+          "attempts": [
+            {
+              "batch_size": 8,
+              "compiler_workers": 4,
+              "limits": {
+                "affinity_cpu_count": 18,
+                "available_memory_mb": 309,
+                "hardware_cpu_count": 18,
+                "pending_passes": 408,
+                "requested_workers": 4,
+                "reservation_cpu": 4,
+                "reservation_memory": 56,
+                "reservation_process_slots": 5
+              },
+              "reasons": []
+            }
+          ],
+          "batch_size": 8,
+          "compiler_chunk_size": 2,
+          "compiler_workers": 4,
+          "dispatched_batch_limit": 8,
+          "estimated_group_memory_mb": 5632,
+          "estimates": {
+            "already_resident_mb": 2442,
+            "fixed_resident_mb": 4096,
+            "per_compiler_memory_mb": 128,
+            "per_span_working_set_mb": 64,
+            "safety_mb": 512
+          },
+          "max_inflight_batches": 2,
+          "max_submitted_compiler_tasks": 8,
+          "model_owners": 1,
+          "reasons": [],
+          "reservation_acquired": false,
+          "schema": "legacy-span-dispatch-capacity/v1",
+          "scope": "dispatch_inside_existing_reservation",
+          "telemetry": {
+            "affinity_cpu_count": 20,
+            "available_memory_mb": 42312,
+            "cgroup_cpu_count": null,
+            "cgroup_memory_remaining_mb": null,
+            "hardware_cpu_count": 20,
+            "load_average": 10.271484375,
+            "probe_errors": []
+          }
+        },
+        "compiler_workers": 4,
+        "cpu_cuda_overlap": true,
+        "guided_compiler": true,
+        "inference_only": true,
+        "progress": {
+          "bytes": 52701179,
+          "path": "autoformal/uscode/resume-checkpoint.parquet",
+          "repository": "justicedao/uscode-autoformal-span-cache",
+          "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+          "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+        },
+        "publication_format": "paired",
+        "runner_sha256": "29e941b41c9b0106c65c26fdf503dbc90bf11e942d2f8dc7934411201370fe1d",
+        "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "whole_batch_seconds": 47.49209763109684
+      },
+      "checkpoint": {
+        "bytes": 398209746,
+        "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+        "runtime_loaded_architecture": "proof_aware_auxiliary_heads_v2",
+        "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "vector_dimensions": 8,
+        "vector_table_counts": {
+          "compiler_quality_embedding_weights": 57,
+          "decoded_embeddings": 0,
+          "decompiler_plan_embedding_weights": 12640,
+          "family_embedding_weights": 8,
+          "family_legal_ir_view_embedding_weights": 42,
+          "family_semantic_slot_embedding_weights": 70470,
+          "family_semantic_slot_legal_ir_view_embedding_weights": 284034,
+          "feature_embedding_weights": 170821,
+          "legal_ir_view_embedding_weights": 6,
+          "logic_signature_embedding_weights": 1777,
+          "predicate_argument_embedding_weights": 9394,
+          "round_trip_signal_embedding_weights": 124,
+          "semantic_slot_embedding_weights": 14014,
+          "semantic_slot_legal_ir_view_embedding_weights": 57187
+        }
+      },
+      "compiler_reasons": {
+        "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:unsupported_norm_type": 1,
+        "no_parser_elements": 7
+      },
+      "compiler_rule_count": 0,
+      "compute_backend": {
+        "autoencoder_compute_backend": "torch_cuda",
+        "autoencoder_compute_device": "cuda",
+        "autoencoder_compute_device_request": "cuda"
+      },
+      "cuda": {
+        "initial_batch_profile": {
+          "cuda_device_time_us": 770.3120000009949,
+          "cuda_kernel_event_count": 494,
+          "profiled": true
+        },
+        "peak_allocated_bytes": 824320,
+        "peak_reserved_bytes": 2097152,
+        "profiled": false
+      },
+      "direct_formula_count": 4,
+      "embedding_representation": {
+        "algorithm": "SHA256(normalized_text)[:16] seed; Python Random.uniform(-1,1); round6",
+        "constituent_training_representation_verified": false,
+        "dimensions": 8,
+        "embedding_model": "mock:stable-sha256",
+        "historical_runtime_commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+        "semantic_embeddings": false
+      },
+      "formalized": false,
+      "guided_compiler_enabled": true,
+      "guided_formula_count": 4,
+      "guided_status": {
+        "captured": 8
+      },
+      "lake_status_counts": {
+        "not_run": 8
+      },
+      "logic_tree": {
+        "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+        "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+      },
+      "process_target_cache": {
+        "batch_cleanup": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        },
+        "before_batch": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        },
+        "enabled": false,
+        "native_bridge_report_cache_enabled": false,
+        "scope": "isolated_legacy_worker_only",
+        "startup": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        }
+      },
+      "producer_source": {
+        "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+        "python_file_count": 7916,
+        "sha256": "15e73447e9a5a7b222836d89a088c33e9bdf422429a0a89afeff9ecab1977729"
+      },
+      "raw_decoder_count": 8,
+      "receipt": {
+        "bytes": 23223530,
+        "path": "workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/receipts/40deac30da45428682f552c5a47b8520.json",
+        "sha256": "9ea4cbb5249848986f0b5f226f92f139d266b275d1799ad61a7ae55bdcd1cb06"
+      },
+      "requested_span_count": 8,
+      "sample_count": 8,
+      "semantic_qualified": false,
+      "source_spans": [
+        {
+          "legal_id": "usc:us:10:4863",
+          "source_sha256": "4769b1c2215c1be41d4d9010d75cca99ccba94282e41d6ee5c208cccc45d6fc3",
+          "source_span_id": "uscode-span-115b573d05e19df6637d28cc768c85da7009423786b857813e33a1cfa1027566",
+          "text": "4863], as amended by this section, should be implemented.\" Requirements Relating to Waivers of Certain Domestic Source Limitations Relating to Specialty Metals Pub."
+        },
+        {
+          "legal_id": "usc:us:10:4863",
+          "source_sha256": "8005377f17076ee2032fa844773ff09025c67b87ac4ab7d1cef95ec909b07587",
+          "source_span_id": "uscode-span-0a4c92a258af687e7665028050e4fd0f3607ac95ee17dad523e592d524672269",
+          "text": "(a)(2)."
+        },
+        {
+          "legal_id": "usc:us:10:4841",
+          "source_sha256": "97b9fb31f4294b42ff514f21fab5696d6bbd98f0e7037cf12ca12980e50aa9d2",
+          "source_span_id": "uscode-span-0979637cdc87794753111c68d4aba64b9a5448e4efe38d40ff96fee8df2ec60f",
+          "text": "Subsec."
+        },
+        {
+          "legal_id": "usc:us:10:4862",
+          "source_sha256": "79dbc8570676417738a1ad4b69dfec4f6ff7dc7bb903741d81bf96315352640b",
+          "source_span_id": "uscode-span-016aa41a3e264039dcd2e7632f3418d3d4ac753628831df610a34094e975ccec",
+          "text": "(2) and redesignated former par."
+        },
+        {
+          "legal_id": "usc:us:10:4864",
+          "source_sha256": "829028858d002b0fd53b456b4b235dc8da38c4a32d5a6db5e16693428c68e474",
+          "source_span_id": "uscode-span-169d9c28c8d71f46511bb3a93978349b34dabb27b4a8dbaa868a8332996e5241",
+          "text": "105\u201385, \u00a7811(a), added subsec."
+        },
+        {
+          "legal_id": "usc:us:10:4841",
+          "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+          "source_span_id": "uscode-span-09841580d3eebdb1bf56af5dd851127bcaec0de38c82f9e3f659118770b37e52",
+          "text": "L."
+        },
+        {
+          "legal_id": "usc:us:10:4871",
+          "source_sha256": "fe067df88f7448f0e8b616b33f527f37d800e900408ae815ec9040891f78f2a1",
+          "source_span_id": "uscode-span-0f13266bc70900e16951dbf32aed982b43c1eff272816a11d0da1858a8d91cc1",
+          "text": "1597; Pub."
+        },
+        {
+          "legal_id": "usc:us:10:4863",
+          "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+          "source_span_id": "uscode-span-1cccf02dd43347512a8379ba887433012c13420bc2a9814e2fafe2a3b8a82ab2",
+          "text": "L."
+        }
+      ],
+      "target_observation": {
+        "bridge_module_preloaded_at_start": true,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+        "disk_cache_enabled": false,
+        "disk_cache_hit_count": 0,
+        "evaluate_provers": false,
+        "generated_target_count": 8,
+        "memory_cache_hit_count": 0,
+        "native_bridge_report_cache_enabled": false,
+        "native_evaluation_attempt_count": 8,
+        "native_evaluation_seconds_sum": 8.018617048161104,
+        "parallel_workers_requested": 1,
+        "parallel_workers_used": 1,
+        "process_target_cache_empty_at_start": true,
+        "process_target_cache_enabled": false,
+        "process_target_cache_entries_at_end": 0,
+        "process_target_cache_entries_at_start": 0,
+        "representation_counts": {
+          "cached_summary": 0,
+          "native": 8,
+          "other": 0,
+          "prepared_native": 0
+        },
+        "supplied_target_count": 0,
+        "target_cache_miss_count": 8,
+        "target_count": 8,
+        "timeout_fallback_count": 0,
+        "training_target_seconds_sum": 0.007590477354824543
+      },
+      "temperature": 0,
+      "timings": {
+        "bridge_on_evaluate_seconds": 9.342027853941545,
+        "compiler_seconds": 5.220340161118656,
+        "elapsed_seconds": 15.949751164065674,
+        "producer_guard_seconds": 1.254067235160619,
+        "projected_observation_seconds": 0.07847136608324945,
+        "sample_preparation_seconds": 0.05468909000046551,
+        "wall_seconds_per_span": 1.9937188955082092
+      },
+      "training_executed": false,
+      "unavailable_artifacts": [],
+      "use_sample_memory": false
+    },
+    {
+      "admitted": false,
+      "artifact_status": {
+        "captured": 8
+      },
+      "batch_number": 3,
+      "bridges": {
+        "adapter_workers": 1,
+        "disk_cache": false,
+        "evaluate_provers": false,
+        "evaluation_invoked": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "native_target_timeout_seconds": 0.0,
+        "native_timeout_fallback_count": 0,
+        "parallel_workers": 1,
+        "parallel_workers_used": 1,
+        "process_metric_caches_may_be_warm": true,
+        "projected_observation_bridge_names": [],
+        "requested": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "target_count": 8
+      },
+      "campaign": {
+        "batch_id": "1cf1539e4de64e20a06231720b06d8dc",
+        "capacity": {
+          "admitted": false,
+          "attempts": [
+            {
+              "batch_size": 8,
+              "compiler_workers": 4,
+              "limits": {
+                "affinity_cpu_count": 18,
+                "available_memory_mb": 308,
+                "hardware_cpu_count": 18,
+                "pending_passes": 400,
+                "requested_workers": 4,
+                "reservation_cpu": 4,
+                "reservation_memory": 56,
+                "reservation_process_slots": 5
+              },
+              "reasons": []
+            }
+          ],
+          "batch_size": 8,
+          "compiler_chunk_size": 2,
+          "compiler_workers": 4,
+          "dispatched_batch_limit": 8,
+          "estimated_group_memory_mb": 5632,
+          "estimates": {
+            "already_resident_mb": 2475,
+            "fixed_resident_mb": 4096,
+            "per_compiler_memory_mb": 128,
+            "per_span_working_set_mb": 64,
+            "safety_mb": 512
+          },
+          "max_inflight_batches": 2,
+          "max_submitted_compiler_tasks": 8,
+          "model_owners": 1,
+          "reasons": [],
+          "reservation_acquired": false,
+          "schema": "legacy-span-dispatch-capacity/v1",
+          "scope": "dispatch_inside_existing_reservation",
+          "telemetry": {
+            "affinity_cpu_count": 20,
+            "available_memory_mb": 42094,
+            "cgroup_cpu_count": null,
+            "cgroup_memory_remaining_mb": null,
+            "hardware_cpu_count": 20,
+            "load_average": 10.04541015625,
+            "probe_errors": []
+          }
+        },
+        "compiler_workers": 4,
+        "cpu_cuda_overlap": false,
+        "guided_compiler": true,
+        "inference_only": true,
+        "progress": {
+          "bytes": 52701179,
+          "path": "autoformal/uscode/resume-checkpoint.parquet",
+          "repository": "justicedao/uscode-autoformal-span-cache",
+          "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+          "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+        },
+        "publication_format": "paired",
+        "runner_sha256": "29e941b41c9b0106c65c26fdf503dbc90bf11e942d2f8dc7934411201370fe1d",
+        "source_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "whole_batch_seconds": 33.48571746703237
+      },
+      "checkpoint": {
+        "bytes": 398209746,
+        "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+        "runtime_loaded_architecture": "proof_aware_auxiliary_heads_v2",
+        "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "vector_dimensions": 8,
+        "vector_table_counts": {
+          "compiler_quality_embedding_weights": 57,
+          "decoded_embeddings": 0,
+          "decompiler_plan_embedding_weights": 12640,
+          "family_embedding_weights": 8,
+          "family_legal_ir_view_embedding_weights": 42,
+          "family_semantic_slot_embedding_weights": 70470,
+          "family_semantic_slot_legal_ir_view_embedding_weights": 284034,
+          "feature_embedding_weights": 170821,
+          "legal_ir_view_embedding_weights": 6,
+          "logic_signature_embedding_weights": 1777,
+          "predicate_argument_embedding_weights": 9394,
+          "round_trip_signal_embedding_weights": 124,
+          "semantic_slot_embedding_weights": 14014,
+          "semantic_slot_legal_ir_view_embedding_weights": 57187
+        }
+      },
+      "compiler_reasons": {
+        "no_parser_elements": 8
+      },
+      "compiler_rule_count": 0,
+      "compute_backend": {
+        "autoencoder_compute_backend": "torch_cuda",
+        "autoencoder_compute_device": "cuda",
+        "autoencoder_compute_device_request": "cuda"
+      },
+      "cuda": {
+        "initial_batch_profile": {
+          "cuda_device_time_us": 770.3120000009949,
+          "cuda_kernel_event_count": 494,
+          "profiled": true
+        },
+        "peak_allocated_bytes": 1110528,
+        "peak_reserved_bytes": 2097152,
+        "profiled": false
+      },
+      "direct_formula_count": 4,
+      "embedding_representation": {
+        "algorithm": "SHA256(normalized_text)[:16] seed; Python Random.uniform(-1,1); round6",
+        "constituent_training_representation_verified": false,
+        "dimensions": 8,
+        "embedding_model": "mock:stable-sha256",
+        "historical_runtime_commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+        "semantic_embeddings": false
+      },
+      "formalized": false,
+      "guided_compiler_enabled": true,
+      "guided_formula_count": 4,
+      "guided_status": {
+        "captured": 8
+      },
+      "lake_status_counts": {
+        "not_run": 8
+      },
+      "logic_tree": {
+        "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+        "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+      },
+      "process_target_cache": {
+        "batch_cleanup": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        },
+        "before_batch": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        },
+        "enabled": false,
+        "native_bridge_report_cache_enabled": false,
+        "scope": "isolated_legacy_worker_only",
+        "startup": {
+          "bridge_report_entries_after": 0,
+          "bridge_report_entries_before": 0,
+          "bridge_report_entries_cleared": 0,
+          "entries_after": 0,
+          "entries_before": 0,
+          "entries_cleared": 0
+        }
+      },
+      "producer_source": {
+        "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+        "python_file_count": 7916,
+        "sha256": "15e73447e9a5a7b222836d89a088c33e9bdf422429a0a89afeff9ecab1977729"
+      },
+      "raw_decoder_count": 8,
+      "receipt": {
+        "bytes": 22370458,
+        "path": "workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/receipts/1cf1539e4de64e20a06231720b06d8dc.json",
+        "sha256": "6c6d8771b7162dd30ac3ba325ff3b828213b76cb26b38e7abb7cb537f1907530"
+      },
+      "requested_span_count": 8,
+      "sample_count": 8,
+      "semantic_qualified": false,
+      "source_spans": [
+        {
+          "legal_id": "usc:us:10:4841",
+          "source_sha256": "e6f40e7755dd3927831427d188281c9ad470c4ee61808c55c203b3f639e7d848",
+          "source_span_id": "uscode-span-1b936a6a79ac6efb83cc936140080f058511cecc67353135d6a1cd09e348359c",
+          "text": "(e)(5)."
+        },
+        {
+          "legal_id": "usc:us:10:4841",
+          "source_sha256": "527784c4ab6d3730eb9a8dcbec5226a7470d6d8ffa65b2db9d981e227927f0e6",
+          "source_span_id": "uscode-span-0e42f78b9ec01b2943916da0dcb466d5dd3cb07e1d3f240c206c292c6c856986",
+          "text": "1, 2022, with additional provisions for delayed implementation and applicability of existing law, see section 1801(d) of Pub."
+        },
+        {
+          "legal_id": "usc:us:10:4871",
+          "source_sha256": "11b326ddd5ea50b08880e95493ebc7d1c938eed73671d9c575a37d7c8901c194",
+          "source_span_id": "uscode-span-1d8281e50f25371ae54a8b7ea6bdd5b4cf2bafee0278c69406a97e752bcc4da8",
+          "text": "116\u2013283, set out as a note preceding section 3001 of this title."
+        },
+        {
+          "legal_id": "usc:us:10:4841",
+          "source_sha256": "46cdea4df9bf023e9faf7cd44cb68d74d93d4bf92ed59c1347fdaa06ee7dd526",
+          "source_span_id": "uscode-span-01c6ffe2b91645d840af1a55c25761284bf92ccb88cf71dcb658ec8ac59e40e9",
+          "text": "(e)."
+        },
+        {
+          "legal_id": "usc:us:10:4871",
+          "source_sha256": "8e57bc5c6a8873dca031ce990fd91d3850ce8237870892b2d1d9c14911aae2dc",
+          "source_span_id": "uscode-span-11e36a3b8e057702608c1a8d241fcbf0d1816abee7cc395c308eab6257e306a1",
+          "text": "App.\" for \"50 U.S.C.\" in parenthetical after \"Export Administration Act of 1979\"."
+        },
+        {
+          "legal_id": "usc:us:10:4861",
+          "source_sha256": "57d78377efd0f334d2e12e2aecf904e24bed7b8faaf338f74f807df94618922b",
+          "source_span_id": "uscode-span-02a4b721f9586e6c482fcd3bda9072f4e61da0cca57e72175ee20b6422ca0bca",
+          "text": "Pub."
+        },
+        {
+          "legal_id": "usc:us:10:4864",
+          "source_sha256": "97b9fb31f4294b42ff514f21fab5696d6bbd98f0e7037cf12ca12980e50aa9d2",
+          "source_span_id": "uscode-span-048ebd7e77bf31ce131b149a22b1a88e2b37f0fd51453c4d0dca1e4f22cdee19",
+          "text": "Subsec."
+        },
+        {
+          "legal_id": "usc:us:10:4845",
+          "source_sha256": "5642d213c3961bc446fc47cbfbc669f4887c3c57dc3dd4b11062e0437713c7b0",
+          "source_span_id": "uscode-span-05b55f8ae6542fae118b66a840e1df9d10a9f2ff9129140808f11046e0a7fb21",
+          "text": "115\u2013232, set out as a note preceding section 3001 of this title."
+        }
+      ],
+      "target_observation": {
+        "bridge_module_preloaded_at_start": true,
+        "bridge_names": [
+          "modal_frame_logic",
+          "deontic_norms",
+          "fol_tdfol",
+          "cec_dcec",
+          "external_prover_router"
+        ],
+        "cache_observation_scope": "this_evaluation_not_proof_of_process_coldness",
+        "disk_cache_enabled": false,
+        "disk_cache_hit_count": 0,
+        "evaluate_provers": false,
+        "generated_target_count": 8,
+        "memory_cache_hit_count": 0,
+        "native_bridge_report_cache_enabled": false,
+        "native_evaluation_attempt_count": 8,
+        "native_evaluation_seconds_sum": 8.227921056561172,
+        "parallel_workers_requested": 1,
+        "parallel_workers_used": 1,
+        "process_target_cache_empty_at_start": true,
+        "process_target_cache_enabled": false,
+        "process_target_cache_entries_at_end": 0,
+        "process_target_cache_entries_at_start": 0,
+        "representation_counts": {
+          "cached_summary": 0,
+          "native": 8,
+          "other": 0,
+          "prepared_native": 0
+        },
+        "supplied_target_count": 0,
+        "target_cache_miss_count": 8,
+        "target_count": 8,
+        "timeout_fallback_count": 0,
+        "training_target_seconds_sum": 0.007756625302135944
+      },
+      "temperature": 0,
+      "timings": {
+        "bridge_on_evaluate_seconds": 9.497889023972675,
+        "compiler_seconds": 5.999541844939813,
+        "elapsed_seconds": 16.913210028083995,
+        "producer_guard_seconds": 1.2693630130961537,
+        "projected_observation_seconds": 0.0897186619695276,
+        "sample_preparation_seconds": 0.05655629909597337,
+        "wall_seconds_per_span": 2.1141512535104994
+      },
+      "training_executed": false,
+      "unavailable_artifacts": [],
+      "use_sample_memory": false
+    }
+  ],
+  "configuration": {
+    "adapter_workers": 1,
+    "batch_size": 8,
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "checkpoint_bytes": 398209746,
+    "checkpoint_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+    "compiler_chunk_size": 2,
+    "compiler_workers": 4,
+    "disk_metric_cache": false,
+    "embedding_representation": {
+      "algorithm": "SHA256(normalized_text)[:16] seed; Python Random.uniform(-1,1); round6",
+      "constituent_training_representation_verified": false,
+      "dimensions": 8,
+      "embedding_model": "mock:stable-sha256",
+      "historical_runtime_commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+      "semantic_embeddings": false
+    },
+    "evaluate_provers": false,
+    "guided_compiler_enabled": true,
+    "max_inflight_batches": 2,
+    "memory_budget_mb": 12288,
+    "model_owners": 1,
+    "native_bridge_report_cache": false,
+    "process_target_cache": false,
+    "producer_source": {
+      "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+      "python_file_count": 7916,
+      "sha256": "15e73447e9a5a7b222836d89a088c33e9bdf422429a0a89afeff9ecab1977729"
+    },
+    "progress": {
+      "bytes": 52701179,
+      "path": "autoformal/uscode/resume-checkpoint.parquet",
+      "repository": "justicedao/uscode-autoformal-span-cache",
+      "revision": "f946ab97260acf795126efb5c84eadc57de26afc",
+      "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+    },
+    "requested_batches": 3,
+    "runner_sha256": "29e941b41c9b0106c65c26fdf503dbc90bf11e942d2f8dc7934411201370fe1d",
+    "source_parquet_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+    "storage_budget_bytes": 750000000,
+    "target_timeout_seconds": 0,
+    "target_workers": 1,
+    "temperature": 0,
+    "use_sample_memory": false,
+    "weights_downloaded": false,
+    "weights_updated": false
+  },
+  "date": "2026-09-30",
+  "events": [
+    {
+      "allocator_admission": {
+        "allocated_bytes": 0,
+        "allocator_fraction": 0.016435181208681485,
+        "allocator_fraction_set": true,
+        "budget_bytes": 2147483648,
+        "cuda_version": "13.0",
+        "device": 0,
+        "device_name": "NVIDIA GB10",
+        "free_bytes": 20097957888,
+        "host_global_gpu_reservation": false,
+        "observed_at": 1790793564.4480014,
+        "other_cuda_allocators_limited": false,
+        "reserved_bytes": 0,
+        "safety_bytes": 2147483648,
+        "scope": "resident_worker_pytorch_allocator_and_observed_device_memory",
+        "torch_version": "2.13.0+cu130",
+        "total_bytes": 130663825408
+      },
+      "at": 1790793578.3740513,
+      "cuda": {
+        "admission": false,
+        "allocated_bytes": 0,
+        "budget_bytes": 2147483648,
+        "cuda_version": "13.0",
+        "device": 0,
+        "device_name": "NVIDIA GB10",
+        "enforcement": "cooperative_lock_and_polled_telemetry_not_device_quota",
+        "free_bytes": 16967577600,
+        "host_global_gpu_reservation": false,
+        "observed_at": 1790793578.367146,
+        "reserved_bytes": 0,
+        "safety_bytes": 2147483648,
+        "scope": "campaign_owner_allocator_and_observed_device_free_memory",
+        "torch_version": "2.13.0+cu130",
+        "total_bytes": 130663825408
+      },
+      "event": "cuda_ready",
+      "pid": 689727,
+      "resident_mb": 2054,
+      "source": {
+        "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+        "python_file_count": 7916,
+        "sha256": "15e73447e9a5a7b222836d89a088c33e9bdf422429a0a89afeff9ecab1977729"
+      }
+    },
+    {
+      "admitted": false,
+      "at": 1790793611.4162908,
+      "batch_id": "2ad3ea5cb72544a6a2765c5cd4f0a73b",
+      "event": "batch_complete",
+      "samples": 8,
+      "wall_seconds": 32.46801892411895,
+      "work": {
+        "done": 28138,
+        "pending": 400,
+        "running": 8
+      }
+    },
+    {
+      "admitted": false,
+      "at": 1790793627.8248427,
+      "batch_id": "40deac30da45428682f552c5a47b8520",
+      "event": "batch_complete",
+      "samples": 8,
+      "wall_seconds": 47.49209763109684,
+      "work": {
+        "done": 28146,
+        "pending": 392,
+        "running": 8
+      }
+    },
+    {
+      "admitted": false,
+      "at": 1790793645.1780603,
+      "batch_id": "1cf1539e4de64e20a06231720b06d8dc",
+      "event": "batch_complete",
+      "samples": 8,
+      "wall_seconds": 33.48571746703237,
+      "work": {
+        "done": 28154,
+        "pending": 392
+      }
+    }
+  ],
+  "full_report_publications": [
+    {
+      "admitted": false,
+      "commit_sha": "48cd0a5b666a8ef6cbaf259e9f1cc94792740e8b",
+      "formalized": false,
+      "manifest": {
+        "bytes": 11882,
+        "git_blob_sha1": "8572b1a01765de09c71ef50e5c7ea24502a1ac3f",
+        "kind": "manifest",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/full-report-publication/376e7def7c18e0851908190de9dae6d5535eba0efd46e09d45b4fede75d36c18.json",
+        "path_in_repo": "autoformal/uscode/reports/v1/manifests/376e7def7c18e0851908190de9dae6d5535eba0efd46e09d45b4fede75d36c18.json",
+        "sha256": "376e7def7c18e0851908190de9dae6d5535eba0efd46e09d45b4fede75d36c18"
+      },
+      "original": {
+        "bytes": 30911519,
+        "sha256": "3ca36729333750bd302f87e2ef3d33c53861c9ec51ead06f4ff733925da21c51"
+      },
+      "parent_commit": "009f612ce449bb454d948a171b9b5d36a4209bc4",
+      "report": {
+        "bytes": 2748255,
+        "git_blob_sha1": "6671e7ca0b6d97852b85d84be28aebc334aa2d2e",
+        "kind": "report",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/full-report-publication/49f60d4504a5b8df4d87b0c57eca52eecebdfbcbe5e52c1b74070de960d946fc.json.gz",
+        "path_in_repo": "autoformal/uscode/reports/v1/reports/49f60d4504a5b8df4d87b0c57eca52eecebdfbcbe5e52c1b74070de960d946fc.json.gz",
+        "sha256": "49f60d4504a5b8df4d87b0c57eca52eecebdfbcbe5e52c1b74070de960d946fc"
+      },
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "schema": "uscode-full-logic-report-publication/v1",
+      "training_executed": false,
+      "uploaded": true
+    },
+    {
+      "admitted": false,
+      "commit_sha": "45acc122f3f9c11da46c039e057a38ab5054a699",
+      "formalized": false,
+      "manifest": {
+        "bytes": 12120,
+        "git_blob_sha1": "49c325e87122fda38c16bc31979665e06ad18add",
+        "kind": "manifest",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/full-report-publication/93d2f5a4779f6888bdf8938607e5a8990dbf019f00cf003faa704fc2d56d40f9.json",
+        "path_in_repo": "autoformal/uscode/reports/v1/manifests/93d2f5a4779f6888bdf8938607e5a8990dbf019f00cf003faa704fc2d56d40f9.json",
+        "sha256": "93d2f5a4779f6888bdf8938607e5a8990dbf019f00cf003faa704fc2d56d40f9"
+      },
+      "original": {
+        "bytes": 23223530,
+        "sha256": "9ea4cbb5249848986f0b5f226f92f139d266b275d1799ad61a7ae55bdcd1cb06"
+      },
+      "parent_commit": "48cd0a5b666a8ef6cbaf259e9f1cc94792740e8b",
+      "report": {
+        "bytes": 2693457,
+        "git_blob_sha1": "1d6a2d7dddab44769320f98cc04fc530962fb9a8",
+        "kind": "report",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/full-report-publication/5fe4185488765685d8b4449f2bfbc1fab8d56f853ef333d0bab3ef06a98e812e.json.gz",
+        "path_in_repo": "autoformal/uscode/reports/v1/reports/5fe4185488765685d8b4449f2bfbc1fab8d56f853ef333d0bab3ef06a98e812e.json.gz",
+        "sha256": "5fe4185488765685d8b4449f2bfbc1fab8d56f853ef333d0bab3ef06a98e812e"
+      },
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "schema": "uscode-full-logic-report-publication/v1",
+      "training_executed": false,
+      "uploaded": true
+    },
+    {
+      "admitted": false,
+      "commit_sha": "f1ff72b4b171fca4ac63a44e4f263982e9129f03",
+      "formalized": false,
+      "manifest": {
+        "bytes": 12123,
+        "git_blob_sha1": "fd6f1ce72d7dd5f3ad5418f1337e5062449aa19b",
+        "kind": "manifest",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/full-report-publication/141c0182a532d30d0beb1886dcaa7071fd65aa5441a8ee9da92e85264630b0ea.json",
+        "path_in_repo": "autoformal/uscode/reports/v1/manifests/141c0182a532d30d0beb1886dcaa7071fd65aa5441a8ee9da92e85264630b0ea.json",
+        "sha256": "141c0182a532d30d0beb1886dcaa7071fd65aa5441a8ee9da92e85264630b0ea"
+      },
+      "original": {
+        "bytes": 22370458,
+        "sha256": "6c6d8771b7162dd30ac3ba325ff3b828213b76cb26b38e7abb7cb537f1907530"
+      },
+      "parent_commit": "45acc122f3f9c11da46c039e057a38ab5054a699",
+      "report": {
+        "bytes": 2651524,
+        "git_blob_sha1": "f70e1665a39412ec0a20d51ca628ad0baac95ee6",
+        "kind": "report",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/full-report-publication/fae864238b8c34e19aecaada1aa650fe7d5c7828c7eb5869c1ec40ae066366f9.json.gz",
+        "path_in_repo": "autoformal/uscode/reports/v1/reports/fae864238b8c34e19aecaada1aa650fe7d5c7828c7eb5869c1ec40ae066366f9.json.gz",
+        "sha256": "fae864238b8c34e19aecaada1aa650fe7d5c7828c7eb5869c1ec40ae066366f9"
+      },
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "schema": "uscode-full-logic-report-publication/v1",
+      "training_executed": false,
+      "uploaded": true
+    }
+  ],
+  "measurement_limits": [
+    "Three small batches establish a bounded native execution smoke, not long-run memory stability.",
+    "Different source spans and process warmth prevent a matched speedup or memory-reduction claim.",
+    "Bridge-on timing includes target preparation and artifact capture; worker time also includes guided compiler observation and source guards.",
+    "Whole-batch residence times overlap because CPU prefetch is enabled; do not sum them as campaign wall time.",
+    "Many selected inputs are citation fragments or editorial material; output counts are not coverage of substantive federal law.",
+    "Legacy eight-dimensional mock vectors and model-guided compiler formulas do not establish an independent learned symbolic decoder.",
+    "Bridge artifacts, syntax-shaped formulas, text roundtrips and losses grant no Lake admission."
+  ],
+  "paired_census_summary": {
+    "comparison_scope": "exact raw AST diagnostic; not semantic equivalence or an independent learned decoder",
+    "comparison_status_counts": {
+      "both_unavailable": 15,
+      "diagnostic_agree": 9
+    },
+    "goals_enqueued": false,
+    "guided_empty_formula_rows": 15,
+    "portable_compiler_repair_goals": 23,
+    "rows": 24,
+    "source": "controller restaging of the exact native receipts; verified immutable manifests listed in paired_publications"
+  },
+  "paired_publications": [
+    {
+      "batch_id": "2ad3ea5cb72544a6a2765c5cd4f0a73b",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "3f5058fb7b31fc2ed6222ef2f69ad21542915b3e",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "80e45953454a0cbb18933602fba5e5871964e3272783b7821e68f2ba5ec29f44",
+        "formalized": false,
+        "manifest": {
+          "path_in_repo": "autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-80e45953454a0cbb18933602fba5e5871964e3272783b7821e68f2ba5ec29f44.json"
+        },
+        "manifest_sha256": "343770c20e66f9137edfdf90db299a440a7797a279928547e51d95d7083a5e1e",
+        "parent_commit": "f1ff72b4b171fca4ac63a44e4f263982e9129f03",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "schema": "paired-span-publication/v1",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "remote_verification": {
+        "commit_sha": "3f5058fb7b31fc2ed6222ef2f69ad21542915b3e",
+        "files": [
+          {
+            "bytes": 2118,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "c11a1884bedc4022ceb66d28c1b3a8630e2c0816",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-80e45953454a0cbb18933602fba5e5871964e3272783b7821e68f2ba5ec29f44.json",
+            "sha256": "343770c20e66f9137edfdf90db299a440a7797a279928547e51d95d7083a5e1e",
+            "verified_digest": "c11a1884bedc4022ceb66d28c1b3a8630e2c0816"
+          },
+          {
+            "bytes": 47560,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "575dd2138ba33144346939b626a10638c1a91e04",
+            "kind": "paired_spans",
+            "path_in_repo": "autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-9423c0c898b214cba2743c0004f41100bb2570c19e53290be2295b9312840869-a0a266e3f39e62a6431c1fc4b37422c8079ecbf4d495fed0dfb55fb3b59a3fd2.parquet",
+            "sha256": "a0a266e3f39e62a6431c1fc4b37422c8079ecbf4d495fed0dfb55fb3b59a3fd2",
+            "verified_digest": "a0a266e3f39e62a6431c1fc4b37422c8079ecbf4d495fed0dfb55fb3b59a3fd2"
+          },
+          {
+            "bytes": 11856,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "5676c9d8d43506b9580f17c3bd9a3c7405835ad2",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/paired-v1/goals/legacy-cuda-census/goals-9423c0c898b214cba2743c0004f41100bb2570c19e53290be2295b9312840869-8a2512551622bd6fb4fe7abca2aa3ba46be0055b3bfff54e7ffb7e885a34436f.parquet",
+            "sha256": "8a2512551622bd6fb4fe7abca2aa3ba46be0055b3bfff54e7ffb7e885a34436f",
+            "verified_digest": "8a2512551622bd6fb4fe7abca2aa3ba46be0055b3bfff54e7ffb7e885a34436f"
+          },
+          {
+            "bytes": 3094256,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "85bbf443cd2925b2b3e46cbfd8f17b5b40e0ce93",
+            "kind": "artifacts",
+            "path_in_repo": "autoformal/uscode/paired-v1/artifacts/legacy-cuda-census/artifacts-9423c0c898b214cba2743c0004f41100bb2570c19e53290be2295b9312840869-26ea0b89de386730252349d2624fd3c6bc9759df2a8b710614ee0c6a79ebac15.parquet",
+            "sha256": "26ea0b89de386730252349d2624fd3c6bc9759df2a8b710614ee0c6a79ebac15",
+            "verified_digest": "26ea0b89de386730252349d2624fd3c6bc9759df2a8b710614ee0c6a79ebac15"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    },
+    {
+      "batch_id": "40deac30da45428682f552c5a47b8520",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "3ee17a894cf39c8f6d89eede0953dcace08cb17a",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "0dc63796d21b8c56c30c6b990a0511d2434eccd429febdff237480d951aa628a",
+        "formalized": false,
+        "manifest": {
+          "path_in_repo": "autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-0dc63796d21b8c56c30c6b990a0511d2434eccd429febdff237480d951aa628a.json"
+        },
+        "manifest_sha256": "4553764c2390729b2bbff9266d3aad1ede0ca807d84d091bb2dc00c54540def9",
+        "parent_commit": "3f5058fb7b31fc2ed6222ef2f69ad21542915b3e",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "schema": "paired-span-publication/v1",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "remote_verification": {
+        "commit_sha": "3ee17a894cf39c8f6d89eede0953dcace08cb17a",
+        "files": [
+          {
+            "bytes": 2118,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "b1477a65e041d59768f81538447b9160e5c64066",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-0dc63796d21b8c56c30c6b990a0511d2434eccd429febdff237480d951aa628a.json",
+            "sha256": "4553764c2390729b2bbff9266d3aad1ede0ca807d84d091bb2dc00c54540def9",
+            "verified_digest": "b1477a65e041d59768f81538447b9160e5c64066"
+          },
+          {
+            "bytes": 40849,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "cfdf62d87438079fcd2f5e755d0f5861a8cc1fef",
+            "kind": "paired_spans",
+            "path_in_repo": "autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-a97c96bd2bedce209edb4917ee1282e47ce82395b38802c140ef6f9e61bfa8a5-a44b87486495dbe9808d72fba3423b5024f31a64e4260ea64f537465b09811e5.parquet",
+            "sha256": "a44b87486495dbe9808d72fba3423b5024f31a64e4260ea64f537465b09811e5",
+            "verified_digest": "a44b87486495dbe9808d72fba3423b5024f31a64e4260ea64f537465b09811e5"
+          },
+          {
+            "bytes": 12158,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "239c5b9659d307edfa2ea79048d68cd9704acdd1",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/paired-v1/goals/legacy-cuda-census/goals-a97c96bd2bedce209edb4917ee1282e47ce82395b38802c140ef6f9e61bfa8a5-d613128c90424b2272efd397570389d1917d460b3d247e04a92e547bdcaad4a6.parquet",
+            "sha256": "d613128c90424b2272efd397570389d1917d460b3d247e04a92e547bdcaad4a6",
+            "verified_digest": "d613128c90424b2272efd397570389d1917d460b3d247e04a92e547bdcaad4a6"
+          },
+          {
+            "bytes": 2974005,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "76dda8e4b6d2210014a305bbe1a517761c302b2e",
+            "kind": "artifacts",
+            "path_in_repo": "autoformal/uscode/paired-v1/artifacts/legacy-cuda-census/artifacts-a97c96bd2bedce209edb4917ee1282e47ce82395b38802c140ef6f9e61bfa8a5-5cba277f6a6e643c3167fe7355bfdf74c226bfdfeebe4301ffa18645c39d4bd4.parquet",
+            "sha256": "5cba277f6a6e643c3167fe7355bfdf74c226bfdfeebe4301ffa18645c39d4bd4",
+            "verified_digest": "5cba277f6a6e643c3167fe7355bfdf74c226bfdfeebe4301ffa18645c39d4bd4"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    },
+    {
+      "batch_id": "1cf1539e4de64e20a06231720b06d8dc",
+      "publication": {
+        "admitted": false,
+        "commit_sha": "35326d1e55ece45c13900a23b2d8059a84818006",
+        "dry_run": false,
+        "enqueued": false,
+        "fingerprint": "92cb9a653bafe41057a77f1ef72589b79847d1ae86b2007a8b250621508c7828",
+        "formalized": false,
+        "manifest": {
+          "path_in_repo": "autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-92cb9a653bafe41057a77f1ef72589b79847d1ae86b2007a8b250621508c7828.json"
+        },
+        "manifest_sha256": "1bed37a64c50146e3937fa531ce8d2647312350005f1885172812dd172ee991e",
+        "parent_commit": "3ee17a894cf39c8f6d89eede0953dcace08cb17a",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "schema": "paired-span-publication/v1",
+        "uploaded": true,
+        "wrote_compiler": false
+      },
+      "remote_verification": {
+        "commit_sha": "35326d1e55ece45c13900a23b2d8059a84818006",
+        "files": [
+          {
+            "bytes": 2118,
+            "digest_kind": "git_blob_sha1",
+            "git_blob_sha1": "fcfb7b57528908a5205466de815be43debf3b16e",
+            "kind": "manifest",
+            "path_in_repo": "autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-92cb9a653bafe41057a77f1ef72589b79847d1ae86b2007a8b250621508c7828.json",
+            "sha256": "1bed37a64c50146e3937fa531ce8d2647312350005f1885172812dd172ee991e",
+            "verified_digest": "fcfb7b57528908a5205466de815be43debf3b16e"
+          },
+          {
+            "bytes": 41230,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "3a8a948d87fa87d16659bc2e6f8c780c7a5e8b0f",
+            "kind": "paired_spans",
+            "path_in_repo": "autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-01e056475dde0d8785c06cee291388bcca3952de599a6ed3c637664b23b441fc-5d92376dd4281fcc5bf524384bb02d1ae7d73f275d12c015f9ef07ec22d99db7.parquet",
+            "sha256": "5d92376dd4281fcc5bf524384bb02d1ae7d73f275d12c015f9ef07ec22d99db7",
+            "verified_digest": "5d92376dd4281fcc5bf524384bb02d1ae7d73f275d12c015f9ef07ec22d99db7"
+          },
+          {
+            "bytes": 11996,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "938551b98537602575e9caa35e94d719913719c7",
+            "kind": "goals",
+            "path_in_repo": "autoformal/uscode/paired-v1/goals/legacy-cuda-census/goals-01e056475dde0d8785c06cee291388bcca3952de599a6ed3c637664b23b441fc-30a933187243db13f05c71ad6f3e3b6dfd86a13b52e4ae279ecb9f803cf7efd6.parquet",
+            "sha256": "30a933187243db13f05c71ad6f3e3b6dfd86a13b52e4ae279ecb9f803cf7efd6",
+            "verified_digest": "30a933187243db13f05c71ad6f3e3b6dfd86a13b52e4ae279ecb9f803cf7efd6"
+          },
+          {
+            "bytes": 2922447,
+            "digest_kind": "lfs_sha256",
+            "git_blob_sha1": "8ba76fae6203e618619b8ef54aacce749b8b1ab2",
+            "kind": "artifacts",
+            "path_in_repo": "autoformal/uscode/paired-v1/artifacts/legacy-cuda-census/artifacts-01e056475dde0d8785c06cee291388bcca3952de599a6ed3c637664b23b441fc-4a53e7f5958d195366105c88e88e57744186e75c7a88c6c4af7d085bc16ffd89.parquet",
+            "sha256": "4a53e7f5958d195366105c88e88e57744186e75c7a88c6c4af7d085bc16ffd89",
+            "verified_digest": "4a53e7f5958d195366105c88e88e57744186e75c7a88c6c4af7d085bc16ffd89"
+          }
+        ],
+        "repository_id": "justicedao/uscode-autoformal-span-cache"
+      }
+    }
+  ],
+  "publication_status": "three_full_reports_and_three_paired_bundles_uploaded_and_verified",
+  "resources": {
+    "first_sample_utc": "2026-09-30T18:39:53.406917+00:00",
+    "last_sample_utc": "2026-09-30T18:40:46.137780+00:00",
+    "peak_observation": {
+      "attempt_bytes": 228010975,
+      "checked_at": 1790793642.073027,
+      "external_charged_bytes": 0,
+      "full_ledger_check": false,
+      "group_rss": {
+        "available": true,
+        "live_processes": 7,
+        "rss_bytes": 3784929280
+      },
+      "host_global_gpu_reservation": false,
+      "owner_and_child_rss_bytes": 3834368000,
+      "scope": "owned_runtime_and_process_group"
+    },
+    "peak_observed_owner_and_child_rss_bytes": 3834368000,
+    "peak_observed_owner_and_child_rss_gib": 3.571033477783203,
+    "sample_count": 27,
+    "samples": [
+      {
+        "attempt_bytes": 167673387,
+        "checked_at": 1790793593.4069169,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 2986930176
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3036368896,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 167673387,
+        "checked_at": 1790793595.4250946,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3025534976
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3074973696,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 167673387,
+        "checked_at": 1790793597.4424725,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3105181696
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3154620416,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 167673387,
+        "checked_at": 1790793599.460383,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3243220992
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3292659712,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 167673386,
+        "checked_at": 1790793601.4828398,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3456991232
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3506429952,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 167673387,
+        "checked_at": 1790793603.50169,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3515056128
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3564494848,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 167673385,
+        "checked_at": 1790793605.5200355,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3520954368
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3570393088,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 167673387,
+        "checked_at": 1790793607.5389094,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3529785344
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3579224064,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 167673387,
+        "checked_at": 1790793609.5566452,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3529785344
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3579224064,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 201750752,
+        "checked_at": 1790793611.6025705,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3520614400
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3570053120,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 201750752,
+        "checked_at": 1790793613.6330855,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3549921280
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3599360000,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 201750752,
+        "checked_at": 1790793615.663002,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3550576640
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3600015360,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 201750751,
+        "checked_at": 1790793617.7027152,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3550576640
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3600015360,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 201750752,
+        "checked_at": 1790793619.7412834,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3593879552
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3643318272,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 201750752,
+        "checked_at": 1790793621.774101,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3619266560
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3668705280,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 201750751,
+        "checked_at": 1790793623.801463,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3637944320
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3687383040,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 201750751,
+        "checked_at": 1790793625.8207593,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3650105344
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3699544064,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010975,
+        "checked_at": 1790793627.8609157,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3757981696
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3807420416,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010975,
+        "checked_at": 1790793629.8909543,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3758985216
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3808423936,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010975,
+        "checked_at": 1790793631.9214344,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3779301376
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3828740096,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010975,
+        "checked_at": 1790793633.9407983,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3783680000
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3833118720,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010975,
+        "checked_at": 1790793635.9789608,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3783680000
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3833118720,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010975,
+        "checked_at": 1790793638.0068882,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3783622656
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3833061376,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010975,
+        "checked_at": 1790793640.0442314,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3784601600
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3834040320,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010975,
+        "checked_at": 1790793642.073027,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3784929280
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3834368000,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 228010974,
+        "checked_at": 1790793644.1067035,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 7,
+          "rss_bytes": 3784519680
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3833958400,
+        "scope": "owned_runtime_and_process_group"
+      },
+      {
+        "attempt_bytes": 253366598,
+        "checked_at": 1790793646.1377797,
+        "external_charged_bytes": 0,
+        "full_ledger_check": false,
+        "group_rss": {
+          "available": true,
+          "live_processes": 3,
+          "rss_bytes": 3586048000
+        },
+        "host_global_gpu_reservation": false,
+        "owner_and_child_rss_bytes": 3635486720,
+        "scope": "owned_runtime_and_process_group"
+      }
+    ],
+    "sampling_limit": "Periodic RSS samples begin after CUDA readiness; not a kernel high-water measurement and not full startup coverage.",
+    "source_sha256": "c788334a44068169f868574ff1af12b6e8b4e48d194a417d733b5d022709e86c"
+  },
+  "schema": "paired-span-native-smoke/v1",
+  "source_paths": {
+    "full_report_publications": "workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/full-report-publication/paired-smoke-uploads.jsonl",
+    "log": "workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/paired-smoke.log",
+    "paired_publications": {
+      "path": "workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/paired-verified-publications.json",
+      "sha256": "6fc97c1ae9df615305af4c903d4336d3c65ab745aecbb621af7d45f7321354f9"
+    },
+    "resources": "workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/paired-smoke-resources.jsonl",
+    "smoke_log_sha256": "c4e945a1c7dfeaf5a8f834795e76d14d49730c6b19e2dcc7075e01f1b9965357"
+  },
+  "summary": {
+    "admitted": false,
+    "canonical_compiler_rule_count": 1,
+    "captured_full_target_documents": 23,
+    "compiler_reasons": {
+      "": 1,
+      "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:procedure": 1,
+      "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:unsupported_norm_type": 1,
+      "no_parser_elements": 21
+    },
+    "direct_formula_count": 15,
+    "formalized": false,
+    "guided_formula_count": 15,
+    "lake_status": "not_run",
+    "legal_ir_target_count": 24,
+    "native_bridge_cache_entries_before_and_after_each_batch": 0,
+    "raw_decoder_observations": 24,
+    "sample_count": 24,
+    "semantic_qualified": false,
+    "target_cache_entries_before_and_after_each_batch": 0,
+    "training_executed": false,
+    "unavailable_target_documents": 1
+  },
+  "tests": {
+    "errors": 0,
+    "failures": 0,
+    "seconds": 7.458,
+    "sha256": "cf9932e14b36a1523d3804bd5c78a0af81beff651f63a2aa9788971005015039",
+    "skipped": 0,
+    "source": "workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/paired-validation-tests.xml",
+    "tests": 227
+  }
+}

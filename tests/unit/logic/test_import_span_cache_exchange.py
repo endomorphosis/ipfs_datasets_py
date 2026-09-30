@@ -581,3 +581,121 @@ def test_manifest_change_between_capture_and_loader_is_rejected(tmp_path, monkey
             ["--manifest", str(manifest_path), "--output", str(tmp_path / "changed")]
         )
     assert not (tmp_path / "changed" / "evidence").exists()
+
+
+def _paired_bundle(tmp_path, *, disagreement=True):
+    from ipfs_datasets_py.logic.autoformal.paired_span_census import (
+        FORMAL_FORMAT, build_paired_census, write_paired_census_bundle,
+    )
+    text = "The agency shall retain records."
+    rule = {"modality": "Obligation", "actor": "agency", "action": "retain", "object": "records"}
+    source = {"source_span_id": "paired-import-1", "legal_id": "usc:5:1", "text": text,
+        "compiler_result": {"compiler_status": "compiled", "rules": [rule], "components": [],
+            "compilation_complete": True, "decompiled": text, "roundtrip": True}}
+    rows = [{**copy.deepcopy(source), "source_span_id": "paired-capability-2"}]
+    if disagreement:
+        source["model_formal_outputs"] = [{"family": "typed_deontic", "format": FORMAL_FORMAT,
+            "payload": {**rule, "modality": "Prohibition"}, "origin": "autoencoder_guided_compiler",
+            "independent": False, "target_conditioned": True, "syntax_status": "not_checked"}]
+        source["model_formal_output_provenance"] = {
+            "source_text_sha256": hashlib.sha256(text.encode()).hexdigest(),
+            "model_identity": "synthetic-test-model", "complete": True}
+        rows.append(source)
+    bundle = build_paired_census(rows, code_identity="synthetic-test-code",
+        model_identity="synthetic-test-model", agent_id="paired-import-test")
+    return write_paired_census_bundle(bundle, tmp_path / "paired-export")
+
+
+def test_paired_bundle_cli_retains_exact_four_files_and_plans_only_native_packets(tmp_path, monkeypatch):
+    written = _paired_bundle(tmp_path)
+    monkeypatch.setattr(importer, "_pin_accelerate", lambda _: pytest.fail("dry run touched native DB"))
+    output = tmp_path / "paired-consumer"
+    assert importer.main(["--manifest", written["manifest"]["path"], "--output", str(output)]) == 0
+    receipt = json.loads((output / "import-receipt.json").read_text())
+    assert receipt["materialized"] is receipt["executed"] is False
+    assert receipt["dry_run"] is True
+    assert receipt["selected_tasks"] == 1
+    assert receipt["deferred_descriptive_goal_count"] == 1
+    assert receipt["deferred_descriptive_goals"][0]["record_kind"] == "capability_gap"
+    assert receipt["origin"]["bundle_schema"] == importer.PAIRED_MANIFEST_SCHEMA
+    kept = receipt["origin"]["evidence_bundle"]
+    assert set(kept) == {"manifest", "paired_spans", "goals", "artifacts"}
+    for kind, artifact in kept.items():
+        assert Path(artifact["path"]).read_bytes() == Path(written[kind]["path"]).read_bytes()
+        assert artifact["sha256"] == written[kind]["sha256"]
+    assert not list(output.rglob("*.duckdb"))
+
+
+def test_paired_capability_goal_is_retained_without_inventing_native_packet(tmp_path):
+    written = _paired_bundle(tmp_path, disagreement=False)
+    output = tmp_path / "capability-consumer"
+    importer.main(["--manifest", written["manifest"]["path"], "--output", str(output)])
+    receipt = json.loads((output / "import-receipt.json").read_text())
+    assert receipt["selected_tasks"] == 0
+    assert receipt["deferred_descriptive_goal_count"] == 1
+    assert receipt["deferred_descriptive_goals"][0]["reason"] == "retained_without_sealed_native_packet_and_task"
+    assert not (output / "packets").exists()
+
+
+def test_paired_repo_layout_selectively_downloads_all_three_tables(tmp_path, monkeypatch):
+    import shutil
+    written = _paired_bundle(tmp_path)
+    manifest_repo = written["manifest"]["path_in_repo"]
+    lookup = {entry["path_in_repo"]: Path(entry["path"])
+              for kind, entry in written.items() if kind in {"manifest", *importer.PAIRED_TABLES}}
+    stage, output, calls = tmp_path / "hub-stage", tmp_path / "paired-remote", []
+    def fetch(*, filename, max_size):
+        calls.append(filename)
+        source = lookup[filename]
+        assert source.stat().st_size <= max_size
+        destination = stage / filename
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, destination)
+        return destination
+    original = importer.download_bundle
+    monkeypatch.setattr(importer, "download_bundle", lambda **kwargs: original(**kwargs, fetch=fetch))
+    importer.main(["--manifest-in-repo", manifest_repo, "--revision", "a" * 40,
+        "--staging-directory", str(stage), "--output", str(output)])
+    assert calls == [manifest_repo, *[written[kind]["path_in_repo"] for kind in importer.PAIRED_TABLES]]
+    receipt = json.loads((output / "import-receipt.json").read_text())
+    assert receipt["selected_tasks"] == 1 and receipt["materialized"] is False
+
+
+def test_paired_artifact_corruption_rejected_before_native_database_access(tmp_path, monkeypatch):
+    written = _paired_bundle(tmp_path)
+    path = Path(written["artifacts"]["path"])
+    raw = bytearray(path.read_bytes()); raw[len(raw) // 2] ^= 1; path.write_bytes(raw)
+    monkeypatch.setattr(importer, "_pin_accelerate", lambda _: pytest.fail("corrupt paired artifact reached native DB"))
+    with pytest.raises(ValueError):
+        importer.main(["--manifest", written["manifest"]["path"], "--output", str(tmp_path / "rejected"),
+            "--materialize", "--database", str(tmp_path / "never.duckdb"),
+            "--accelerate-root", str(tmp_path / "unused")])
+    assert not (tmp_path / "never.duckdb").exists()
+
+
+def test_paired_native_replay_requires_all_four_retained_artifacts(tmp_path):
+    written = _paired_bundle(tmp_path)
+    from ipfs_datasets_py.logic.autoformal.paired_span_census import load_paired_census_bundle
+    loaded = load_paired_census_bundle(written["manifest"]["path"])
+    kept = importer.retain_bundle_evidence(manifest_path=Path(written["manifest"]["path"]),
+        **{kind + "_path": Path(written[kind]["path"]) for kind in importer.PAIRED_TABLES},
+        directory=tmp_path / "retained-paired", max_bytes=importer.DEFAULT_MAX_BYTES,
+        expected_sha256={kind: written[kind]["sha256"] for kind in ("manifest", *importer.PAIRED_TABLES)})
+    origin = {"bundle_schema": importer.PAIRED_MANIFEST_SCHEMA, "evidence_bundle": kept}
+    source = Source()
+    plan = importer.plan_import(loaded["portable_goal_rows"])
+    importer.materialize_import(source, plan, packet_directory=tmp_path / "packets", origin=origin)
+    assert len(source.calls) == 1
+    result = importer.materialize_import(source, plan, packet_directory=tmp_path / "replay", origin=origin)
+    assert result["inserted_count"] == 0
+    Path(kept["artifacts"]["path"]).unlink()
+    with pytest.raises(importer.ImportError, match="lost its verified"):
+        importer.materialize_import(source, plan, packet_directory=tmp_path / "replay", origin=origin)
+    assert len(source.calls) == 1
+
+
+def test_incomplete_paired_retention_closure_rejected(tmp_path):
+    with pytest.raises(importer.ImportError, match="exactly three"):
+        importer.retain_bundle_evidence(manifest_path=tmp_path / "manifest.json",
+            paired_spans_path=tmp_path / "paired.parquet", goals_path=tmp_path / "goals.parquet",
+            directory=tmp_path / "retained", max_bytes=1000, expected_sha256={})

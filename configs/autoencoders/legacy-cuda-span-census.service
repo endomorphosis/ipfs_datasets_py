@@ -11,7 +11,7 @@ Environment=PYTHONPATH=%h/lift_coding/external/ipfs_datasets
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=CUDA_VISIBLE_DEVICES=0
 Environment=HF_HUB_DISABLE_PROGRESS_BARS=1
-ExecStart=/usr/bin/python3 -B %h/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_legacy_span_cuda.py --runtime-directory %h/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime --compiler-workers 4 --bridge-workers 1 --batch-size 32 --max-batches 0 --poll-seconds 300 --storage-bytes 750000000 --memory-mb 12288 --agent-id legacy-cuda-census --upload
+ExecStart=/usr/bin/python3 -B %h/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_legacy_span_cuda.py --runtime-directory %h/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime --compiler-workers 4 --bridge-workers 1 --batch-size 8 --max-batches 0 --poll-seconds 300 --storage-bytes 750000000 --memory-mb 12288 --agent-id legacy-cuda-census --publication-format paired --guided-compiler --upload
 Restart=on-failure
 RestartSec=60
 RuntimeMaxSec=infinity

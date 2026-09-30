@@ -22,7 +22,7 @@ def source(text="The agency shall retain records.", span_id="fixture-span"):
 
 
 def receipt(row, batch_id):
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import LEGACY_SHA256
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import LEGACY_SHA256, LEGACY_BYTES
     observation = {**row, "status": "diagnostic_observed", "compiler": {"compiler_status": "compiled", "roundtrip": True,
                     "decompiled": row["text"], "admitted": False, "formalized": False},
                    "raw_decoder": {"cosine_similarity": 0.9, "reconstruction_loss": 0.1},
@@ -30,11 +30,20 @@ def receipt(row, batch_id):
                    "learned_formula_generation": False, "semantic_qualified": False}
     return {"schema_version": "legacy-span-cuda-diagnostic/v1", "mode": "legacy_mock_diagnostic",
             "rows": [observation], "producer_source": {"sha256": "c" * 64},
-            "checkpoint": {"sha256": LEGACY_SHA256}, "sample_count": 1, "requested_span_count": 1,
+            "checkpoint": {"sha256": LEGACY_SHA256, "bytes": LEGACY_BYTES}, "sample_count": 1, "requested_span_count": 1,
             "raw_evaluation": {"sample_count": 1, "legal_ir_target_count": 1,
                                "cosine_similarity": 0.9, "reconstruction_loss": 0.1},
             "campaign": {"batch_id": batch_id}, "training_executed": False,
             "admitted": False, "formalized": False, "semantic_qualified": False}
+
+
+def legacy_manifest(runtime):
+    """A real immutable legacy bundle, consumed by the format dispatcher."""
+    from ipfs_datasets_py.logic.autoformal.span_cache_exchange import publish_compiled_exchange
+    staged = publish_compiled_exchange(runner.exchange_rows(receipt(source(), "fixture-batch")),
+        runtime / "outbox", upload=False, agent_id="fixture-agent",
+        release_id="ipfs-uscode-5016b86a", code_identity="fixture-code", model_identity="fixture-model")
+    return staged["manifest"]["path"]
 
 
 @pytest.fixture
@@ -294,16 +303,17 @@ def test_per_sample_evaluation_does_not_repeat_other_rows_vectors():
 
 
 def test_publication_failure_retains_durable_staged_batch_for_retry(queue, monkeypatch):
-    db, _ = queue
+    db, runtime = queue
     from ipfs_datasets_py.logic.autoformal import span_cache_exchange as exchange
-    db.execute("INSERT INTO batches VALUES ('b1','[]','staged','manifest.json',NULL,'digest')")
+    manifest_path = legacy_manifest(runtime)
+    db.execute("INSERT INTO batches VALUES ('b1','[]','staged',?,NULL,'digest')", [manifest_path])
     calls = []
     def publish(path, *, upload, api=None):
         calls.append((path, upload))
         return {"uploaded": False, "error": "TemporaryNetworkFailure"}
     monkeypatch.setattr(exchange, "publish_exchange_manifest", publish)
     runner.publish_pending(db, True)
-    assert calls == [("manifest.json", True)]
+    assert calls == [(manifest_path, True)]
     assert db.execute("SELECT status,publication FROM batches").fetchone() == ("staged", None)
     monkeypatch.setattr(exchange, "publish_exchange_manifest", lambda *a, **kw: {"uploaded": True, "commit_sha": "e" * 40})
     runner.publish_pending(db, True)
@@ -316,7 +326,8 @@ def test_hub_rate_limit_persists_backoff_and_skips_all_network_until_retry(queue
     import huggingface_hub
     from ipfs_datasets_py.logic.autoformal import span_cache_exchange as exchange
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_publication as publication
-    db.execute("INSERT INTO batches VALUES ('b1','[]','staged','manifest.json',NULL,'digest')")
+    manifest_path = legacy_manifest(runtime)
+    db.execute("INSERT INTO batches VALUES ('b1','[]','staged',?,NULL,'digest')", [manifest_path])
     now, calls = [1000.0], []
 
     class RateLimit(Exception):
@@ -330,7 +341,7 @@ def test_hub_rate_limit_persists_backoff_and_skips_all_network_until_retry(queue
             raise RateLimit("test rate limit without a real request")
 
     def publish(path, *, upload, api):
-        assert path == "manifest.json" and upload is True
+        assert path == manifest_path and upload is True
         try:
             api.repo_info(repo_id="fixture-repository")
         except RateLimit:
@@ -399,6 +410,7 @@ def test_cleanup_verification_rate_limit_uses_the_same_persisted_backoff(queue, 
 def test_engine_prefetches_one_cpu_batch_before_waiting_for_current_gpu(tmp_path, monkeypatch):
     """Exercise controller ordering with deferred futures, never launching workers."""
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_intake as intake
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_capacity as capacity
     rows = [source(span_id="span-a"), source("The agency shall publish reports.", "span-b")]
     events = []
 
@@ -417,11 +429,14 @@ def test_engine_prefetches_one_cpu_batch_before_waiting_for_current_gpu(tmp_path
             return False
         def submit(self, function, *args):
             if function is runner._gpu_ready:
-                return Future(lambda: {"source": {"sha256": "c" * 64}, "pid": 1, "cuda": {}})
-            if function is runner._compile:
-                events.append(("cpu_submit", args[0]["source_span_id"]))
-                return Future(lambda: {})
+                return Future(lambda: {"source": {"sha256": "c" * 64}, "pid": 1, "cuda": {}, "resident_mb": 128})
+            if function is runner._compile_batch:
+                assert 1 <= len(args[0]) <= 8
+                assert args[1] == "c" * 64
+                events.extend(("cpu_submit", row["source_span_id"]) for row in args[0])
+                return Future(lambda: [{"source_span_id": row["source_span_id"]} for row in args[0]])
             assert function is runner._gpu_evaluate
+            assert set(args[1]) == {row["source_span_id"] for row in args[0]}
             events.append(("gpu_submit", args[0][0]["source_span_id"]))
             def completed():
                 events.append(("gpu_result", args[0][0]["source_span_id"]))
@@ -441,6 +456,10 @@ def test_engine_prefetches_one_cpu_batch_before_waiting_for_current_gpu(tmp_path
     monkeypatch.setattr(runner, "publish_pending", lambda *args: None)
     monkeypatch.setattr(runner, "stage", stage)
     monkeypatch.setattr(runner, "digest_file", lambda *args: runner.RUNNER_SHA256)
+    monkeypatch.setattr(runner, "resident_mb", lambda: 256)
+    monkeypatch.setattr(capacity, "hardware_probe", lambda: {"hardware_cpu_count": 8,
+        "affinity_cpu_count": 8, "cgroup_cpu_count": 4,
+        "available_memory_mb": 20000, "cgroup_memory_remaining_mb": 20000})
     monkeypatch.setattr(intake, "prepare_progress_index", lambda *args, **kwargs: SimpleNamespace(table="fixture_index"))
     monkeypatch.setattr(intake, "iter_joined_section_batches", lambda *args, **kwargs: iter([
         {"rows": rows, "next_section": 2, "counts": {"matched_count": 2}}]))
@@ -448,7 +467,8 @@ def test_engine_prefetches_one_cpu_batch_before_waiting_for_current_gpu(tmp_path
     args = SimpleNamespace(runtime_directory=tmp_path, checkpoint=tmp_path / "fake-checkpoint.json",
         source_parquet=tmp_path / "fake-laws.parquet", agent_id="fixture-agent", batch_size=1,
         compiler_workers=2, bridge_workers=1, publish_only=False, max_batches=2,
-        storage_bytes=100_000_000, poll_seconds=1, upload=False)
+        storage_bytes=100_000_000, poll_seconds=1, upload=False, memory_mb=12288,
+        guided_compiler=True, publication_format="paired")
     assert runner.engine(args) == 0
     gpu_order = [event[1] for event in events if event[0] == "gpu_submit"]
     assert len(gpu_order) == 2
@@ -476,3 +496,87 @@ def test_publish_only_retries_existing_outbox_without_input_download_or_model(tm
     assert runner.engine(args) == 0
     assert calls and all(value == (True, tmp_path) for value in calls)
     assert json.loads((tmp_path / "status.json").read_text())["phase"] == "publication_completed"
+
+
+@pytest.mark.parametrize("disagreement", [False, True])
+def test_paired_stage_preserves_bound_guided_outputs_raw_evidence_and_deferred_goals(queue, disagreement):
+    from ipfs_datasets_py.logic.autoformal.paired_span_census import load_paired_census_bundle
+    db, runtime = queue
+    row = source()
+    runner.enqueue(db, {"rows": [row], "next_section": 1})
+    batch_id, _ = runner.select_batch(db, 1)
+    captured = receipt(row, batch_id)
+    captured["campaign"]["publication_format"] = "paired"
+    observation = captured["rows"][0]
+    observation["compiler"].update(compilation_complete=True,
+        rules=[{"modality": "Obligation", "actor": "agency", "action": "retain", "object": "records"}])
+    observation["raw_decoder"]["embedding"] = [.1] * 8
+    observation["safety_projected_decoder"]["embedding"] = [.2] * 8
+    direct = {"family": "deontic", "format": "modal-ir-formula/v1",
+              "payload": {"operator": {"family": "deontic", "symbol": "O"}, "action": "retain"},
+              "origin": "deterministic_codec", "independent": False, "target_conditioned": False,
+              "syntax_status": "not_checked"}
+    guided = copy.deepcopy(direct)
+    guided.update(origin="autoencoder_guided_compiler", target_conditioned=True)
+    if disagreement:
+        guided["payload"]["action"] = "disclose"
+    binding = {"source_text_sha256": row["source_sha256"], "complete": True,
+               "syntax_status": "not_checked", "comparison_scope": "exact_raw_ast_diagnostic",
+               "completeness_scope": "emitted_native_formula_collection", "independent": False}
+    observation["guided_compiler_observation"] = {
+        "schema": "legacy-autoencoder-guided-compiler/v1", "status": "captured",
+        "origin": "autoencoder_guided_compiler", "independent": False,
+        "target_conditioned": True, "learned_formula_generation": False,
+        "direct_formal_outputs": [direct], "guided_formal_outputs": [guided],
+        "model_formal_outputs": [guided],
+        "direct_formal_output_provenance": {**binding, "model_identity": None,
+            "checkpoint_sha256": None, "origin": "deterministic_codec", "target_conditioned": False},
+        "model_formal_output_provenance": {**binding, "model_identity": dict(captured["checkpoint"]),
+            "checkpoint_sha256": captured["checkpoint"]["sha256"],
+            "origin": "autoencoder_guided_compiler", "target_conditioned": True}}
+    staged = runner.stage(db, runtime, batch_id, captured, "fixture-agent")
+    loaded = load_paired_census_bundle(staged["manifest"]["path"])
+    assert loaded["original_receipt"] == captured
+    span = loaded["paired_spans"][0]
+    assert span["autoencoder"]["raw_vector"] == [.1] * 8
+    assert span["autoencoder"]["projected_vector"] == [.2] * 8
+    assert span["autoencoder"]["source_binding_verified"] is True
+    assert span["autoencoder"]["complete"] is span["compiler"]["complete"] is True
+    assert json.loads(span["autoencoder"]["formal_outputs"][0]["payload_json"]) == guided["payload"]
+    assert json.loads(span["compiler"]["formal_outputs"][0]["payload_json"]) == direct["payload"]
+    assert json.loads(span["compiler"]["canonical_formal_outputs"][0]["payload_json"]) == observation["compiler"]["rules"][0]
+    assert span["comparison"]["status"] == ("diagnostic_disagree" if disagreement else "diagnostic_agree")
+    assert span["comparison"]["independent"] is False
+    assert span["lake"]["admitted"] is span["admitted"] is span["formalized"] is False
+    assert db.execute("SELECT status FROM work").fetchone()[0] == "done"
+    assert db.execute("SELECT status FROM batches").fetchone()[0] == "staged"
+    if disagreement:
+        assert loaded["goals"] and loaded["portable_goal_rows"]
+        assert all(goal["enqueued"] is False for goal in loaded["goals"])
+        packet = json.loads(loaded["portable_goal_rows"][0]["packet_json"])
+        assert packet["row"]["capture"]["comparison"]["status"] == "diagnostic_disagree"
+        assert packet["allowed_edit_paths"] and packet["regression_tests"]
+    else:
+        assert loaded["goals"] == []
+
+
+def test_paired_manifest_dispatch_does_not_enter_legacy_exporter(queue, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import span_cache_exchange as exchange
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import paired_span_publication as paired
+    db, runtime = queue
+    row = source()
+    runner.enqueue(db, {"rows": [row], "next_section": 1})
+    batch_id, _ = runner.select_batch(db, 1)
+    captured = receipt(row, batch_id)
+    captured["campaign"]["publication_format"] = "paired"
+    staged = runner.stage(db, runtime, batch_id, captured, "fixture-agent")
+    calls = []
+    def publish(path, *, upload, api):
+        calls.append((path, upload))
+        return {"uploaded": True, "commit_sha": "f" * 40}
+    monkeypatch.setattr(paired, "publish_paired_manifest", publish)
+    monkeypatch.setattr(exchange, "publish_exchange_manifest",
+                        lambda *args, **kwargs: pytest.fail("paired bundle reached legacy exporter"))
+    runner.publish_pending(db, True)
+    assert calls == [(staged["manifest"]["path"], True)]
+    assert db.execute("SELECT status FROM batches").fetchone()[0] == "published"
