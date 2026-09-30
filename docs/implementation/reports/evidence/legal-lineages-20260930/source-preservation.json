@@ -1,0 +1,15 @@
+{
+  "schema": "legal-autoencoder-source-preservation/v1",
+  "repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "legacy_refs": {
+    "refs/heads/autoencoder/legacy-v1": "ddf6b79467b68159650df81befc288c8553df664",
+    "refs/tags/autoencoder/legacy-v1-ddf6b794": "db44ba12a0634447ab7cfa6f23ebefe486ba2ca7",
+    "refs/tags/autoencoder/legacy-v1-ddf6b794^{}": "ddf6b79467b68159650df81befc288c8553df664"
+  },
+  "current_branch": "main",
+  "current_catalog_source_baseline": "485adbbe7032a1445b6b2322eab539c448094b22",
+  "canonical_working_tree_switched": false,
+  "weights_modified": false,
+  "training_executed": false,
+  "admitted": false
+}

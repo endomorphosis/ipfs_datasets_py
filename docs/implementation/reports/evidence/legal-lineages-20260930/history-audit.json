@@ -1,0 +1,378 @@
+{
+  "adaptive_method_comparison": {
+    "added": [
+      "_raw_decoder_evaluation_observation",
+      "_raw_decoder_for_objective",
+      "_validate_raw_embedding_vector",
+      "decoder_preprojection_metrics"
+    ],
+    "changed": [
+      "_apply_projection_update_batch",
+      "_apply_projection_update_batch_in_transaction",
+      "_decoded_for",
+      "_nudge_decoded_embedding",
+      "_sample_training_objective",
+      "_select_hard_examples_for_projection",
+      "evaluate",
+      "train_generalizable_projection"
+    ],
+    "comparison_kind": "AST body including signatures, excluding source locations",
+    "removed": []
+  },
+  "admitted": false,
+  "audit_date": "2026-09-30",
+  "audit_method": "Read immutable git objects, parse AST without executing package, compare bytes and inspect committed historical evidence.",
+  "commit_scope_note": "An archival repository cut, not the introducing commit of either autoencoder architecture.",
+  "comparison_revision": "485adbbe7032a1445b6b2322eab539c448094b22",
+  "existing_distillation_contract": {
+    "adapter": "independent bounded low-rank C @ B per reusable embedding head",
+    "default_influence": 0.0,
+    "default_minimum_promotion_seeds": 3,
+    "implementation": "modal_autoencoder_legacy_distillation.py",
+    "lowest_configurable_minimum_promotion_seeds": 2,
+    "promotion_requires": "Held-out improvement and hard no-regression guardrails including required-family semantic evidence.",
+    "sample_memory_excluded": true,
+    "separate_teacher_student_states": true,
+    "teacher_not_mutated": true
+  },
+  "historical_causal_autoencoder_guidance": {
+    "evaluation_status": "not_measured",
+    "historical_checkpoint_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+    "historical_declared_architecture": "legacy_dense_v1",
+    "historical_effective_architecture": "proof_aware_auxiliary_heads_v2",
+    "reason": "terminal_unsupported",
+    "status": "unavailable_no_reviewed_causal_l1_adapter"
+  },
+  "historical_compiler_executed_today": false,
+  "historical_integrated_smoke": {
+    "all_family_candidate_equals_baseline": true,
+    "deontic_baseline": {
+      "autoencoder_cosine_similarity": 0.78937515,
+      "autoencoder_cross_entropy_loss": 1.051159246,
+      "holdout": 0.475657547926,
+      "ir_cosine_similarity": 0.987677451831,
+      "ir_cross_entropy_loss": 0.597011295045,
+      "proof_success_rate": 0.0,
+      "provenance": 1.0,
+      "reconstruction_success_rate": 0.0,
+      "round_trip": 0.0,
+      "semantic_equivalence": 0.0,
+      "source_copy_penalty": 0.0,
+      "uncertainty": 0.0
+    },
+    "deontic_candidate": {
+      "autoencoder_cosine_similarity": 0.78937515,
+      "autoencoder_cross_entropy_loss": 1.051159246,
+      "holdout": 0.475657547926,
+      "ir_cosine_similarity": 0.987677451831,
+      "ir_cross_entropy_loss": 0.597011295045,
+      "proof_success_rate": 0.0,
+      "provenance": 1.0,
+      "reconstruction_success_rate": 0.0,
+      "round_trip": 0.0,
+      "semantic_equivalence": 0.0,
+      "source_copy_penalty": 0.0,
+      "uncertainty": 0.0
+    },
+    "note": "Different eight-row fixture, not a matched speed baseline or new-vs-legacy architecture ablation.",
+    "run_id": "legal-ir-10m-smoke-20260723T033130Z",
+    "source_revision": "19fc6962bf45262043971ca2f05e1c0005fc97fd"
+  },
+  "historical_model_executed_today": false,
+  "historical_pilot": {
+    "admitted": false,
+    "case_count": 5,
+    "closed_atom_vocabulary": true,
+    "dcec_results": {
+      "cycle_score": 0.0,
+      "end_to_end_score": 0.0,
+      "executed": 5,
+      "forward_score": 0.0,
+      "full_roundtrip_coverage": 0,
+      "nonvacuous_exact_cycle_count": 0,
+      "raw_lean_empty_identity_count": 5
+    },
+    "distractors_per_atom_group": 2,
+    "evidence_type": "historical committed receipt; not rerun today",
+    "gold_rule_count": 24,
+    "historical_kernel_claim": "exact_canonical_rule_cid_list_identity; no lake build admission established by this audit",
+    "modal_spacy_results": {
+      "cycle_score": 0.920833333,
+      "end_to_end_score": 0.783333333,
+      "executed": 5,
+      "forward_score": 0.8325,
+      "full_roundtrip_coverage": 5,
+      "mean_arm_seconds": 16.302863198,
+      "nonvacuous_exact_cycle_count": 0
+    },
+    "not_autoencoder_ablation": true,
+    "source_runtime_revision": "feada0db461d1dde8e4970ce98c2ddbeb8756da1",
+    "typed_deontic_results": {
+      "cycle_score": 1.0,
+      "end_to_end_score": 0.915,
+      "executed": 5,
+      "forward_score": 0.915,
+      "full_roundtrip_coverage": 5,
+      "mean_arm_seconds": 8.971717401,
+      "nonvacuous_exact_cycle_count": 5
+    }
+  },
+  "legacy_feature_inventory": {
+    "accepted_checkpoint_sha256": "1c615f7c622b46e1a3d7349b436bf5daefc3e26866e9458c0feacfe545bcb033",
+    "accepted_rows": 209759,
+    "direct_embedding_activation_deferred": true,
+    "exact_legacy_rows": 209753,
+    "legacy_checkpoint_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+    "legacy_generalizable_rows": 1205336,
+    "omitted_active_rows": 907702,
+    "omitted_rows": 995577,
+    "reported_risk": "Direct bulk embedding transfer reduced held-out cosine; omitted rows are transfer-risk classifications, not negative quality labels.",
+    "source_l1_signal_coverage": 0.984643314506242,
+    "target_overrides": 6
+  },
+  "minimal_lineage_boundaries": [
+    "Keep immutable legacy teacher checkpoint, raw declared architecture, embedding contract, runtime code revision and producer parser/compiler/bridge revisions together.",
+    "Give current trainable student a distinct checkpoint identity, representation/profile and dataset/control-plane namespace; never replace the teacher in place.",
+    "Distinguish historical replay from current-runtime compatibility use of old weights. Only a provenance-isolated explicitly selected historical environment can claim old runtime behavior.",
+    "Exchange distilled feature targets or separate bounded adapters with both source and destination lineage IDs; never bulk-merge incompatible widths or sample-memory rows.",
+    "Evaluate the same held-out spans with both lineages; record formula provenance, source-grounded semantic fidelity, raw vector quality and per-family coverage separately.",
+    "Lake build remains the only admission; compiler pilot scores and teacher-vector losses do not grant legal admission."
+  ],
+  "model_output_contract": {
+    "decode_output": "list[float] embedding vector",
+    "encode_outputs": [
+      "family_distribution",
+      "sample_id",
+      "selected_frame",
+      "target_family",
+      "target_family_distribution",
+      "embedding_projection"
+    ],
+    "formula_producer": "deterministic compiler and bridge adapters",
+    "historical_references": {
+      "class_diagnostic_docstring": 3514,
+      "decode": 4360,
+      "encode": 4291,
+      "projection_may_return_target": 8080,
+      "seven_family_metrics": 29621,
+      "target_projection_call": 7910
+    },
+    "independent_learned_formula_decoder_found": false,
+    "reconstruction_comparability_caveat": "Historical _decoded_for passes sample.embedding_vector into reconstruction-safe projection, which may return target_point exactly. Projected reconstruction metrics are not raw decoder metrics."
+  },
+  "positive_example": {
+    "case_id": "exception_with_window",
+    "current_admitted": false,
+    "cycle_semantic_score": 1.0,
+    "forward_semantic_score": 1.0,
+    "historical_lean_validator": {
+      "benchmark_accepted": true,
+      "claim": "exact_canonical_rule_cid_list_identity",
+      "elapsed_seconds": 0.77632667,
+      "kernel_accepted": true,
+      "nonvacuous": true,
+      "return_code": 0,
+      "source_cid": "bafkreia3tuenzbmwiufhhbm6ye6mvoczz3drfv26db4k62zobne4vxcvf4",
+      "status": "success",
+      "stderr_cid": "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+      "stderr_excerpt": "",
+      "stdout_cid": "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+      "validator": "lean_native_kernel"
+    },
+    "l1": {
+      "rules": [
+        {
+          "action": "submit",
+          "actor": "company_a",
+          "conditions": [],
+          "exceptions": [
+            "emergency"
+          ],
+          "modality": "O",
+          "object": "backup_report",
+          "temporal": [
+            "within_10_days"
+          ]
+        }
+      ]
+    },
+    "l1_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+    "l2": {
+      "rules": [
+        {
+          "action": "submit",
+          "actor": "company_a",
+          "conditions": [],
+          "exceptions": [
+            "emergency"
+          ],
+          "modality": "O",
+          "object": "backup_report",
+          "temporal": [
+            "within_10_days"
+          ]
+        }
+      ]
+    },
+    "l2_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+    "producer": "typed_deontic_codec",
+    "realization": "Company A shall submit backup report within 10 days unless emergency.",
+    "source_text": "Company A shall submit backup report within 10 days unless emergency.",
+    "source_withheld_from_realizer": true
+  },
+  "preserved_metric_families": [
+    "deontic",
+    "frame_logic",
+    "tdfol",
+    "kg",
+    "cec",
+    "external_provers",
+    "decompiler"
+  ],
+  "requested_commit_date": "2026-09-19 08:08:08 +0000",
+  "requested_commit_subject": "Add remaining SAWM trace corpus and program-view modules.",
+  "requested_historical_revision": "ddf6b79467b68159650df81befc288c8553df664",
+  "schema_version": "legal-autoencoder-historical-lineage-audit/v1",
+  "source_bindings": [
+    {
+      "bytes": 1352250,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "revision": "ddf6b79467b68159650df81befc288c8553df664",
+      "sha256": "b56316f756a36cfbcbe7070207678090d5e1c8beebe2ef4710ddd6732ddd045d"
+    },
+    {
+      "bytes": 6296,
+      "path": "docs/performance_snapshots/2026-07-26_semantic_logic_roundtrip_pilot.json",
+      "revision": "ddf6b79467b68159650df81befc288c8553df664",
+      "sha256": "85d3abbcfe578203ab4b8609db90320a073c249d470bc2c7555bab887493cedf"
+    },
+    {
+      "bytes": 613574,
+      "path": "workspace/benchmarks/semantic-logic-roundtrip/2026-07-26-audited-v2/semantic-roundtrip-report.json",
+      "revision": "ddf6b79467b68159650df81befc288c8553df664",
+      "sha256": "748e42f4443a4862cc14630b572a0a8d84f9a6d3acd5ad1b16d5fb8dbf5840ec"
+    },
+    {
+      "bytes": 14580,
+      "path": "tests/fixtures/semantic_roundtrip/pilot_cases.json",
+      "revision": "ddf6b79467b68159650df81befc288c8553df664",
+      "sha256": "6d34cdd1392d3a9964f04e4260f722e076ba7b96c3cdd2fc59749460756cf167"
+    },
+    {
+      "bytes": 8701,
+      "path": "workspace/benchmarks/semantic-roundtrip-compositions/causal_autoencoder_guidance_qualification.json",
+      "revision": "ddf6b79467b68159650df81befc288c8553df664",
+      "sha256": "410a9bc58a592aa749b2d2fe7d620dbbab0d4aa6fe77b98c6b7d5c1969d7176c"
+    },
+    {
+      "bytes": 23334,
+      "path": "docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json",
+      "revision": "ddf6b79467b68159650df81befc288c8553df664",
+      "sha256": "b5953e711360c9b32476ac6d4add4a687a7754aa5b6e780ce94fe647d6c65736"
+    },
+    {
+      "bytes": 8443,
+      "path": "docs/implementation/reports/LEGAL_IR_LEGACY_FEATURE_INVENTORY.md",
+      "revision": "ddf6b79467b68159650df81befc288c8553df664",
+      "sha256": "0eb191a8f131cf8be61d411814e7b218d70f42240325c3a21fc7a893484c825d"
+    },
+    {
+      "bytes": 1425432,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "revision": "485adbbe7032a1445b6b2322eab539c448094b22",
+      "sha256": "2ab5ee184dc2267aad3d0263ae2bf43c8972779a536162dd25511c16737d96d4"
+    }
+  ],
+  "state_comparison": {
+    "compatible_legacy_architecture": "legacy_dense_v1",
+    "current_annotation_count": 41,
+    "fields": [
+      "decoded_embeddings",
+      "family_logits",
+      "compiler_quality_embedding_weights",
+      "compiler_quality_family_logits",
+      "logic_signature_embedding_weights",
+      "logic_signature_family_logits",
+      "logic_signature_legal_ir_view_logits",
+      "round_trip_signal_embedding_weights",
+      "round_trip_signal_family_logits",
+      "round_trip_signal_legal_ir_view_logits",
+      "decompiler_plan_embedding_weights",
+      "decompiler_plan_family_logits",
+      "decompiler_plan_legal_ir_view_logits",
+      "predicate_argument_embedding_weights",
+      "predicate_argument_family_logits",
+      "predicate_argument_legal_ir_view_logits",
+      "feature_embedding_weights",
+      "family_embedding_weights",
+      "family_semantic_slot_embedding_weights",
+      "family_semantic_slot_legal_ir_view_embedding_weights",
+      "family_legal_ir_view_embedding_weights",
+      "semantic_slot_embedding_weights",
+      "feature_family_logits",
+      "semantic_slot_family_logits",
+      "legal_ir_view_logits",
+      "legal_ir_view_embedding_weights",
+      "legal_ir_view_family_logits",
+      "feature_legal_ir_view_logits",
+      "family_semantic_slot_legal_ir_view_logits",
+      "semantic_slot_legal_ir_view_embedding_weights",
+      "semantic_slot_legal_ir_view_family_logits",
+      "semantic_slot_legal_ir_view_logits",
+      "proof_auxiliary_head_logits",
+      "proof_feedback_version_fingerprint",
+      "applied_proof_feedback_ids",
+      "applied_leanstral_guidance_ids",
+      "applied_todo_ids",
+      "architecture_version",
+      "_state_identity_tracker",
+      "_state_transaction_guard",
+      "_active_state_transaction"
+    ],
+    "fields_equal": true,
+    "historical_and_current_default_architecture": "proof_aware_auxiliary_heads_v2",
+    "historical_annotation_count": 41,
+    "public_annotation_count": 38,
+    "schema_version": "modal-autoencoder-state-v1"
+  },
+  "tests_inspected_not_executed": [
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_legacy_distillation.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_feature_transfer.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_proof_heads.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_feature_transfer_canary.py",
+    "tests/unit/benchmarks/test_semantic_logic_roundtrip.py"
+  ],
+  "unchanged_modules": [
+    {
+      "byte_identical": true,
+      "current_sha256": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee",
+      "historical_sha256": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_legacy_distillation.py"
+    },
+    {
+      "byte_identical": true,
+      "current_sha256": "6101b36ad84a7ebb1abd3f72c8bc1bcd1d91b3b246af45f15d0378578b37266d",
+      "historical_sha256": "6101b36ad84a7ebb1abd3f72c8bc1bcd1d91b3b246af45f15d0378578b37266d",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_feature_transfer.py"
+    },
+    {
+      "byte_identical": true,
+      "current_sha256": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+      "historical_sha256": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_factorized_heads.py"
+    },
+    {
+      "byte_identical": true,
+      "current_sha256": "4b4543d071ccbc765a8e43d6cf2d13fd74d2a075947d53c476de7e1a0679fb1d",
+      "historical_sha256": "4b4543d071ccbc765a8e43d6cf2d13fd74d2a075947d53c476de7e1a0679fb1d",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_legacy_view_calibration.py"
+    },
+    {
+      "byte_identical": true,
+      "current_sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+      "historical_sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py"
+    }
+  ],
+  "weights_downloaded": false
+}

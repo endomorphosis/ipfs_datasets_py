@@ -1,0 +1,167 @@
+{
+  "schema": "legal-autoencoder-lineages/v1",
+  "created_at": "2026-09-30",
+  "purpose": "Preserve the complete legacy teacher independently from current legal feature students; require explicit checkpoint identity before any compatibility load.",
+  "source_repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "admission_policy": {
+    "sole_lean_admit": "source-bound lake build <Lib>",
+    "constitution_formalized": false,
+    "lineage_registration_is_admission": false
+  },
+  "lineages": {
+    "legacy_hub_v1": {
+      "lineage_id": "legacy_hub_v1",
+      "role": "immutable_distillation_teacher",
+      "source_baseline_commit": "ddf6b79467b68159650df81befc288c8553df664",
+      "source_branch": "autoencoder/legacy-v1",
+      "source_snapshot_tag": "autoencoder/legacy-v1-ddf6b794",
+      "source_baseline_meaning": "User-selected historical runtime reference; not the recorded producer of the Hub weights.",
+      "artifact_namespace": "autoencoders/legal/legacy_hub_v1",
+      "checkpoint_policy": {
+        "mode": "fixed_sha256",
+        "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "size_bytes": 398209746
+      },
+      "checkpoint": {
+        "repository_id": "justicedao/legal-ir-autoencoder-checkpoints",
+        "repository_type": "dataset",
+        "revision": "94ca549d102e3e31781370aec1247f91365440eb",
+        "path": "checkpoints/20260630T221836Z/state/legal-ir-autoencoder-canonical.state.json",
+        "manifest_path": "checkpoints/20260630T221836Z/manifest.json",
+        "manifest_sha256": "487bb6ccfec671141fefba7600faad99c0dcef14c5f5a2a2cf80b125c240fcfd",
+        "preparation_source_commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+        "constituent_producer_commits_verified": false,
+        "merge_mode": "weighted_union",
+        "source_runs": 10,
+        "source_architectures": {
+          "legacy_dense_v1": 3,
+          "legacy_unknown": 7
+        },
+        "reusable_entry_count": 1205336
+      },
+      "model_family": "AdaptiveModalAutoencoder sparse residual features",
+      "representation": {
+        "observed_embedding_dimensions": 8,
+        "semantic_encoder_provenance": "unrecorded",
+        "diagnostic_input_only": "mock:stable-sha256/8 is a later diagnostic choice, not recovered original embedding provenance"
+      },
+      "execution_policy": {
+        "freeze_original_checkpoint": true,
+        "training_original_in_place": false,
+        "compatibility_resave_is_new_artifact": true,
+        "runtime_and_checkpoint_identities_separate": true,
+        "learned_formula_decoder_available": false
+      },
+      "known_non_equivalent_artifacts": [
+        {
+          "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+          "meaning": "restart12 small diagnostic checkpoint; not this teacher"
+        }
+      ]
+    },
+    "current_legal_v2": {
+      "lineage_id": "current_legal_v2",
+      "role": "evolving_legal_feature_student",
+      "source_baseline_commit": "485adbbe7032a1445b6b2322eab539c448094b22",
+      "source_branch": "main",
+      "artifact_namespace": "autoencoders/legal/current_legal_v2",
+      "checkpoint_policy": {
+        "mode": "explicit_sha256",
+        "forbidden_sha256": [
+          "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+          "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+        ]
+      },
+      "checkpoint_selection": "Explicit existing local student artifact and expected SHA-256 required; no implicit latest checkpoint.",
+      "model_family": "AdaptiveModalAutoencoder sparse residual features with optional proof-aware auxiliary heads",
+      "runtime_architecture_tag": "proof_aware_auxiliary_heads_v2",
+      "architecture_tag_is_lineage_identity": false,
+      "representation": {
+        "verified_local_feature_example_dimensions": 384,
+        "verified_local_feature_example": "gte-small384-feature-smoke",
+        "example_is_campaign_selection": false,
+        "embedding_receipt_required_for_semantic_training": true
+      },
+      "feature_objective": "raw_decoder with existing legal IR loss and regression gates",
+      "execution_policy": {
+        "separate_state_directory": true,
+        "separate_control_plane_variant": true,
+        "explicit_parent_and_sparse_delta_bindings": true,
+        "teacher_weights_not_merged_implicitly": true,
+        "learned_formula_decoder_available": false
+      },
+      "not_this_lineage": [
+        "UI/Security/Intent native structural bottleneck",
+        "legacy full teacher relabeled by compatibility loader",
+        "restart12 diagnostic checkpoint"
+      ],
+      "retained_examples": {
+        "status": "verified historical examples, not an implicit selected head",
+        "embedding": {
+          "dimension": 384,
+          "model_id": "thenlper/gte-small",
+          "revision": "17e1f347d17fe144873b1201da91788898c639cd"
+        },
+        "fresh_parent": {
+          "architecture_version": "proof_aware_auxiliary_heads_v2",
+          "bytes": 1558,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r3/fresh-gte-small-384.state.json",
+          "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9",
+          "status": "fresh empty parent; dimension comes from bound run inputs, not empty checkpoint rows"
+        },
+        "trained_checkpoints": [
+          {
+            "lane": 1,
+            "checkpoint": {
+              "bytes": 7204344,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+              "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+            },
+            "head_version_id": "sha256:7c814c57d641d8e5f0a681b49ab98c5d8396e2a17e711383b7fb331786d44afb",
+            "qualified": false,
+            "admitted": false
+          },
+          {
+            "lane": 3,
+            "checkpoint": {
+              "bytes": 6985555,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/a0/a02b62d4e4e1cf8c7f6547ef6a02288bc71d40554f6db30521b574a149e0eb74",
+              "sha256": "a02b62d4e4e1cf8c7f6547ef6a02288bc71d40554f6db30521b574a149e0eb74"
+            },
+            "head_version_id": "sha256:d8aeceb73cf71461b3592ed683ea7891699b37315bd30744a9e06fb021419c20",
+            "qualified": false,
+            "admitted": false
+          }
+        ],
+        "evidence": "docs/implementation/reports/evidence/legal-lineages-20260930/checkpoint-audit.json"
+      }
+    }
+  },
+  "distillation": {
+    "direction": {
+      "teacher": "legacy_hub_v1",
+      "student": "current_legal_v2"
+    },
+    "teacher_read_only": true,
+    "adapter_separate_from_parent_weights": true,
+    "existing_implementation": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_legacy_distillation.py",
+    "reusable_embedding_fields": 13,
+    "sample_memory_excluded": true,
+    "default_runtime_influence": 0.0,
+    "minimum_promotion_seeds": 3,
+    "required_bindings": [
+      "teacher_checkpoint_sha256",
+      "student_checkpoint_sha256",
+      "source_runtime_and_constructor_configuration",
+      "embedding_model_and_dimensions",
+      "source_disjoint_split_id",
+      "seed",
+      "target_provenance",
+      "adapter_digest"
+    ],
+    "cross_dimension_transfer": "Existing 8-dimensional adapter is not a learned 8-to-384 map; current implementation returns zero adjustment on dimension mismatch. Learn and independently validate an explicit aligned-data bridge before enabling cross-dimension influence.",
+    "formula_distillation": "Compiler/bridge targets retain producer provenance and defects; vectors and guided compiler agreement do not establish independent learned formulas.",
+    "original_checkpoints_unchanged": true
+  },
+  "operational_scope": "This catalog and checkpoint preflight do not modify or automatically select existing live runners, shared database heads, Hub checkpoints, or inference qualification. Runtime compatibility requires a separate pinned replay."
+}

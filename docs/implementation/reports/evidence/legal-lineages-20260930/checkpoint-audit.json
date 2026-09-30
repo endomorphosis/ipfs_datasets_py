@@ -1,0 +1,248 @@
+{
+  "admitted": false,
+  "checkpoint_files_modified": false,
+  "constitution_formalized": false,
+  "current_legal_student_exemplars": {
+    "architecture_version": "proof_aware_auxiliary_heads_v2",
+    "embedding": {
+      "dimension": 384,
+      "model_id": "thenlper/gte-small",
+      "revision": "17e1f347d17fe144873b1201da91788898c639cd"
+    },
+    "fresh_parent": {
+      "architecture_version": "proof_aware_auxiliary_heads_v2",
+      "bytes": 1558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r3/fresh-gte-small-384.state.json",
+      "sha256": "a8b790639f6309a36e715b9e846d0554f163f0b05ec3468f91308e4da27d05d9",
+      "status": "fresh empty parent; dimension comes from bound run inputs, not empty checkpoint rows"
+    },
+    "frozen_source_manifest": {
+      "bytes": 5071795,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/source-capture-r4/capsule/manifest.json",
+      "sha256": "99101d3813dbe67ed836c15a019153a3f12b6595b5e6e30c91d1298baf59cbd1"
+    },
+    "model_class": "AdaptiveModalAutoencoder",
+    "model_variant": "gte-small384-feature-smoke",
+    "not_the_ui_security_intent_native_bottleneck": true,
+    "status": "Historical September feature smoke exemplars, not an assertion about an active campaign or promoted model",
+    "strongest_parallel_training_receipt": {
+      "bytes": 352564,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder-feature-pretraining-20260929/parallel-feature-smoke.json",
+      "sha256": "ffecbaf7d2e4109446cf08e00e807eeaf782a7a2506fc05a90796cdb7abe1170"
+    },
+    "trained_lanes": [
+      {
+        "admitted": false,
+        "architecture_version": "proof_aware_auxiliary_heads_v2",
+        "candidate_manifest": {
+          "bytes": 1224,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/outputs/incremental-0b8ac08050ed035ac608bf61b5c55e792ba68c8434bcb54714d18a192261171c/candidate.manifest.json",
+          "sha256": "358110cd306570a52645a71d0e6063b8749ce40f371f6be394f6a4b0a2d39349"
+        },
+        "checkpoint": {
+          "bytes": 7204344,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+          "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+        },
+        "checkpoint_kind": "materialized JSON corresponding to replay-verified sparse candidate; no replay performed in this audit",
+        "embedding_row_widths": [
+          384
+        ],
+        "feature_evidence": {
+          "bytes": 1671,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/feature-evidence/incremental-0b8ac08050ed035ac608bf61b5c55e792ba68c8434bcb54714d18a192261171c.json",
+          "sha256": "6e06ff4011dbc7987bf8baf15fe6e5ab98a9ed8302ada5f9bfc882170d5442bd"
+        },
+        "formalized": false,
+        "head_version_id": "sha256:7c814c57d641d8e5f0a681b49ab98c5d8396e2a17e711383b7fb331786d44afb",
+        "job_id": "incremental-0b8ac08050ed035ac608bf61b5c55e792ba68c8434bcb54714d18a192261171c",
+        "lane": 1,
+        "producer_package_manifest": {
+          "file_count": 7842,
+          "sha256": "dcce157d1a44c13428934a5b814205db8ac947ade326c1f1d31b2a222511418d"
+        },
+        "producer_source_hashes": {
+          "autoencoder": "bc04009a284d6bfe6e8dc07a7477f704177167980890a0060b6a69a9dc1a5b3d",
+          "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+          "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+          "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+          "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+          "worker": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+        },
+        "qualified": false,
+        "raw_tuning_metrics": {
+          "after": {
+            "embedding_cosine_similarity": 0.8435439276885552,
+            "legal_ir_target_count": 2,
+            "reconstruction_loss": 0.0018798290767505902
+          },
+          "before": {
+            "embedding_cosine_similarity": 0.7961173977866742,
+            "legal_ir_target_count": 2,
+            "reconstruction_loss": 0.002011482012996807
+          }
+        },
+        "reconstruction_objective": "raw_decoder",
+        "source_bound_sample_count": 1,
+        "source_bound_validation_sample_count": 2,
+        "source_manifest_verified": true,
+        "source_verification_scope": "file hashes before/after job, pinned module origins, and unchanged files since first process job; modules loaded before first job are not bytecode-attested",
+        "state_identity": "e52f71fe7fa5d3cd9982caa1920593851910e0fc2da834151b57c4d40efb0cdd",
+        "training_receipt": {
+          "bytes": 303004,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/outputs/incremental-0b8ac08050ed035ac608bf61b5c55e792ba68c8434bcb54714d18a192261171c/receipt.json",
+          "sha256": "d8ac75642d8cf544cbf359bb0365a44e9ba8f6959cb99a247a51e7b0b18697a1"
+        }
+      },
+      {
+        "admitted": false,
+        "architecture_version": "proof_aware_auxiliary_heads_v2",
+        "candidate_manifest": {
+          "bytes": 1224,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/outputs/incremental-2c9b215550efff88bdf3a01436401cc252bb42913fe3c55c159c5030660b4ac2/candidate.manifest.json",
+          "sha256": "aa907d1300933b104ba0bbbdd79059237d47c2e4c5ea0845db432120dfdd323c"
+        },
+        "checkpoint": {
+          "bytes": 6985555,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/a0/a02b62d4e4e1cf8c7f6547ef6a02288bc71d40554f6db30521b574a149e0eb74",
+          "sha256": "a02b62d4e4e1cf8c7f6547ef6a02288bc71d40554f6db30521b574a149e0eb74"
+        },
+        "checkpoint_kind": "materialized JSON corresponding to replay-verified sparse candidate; no replay performed in this audit",
+        "embedding_row_widths": [
+          384
+        ],
+        "feature_evidence": {
+          "bytes": 1672,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/feature-evidence/incremental-2c9b215550efff88bdf3a01436401cc252bb42913fe3c55c159c5030660b4ac2.json",
+          "sha256": "fdc21825538c23faedb42dae0f4daeae98434359005bde2fbb23d95eb6509a3f"
+        },
+        "formalized": false,
+        "head_version_id": "sha256:d8aeceb73cf71461b3592ed683ea7891699b37315bd30744a9e06fb021419c20",
+        "job_id": "incremental-2c9b215550efff88bdf3a01436401cc252bb42913fe3c55c159c5030660b4ac2",
+        "lane": 3,
+        "producer_package_manifest": {
+          "file_count": 7842,
+          "sha256": "dcce157d1a44c13428934a5b814205db8ac947ade326c1f1d31b2a222511418d"
+        },
+        "producer_source_hashes": {
+          "autoencoder": "bc04009a284d6bfe6e8dc07a7477f704177167980890a0060b6a69a9dc1a5b3d",
+          "compiler": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+          "decompiler": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+          "parser": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+          "samples": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+          "worker": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+        },
+        "qualified": false,
+        "raw_tuning_metrics": {
+          "after": {
+            "embedding_cosine_similarity": 0.8268949161916875,
+            "legal_ir_target_count": 2,
+            "reconstruction_loss": 0.0018775274070615662
+          },
+          "before": {
+            "embedding_cosine_similarity": 0.7549637246497067,
+            "legal_ir_target_count": 2,
+            "reconstruction_loss": 0.0020357883687187866
+          }
+        },
+        "reconstruction_objective": "raw_decoder",
+        "source_bound_sample_count": 1,
+        "source_bound_validation_sample_count": 2,
+        "source_manifest_verified": true,
+        "source_verification_scope": "file hashes before/after job, pinned module origins, and unchanged files since first process job; modules loaded before first job are not bytecode-attested",
+        "state_identity": "930f04c669b496d7900c2f82794d3478960f273a1ae81a3a4c76261dc0d7b0ab",
+        "training_receipt": {
+          "bytes": 304090,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/outputs/incremental-2c9b215550efff88bdf3a01436401cc252bb42913fe3c55c159c5030660b4ac2/receipt.json",
+          "sha256": "5208c7483600de4f6444c1df4dbfb06fbc6d3a2674f28bd86a0edfb15c51a289"
+        }
+      }
+    ],
+    "training_evidence_scope": {
+      "accepted_epochs": 18,
+      "admitted": false,
+      "canary_evaluated": false,
+      "exact_resume_demonstrated": true,
+      "formalized": false,
+      "global_holdout_verified": false,
+      "qualified": false,
+      "repeated_tuning_rows": 2,
+      "training_overlap_demonstrated": true,
+      "training_rows": 6
+    }
+  },
+  "lake_executed": false,
+  "legacy_teacher": {
+    "architecture_tag_policy": "Do not infer raw checkpoint architecture or producer history from the current loader return tag.",
+    "checkpoint_id": "legal-ir-autoencoder-canonical-20260630T221836Z",
+    "constituent_training_producer_commits_independently_pinned": false,
+    "dataset_card": {
+      "bytes": 1347,
+      "sha256": "c5de35ea8525221a39f4260f61e59b5339f883225682d0d64f01a1048f9245cc",
+      "url": "https://huggingface.co/datasets/justicedao/legal-ir-autoencoder-checkpoints/resolve/94ca549d102e3e31781370aec1247f91365440eb/README.md"
+    },
+    "historical_runtime_is_checkpoint_producer": false,
+    "historical_runtime_status": "later descendant compatibility candidate; runtime parity with checkpoint not established by this audit",
+    "hub_checkpoint": {
+      "compatibility_adapter": "ModalAutoencoderTrainingState.load_json(path).generalizable_copy()",
+      "generalizable_entry_count": 1205336,
+      "merge_mode": "weighted_union",
+      "relative_path": "checkpoints/20260630T221836Z/state/legal-ir-autoencoder-canonical.state.json",
+      "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+      "size_bytes": 398209746,
+      "source_count": 10,
+      "total_merge_weight": 4.747726556
+    },
+    "known_input_width": 8,
+    "manifest": {
+      "bytes": 9735,
+      "sha256": "487bb6ccfec671141fefba7600faad99c0dcef14c5f5a2a2cf80b125c240fcfd",
+      "url": "https://huggingface.co/datasets/justicedao/legal-ir-autoencoder-checkpoints/resolve/94ca549d102e3e31781370aec1247f91365440eb/checkpoints/20260630T221836Z/manifest.json"
+    },
+    "merge_base_with_preparation_commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+    "observed_main_revision": "94ca549d102e3e31781370aec1247f91365440eb",
+    "pinned_revision": "94ca549d102e3e31781370aec1247f91365440eb",
+    "preparation_source_commit": "4f8ec909c82504e64efd5572ca50c7fa2e4f92c0",
+    "repo_id": "justicedao/legal-ir-autoencoder-checkpoints",
+    "requested_historical_runtime_commit": "ddf6b79467b68159650df81befc288c8553df664",
+    "semantic_embedding_producer_recorded": false,
+    "source_architecture_counts": {
+      "legacy_dense_v1": 3,
+      "legacy_unknown": 7
+    },
+    "verified_existing_local_checkpoint": {
+      "bytes": 398209746,
+      "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+      "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be"
+    }
+  },
+  "model_imports_performed": false,
+  "observed_at": "2026-09-30T19:23:06.529629+00:00",
+  "other_noninterchangeable_states": {
+    "july_accepted_legacy_transfer": {
+      "accepted_legacy_rows": 209759,
+      "omitted_legacy_rows": 995577,
+      "sha256": "1c615f7c622b46e1a3d7349b436bf5daefc3e26866e9458c0feacfe545bcb033",
+      "verification_scope": "Recorded historical inventory binding; corresponding checkpoint not freshly verified here"
+    },
+    "restart12": {
+      "bytes": 25895338,
+      "embedding_dimension": 8,
+      "meaning": "June diagnostic checkpoint, not the full Hub teacher or384-dimensional student",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    }
+  },
+  "safeguards_needed": [
+    "Pin file SHA, architecture as recorded, runtime source, input model/dimension, constructor scales and output contract separately.",
+    "Current ModalAutoencoderTrainingState.from_dict accepts a missing legacy tag and returns proof_aware_auxiliary_heads_v2; a new lineage launcher must record or reject this conversion explicitly.",
+    "Keep immutable teacher and independent student storage/model-variant/Hub prefixes; never resave the Hub teacher with the student loader.",
+    "Do not pad, truncate, relabel or silently project eight-dimensional teacher vectors into384-dimensional student vectors.",
+    "Existing bounded low-rank tail adapters are not an established cross-embedding-space mapper; require explicit alignment design and held-out evidence.",
+    "Require teacher/student checkpoint SHA, split and source bindings for every distillation artifact. Keep adapter influence zero until promotion evidence passes.",
+    "Compare raw decoder outputs separately from target-aware safety projection. Report semantic fidelity and Lake evidence independently of syntax, reconstruction and agreement."
+  ],
+  "schema": "legal-autoencoder-lineage-checkpoint-audit/v1",
+  "scope": "Read-only artifact and metadata inspection; only this audit report was written. No model imports, weight downloads, training, replay, or qualification.",
+  "training_executed": false,
+  "weights_downloaded": false
+}

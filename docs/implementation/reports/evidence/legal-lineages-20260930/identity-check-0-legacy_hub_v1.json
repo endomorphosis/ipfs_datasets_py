@@ -1,0 +1,24 @@
+{
+  "admitted": false,
+  "artifact_namespace": "autoencoders/legal/legacy_hub_v1",
+  "checkpoint": {
+    "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+    "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+    "size_bytes": 398209746
+  },
+  "checkpoint_identity_verified": true,
+  "checkpoint_policy_mode": "fixed_sha256",
+  "created_at": "2026-09-30T19:26:00.417464+00:00",
+  "execution_not_started": true,
+  "lineage_id": "legacy_hub_v1",
+  "qualification": false,
+  "registry": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/legal_autoencoder_lineages.json",
+    "sha256": "72acece5c00463a915df284b59836171a2d7256946f137ad482f46a925c2398e",
+    "size_bytes": 8430
+  },
+  "role": "immutable_distillation_teacher",
+  "runtime_compatibility_checked": false,
+  "schema": "legal-autoencoder-lineage-check/v1",
+  "source_baseline_commit": "ddf6b79467b68159650df81befc288c8553df664"
+}

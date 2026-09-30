@@ -23,6 +23,8 @@ belong to their named backend; they are not interchangeable across backends.
 | Diagnose stalled epochs, source drift, storage admission, or rejected candidates | [Operations and troubleshooting](operations_and_troubleshooting.md) |
 | Find the exact callable or script for a task | [API and command map](api_map.md) |
 
+See [legal autoencoder lineages](legal_autoencoder_lineages.md) to preserve the full legacy teacher separately from current students.
+
 ## Choose an execution path first
 
 | Path | Input and representation | Output | Current scope |

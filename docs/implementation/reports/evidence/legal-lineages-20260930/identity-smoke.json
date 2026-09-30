@@ -1,0 +1,38 @@
+{
+  "schema": "legal-autoencoder-lineage-check-smoke/v1",
+  "verified_checkpoints": [
+    {
+      "lineage": "legacy_hub_v1",
+      "checkpoint_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+      "checkpoint_bytes": 398209746,
+      "receipt_path": "docs/implementation/reports/evidence/legal-lineages-20260930/identity-check-0-legacy_hub_v1.json",
+      "wall_seconds": 0.24969961307942867,
+      "passed": true
+    },
+    {
+      "lineage": "current_legal_v2",
+      "checkpoint_sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "checkpoint_bytes": 7204344,
+      "receipt_path": "docs/implementation/reports/evidence/legal-lineages-20260930/identity-check-1-current_legal_v2.json",
+      "wall_seconds": 0.04582679597660899,
+      "passed": true
+    },
+    {
+      "lineage": "current_legal_v2",
+      "checkpoint_sha256": "a02b62d4e4e1cf8c7f6547ef6a02288bc71d40554f6db30521b574a149e0eb74",
+      "checkpoint_bytes": 6985555,
+      "receipt_path": "docs/implementation/reports/evidence/legal-lineages-20260930/identity-check-2-current_legal_v2.json",
+      "wall_seconds": 0.03239870606921613,
+      "passed": true
+    }
+  ],
+  "teacher_as_student_rejected": true,
+  "tests_passed": 23,
+  "weights_downloaded": false,
+  "weights_changed": false,
+  "model_imports": false,
+  "training_executed": false,
+  "lake_executed": false,
+  "admitted": false,
+  "notes": "Timing is streaming identity verification only, not inference or training. Historical semantics not rerun."
+}

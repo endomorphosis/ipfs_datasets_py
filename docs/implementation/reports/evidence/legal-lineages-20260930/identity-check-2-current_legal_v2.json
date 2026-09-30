@@ -1,0 +1,24 @@
+{
+  "admitted": false,
+  "artifact_namespace": "autoencoders/legal/current_legal_v2",
+  "checkpoint": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/a0/a02b62d4e4e1cf8c7f6547ef6a02288bc71d40554f6db30521b574a149e0eb74",
+    "sha256": "a02b62d4e4e1cf8c7f6547ef6a02288bc71d40554f6db30521b574a149e0eb74",
+    "size_bytes": 6985555
+  },
+  "checkpoint_identity_verified": true,
+  "checkpoint_policy_mode": "explicit_sha256",
+  "created_at": "2026-09-30T19:26:00.496751+00:00",
+  "execution_not_started": true,
+  "lineage_id": "current_legal_v2",
+  "qualification": false,
+  "registry": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/legal_autoencoder_lineages.json",
+    "sha256": "72acece5c00463a915df284b59836171a2d7256946f137ad482f46a925c2398e",
+    "size_bytes": 8430
+  },
+  "role": "evolving_legal_feature_student",
+  "runtime_compatibility_checked": false,
+  "schema": "legal-autoencoder-lineage-check/v1",
+  "source_baseline_commit": "485adbbe7032a1445b6b2322eab539c448094b22"
+}
