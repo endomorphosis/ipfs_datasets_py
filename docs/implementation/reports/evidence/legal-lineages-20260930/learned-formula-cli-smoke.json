@@ -1,0 +1,706 @@
+{
+  "admitted": false,
+  "first_training": {
+    "admitted": false,
+    "checkpoint": {
+      "bytes": 2831439,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/installed-cli-smoke/train/checkpoint.json",
+      "schema": "learned-legal-formula-checkpoint/v1",
+      "sha256": "900e5a0c46541d30df23fca26b0974cf2e5d3fdbeacb736d86372c8cc994c7fc"
+    },
+    "formalized": false,
+    "heldout_evaluated": false,
+    "qualified": false,
+    "runtime": {
+      "admitted": false,
+      "capabilities": [
+        "train",
+        "infer",
+        "load_checkpoint",
+        "decode_formal_logic",
+        "register_candidate",
+        "load_version"
+      ],
+      "checkpoint_present": true,
+      "checkpoint_sha256": "900e5a0c46541d30df23fca26b0974cf2e5d3fdbeacb736d86372c8cc994c7fc",
+      "dimension": null,
+      "domain": "legal_ir",
+      "formal_decoder": {
+        "available": true,
+        "head_required": true,
+        "independent_learned_formula_decoder": true,
+        "modes": [
+          "learned"
+        ],
+        "scope": "single_typed_deontic_rule_training_vocabulary"
+      },
+      "formalized": false,
+      "input_representation": "source_text",
+      "integrated": true,
+      "lineage_id": "source_conditioned_formula_v1",
+      "objective_default": "teacher_forced_formula_token_cross_entropy",
+      "parent_version_id": null,
+      "promotion_performed": false,
+      "qualified": false,
+      "runtime_id": "legal_ir:source_conditioned_formula_v1",
+      "runtime_version": "source_conditioned_formula_v1",
+      "schema": "autoencoder-runtime-interface/v1",
+      "source_identity": {
+        "files": {
+          "autoencoder_runtime_registry.py": "214f4a36d4e840620e6ad8b0767dfe5f5dd764c8d1ed870b3082d86d17bac9cf",
+          "legal_formula_checkpoint.py": "d682537d04402a621f888ff17a385f13b1cd7e4004ee4e0bc805160e4af1ad80",
+          "legal_formula_codec.py": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+          "legal_formula_learning.py": "bb5fad7e1410149be8e9fe649c5825ccff931ed2ab89c840c70c141b96c6a425"
+        },
+        "scope": "listed_runtime_files_only_not_transitive_dependency_provenance",
+        "sha256": "8c31488c21e6f41c717e2a0ffb4d5ee7f9cff0b862e789b48b4c6caccc32dd5d"
+      },
+      "state_schema": "learned-legal-formula-checkpoint/v1",
+      "trained_checkpoint_present": true
+    },
+    "training": {
+      "admitted": false,
+      "batch_losses": [
+        {
+          "epoch": 0,
+          "step": 1,
+          "token_count": 127,
+          "token_cross_entropy": 3.3367714881896973
+        },
+        {
+          "epoch": 0,
+          "step": 2,
+          "token_count": 125,
+          "token_cross_entropy": 3.109977960586548
+        },
+        {
+          "epoch": 0,
+          "step": 3,
+          "token_count": 126,
+          "token_cross_entropy": 2.8623883724212646
+        },
+        {
+          "epoch": 0,
+          "step": 4,
+          "token_count": 128,
+          "token_cross_entropy": 2.64935564994812
+        },
+        {
+          "epoch": 0,
+          "step": 5,
+          "token_count": 126,
+          "token_cross_entropy": 2.3904314041137695
+        },
+        {
+          "epoch": 0,
+          "step": 6,
+          "token_count": 125,
+          "token_cross_entropy": 2.106839179992676
+        },
+        {
+          "epoch": 0,
+          "step": 7,
+          "token_count": 126,
+          "token_cross_entropy": 1.9596019983291626
+        },
+        {
+          "epoch": 0,
+          "step": 8,
+          "token_count": 127,
+          "token_cross_entropy": 1.677707314491272
+        },
+        {
+          "epoch": 0,
+          "step": 9,
+          "token_count": 125,
+          "token_cross_entropy": 1.449479341506958
+        }
+      ],
+      "checkpoint_sha256": "900e5a0c46541d30df23fca26b0974cf2e5d3fdbeacb736d86372c8cc994c7fc",
+      "deadline_scope": "soft_deadline_before_numeric_or_metric_batch; preparation_and_serialization_not_interruptible",
+      "download_calls": 0,
+      "elapsed_seconds": 0.907605062937364,
+      "epochs_completed": 1,
+      "epochs_requested": 1,
+      "examples_persisted": false,
+      "final_model_state_sha256": "f128a598613bd1fe4385a73efd8e841d81ff6c0a2f4989725d5d4c11a513156f",
+      "final_output_head_sha256": "08a834e68d3df8b20b9280d478dacc804367e8719a2966baed60068791a2d92b",
+      "formalized": false,
+      "gradient_norm_max": 0.6241000294685364,
+      "independent_source_conditioning": true,
+      "initial_model_state_sha256": "0fae1cdb223491e7a56d3d2c8557abe900a20500ee607d7385f7283e90f8dc5e",
+      "initial_output_head_sha256": "8d9f36a203ac7f5f183a1dcb4685cd3d04461b8f66c5da00d180a54d63b198cc",
+      "legacy_weights_used": false,
+      "lineage_id": "source_conditioned_formula_v1",
+      "objective": "teacher_forced_formula_token_cross_entropy",
+      "optimizer_steps": 9,
+      "output_head_gradient_norm_max": 0.5515372816193841,
+      "parent_checkpoint_sha256": null,
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 9,
+        "row_cursor": 0
+      },
+      "promotion_performed": false,
+      "proof_authority": false,
+      "provider_calls": 0,
+      "publication_performed": false,
+      "qualified": false,
+      "roundtrip_ok": false,
+      "sample_memory_used": false,
+      "schema": "learned-legal-formula-training/v1",
+      "semantic_correctness_verified": false,
+      "stopped_reason": "epoch_limit",
+      "training_after": {
+        "complete": true,
+        "rows_evaluated": 72,
+        "teacher_forcing": true,
+        "token_cross_entropy": 1.22301412552989
+      },
+      "training_before": {
+        "complete": true,
+        "rows_evaluated": 72,
+        "teacher_forcing": true,
+        "token_cross_entropy": 3.3347106643710367
+      },
+      "training_executed": true,
+      "tuning": {
+        "complete": true,
+        "rejected_rows": [],
+        "rows_evaluated": 12,
+        "scope": "held_out_sources_with_in_vocabulary_targets",
+        "split_source_and_id_disjoint": true,
+        "targets_required_disjoint": false,
+        "teacher_forcing": true,
+        "token_cross_entropy": 1.251094877092462,
+        "used_for_fit_or_selection": false
+      }
+    }
+  },
+  "formalized": false,
+  "heldout_used_for_cli_fit_or_selection": false,
+  "inference": {
+    "admitted": false,
+    "checkpoint_optimizer_steps": 900,
+    "checkpoint_sha256": "4876186f4a5fe3957640a2cff1a4e1b2046bc945d24e08d244973e641733384e",
+    "decoded_count": 3,
+    "decoded_formulas_generated": true,
+    "formalized": false,
+    "independent_text_to_logic": true,
+    "learned_formula_generation": true,
+    "lineage_id": "source_conditioned_formula_v1",
+    "promotion_performed": false,
+    "proof_authority": false,
+    "publication_performed": false,
+    "qualified": false,
+    "roundtrip_ok": false,
+    "rows": [
+      {
+        "admitted": false,
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "disclose",
+              "actor": "agency",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "F",
+              "object": "records",
+              "temporal": []
+            }
+          ]
+        },
+        "family_syntax_checked": false,
+        "formal_outputs": [
+          {
+            "admitted": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "F(disclose(agency, records))",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "origin": "learned_source_conditioned_formula_decoder",
+            "payload": {
+              "action": "disclose",
+              "actor": "agency",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "F",
+              "object": "records",
+              "temporal": []
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "syntax_scope": "canonical_rule_schema_and_decoder_grammar"
+          }
+        ],
+        "formalized": false,
+        "formula_text": "F(disclose(agency, records))",
+        "generated_token_ids": [
+          1,
+          3,
+          20,
+          4,
+          17,
+          5,
+          13,
+          6,
+          24,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          2
+        ],
+        "independent_text_to_logic": true,
+        "learned_formula_generation": true,
+        "minimum_decision_logit_margin": 9.69387149810791,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": null,
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "76cd8cc5634bbbd900828d3b07ba05b30452cca2f439cca301b01e5248f7d3b8",
+        "status": "decoded",
+        "syntax_scope": "canonical_rule_schema_and_decoder_grammar",
+        "target_access": false,
+        "teacher_forcing": false,
+        "temperature": 0,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "submit",
+              "actor": "Company A",
+              "conditions": [],
+              "exceptions": [
+                "emergency"
+              ],
+              "modality": "O",
+              "object": "backup report",
+              "temporal": [
+                "within 10 days"
+              ]
+            }
+          ]
+        },
+        "family_syntax_checked": false,
+        "formal_outputs": [
+          {
+            "admitted": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "O(submit(\"Company A\", \"backup report\")) scope={\"exceptions\": [\"emergency\"], \"temporal\": [\"within 10 days\"]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "origin": "learned_source_conditioned_formula_decoder",
+            "payload": {
+              "action": "submit",
+              "actor": "Company A",
+              "conditions": [],
+              "exceptions": [
+                "emergency"
+              ],
+              "modality": "O",
+              "object": "backup report",
+              "temporal": [
+                "within 10 days"
+              ]
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "syntax_scope": "canonical_rule_schema_and_decoder_grammar"
+          }
+        ],
+        "formalized": false,
+        "formula_text": "O(submit(\"Company A\", \"backup report\")) scope={\"exceptions\": [\"emergency\"], \"temporal\": [\"within 10 days\"]}",
+        "generated_token_ids": [
+          1,
+          3,
+          21,
+          4,
+          16,
+          5,
+          15,
+          6,
+          23,
+          7,
+          8,
+          9,
+          19,
+          10,
+          11,
+          27,
+          12,
+          2
+        ],
+        "independent_text_to_logic": true,
+        "learned_formula_generation": true,
+        "minimum_decision_logit_margin": 2.985091209411621,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": null,
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "44b3f0227eb7e41a8e0c840478e8c2b411c23fbc8016270a367f22db82486213",
+        "status": "decoded",
+        "syntax_scope": "canonical_rule_schema_and_decoder_grammar",
+        "target_access": false,
+        "teacher_forcing": false,
+        "temperature": 0,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "retain",
+              "actor": "officer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "the file",
+              "temporal": [
+                "at least 20 days"
+              ]
+            }
+          ]
+        },
+        "family_syntax_checked": false,
+        "formal_outputs": [
+          {
+            "admitted": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "O(retain(officer, \"the file\")) scope={\"temporal\": [\"at least 20 days\"]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "origin": "learned_source_conditioned_formula_decoder",
+            "payload": {
+              "action": "retain",
+              "actor": "officer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "the file",
+              "temporal": [
+                "at least 20 days"
+              ]
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "syntax_scope": "canonical_rule_schema_and_decoder_grammar"
+          }
+        ],
+        "formalized": false,
+        "formula_text": "O(retain(officer, \"the file\")) scope={\"temporal\": [\"at least 20 days\"]}",
+        "generated_token_ids": [
+          1,
+          3,
+          21,
+          4,
+          18,
+          5,
+          14,
+          6,
+          25,
+          7,
+          8,
+          9,
+          10,
+          11,
+          26,
+          12,
+          2
+        ],
+        "independent_text_to_logic": true,
+        "learned_formula_generation": true,
+        "minimum_decision_logit_margin": 9.343132019042969,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": null,
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "ac822605c0d4189d986f5f742ed687a187bccba62ecfe2c4e181823284ecaf69",
+        "status": "decoded",
+        "syntax_scope": "canonical_rule_schema_and_decoder_grammar",
+        "target_access": false,
+        "teacher_forcing": false,
+        "temperature": 0,
+        "training_executed": false
+      }
+    ],
+    "schema": "learned-legal-formula-inference/v1",
+    "semantic_correctness_verified": false,
+    "source_input_conditioned": true,
+    "status": "decoded",
+    "target_access": false,
+    "teacher_forcing": false,
+    "trained_checkpoint": true,
+    "training_executed": false
+  },
+  "known_gate_count": 3,
+  "known_gate_exact": 3,
+  "lake_executed": false,
+  "qualified": false,
+  "resumed_training": {
+    "admitted": false,
+    "checkpoint": {
+      "bytes": 2830163,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/installed-cli-smoke/resume/checkpoint.json",
+      "schema": "learned-legal-formula-checkpoint/v1",
+      "sha256": "6aafe580de718a1acb313cc5e0c6d7b1f3c7a860dcba89b11971927265a40772"
+    },
+    "formalized": false,
+    "heldout_evaluated": false,
+    "qualified": false,
+    "runtime": {
+      "admitted": false,
+      "capabilities": [
+        "train",
+        "infer",
+        "load_checkpoint",
+        "decode_formal_logic",
+        "register_candidate",
+        "load_version"
+      ],
+      "checkpoint_present": true,
+      "checkpoint_sha256": "6aafe580de718a1acb313cc5e0c6d7b1f3c7a860dcba89b11971927265a40772",
+      "dimension": null,
+      "domain": "legal_ir",
+      "formal_decoder": {
+        "available": true,
+        "head_required": true,
+        "independent_learned_formula_decoder": true,
+        "modes": [
+          "learned"
+        ],
+        "scope": "single_typed_deontic_rule_training_vocabulary"
+      },
+      "formalized": false,
+      "input_representation": "source_text",
+      "integrated": true,
+      "lineage_id": "source_conditioned_formula_v1",
+      "objective_default": "teacher_forced_formula_token_cross_entropy",
+      "parent_version_id": null,
+      "promotion_performed": false,
+      "qualified": false,
+      "runtime_id": "legal_ir:source_conditioned_formula_v1",
+      "runtime_version": "source_conditioned_formula_v1",
+      "schema": "autoencoder-runtime-interface/v1",
+      "source_identity": {
+        "files": {
+          "autoencoder_runtime_registry.py": "214f4a36d4e840620e6ad8b0767dfe5f5dd764c8d1ed870b3082d86d17bac9cf",
+          "legal_formula_checkpoint.py": "d682537d04402a621f888ff17a385f13b1cd7e4004ee4e0bc805160e4af1ad80",
+          "legal_formula_codec.py": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+          "legal_formula_learning.py": "bb5fad7e1410149be8e9fe649c5825ccff931ed2ab89c840c70c141b96c6a425"
+        },
+        "scope": "listed_runtime_files_only_not_transitive_dependency_provenance",
+        "sha256": "8c31488c21e6f41c717e2a0ffb4d5ee7f9cff0b862e789b48b4c6caccc32dd5d"
+      },
+      "state_schema": "learned-legal-formula-checkpoint/v1",
+      "trained_checkpoint_present": true
+    },
+    "training": {
+      "admitted": false,
+      "batch_losses": [
+        {
+          "epoch": 1,
+          "step": 10,
+          "token_count": 126,
+          "token_cross_entropy": 1.1937693357467651
+        },
+        {
+          "epoch": 1,
+          "step": 11,
+          "token_count": 128,
+          "token_cross_entropy": 1.0286264419555664
+        },
+        {
+          "epoch": 1,
+          "step": 12,
+          "token_count": 124,
+          "token_cross_entropy": 0.890214741230011
+        },
+        {
+          "epoch": 1,
+          "step": 13,
+          "token_count": 125,
+          "token_cross_entropy": 0.7527332305908203
+        },
+        {
+          "epoch": 1,
+          "step": 14,
+          "token_count": 126,
+          "token_cross_entropy": 0.614941418170929
+        },
+        {
+          "epoch": 1,
+          "step": 15,
+          "token_count": 127,
+          "token_cross_entropy": 0.5585779547691345
+        },
+        {
+          "epoch": 1,
+          "step": 16,
+          "token_count": 126,
+          "token_cross_entropy": 0.5159984827041626
+        },
+        {
+          "epoch": 1,
+          "step": 17,
+          "token_count": 126,
+          "token_cross_entropy": 0.4265856146812439
+        },
+        {
+          "epoch": 1,
+          "step": 18,
+          "token_count": 127,
+          "token_cross_entropy": 0.3860188126564026
+        }
+      ],
+      "checkpoint_sha256": "6aafe580de718a1acb313cc5e0c6d7b1f3c7a860dcba89b11971927265a40772",
+      "deadline_scope": "soft_deadline_before_numeric_or_metric_batch; preparation_and_serialization_not_interruptible",
+      "download_calls": 0,
+      "elapsed_seconds": 0.48169138096272945,
+      "epochs_completed": 1,
+      "epochs_requested": 1,
+      "examples_persisted": false,
+      "final_model_state_sha256": "1da8d486f3c8744cf357def4788c0743d41ad75812a905761e3f17f525f1e4be",
+      "final_output_head_sha256": "f87604ef217957110b6317fdb146e53c2306727cdd42dfdc0903b4ebe8f59606",
+      "formalized": false,
+      "gradient_norm_max": 0.4846614897251129,
+      "independent_source_conditioning": true,
+      "initial_model_state_sha256": "f128a598613bd1fe4385a73efd8e841d81ff6c0a2f4989725d5d4c11a513156f",
+      "initial_output_head_sha256": "08a834e68d3df8b20b9280d478dacc804367e8719a2966baed60068791a2d92b",
+      "legacy_weights_used": false,
+      "lineage_id": "source_conditioned_formula_v1",
+      "objective": "teacher_forced_formula_token_cross_entropy",
+      "optimizer_steps": 9,
+      "output_head_gradient_norm_max": 0.43756838191013314,
+      "parent_checkpoint_sha256": "900e5a0c46541d30df23fca26b0974cf2e5d3fdbeacb736d86372c8cc994c7fc",
+      "progress": {
+        "epochs_completed": 2,
+        "optimizer_steps": 18,
+        "row_cursor": 0
+      },
+      "promotion_performed": false,
+      "proof_authority": false,
+      "provider_calls": 0,
+      "publication_performed": false,
+      "qualified": false,
+      "roundtrip_ok": false,
+      "sample_memory_used": false,
+      "schema": "learned-legal-formula-training/v1",
+      "semantic_correctness_verified": false,
+      "stopped_reason": "epoch_limit",
+      "training_after": {
+        "complete": true,
+        "rows_evaluated": 72,
+        "teacher_forcing": true,
+        "token_cross_entropy": 0.3158145635926251
+      },
+      "training_before": {
+        "complete": true,
+        "rows_evaluated": 72,
+        "teacher_forcing": true,
+        "token_cross_entropy": 1.22301412552989
+      },
+      "training_executed": true,
+      "tuning": {
+        "complete": true,
+        "rejected_rows": [],
+        "rows_evaluated": 12,
+        "scope": "held_out_sources_with_in_vocabulary_targets",
+        "split_source_and_id_disjoint": true,
+        "targets_required_disjoint": false,
+        "teacher_forcing": true,
+        "token_cross_entropy": 0.32008041519867747,
+        "used_for_fit_or_selection": false
+      }
+    }
+  },
+  "runs": [
+    {
+      "args": [
+        "infer",
+        "--checkpoint",
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/smoke-final-20260930/checkpoint.json",
+        "--sha256",
+        "4876186f4a5fe3957640a2cff1a4e1b2046bc945d24e08d244973e641733384e",
+        "--input",
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/installed-cli-smoke/sources.json",
+        "--output",
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/installed-cli-smoke/predictions.json"
+      ],
+      "elapsed_seconds": 2.0129720841068774,
+      "returncode": 0
+    },
+    {
+      "args": [
+        "train",
+        "--corpus",
+        "/home/barberb/lift_coding/external/ipfs_datasets/tests/fixtures/legal_formula_learning/v1.json",
+        "--output",
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/installed-cli-smoke/train",
+        "--epochs",
+        "1",
+        "--seconds",
+        "30"
+      ],
+      "elapsed_seconds": 2.577939805109054,
+      "returncode": 0
+    },
+    {
+      "args": [
+        "train",
+        "--corpus",
+        "/home/barberb/lift_coding/external/ipfs_datasets/tests/fixtures/legal_formula_learning/v1.json",
+        "--output",
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/installed-cli-smoke/resume",
+        "--epochs",
+        "1",
+        "--seconds",
+        "30",
+        "--resume",
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/installed-cli-smoke/train/checkpoint.json",
+        "--resume-sha256",
+        "900e5a0c46541d30df23fca26b0974cf2e5d3fdbeacb736d86372c8cc994c7fc"
+      ],
+      "elapsed_seconds": 2.6787206968292594,
+      "returncode": 0
+    }
+  ],
+  "schema": "installed-learned-formula-cli-smoke/v1",
+  "weights_downloaded": false
+}

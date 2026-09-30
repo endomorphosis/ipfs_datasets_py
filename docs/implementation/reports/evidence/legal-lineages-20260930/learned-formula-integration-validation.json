@@ -1,0 +1,43 @@
+{
+  "admitted": false,
+  "base_commit": "0b779f73929e4fb45c191bcce001a5ef20a64c55",
+  "bridge_performance_measured": false,
+  "constitution_roundtrip_ok_assigned": false,
+  "files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py": "214f4a36d4e840620e6ad8b0767dfe5f5dd764c8d1ed870b3082d86d17bac9cf",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_checkpoint.py": "c414b20bf587210bb5bea65e31a743ec7165aaccf8a1ca336d756c46a3f53704",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_learning.py": "bb5fad7e1410149be8e9fe649c5825ccff931ed2ab89c840c70c141b96c6a425",
+    "scripts/ops/legal_ir/train_learned_formula_decoder.py": "c6c58df7903629e3e6cc3199aafb84267688b15be9246ef315742027ea8cd076",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_runtime_registry.py": "a58273597d7006ff2f27a2331218e3c0371bb8122cbdf18b00e60773c662c79c",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_learned_formula_runtime.py": "613abb4e36d1d8ac5b45b65dc2afca4f7352adc1c27397ca2afa089aa50f6f9b",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_learned_legal_formula_fixture.py": "f864b7afcb4f649ad040c454b93e1248c5699107bd487d7a11268d0aa9961c5c",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py": "3d28183dca0f563a054f9daaf64531670bca79f1adcafb539dea2ece9bf8db2d",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_learning.py": "2de184140617f1cd20abc1e59c0b5d19a396923d66c9c91fe6d48f934b87e9d4"
+  },
+  "formalized": false,
+  "frozen_legacy_modules_verified": 23,
+  "frozen_manifest_sha256": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+  "heldout_semantic_success": false,
+  "lake_executed": false,
+  "qualified": false,
+  "schema": "learned-legal-formula-integration-validation/v1",
+  "suite_overlap": "Final 13-case registry suite replaces its earlier 11-case run; parameter display IDs changed.",
+  "suites": [
+    {
+      "failed": 0,
+      "junit": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/installed-regression.xml",
+      "passed": 312,
+      "sha256": "9c6bea96a9625883c02828f0a9e818de766060d1bb901253f3eb1fba28f2dac8",
+      "skipped": 0
+    },
+    {
+      "failed": 0,
+      "junit": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/learned-formula-staging/final-registry-tests.xml",
+      "passed": 13,
+      "sha256": "9c238c76fe12386f28d98c84eb359a7a34ac1ccaaad76027ff0ce464a97e165d",
+      "skipped": 0
+    }
+  ],
+  "weights_downloaded": false
+}

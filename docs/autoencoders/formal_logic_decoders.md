@@ -1,14 +1,16 @@
 # Formal output from the versioned autoencoders
 
 Use `decode_formal_logic()` for formal candidates. The historical legal
-`decode()` method returns an embedding vector; `infer()` remains numerical
-inference. A vector is not a formula. The common runtime previously lacked a
+`decode()` method returns an embedding vector; its `infer()` remains numerical
+inference. A separate `source_conditioned_formula_v1` runtime now trains and
+generates formula tokens from source text alone. A vector is not a formula. The common runtime previously lacked a
 formal-output method, even though compiler-guided legal formulas were available
 through a separate census implementation.
 
 | Runtime | Formal output | Important limit |
 | --- | --- | --- |
 | Legal `legacy_v1`, `legacy_v1_optimized`, `current_v2` | Complete modal ASTs from the model-guided compiler, or strict typed-deontic compiler rules | These checkpoints have no independent learned formula-token decoder |
+| Legal `source_conditioned_formula_v1` | Independently generated, grammar-validated canonical deontic rule from source text | Freshly trained sequence model; one rule, closed training vocabulary; syntax is not semantic accuracy |
 | Security, Intent, UI/UX `native_v1` | Native expressions reconstructed from model output scores and a training-fitted structural head | Input is compiler-prepared structural features; the head supports fixed shapes and known vocabulary |
 | Security, Intent, UI/UX `native_v2` | Same structural readout over the saved v2 numerical decoder | Read-only formal factory; the common v2 training/registry adapter is still separate work |
 
@@ -17,6 +19,12 @@ every domain into legal deontic logic or claim that every downstream logic
 backend accepts their output. None grants proof, qualification or formalization.
 Only the separate source-bound `lake build <Lib>` path can grant a Lean admit.
 The Constitution remains unformalized.
+
+For actual formula-token learning, use the separate
+[learned formula training guide](learned_legal_formula_training.md). Its
+[smoke report](learned_legal_formula_smoke_20260930.md) retains an exception-loss
+failure despite low reconstruction loss. It does not change the capabilities
+of historical checkpoints.
 
 ## Legal formulas
 

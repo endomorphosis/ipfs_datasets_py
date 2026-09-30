@@ -12,6 +12,7 @@ never chooses executable code.
 | `legal_ir` | `legacy_v1` | Frozen ddf6b794 numerical runtime; explicit 8D vectors | Train, evaluate, load local JSON checkpoint with expected SHA-256 |
 | `legal_ir` | `legacy_v1_optimized` | Opt-in descendant of the same 8D lineage; streamed transaction norms | Same API and objective as legacy, separate runtime profile |
 | `legal_ir` | `current_v2` | Current numerical runtime; explicit 384D vectors; raw-decoder default | Train, evaluate, load local JSON checkpoint with expected SHA-256 |
+| `legal_ir` | `source_conditioned_formula_v1` | Fresh source-GRU/attention/formula-GRU model; source strings | Token-CE training, source-only inference, checkpoint and owner-registry exact Adam resume |
 | `security_ir`, `intent_ir`, `ui_ux_ir` | `native_v1` | Native compiler projection features; full-batch Adam v1 | Prepare, train, infer, register candidate, reload and resume |
 | `security_ir`, `intent_ir`, `ui_ux_ir` | `native_v2` | Existing streamed minibatch Adam v2 | Read-only inference/formal readout through `open_formal_decoder`; common training/registry opening still fails explicitly |
 
@@ -46,7 +47,8 @@ legacy = runtimes.open_runtime(
 current = runtimes.open_runtime("legal_ir", "current_v2", compute_device="cpu")
 ```
 
-Legal `infer(samples, **options)` delegates to the selected facade's `evaluate`
+For `legacy_v1`, `legacy_v1_optimized`, and `current_v2`, legal
+`infer(samples, **options)` delegates to the selected facade's `evaluate`
 and returns its existing metric object. `train(samples,
 validation_samples=..., **options)` delegates to its projection trainer. All
 existing bridge names, prover flags, sample-memory settings, deadlines, update
@@ -56,6 +58,13 @@ requires an existing local checkpoint and its exact hash; it downloads nothing.
 `decode_formal_logic` is a separate explicit path: legal compiler-guided ASTs or
 native expressions read from reconstructed feature scores. Neither path is an
 independent learned text-to-formula model.
+
+The separate `source_conditioned_formula_v1` has a different source-text input
+and checkpoint schema. Its `infer()` calls source-only formula generation, and
+its `train()` receives source/rule pairs. Read the
+[learned formula guide](learned_legal_formula_training.md) for exact signatures,
+limits, token loss, checkpoint and registry resume. It is not a legacy weight
+migration or a new qualification route.
 
 `describe()` reports a SHA-256 identity for the listed runtime source files.
 This describes those files, not the entire dependency tree or a complete source

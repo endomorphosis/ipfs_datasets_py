@@ -1,0 +1,2322 @@
+{
+  "schema": "source-conditioned-legal-formula-fixture/v1",
+  "provenance": "authored_synthetic_not_legal_authority",
+  "description": "Controlled authored grammar fixture; canonical targets are explicit synthetic semantics, never compiler outputs. This is not a US Code or Constitution gold dataset.",
+  "inference_input_fields": [
+    "source_text"
+  ],
+  "authority": {
+    "admitted": false,
+    "roundtrip_ok": false,
+    "formalized": false,
+    "legal_qualification": false,
+    "heldout_generalization_established": false
+  },
+  "bounds": {
+    "source_tokens": 64,
+    "target_tokens": 64,
+    "max_rules": 1,
+    "max_qualifiers_per_rule": 4
+  },
+  "partition_policy": {
+    "id": "authored-compositional-split-v1",
+    "selection": "Heldout minimal pairs and composed exceptions are fixed explicitly; tuning and training use fixed SHA256 ordering of remaining authored cases. No model was consulted in fixture selection.",
+    "generalization_scope": "Compositional reuse of trained words and canonical atoms in a small synthetic grammar.",
+    "source_and_complete_target_disjoint": true,
+    "heldout_for_optimizer_selection": false,
+    "regression": "The three familiar gate sentences are excluded from training, tuning and heldout accounting."
+  },
+  "train": [
+    {
+      "id": "agency-disclose-f-deadline",
+      "source_text": "The agency shall not disclose records within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-disclose-o-deadline",
+      "source_text": "The agency shall disclose records within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-disclose-o-exception",
+      "source_text": "The agency shall disclose records unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-disclose-o-minimum",
+      "source_text": "The agency shall disclose records for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-disclose-p-deadline",
+      "source_text": "The agency may disclose records within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-disclose-p-minimum",
+      "source_text": "The agency may disclose records for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-f-deadline",
+      "source_text": "The agency shall not retain the file within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-f-exception",
+      "source_text": "The agency shall not retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-f-minimum",
+      "source_text": "The agency shall not retain the file for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-o-deadline",
+      "source_text": "The agency shall retain the file within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-o-exception",
+      "source_text": "The agency shall retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-o-minimum",
+      "source_text": "The agency shall retain the file for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-f-deadline",
+      "source_text": "The agency shall not submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-f-exception",
+      "source_text": "The agency shall not submit backup report unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-f-plain",
+      "source_text": "The agency shall not submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-o-deadline",
+      "source_text": "The agency shall submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-o-minimum",
+      "source_text": "The agency shall submit backup report for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-o-plain",
+      "source_text": "The agency shall submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-p-deadline",
+      "source_text": "The agency may submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-p-exception",
+      "source_text": "The agency may submit backup report unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-p-minimum",
+      "source_text": "The agency may submit backup report for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-p-plain",
+      "source_text": "The agency may submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-f-deadline",
+      "source_text": "Company A shall not disclose records within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-f-minimum",
+      "source_text": "Company A shall not disclose records for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-f-plain",
+      "source_text": "Company A shall not disclose records.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-o-deadline",
+      "source_text": "Company A shall disclose records within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-o-exception",
+      "source_text": "Company A shall disclose records unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-o-minimum",
+      "source_text": "Company A shall disclose records for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-p-exception",
+      "source_text": "Company A may disclose records unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-p-plain",
+      "source_text": "Company A may disclose records.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-f-deadline",
+      "source_text": "Company A shall not retain the file within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-f-exception",
+      "source_text": "Company A shall not retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-f-plain",
+      "source_text": "Company A shall not retain the file.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-o-deadline",
+      "source_text": "Company A shall retain the file within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-o-plain",
+      "source_text": "Company A shall retain the file.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-p-deadline",
+      "source_text": "Company A may retain the file within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-p-exception",
+      "source_text": "Company A may retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-p-plain",
+      "source_text": "Company A may retain the file.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-f-deadline",
+      "source_text": "Company A shall not submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-f-exception",
+      "source_text": "Company A shall not submit backup report unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-f-minimum",
+      "source_text": "Company A shall not submit backup report for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-o-deadline",
+      "source_text": "Company A shall submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-o-minimum",
+      "source_text": "Company A shall submit backup report for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-o-plain",
+      "source_text": "Company A shall submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-p-exception",
+      "source_text": "Company A may submit backup report unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-p-minimum",
+      "source_text": "Company A may submit backup report for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-p-plain",
+      "source_text": "Company A may submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-f-deadline",
+      "source_text": "The officer shall not disclose records within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-f-minimum",
+      "source_text": "The officer shall not disclose records for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-f-plain",
+      "source_text": "The officer shall not disclose records.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-o-exception",
+      "source_text": "The officer shall disclose records unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-o-minimum",
+      "source_text": "The officer shall disclose records for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-p-deadline",
+      "source_text": "The officer may disclose records within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-p-exception",
+      "source_text": "The officer may disclose records unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-p-plain",
+      "source_text": "The officer may disclose records.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-f-deadline",
+      "source_text": "The officer shall not retain the file within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-f-exception",
+      "source_text": "The officer shall not retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-f-minimum",
+      "source_text": "The officer shall not retain the file for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-f-plain",
+      "source_text": "The officer shall not retain the file.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-o-deadline",
+      "source_text": "The officer shall retain the file within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-o-exception",
+      "source_text": "The officer shall retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-o-plain",
+      "source_text": "The officer shall retain the file.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-p-exception",
+      "source_text": "The officer may retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-p-minimum",
+      "source_text": "The officer may retain the file for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-f-exception",
+      "source_text": "The officer shall not submit backup report unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-f-minimum",
+      "source_text": "The officer shall not submit backup report for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-f-plain",
+      "source_text": "The officer shall not submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-o-exception",
+      "source_text": "The officer shall submit backup report unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-o-minimum",
+      "source_text": "The officer shall submit backup report for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-o-plain",
+      "source_text": "The officer shall submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-p-exception",
+      "source_text": "The officer may submit backup report unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-p-plain",
+      "source_text": "The officer may submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    }
+  ],
+  "tuning": [
+    {
+      "id": "agency-disclose-o-plain",
+      "source_text": "The agency shall disclose records.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-disclose-p-exception",
+      "source_text": "The agency may disclose records unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-p-exception",
+      "source_text": "The agency may retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-f-minimum",
+      "source_text": "The agency shall not submit backup report for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-o-exception",
+      "source_text": "The agency shall submit backup report unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-o-exception",
+      "source_text": "Company A shall retain the file unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-f-plain",
+      "source_text": "Company A shall not submit backup report.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-p-deadline",
+      "source_text": "Company A may submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-f-exception",
+      "source_text": "The officer shall not disclose records unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-o-deadline",
+      "source_text": "The officer shall disclose records within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-disclose-p-minimum",
+      "source_text": "The officer may disclose records for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-p-deadline",
+      "source_text": "The officer may retain the file within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "heldout": [
+    {
+      "id": "agency-retain-f-plain",
+      "source_text": "The agency shall not retain the file.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-o-plain",
+      "source_text": "The agency shall retain the file.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-retain-p-plain",
+      "source_text": "The agency may retain the file.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "agency",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "agency-submit-o-composed-exception",
+      "source_text": "The agency shall submit backup report within 10 days unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "agency",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-disclose-f-exception",
+      "source_text": "Company A shall not disclose records unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-f-minimum",
+      "source_text": "Company A shall not retain the file for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-o-minimum",
+      "source_text": "Company A shall retain the file for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-retain-p-minimum",
+      "source_text": "Company A may retain the file for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "Company A",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-o-composed-exception",
+      "source_text": "The officer shall retain the file for at least 20 days unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-f-deadline",
+      "source_text": "The officer shall not submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-o-deadline",
+      "source_text": "The officer shall submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-submit-p-deadline",
+      "source_text": "The officer may submit backup report within 10 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "P",
+            "actor": "officer",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "regression": [
+    {
+      "id": "agency-disclose-f-plain",
+      "source_text": "The agency shall not disclose records.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "agency",
+            "action": "disclose",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "company_a-submit-o-composed-exception",
+      "source_text": "Company A shall submit backup report within 10 days unless emergency.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "Company A",
+            "action": "submit",
+            "object": "backup report",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "officer-retain-o-minimum",
+      "source_text": "The officer shall retain the file for at least 20 days.",
+      "canonical_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "officer",
+            "action": "retain",
+            "object": "the file",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "at least 20 days"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "oracle_temporal_records": {
+    "agency-disclose-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-disclose-f-plain": [],
+    "agency-disclose-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-disclose-o-exception": [],
+    "agency-disclose-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "agency-disclose-o-plain": [],
+    "agency-disclose-p-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-disclose-p-exception": [],
+    "agency-disclose-p-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "agency-retain-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-retain-f-exception": [],
+    "agency-retain-f-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "agency-retain-f-plain": [],
+    "agency-retain-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-retain-o-exception": [],
+    "agency-retain-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "agency-retain-o-plain": [],
+    "agency-retain-p-exception": [],
+    "agency-retain-p-plain": [],
+    "agency-submit-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-submit-f-exception": [],
+    "agency-submit-f-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "agency-submit-f-plain": [],
+    "agency-submit-o-composed-exception": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-submit-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-submit-o-exception": [],
+    "agency-submit-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "agency-submit-o-plain": [],
+    "agency-submit-p-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "agency-submit-p-exception": [],
+    "agency-submit-p-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "agency-submit-p-plain": [],
+    "company_a-disclose-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-disclose-f-exception": [],
+    "company_a-disclose-f-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "company_a-disclose-f-plain": [],
+    "company_a-disclose-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-disclose-o-exception": [],
+    "company_a-disclose-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "company_a-disclose-p-exception": [],
+    "company_a-disclose-p-plain": [],
+    "company_a-retain-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-retain-f-exception": [],
+    "company_a-retain-f-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "company_a-retain-f-plain": [],
+    "company_a-retain-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-retain-o-exception": [],
+    "company_a-retain-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "company_a-retain-o-plain": [],
+    "company_a-retain-p-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-retain-p-exception": [],
+    "company_a-retain-p-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "company_a-retain-p-plain": [],
+    "company_a-submit-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-submit-f-exception": [],
+    "company_a-submit-f-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "company_a-submit-f-plain": [],
+    "company_a-submit-o-composed-exception": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-submit-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-submit-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "company_a-submit-o-plain": [],
+    "company_a-submit-p-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "company_a-submit-p-exception": [],
+    "company_a-submit-p-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "company_a-submit-p-plain": [],
+    "officer-disclose-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-disclose-f-exception": [],
+    "officer-disclose-f-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-disclose-f-plain": [],
+    "officer-disclose-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-disclose-o-exception": [],
+    "officer-disclose-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-disclose-p-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-disclose-p-exception": [],
+    "officer-disclose-p-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-disclose-p-plain": [],
+    "officer-retain-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-retain-f-exception": [],
+    "officer-retain-f-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-retain-f-plain": [],
+    "officer-retain-o-composed-exception": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-retain-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-retain-o-exception": [],
+    "officer-retain-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-retain-o-plain": [],
+    "officer-retain-p-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-retain-p-exception": [],
+    "officer-retain-p-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-submit-f-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-submit-f-exception": [],
+    "officer-submit-f-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-submit-f-plain": [],
+    "officer-submit-o-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-submit-o-exception": [],
+    "officer-submit-o-minimum": [
+      {
+        "temporal_kind": "minimum_duration",
+        "value": "20 days",
+        "quantity": 20
+      }
+    ],
+    "officer-submit-o-plain": [],
+    "officer-submit-p-deadline": [
+      {
+        "temporal_kind": "within_duration",
+        "value": "10 days",
+        "quantity": 10
+      }
+    ],
+    "officer-submit-p-exception": [],
+    "officer-submit-p-plain": []
+  },
+  "oov_probes": [
+    {
+      "id": "unknown-actor",
+      "source_text": "The tribunal shall disclose records.",
+      "expected": "abstain_or_explicit_unsupported",
+      "unseen_atom": "tribunal"
+    },
+    {
+      "id": "unknown-object",
+      "source_text": "The agency shall submit tax returns.",
+      "expected": "abstain_or_explicit_unsupported",
+      "unseen_atom": "tax returns"
+    },
+    {
+      "id": "unknown-duration",
+      "source_text": "The officer shall retain the file for at least 37 days.",
+      "expected": "abstain_or_explicit_unsupported",
+      "unseen_atom": "at least 37 days"
+    },
+    {
+      "id": "unknown-exception",
+      "source_text": "Company A shall submit backup report unless natural disaster.",
+      "expected": "abstain_or_explicit_unsupported",
+      "unseen_atom": "natural disaster"
+    }
+  ],
+  "ablation_protocol": {
+    "same_init_untrained": "Same source-only decode with initial weights; no fitting.",
+    "trained": "Fit source-target pairs from train only; tune hyperparameters/stopping on tuning only; evaluate heldout once after selection.",
+    "zeroed_decoder": "Same head with all learned decoder parameters zeroed; preserve codec grammar and same source text.",
+    "source_permutation": "For each heldout target compare inference from the next heldout source in sorted case_id order (cyclic, no fixed points); failure to fall indicates source conditioning needs investigation.",
+    "target_poison": "Inference receives source string only; compare output when surrounding evaluation targets are removed or replaced. Outputs must remain identical.",
+    "compiler_disabled": "Monkeypatch parser/compiler/decompiler entry points to raise while learned inference runs; any call fails the test.",
+    "no_target_copy": "Report exact full-rule matches and per-field accuracy on every row; require generated target not retrieved from a nearest-target table.",
+    "loss_reporting": "Record teacher-forced train/tuning cross-entropy separately from autoregressive heldout exact match, invalid/abstained counts, and sample totals. No success-only denominator.",
+    "safety": "Every arm keeps admitted, roundtrip_ok, formalized, legal_qualification false; no Lake run is implied."
+  }
+}

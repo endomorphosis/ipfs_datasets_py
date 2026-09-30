@@ -8,7 +8,10 @@ following internal class calls. Linked modules own validation and defaults.
 For formal outputs across the versioned models, use
 `autoencoder_runtime_registry.open_formal_decoder(...).decode_formal_logic(...)`.
 See [formal decoder modes, persistence and limitations](formal_logic_decoders.md).
-Vector `decode()` and numerical `infer()` keep their original meanings.
+Vector `decode()` and numerical `infer()` keep their original meanings for the
+existing embedding runtimes. The separate `source_conditioned_formula_v1`
+accepts source strings and generates learned formula candidates. See
+[training, checkpoint resume and CLI](learned_legal_formula_training.md).
 
 ## Native modalities
 
@@ -33,6 +36,7 @@ for this backend; check its format before reusing output.
 
 | Task | Entry point | Guide |
 | --- | --- | --- |
+| Train/resume or infer learned formula tokens | [train_learned_formula_decoder.py](../../scripts/ops/legal_ir/train_learned_formula_decoder.py); common runtime `legal_ir:source_conditioned_formula_v1` | [Learned formula guide](learned_legal_formula_training.md) |
 | Local incremental inference/training | [run_incremental_autoencoders.py](../../scripts/ops/legal_ir/run_incremental_autoencoders.py) | [Training](legal_training.md), [inference](inference_and_qualification.md) |
 | Owner/remote worker protocol | [run_distributed_autoencoders.py](../../scripts/ops/legal_ir/run_distributed_autoencoders.py) | [Control plane](control_plane_and_sync.md) |
 | Hardware-aware worker waves | [run_autoencoder_fleet.py](../../scripts/ops/legal_ir/run_autoencoder_fleet.py) | [Operations](operations_and_troubleshooting.md) |

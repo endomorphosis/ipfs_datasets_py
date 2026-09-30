@@ -20,6 +20,7 @@ from .autoencoder_modality_contracts import ModalityAdapterRegistry, ModalityCon
 SCHEMA = "autoencoder-runtime-interface/v1"
 NATIVE_DOMAINS = ("intent_ir", "security_ir", "ui_ux_ir")
 LEGAL_VERSIONS = ("legacy_v1", "legacy_v1_optimized", "current_v2")
+LEARNED_FORMULA_VERSION = "source_conditioned_formula_v1"
 MAX_CANDIDATE_BYTES = 32 * 1024 * 1024
 
 
@@ -52,6 +53,20 @@ def describe_runtime(domain, version):
     """Describe an exact selection; never infer a version from vector width."""
     root = _optimizer_root()
     paths = [("autoencoder_runtime_registry.py", Path(__file__))]
+    if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
+        paths.extend((name, Path(__file__).with_name(name)) for name in
+                     ("legal_formula_learning.py", "legal_formula_codec.py", "legal_formula_checkpoint.py"))
+        return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+                "runtime_id": domain + ":" + version, "lineage_id": version,
+                "input_representation": "source_text", "dimension": None,
+                "state_schema": "learned-legal-formula-checkpoint/v1",
+                "objective_default": "teacher_forced_formula_token_cross_entropy",
+                "capabilities": ["train", "infer", "load_checkpoint", "decode_formal_logic",
+                                 "register_candidate", "load_version"], "integrated": True,
+                "formal_decoder": {"available": True, "modes": ["learned"],
+                    "independent_learned_formula_decoder": True, "head_required": True,
+                    "scope": "single_typed_deontic_rule_training_vocabulary"},
+                "source_identity": _source_identity(paths), **features.FALSE}
     if domain == "legal_ir":
         _require(version in LEGAL_VERSIONS, "unknown legal runtime version")
         namespace = root / "autoencoder_lineages"
@@ -105,7 +120,7 @@ def list_runtimes():
     legal = [version for version in LEGAL_VERSIONS if
              ((namespace / (version + ".py")) if version == "legacy_v1_optimized"
               else (namespace / version / "__init__.py")).is_file()]
-    return [describe_runtime("legal_ir", version) for version in legal] + [
+    return [describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION)] + [
         describe_runtime(domain, version) for domain in NATIVE_DOMAINS
         for version in ("native_v1", "native_v2")]
 
@@ -268,10 +283,72 @@ class LegalRuntime:
         return decode_legal_formulas(self.model, samples, mode=mode, **options)
 
 
+class LearnedFormulaRuntime:
+    """A separate source-conditioned model; old legal weights are never converted."""
+    def __init__(self, *, checkpoint=None, expected_sha256=None):
+        from . import legal_formula_learning as learning
+        self._checkpoint = None
+        if checkpoint is not None:
+            if isinstance(checkpoint, (str, Path)):
+                self._checkpoint = learning.load_checkpoint(checkpoint, expected_sha256=expected_sha256)
+            else:
+                _require(expected_sha256 is None, "in-memory checkpoints do not accept a file hash")
+                learning.validate_checkpoint(checkpoint)
+                self._checkpoint = _copy(checkpoint)
+        else:
+            _require(expected_sha256 is None, "checkpoint hash supplied without checkpoint")
+        self._decoder = None
+        self._result = None
+        self._parent_version_id = None
+
+    @property
+    def checkpoint(self):
+        return None if self._checkpoint is None else _copy(self._checkpoint)
+
+    def describe(self):
+        from . import legal_formula_learning as learning
+        return {**describe_runtime("legal_ir", LEARNED_FORMULA_VERSION),
+                "checkpoint_sha256": None if self._checkpoint is None else learning.checkpoint_digest(self._checkpoint),
+                "parent_version_id": self._parent_version_id,
+                "checkpoint_present": self._checkpoint is not None,
+                "trained_checkpoint_present": self._checkpoint is not None
+                    and self._checkpoint["progress"]["optimizer_steps"] > 0}
+
+    def train(self, samples, *, validation_samples, **options):
+        from . import legal_formula_learning as learning
+        _require(self._result is None, "register the pending candidate before training another version")
+        _require("checkpoint" not in options, "resume checkpoint is bound to this runtime")
+        result = learning.train_decoder(samples, validation_samples, checkpoint=self._checkpoint, **options)
+        self._checkpoint, self._result = _copy(result["checkpoint"]), _copy(result)
+        self._decoder = None
+        return result
+
+    def decode_formal_logic(self, samples, *, mode="learned"):
+        from . import legal_formula_learning as learning
+        _require(mode == "learned", "source-conditioned formula runtime supports only learned mode")
+        _require(self._checkpoint is not None, "train or load a learned formula checkpoint before inference")
+        if self._decoder is None:
+            self._decoder = learning.LearnedLegalFormulaDecoder(self._checkpoint)
+        return self._decoder.decode_formal_logic(samples)
+
+    def infer(self, samples):
+        return self.decode_formal_logic(samples)
+
+    def register_candidate(self, registry, directory):
+        from .legal_formula_checkpoint import register_candidate
+        _require(self._result is not None, "train a candidate before registering it")
+        result = register_candidate(registry, self._result, directory, parent_version_id=self._parent_version_id)
+        self._parent_version_id = result["version_id"]
+        self._result = None
+        return {**result, "runtime_id": "legal_ir:" + LEARNED_FORMULA_VERSION}
+
+
 def open_runtime(domain, version, **binding):
     """Select explicitly. Dimensions, source metadata, and filenames never dispatch."""
     descriptor = describe_runtime(domain, version)
     _require(descriptor["integrated"], descriptor.get("unsupported_reason", "runtime is not integrated"))
+    if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
+        return LearnedFormulaRuntime(**binding)
     if domain == "legal_ir":
         return LegalRuntime(version, **binding)
     return NativeRuntime(domain, **binding)
@@ -319,6 +396,12 @@ def load_version(registry, version_id, *, domain, version):
     """
     descriptor = describe_runtime(domain, version)
     _require("load_version" in descriptor["capabilities"], "runtime lacks registry load_version")
+    if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
+        from .legal_formula_checkpoint import load_registered_candidate
+        saved = load_registered_candidate(registry, version_id)
+        runtime = LearnedFormulaRuntime(checkpoint=saved["checkpoint"])
+        runtime._parent_version_id = version_id
+        return runtime
     row = registry.get_version(version_id)
     if "decoder_head_sha256" in row["metadata"]:
         from .native_formal_checkpoint import FormalCandidateError, load_formal_candidate
@@ -405,4 +488,5 @@ def open_formal_decoder(domain, version, **binding):
 
 __all__ = ["RuntimeVersionError", "list_runtimes", "describe_runtime", "prepare_targets",
            "open_runtime", "build_native_runtime", "load_version", "open_formal_decoder",
-           "NativeRuntime", "LegalRuntime", "StreamedFormalRuntime"]
+           "NativeRuntime", "LegalRuntime", "StreamedFormalRuntime", "LearnedFormulaRuntime",
+           "LEARNED_FORMULA_VERSION"]

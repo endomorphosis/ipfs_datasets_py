@@ -169,7 +169,7 @@ def test_registry_rejects_promoted_metadata_and_forged_parent(tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("version", [entry["runtime_version"] for entry in interface.list_runtimes()
-                                     if entry["domain"] == "legal_ir"])
+                                     if entry["domain"] == "legal_ir" and entry["runtime_version"] in interface.LEGAL_VERSIONS])
 def test_legal_runtime_infers_trains_and_loads_explicit_checkpoint(version, tmp_path):
     lineage = importlib.import_module(PREFIX + ".autoencoder_lineages." + version)
     train, tune = legal_fixtures.sample(lineage), legal_fixtures.sample(lineage, "notices")
