@@ -1,0 +1,39 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 491 items
+
+tests/unit/logic/formalization/autoencoder/test_distributed_384_exchange.py . [  0%]
+............................                                             [  5%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_integrity.py . [  6%]
+....................................                                     [ 13%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_numerics.py . [ 13%]
+............................................sss                          [ 23%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_profiles.py . [ 23%]
+..................................                                       [ 30%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_runner.py . [ 30%]
+............                                                             [ 32%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_store.py . [ 33%]
+.............................                                            [ 39%]
+tests/unit/duckdb_control/test_autoencoder_shared_weight_control.py .... [ 39%]
+...ss                                                                    [ 40%]
+tests/unit/duckdb_control/test_autoencoder_registry.py ................. [ 44%]
+....................................................                     [ 54%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_formula_exchange.py . [ 55%]
+.............................................................            [ 67%]
+tests/unit/optimizers/logic_theorem_optimizer/test_domain_family_complete_training.py . [ 67%]
+..............                                                           [ 70%]
+tests/unit/logic/formalization/autoencoder/test_structured_source_384.py . [ 70%]
+......................................                                   [ 78%]
+tests/unit/logic/formalization/autoencoder/test_security_source_program_binding_384_v2.py . [ 78%]
+................................                                         [ 85%]
+tests/unit/logic/formalization/autoencoder/test_grouped_source_training_384.py . [ 85%]
+.................................                                        [ 92%]
+tests/unit/logic/formalization/autoencoder/test_context_declaration_bridge.py . [ 92%]
+.....................................                                    [100%]
+
+================== 486 passed, 5 skipped in 60.60s (0:01:00) ===================

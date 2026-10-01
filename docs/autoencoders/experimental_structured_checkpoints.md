@@ -77,3 +77,7 @@ Pass it to `scripts/ops/agent_supervisor/prepare_task_context.py` using
 All output remains advisory and fail-open; loading a checkpoint confers no proof,
 admission, or execution authority. Use the reviewed local GTE snapshot and native
 Lake configuration when exercising the full source-to-projection path.
+
+## Shared training and versioned exchange
+
+The [distributed 384d training guide](distributed_384_training.md) connects these exact published parents to reviewed typed datasets, local worker threads, a single-owner DuckDB journal, and immutable Hugging Face updates and merged checkpoints. The [four-domain live verification](../implementation/reports/evidence/distributed-384-local-hub-20261001/README.md) records reconstruction, transfer sizes, and projection gaps.
