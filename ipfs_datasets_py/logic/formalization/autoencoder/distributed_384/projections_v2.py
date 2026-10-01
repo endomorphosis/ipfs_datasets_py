@@ -12,6 +12,7 @@ import weakref
 
 from . import contracts as c, profiles
 from .projection_context_contract import validate_context
+from .supplemental_context import split_context
 from .. import family_training_v3 as catalog_owner, family_training_v7 as native
 from . import candidate_native_lake as lake
 
@@ -85,13 +86,19 @@ class PreparedCandidateProjection:
         seed = self._part("source_seed")
         return _inputs(**seed)
 
+    @property
+    def supplemental_interpretations(self):
+        seed = self._part("source_seed")
+        return split_context(seed["domain"], seed["target"], seed["source_text"], seed["context"])[1]
+
 
 def _inputs(domain, target, source_text, context):
     if domain in {"intent_ir", "security_ir"}:
         from .projection_inputs import prepare_source_inputs
     else:
         from .legal_ui_inputs import prepare_source_inputs
-    return prepare_source_inputs(domain, target, source_text, context=context)
+    native_context, _ = split_context(domain, target, source_text, context)
+    return prepare_source_inputs(domain, target, source_text, context=native_context)
 
 
 def _native_request(domain, selected, source_inputs):
@@ -128,6 +135,7 @@ def prepare_candidate_projection(domain, target, source_text, *, context=None, r
     selected = _families(domain, required_families)
     if context is not None:
         validate_context(context, domain, target, source_text)
+    _, interpretations = split_context(domain, target, source_text, context)
     legacy = profiles.project_candidate(domain, target, source_text, required_families=selected)
     report = dict(schema=SCHEMA, domain_id=domain, candidate_valid=legacy["candidate_valid"],
         candidate_sha256=legacy["candidate_sha256"], source_sha256=legacy["source_sha256"],
@@ -138,6 +146,9 @@ def prepare_candidate_projection(domain, target, source_text, *, context=None, r
         declaration_scope="source_binding_is_identity_not_source_semantic_fidelity",
         qualification_scope="native_typed_projection_and_supported_Lean_lowering",
         native_check_scope="syntax_and_types_only", auxiliary_family_coverage=[],
+        supplemental_interpretations=deepcopy(interpretations),
+        supplemental_interpretation_count=len(interpretations),
+        supplemental_interpretations_inferred=False,
         auxiliary_families=[], native_requested_families=selected,
         lake_build_executed=False, all_requested_native_checks_passed=False,
         native_report_sha256=None, native_preparation=None, **FALSE)
@@ -164,7 +175,7 @@ def prepare_candidate_projection(domain, target, source_text, *, context=None, r
                 native_report = native.prepare_family_training_targets_v7(domain,
                     requested_families=native_requested, **source_inputs)
                 preparation = lake.prepare_native_family_lean(native_report, source_inputs=source_inputs,
-                    source_text=source_text, candidate=target)
+                    source_text=source_text, candidate=target, interpretations=interpretations)
                 report["native_report_sha256"] = native_report["report_sha256"]
                 # The full native report is retained for exact replay; the redundant
                 # large Lean text is an artifact of preparation, not model output.
@@ -223,10 +234,12 @@ def check_candidate_projection(prepared, *, lake_executable, output_directory,
     before = c.digest(prepared.report)
     execution = lake.build_native_family_lake(prepared.native_report, source_inputs=prepared.source_inputs,
         source_text=prepared.source_text, candidate=prepared.candidate,
+        interpretations=prepared.supplemental_interpretations,
         lake_executable=lake_executable, output_directory=output_directory,
         java_executable=java_executable, tla2tools_jar=tla2tools_jar, timeout_seconds=timeout_seconds)
     observation = lake.verify_native_family_lake(execution, prepared.native_report,
-        source_inputs=prepared.source_inputs, source_text=prepared.source_text, candidate=prepared.candidate)
+        source_inputs=prepared.source_inputs, source_text=prepared.source_text, candidate=prepared.candidate,
+        interpretations=prepared.supplemental_interpretations)
     c.require(c.digest(prepared.report) == before, "candidate report changed during native check")
     report = deepcopy(prepared.report)
     report.pop("report_sha256")

@@ -38,7 +38,7 @@ def _term(value, depth=0):
     return "(." + kind + " " + sort + " " + string(value["symbol_id"] or value["literal"]) + ")"
 
 
-def _validate(payload):
+def _validate(payload, *, allow_equivalence=False):
     require(type(payload) is dict and len(_json(payload).encode()) <= 128 * 1024,
             "bounded_native_protocol_document_required")
     try:
@@ -50,7 +50,7 @@ def _validate(payload):
                 "rewrite_facts", "events", "claims", "trust_assumptions", "sorts"):
         require(len(payload[key]) <= 64, "bounded_protocol_declarations_required:" + key)
     require(payload["claims"], "nonempty_protocol_queries_required")
-    require(not any(row["kind"] == "equivalence" for row in payload["claims"]),
+    require(allow_equivalence or not any(row["kind"] == "equivalence" for row in payload["claims"]),
             "protocol_observational_equivalence_requires_explicit_process_or_frame_semantics")
     require(set(payload["equational_theories"]) <= {"free", "symmetric_encryption"},
             "protocol_algebra_requires_dedicated_lowering")
@@ -142,9 +142,11 @@ def eventAt (trace : Trace) (identifier : String) (position : Nat) : Prop :=
 '''
 
 
-def emit_protocol(payload):
+def emit_protocol(payload, *, interpretation=None):
     """Return semantic definitions for an exact native ProtocolIR dictionary."""
-    native, symmetric = _validate(payload)
+    native, symmetric = _validate(payload, allow_equivalence=interpretation is not None)
+    has_frames = any(row["kind"] == "equivalence" for row in payload["claims"])
+    require(interpretation is None or has_frames, "protocol_static_interpretation_has_no_equivalence_claim")
     lines = [PRELUDE]
     # Every source/declaration/observation remains visible for provenance. The
     # operational and query definitions below, rather than this record, are the
@@ -266,6 +268,11 @@ def injectiveCorrespondence (trace : Trace) (antecedent consequent : String) : P
         statement = _json({key: row[key] for key in ("assumption_id", "statement", "trusted_role_ids", "trusted_key_ids")})
         lines.append("def " + name + " (i : ProtocolInterpretation) : Prop := i.trustPremise " + string(statement)
             + " ∧ ∀ key, key ∈ " + _strings(row["trusted_key_ids"]) + " → key ∉ compromisedKeys")
+    frame_details = None
+    if has_frames:
+        from .native_protocol_frames import emit_static_frames
+        frame_source, frame_details = emit_static_frames(payload, interpretation)
+        lines.append(frame_source)
     claim_names = {}
     for index, row in enumerate(payload["claims"]):
         name = "query_" + str(index); claim_names[row["claim_id"]] = name
@@ -275,6 +282,8 @@ def injectiveCorrespondence (trace : Trace) (antecedent consequent : String) : P
             body = "∀ trace, executions i trace → ∀ secret, secret ∈ " + _terms(row["secret_terms"]) + " → ¬ Knows trace secret"
         elif kind == "reachability":
             body = "∃ trace, executions i trace ∧ " + " ∧ ".join("eventOccurs trace " + string(event) for event in row["reachable_event_ids"])
+        elif kind == "equivalence":
+            body = frame_details["queries"][row["claim_id"]]
         else:
             operator = "injectiveCorrespondence" if row["correspondence"] == "injective" else "correspondence"
             body = "∀ trace, executions i trace → " + operator + " trace " + string(row["antecedent_event_ids"][0]) + " " + string(row["consequent_event_ids"][0])
@@ -295,6 +304,14 @@ def injectiveCorrespondence (trace : Trace) (antecedent consequent : String) : P
             "Display metadata, source maps and observations are retained without becoming semantic assumptions."],
         "source_semantics_verified": False, "model_checker_executed": False, "protocol_security_verified": False,
         "role_processes_verified": False, "capability_floor_eligible": False, "admitted": False, "qualified": False}
+    if frame_details is not None:
+        details["profile"] = "native-ground-protocol-static-frame-lean/v2"
+        details["static_frame_interpretation"] = frame_details
+        details["operators"] += ["all_finite_observer_recipes", "static_frame_equivalence", "definedness_observation"]
+        details["assumptions"] = [item for item in details["assumptions"]
+            if not item.startswith("Queries are formulas, not asserted truths.")]
+        details["assumptions"] += ["Queries are formulas, not asserted truths. Static-frame interpretation does not establish role-process equivalence.",
+                                   *frame_details["assumptions"]]
     return "\n".join(lines) + "\n", details
 
 

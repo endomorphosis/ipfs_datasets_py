@@ -13,18 +13,19 @@ import weakref
 
 from . import codeunit_program_lean as program
 from .contracts import digest, raw, require
+from . import supplemental_context
 from .. import native_family_lake_v5 as previous
 from .. import native_supplemental_lean as supplemental
 from ..native_family_lean_emitters import UnsupportedNativeLean
 
-SCHEMA = "distributed-384-candidate-native-lake/v2"
+SCHEMA = "distributed-384-candidate-native-lake/v3"
 FALSE = previous.FALSE
 _REGISTRY = weakref.WeakKeyDictionary()
 
 
 def _pins():
     return {str(Path(path).resolve()): hashlib.sha256(Path(path).read_bytes()).hexdigest()
-            for path in (__file__, program.__file__, supplemental.__file__,
+            for path in (__file__, program.__file__, supplemental.__file__, supplemental_context.__file__,
                          *(module.__file__ for module in supplemental.PRODUCERS))}
 
 
@@ -131,11 +132,13 @@ def _preparation_digest(prepared):
                    if key not in {"producer", "preparation_sha256"}})
 
 
-def prepare_native_family_lean(report, *, source_inputs, source_text, candidate):
+def prepare_native_family_lean(report, *, source_inputs, source_text, candidate, interpretations=None):
     """Preserve v5 results and extend only exact replayed native fragments."""
     _guard()
     identity = _identity(report, source_inputs, source_text, candidate)
     original = previous.prepare_native_family_lean(report, source_inputs=source_inputs)
+    interpretations = supplemental_context.canonical_interpretations([] if interpretations is None else interpretations)
+    interpreted = supplemental_context.validate_native_bindings(interpretations, report)
     prepared = deepcopy(original)
     extensions = []
     recognized = [p for p in report["projections"] if _recognizes(report, p)]
@@ -154,7 +157,8 @@ def prepare_native_family_lean(report, *, source_inputs, source_text, candidate)
                 source, lowering = program.emit_program(projection["payload"], code_unit=source_inputs.get("code_unit"),
                     source_text=source_text, candidate=candidate)
             else:
-                source, lowering = supplemental.emit_projection(projection, domain=report["domain_id"])
+                source, lowering = supplemental.emit_projection(projection, domain=report["domain_id"],
+                    interpretation=interpreted.get(projection["projection_id"]))
         except UnsupportedNativeLean as error:
             # A known route does not make unsupported declarations disappear.
             row.update(reason=str(error)[:2000], previous_lowering_observation=prior,
@@ -174,6 +178,8 @@ def prepare_native_family_lean(report, *, source_inputs, source_text, candidate)
             "source or candidate changed during native preparation")
     require(previous._digest(report) == original["report_sha256"], "native report changed during preparation")
     prepared.update(schema=SCHEMA, **identity, legacy_schema=previous.SCHEMA,
+        supplemental_interpretations=deepcopy(interpretations),
+        supplemental_interpretations_sha256=digest(interpretations),
         legacy_preparation_sha256=_preparation_digest(original), source_candidate_replay_bound=True,
         candidate_rewritten=False, extended_projection_count=len(extensions),
         lean_source_sha256=hashlib.sha256(prepared["lean_source"].encode()).hexdigest())
@@ -196,13 +202,14 @@ class CandidateNativeLakeExecution:
 
 def build_native_family_lake(report, *, source_inputs, source_text, candidate,
                             lake_executable, timeout_seconds=60, output_directory=None,
-                            java_executable=None, tla2tools_jar=None):
+                            java_executable=None, tla2tools_jar=None, interpretations=None):
     """Execute Lake and every required native syntax check, then replay inputs."""
     require(type(timeout_seconds) in (int, float) and 0 < timeout_seconds <= 60,
             "bounded native Lake timeout required")
     output = Path(output_directory).resolve() if output_directory is not None else None
     require(output is None or not output.exists(), "fresh candidate native Lake evidence directory required")
-    receipt = prepare_native_family_lean(report, source_inputs=source_inputs, source_text=source_text, candidate=candidate)
+    receipt = prepare_native_family_lean(report, source_inputs=source_inputs, source_text=source_text, candidate=candidate,
+        interpretations=interpretations)
     before = receipt["preparation_sha256"]
     candidates = [row for row in receipt["per_projection"] if row["semantic_lowering_supported"]]
     for row in candidates:
@@ -218,7 +225,8 @@ def build_native_family_lake(report, *, source_inputs, source_text, candidate,
         "status": "blocked", "backend_executed": False, "reason": "no_supported_native_declarations"}
     if execution.get("executable_sha256") and execution.get("command"):
         receipt["producer"][str(Path(execution["command"][0]).resolve())] = execution["executable_sha256"]
-    fresh = prepare_native_family_lean(report, source_inputs=source_inputs, source_text=source_text, candidate=candidate)
+    fresh = prepare_native_family_lean(report, source_inputs=source_inputs, source_text=source_text, candidate=candidate,
+        interpretations=interpretations)
     require(fresh["preparation_sha256"] == before, "candidate native inputs or generated source changed during build")
     previous._check_pins(receipt["producer"])
     passed = execution["status"] == "passed" and execution["backend_executed"] is True
@@ -240,14 +248,16 @@ def build_native_family_lake(report, *, source_inputs, source_text, candidate,
     return handle
 
 
-def verify_native_family_lake(execution, report, projection_id=None, *, source_inputs, source_text, candidate):
+def verify_native_family_lake(execution, report, projection_id=None, *, source_inputs, source_text, candidate,
+                             interpretations=None):
     """Verify a live issued handle against fresh typed source/candidate replay."""
     _guard()
     require(type(execution) is CandidateNativeLakeExecution and execution in _REGISTRY,
             "live issued candidate native Lake execution required; archived receipts are insufficient")
     recorded = _REGISTRY[execution]
     previous._check_pins(recorded["producer"])
-    fresh = prepare_native_family_lean(report, source_inputs=source_inputs, source_text=source_text, candidate=candidate)
+    fresh = prepare_native_family_lean(report, source_inputs=source_inputs, source_text=source_text, candidate=candidate,
+        interpretations=interpretations)
     require(fresh["preparation_sha256"] == recorded["preparation_sha256"],
             "candidate Lake execution belongs to another report, source, candidate or input declaration")
     receipt = json.loads(recorded["receipt"])

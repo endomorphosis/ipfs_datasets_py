@@ -12,6 +12,11 @@ The context entry has the shape `{"kind": "authorization", "document": native_do
 inside `inputs.supplemental_inputs`. Other supported kinds are `concurrency`,
 `protocol`, and `refinement`.
 
+The richer [explicit interpretation routes](explicit_native_interpretations.md)
+add typed state updates, symbolic refinement and static protocol frames while
+preserving the original native models. The fragments below describe operation
+without that additional evidence.
+
 | Kind | Native family/profile | Applicable domain routes | Shared emitter |
 | --- | --- | --- | --- |
 | `authorization` | `authorization` / `datalog` | Intent, Security, Legal, UI/UX | `native_authorization_lean.emit_authorization` |
@@ -127,7 +132,7 @@ blocked until those declarations receive a typed interpretation.
 
 ## Replay, compilation, and coverage
 
-The candidate gate schema is `distributed-384-candidate-native-lake/v2`. It
+The candidate gate schema is `distributed-384-candidate-native-lake/v3`. It
 reuses the frozen v5 native gate and native model owners, adding routes only for
 the audited Security source/program join and recognized supplemental models.
 The native supplemental envelope must contain exactly `bridge`,

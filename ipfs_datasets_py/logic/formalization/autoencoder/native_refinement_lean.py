@@ -94,8 +94,11 @@ def _list(values):
     return "[" + ", ".join(values) + "]"
 
 
-def emit_refinement(payload):
-    """Lower the complete closed finite graph fragment, or reject it explicitly."""
+def emit_refinement(payload, *, interpretation=None):
+    """Lower exact native declarations, requiring explicit evidence for symbolic data."""
+    if interpretation is not None:
+        from .native_symbolic_refinement_lean import emit_refinement as emit_symbolic
+        return emit_symbolic(payload, interpretation=interpretation)
     require(type(payload) is dict and len(_raw(payload).encode()) <= 512 * 1024,
             "bounded_native_refinement_document_required")
     native = RefinementIR.from_dict(payload)

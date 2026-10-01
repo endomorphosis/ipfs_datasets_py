@@ -112,6 +112,13 @@ def _parser():
     projection_families.add_argument("--domain", choices=DOMAINS)
     _result(projection_families)
 
+    world = commands.add_parser("intent-world", help="inspect exact Intent IDs or bind an explicit guarded world model")
+    world.add_argument("--candidate", type=Path, required=True, help="unchanged decoded Intent candidate JSON")
+    world.add_argument("--source-text", type=Path, required=True, help="exact UTF-8 instruction file")
+    world.add_argument("--world-model", type=Path, help="explicit typed world model JSON; omit to list binding requirements")
+    world.add_argument("--additional-inputs", type=Path, help="other formula or native context inputs to retain")
+    _result(world)
+
     export = commands.add_parser("export-pairs", help="audit reviewed native pairs and bound embeddings for training")
     export.add_argument("--domain", choices=DOMAINS, required=True)
     export.add_argument("--pairs", type=Path, required=True)
@@ -146,6 +153,16 @@ def _dispatch(args):
     if args.command == "projection-families":
         from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.projections_v2 import family_catalog
         return family_catalog(args.domain) if args.domain else {domain: family_catalog(domain) for domain in DOMAINS}
+    if args.command == "intent-world":
+        from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.intent_world_model import (
+            bind_intent_world_model, world_model_requirements)
+        candidate, source = read_json(args.candidate), args.source_text.read_bytes().decode("utf-8")
+        if args.world_model is None:
+            if args.additional_inputs is not None:
+                raise ValueError("additional inputs require an explicit world model")
+            return world_model_requirements(candidate, source)
+        return bind_intent_world_model(candidate, source, read_json(args.world_model),
+            additional_inputs=read_json(args.additional_inputs) if args.additional_inputs is not None else None)
     if args.command == "export-pairs":
         from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.paired_export import export_reviewed_pairs
         return export_reviewed_pairs(args.domain, args.pairs, args.embeddings, args.output_dir,

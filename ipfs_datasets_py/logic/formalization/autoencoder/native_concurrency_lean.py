@@ -17,8 +17,10 @@ import json
 
 from ...software_verification.concurrency import ConcurrencyIR
 from .native_family_lean_emitters import UnsupportedNativeLean, require, string
+from . import native_concurrency_interpretation as interpreted
 
 PROFILE = "native-concurrency-constant-guard-skip-lean/v1"
+PRODUCERS = (interpreted, *interpreted.PRODUCERS)
 
 
 def _list(values):
@@ -34,7 +36,7 @@ def _literal(text, label):
     return {"true": "True", "false": "False"}[text]
 
 
-def emit_concurrency(payload):
+def emit_concurrency(payload, *, interpretation=None):
     """Return a faithful closed-fragment interpretation, or reject the payload.
 
     Free-text *labels* and component names are provenance, never formulas.
@@ -42,6 +44,8 @@ def emit_concurrency(payload):
     explicit canonical strings documented below. This intentionally blocks the
     richer producer/consumer example until it has typed operational expressions.
     """
+    if interpretation is not None:
+        return interpreted.emit_interpreted_concurrency(payload, interpretation)
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     require(len(encoded) <= 262144, "bounded_concurrency_payload_required")
     native = ConcurrencyIR.from_dict(payload)

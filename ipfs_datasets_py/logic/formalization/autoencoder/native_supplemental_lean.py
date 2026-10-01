@@ -8,9 +8,12 @@ from . import native_authorization_lean as authorization
 from . import native_concurrency_lean as concurrency
 from . import native_protocol_lean as protocol
 from . import native_refinement_lean as refinement
+from . import native_protocol_frames as protocol_frames
+from . import native_symbolic_refinement_lean as symbolic_refinement
 from .native_family_lean_emitters import require
 
-PRODUCERS = (authorization, concurrency, protocol, refinement)
+PRODUCERS = tuple(dict.fromkeys((authorization, concurrency, protocol, refinement,
+    *concurrency.PRODUCERS, protocol_frames, symbolic_refinement, *symbolic_refinement.PRODUCERS)))
 ROUTES = {
     "authorization": ("authorization", "datalog", "authorization-ir/v1", authorization.emit_authorization),
     "concurrency": ("concurrency", "rely_guarantee", "concurrency-ir/v1", concurrency.emit_concurrency),
@@ -24,7 +27,7 @@ def recognizes(row, domain):
     return any(row.get("projection_id") == domain + "/supplemental/" + kind + "/v2" for kind in kinds)
 
 
-def emit_projection(row, *, domain):
+def emit_projection(row, *, domain, interpretation=None):
     require(recognizes(row, domain), "known_native_supplemental_projection_required")
     kind = row["projection_id"].split("/")[2]
     family, profile, schema, emit = ROUTES[kind]
@@ -38,7 +41,9 @@ def emit_projection(row, *, domain):
             "native_supplemental_document_schema_differs")
     # The native owner regenerates bridge/expression identities in the enclosing
     # source replay. No unvalidated renderer or class name is loaded from input.
-    source, details = emit(document)
+    require(interpretation is None or kind in {"concurrency", "protocol", "refinement"},
+            "supplemental_interpretation_kind_not_supported")
+    source, details = emit(document) if interpretation is None else emit(document, interpretation=interpretation)
     details.update(supplemental_kind=kind, native_family=family,
                    source_meaning_inferred=False, native_document_rewritten=False)
     return source, details

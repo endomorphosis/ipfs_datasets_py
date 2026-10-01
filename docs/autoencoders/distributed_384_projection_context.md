@@ -7,6 +7,10 @@ DuckDB journal, checkpoint, and published defaults unchanged. It supplies only
 `id`, `source_text`, and `embedding` to inference; target labels do not enter
 inference or replace predictions.
 
+For richer native models, see [explicit typed interpretations and Intent world
+bindings](explicit_native_interpretations.md). These supply declared semantics
+for the unchanged prediction and are retained separately from learned output.
+
 ```bash
 python scripts/ops/autoencoder/run_distributed_384.py project \
   --round-dir work/security-round-001 \
