@@ -107,6 +107,33 @@ def _parser():
     merge.add_argument("--full-anchor", action="store_true",
         help="stage/publish a complete checkpoint anchor instead of only a parent-bound patch")
     _result(merge)
+
+    projection_families = commands.add_parser("projection-families", help="show current native projection adapters and default requirements")
+    projection_families.add_argument("--domain", choices=DOMAINS)
+    _result(projection_families)
+
+    export = commands.add_parser("export-pairs", help="audit reviewed native pairs and bound embeddings for training")
+    export.add_argument("--domain", choices=DOMAINS, required=True)
+    export.add_argument("--pairs", type=Path, required=True)
+    export.add_argument("--embeddings", type=Path, required=True)
+    export.add_argument("--output-dir", type=Path, required=True)
+    export.add_argument("--base", type=Path)
+    export.add_argument("--cache-dir", type=Path)
+    export.add_argument("--local-files-only", action="store_true")
+    _result(export)
+
+    project = commands.add_parser("project", help="project merged-checkpoint predictions with source-bound context")
+    _round(project)
+    project.add_argument("--checkpoint", type=Path, required=True)
+    project.add_argument("--output-dir", type=Path, required=True, help="fresh evidence directory")
+    project.add_argument("--contexts", type=Path, help="closed checkpoint/candidate-bound context batch")
+    project.add_argument("--row-id", dest="row_ids", action="append", help="explicit validation subset; repeat")
+    project.add_argument("--require-family", dest="required_families", action="append")
+    project.add_argument("--lake-executable", type=Path, help="installed native Lake; omission prepares projections only")
+    project.add_argument("--java-executable", type=Path)
+    project.add_argument("--tla2tools-jar", type=Path)
+    project.add_argument("--timeout-seconds", type=_positive, default=60)
+    _result(project)
     return parser
 
 
@@ -116,6 +143,18 @@ def _dispatch(args):
         from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.profiles import get_profile
         return get_profile(args.domain) if args.domain else {domain: get_profile(domain) for domain in DOMAINS}
 
+    if args.command == "projection-families":
+        from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.projections_v2 import family_catalog
+        return family_catalog(args.domain) if args.domain else {domain: family_catalog(domain) for domain in DOMAINS}
+    if args.command == "export-pairs":
+        from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.paired_export import export_reviewed_pairs
+        return export_reviewed_pairs(args.domain, args.pairs, args.embeddings, args.output_dir,
+            base_path=args.base, cache_dir=args.cache_dir, local_files_only=args.local_files_only)
+    if args.command == "project":
+        from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.qualification import qualify_round
+        return qualify_round(args.round_dir, args.checkpoint, args.output_dir, contexts_path=args.contexts,
+            row_ids=args.row_ids, required_families=args.required_families, lake_executable=args.lake_executable,
+            java_executable=args.java_executable, tla2tools_jar=args.tla2tools_jar, timeout_seconds=args.timeout_seconds)
     from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384 import runner
     if args.command == "prepare":
         return runner.prepare_round(args.domain, args.training, args.validation, args.output_dir,

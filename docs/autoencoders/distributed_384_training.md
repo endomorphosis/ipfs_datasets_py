@@ -71,6 +71,13 @@ label, unpaired span, or raw instruction is not automatically a typed IR target.
 New classes or structures outside the parent's schema require a separate
 schema/training workflow; this round cannot silently extend the vocabulary.
 
+The [reviewed pair importer](reviewed_384_pair_exports.md) checks source/target
+bindings, embedding provenance, and transitive leakage groups before exporting
+these files. After merging, use the additive
+[native projection command](distributed_384_projection_context.md) to validate
+actual checkpoint predictions with explicit source-bound context and fresh
+Lake/SANY execution, without rewriting the completed round.
+
 For an initial local round, `source.json` can be:
 
 ```json
