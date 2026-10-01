@@ -1,5 +1,10 @@
 # Provisional fixtures and retrieved context
 
+The [context-to-projection handoff](context_projection_handoff.md) now connects
+explicit fixture/cited bindings and retrieved structured slot manifests to
+native Legal/UI target preparation and Lake checks. The candidate retrieval
+layer described below continues to grant no source-truth authority.
+
 A missing trigger, definition, referent or application policy should not force
 us to stop developing its projection. Give the unresolved source an explicitly
 assumed companion, test that companion, and continue collecting evidence for
