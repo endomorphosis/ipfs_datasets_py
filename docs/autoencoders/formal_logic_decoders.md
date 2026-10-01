@@ -1,15 +1,16 @@
 # Formal output from the versioned autoencoders
 
 Use `decode_formal_logic()` for formal candidates. The historical legal
-`decode()` method returns an embedding vector; its `infer()` remains numerical
-inference. A separate `source_conditioned_formula_v1` runtime now trains and
+`decode()` method returns an embedding vector; without an attached learned head,
+its `infer()` remains numerical inference. A separate `source_conditioned_formula_v1` runtime now trains and
 generates formula tokens from source text alone. A vector is not a formula. The common runtime previously lacked a
 formal-output method, even though compiler-guided legal formulas were available
 through a separate census implementation.
 
 | Runtime | Formal output | Important limit |
 | --- | --- | --- |
-| Legal `legacy_v1`, `legacy_v1_optimized`, `current_v2` | Complete modal ASTs from the model-guided compiler, or strict typed-deontic compiler rules | These checkpoints have no independent learned formula-token decoder |
+| Legal `legacy_v1`, `legacy_v1_optimized`, `current_v2`, unconfigured | Complete modal ASTs from the model-guided compiler, or strict typed-deontic compiler rules | Historical numeric checkpoints alone have no learned formula-token decoder |
+| Same legal lineages with an attached joint formula head | Learned typed-deontic formula tokens conditioned on the model's raw representation | Separate projection/head trained jointly with reconstruction; parser-derived features remain inputs and sparse core is frozen |
 | Legal `source_conditioned_formula_v1` | Independently generated, grammar-validated canonical deontic rule from source text | Freshly trained sequence model; one rule, closed training vocabulary; syntax is not semantic accuracy |
 | Security, Intent, UI/UX `native_formula_v1` | Learned categorical native output records with decoder-aware cross-entropy | Fixed shapes and training vocabulary; compiler structures are inputs, no independent raw-text generation |
 | Security, Intent, UI/UX `native_v1` | Native expressions reconstructed from model output scores and a training-fitted structural head | Input is compiler-prepared structural features; the head supports fixed shapes and known vocabulary |
@@ -27,7 +28,8 @@ For actual formula-token learning, use the separate
 [learned formula training guide](learned_legal_formula_training.md). Its
 [smoke report](learned_legal_formula_smoke_20260930.md) retains an exception-loss
 failure despite low reconstruction loss. It does not change the capabilities
-of historical checkpoints.
+of historical checkpoints. To attach a learned decoder directly to either modal
+lineage, use [joint latent formula training](modal_joint_formula_training.md).
 
 ## Legal formulas
 

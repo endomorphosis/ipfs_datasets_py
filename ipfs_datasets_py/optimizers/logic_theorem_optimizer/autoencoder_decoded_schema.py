@@ -89,6 +89,10 @@ def validate_decoded_outputs(runtime, samples, *, output_directory, timeout_seco
     acquire a source-only compiler fallback or a passed schema observation.
     The timeout is per actual Lake build, not a whole-batch training budget.
     """
+    if type(runtime) is interface.LegalRuntime and runtime.model._joint_formula_checkpoint is not None:
+        from .modal_joint_formula_schema import validate_modal_decoded_outputs
+        return validate_modal_decoded_outputs(runtime, samples, output_directory=output_directory,
+                                              timeout_seconds=timeout_seconds)
     _require(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
              and 1 <= timeout_seconds <= 120, "bounded Lake timeout required")
     domain, version, checkpoint_sha = _binding(runtime)

@@ -110,8 +110,12 @@ def describe_runtime(domain, version):
                   "objective_default": "historical_reconstruction" if legacy else "raw_decoder",
                   "capabilities": ["train", "infer", "load_checkpoint", "decode_formal_logic"], "integrated": True,
                   "formal_decoder": {"available": True, "modes": ["guided_compiler", "canonical_compiler"],
-                                     "independent_learned_formula_decoder": False, "head_required": False}}
+                                     "independent_learned_formula_decoder": False, "head_required": False,
+                                     "optional_learned_latent_mode": "learned_latent",
+                                     "learned_latent_head_requires_joint_training": True,
+                                     "joint_training_scope": "residual_projection_and_formula_head_with_frozen_sparse_core"}}
         paths.append(("legal_formal_decoder.py", root / "legal_formal_decoder.py"))
+        paths.extend((name, root / name) for name in ("modal_joint_formula.py", "modal_latent_formula.py"))
     else:
         _require(domain in NATIVE_DOMAINS, "unknown modality domain")
         _require(version in ("native_v1", "native_v2"), "unknown native runtime version")
@@ -281,8 +285,9 @@ class NativeRuntime:
 
 
 class LegalRuntime:
-    """Legal features and explicitly attributed compiler-backed formal candidates."""
-    def __init__(self, version, *, checkpoint=None, expected_sha256=None, **model_options):
+    """Legal features with optional jointly trained latent formula projection/head."""
+    def __init__(self, version, *, checkpoint=None, expected_sha256=None,
+                 formula_checkpoint=None, formula_sha256=None, **model_options):
         self._descriptor = describe_runtime("legal_ir", version)
         # The module name is selected solely from the closed local enum above.
         namespace = importlib.import_module(__package__ + ".autoencoder_lineages." + version)
@@ -291,19 +296,36 @@ class LegalRuntime:
             self.model = namespace.Autoencoder(**model_options)
         else:
             self.model = namespace.load_checkpoint(checkpoint, expected_sha256=expected_sha256, **model_options)
+        if formula_checkpoint is not None:
+            if isinstance(formula_checkpoint, (str, Path)):
+                self.model.load_formula_checkpoint(formula_checkpoint, expected_sha256=formula_sha256)
+            else:
+                _require(formula_sha256 is None, "in-memory formula checkpoint has no file hash")
+                self.model.attach_formula_checkpoint(formula_checkpoint)
+        else:
+            _require(formula_sha256 is None, "formula hash supplied without checkpoint")
 
     def describe(self):
-        return {**_copy(self._descriptor), "model": self.model.describe()}
+        result = {**_copy(self._descriptor), "model": self.model.describe()}
+        if self.model._joint_formula_checkpoint is not None:
+            result["formal_decoder"]["modes"].append("learned_latent")
+            result["formal_decoder"]["learned_latent_head_attached"] = True
+            result["formal_decoder"]["trained_neural_decoder"] = self.model._joint_formula_checkpoint["progress"]["optimizer_steps"] > 0
+            result["formal_decoder"]["source_only"] = False
+            result["objective_default"] = "formula_token_cross_entropy_plus_projected_embedding_mse"
+        return result
 
     def train(self, samples, *, validation_samples=None, **options):
         return self.model.train_generalizable_projection(samples, validation_samples=validation_samples, **options)
 
     def infer(self, samples, **options):
+        if self.model._joint_formula_checkpoint is not None:
+            _require(not options, "joint formula inference has no bridge or compiler options")
+            return self.model.decode_formal_logic(samples, mode="learned_latent")
         return self.model.evaluate(samples, **options)
 
-    def decode_formal_logic(self, samples, *, mode="guided_compiler", **options):
-        from .legal_formal_decoder import decode_legal_formulas
-        return decode_legal_formulas(self.model, samples, mode=mode, **options)
+    def decode_formal_logic(self, samples, *, mode=None, **options):
+        return self.model.decode_formal_logic(samples, mode=mode, **options)
 
 
 class LearnedFormulaRuntime:

@@ -63,9 +63,19 @@ existing bridge names, prover flags, sample-memory settings, deadlines, update
 backends, and objective controls remain explicit options. Neither method adds
 a learned formula decoder or changes the legal qualification policy. Loading
 requires an existing local checkpoint and its exact hash; it downloads nothing.
-`decode_formal_logic` is a separate explicit path: legal compiler-guided ASTs or
+With no attached formula head, `decode_formal_logic` is a separate explicit path: legal compiler-guided ASTs or
 native expressions read from reconstructed feature scores. Neither path is an
 independent learned text-to-formula model.
+
+For both legal widths, explicit `formula_targets` and
+`validation_formula_targets` on `train()` activate the
+[joint latent formula profile](modal_joint_formula_training.md). It jointly
+trains a separately owned residual embedding projection and formula decoder;
+the historical sparse core remains frozen. After attachment, inference and
+default formal decoding use this learned head. Its checkpoint, input contract,
+return type and supported typed-deontic scope are documented in that guide.
+It consumes core vectors rather than source tokens and is a distinct profile
+from the source-conditioned model below.
 
 The separate `source_conditioned_formula_v1` has a different source-text input
 and checkpoint schema. Its `infer()` calls source-only formula generation, and

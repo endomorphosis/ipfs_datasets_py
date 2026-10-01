@@ -104,6 +104,8 @@ class LineageModelContract:
 
     def __init__(self, *, state=None, **kwargs):
         self._checkpoint_identity = None
+        self._joint_formula_checkpoint = None
+        self._joint_formula_decoder = None
         self._logic_tree = require_canonical_modules(self._implementation_class.__module__)
         if state is None:
             state = self._training_state_class()
@@ -130,6 +132,16 @@ class LineageModelContract:
     def encode(self, sample, **kwargs):
         self._validate_state(self.state)
         validate_sample(sample, self.DIMENSION)
+        if self._joint_formula_checkpoint is not None:
+            if set(kwargs) - {"use_sample_memory"}:
+                raise ValueError("joint formula encode accepts only use_sample_memory=False")
+            if kwargs.get("use_sample_memory", False) is not False:
+                raise ValueError("joint formula encode forbids sample memory")
+            from ..modal_joint_formula import projected_embedding
+            return {"sample_id": sample.sample_id,
+                    "embedding_projection": projected_embedding(self, sample),
+                    "projection_origin": "joint_learned_residual_projection",
+                    "use_sample_memory": False}
         result = super().encode(sample, **kwargs)
         validate_vector(result.get("embedding_projection"), self.DIMENSION, "encoded embedding_projection")
         return result
@@ -145,6 +157,11 @@ class LineageModelContract:
 
     def evaluate(self, samples, **kwargs):
         self._validate_state(self.state)
+        if self._joint_formula_checkpoint is not None:
+            if kwargs:
+                raise ValueError("joint formula evaluation accepts no bridge options; it evaluates the trained projection and decoder")
+            from ..modal_joint_formula import infer
+            return infer(self, samples)
         sample_list = self._samples(samples)
         if self._raw_reconstruction_default:
             kwargs.setdefault("reconstruction_objective", "raw_decoder")
@@ -154,8 +171,19 @@ class LineageModelContract:
             validate_vector(vector, self.DIMENSION, f"evaluation decoded_embeddings[{key!r}]")
         return result
 
-    def train_generalizable_projection(self, samples, *, validation_samples=None, **kwargs):
+    def train_generalizable_projection(self, samples, *, validation_samples=None,
+                                      formula_targets=None, validation_formula_targets=None,
+                                      formula_options=None, **kwargs):
         self._validate_state(self.state)
+        if formula_targets is not None or self._joint_formula_checkpoint is not None:
+            if formula_targets is None or validation_formula_targets is None or validation_samples is None:
+                raise ValueError("joint training requires explicit training and validation formula targets; decoder training cannot be skipped")
+            from ..modal_joint_formula import train
+            return train(self, samples, formula_targets, validation_samples=validation_samples,
+                         validation_targets=validation_formula_targets,
+                         formula_options=formula_options, **kwargs)
+        if validation_formula_targets is not None or formula_options is not None:
+            raise ValueError("formula configuration requires training formula targets")
         sample_list = self._samples(samples)
         validation = None if validation_samples is None else self._samples(validation_samples)
         if self._raw_reconstruction_default:
@@ -178,16 +206,45 @@ class LineageModelContract:
             "implementation_scope": self._implementation_scope,
             "shared_canonical_logic_modules": dict(self._logic_tree),
             "independent_formula_decoder": False,
-            "formal_logic_decoder_modes": ["guided_compiler", "canonical_compiler"],
+            "learned_latent_formula_decoder": self._joint_formula_checkpoint is not None,
+            "formal_logic_decoder_modes": ["guided_compiler", "canonical_compiler"] +
+                (["learned_latent"] if self._joint_formula_checkpoint is not None else []),
+            "joint_formula_profile": self.formula_decoder_description(),
             "semantic_embedding_verified": False,
             "semantic_qualification": False,
             "admitted": False,
         }
 
-    def decode_formal_logic(self, samples, *, mode="guided_compiler", **options):
-        """Emit explicit compiler-backed candidates; this is separate from vector decode()."""
+    def decode_formal_logic(self, samples, *, mode=None, **options):
+        """Use an attached learned head by default; keep compiler modes explicit."""
+        mode = mode or ("learned_latent" if self._joint_formula_checkpoint is not None else "guided_compiler")
+        if mode == "learned_latent":
+            if options:
+                raise ValueError("learned latent inference has no compiler or sampling options")
+            from ..modal_joint_formula import infer
+            return infer(self, samples)
         from ..legal_formal_decoder import decode_legal_formulas
         return decode_legal_formulas(self, samples, mode=mode, **options)
+
+    def formula_decoder_description(self):
+        from ..modal_joint_formula import describe
+        return describe(self)
+
+    @property
+    def formula_checkpoint(self):
+        return None if self._joint_formula_checkpoint is None else json.loads(json.dumps(self._joint_formula_checkpoint))
+
+    def attach_formula_checkpoint(self, checkpoint):
+        from ..modal_joint_formula import attach
+        return attach(self, checkpoint)
+
+    def save_formula_checkpoint(self, path):
+        from ..modal_joint_formula import save
+        return save(self, path)
+
+    def load_formula_checkpoint(self, path, *, expected_sha256):
+        from ..modal_joint_formula import load
+        return load(self, path, expected_sha256=expected_sha256)
 
 
 def _identity(info):
