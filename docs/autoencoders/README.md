@@ -13,6 +13,8 @@ belong to their named backend; they are not interchangeable across backends.
 | --- | --- |
 | Select a version across Legal, Security, Intent and UI/UX | [Versioned runtime interface](versioned_runtime_interface.md) |
 | Inspect required logic families, decoder losses and Lake coverage | [Logic output requirements and inventory](logic_output_requirements.md) |
+| Validate Legal conditions/exceptions or request/token UI confirmations before training | [Legal/UI qualifier coverage and v7/v5 entry points](legal_ui_qualifier_coverage.md) |
+| Check Intent preconditions, updates and effects against a finite state model | [Guarded Intent projections and training](native_guarded_intent_training.md) |
 | Obtain formal ASTs or reconstruct native expressions from model scores | [Formal logic decoders](formal_logic_decoders.md) |
 | Train native categorical decoders and check actual outputs with Lake | [Native formula training](native_formula_training.md) |
 | Train a source-only learned formula decoder | [Learned legal formula training](learned_legal_formula_training.md) |

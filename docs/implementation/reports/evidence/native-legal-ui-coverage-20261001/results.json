@@ -1,0 +1,308 @@
+{
+  "schema": "native-legal-ui-qualifier-coverage-results/v1",
+  "base_commit": "b9d65cc3d34b39a292882dc28670b29811f5e3e9",
+  "scope": "explicit caller Legal/UI interpretations and auxiliary structural training; not source translation, holdout fidelity or corpus autoformalization",
+  "focused_tests": [
+    {
+      "receipt": "legal-tests-r4.xml",
+      "tests": 44,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "wall_seconds": 1.011
+    },
+    {
+      "receipt": "ui-helper-r3.xml",
+      "tests": 40,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "wall_seconds": 3.071
+    },
+    {
+      "receipt": "integration-tests-r1.xml",
+      "tests": 44,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "wall_seconds": 35.49
+    }
+  ],
+  "distinct_passing_tests": 128,
+  "integration_native_builds": [
+    {
+      "receipt": "default-matrix-r1/legal_ir/receipt.json",
+      "library": "LegalIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "LegalIR"
+      ],
+      "passed_projection_count": 9,
+      "projection_count": 11,
+      "SANY_checks": 0,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "default-matrix-r1/security_ir/receipt.json",
+      "library": "SecurityIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "SecurityIR"
+      ],
+      "passed_projection_count": 16,
+      "projection_count": 16,
+      "SANY_checks": 1,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "default-matrix-r1/intent_ir/receipt.json",
+      "library": "IntentIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "IntentIR"
+      ],
+      "passed_projection_count": 23,
+      "projection_count": 23,
+      "SANY_checks": 1,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "default-matrix-r1/ui_ux_ir/receipt.json",
+      "library": "UIUXIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "UIUXIR"
+      ],
+      "passed_projection_count": 15,
+      "projection_count": 16,
+      "SANY_checks": 1,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "qualified-training-r1/legal_ir/source-0/receipt.json",
+      "library": "LegalIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "LegalIR"
+      ],
+      "passed_projection_count": 11,
+      "projection_count": 11,
+      "SANY_checks": 0,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "qualified-training-r1/legal_ir/source-1/receipt.json",
+      "library": "LegalIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "LegalIR"
+      ],
+      "passed_projection_count": 11,
+      "projection_count": 11,
+      "SANY_checks": 0,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "qualified-training-r1/legal_ir/source-2/receipt.json",
+      "library": "LegalIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "LegalIR"
+      ],
+      "passed_projection_count": 11,
+      "projection_count": 11,
+      "SANY_checks": 0,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "qualified-training-r1/ui_ux_ir/source-0/receipt.json",
+      "library": "UIUXIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "UIUXIR"
+      ],
+      "passed_projection_count": 16,
+      "projection_count": 16,
+      "SANY_checks": 1,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "qualified-training-r1/ui_ux_ir/source-1/receipt.json",
+      "library": "UIUXIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "UIUXIR"
+      ],
+      "passed_projection_count": 16,
+      "projection_count": 16,
+      "SANY_checks": 1,
+      "all_additional_checks_passed": true
+    },
+    {
+      "receipt": "qualified-training-r1/ui_ux_ir/source-2/receipt.json",
+      "library": "UIUXIR",
+      "command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "UIUXIR"
+      ],
+      "passed_projection_count": 16,
+      "projection_count": 16,
+      "SANY_checks": 1,
+      "all_additional_checks_passed": true
+    }
+  ],
+  "default_matrix": {
+    "intent_ir": {
+      "passed": 23,
+      "total": 23,
+      "wall_seconds": 4.864041622029617,
+      "strict_training_allowed": false,
+      "blocked": []
+    },
+    "security_ir": {
+      "passed": 16,
+      "total": 16,
+      "wall_seconds": 3.853207129985094,
+      "strict_training_allowed": false,
+      "blocked": []
+    },
+    "ui_ux_ir": {
+      "passed": 15,
+      "total": 16,
+      "wall_seconds": 3.7031625229865313,
+      "strict_training_allowed": false,
+      "blocked": [
+        {
+          "projection_id": "ui_ux_ir:tdfol",
+          "reason": "UI_before_requires_explicit_occurrence_and_precedence_semantics"
+        }
+      ]
+    },
+    "legal_ir": {
+      "passed": 9,
+      "total": 11,
+      "wall_seconds": 7.159305823966861,
+      "strict_training_allowed": false,
+      "blocked": [
+        {
+          "projection_id": "legal-ir/modal-family/deontic/v3",
+          "reason": "native_projection_not_ready"
+        },
+        {
+          "projection_id": "legal-ir/modal-family/temporal/v3",
+          "reason": "native_projection_not_ready"
+        }
+      ]
+    }
+  },
+  "default_supported": 63,
+  "default_total": 66,
+  "default_named_formula_cases_passed": 32,
+  "expanded_qualifier_smoke": {
+    "legal_ir": {
+      "integration_passed": true,
+      "projection_counts": [
+        11,
+        11,
+        11
+      ],
+      "source_count": 3,
+      "training_sources": 2,
+      "tuning_sources": 1,
+      "optimizer_steps": 2,
+      "selected_epoch": 0,
+      "calibration_selected_families": [
+        "deontic",
+        "temporal"
+      ],
+      "tuning_objective_before": 0.0013347692618356746,
+      "tuning_objective_selected": 0.001333891695050889,
+      "whole_smoke_seconds": 21.420604679035023,
+      "native_preparation_and_checks_seconds": 13.67849799990654,
+      "numerical_preparation_seconds": 2.5800099240150303,
+      "optimization_seconds": 0.21716727199964225,
+      "integration_checks": {
+        "all_three_native_builds_passed": true,
+        "strict_training_gate_passed": true,
+        "strict_tuning_gate_passed": true,
+        "two_optimizer_steps_executed": true,
+        "all_training_projection_occurrences_covered": true,
+        "all_tuning_projection_loss_terms_present": true,
+        "all_inference_projection_loss_terms_present": true,
+        "all_inference_projection_occurrences_have_loss": true,
+        "all_eight_explicit_formulas_retained": true
+      }
+    },
+    "ui_ux_ir": {
+      "integration_passed": true,
+      "projection_counts": [
+        16,
+        16,
+        16
+      ],
+      "source_count": 3,
+      "training_sources": 2,
+      "tuning_sources": 1,
+      "optimizer_steps": 2,
+      "selected_epoch": 0,
+      "calibration_selected_families": [],
+      "tuning_objective_before": 0.0006724709406968538,
+      "tuning_objective_selected": 0.0006724709406968538,
+      "whole_smoke_seconds": 21.5858855987899,
+      "native_preparation_and_checks_seconds": 13.812145826872438,
+      "numerical_preparation_seconds": 2.3766070979181677,
+      "optimization_seconds": 0.013025461928918958,
+      "integration_checks": {
+        "all_three_native_builds_passed": true,
+        "strict_training_gate_passed": true,
+        "strict_tuning_gate_passed": true,
+        "two_optimizer_steps_executed": true,
+        "all_training_projection_occurrences_covered": true,
+        "all_tuning_projection_loss_terms_present": true,
+        "all_inference_projection_loss_terms_present": true,
+        "all_inference_projection_occurrences_have_loss": true,
+        "all_eight_explicit_formulas_retained": true
+      }
+    }
+  },
+  "expanded_smoke_total_wall_seconds": 43.01440314389765,
+  "expanded_projection_occurrences": 81,
+  "expanded_Lake_builds": 6,
+  "expanded_SANY_checks": 3,
+  "native_semantic_checks": {
+    "legal": "legal-native-scope-summary-r2.json",
+    "ui": "ui-helper-r3.xml",
+    "false_Legal_claim_rejected": "LegalIR build explicitly rejects false String equality after unfolding",
+    "false_UI_claims_rejected": [
+      "stale_confirmation",
+      "cancelled_confirmation",
+      "wrong_request",
+      "reused_token",
+      "invalid_clock"
+    ],
+    "gate_control_doubles_are_native_evidence": false,
+    "supplemental_Legal_tool_version": "4.34.1",
+    "UI_and_integration_tool_version": "4.30.0"
+  },
+  "timing_scope": "fresh native workspaces; shared host with concurrent focused checks; not span or bridge-on evaluate timing",
+  "bridge_on_evaluate_measured": false,
+  "weights_downloaded": false,
+  "Mathlib_imported": false,
+  "source_decoder_trained": false,
+  "heldout_improvement_established": false,
+  "admitted": false,
+  "qualified": false,
+  "formalized": false,
+  "source_semantics_verified": false,
+  "constitution_formalized": false
+}
