@@ -753,6 +753,16 @@ class _PythonLowering:
                 )
                 continue
             if isinstance(stmt, ast.If):
+                # The current adapter retains both arms in one diagnostic
+                # block; it does not yet construct path-sensitive CFG edges.
+                # Keep those observations available, but never advertise this
+                # linearized representation as complete source semantics.
+                complete = False
+                self._retain(
+                    "python.if.path_sensitive_cfg",
+                    stmt,
+                    subject_ids=(function_decl_id,),
+                )
                 cond = self.lower_expression(
                     stmt.test, function=function, locals_map=locals_map
                 )
@@ -1666,15 +1676,24 @@ def adapt_source_to_software_verification(
     language: str = "",
     revision: str = "workspace:local",
     max_source_bytes: int = 2 * 1024 * 1024,
+    include_supervisor_evidence: bool = True,
 ) -> SourceAdapterResult:
-    """Adapt one source unit into shared software-verification artifacts."""
+    """Adapt one source unit into shared software-verification artifacts.
+
+    Set ``include_supervisor_evidence=False`` for native-only operation without
+    attempting to import the optional supervisor AST evidence provider.
+    """
 
     if not isinstance(source, str):
         raise SourceAdapterError("source must be text")
     if not isinstance(max_source_bytes, int) or isinstance(max_source_bytes, bool) or max_source_bytes < 1:
         raise SourceAdapterError("max_source_bytes must be a positive integer")
+    if type(include_supervisor_evidence) is not bool:
+        raise SourceAdapterError("include_supervisor_evidence must be a boolean")
     byte_count = len(source.encode("utf-8", errors="surrogatepass"))
-    adapt_program_source, detect_program_language = _load_program_ast_adapter()
+    adapt_program_source, detect_program_language = (
+        _load_program_ast_adapter() if include_supervisor_evidence else (None, None)
+    )
     detected = language
     evidence = None
     if detect_program_language is not None:
@@ -1755,6 +1774,7 @@ class SourceSoftwareVerificationAdapter:
     interface: str = SOURCE_SOFTWARE_VERIFICATION_ADAPTER
     version: str = SOURCE_ADAPTER_VERSION
     max_source_bytes: int = 2 * 1024 * 1024
+    include_supervisor_evidence: bool = True
 
     def adapt(
         self,
@@ -1770,6 +1790,7 @@ class SourceSoftwareVerificationAdapter:
             language=language,
             revision=revision,
             max_source_bytes=self.max_source_bytes,
+            include_supervisor_evidence=self.include_supervisor_evidence,
         )
 
 
