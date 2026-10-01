@@ -17,6 +17,7 @@ import time
 
 from . import autoencoder_family_training as codec
 from . import autoencoder_family_training_prepared as prepared
+from . import autoencoder_family_decoder_refinement as decoder_refinement
 from ...logic.formalization.autoencoder import family_training_v7 as native
 from ...logic.formalization.autoencoder import projection_validation_contract_v5 as policy
 
@@ -30,7 +31,8 @@ _forward = prepared._forward
 def _implementation():
     from ...logic.formalization.autoencoder import native_family_lake_v5 as native_family_lake
     return {name: _sha(Path(module.__file__).read_bytes()) for name, module in (
-        ("feature_codec", codec), ("prepared_math", prepared), ("target_adapter", native),
+        ("feature_codec", codec), ("prepared_math", prepared),
+        ("decoder_refinement", decoder_refinement), ("target_adapter", native),
         ("projection_policy", policy), ("native_lake_issuer", native_family_lake))} | {
             "trainer": _sha(Path(__file__).read_bytes())}
 
@@ -131,15 +133,20 @@ def _read(descriptor):
 @codec._single_threaded
 def train_validated_family_projection_autoencoder(training_observations, validation_observations, *,
         domain_id, output_dir, epochs=12, latent_width=16, learning_rate=.001,
-        minibatch_size=32, denoising=.05, ridge=.001, patience=4, seed=1729, max_seconds=120):
+        minibatch_size=32, denoising=.05, ridge=.001, patience=4, seed=1729, max_seconds=120,
+        refinement_strategy="joint_adam"):
     """Train a fresh structural head after live input gates; never grant admission.
 
     No parent/resume conversion is supported by this first strict artifact.
     The deadline covers numerical initialization, calibration and refinement;
     native evidence validation/feature preparation are separately timed. A late
     or partial epoch is never selected. Tuning selects; no heldout input is read.
+    ``decoder_blocks`` freezes the shared encoder and selects complete decoder
+    families independently; the default keeps the existing joint Adam path.
     """
     import torch
+    _require(refinement_strategy in ("joint_adam", "decoder_blocks"),
+             "unknown native refinement strategy")
     call_started = time.monotonic()
     producer = _verify_implementation()
     training_reports, training_gate = _panel(training_observations, domain_id)
@@ -194,63 +201,74 @@ def train_validated_family_projection_autoencoder(training_observations, validat
             else:
                 calibration["selection_discarded_due_deadline"] = True
     calibration_loss = best_loss
-    parameters = [p.detach().clone().requires_grad_() for p in best]
-    optimizer = torch.optim.Adam(parameters, lr=learning_rate)
-    generator = torch.Generator(device="cpu").manual_seed(seed)
-    population = (len(training), masks.sum(dim=0).tolist())
     preparation_seconds = time.monotonic() - call_started
     optimization_started = time.monotonic()
-    history, steps, selected_epoch, stale, stopped = [], 0, 0, 0, "epoch_budget"
-    for epoch in range(epochs):
-        if time.monotonic() - started >= max_seconds:
-            stopped = "deadline"
-            break
-        order = torch.randperm(len(training), generator=generator)
-        weighted, seen, aborted = 0., 0, False
-        for offset in range(0, len(training), minibatch_size):
+    refinement_diagnostics = None
+    if refinement_strategy == "decoder_blocks":
+        refinement = decoder_refinement.refine_decoder_blocks(torch, best, training, masks,
+            validation, validation_mask, spans, space["projections"], epochs=epochs,
+            learning_rate=learning_rate, minibatch_size=minibatch_size, denoising=denoising,
+            patience=patience, seed=seed, deadline=started + max_seconds)
+        best, best_loss, after = refinement["parameters"], refinement["loss"], refinement["metrics"]
+        history, steps = refinement["history"], refinement["steps"]
+        selected_epoch, stopped = refinement["selected_epoch"], refinement["stopped"]
+        refinement_diagnostics = refinement["selection_diagnostics"]
+    else:
+        parameters = [p.detach().clone().requires_grad_() for p in best]
+        optimizer = torch.optim.Adam(parameters, lr=learning_rate)
+        generator = torch.Generator(device="cpu").manual_seed(seed)
+        population = (len(training), masks.sum(dim=0).tolist())
+        history, steps, selected_epoch, stale, stopped = [], 0, 0, 0, "epoch_budget"
+        for epoch in range(epochs):
             if time.monotonic() - started >= max_seconds:
-                aborted = True
+                stopped = "deadline"
                 break
-            indices = order[offset:offset + minibatch_size]
-            clean = training[indices]
-            optimizer.zero_grad(set_to_none=True)
-            objective = prepared._PreparedObjective(torch, clean, masks[indices], spans, space["projections"], population)
-            clean_loss = objective(_forward(torch, clean, parameters))
-            loss = clean_loss
-            if denoising:
-                corrupted = clean * (torch.rand(clean.shape, generator=generator) >= denoising)
-                noisy_loss = objective(_forward(torch, corrupted, parameters))
-                loss = .75 * clean_loss + .25 * noisy_loss
-            _require(bool(torch.isfinite(loss)), "nonfinite native training loss")
-            loss.backward()
-            norm = float(torch.nn.utils.clip_grad_norm_(parameters, 1.))
-            _require(math.isfinite(norm), "nonfinite native training gradient")
-            progress = (epoch + offset / len(training)) / epochs
-            rate = learning_rate * min(1., (steps + 1) / 5) * (.1 + .9 * (1 + math.cos(math.pi * progress)) / 2)
-            optimizer.param_groups[0]["lr"] = rate
-            optimizer.step()
-            steps += 1
-            weighted += float(loss.detach()) * len(indices)
-            seen += len(indices)
-        if aborted:
-            stopped = "deadline_partial_epoch_not_selected"
-            break
-        with torch.no_grad():
-            score, metrics = codec._objective(torch, _forward(torch, validation, parameters), validation,
-                validation_mask, spans, space["projections"])
-        _require(bool(torch.isfinite(score)), "nonfinite native validation loss")
-        selected = time.monotonic() - started < max_seconds and float(score) < best_loss - EPS and all(
-            value <= after["families"][family] + EPS for family, value in metrics["families"].items())
-        if selected:
-            best, best_loss, after = [p.detach().clone() for p in parameters], float(score), metrics
-            selected_epoch, stale = epoch + 1, 0
-        else:
-            stale += 1
-        history.append({"epoch": epoch + 1, "training_objective": weighted / seen,
-            "validation_objective": float(score), "validation_families": metrics["families"], "selected": selected})
-        if stale >= patience:
-            stopped = "validation_patience"
-            break
+            order = torch.randperm(len(training), generator=generator)
+            weighted, seen, aborted = 0., 0, False
+            for offset in range(0, len(training), minibatch_size):
+                if time.monotonic() - started >= max_seconds:
+                    aborted = True
+                    break
+                indices = order[offset:offset + minibatch_size]
+                clean = training[indices]
+                optimizer.zero_grad(set_to_none=True)
+                objective = prepared._PreparedObjective(torch, clean, masks[indices], spans, space["projections"], population)
+                clean_loss = objective(_forward(torch, clean, parameters))
+                loss = clean_loss
+                if denoising:
+                    corrupted = clean * (torch.rand(clean.shape, generator=generator) >= denoising)
+                    noisy_loss = objective(_forward(torch, corrupted, parameters))
+                    loss = .75 * clean_loss + .25 * noisy_loss
+                _require(bool(torch.isfinite(loss)), "nonfinite native training loss")
+                loss.backward()
+                norm = float(torch.nn.utils.clip_grad_norm_(parameters, 1.))
+                _require(math.isfinite(norm), "nonfinite native training gradient")
+                progress = (epoch + offset / len(training)) / epochs
+                rate = learning_rate * min(1., (steps + 1) / 5) * (.1 + .9 * (1 + math.cos(math.pi * progress)) / 2)
+                optimizer.param_groups[0]["lr"] = rate
+                optimizer.step()
+                steps += 1
+                weighted += float(loss.detach()) * len(indices)
+                seen += len(indices)
+            if aborted:
+                stopped = "deadline_partial_epoch_not_selected"
+                break
+            with torch.no_grad():
+                score, metrics = codec._objective(torch, _forward(torch, validation, parameters), validation,
+                    validation_mask, spans, space["projections"])
+            _require(bool(torch.isfinite(score)), "nonfinite native validation loss")
+            selected = time.monotonic() - started < max_seconds and float(score) < best_loss - EPS and all(
+                value <= after["families"][family] + EPS for family, value in metrics["families"].items())
+            if selected:
+                best, best_loss, after = [p.detach().clone() for p in parameters], float(score), metrics
+                selected_epoch, stale = epoch + 1, 0
+            else:
+                stale += 1
+            history.append({"epoch": epoch + 1, "training_objective": weighted / seen,
+                "validation_objective": float(score), "validation_families": metrics["families"], "selected": selected})
+            if stale >= patience:
+                stopped = "validation_patience"
+                break
     optimization_seconds = time.monotonic() - optimization_started
     _loss_coverage(validation_rows, validation_coverage, after)
     _require(all(after["families"][family] <= value + EPS for family, value in initial_metrics["families"].items()),
@@ -268,12 +286,16 @@ def train_validated_family_projection_autoencoder(training_observations, validat
         "parent_modified": False, "vocabulary_scope": "original_training_only", "optimizer_state": "fresh_adam",
         "objective": "masked_macro_family_native_projection_reconstruction",
         "training_objective": "0.75_clean_plus_0.25_denoising_mse_plus_0.1_cosine" if denoising else "clean_mse_plus_0.1_cosine",
-        "selection": "validation_family_block_calibration_then_monotone_joint_refinement",
+        "selection": ("validation_family_block_calibration_then_independent_decoder_refinement"
+            if refinement_strategy == "decoder_blocks" else
+            "validation_family_block_calibration_then_monotone_joint_refinement"),
+        "refinement_strategy": refinement_strategy, "refinement_diagnostics": refinement_diagnostics,
         "before": {"objective": float(initial_loss), **initial_metrics},
         "after": {"objective": best_loss, **after}, "improved": best_loss < float(initial_loss) - EPS,
         "history": history, "stopping": stopped, "elapsed_seconds": time.monotonic() - started,
         "settings": {"learning_rate": learning_rate, "denoising": denoising, "ridge": ridge,
-            "minibatch_size": minibatch_size, "patience": patience, "seed": seed, "max_seconds": max_seconds},
+            "minibatch_size": minibatch_size, "patience": patience, "seed": seed, "max_seconds": max_seconds,
+            "refinement_strategy": refinement_strategy},
         "trained_logic_families": observed if steps or calibration["status"] == "executed" else [],
         "loss_target_logic_families": observed,
         "families_without_validation": sorted(set(observed) - set(after["families"])),
@@ -286,7 +308,7 @@ def train_validated_family_projection_autoencoder(training_observations, validat
         "source_text_decoder_trained": False, "lake_build_executed": False,
         "provider_calls": 0, "download_calls": 0, **FALSE}
     report["prepared_execution"] = {"producer": producer, "reference_schema": prepared.SCHEMA,
-        "semantics": "same_masked_macro_family_objective_and_selection",
+        "semantics": "same_masked_macro_family_objective_with_declared_refinement_strategy",
         "atom_cache": cache_info()._asdict(), "preparation_seconds": preparation_seconds,
         "optimization_seconds": optimization_seconds}
     _require(_verify_implementation() == producer, "validated producer drift during fitting")

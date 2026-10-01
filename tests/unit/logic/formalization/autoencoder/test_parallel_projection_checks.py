@@ -153,6 +153,37 @@ def test_diagnostic_uses_real_parser_and_translator_with_exact_binding(job):
     assert binding["relation"] == "exact_propositional_native_ast_translation"
     assert all("(assert (=> p q))" in attempt.translation.translated_text for attempt in attempts)
     assert not binding["source_meaning_relation_verified"]
+    assert all(row["source_logic_family"] == "propositional"
+               and row["operation"] == "check_satisfiability"
+               and row["input_semantics"] == "assert_formula"
+               for row in binding["semantic_routing"]["routes"])
+
+
+@pytest.mark.parametrize("family", ["first_order", "deontic", "modal", "temporal", "tdfol",
+    "dcec", "cec", "frame_logic", "transition_system", "tla_plus"])
+def test_unsupported_family_never_launches_or_acquires_solver_resources(
+        tmp_path, scheduler, job, stub_native, monkeypatch, family):
+    modified = deepcopy(job.report)
+    modified["projections"][0]["logic_family"] = family
+    target = replace(job, report=modified)
+    monkeypatch.setattr(checks.native, "build_native_family_lake", lambda *a, **k: pytest.fail("native launched before route gate"))
+    monkeypatch.setattr(checks.portfolio, "SolverPortfolio", lambda *a, **k: pytest.fail("unsupported solver launched"))
+    with pytest.raises(ValueError, match="propositional targets only"):
+        run(tmp_path, scheduler, [target], portfolio_jobs=[diagnostic(target)])
+    assert scheduler.snapshot()["counters"]["acquisitions_total"] == 0
+    assert not (tmp_path / "out").exists()
+
+
+def test_atp_and_smt_keep_distinct_operations_without_winner_cancellation(job):
+    attempts, policy, binding = checks._diagnostic(
+        diagnostic(job, solver_names=("z3", "vampire")), job, 10, 256, 2)
+    routes = binding["semantic_routing"]["routes"]
+    assert routes[0]["verdict_semantics"] == "formula_satisfiability"
+    assert routes[1]["verdict_semantics"] == "formula_validity_candidate"
+    assert "(assert" in attempts[0].translation.translated_text
+    assert "conjecture" in attempts[1].translation.translated_text
+    assert policy.cancel_on_first_conclusive is False
+    assert binding["semantic_routing"]["cross_operation_vote_permitted"] is False
 
 
 def test_diagnostic_target_ast_must_equal_reparse(job):
