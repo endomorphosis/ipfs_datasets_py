@@ -186,6 +186,19 @@ def describe(model):
         **FALSE}
 
 
+def _attached_checkpoint(model, *, validate_runtime=False):
+    """Bind the cached execution model to the exact privately owned sidecar."""
+    checkpoint = getattr(model, "_joint_formula_checkpoint", None)
+    decoder = getattr(model, "_joint_formula_decoder", None)
+    _require(checkpoint is not None and decoder is not None,
+             "learned latent formula decoder requires training or an attached checkpoint")
+    _require(hashlib.sha256(_raw(checkpoint)).hexdigest() == decoder.checkpoint_sha256,
+             "cached formula decoder differs from attached checkpoint; reattach explicitly")
+    if validate_runtime:
+        decoder._check()
+    return checkpoint
+
+
 def train(model, samples, targets, *, validation_samples, validation_targets,
           epochs=20, max_seconds=60, formula_options=None, max_optimizer_steps=None):
     from . import modal_latent_formula as learning
@@ -200,6 +213,7 @@ def train(model, samples, targets, *, validation_samples, validation_targets,
         _require(formula_options is None or type(formula_options) is dict, "formula_options must be a mapping")
         checkpoint = learning.build_checkpoint(binding, training, tuning, **(formula_options or {}))
     else:
+        checkpoint = _attached_checkpoint(model, validate_runtime=True)
         _require(not formula_options, "resumed decoder configuration is immutable")
         _require(checkpoint["binding"] == binding, "core changed after decoder attachment; explicit new branch required")
     remaining = max_seconds - (time.monotonic() - started)
@@ -215,8 +229,7 @@ def train(model, samples, targets, *, validation_samples, validation_targets,
 
 
 def infer(model, samples):
-    checkpoint = getattr(model, "_joint_formula_checkpoint", None)
-    _require(checkpoint is not None, "learned latent formula decoder requires training or an attached checkpoint")
+    checkpoint = _attached_checkpoint(model)
     binding = _core_binding(model)
     _require(checkpoint["binding"] == binding, "core changed after decoder attachment")
     samples = _samples(model, samples)
@@ -235,7 +248,7 @@ def infer(model, samples):
 
 
 def projected_embedding(model, sample):
-    checkpoint = getattr(model, "_joint_formula_checkpoint", None)
+    checkpoint = _attached_checkpoint(model)
     _require(checkpoint is not None and checkpoint["binding"] == _core_binding(model),
              "attached formula projection differs from numerical core")
     rows = _rows(model, [sample])
@@ -243,7 +256,7 @@ def projected_embedding(model, sample):
 
 
 def save(model, path):
-    checkpoint = getattr(model, "_joint_formula_checkpoint", None)
+    checkpoint = _attached_checkpoint(model, validate_runtime=True)
     _require(checkpoint is not None and checkpoint["binding"] == _core_binding(model), "no valid attached formula checkpoint")
     data = _raw(checkpoint)
     _require(len(data) <= MAX_HEAD_BYTES, "formula checkpoint exceeds byte bound")

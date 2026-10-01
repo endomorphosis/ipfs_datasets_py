@@ -1,0 +1,55 @@
+{
+  "unique_test_cases": 388,
+  "runs": [
+    {
+      "file": "release-tests.xml",
+      "sha256": "dd5c518c4d28993ad32481e04d3e2e95e6564544e1ed10f2656fe202becdf27c",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "373",
+          "time": "124.398",
+          "timestamp": "2026-10-01T04:50:18.981197+00:00",
+          "hostname": "spark-b271"
+        }
+      ]
+    },
+    {
+      "file": "transfer-final-tests.xml",
+      "sha256": "c01fa04327293d3942fae4fdd46c277edcae9cb7b71dbd1273b9582463631db9",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "41",
+          "time": "2.786",
+          "timestamp": "2026-10-01T04:53:02.397629+00:00",
+          "hostname": "spark-b271"
+        }
+      ]
+    },
+    {
+      "file": "transfer-temporal-tests.xml",
+      "sha256": "982be2db6563484c0383e16fec35381f19337b8030300ca75cbbc60fe291850c",
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "55",
+          "time": "2.098",
+          "timestamp": "2026-10-01T04:59:36.223502+00:00",
+          "hostname": "spark-b271"
+        }
+      ]
+    }
+  ],
+  "admitted": false,
+  "qualified": false
+}

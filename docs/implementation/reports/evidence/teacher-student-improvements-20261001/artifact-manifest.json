@@ -1,0 +1,233 @@
+{
+  "admitted": false,
+  "archive": "teacher-student-artifacts.tar.gz",
+  "archive_bytes": 2916072,
+  "archive_sha256": "85b0033c6a30ca97ee30ba715ffab77466a34429bdc369f3527f50db5bd38f28",
+  "files": {
+    "embedding-production.json": {
+      "bytes": 4347,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/embedding-production.json",
+      "sha256": "672f71633b89e73574edc0d6fe1a8a9de9ca42ad63bd2e74977dcf1ce9c5dff2"
+    },
+    "embeddings.json": {
+      "bytes": 62376,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/embeddings.json",
+      "sha256": "802360413774830a88484ea8a79d66d475d0b0c52ebfc170f66828857674b26f"
+    },
+    "generated-schema/inference.json": {
+      "bytes": 23269,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/inference.json",
+      "sha256": "0c1b74855ab5e7845735d50a0ad8192788339adb23ad21db95a77bfbd866f8c6"
+    },
+    "generated-schema/inputs.json": {
+      "bytes": 20759,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/inputs.json",
+      "sha256": "28c0847b2ffda5be012198dd9583164bf739d2496b8d34a550e12c4952b46cdd"
+    },
+    "generated-schema/report.json": {
+      "bytes": 11264,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/report.json",
+      "sha256": "1360013a93754eb7a605a5f88334fc89a7f5cc101415b8df8b9fe33511061ce3"
+    },
+    "generated-schema/sample-0-projection-0/DecoderSchema.lean": {
+      "bytes": 992,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-0-projection-0/DecoderSchema.lean",
+      "sha256": "ceed62ac8562d3734f9e9b91805d6b79a72db8658e6ec4ae0fba262e3ea4362e"
+    },
+    "generated-schema/sample-0-projection-0/artifact.json": {
+      "bytes": 4187,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-0-projection-0/artifact.json",
+      "sha256": "c164af12fb0d585b17fe7a04fe31aa2d7e3afc9a7b705d7a7bf515043ca693b9"
+    },
+    "generated-schema/sample-0-projection-0/lake.log": {
+      "bytes": 195,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-0-projection-0/lake.log",
+      "sha256": "a588587eab28b2cc9295fdd6ac7ebe8b181e83fe45a56ad2688ff23bc4eb5076"
+    },
+    "generated-schema/sample-0-projection-0/lakefile.lean": {
+      "bytes": 71,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-0-projection-0/lakefile.lean",
+      "sha256": "2c656b05cb2d41d0f561e8a23045e23712ee1a1dcc1bee973697c2081f171a4a"
+    },
+    "generated-schema/sample-0-projection-0/lean-toolchain": {
+      "bytes": 25,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-0-projection-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    "generated-schema/sample-0-projection-0/receipt.json": {
+      "bytes": 3272,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-0-projection-0/receipt.json",
+      "sha256": "6813d31b44c7fe9176b2fafd9256b028dc2cc50fdb3852fc52bb10a3b79502f7"
+    },
+    "generated-schema/sample-0-projection-0/toolchain.log": {
+      "bytes": 54,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-0-projection-0/toolchain.log",
+      "sha256": "bc831a0049e8e228f623b232249ffb7047e46040c21436bdccc0d9ff428fa978"
+    },
+    "generated-schema/sample-1-projection-0/DecoderSchema.lean": {
+      "bytes": 1024,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-1-projection-0/DecoderSchema.lean",
+      "sha256": "670b5db273c10689098f490e6141cd60876aaaaa2a430b46a8d28e3ad7117114"
+    },
+    "generated-schema/sample-1-projection-0/artifact.json": {
+      "bytes": 4219,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-1-projection-0/artifact.json",
+      "sha256": "560134a3b18604d7e55c5e62d8faf6ab60fdc9381ede24f23329aca28bd8aaf4"
+    },
+    "generated-schema/sample-1-projection-0/lake.log": {
+      "bytes": 195,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-1-projection-0/lake.log",
+      "sha256": "7f95ef859aaf260ed3881937e009fc74ecdac9d2b88d889e697cb1c83a00d9b5"
+    },
+    "generated-schema/sample-1-projection-0/lakefile.lean": {
+      "bytes": 71,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-1-projection-0/lakefile.lean",
+      "sha256": "2c656b05cb2d41d0f561e8a23045e23712ee1a1dcc1bee973697c2081f171a4a"
+    },
+    "generated-schema/sample-1-projection-0/lean-toolchain": {
+      "bytes": 25,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-1-projection-0/lean-toolchain",
+      "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8"
+    },
+    "generated-schema/sample-1-projection-0/receipt.json": {
+      "bytes": 3272,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-1-projection-0/receipt.json",
+      "sha256": "bd08615c6a6ae9e293ea0c8598a80d8fa6898bc4f4e16ca6d24365f61392c144"
+    },
+    "generated-schema/sample-1-projection-0/toolchain.log": {
+      "bytes": 54,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sample-1-projection-0/toolchain.log",
+      "sha256": "bc831a0049e8e228f623b232249ffb7047e46040c21436bdccc0d9ff428fa978"
+    },
+    "generated-schema/sources.json": {
+      "bytes": 449,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/generated-schema/sources.json",
+      "sha256": "b41ccba3146e61276d9355feef101f8564cc86dc941cf926b8e0a246fca5f890"
+    },
+    "holdout-transfer.json": {
+      "bytes": 29875,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/holdout-transfer.json",
+      "sha256": "ec89392949978342a1c7468640869562045b0d3e3f738e669ed78d9cb7d0c79e"
+    },
+    "report.json": {
+      "bytes": 305473,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/report.json",
+      "sha256": "febb2b40a553f59accf8c6159178b77eeb7d2350433c193cccb52acbd3d01882"
+    },
+    "sources/excluded-constitution.txt": {
+      "bytes": 89,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/excluded-constitution.txt",
+      "sha256": "5114ff45f9c5857737faa1e6e44ce16689385470f1d186ec1c59b5f8d81d7344"
+    },
+    "sources/excluded-multiple.txt": {
+      "bytes": 53,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/excluded-multiple.txt",
+      "sha256": "1084fda6614328efd6e51876325a587303cca3232fbb7d18067b0777a732073f"
+    },
+    "sources/excluded-restriction.txt": {
+      "bytes": 53,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/excluded-restriction.txt",
+      "sha256": "0318eb98dc00a929dc3279556279cf30dedd2850d53109197b80481c33fc8337"
+    },
+    "sources/holdout-agency-minimum.txt": {
+      "bytes": 54,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/holdout-agency-minimum.txt",
+      "sha256": "b2d2bf8c395e1f61189fb04b20b3c29a7c94f7b71ef86c5a92ff79568d9c7b34"
+    },
+    "sources/holdout-company-prohibition.txt": {
+      "bytes": 36,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/holdout-company-prohibition.txt",
+      "sha256": "95974d783c995bb8be9c746848083ed52aab71301dde5e92fdca34b0a5b0de8a"
+    },
+    "sources/holdout-officer-deadline.txt": {
+      "bytes": 70,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/holdout-officer-deadline.txt",
+      "sha256": "a4f2645d61848cdf0882fa454cd1ee7d767df4e8621b89cf9f15f8dedabaeb13"
+    },
+    "sources/holdout-officer-prohibition.txt": {
+      "bytes": 39,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/holdout-officer-prohibition.txt",
+      "sha256": "c5dd4fb21676541eeb84ea98a0867a95cef139eecf2aa0ea1ebf5a72be582b86"
+    },
+    "sources/train-deadline.txt": {
+      "bytes": 69,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/train-deadline.txt",
+      "sha256": "44b3f0227eb7e41a8e0c840478e8c2b411c23fbc8016270a367f22db82486213"
+    },
+    "sources/train-minimum.txt": {
+      "bytes": 55,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/train-minimum.txt",
+      "sha256": "ac822605c0d4189d986f5f742ed687a187bccba62ecfe2c4e181823284ecaf69"
+    },
+    "sources/train-prohibition.txt": {
+      "bytes": 38,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/train-prohibition.txt",
+      "sha256": "76cd8cc5634bbbd900828d3b07ba05b30452cca2f439cca301b01e5248f7d3b8"
+    },
+    "sources/train-report.txt": {
+      "bytes": 32,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/train-report.txt",
+      "sha256": "bc784addce5120b728418f058f61eebf89277b3434ffc88e8d6dc452c7fb689b"
+    },
+    "sources/tune-deadline.txt": {
+      "bytes": 68,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/tune-deadline.txt",
+      "sha256": "78af2801d47116db825e5f050de16d7f605b7c2355aa6b39ef9ee01d1a93809f"
+    },
+    "sources/tune-minimum.txt": {
+      "bytes": 54,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/tune-minimum.txt",
+      "sha256": "4d1a5d5fd118cee4a26ba31865e1d51d2ed62144f41e452a496d4fbd5603e073"
+    },
+    "sources/tune-prohibition.txt": {
+      "bytes": 37,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/tune-prohibition.txt",
+      "sha256": "f09423fbf43fe420b6b300f3d3338f0ccff4381940d6f3f5609aa06ca62e5fba"
+    },
+    "sources/tune-report.txt": {
+      "bytes": 31,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/sources/tune-report.txt",
+      "sha256": "c1a51649b0f65b85604da0eb6346995122e5a2ad5d5e0fa12edf5fadd6400a94"
+    },
+    "student-formula.json": {
+      "bytes": 1645930,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/student-formula.json",
+      "sha256": "910ce3da7d3db011e286f0762503e9a2c1a8d80996a292d2a39f3e255992eba7"
+    },
+    "student-resumed-formula.json": {
+      "bytes": 1646079,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/student-resumed-formula.json",
+      "sha256": "eff2b34680596be2f3ed1ed38f3bab92c96679900e674a7f9bd5518ad32ef697"
+    },
+    "student-samples.json": {
+      "bytes": 162614,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/student-samples.json",
+      "sha256": "f1b64868cd9b87a533bc7c4db3d44336bfb2f4c89f31cd732434963c6a119c43"
+    },
+    "teacher-rows.json": {
+      "bytes": 22630343,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/teacher-rows.json",
+      "sha256": "dcc101081e82682d1a819e6b74c8b997a64852d344ee99dffec2f956bdb05621"
+    },
+    "train-transfer.json": {
+      "bytes": 29785,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/train-transfer.json",
+      "sha256": "3cf8af62b4da77a3c8a7da2be74335707d01ddf30b730198cbbf6b891b440dc3"
+    },
+    "train_excluded-transfer.json": {
+      "bytes": 2914,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/train_excluded-transfer.json",
+      "sha256": "b2757e325a004f3177355362622af2c75726ae4203610c3ec4697007d601cb2f"
+    },
+    "tuning-transfer.json": {
+      "bytes": 29778,
+      "original_local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/integrated-r2/tuning-transfer.json",
+      "sha256": "46f0ca133f9223b8f48530d4c0ab3ab220f1a70e8422dd71b0c0f9ee976cf55f"
+    }
+  },
+  "formalized": false,
+  "qualified": false,
+  "roundtrip_ok": false,
+  "schema": "teacher-student-diagnostic-artifact-bundle/v1",
+  "scope": "Authored diagnostic evidence and newly trained student heads; no retained teacher weights or embedding model assets included"
+}

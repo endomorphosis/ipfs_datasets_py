@@ -1,0 +1,19 @@
+{
+  "dimension": 384,
+  "training_steps": 100,
+  "cached_weights_mutation": {
+    "before_status": "decoded",
+    "after_status": "decoded",
+    "projection_changed": true,
+    "same_checkpoint_sha256": true,
+    "mutation_rejected": false
+  },
+  "nonfinite_projection": {
+    "infer_status": "decoded",
+    "infer_reasons": [
+      null,
+      null
+    ],
+    "project_error": "nonfinite learned projection"
+  }
+}

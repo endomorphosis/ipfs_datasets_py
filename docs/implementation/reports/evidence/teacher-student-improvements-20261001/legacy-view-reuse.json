@@ -1,0 +1,159 @@
+{
+  "schema": "legacy-encode-view-reuse-benchmark/v1",
+  "created_at": "2026-10-01T04:42:05.374926+00:00",
+  "source_sha256": "bc172008fcecc3b81e32dd4bc6e293ef407293da0c81f57e496a7e18d629f819",
+  "compute_device": "cpu",
+  "sample_count": 3,
+  "sample_origin": "authored_gate_fixtures",
+  "bridge_names": [],
+  "legal_ir_target_count": 0,
+  "legal_ir_evaluate_provers": false,
+  "metric_disk_cache": false,
+  "legal_ir_parallel_workers": 1,
+  "use_sample_memory": false,
+  "qualification": false,
+  "lake_executed": false,
+  "timing_scope": "numeric encode only; not bridge-on evaluation",
+  "profiles": {
+    "cached": {
+      "warm_seconds_per_span": {
+        "baseline": [
+          0.009128100036953886,
+          0.009730715265808007,
+          0.009563235604825119,
+          0.00905395500206699,
+          0.009363359267202517,
+          0.009104638368201752,
+          0.009012494694131117
+        ],
+        "view_reuse": [
+          0.008727351599372924,
+          0.010808307165279984,
+          0.008711457500855129,
+          0.00851745909700791,
+          0.008707629734029372,
+          0.008539251370045046,
+          0.008210007403977215
+        ]
+      },
+      "median_seconds_per_span": {
+        "baseline": 0.009128100036953886,
+        "view_reuse": 0.008707629734029372
+      },
+      "same_outputs": true,
+      "memo": {
+        "scope": "one encode call; no cross-call prediction retention",
+        "max_entries": 8,
+        "byte_bound": null,
+        "memory_scope": "source JSON hashed transiently; retained readout sizes depend on IR family count",
+        "last_encode": {
+          "hits": 3,
+          "misses": 1,
+          "retained_after_encode": 0
+        }
+      },
+      "train": {
+        "times": {
+          "baseline": [
+            0.3632333190180361,
+            0.38623502594418824,
+            0.3242665899451822,
+            0.3780376659706235,
+            0.3117193451616913
+          ],
+          "view_reuse": [
+            0.30491984402760863,
+            0.38079340010881424,
+            0.3864429648965597,
+            0.3203420080244541,
+            0.3742142210248858
+          ]
+        },
+        "median_seconds": {
+          "baseline": 0.3632333190180361,
+          "view_reuse": 0.3742142210248858
+        },
+        "sample_count": 2,
+        "training_count": 1,
+        "validation_count": 1,
+        "accepted_epochs": 1,
+        "exact_state_parity": true,
+        "state_sha256": "74c651ebc06c5727ea4ef9210748d8998ae0383fc85e676e58846d6b38f8f43d",
+        "projection_update_backend": "python_sparse_batch",
+        "max_line_search_attempts": 1,
+        "projection_max_update_families": 4,
+        "max_seconds": 60
+      }
+    },
+    "historical_daemon": {
+      "warm_seconds_per_span": {
+        "baseline": [
+          0.019113904035960635,
+          0.01860560899755607,
+          0.018710325138332942,
+          0.019256126733186343,
+          0.01929891826584935,
+          0.019197649632891018,
+          0.019342276159053047
+        ],
+        "view_reuse": [
+          0.011985608601632218,
+          0.011774891599391898,
+          0.011749766937767466,
+          0.011805310666871568,
+          0.012412964863081773,
+          0.012415258764910201,
+          0.012429506393770377
+        ]
+      },
+      "median_seconds_per_span": {
+        "baseline": 0.019197649632891018,
+        "view_reuse": 0.011985608601632218
+      },
+      "same_outputs": true,
+      "memo": {
+        "scope": "one encode call; no cross-call prediction retention",
+        "max_entries": 8,
+        "byte_bound": null,
+        "memory_scope": "source JSON hashed transiently; retained readout sizes depend on IR family count",
+        "last_encode": {
+          "hits": 5,
+          "misses": 1,
+          "retained_after_encode": 0
+        }
+      },
+      "train": {
+        "times": {
+          "baseline": [
+            0.639811199856922,
+            0.6431615490000695,
+            0.5708913540001959,
+            0.5797611880116165,
+            0.6587295371573418
+          ],
+          "view_reuse": [
+            0.5683852250222117,
+            0.643585731042549,
+            0.632995440158993,
+            0.5621023520361632,
+            0.5504772958811373
+          ]
+        },
+        "median_seconds": {
+          "baseline": 0.639811199856922,
+          "view_reuse": 0.5683852250222117
+        },
+        "sample_count": 2,
+        "training_count": 1,
+        "validation_count": 1,
+        "accepted_epochs": 1,
+        "exact_state_parity": true,
+        "state_sha256": "7bdf982fd885ed327e4cbfbd616f34360ec5a94f2204db58d1cc34fbc2936d28",
+        "projection_update_backend": "python_sparse_batch",
+        "max_line_search_attempts": 1,
+        "projection_max_update_families": 4,
+        "max_seconds": 60
+      }
+    }
+  }
+}

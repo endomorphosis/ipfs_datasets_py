@@ -286,6 +286,23 @@ def test_attached_decoder_training_cannot_be_skipped_and_checkpoint_is_not_alias
     assert model.formula_checkpoint == before
 
 
+@pytest.mark.parametrize("operation", ["infer", "project", "save", "train"])
+def test_owned_sidecar_cannot_disagree_with_cached_decoder(trained, tmp_path, operation):
+    model = _clone(trained)
+    model._joint_formula_checkpoint["model_state"]["projection_up.bias"][0] += .25
+    calls = {
+        "infer": lambda: model.decode_formal_logic(trained["rows"]),
+        "project": lambda: model.encode(trained["rows"][0]),
+        "save": lambda: model.save_formula_checkpoint(tmp_path / "must-not-save.json"),
+        "train": lambda: model.train_generalizable_projection(trained["rows"],
+            validation_samples=trained["tuning"], formula_targets=trained["targets"],
+            validation_formula_targets=trained["tuning_targets"], epochs=1, max_seconds=15),
+    }
+    with pytest.raises(ValueError, match="cached formula decoder differs from attached checkpoint"):
+        calls[operation]()
+    assert not (tmp_path / "must-not-save.json").exists()
+
+
 @pytest.mark.parametrize("changed", ("core", "configuration", "source"))
 def test_attached_formula_checkpoint_rejects_changed_core_configuration_or_source(trained, monkeypatch, changed):
     model = _clone(trained)

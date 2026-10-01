@@ -147,6 +147,22 @@ formula transport codec does not accept this new checkpoint schema. Fleet/Hub
 adapters for this profile require an explicit integration before a distributed
 campaign can use it.
 
+Cached inference checks its actual tensor contents against the loaded checkpoint
+before and after each batch. This also detects writes through `tensor.data`,
+which Torch version counters can miss. Checkpoint and codec properties return
+defensive copies. Editing the cached model directly requires an explicit new
+checkpoint and attachment; a changed model cannot keep reporting the old hash.
+The joint facade also rejects a sidecar that no longer matches its cached head
+before inference, projection, saving or resumed training. The tensor reference
+uses one additional model-sized allocation; checks run per batch, not per token.
+
+Finite stored weights can still overflow during projection. Formula inference
+now abstains on a nonfinite projection or decoder condition before activation
+saturation can hide that failure. Projection-only inference raises on nonfinite
+output. Neither path falls back to compiler output or an input vector. These are
+execution-integrity checks; they do not establish formula fidelity or alter the
+training objective, vocabulary, temperature, token bound or qualification gates.
+
 Lake must check actual generated output through the decoded-schema evaluator.
 A grammar check, low reconstruction loss, formula loss, registry row or schema
 typecheck alone does not establish a legal admit or source meaning. Qualification

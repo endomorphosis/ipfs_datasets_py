@@ -1,0 +1,96 @@
+{
+  "schema": "legacy-teacher-current-student-diagnostic/v1",
+  "scope": "Authored diagnostic texts, with one explicitly excluded Constitution fragment; no independent legal gold",
+  "rows": [
+    {
+      "id": "train-report",
+      "split": "training",
+      "text": "The agency shall submit reports.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "train-prohibition",
+      "split": "training",
+      "text": "The agency shall not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "train-minimum",
+      "split": "training",
+      "text": "The officer shall retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "train-deadline",
+      "split": "training",
+      "text": "Company A shall submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "tune-report",
+      "split": "tuning",
+      "text": "The agency must submit reports.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "tune-prohibition",
+      "split": "tuning",
+      "text": "The agency must not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "tune-minimum",
+      "split": "tuning",
+      "text": "The officer must retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "tune-deadline",
+      "split": "tuning",
+      "text": "Company A must submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "holdout-officer-prohibition",
+      "split": "holdout",
+      "text": "The officer shall not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "holdout-agency-minimum",
+      "split": "holdout",
+      "text": "The agency shall retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "holdout-company-prohibition",
+      "split": "holdout",
+      "text": "Company A must not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "holdout-officer-deadline",
+      "split": "holdout",
+      "text": "The officer must submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "excluded-restriction",
+      "split": "excluded",
+      "text": "The agency shall disclose records only if authorized.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "excluded-multiple",
+      "split": "excluded",
+      "text": "The agency shall submit reports and disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "excluded-constitution",
+      "split": "excluded",
+      "text": "All legislative Powers herein granted shall be vested in a Congress of the United States.",
+      "corpus": "constitution"
+    }
+  ]
+}

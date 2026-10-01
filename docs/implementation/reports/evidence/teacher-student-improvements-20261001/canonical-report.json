@@ -1,0 +1,152 @@
+{
+  "schema": "owned-decoder-canonical-gates-release-check/v1",
+  "operational_ok": true,
+  "source_export": {
+    "base_commit": "41bc964cb56c771567fb656996cb440092ab2cd8",
+    "export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source",
+    "exported_paths": [
+      "ipfs_datasets_py",
+      "scripts/ops/legal_ir",
+      "scripts/__init__.py",
+      "benchmarks/bench_semantic_logic_roundtrip.py",
+      "tests/fixtures",
+      "tests/conftest.py",
+      "tests/__init__.py",
+      "pyproject.toml",
+      "setup.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula.py",
+      "tests/unit/logic/test_autoencoder_lineage_runtimes.py"
+    ],
+    "owned_overrides": {
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py": "5dda48e79614f49c2e2c8b107811bde37260355f7d4ca4e0e54a88d883725204",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula.py": "6532864e953bece5d9103b28995d668eddf44c71bd16bef1f180f1578608903d",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula.py": "863f9ffb0f93c1469b309f94e70079017a84670c01f0986bff292b9aa48836bc"
+    },
+    "git_objects_read_only_alternate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/objects",
+    "dirty_parser_changes_included": false
+  },
+  "source_sha256": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/ipfs_datasets_py/logic/deontic/formula_builder.py": "dc53e7c4875a2afa98e100177c0d70e224e1945048f18993333f72c313529109",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/benchmarks/bench_semantic_logic_roundtrip.py": "353c61ca907ea2f6649d135d1e3b5d8fcdcae0fd67a14d7901d8ef63f5386d90",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/tests/fixtures/semantic_roundtrip/pilot_cases.json": "6d34cdd1392d3a9964f04e4260f722e076ba7b96c3cdd2fc59749460756cf167",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/scripts/ops/legal_ir/benchmark_semantic_pilot.py": "682ea1fb5431123a9004e7a46794fc0c47a1eebe12e2a2f6eda3ce6749c27757",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py": "5dda48e79614f49c2e2c8b107811bde37260355f7d4ca4e0e54a88d883725204",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula.py": "6532864e953bece5d9103b28995d668eddf44c71bd16bef1f180f1578608903d",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula.py": "863f9ffb0f93c1469b309f94e70079017a84670c01f0986bff292b9aa48836bc",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/ipfs_datasets_py/logic/autoformal/__init__.py": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/scripts/ops/legal_ir/smoke_legacy_linguistic_autoencoder.py": "42a88c5f4896ffc294fe1266ea01cefe13d7621ebe754abc5bb3bc625b403262",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/scripts/ops/legal_ir/validate_legacy_linguistic_teacher.py": "5d319aa53b5e38922db2fa725ee31a6074f2a5a38906a4f66b57d5e309893cdc",
+    "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/source/../run_gates.py": "aacf65eb2e96db9714784322d792d10f5c865950f0fd9ce65a437052ca0e81b5"
+  },
+  "decoder_tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "86",
+    "time": "12.354",
+    "timestamp": "2026-10-01T04:50:07.687645+00:00",
+    "hostname": "spark-b271"
+  },
+  "initial_test_collection": "Partial export lacked shared test fixture; added exact committed helper, reran both suites successfully. First collection logs retained.",
+  "pilot_summary": {
+    "case_count": 5,
+    "success_count": 5,
+    "execution_rate": 1.0,
+    "forward_semantic_coverage_count": 5,
+    "forward_semantic_coverage_rate": 1.0,
+    "full_roundtrip_coverage_count": 5,
+    "full_roundtrip_coverage_rate": 1.0,
+    "semantic_coverage_count": 5,
+    "coverage_rate": 1.0,
+    "mean_forward_semantic_score": 0.92,
+    "mean_cycle_semantic_score": 1.0,
+    "mean_end_to_end_semantic_score": 0.92,
+    "mean_forward_semantic_loss": 0.08,
+    "mean_cycle_semantic_loss": 0.0,
+    "mean_end_to_end_semantic_loss": 0.08,
+    "conditional_mean_forward_semantic_score": 0.92,
+    "conditional_mean_cycle_semantic_score": 1.0,
+    "conditional_mean_end_to_end_semantic_score": 0.92,
+    "mean_total_seconds": 0.07485394,
+    "timing_scope": "arm_reported_wall_time_on_executed_cases",
+    "copy_risk_count": 1,
+    "hammer_equivalent_count": 0,
+    "raw_lean_kernel_accepted_count": 0,
+    "nonvacuous_exact_identity_count": 0,
+    "validation_failure_count": 0
+  },
+  "pilot_l1_l2_cid_identity_count": 5,
+  "historical_reference": {
+    "forward": 0.915,
+    "cycle": 1.0,
+    "source": "docs/benchmarks/semantic_logic_roundtrip.md",
+    "scope": "existing five-case historical fixture; no new independent adjudication"
+  },
+  "canonical_gates_passed": 3,
+  "empty_vocab_abstentions": 3,
+  "lake_command": [
+    "/home/barberb/.elan/toolchains/leanprover--lean4---v4.26.0/bin/lake",
+    "build",
+    "Legal"
+  ],
+  "lake_executed": true,
+  "lake_ok": true,
+  "lake_scope": "numeric 19/20 boundary from canonical minimum-duration gate; not source-to-formula fidelity",
+  "timing": {
+    "canonical_vocabulary_plus_compile_wall_seconds_per_span": 0.05899314062359432,
+    "pilot_arm_seconds_per_span": 0.07485394,
+    "sample_count_canonical": 3,
+    "sample_count_pilot": 5,
+    "cold_process": true,
+    "metric_disk_cache": false,
+    "bridge_names": [],
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 0,
+    "bridge_on_evaluate": null
+  },
+  "artifacts": {
+    "export.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/export.json",
+      "sha256": "c6ef666f83d10329465773ebd766f27811ae615f8166f62129de52e18f329bf7"
+    },
+    "gates.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/gates.json",
+      "sha256": "53ed3922366ad27c19f3fc84ef06d167ac5770c70081a850d02bb0d4cba49c8c"
+    },
+    "pilot.json": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/pilot.json",
+      "sha256": "124be35a83a34e4a5906845df87d0d69afa465b1f51ced2a0c97723e1b0bdec6"
+    },
+    "decoder-tests-complete.xml": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/decoder-tests-complete.xml",
+      "sha256": "5a6ad04697bbc51e27575a7c1c48995b2b01402482561b5be707ae9b8880d159"
+    },
+    "gates.log": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/gates.log",
+      "sha256": "8207f6e9a768c9071c86cfe78b96e0fed10a730fba3f7a91c9382c53135f3f91"
+    },
+    "pilot.log": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/pilot.log",
+      "sha256": "8d09b422daf2c8ca8ae25170203e8aedc49537ca1e71514018bb27c2409d1767"
+    },
+    "decoder-tests-complete.log": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/current-legal-gates-20261001/decoder-tests-complete.log",
+      "sha256": "c22f0b69cc260c058e955786fde7b49e7958de39d0e7348d8a4bae2abad22fdb"
+    }
+  },
+  "admitted": false,
+  "formalized": false,
+  "roundtrip_ok": false,
+  "qualified": false,
+  "semantic_qualification": false,
+  "constitution_processed": false
+}

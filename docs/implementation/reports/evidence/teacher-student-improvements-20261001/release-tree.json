@@ -1,0 +1,45 @@
+{
+  "base_commit": "41bc964cb56c771567fb656996cb440092ab2cd8",
+  "owned_paths": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_teacher_distillation.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_view_reuse.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_teacher_distillation.py",
+    "tests/unit/logic/test_legacy_linguistic_view_reuse.py",
+    "tests/unit/logic/test_teacher_student_transfer_runner.py",
+    "tests/fixtures/logic/legacy_teacher_distillation.json",
+    "scripts/ops/legal_ir/validate_teacher_student_transfer.py"
+  ],
+  "exported_paths": [
+    "ipfs_datasets_py",
+    "scripts/ops/legal_ir",
+    "scripts/__init__.py",
+    "tests/unit/logic",
+    "tests/unit/optimizers/logic_theorem_optimizer",
+    "tests/fixtures",
+    "tests/conftest.py",
+    "tests/__init__.py",
+    "pyproject.toml",
+    "setup.py"
+  ],
+  "source_export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source",
+  "local_validation_commit": "c53200236ff1233802d41966fec898e7620a958d",
+  "export_tree": "76945be7012dc6e610a6588b55c8e2545ccaf83b",
+  "owned_sha256": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py": "5dda48e79614f49c2e2c8b107811bde37260355f7d4ca4e0e54a88d883725204",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_teacher_distillation.py": "adca358567c1520905c9bffec8166c01bfebe0dc6a8c63ad39940cb78ba43ff3",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_view_reuse.py": "bc172008fcecc3b81e32dd4bc6e293ef407293da0c81f57e496a7e18d629f819",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula.py": "6532864e953bece5d9103b28995d668eddf44c71bd16bef1f180f1578608903d",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula.py": "863f9ffb0f93c1469b309f94e70079017a84670c01f0986bff292b9aa48836bc",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_teacher_distillation.py": "f4cf008f17929c21001747f05a6ec70f39e4f467aed3ed0967ca0874b060df50",
+    "tests/unit/logic/test_legacy_linguistic_view_reuse.py": "98b394869a58539fb6e3e171b670977feac099acd1797c3556bdbc292714d74b",
+    "tests/unit/logic/test_teacher_student_transfer_runner.py": "819b589cf7c9a4d6f4a1ca01e7d9a1a2aff71a73f687eee38fe6790891d3f981",
+    "tests/fixtures/logic/legacy_teacher_distillation.json": "43520883f76513b7bc3716c71ccb55a27ef4e91b22628b7b59a58682e0b3648f",
+    "scripts/ops/legal_ir/validate_teacher_student_transfer.py": "e1744e54c16fca48a51cf7e7eff1360d2f137c026a3fe38c1970f990abda71c2"
+  },
+  "initial_test_validation_commit": "b8c804f6985426f34573393bfa489d05ee4b19a0"
+}

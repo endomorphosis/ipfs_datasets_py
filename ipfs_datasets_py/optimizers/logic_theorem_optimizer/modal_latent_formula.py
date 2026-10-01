@@ -451,24 +451,51 @@ class LatentFormulaDecoder:
     """Worker-private cached inference; inputs never include formula targets."""
     def __init__(self, checkpoint, *, expected_binding=None):
         self.torch, self.model, _ = _restore(checkpoint, expected_binding)
-        self.checkpoint = copy.deepcopy(checkpoint)
-        self.checkpoint_sha256 = checkpoint_digest(checkpoint)
-        self.codec = self.checkpoint["codec"]
+        self._checkpoint = copy.deepcopy(checkpoint)
+        self._checkpoint_sha256 = checkpoint_digest(checkpoint)
+        self._codec = self._checkpoint["codec"]
+        # A version-counter-only check misses writes through tensor.data. Keep
+        # one tensor-sized reference, rather than repeatedly serializing the
+        # full JSON checkpoint (which also contains Adam and provenance).
+        self._reference_weights = {name: tensor.detach().clone()
+                                   for name, tensor in self.model.state_dict().items()}
+
+    @property
+    def checkpoint(self):
+        """A diagnostic snapshot; callers cannot mutate inference metadata."""
+        return copy.deepcopy(self._checkpoint)
+
+    @property
+    def codec(self):
+        return copy.deepcopy(self._codec)
+
+    @property
+    def checkpoint_sha256(self):
+        return self._checkpoint_sha256
 
     def _check(self):
         _torch()
-        _require(self.checkpoint["implementation"] == _implementation(), "latent source provenance differs")
+        _require(self._checkpoint["implementation"] == _implementation(), "latent source provenance differs")
+        state = self.model.state_dict()
+        _require(set(state) == set(self._reference_weights), "cached decoder weights differ from checkpoint")
+        _require(all(tensor.shape == self._reference_weights[name].shape
+                     and tensor.dtype == self._reference_weights[name].dtype
+                     and tensor.device == self._reference_weights[name].device
+                     and self.torch.equal(tensor, self._reference_weights[name])
+                     for name, tensor in state.items()), "cached decoder weights differ from checkpoint")
 
     def project(self, latents):
         self._check()
         _require(type(latents) in (list, tuple) and 1 <= len(latents) <= 128, "one to 128 vectors required")
         for latent in latents:
-            _vector(latent, self.checkpoint["binding"]["dimension"], "latent")
+            _vector(latent, self._checkpoint["binding"]["dimension"], "latent")
         self.model.eval()
         with self.torch.no_grad():
             values = self.model.project(self.torch.tensor(latents, dtype=self.torch.float32))
             _require(bool(self.torch.isfinite(values).all()), "nonfinite learned projection")
-            return values.tolist()
+            result = values.tolist()
+        self._check()
+        return result
 
     def _decode(self, row, projection_id):
         base = {"id": row["id"], "source_sha256": hashlib.sha256(row["source_text"].encode()).hexdigest(),
@@ -480,7 +507,7 @@ class LatentFormulaDecoder:
             "temperature": 0, **FALSE}
         if projection_id != PROJECTION_ID:
             return {**base, "reason": "unsupported_formula_projection"}
-        if not self.checkpoint["progress"]["optimizer_steps"]:
+        if not self._checkpoint["progress"]["optimizer_steps"]:
             return {**base, "reason": "untrained_formula_head"}
         if not bool(self.model.output.weight.detach().any()) and not bool(self.model.output.bias.detach().any()):
             return {**base, "reason": "zero_output_head"}
@@ -489,9 +516,13 @@ class LatentFormulaDecoder:
         self.model.eval()
         with torch.no_grad():
             projected = self.model.project(torch.tensor([row["latent"]], dtype=torch.float32))
+            if not bool(torch.isfinite(projected).all()):
+                return {**base, "reason": "nonfinite_learned_projection"}
             hidden = self.model.start(projected)
+            if not bool(torch.isfinite(hidden).all()):
+                return {**base, "reason": "nonfinite_decoder_condition"}
             for _ in range(63):
-                allowed = codec_module.allowed_token_ids(self.codec, prefix)
+                allowed = codec_module.allowed_token_ids(self._codec, prefix)
                 if not allowed:
                     return {**base, "reason": "no_allowed_grammar_token", "generated_token_ids": prefix}
                 logits, hidden = self.model.next_logits(torch.tensor([[prefix[-1]]], dtype=torch.long), hidden)
@@ -507,7 +538,7 @@ class LatentFormulaDecoder:
                 prefix.append(allowed[int(ranking[0])])
                 if prefix[-1] == codec_module.TARGET_EOS:
                     try:
-                        canonical_ir = codec_module.decode_target(self.codec, prefix)
+                        canonical_ir = codec_module.decode_target(self._codec, prefix)
                     except ValueError as error:
                         return {**base, "reason": "generated_ir_rejected", "detail": str(error), "generated_token_ids": prefix}
                     display = _display(canonical_ir)
@@ -526,10 +557,11 @@ class LatentFormulaDecoder:
         self._check()
         _require(type(projection_id) is str and 0 < len(projection_id) <= 256, "bounded projection id required")
         _require(type(rows) in (list, tuple) and 1 <= len(rows) <= 128, "one to 128 inference rows required")
-        validated = _rows(rows, self.checkpoint["binding"]["dimension"], training=False)
+        validated = _rows(rows, self._checkpoint["binding"]["dimension"], training=False)
         results = [self._decode(row, projection_id) for row in validated]
+        self._check()
         count = sum(row["status"] == "decoded" for row in results)
-        return {"schema": "modal-latent-formula-inference/v1", "binding": copy.deepcopy(self.checkpoint["binding"]),
+        return {"schema": "modal-latent-formula-inference/v1", "binding": copy.deepcopy(self._checkpoint["binding"]),
             "checkpoint_sha256": self.checkpoint_sha256, "rows": results, "decoded_count": count,
             "status": "decoded" if count == len(rows) else "partial" if count else "abstained",
             "decoded_formulas_generated": count > 0, "training_executed": False,

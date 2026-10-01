@@ -1,0 +1,54 @@
+{
+  "dimension": 384,
+  "training_steps": 100,
+  "training_before": {
+    "token_cross_entropy": 2.879323720932007,
+    "reconstruction_mse": 0.07642007619142532,
+    "rows_evaluated": 2,
+    "token_count": 30,
+    "complete": true,
+    "teacher_forcing": true,
+    "used_for_fit_or_selection": false
+  },
+  "training_after": {
+    "token_cross_entropy": 0.0048946295864880085,
+    "reconstruction_mse": 0.0005239970050752163,
+    "rows_evaluated": 2,
+    "token_count": 30,
+    "complete": true,
+    "teacher_forcing": true,
+    "used_for_fit_or_selection": false
+  },
+  "normal_inference_status": "decoded",
+  "normal_formulas_exact": true,
+  "cached_weights_mutation_rejected": {
+    "projection": "cached decoder weights differ from checkpoint",
+    "inference": "cached decoder weights differ from checkpoint"
+  },
+  "nonfinite_projection": {
+    "status": "abstained",
+    "reasons": [
+      "nonfinite_learned_projection",
+      "nonfinite_learned_projection"
+    ]
+  },
+  "reference_tensor_bytes": 45272,
+  "integrity_check_warm_seconds": [
+    0.0005583758465945721,
+    0.0005229830276221037,
+    0.0005252067930996418,
+    0.0005078630056232214,
+    0.000510822981595993
+  ],
+  "integrity_check_warm_median_seconds": 0.0005229830276221037,
+  "measurement_scope": "authored synthetic vectors and typed rule targets, CPU1; no compiler bridge, semantic qualification or legal admit",
+  "qualified": false,
+  "admitted": false,
+  "formalized": false,
+  "roundtrip_ok": false,
+  "proof_authority": false,
+  "semantic_correctness_verified": false,
+  "promotion_performed": false,
+  "publication_performed": false,
+  "lake_executed": false
+}

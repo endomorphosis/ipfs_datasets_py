@@ -18,6 +18,8 @@ belong to their named backend; they are not interchangeable across backends.
 | Train a source-only learned formula decoder | [Learned legal formula training](learned_legal_formula_training.md) |
 | Preserve and train the old 8D linguistic/IR feature decoder | [Legacy linguistic training](legacy_linguistic_training.md) |
 | Reproduce the September 17 teacher and prepare screened distillation targets | [Historical teacher fidelity, fixes and performance](legacy_teacher_fidelity.md) |
+| Transfer screened teacher evidence into separately embedded 384D formula training | [Teacher-to-student preparation and smoke](teacher_student_transfer.md) |
+| Train the current latent projection and formula decoder together | [Joint formula training](modal_joint_formula_training.md) |
 | Recover historical 8D training optimizations | [Legacy speed history and selective ports](legacy_speed_history.md) |
 | Try native UI/UX learning from real compiler output | [Runnable native quickstart](native_feature_quickstart.md) |
 | Train UI DOM/IDL bindings, resume, and choose HF datasets | [UI training, datasets and bindings](ui_datasets_and_bindings.md) |

@@ -326,3 +326,101 @@ duplication in the 0.875 MB summary. Full artifacts remain in the local evidence
 directory with checksums. Weight materialization, full wrapper/decompiler work,
 and proposal copying still need separate profiling before production-scale
 training claims. This run neither uploads to Hugging Face nor restarts a worker.
+
+## Optional reuse of identical readouts within one encode call
+
+The separate `legacy_v1.linguistic_view_reuse` module avoids recomputing an
+identical LegalIR view distribution several times during numerical encoding.
+It supports both preserved linguistic profiles and does not modify their frozen
+code, representations, objectives or checkpoint formats. Select it explicitly;
+it is not enabled automatically by hardware detection.
+
+| Loader `profile` | Model class |
+| --- | --- |
+| `historical_daemon` | `ViewReuseHistoricalDaemonAutoencoder` |
+| `cached` | `ViewReuseCachedLinguisticAutoencoder` |
+| `streamed_cached` | `ViewReuseStreamedCachedLinguisticAutoencoder` |
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1.linguistic_view_reuse import (
+    load_checkpoint, load_training_checkpoint,
+)
+
+teacher_model = load_checkpoint(
+    "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+    expected_sha256="7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+    profile="historical_daemon", compute_device="cpu",
+)
+sample = teacher_model.build_sample(
+    title="fixture", section="prohibition",
+    text="The agency shall not disclose records.",
+)
+encoded = teacher_model.encode(sample, use_sample_memory=False)
+decoded_vector = teacher_model.decode(encoded)
+assert teacher_model.describe()["view_reuse"]["last_encode"]["retained_after_encode"] == 0
+
+# Resume an existing bundle created by this selected preserved profile:
+# resumed = load_training_checkpoint(existing_bundle, profile="historical_daemon")
+```
+
+Direct model construction and `train_generalizable_projection()` use the same
+arguments as their corresponding preserved classes. The strict loaders verify
+existing local files and retain checkpoint provenance; they never download
+weights. A bundle must match the selected profile. The `cached` and
+`streamed_cached` bundle loaders also accept the existing runtime cache bounds.
+The historical daemon retains its fixed cache configuration.
+
+The memo exists only inside one `encode()` call. Its key includes a SHA-256 of
+the complete legal sample, the weight-state object and tracked revision,
+sample-memory mode, actual target distribution and ordered family candidates.
+The complete sample includes citation/title/section and nested IR/parser/frame
+metadata, preserving the corrected source isolation. Existing configuration and
+source guards run on memo hits as well as misses. Different weights or targets
+cannot reuse an earlier readout. The first readout executes the original
+numerical method, and callers receive independently mutable dictionaries.
+
+At most eight readouts are retained, and all are discarded when encoding
+returns or raises. Source JSON is hashed transiently rather than retained as a
+large key. This is an entry bound, not a byte bound: temporary readout size
+depends on the number of IR families. There is no prediction cache across
+calls, samples or epochs. Optimizer updates outside `encode()` still execute
+the original methods, and training evaluations can use the optimization without
+changing the acceptance criteria. Use separate model instances for concurrent
+training; this does not provide atomic inference over concurrently mutated
+weights.
+
+Nineteen focused regression tests passed, covering weighted output equality,
+configuration/source guards, state and target changes, mutable source metadata,
+failure cleanup, accepted training reports, complete weight states, checkpoint
+reload and resumed updates for all three profiles. The reports match after
+excluding wall-clock timing fields. This establishes numerical parity on the
+tested cases, not formula fidelity or proof admission.
+
+### Additional October 1 numeric benchmark
+
+The [recorded receipt](../implementation/reports/evidence/teacher-student-improvements-20261001/legacy-view-reuse.json)
+binds the implementation source hash and records every timing repetition. On
+one machine using CPU, three authored gate cases were measured after warming
+the existing feature caches. Each timing group made ten passes over all three
+cases; seven groups alternated baseline and optimized order. The table reports
+median wall time per span for numerical `encode()` only.
+
+| Profile | Existing implementation | With encode-local reuse |
+| --- | ---: | ---: |
+| Cached bare linguistic profile | 9.128 ms/span | 8.708 ms/span |
+| Full historical daemon profile | 19.198 ms/span | 11.986 ms/span |
+
+Configuration: bridge names `[]`, `legal_ir_target_count=0`, prover evaluation
+false, metric disk cache disabled (`IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE=0`),
+one worker, `use_sample_memory=False`. These are warm numeric measurements with
+fresh small cores. No bridge-on evaluate or actual Lake build ran in this
+benchmark, and it did not measure full wrapper compilation/decompilation,
+retained-checkpoint throughput, CUDA or multiple machines.
+
+Five fresh one-epoch runs per implementation, each using one training and one
+validation span, accepted identical updates and produced identical complete
+states. Their timing varied: the cached profile was slightly slower in this
+receipt, while the daemon was faster; an earlier measurement showed no daemon
+epoch improvement. **No stable training speedup is established.** Proposal
+copying and bookkeeping remain separate costs. The numerical inference result
+above is not a faster legal-IR bridge run and does not change qualification.

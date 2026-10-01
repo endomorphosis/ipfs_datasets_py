@@ -248,3 +248,69 @@ def test_checkpoint_has_no_training_sources_and_no_source_model(trained):
     assert checkpoint["codec"]["source_vocabulary"] == ["<pad>", "<unk>", "latent"]
     assert not any("source" in key or "encoder" in key for key in checkpoint["model_state"])
     assert "source_text" not in json.dumps(checkpoint)
+
+
+@pytest.mark.parametrize("dimension", [8, 384])
+def test_cached_runtime_weights_cannot_change_under_original_checkpoint_digest(dimension):
+    samples = train_rows(dimension)
+    checkpoint = learning.build_checkpoint(binding(dimension), samples, [], **OPTIONS)
+    decoder = learning.LatentFormulaDecoder(checkpoint)
+    version = decoder.model.projection_up.bias._version
+    # .data writes are deliberately tested: Torch version counters alone do
+    # not detect this common way of modifying a cached inference model.
+    decoder.model.projection_up.bias.data.add_(.25)
+    assert decoder.model.projection_up.bias._version == version
+    for operation in (lambda: decoder.project([samples[0]["latent"]]),
+                      lambda: decoder.infer(inference(samples))):
+        with pytest.raises(ValueError, match="cached decoder weights differ"):
+            operation()
+
+
+def test_cached_runtime_checkpoint_and_codec_are_defensive_snapshots(trained):
+    decoder = learning.LatentFormulaDecoder(trained["checkpoint"])
+    expected = decoder.infer(inference(train_rows()))
+    decoder.checkpoint["progress"]["optimizer_steps"] = 0
+    decoder.codec["target_vocabulary"][0] = "untrusted replacement"
+    assert decoder.checkpoint == trained["checkpoint"]
+    assert decoder.infer(inference(train_rows())) == expected
+
+
+def test_cached_runtime_rechecks_weights_after_batch_without_per_row_provenance_work(trained, monkeypatch):
+    decoder = learning.LatentFormulaDecoder(trained["checkpoint"])
+    original_check, checks = decoder._check, []
+    def checked():
+        checks.append(True)
+        original_check()
+    monkeypatch.setattr(decoder, "_check", checked)
+    decoder.infer(inference(train_rows()))
+    assert len(checks) == 2
+    original_decode = decoder._decode
+    def changed_during_inference(row, projection):
+        result = original_decode(row, projection)
+        decoder.model.projection_up.bias.data.add_(.25)
+        return result
+    monkeypatch.setattr(decoder, "_decode", changed_during_inference)
+    with pytest.raises(ValueError, match="cached decoder weights differ"):
+        decoder.infer(inference(train_rows()))
+
+
+@pytest.mark.parametrize("dimension", [8, 384])
+def test_nonfinite_projection_abstains_before_saturation_can_hide_overflow(dimension):
+    samples = train_rows(dimension)
+    initial = learning.build_checkpoint(binding(dimension), samples, [], **OPTIONS)
+    checkpoint = learning.train(initial, samples, [], epochs=1)["checkpoint"]
+    for name, value in (("projection_down.weight", 0.), ("projection_down.bias", 100.),
+                        ("projection_up.weight", 1e38), ("projection_up.bias", 0.),
+                        ("condition.weight", 1e-6), ("condition.bias", 0.)):
+        checkpoint["model_state"][name] = torch.full_like(
+            torch.tensor(checkpoint["model_state"][name]), value).tolist()
+    # Every stored weight is finite. The residual projection overflows, while
+    # the following tanh would saturate infinity into a finite hidden state.
+    decoder = learning.LatentFormulaDecoder(checkpoint)
+    result = decoder.infer(inference(samples))
+    assert result["status"] == "abstained"
+    assert all(row["reason"] == "nonfinite_learned_projection" and row["canonical_ir"] is None
+               and row["formal_outputs"] == [] for row in result["rows"])
+    with pytest.raises(ValueError, match="nonfinite learned projection"):
+        decoder.project([samples[0]["latent"]])
+    assert all(result[key] is False for key in learning.FALSE)
