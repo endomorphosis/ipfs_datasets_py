@@ -1,5 +1,10 @@
 # Native projection validation for each modality
 
+For the additive v4 target producer and v2 validation/training APIs, including
+ProgramIR, Intent/UI and real SANY coverage, see
+[native projection coverage v2](native_projection_coverage_v2.md).
+The APIs and measurements below describe the preserved first version.
+
 Use native target preparation, per-projection validation, and the modality's
 actual Lake build before treating a training panel as projection-validated.
 The older structural feature recipes remain diagnostic. Their reconstruction

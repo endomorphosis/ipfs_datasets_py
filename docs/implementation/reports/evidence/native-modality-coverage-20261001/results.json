@@ -1,0 +1,200 @@
+{
+  "schema": "native-projection-coverage-release/v2",
+  "distinct_tests_passed": 375,
+  "test_runs": [
+    {
+      "path": "baseline-regressions.xml",
+      "cases": 251,
+      "failed": 0,
+      "skipped": 1
+    },
+    {
+      "path": "baseline-native-training.xml",
+      "cases": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "path": "release-new-tests.xml",
+      "cases": 111,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "path": "release-affected-tests-r2.xml",
+      "cases": 42,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "domains": {
+    "intent_ir": {
+      "library": "IntentIR",
+      "lake_status": "passed",
+      "passed_projections": 20,
+      "emitted_projections": 23,
+      "wall_seconds": 3.956146585987881,
+      "strict_training_allowed": false
+    },
+    "security_ir": {
+      "library": "SecurityIR",
+      "lake_status": "passed",
+      "passed_projections": 13,
+      "emitted_projections": 16,
+      "wall_seconds": 3.191508780932054,
+      "strict_training_allowed": false
+    },
+    "ui_ux_ir": {
+      "library": "UIUXIR",
+      "lake_status": "passed",
+      "passed_projections": 15,
+      "emitted_projections": 16,
+      "wall_seconds": 3.367555743083358,
+      "strict_training_allowed": false
+    },
+    "legal_ir": {
+      "library": "LegalIR",
+      "lake_status": "passed",
+      "passed_projections": 9,
+      "emitted_projections": 11,
+      "wall_seconds": 6.588397668208927,
+      "strict_training_allowed": false
+    }
+  },
+  "named_formula_cases_passed": 32,
+  "passed_projections": 57,
+  "emitted_projections": 66,
+  "previous_passed_projections": 44,
+  "remaining_projection_blockers": [
+    {
+      "domain_id": "intent_ir",
+      "projection_id": "intent-extended/datalog/default/v1",
+      "reason": "reified_Intent_declaration_data_is_not_domain_Datalog_or_CHC_semantics"
+    },
+    {
+      "domain_id": "intent_ir",
+      "projection_id": "intent-route/facts/v1",
+      "reason": "unexecuted_action_declaration_is_not_an_observed_FOL_fact"
+    },
+    {
+      "domain_id": "intent_ir",
+      "projection_id": "intent-extended/horn_chc/default/v1",
+      "reason": "reified_Intent_declaration_data_is_not_domain_Datalog_or_CHC_semantics"
+    },
+    {
+      "domain_id": "security_ir",
+      "projection_id": "hyperproperty.ir/v1",
+      "reason": "no_semantics_preserving_Lean_emitter_for_projection:hyperproperty.ir/v1"
+    },
+    {
+      "domain_id": "security_ir",
+      "projection_id": "separation_logic.heap_model/v1",
+      "reason": "no_semantics_preserving_Lean_emitter_for_projection:separation_logic.heap_model/v1"
+    },
+    {
+      "domain_id": "security_ir",
+      "projection_id": "separation_logic.ir/v1",
+      "reason": "no_semantics_preserving_Lean_emitter_for_projection:separation_logic.ir/v1"
+    },
+    {
+      "domain_id": "ui_ux_ir",
+      "projection_id": "ui_ux_ir:tdfol",
+      "reason": "UI_before_requires_explicit_occurrence_and_precedence_semantics"
+    },
+    {
+      "domain_id": "legal_ir",
+      "projection_id": "legal-ir/modal-family/deontic/v3",
+      "reason": "native_projection_not_ready"
+    },
+    {
+      "domain_id": "legal_ir",
+      "projection_id": "legal-ir/modal-family/temporal/v3",
+      "reason": "native_projection_not_ready"
+    }
+  ],
+  "SANY_checks": [
+    {
+      "domain_id": "intent_ir",
+      "projection_id": "intent_ir/bounded_state/tla_plus/v4",
+      "status": "passed",
+      "tool_sha256": {
+        "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+        "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+      }
+    },
+    {
+      "domain_id": "security_ir",
+      "projection_id": "security_ir/bounded_state/tla_plus/v4",
+      "status": "passed",
+      "tool_sha256": {
+        "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+        "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+      }
+    },
+    {
+      "domain_id": "ui_ux_ir",
+      "projection_id": "ui_ux_ir/bounded_state/tla_plus/v4",
+      "status": "passed",
+      "tool_sha256": {
+        "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+        "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+      }
+    }
+  ],
+  "training": {
+    "integration_passed": true,
+    "source_count": 3,
+    "optimizer_steps": 2,
+    "selected_epoch": 0,
+    "objective_before": 0.001113658980810743,
+    "objective_after": 0.001113658980810743,
+    "improved": false,
+    "loss_coverage": {
+      "training": {
+        "all_emitted_projections_have_loss": true,
+        "projection_occurrences": 18,
+        "rows_per_projection": {
+          "legal-ir/canonical-norms/v1": 2,
+          "legal_ir/native_formula/CEC/v3": 2,
+          "legal_ir/native_formula/DCEC/v3": 2,
+          "legal_ir/native_formula/DFOL/v3": 2,
+          "legal_ir/native_formula/FOL/v3": 2,
+          "legal_ir/native_formula/TDFOL/v3": 2,
+          "legal_ir/native_formula/TFOL/v3": 2,
+          "legal_ir/native_formula/frame_logic/v3": 2,
+          "legal_ir/native_formula/propositional/v3": 2
+        },
+        "scope": "retained_structural_features_only",
+        "unknown_atoms_are_not_reconstructed": true
+      },
+      "tuning": {
+        "all_emitted_projections_have_loss": true,
+        "projection_occurrences": 9,
+        "rows_per_projection": {
+          "legal-ir/canonical-norms/v1": 1,
+          "legal_ir/native_formula/CEC/v3": 1,
+          "legal_ir/native_formula/DCEC/v3": 1,
+          "legal_ir/native_formula/DFOL/v3": 1,
+          "legal_ir/native_formula/FOL/v3": 1,
+          "legal_ir/native_formula/TDFOL/v3": 1,
+          "legal_ir/native_formula/TFOL/v3": 1,
+          "legal_ir/native_formula/frame_logic/v3": 1,
+          "legal_ir/native_formula/propositional/v3": 1
+        },
+        "scope": "retained_structural_features_only",
+        "unknown_atoms_are_not_reconstructed": true
+      }
+    },
+    "total_wall_seconds": 18.0589336019475,
+    "native_preparation_and_Lake_seconds": 12.382495790952817,
+    "numerical_preparation_seconds": 2.472214724868536,
+    "optimization_seconds": 0.20887189591303468
+  },
+  "bridge_evaluation_executed": false,
+  "external_model_checker_executed": false,
+  "weights_downloaded": false,
+  "admitted": false,
+  "qualified": false,
+  "source_semantics_verified": false,
+  "constitution_formalized": false
+}

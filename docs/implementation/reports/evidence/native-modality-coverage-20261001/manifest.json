@@ -1,0 +1,693 @@
+{
+  "schema": "native-modality-coverage-evidence/v2",
+  "base_commit": "037839c18e5a7784cb22f0aecd320105b071e6e4",
+  "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native-modality-coverage-20261001/source",
+  "candidate_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/family_training_v4.py": "5af04f8c3f6f1a378b69d85e8169cd167f442a0e6e7ad17baaedd6157dcd455c",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lake_v2.py": "7f1df1fb2c25dfb246494ea5baf19737eba39e32e33b7756fd00fcbe32e4e94b",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters_v2.py": "a980bed6bb2aded90ba49af8e8c85d4d9e448c6dbc4e877f5ae3bec83d61ed09",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_intent_lean.py": "b2039fb5dd9579fb2ed26ff3e652005c0caf6858c2956b4b66ca2f71dd9c7a67",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_program_lean.py": "14d9a4aebb305ffaa26ca30c9ab154b12df9acdd77b10a033da9f1928d7e3288",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_tla_projection.py": "e1611c42195afbb1a436df9216e26dcc7b1d5630bcb23bd6a8b55c9e7b5f9cdc",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_ui_lean.py": "f772fbbcc900d008f732001ac4bf48a4bdbe8577ae2a214fad8fde1964f34239",
+    "ipfs_datasets_py/logic/formalization/autoencoder/projection_validation_contract_v2.py": "b9751fa54c1142eb63a6c27cd2f7177248b2d72b96354414e00ff848a2d90c4f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_validated_v2.py": "9fcd78dd7c7294fa8ce637f7916e9341636af4679a644deda6dd9087f23b4a7b",
+    "scripts/ops/autoencoder/check_native_projection_lake_v2.py": "7b38f973e443a56476e42a050e608747aa8c6776fc72a477868c02565373718e",
+    "scripts/ops/autoencoder/smoke_validated_projection_training_v2.py": "5a3b298c291ebf3c782e77d0d64ecf807436c39ede6354eb2affe04270489e58",
+    "tests/unit/logic/formalization/autoencoder/test_native_intent_lean.py": "4defbc66f6792e15812e1f241a532096f894835bfd4e11852d1c0d2a2ec9cbe9",
+    "tests/unit/logic/formalization/autoencoder/test_native_program_lean.py": "47dbc594ae5ede22d7130dde2ebd893e5682f5cfe94cf71c2401f7852bd8f3bf",
+    "tests/unit/logic/formalization/autoencoder/test_native_tla_projection.py": "f6d8e1b820353c0a76793f7ef6df27817f4d6234cdbfa79b9f7e59fb6aff782d",
+    "tests/unit/logic/formalization/autoencoder/test_native_ui_lean.py": "ba43efec771235d027831675f53e91f26e5fb19f3c0ea15b9e5232304429849c",
+    "tests/unit/logic/formalization/autoencoder/test_native_family_validation_v2.py": "ff18b1f349c34799971270f591b3e74b8d6d9dc319ca2cbcc64cf54072f80a53",
+    "docs/autoencoders/native_projection_coverage_v2.md": "6c1c7f0fa28567600d15ec25fe6f31c288d35fceaeb2197da287ab9edb243f7a",
+    "docs/autoencoders/native_projection_validation.md": "adc9d3a28266ab70a3956c5d4642c79599bb2129f7d3efb41d596e740a04fff5"
+  },
+  "tests": {
+    "distinct_passed": 375,
+    "distinct_failed": 0,
+    "distinct_skipped": 0,
+    "runs": [
+      {
+        "path": "baseline-regressions.xml",
+        "cases": 251,
+        "failed": 0,
+        "skipped": 1
+      },
+      {
+        "path": "baseline-native-training.xml",
+        "cases": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "release-new-tests.xml",
+        "cases": 111,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "path": "release-affected-tests-r2.xml",
+        "cases": 42,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "note": "The initial optional native test was rerun with the installed Lake explicitly selected. Affected tests were rerun after final UI metadata/source checks."
+  },
+  "final_matrix": "matrix-v2-r2/summary.json",
+  "final_training": "training-v2-r2/summary.json",
+  "superseded_attempts": {
+    "matrix-v2-r1": "Valid partial evidence before reviewed UI state metadata support; source snapshot in attempt-sources/r1.",
+    "training-v2-r1": "Successful smoke repeated after final TLA producer change.",
+    "native-validation-v2-tests.xml": "Incomplete test run invalidated by concurrent producer edits; final affected tests passed.",
+    "intent-lean-tests-r1.xml": "Superseded fixture/review iteration; final Intent tests passed.",
+    "intent-lean-tests-r2.xml": "Superseded fixture/review iteration; final Intent tests passed."
+  },
+  "measurement_scope": "Authored native declarations, fresh Lake workspaces, shared host. Final matrix, training smoke, and focused tests ran concurrently. Not a span-throughput or bridge-on evaluation.",
+  "source_snapshots": [
+    "attempt-sources/r1/sha256.json",
+    "attempt-sources/final/sha256.json"
+  ],
+  "archive": {
+    "file": "native-projection-coverage.tar.gz",
+    "sha256": "c3854426e326b6ab83263e55ac2636f341d86090cd9d64e92551d92187edcc32",
+    "bytes": 1138943,
+    "members": [
+      {
+        "path": "attempt-sources/final/docs/autoencoders/native_projection_coverage_v2.md",
+        "bytes": 10927
+      },
+      {
+        "path": "attempt-sources/final/docs/autoencoders/native_projection_validation.md",
+        "bytes": 10466
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/logic/formalization/autoencoder/family_training_v4.py",
+        "bytes": 6831
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lake_v2.py",
+        "bytes": 14207
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters_v2.py",
+        "bytes": 666
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/logic/formalization/autoencoder/native_intent_lean.py",
+        "bytes": 20471
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/logic/formalization/autoencoder/native_program_lean.py",
+        "bytes": 19008
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/logic/formalization/autoencoder/native_tla_projection.py",
+        "bytes": 28084
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/logic/formalization/autoencoder/native_ui_lean.py",
+        "bytes": 21130
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/logic/formalization/autoencoder/projection_validation_contract_v2.py",
+        "bytes": 18359
+      },
+      {
+        "path": "attempt-sources/final/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_validated_v2.py",
+        "bytes": 21891
+      },
+      {
+        "path": "attempt-sources/final/scripts/ops/autoencoder/check_native_projection_lake_v2.py",
+        "bytes": 7715
+      },
+      {
+        "path": "attempt-sources/final/scripts/ops/autoencoder/smoke_validated_projection_training_v2.py",
+        "bytes": 7425
+      },
+      {
+        "path": "attempt-sources/final/sha256.json",
+        "bytes": 2596
+      },
+      {
+        "path": "attempt-sources/final/tests/unit/logic/formalization/autoencoder/test_native_family_validation_v2.py",
+        "bytes": 13337
+      },
+      {
+        "path": "attempt-sources/final/tests/unit/logic/formalization/autoencoder/test_native_intent_lean.py",
+        "bytes": 13393
+      },
+      {
+        "path": "attempt-sources/final/tests/unit/logic/formalization/autoencoder/test_native_program_lean.py",
+        "bytes": 13142
+      },
+      {
+        "path": "attempt-sources/final/tests/unit/logic/formalization/autoencoder/test_native_tla_projection.py",
+        "bytes": 12844
+      },
+      {
+        "path": "attempt-sources/final/tests/unit/logic/formalization/autoencoder/test_native_ui_lean.py",
+        "bytes": 10975
+      },
+      {
+        "path": "attempt-sources/r1/docs/autoencoders/native_projection_coverage_v2.md",
+        "bytes": 7527
+      },
+      {
+        "path": "attempt-sources/r1/docs/autoencoders/native_projection_validation.md",
+        "bytes": 10466
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/logic/formalization/autoencoder/family_training_v4.py",
+        "bytes": 6831
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lake_v2.py",
+        "bytes": 14207
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters_v2.py",
+        "bytes": 666
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/logic/formalization/autoencoder/native_intent_lean.py",
+        "bytes": 20471
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/logic/formalization/autoencoder/native_program_lean.py",
+        "bytes": 19008
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/logic/formalization/autoencoder/native_tla_projection.py",
+        "bytes": 19343
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/logic/formalization/autoencoder/native_ui_lean.py",
+        "bytes": 21130
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/logic/formalization/autoencoder/projection_validation_contract_v2.py",
+        "bytes": 18359
+      },
+      {
+        "path": "attempt-sources/r1/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_validated_v2.py",
+        "bytes": 21891
+      },
+      {
+        "path": "attempt-sources/r1/scripts/ops/autoencoder/check_native_projection_lake_v2.py",
+        "bytes": 7715
+      },
+      {
+        "path": "attempt-sources/r1/scripts/ops/autoencoder/smoke_validated_projection_training_v2.py",
+        "bytes": 7425
+      },
+      {
+        "path": "attempt-sources/r1/sha256.json",
+        "bytes": 2596
+      },
+      {
+        "path": "attempt-sources/r1/tests/unit/logic/formalization/autoencoder/test_native_family_validation_v2.py",
+        "bytes": 13337
+      },
+      {
+        "path": "attempt-sources/r1/tests/unit/logic/formalization/autoencoder/test_native_intent_lean.py",
+        "bytes": 13393
+      },
+      {
+        "path": "attempt-sources/r1/tests/unit/logic/formalization/autoencoder/test_native_program_lean.py",
+        "bytes": 13142
+      },
+      {
+        "path": "attempt-sources/r1/tests/unit/logic/formalization/autoencoder/test_native_tla_projection.py",
+        "bytes": 9437
+      },
+      {
+        "path": "attempt-sources/r1/tests/unit/logic/formalization/autoencoder/test_native_ui_lean.py",
+        "bytes": 10975
+      },
+      {
+        "path": "baseline-native-training.log",
+        "bytes": 1159
+      },
+      {
+        "path": "baseline-native-training.xml",
+        "bytes": 431
+      },
+      {
+        "path": "baseline-regressions.log",
+        "bytes": 2619
+      },
+      {
+        "path": "baseline-regressions.xml",
+        "bytes": 47415
+      },
+      {
+        "path": "intent-lean-tests-r1.log",
+        "bytes": 65269
+      },
+      {
+        "path": "intent-lean-tests-r1.xml",
+        "bytes": 67151
+      },
+      {
+        "path": "intent-lean-tests-r2.log",
+        "bytes": 5466
+      },
+      {
+        "path": "intent-lean-tests-r2.xml",
+        "bytes": 9667
+      },
+      {
+        "path": "intent-lean-tests-r3.log",
+        "bytes": 1224
+      },
+      {
+        "path": "intent-lean-tests-r3.xml",
+        "bytes": 5738
+      },
+      {
+        "path": "intent-lean-tests-r4.log",
+        "bytes": 1224
+      },
+      {
+        "path": "intent-lean-tests-r4.xml",
+        "bytes": 6919
+      },
+      {
+        "path": "matrix-v2-r1/intent_ir/IntentIR.lean",
+        "bytes": 22511
+      },
+      {
+        "path": "matrix-v2-r1/intent_ir/batch-validation.json",
+        "bytes": 36851
+      },
+      {
+        "path": "matrix-v2-r1/intent_ir/native-targets.json",
+        "bytes": 294290
+      },
+      {
+        "path": "matrix-v2-r1/intent_ir/receipt.json",
+        "bytes": 112467
+      },
+      {
+        "path": "matrix-v2-r1/intent_ir/validation.json",
+        "bytes": 28138
+      },
+      {
+        "path": "matrix-v2-r1/intent_ir-prepared-targets.json",
+        "bytes": 294290
+      },
+      {
+        "path": "matrix-v2-r1/legal_ir/LegalIR.lean",
+        "bytes": 3378
+      },
+      {
+        "path": "matrix-v2-r1/legal_ir/batch-validation.json",
+        "bytes": 31812
+      },
+      {
+        "path": "matrix-v2-r1/legal_ir/native-targets.json",
+        "bytes": 88689
+      },
+      {
+        "path": "matrix-v2-r1/legal_ir/receipt.json",
+        "bytes": 100961
+      },
+      {
+        "path": "matrix-v2-r1/legal_ir/validation.json",
+        "bytes": 22838
+      },
+      {
+        "path": "matrix-v2-r1/legal_ir-prepared-targets.json",
+        "bytes": 88689
+      },
+      {
+        "path": "matrix-v2-r1/security_ir/SecurityIR.lean",
+        "bytes": 8359
+      },
+      {
+        "path": "matrix-v2-r1/security_ir/batch-validation.json",
+        "bytes": 32177
+      },
+      {
+        "path": "matrix-v2-r1/security_ir/native-targets.json",
+        "bytes": 151859
+      },
+      {
+        "path": "matrix-v2-r1/security_ir/receipt.json",
+        "bytes": 79989
+      },
+      {
+        "path": "matrix-v2-r1/security_ir/validation.json",
+        "bytes": 24826
+      },
+      {
+        "path": "matrix-v2-r1/security_ir-prepared-targets.json",
+        "bytes": 151859
+      },
+      {
+        "path": "matrix-v2-r1/summary.json",
+        "bytes": 390355
+      },
+      {
+        "path": "matrix-v2-r1/ui_ux_ir/UIUXIR.lean",
+        "bytes": 9260
+      },
+      {
+        "path": "matrix-v2-r1/ui_ux_ir/batch-validation.json",
+        "bytes": 33683
+      },
+      {
+        "path": "matrix-v2-r1/ui_ux_ir/native-targets.json",
+        "bytes": 254353
+      },
+      {
+        "path": "matrix-v2-r1/ui_ux_ir/receipt.json",
+        "bytes": 85501
+      },
+      {
+        "path": "matrix-v2-r1/ui_ux_ir/validation.json",
+        "bytes": 25196
+      },
+      {
+        "path": "matrix-v2-r1/ui_ux_ir-prepared-targets.json",
+        "bytes": 254353
+      },
+      {
+        "path": "matrix-v2-r1.log",
+        "bytes": 12345
+      },
+      {
+        "path": "matrix-v2-r2/intent_ir/IntentIR.lean",
+        "bytes": 22511
+      },
+      {
+        "path": "matrix-v2-r2/intent_ir/batch-validation.json",
+        "bytes": 36851
+      },
+      {
+        "path": "matrix-v2-r2/intent_ir/native-targets.json",
+        "bytes": 294390
+      },
+      {
+        "path": "matrix-v2-r2/intent_ir/receipt.json",
+        "bytes": 112470
+      },
+      {
+        "path": "matrix-v2-r2/intent_ir/validation.json",
+        "bytes": 28138
+      },
+      {
+        "path": "matrix-v2-r2/intent_ir-prepared-targets.json",
+        "bytes": 294390
+      },
+      {
+        "path": "matrix-v2-r2/legal_ir/LegalIR.lean",
+        "bytes": 3378
+      },
+      {
+        "path": "matrix-v2-r2/legal_ir/batch-validation.json",
+        "bytes": 31812
+      },
+      {
+        "path": "matrix-v2-r2/legal_ir/native-targets.json",
+        "bytes": 88689
+      },
+      {
+        "path": "matrix-v2-r2/legal_ir/receipt.json",
+        "bytes": 100961
+      },
+      {
+        "path": "matrix-v2-r2/legal_ir/validation.json",
+        "bytes": 22838
+      },
+      {
+        "path": "matrix-v2-r2/legal_ir-prepared-targets.json",
+        "bytes": 88689
+      },
+      {
+        "path": "matrix-v2-r2/security_ir/SecurityIR.lean",
+        "bytes": 8359
+      },
+      {
+        "path": "matrix-v2-r2/security_ir/batch-validation.json",
+        "bytes": 32177
+      },
+      {
+        "path": "matrix-v2-r2/security_ir/native-targets.json",
+        "bytes": 151959
+      },
+      {
+        "path": "matrix-v2-r2/security_ir/receipt.json",
+        "bytes": 79989
+      },
+      {
+        "path": "matrix-v2-r2/security_ir/validation.json",
+        "bytes": 24826
+      },
+      {
+        "path": "matrix-v2-r2/security_ir-prepared-targets.json",
+        "bytes": 151959
+      },
+      {
+        "path": "matrix-v2-r2/summary.json",
+        "bytes": 395585
+      },
+      {
+        "path": "matrix-v2-r2/ui_ux_ir/UIUXIR.lean",
+        "bytes": 11937
+      },
+      {
+        "path": "matrix-v2-r2/ui_ux_ir/batch-validation.json",
+        "bytes": 33669
+      },
+      {
+        "path": "matrix-v2-r2/ui_ux_ir/native-targets.json",
+        "bytes": 267923
+      },
+      {
+        "path": "matrix-v2-r2/ui_ux_ir/receipt.json",
+        "bytes": 93073
+      },
+      {
+        "path": "matrix-v2-r2/ui_ux_ir/validation.json",
+        "bytes": 25024
+      },
+      {
+        "path": "matrix-v2-r2/ui_ux_ir-prepared-targets.json",
+        "bytes": 267923
+      },
+      {
+        "path": "matrix-v2-r2.log",
+        "bytes": 12344
+      },
+      {
+        "path": "native-program-lean-tests.xml",
+        "bytes": 3163
+      },
+      {
+        "path": "native-tla-projection-tests-r2.xml",
+        "bytes": 2317
+      },
+      {
+        "path": "native-tla-projection-tests-r3.xml",
+        "bytes": 5009
+      },
+      {
+        "path": "native-tla-projection-tests.xml",
+        "bytes": 1968
+      },
+      {
+        "path": "native-validation-v2-tests.log",
+        "bytes": 4402
+      },
+      {
+        "path": "native-validation-v2-tests.xml",
+        "bytes": 2344
+      },
+      {
+        "path": "owned-files.json",
+        "bytes": 1372
+      },
+      {
+        "path": "release-affected-tests-r2.log",
+        "bytes": 1399
+      },
+      {
+        "path": "release-affected-tests-r2.xml",
+        "bytes": 8374
+      },
+      {
+        "path": "release-new-tests.log",
+        "bytes": 1872
+      },
+      {
+        "path": "release-new-tests.xml",
+        "bytes": 20475
+      },
+      {
+        "path": "training-v2-r1/checkpoint/family_checkpoint.json",
+        "bytes": 346985
+      },
+      {
+        "path": "training-v2-r1/source-0/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-v2-r1/source-0/receipt.json",
+        "bytes": 86749
+      },
+      {
+        "path": "training-v2-r1/source-0/targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r1/source-0/validation.json",
+        "bytes": 20881
+      },
+      {
+        "path": "training-v2-r1/source-0-prepared-targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r1/source-1/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-v2-r1/source-1/receipt.json",
+        "bytes": 86749
+      },
+      {
+        "path": "training-v2-r1/source-1/targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r1/source-1/validation.json",
+        "bytes": 20881
+      },
+      {
+        "path": "training-v2-r1/source-1-prepared-targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r1/source-2/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-v2-r1/source-2/receipt.json",
+        "bytes": 86749
+      },
+      {
+        "path": "training-v2-r1/source-2/targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r1/source-2/validation.json",
+        "bytes": 20881
+      },
+      {
+        "path": "training-v2-r1/source-2-prepared-targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r1/summary.json",
+        "bytes": 223863
+      },
+      {
+        "path": "training-v2-r1.log",
+        "bytes": 11928
+      },
+      {
+        "path": "training-v2-r2/checkpoint/family_checkpoint.json",
+        "bytes": 346987
+      },
+      {
+        "path": "training-v2-r2/source-0/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-v2-r2/source-0/receipt.json",
+        "bytes": 86749
+      },
+      {
+        "path": "training-v2-r2/source-0/targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r2/source-0/validation.json",
+        "bytes": 20881
+      },
+      {
+        "path": "training-v2-r2/source-0-prepared-targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r2/source-1/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-v2-r2/source-1/receipt.json",
+        "bytes": 86749
+      },
+      {
+        "path": "training-v2-r2/source-1/targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r2/source-1/validation.json",
+        "bytes": 20881
+      },
+      {
+        "path": "training-v2-r2/source-1-prepared-targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r2/source-2/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-v2-r2/source-2/receipt.json",
+        "bytes": 86749
+      },
+      {
+        "path": "training-v2-r2/source-2/targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r2/source-2/validation.json",
+        "bytes": 20881
+      },
+      {
+        "path": "training-v2-r2/source-2-prepared-targets.json",
+        "bytes": 76683
+      },
+      {
+        "path": "training-v2-r2/summary.json",
+        "bytes": 223864
+      },
+      {
+        "path": "training-v2-r2.log",
+        "bytes": 11926
+      },
+      {
+        "path": "ui-lake-unit-receipts/negative.json",
+        "bytes": 1646
+      },
+      {
+        "path": "ui-lake-unit-receipts/positive.json",
+        "bytes": 963
+      },
+      {
+        "path": "ui-lowering-tests.log",
+        "bytes": 1221
+      },
+      {
+        "path": "ui-lowering-tests.xml",
+        "bytes": 5451
+      }
+    ]
+  },
+  "admitted": false,
+  "qualified": false,
+  "constitution_formalized": false
+}
