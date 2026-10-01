@@ -1,0 +1,25 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 160 items
+
+tests/unit/logic/formalization/autoencoder/test_parallel_projection_checks.py . [  0%]
+............................................                             [ 28%]
+tests/unit/logic/formalization/autoencoder/test_family_decoder_refinement.py . [ 28%]
+.......................                                                  [ 43%]
+tests/unit/logic/formalization/autoencoder/test_family_safe_convergence_panel.py . [ 43%]
+.......                                                                  [ 48%]
+tests/unit/logic/formalization/autoencoder/test_validated_family_refinement.py . [ 48%]
+..............                                                           [ 57%]
+tests/unit_tests/logic/hammers/test_semantic_routing.py ................ [ 67%]
+........................                                                 [ 82%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_supplemental_native_lake.py . [ 83%]
+.............                                                            [ 91%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_supplemental_replay_boundaries.py . [ 91%]
+.............                                                            [100%]
+
+============================= 160 passed in 54.08s =============================
