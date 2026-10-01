@@ -1,0 +1,54 @@
+[
+  {
+    "bytes": 128924,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+    "sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+    "weights_retained_locally_only": true
+  },
+  {
+    "bytes": 11108,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/schema/report.json",
+    "sha256": "07284852036fff74cff647dfd1d862b2efec3d84fae959d4f215787f8c8da8a8"
+  },
+  {
+    "bytes": 2313,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/schema/inputs.json",
+    "sha256": "2180ac2d5d0b666d4f3088ded217e31d630a00b68fe736b81d2b8e28ed07107d"
+  },
+  {
+    "bytes": 7311,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/schema/inference.json",
+    "sha256": "41226caa8536de02e6aa0db651d1aa425720c6b9435a2bcb42bacb5a9eb2ef86"
+  },
+  {
+    "bytes": 345,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/schema/sources.json",
+    "sha256": "6a5af98a77826597b8251953e0dac8fc305cf20677cfbbfd73672e1afb92accf"
+  },
+  {
+    "bytes": 748121,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/current_v2/formula-head.json",
+    "sha256": "8e5a848f54d710ea227999c281e313001cec175e0923df9f35442a4e1df3f1b8",
+    "weights_retained_locally_only": true
+  },
+  {
+    "bytes": 11122,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/current_v2/schema/report.json",
+    "sha256": "98d01324ad0a0005e892504ff030b933ea6b1d94238ecebda924fa6237874e68"
+  },
+  {
+    "bytes": 15785,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/current_v2/schema/inputs.json",
+    "sha256": "3074070de12bea55e64f731685803a54d89373f680480d29b19a5b3f3b8ad6a6"
+  },
+  {
+    "bytes": 22545,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/current_v2/schema/inference.json",
+    "sha256": "a82801821d19917682a2b234521fad94f232fa44ef3b2a9625e67b090a8852e4"
+  },
+  {
+    "bytes": 345,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/current_v2/schema/sources.json",
+    "sha256": "6a5af98a77826597b8251953e0dac8fc305cf20677cfbbfd73672e1afb92accf"
+  }
+]

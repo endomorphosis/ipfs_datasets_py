@@ -1,0 +1,166 @@
+[
+  {
+    "directory": "current_v2/schema/sample-0-projection-0",
+    "files": [
+      {
+        "bytes": 992,
+        "name": "DecoderSchema.lean",
+        "sha256": "ceed62ac8562d3734f9e9b91805d6b79a72db8658e6ec4ae0fba262e3ea4362e",
+        "text": "namespace DecoderSchema\n\ninductive AbsentValue where | null\n\ninductive EmptyElement where\n\nstructure ExactFloat64 where\n  bits : UInt64\n\ninductive LegalModality where | obligation | permission | prohibition\n\nstructure Record0 where\n  field0 : String\n  field1 : String\n  field2 : List String\n  field3 : List String\n  field4 : LegalModality\n  field5 : String\n  field6 : List String\n\nstructure Record1 where\n  field0 : List (Record0)\n\ndef decodedInstance : Record1 :=\n  ({ field0 := [({ field0 := (String.ofList [Char.ofNat 115, Char.ofNat 117, Char.ofNat 98, Char.ofNat 109, Char.ofNat 105, Char.ofNat 116]), field1 := (String.ofList [Char.ofNat 97, Char.ofNat 103, Char.ofNat 101, Char.ofNat 110, Char.ofNat 99, Char.ofNat 121]), field2 := [], field3 := [], field4 := LegalModality.obligation, field5 := (String.ofList [Char.ofNat 114, Char.ofNat 101, Char.ofNat 112, Char.ofNat 111, Char.ofNat 114, Char.ofNat 116, Char.ofNat 115]), field6 := [] } : Record0)] } : Record1)\n\nend DecoderSchema\n"
+      },
+      {
+        "bytes": 71,
+        "name": "lakefile.lean",
+        "sha256": "2c656b05cb2d41d0f561e8a23045e23712ee1a1dcc1bee973697c2081f171a4a",
+        "text": "import Lake\nopen Lake DSL\npackage decoderSchema\nlean_lib DecoderSchema\n"
+      },
+      {
+        "bytes": 195,
+        "name": "lake.log",
+        "sha256": "fc25f6562221a32b11cfde8e9bc2f0747a49fccf8f7b29870f9c5ebfcfedac6a",
+        "text": "\u2714 [2/3] Built DecoderSchema (341ms)\nBuild completed successfully (3 jobs).\n\ninfo: decoderSchema: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n"
+      },
+      {
+        "bytes": 25,
+        "name": "lean-toolchain",
+        "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+        "text": "leanprover/lean4:v4.26.0\n"
+      },
+      {
+        "bytes": 54,
+        "name": "toolchain.log",
+        "sha256": "bc831a0049e8e228f623b232249ffb7047e46040c21436bdccc0d9ff428fa978",
+        "text": "Lake version 5.0.0-src+d8204c9 (Lean version 4.26.0)\n\n"
+      },
+      {
+        "bytes": 4187,
+        "name": "artifact.json",
+        "sha256": "26f013e248beda7fec79a85948e1624751bd60dbe79b2fdbd80759130df23036",
+        "text": "{\"admitted\":false,\"artifact_sha256\":\"b01be40e5d7c09f2e88f590b51e9133593bc268f56cbb204707bae6c8d24d793\",\"checkpoint_binding_scope\":\"caller_supplied_digest_not_loaded_or_verified\",\"checkpoint_sha256\":\"8e5a848f54d710ea227999c281e313001cec175e0923df9f35442a4e1df3f1b8\",\"checkpoint_source_tie_verified\":false,\"domain\":\"legal_ir\",\"domain_wide_schema_verified\":false,\"formalized\":false,\"full_family_coverage_verified\":false,\"input_sha256\":\"c37eeb01efeb571ada0c817d8de65b4459e1d4b45b035a4a876bbc0dfdeabb2e\",\"lean_source\":\"namespace DecoderSchema\\n\\ninductive AbsentValue where | null\\n\\ninductive EmptyElement where\\n\\nstructure ExactFloat64 where\\n  bits : UInt64\\n\\ninductive LegalModality where | obligation | permission | prohibition\\n\\nstructure Record0 where\\n  field0 : String\\n  field1 : String\\n  field2 : List String\\n  field3 : List String\\n  field4 : LegalModality\\n  field5 : String\\n  field6 : List String\\n\\nstructure Record1 where\\n  field0 : List (Record0)\\n\\ndef decodedInstance : Record1 :=\\n  ({ field0 := [({ field0 := (String.ofList [Char.ofNat 115, Char.ofNat 117, Char.ofNat 98, Char.ofNat 109, Char.ofNat 105, Char.ofNat 116]), field1 := (String.ofList [Char.ofNat 97, Char.ofNat 103, Char.ofNat 101, Char.ofNat 110, Char.ofNat 99, Char.ofNat 121]), field2 := [], field3 := [], field4 := LegalModality.obligation, field5 := (String.ofList [Char.ofNat 114, Char.ofNat 101, Char.ofNat 112, Char.ofNat 111, Char.ofNat 114, Char.ofNat 116, Char.ofNat 115]), field6 := [] } : Record0)] } : Record1)\\n\\nend DecoderSchema\\n\",\"lean_source_sha256\":\"ceed62ac8562d3734f9e9b91805d6b79a72db8658e6ec4ae0fba262e3ea4362e\",\"native_validation\":{\"logic_family\":\"deontic\",\"projection_id\":\"canonical-deontic-rules/v1\",\"schema\":\"ipfs-datasets.canonical-roundtrip-ir.v1\",\"validator\":\"CanonicalRoundTripIR@1\"},\"producer_sources\":{\"files\":{\"canonical_pin:compiler\":\"daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd\",\"canonical_pin:decompiler\":\"79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64\",\"canonical_pin:parser\":\"9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59\",\"logic/backends/process.py\":\"742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f\",\"logic/legal_ir/canonical_contracts.py\":\"d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b\",\"schema_emitter\":\"f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55\"},\"scope\":\"listed_emitter_validator_sources_and_owned_function_code_not_full_transitive_provenance\",\"sha256\":\"316c999198c4127139f9366b342203878954e0c0211aeac45701fa9d49e25f72\"},\"promotion_performed\":false,\"proof_authority\":false,\"qualified\":false,\"schema\":\"autoencoder-schema-lake-artifact/v1\",\"scope\":\"exact_artifact_structural_shape_and_instance\",\"shape\":{\"array_policy\":\"preserve_order_and_multiplicity_empty_arrays_have_uninhabited_element_type\",\"records_and_unions\":[{\"fields\":[{\"lean_field\":\"field0\",\"lean_type\":\"String\",\"source_field\":\"action\"},{\"lean_field\":\"field1\",\"lean_type\":\"String\",\"source_field\":\"actor\"},{\"lean_field\":\"field2\",\"lean_type\":\"List String\",\"source_field\":\"conditions\"},{\"lean_field\":\"field3\",\"lean_type\":\"List String\",\"source_field\":\"exceptions\"},{\"lean_field\":\"field4\",\"lean_type\":\"LegalModality\",\"source_field\":\"modality\"},{\"lean_field\":\"field5\",\"lean_type\":\"String\",\"source_field\":\"object\"},{\"lean_field\":\"field6\",\"lean_type\":\"List String\",\"source_field\":\"temporal\"}],\"kind\":\"closed_record\",\"lean_type\":\"Record0\",\"missing_fields\":\"not_materialized_or_defaulted\"},{\"fields\":[{\"lean_field\":\"field0\",\"lean_type\":\"List (Record0)\",\"source_field\":\"rules\"}],\"kind\":\"closed_record\",\"lean_type\":\"Record1\",\"missing_fields\":\"not_materialized_or_defaulted\"}],\"root_type\":\"Record1\",\"scalar_encoding\":{\"boolean\":\"Bool\",\"float\":\"exact_ieee754_binary64_bits\",\"integer\":\"Int\",\"null\":\"AbsentValue.null\",\"string\":\"unicode_scalar_list\"},\"schema\":\"decoder-artifact-structural-shape/v1\"},\"shape_sha256\":\"c60d1dc185200015c6068e77af2a444c84f13d732f96222703d2ae416212667d\",\"source_binding_scope\":\"provided_exact_text_bytes_not_native_source_digest_or_semantic_fidelity\",\"source_semantics_verified\":false,\"source_sha256\":\"bc784addce5120b728418f058f61eebf89277b3434ffc88e8d6dc452c7fb689b\"}"
+      }
+    ]
+  },
+  {
+    "directory": "current_v2/schema/sample-1-projection-0",
+    "files": [
+      {
+        "bytes": 991,
+        "name": "DecoderSchema.lean",
+        "sha256": "d06208236ad0b02eb58158d8722a079bf5fd62ad5220df56e51ea884036a1935",
+        "text": "namespace DecoderSchema\n\ninductive AbsentValue where | null\n\ninductive EmptyElement where\n\nstructure ExactFloat64 where\n  bits : UInt64\n\ninductive LegalModality where | obligation | permission | prohibition\n\nstructure Record0 where\n  field0 : String\n  field1 : String\n  field2 : List String\n  field3 : List String\n  field4 : LegalModality\n  field5 : String\n  field6 : List String\n\nstructure Record1 where\n  field0 : List (Record0)\n\ndef decodedInstance : Record1 :=\n  ({ field0 := [({ field0 := (String.ofList [Char.ofNat 115, Char.ofNat 117, Char.ofNat 98, Char.ofNat 109, Char.ofNat 105, Char.ofNat 116]), field1 := (String.ofList [Char.ofNat 97, Char.ofNat 103, Char.ofNat 101, Char.ofNat 110, Char.ofNat 99, Char.ofNat 121]), field2 := [], field3 := [], field4 := LegalModality.obligation, field5 := (String.ofList [Char.ofNat 110, Char.ofNat 111, Char.ofNat 116, Char.ofNat 105, Char.ofNat 99, Char.ofNat 101, Char.ofNat 115]), field6 := [] } : Record0)] } : Record1)\n\nend DecoderSchema\n"
+      },
+      {
+        "bytes": 71,
+        "name": "lakefile.lean",
+        "sha256": "2c656b05cb2d41d0f561e8a23045e23712ee1a1dcc1bee973697c2081f171a4a",
+        "text": "import Lake\nopen Lake DSL\npackage decoderSchema\nlean_lib DecoderSchema\n"
+      },
+      {
+        "bytes": 195,
+        "name": "lake.log",
+        "sha256": "60dec2263a1949ad4db41fc8b7c2c1d04af03a0a628a8dad91ff6a91b4f3afd9",
+        "text": "\u2714 [2/3] Built DecoderSchema (387ms)\nBuild completed successfully (3 jobs).\n\ninfo: decoderSchema: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n"
+      },
+      {
+        "bytes": 25,
+        "name": "lean-toolchain",
+        "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+        "text": "leanprover/lean4:v4.26.0\n"
+      },
+      {
+        "bytes": 54,
+        "name": "toolchain.log",
+        "sha256": "bc831a0049e8e228f623b232249ffb7047e46040c21436bdccc0d9ff428fa978",
+        "text": "Lake version 5.0.0-src+d8204c9 (Lean version 4.26.0)\n\n"
+      },
+      {
+        "bytes": 4186,
+        "name": "artifact.json",
+        "sha256": "0e54494912895f26dc2c4ef31110bc0e679199949cbe156b70c13ea62240df33",
+        "text": "{\"admitted\":false,\"artifact_sha256\":\"cf0ce6e57eabca474f060a79a96cd67f8b6954d5c3ae7b420622bff7dc03b90f\",\"checkpoint_binding_scope\":\"caller_supplied_digest_not_loaded_or_verified\",\"checkpoint_sha256\":\"8e5a848f54d710ea227999c281e313001cec175e0923df9f35442a4e1df3f1b8\",\"checkpoint_source_tie_verified\":false,\"domain\":\"legal_ir\",\"domain_wide_schema_verified\":false,\"formalized\":false,\"full_family_coverage_verified\":false,\"input_sha256\":\"9996f901f8c120e9af6f7eb262325e277462b68a426e9e4e0ed7c52b1436c251\",\"lean_source\":\"namespace DecoderSchema\\n\\ninductive AbsentValue where | null\\n\\ninductive EmptyElement where\\n\\nstructure ExactFloat64 where\\n  bits : UInt64\\n\\ninductive LegalModality where | obligation | permission | prohibition\\n\\nstructure Record0 where\\n  field0 : String\\n  field1 : String\\n  field2 : List String\\n  field3 : List String\\n  field4 : LegalModality\\n  field5 : String\\n  field6 : List String\\n\\nstructure Record1 where\\n  field0 : List (Record0)\\n\\ndef decodedInstance : Record1 :=\\n  ({ field0 := [({ field0 := (String.ofList [Char.ofNat 115, Char.ofNat 117, Char.ofNat 98, Char.ofNat 109, Char.ofNat 105, Char.ofNat 116]), field1 := (String.ofList [Char.ofNat 97, Char.ofNat 103, Char.ofNat 101, Char.ofNat 110, Char.ofNat 99, Char.ofNat 121]), field2 := [], field3 := [], field4 := LegalModality.obligation, field5 := (String.ofList [Char.ofNat 110, Char.ofNat 111, Char.ofNat 116, Char.ofNat 105, Char.ofNat 99, Char.ofNat 101, Char.ofNat 115]), field6 := [] } : Record0)] } : Record1)\\n\\nend DecoderSchema\\n\",\"lean_source_sha256\":\"d06208236ad0b02eb58158d8722a079bf5fd62ad5220df56e51ea884036a1935\",\"native_validation\":{\"logic_family\":\"deontic\",\"projection_id\":\"canonical-deontic-rules/v1\",\"schema\":\"ipfs-datasets.canonical-roundtrip-ir.v1\",\"validator\":\"CanonicalRoundTripIR@1\"},\"producer_sources\":{\"files\":{\"canonical_pin:compiler\":\"daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd\",\"canonical_pin:decompiler\":\"79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64\",\"canonical_pin:parser\":\"9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59\",\"logic/backends/process.py\":\"742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f\",\"logic/legal_ir/canonical_contracts.py\":\"d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b\",\"schema_emitter\":\"f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55\"},\"scope\":\"listed_emitter_validator_sources_and_owned_function_code_not_full_transitive_provenance\",\"sha256\":\"316c999198c4127139f9366b342203878954e0c0211aeac45701fa9d49e25f72\"},\"promotion_performed\":false,\"proof_authority\":false,\"qualified\":false,\"schema\":\"autoencoder-schema-lake-artifact/v1\",\"scope\":\"exact_artifact_structural_shape_and_instance\",\"shape\":{\"array_policy\":\"preserve_order_and_multiplicity_empty_arrays_have_uninhabited_element_type\",\"records_and_unions\":[{\"fields\":[{\"lean_field\":\"field0\",\"lean_type\":\"String\",\"source_field\":\"action\"},{\"lean_field\":\"field1\",\"lean_type\":\"String\",\"source_field\":\"actor\"},{\"lean_field\":\"field2\",\"lean_type\":\"List String\",\"source_field\":\"conditions\"},{\"lean_field\":\"field3\",\"lean_type\":\"List String\",\"source_field\":\"exceptions\"},{\"lean_field\":\"field4\",\"lean_type\":\"LegalModality\",\"source_field\":\"modality\"},{\"lean_field\":\"field5\",\"lean_type\":\"String\",\"source_field\":\"object\"},{\"lean_field\":\"field6\",\"lean_type\":\"List String\",\"source_field\":\"temporal\"}],\"kind\":\"closed_record\",\"lean_type\":\"Record0\",\"missing_fields\":\"not_materialized_or_defaulted\"},{\"fields\":[{\"lean_field\":\"field0\",\"lean_type\":\"List (Record0)\",\"source_field\":\"rules\"}],\"kind\":\"closed_record\",\"lean_type\":\"Record1\",\"missing_fields\":\"not_materialized_or_defaulted\"}],\"root_type\":\"Record1\",\"scalar_encoding\":{\"boolean\":\"Bool\",\"float\":\"exact_ieee754_binary64_bits\",\"integer\":\"Int\",\"null\":\"AbsentValue.null\",\"string\":\"unicode_scalar_list\"},\"schema\":\"decoder-artifact-structural-shape/v1\"},\"shape_sha256\":\"c60d1dc185200015c6068e77af2a444c84f13d732f96222703d2ae416212667d\",\"source_binding_scope\":\"provided_exact_text_bytes_not_native_source_digest_or_semantic_fidelity\",\"source_semantics_verified\":false,\"source_sha256\":\"a3bd00861440aea76c477c67337a7d178cdc8af6bbecd163bd70ad70a61edaa4\"}"
+      }
+    ]
+  },
+  {
+    "directory": "legacy_v1/schema/sample-0-projection-0",
+    "files": [
+      {
+        "bytes": 992,
+        "name": "DecoderSchema.lean",
+        "sha256": "ceed62ac8562d3734f9e9b91805d6b79a72db8658e6ec4ae0fba262e3ea4362e",
+        "text": "namespace DecoderSchema\n\ninductive AbsentValue where | null\n\ninductive EmptyElement where\n\nstructure ExactFloat64 where\n  bits : UInt64\n\ninductive LegalModality where | obligation | permission | prohibition\n\nstructure Record0 where\n  field0 : String\n  field1 : String\n  field2 : List String\n  field3 : List String\n  field4 : LegalModality\n  field5 : String\n  field6 : List String\n\nstructure Record1 where\n  field0 : List (Record0)\n\ndef decodedInstance : Record1 :=\n  ({ field0 := [({ field0 := (String.ofList [Char.ofNat 115, Char.ofNat 117, Char.ofNat 98, Char.ofNat 109, Char.ofNat 105, Char.ofNat 116]), field1 := (String.ofList [Char.ofNat 97, Char.ofNat 103, Char.ofNat 101, Char.ofNat 110, Char.ofNat 99, Char.ofNat 121]), field2 := [], field3 := [], field4 := LegalModality.obligation, field5 := (String.ofList [Char.ofNat 114, Char.ofNat 101, Char.ofNat 112, Char.ofNat 111, Char.ofNat 114, Char.ofNat 116, Char.ofNat 115]), field6 := [] } : Record0)] } : Record1)\n\nend DecoderSchema\n"
+      },
+      {
+        "bytes": 71,
+        "name": "lakefile.lean",
+        "sha256": "2c656b05cb2d41d0f561e8a23045e23712ee1a1dcc1bee973697c2081f171a4a",
+        "text": "import Lake\nopen Lake DSL\npackage decoderSchema\nlean_lib DecoderSchema\n"
+      },
+      {
+        "bytes": 195,
+        "name": "lake.log",
+        "sha256": "387222410a726a021218856fc20f84bd98784877db0cf42fde07ed0945ed1103",
+        "text": "\u2714 [2/3] Built DecoderSchema (400ms)\nBuild completed successfully (3 jobs).\n\ninfo: decoderSchema: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n"
+      },
+      {
+        "bytes": 25,
+        "name": "lean-toolchain",
+        "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+        "text": "leanprover/lean4:v4.26.0\n"
+      },
+      {
+        "bytes": 54,
+        "name": "toolchain.log",
+        "sha256": "bc831a0049e8e228f623b232249ffb7047e46040c21436bdccc0d9ff428fa978",
+        "text": "Lake version 5.0.0-src+d8204c9 (Lean version 4.26.0)\n\n"
+      },
+      {
+        "bytes": 4187,
+        "name": "artifact.json",
+        "sha256": "1dbbd997432efa858c15b3b23034f2a7b483416398ade86e09613f69ed747e7b",
+        "text": "{\"admitted\":false,\"artifact_sha256\":\"9280f64be855cc3d345833c0c9d5fc552c585da404e00873e9d30dee5a515849\",\"checkpoint_binding_scope\":\"caller_supplied_digest_not_loaded_or_verified\",\"checkpoint_sha256\":\"ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe\",\"checkpoint_source_tie_verified\":false,\"domain\":\"legal_ir\",\"domain_wide_schema_verified\":false,\"formalized\":false,\"full_family_coverage_verified\":false,\"input_sha256\":\"c37eeb01efeb571ada0c817d8de65b4459e1d4b45b035a4a876bbc0dfdeabb2e\",\"lean_source\":\"namespace DecoderSchema\\n\\ninductive AbsentValue where | null\\n\\ninductive EmptyElement where\\n\\nstructure ExactFloat64 where\\n  bits : UInt64\\n\\ninductive LegalModality where | obligation | permission | prohibition\\n\\nstructure Record0 where\\n  field0 : String\\n  field1 : String\\n  field2 : List String\\n  field3 : List String\\n  field4 : LegalModality\\n  field5 : String\\n  field6 : List String\\n\\nstructure Record1 where\\n  field0 : List (Record0)\\n\\ndef decodedInstance : Record1 :=\\n  ({ field0 := [({ field0 := (String.ofList [Char.ofNat 115, Char.ofNat 117, Char.ofNat 98, Char.ofNat 109, Char.ofNat 105, Char.ofNat 116]), field1 := (String.ofList [Char.ofNat 97, Char.ofNat 103, Char.ofNat 101, Char.ofNat 110, Char.ofNat 99, Char.ofNat 121]), field2 := [], field3 := [], field4 := LegalModality.obligation, field5 := (String.ofList [Char.ofNat 114, Char.ofNat 101, Char.ofNat 112, Char.ofNat 111, Char.ofNat 114, Char.ofNat 116, Char.ofNat 115]), field6 := [] } : Record0)] } : Record1)\\n\\nend DecoderSchema\\n\",\"lean_source_sha256\":\"ceed62ac8562d3734f9e9b91805d6b79a72db8658e6ec4ae0fba262e3ea4362e\",\"native_validation\":{\"logic_family\":\"deontic\",\"projection_id\":\"canonical-deontic-rules/v1\",\"schema\":\"ipfs-datasets.canonical-roundtrip-ir.v1\",\"validator\":\"CanonicalRoundTripIR@1\"},\"producer_sources\":{\"files\":{\"canonical_pin:compiler\":\"daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd\",\"canonical_pin:decompiler\":\"79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64\",\"canonical_pin:parser\":\"9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59\",\"logic/backends/process.py\":\"742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f\",\"logic/legal_ir/canonical_contracts.py\":\"d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b\",\"schema_emitter\":\"f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55\"},\"scope\":\"listed_emitter_validator_sources_and_owned_function_code_not_full_transitive_provenance\",\"sha256\":\"316c999198c4127139f9366b342203878954e0c0211aeac45701fa9d49e25f72\"},\"promotion_performed\":false,\"proof_authority\":false,\"qualified\":false,\"schema\":\"autoencoder-schema-lake-artifact/v1\",\"scope\":\"exact_artifact_structural_shape_and_instance\",\"shape\":{\"array_policy\":\"preserve_order_and_multiplicity_empty_arrays_have_uninhabited_element_type\",\"records_and_unions\":[{\"fields\":[{\"lean_field\":\"field0\",\"lean_type\":\"String\",\"source_field\":\"action\"},{\"lean_field\":\"field1\",\"lean_type\":\"String\",\"source_field\":\"actor\"},{\"lean_field\":\"field2\",\"lean_type\":\"List String\",\"source_field\":\"conditions\"},{\"lean_field\":\"field3\",\"lean_type\":\"List String\",\"source_field\":\"exceptions\"},{\"lean_field\":\"field4\",\"lean_type\":\"LegalModality\",\"source_field\":\"modality\"},{\"lean_field\":\"field5\",\"lean_type\":\"String\",\"source_field\":\"object\"},{\"lean_field\":\"field6\",\"lean_type\":\"List String\",\"source_field\":\"temporal\"}],\"kind\":\"closed_record\",\"lean_type\":\"Record0\",\"missing_fields\":\"not_materialized_or_defaulted\"},{\"fields\":[{\"lean_field\":\"field0\",\"lean_type\":\"List (Record0)\",\"source_field\":\"rules\"}],\"kind\":\"closed_record\",\"lean_type\":\"Record1\",\"missing_fields\":\"not_materialized_or_defaulted\"}],\"root_type\":\"Record1\",\"scalar_encoding\":{\"boolean\":\"Bool\",\"float\":\"exact_ieee754_binary64_bits\",\"integer\":\"Int\",\"null\":\"AbsentValue.null\",\"string\":\"unicode_scalar_list\"},\"schema\":\"decoder-artifact-structural-shape/v1\"},\"shape_sha256\":\"c60d1dc185200015c6068e77af2a444c84f13d732f96222703d2ae416212667d\",\"source_binding_scope\":\"provided_exact_text_bytes_not_native_source_digest_or_semantic_fidelity\",\"source_semantics_verified\":false,\"source_sha256\":\"bc784addce5120b728418f058f61eebf89277b3434ffc88e8d6dc452c7fb689b\"}"
+      }
+    ]
+  },
+  {
+    "directory": "legacy_v1/schema/sample-1-projection-0",
+    "files": [
+      {
+        "bytes": 991,
+        "name": "DecoderSchema.lean",
+        "sha256": "d06208236ad0b02eb58158d8722a079bf5fd62ad5220df56e51ea884036a1935",
+        "text": "namespace DecoderSchema\n\ninductive AbsentValue where | null\n\ninductive EmptyElement where\n\nstructure ExactFloat64 where\n  bits : UInt64\n\ninductive LegalModality where | obligation | permission | prohibition\n\nstructure Record0 where\n  field0 : String\n  field1 : String\n  field2 : List String\n  field3 : List String\n  field4 : LegalModality\n  field5 : String\n  field6 : List String\n\nstructure Record1 where\n  field0 : List (Record0)\n\ndef decodedInstance : Record1 :=\n  ({ field0 := [({ field0 := (String.ofList [Char.ofNat 115, Char.ofNat 117, Char.ofNat 98, Char.ofNat 109, Char.ofNat 105, Char.ofNat 116]), field1 := (String.ofList [Char.ofNat 97, Char.ofNat 103, Char.ofNat 101, Char.ofNat 110, Char.ofNat 99, Char.ofNat 121]), field2 := [], field3 := [], field4 := LegalModality.obligation, field5 := (String.ofList [Char.ofNat 110, Char.ofNat 111, Char.ofNat 116, Char.ofNat 105, Char.ofNat 99, Char.ofNat 101, Char.ofNat 115]), field6 := [] } : Record0)] } : Record1)\n\nend DecoderSchema\n"
+      },
+      {
+        "bytes": 71,
+        "name": "lakefile.lean",
+        "sha256": "2c656b05cb2d41d0f561e8a23045e23712ee1a1dcc1bee973697c2081f171a4a",
+        "text": "import Lake\nopen Lake DSL\npackage decoderSchema\nlean_lib DecoderSchema\n"
+      },
+      {
+        "bytes": 195,
+        "name": "lake.log",
+        "sha256": "8d292e4067b6b64b2ea84244ed5d1cb85a29679a062296fb4b61da3123330003",
+        "text": "\u2714 [2/3] Built DecoderSchema (424ms)\nBuild completed successfully (3 jobs).\n\ninfo: decoderSchema: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n"
+      },
+      {
+        "bytes": 25,
+        "name": "lean-toolchain",
+        "sha256": "e8173aad377a6d70041e5f7a5d8895ed587628f5cab243c53a18c40a1b7b6bf8",
+        "text": "leanprover/lean4:v4.26.0\n"
+      },
+      {
+        "bytes": 54,
+        "name": "toolchain.log",
+        "sha256": "bc831a0049e8e228f623b232249ffb7047e46040c21436bdccc0d9ff428fa978",
+        "text": "Lake version 5.0.0-src+d8204c9 (Lean version 4.26.0)\n\n"
+      },
+      {
+        "bytes": 4186,
+        "name": "artifact.json",
+        "sha256": "255ec8fe65bbc0937c3e2ee1f7e0a69db5312e3f206b64cf5693f4e0a85aac2f",
+        "text": "{\"admitted\":false,\"artifact_sha256\":\"66b267c0cf96112b56ebcd91992da496c167946a3612bbbf1473d3fc51d25fef\",\"checkpoint_binding_scope\":\"caller_supplied_digest_not_loaded_or_verified\",\"checkpoint_sha256\":\"ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe\",\"checkpoint_source_tie_verified\":false,\"domain\":\"legal_ir\",\"domain_wide_schema_verified\":false,\"formalized\":false,\"full_family_coverage_verified\":false,\"input_sha256\":\"9996f901f8c120e9af6f7eb262325e277462b68a426e9e4e0ed7c52b1436c251\",\"lean_source\":\"namespace DecoderSchema\\n\\ninductive AbsentValue where | null\\n\\ninductive EmptyElement where\\n\\nstructure ExactFloat64 where\\n  bits : UInt64\\n\\ninductive LegalModality where | obligation | permission | prohibition\\n\\nstructure Record0 where\\n  field0 : String\\n  field1 : String\\n  field2 : List String\\n  field3 : List String\\n  field4 : LegalModality\\n  field5 : String\\n  field6 : List String\\n\\nstructure Record1 where\\n  field0 : List (Record0)\\n\\ndef decodedInstance : Record1 :=\\n  ({ field0 := [({ field0 := (String.ofList [Char.ofNat 115, Char.ofNat 117, Char.ofNat 98, Char.ofNat 109, Char.ofNat 105, Char.ofNat 116]), field1 := (String.ofList [Char.ofNat 97, Char.ofNat 103, Char.ofNat 101, Char.ofNat 110, Char.ofNat 99, Char.ofNat 121]), field2 := [], field3 := [], field4 := LegalModality.obligation, field5 := (String.ofList [Char.ofNat 110, Char.ofNat 111, Char.ofNat 116, Char.ofNat 105, Char.ofNat 99, Char.ofNat 101, Char.ofNat 115]), field6 := [] } : Record0)] } : Record1)\\n\\nend DecoderSchema\\n\",\"lean_source_sha256\":\"d06208236ad0b02eb58158d8722a079bf5fd62ad5220df56e51ea884036a1935\",\"native_validation\":{\"logic_family\":\"deontic\",\"projection_id\":\"canonical-deontic-rules/v1\",\"schema\":\"ipfs-datasets.canonical-roundtrip-ir.v1\",\"validator\":\"CanonicalRoundTripIR@1\"},\"producer_sources\":{\"files\":{\"canonical_pin:compiler\":\"daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd\",\"canonical_pin:decompiler\":\"79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64\",\"canonical_pin:parser\":\"9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59\",\"logic/backends/process.py\":\"742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f\",\"logic/legal_ir/canonical_contracts.py\":\"d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b\",\"schema_emitter\":\"f78a630fc808278b6c82eaa248fbaeefd7f60462db7e974fccdb634938ac9d55\"},\"scope\":\"listed_emitter_validator_sources_and_owned_function_code_not_full_transitive_provenance\",\"sha256\":\"316c999198c4127139f9366b342203878954e0c0211aeac45701fa9d49e25f72\"},\"promotion_performed\":false,\"proof_authority\":false,\"qualified\":false,\"schema\":\"autoencoder-schema-lake-artifact/v1\",\"scope\":\"exact_artifact_structural_shape_and_instance\",\"shape\":{\"array_policy\":\"preserve_order_and_multiplicity_empty_arrays_have_uninhabited_element_type\",\"records_and_unions\":[{\"fields\":[{\"lean_field\":\"field0\",\"lean_type\":\"String\",\"source_field\":\"action\"},{\"lean_field\":\"field1\",\"lean_type\":\"String\",\"source_field\":\"actor\"},{\"lean_field\":\"field2\",\"lean_type\":\"List String\",\"source_field\":\"conditions\"},{\"lean_field\":\"field3\",\"lean_type\":\"List String\",\"source_field\":\"exceptions\"},{\"lean_field\":\"field4\",\"lean_type\":\"LegalModality\",\"source_field\":\"modality\"},{\"lean_field\":\"field5\",\"lean_type\":\"String\",\"source_field\":\"object\"},{\"lean_field\":\"field6\",\"lean_type\":\"List String\",\"source_field\":\"temporal\"}],\"kind\":\"closed_record\",\"lean_type\":\"Record0\",\"missing_fields\":\"not_materialized_or_defaulted\"},{\"fields\":[{\"lean_field\":\"field0\",\"lean_type\":\"List (Record0)\",\"source_field\":\"rules\"}],\"kind\":\"closed_record\",\"lean_type\":\"Record1\",\"missing_fields\":\"not_materialized_or_defaulted\"}],\"root_type\":\"Record1\",\"scalar_encoding\":{\"boolean\":\"Bool\",\"float\":\"exact_ieee754_binary64_bits\",\"integer\":\"Int\",\"null\":\"AbsentValue.null\",\"string\":\"unicode_scalar_list\"},\"schema\":\"decoder-artifact-structural-shape/v1\"},\"shape_sha256\":\"c60d1dc185200015c6068e77af2a444c84f13d732f96222703d2ae416212667d\",\"source_binding_scope\":\"provided_exact_text_bytes_not_native_source_digest_or_semantic_fidelity\",\"source_semantics_verified\":false,\"source_sha256\":\"a3bd00861440aea76c477c67337a7d178cdc8af6bbecd163bd70ad70a61edaa4\"}"
+      }
+    ]
+  }
+]

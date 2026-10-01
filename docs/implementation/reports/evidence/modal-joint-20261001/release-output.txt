@@ -1,0 +1,68 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/modal-joint-release-66b7f30c5
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 776 items
+
+tests/unit/duckdb_control/test_autoencoder_quack.py ....                 [  0%]
+tests/unit/logic/test_autoencoder_lineage_guard.py ..................... [  3%]
+..                                                                       [  3%]
+tests/unit/logic/test_autoencoder_lineage_runtimes.py .................. [  5%]
+......................                                                   [  8%]
+tests/unit/logic/test_family_qualification.py .......................... [ 11%]
+........................................................................ [ 21%]
+..                                                                       [ 21%]
+tests/unit/logic/test_import_span_cache_exchange.py .................... [ 24%]
+..................                                                       [ 26%]
+tests/unit/logic/test_index_span_exchange_outputs.py ................... [ 28%]
+                                                                         [ 28%]
+tests/unit/logic/test_paired_span_census.py ............................ [ 32%]
+...................................                                      [ 36%]
+tests/unit/logic/test_publish_span_cache_exchange.py ............        [ 38%]
+tests/unit/logic/test_span_cache_exchange.py ................            [ 40%]
+tests/unit/logic/test_span_cache_exchange_outputs.py ................... [ 43%]
+..............                                                           [ 44%]
+tests/unit/logic/test_span_cache_exchange_validation.py ................ [ 46%]
+....                                                                     [ 47%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_decoded_schema.py . [ 47%]
+......                                                                   [ 48%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_formula_exchange.py . [ 48%]
+.............................................................            [ 56%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_formula_fleet.py . [ 56%]
+........                                                                 [ 57%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_runtime_registry.py . [ 57%]
+..............                                                           [ 59%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_schema_lake.py . [ 59%]
+................................                                         [ 63%]
+tests/unit/optimizers/logic_theorem_optimizer/test_formula_checkpoint_exchange_cli.py . [ 63%]
+...                                                                      [ 64%]
+tests/unit/optimizers/logic_theorem_optimizer/test_learned_formula_runtime.py . [ 64%]
+............                                                             [ 65%]
+tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_cuda_runner.py . [ 65%]
+...................................                                      [ 70%]
+tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_publication.py . [ 70%]
+..............                                                           [ 72%]
+tests/unit/optimizers/logic_theorem_optimizer/test_legal_formal_decoder.py . [ 72%]
+.......................................................                  [ 79%]
+tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_learning.py . [ 79%]
+...........                                                              [ 81%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula.py . [ 81%]
+........................................                                 [ 86%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula_schema.py . [ 86%]
+...................                                                      [ 89%]
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula.py . [ 89%]
+..............................                                           [ 93%]
+tests/unit/optimizers/logic_theorem_optimizer/test_native_formula_cli.py . [ 93%]
+.............                                                            [ 94%]
+tests/unit/optimizers/logic_theorem_optimizer/test_native_formula_runtime.py . [ 94%]
+.............                                                            [ 96%]
+tests/unit/optimizers/logic_theorem_optimizer/test_native_formula_training.py . [ 96%]
+....................                                                     [ 99%]
+tests/unit/optimizers/logic_theorem_optimizer/test_paired_span_publication.py . [ 99%]
+....                                                                     [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-release-20261001/release-tests.xml -
+======================= 776 passed in 119.41s (0:01:59) ========================

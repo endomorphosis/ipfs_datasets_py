@@ -1,0 +1,65 @@
+{
+  "admitted": false,
+  "checkpoint_weights_included": false,
+  "files": [
+    {
+      "bytes": 28097,
+      "path": "lake-projects.json",
+      "sha256": "0c2e743c25b20098904849b78ee8e2bcead3dfbdfacaed38b91df7a354aa3533"
+    },
+    {
+      "bytes": 82744,
+      "path": "observations.json",
+      "sha256": "47892cc38d9a433aa9b5f5ca476cd6a035e533a1aade1fb214fc8dded11ab80d"
+    },
+    {
+      "bytes": 2636,
+      "path": "originals.json",
+      "sha256": "bccd1096232fd72f47cbb3a0b5dd55ae3fb61861901abb8792c47d64c1446f09"
+    },
+    {
+      "bytes": 5593,
+      "path": "release-output.txt",
+      "sha256": "28d7505141d55d839f4a84c989589b78d5ce256c1f0fa9ca49a3cf54ffc04422"
+    },
+    {
+      "bytes": 1972,
+      "path": "release-test-files.txt",
+      "sha256": "efc0d983186ae5a9a31cfc55da2e65ed9c4489872f27bcfc4a567b6fd92fe5e8"
+    },
+    {
+      "bytes": 138467,
+      "path": "release-tests.xml",
+      "sha256": "34fe8b3b5d08f4282e461b43721582550c90826736c7d29610b81ab0b41d7570"
+    },
+    {
+      "bytes": 4096,
+      "path": "schema-tests.xml",
+      "sha256": "214e78581010afc74a9f37fb773a1294c079f81204681fc5a7ad1865f5e28650"
+    },
+    {
+      "bytes": 208743,
+      "path": "smoke.json",
+      "sha256": "a443ca9be14210b5616dbac69811b2f38f8519519b3eb66320f6e57d5d9c2d5c"
+    },
+    {
+      "bytes": 6608,
+      "path": "smoke_harness.py",
+      "sha256": "39f92e24df4d24f133a6c94b7c5607130fc9e6ea4412aaf07afc3f05e4dc8dec"
+    },
+    {
+      "bytes": 3161,
+      "path": "source-identities.json",
+      "sha256": "621e9d85b3b8fbd9783ced01fb46ae10bb6d0d5e0e01cb314168f8a9e6a9fceb"
+    },
+    {
+      "bytes": 1149,
+      "path": "summary.json",
+      "sha256": "2ae9735d8b54a0fb5e08d437ff37838bd0163214cb5460e923822b50da26e5af"
+    }
+  ],
+  "formalized": false,
+  "implementation_commit": "66b7f30c592fac7191524f8ba4d19250336c9a3d",
+  "private_credentials_included": false,
+  "schema": "modal-joint-evidence/v1"
+}

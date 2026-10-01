@@ -1,0 +1,34 @@
+{
+  "actual_lake_schema_builds": 4,
+  "admitted": false,
+  "constitution_formalized": false,
+  "downloaded_weights": false,
+  "full_logic_floor_coverage": false,
+  "head_training": "joint formula CE and embedding MSE update residual projection and decoder",
+  "historical_sparse_core_frozen": true,
+  "implementation_commit": "66b7f30c592fac7191524f8ba4d19250336c9a3d",
+  "independent_text_to_logic": false,
+  "live_services_reconfigured": false,
+  "new_head_fleet_transport_implemented": false,
+  "qualification_granted": false,
+  "release_worktree": "/tmp/modal-joint-release-66b7f30c5",
+  "schema": "modal-joint-release-validation/v1",
+  "smoke_scope": "authored synthetic/in-sample two-row fixture per lineage; no archived checkpoint or verified semantic embeddings",
+  "supported_logic_families": [
+    "deontic"
+  ],
+  "test_environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HF_HUB_OFFLINE": "1",
+    "IPFS_DATASETS_RUN_NATIVE_STORAGE_PROBE": "1",
+    "PYTHONPATH": "isolated checkout"
+  },
+  "tests": {
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "776",
+    "time": "119.400"
+  },
+  "uploaded_to_hub": false
+}

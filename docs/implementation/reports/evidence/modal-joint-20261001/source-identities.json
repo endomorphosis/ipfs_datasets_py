@@ -1,0 +1,35 @@
+{
+  "files": {
+    "docs/autoencoders/formal_logic_decoders.md": "1812b79418be6c0178de8124918d96e67ffc824078364d93bbdafdca1d5280b2",
+    "docs/autoencoders/historical_modal_decoder_research.md": "c9f53d80bf198da2284e4d4b895d7a7302ed42e2d88734454b46ac3b6bd52c2f",
+    "docs/autoencoders/modal_joint_formula_training.md": "1438a4051fd9d7e9874b25b787fae261f0d78204a84268aee02739857404a1b1",
+    "docs/autoencoders/versioned_runtime_interface.md": "a607a3c89399d08bb80af5c1ad07940bd2c7791676c04646d52bace88c1f87c7",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": {
+      "committed_sha256": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+      "working_tree_sha256": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": {
+      "committed_sha256": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+      "working_tree_sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": {
+      "committed_sha256": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+      "working_tree_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_decoded_schema.py": "5e7760f420d42df79f473c774215c5ccfe29223aaed405b05fb1b4e44a6ff835",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py": "ad9603c7b4dd80736aa9bb32dc4ffc537149f1d111b265c95b6dbedc5dbfe8aa",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py": "27616770fb7a21f2dbeacbe883fa0dd289a79ec6cad95589c2d4ed7fd37dd80a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+      "committed_sha256": "2ab5ee184dc2267aad3d0263ae2bf43c8972779a536162dd25511c16737d96d4",
+      "working_tree_sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py": "3c86a9706045cb7ac44ea17710ab6cf9ae308d0a82de39b84739b57f61cc19b6",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula_schema.py": "29283726c67b64db0203bd007c287f8dabe158ec3d3b897c5ba8a7d1ce08f70d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "c999c06daf7528a23840193dabc02502853b286bd1c30f63d5c1d2cfdcfbfac4",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula.py": "d3b9433e352cc725b82f697023ea097177a8cf04a76551ff3297a9ee4b784f89",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_joint_formula_schema.py": "39a4615f4d2333a57d2fc9fdd9694b6317cffdb4d7e880a752655082324d0a11",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula.py": "a99d1bc6bda32df5addd83b3775e177ac4dca46a45e96fd68a1f91607c5b44ce"
+  },
+  "implementation_commit": "66b7f30c592fac7191524f8ba4d19250336c9a3d",
+  "scope": "owned implementation matches commit; smoke used canonical working tree, release suite uses isolated commit"
+}
