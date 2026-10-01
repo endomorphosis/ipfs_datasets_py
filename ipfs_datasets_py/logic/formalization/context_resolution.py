@@ -10,10 +10,17 @@ from collections import deque
 from dataclasses import dataclass
 import hashlib
 import json
+import math
+from pathlib import Path
+import re
 from time import monotonic
 
 from ..ir_core.provenance import SourceRef, SourceSpan
 from ...processors.retrieval import build_bm25_index, search_bm25_index
+
+_PACKAGE_ROOT = Path(__file__).resolve().parents[2]
+_PRODUCER_PINS = {name: hashlib.sha256((_PACKAGE_ROOT / name).read_bytes()).hexdigest() for name in (
+    "logic/formalization/context_resolution.py", "logic/ir_core/provenance.py", "processors/retrieval.py")}
 
 SCHEMA = "formalization-context-candidates/v1"
 SLOT_SORTS = frozenset({"referent", "temporal_anchor", "temporal_model", "scope",
@@ -31,6 +38,12 @@ def context_digest(value):
 def _require(condition, reason):
     if not condition:
         raise ValueError(reason)
+
+
+def _guard_producers():
+    for name, expected in _PRODUCER_PINS.items():
+        _require(hashlib.sha256((_PACKAGE_ROOT / name).read_bytes()).hexdigest() == expected,
+            "context_producer_changed_since_import:" + name)
 
 
 def _text(value, name, maximum=4096):
@@ -174,13 +187,14 @@ def _slots(slots):
     return result
 
 
-def prepare_context_bundle(index, *, source_span_id, slots, fixtures=(), limits=None):
+def prepare_context_bundle(index, *, source_span_id, slots, fixtures=(), sparse_observations=(), limits=None):
     """Return candidates plus optional explicit assumptions, never filled truth.
 
     The byte budget is global across slots; each excerpt is stored once. Local
     neighbors are ordered excerpts of the same exact document revision, not an
     assertion of governance. Graph traversal never invents a missing edge.
     """
+    _guard_producers()
     _require(type(index) is BoundedContextIndex, "bounded_context_index_required")
     limits = limits or ContextLimits()
     limits.validate()
@@ -202,6 +216,37 @@ def prepare_context_bundle(index, *, source_span_id, slots, fixtures=(), limits=
     _require(source_span_id in data["spans"], "missing_selected_span")
     selected = data["spans"][source_span_id]
     partition = selected["partition"]
+    _require(type(sparse_observations) in (list, tuple) and len(sparse_observations) <= 32, "bounded_sparse_observations_required")
+    sparse = {}
+    sparse_bytes = 0
+    for observation in sparse_observations:
+        _require(type(observation) is dict and observation.get("schema") == "pinned-sparse-context-retrieval/v1", "sparse_context_observation_required")
+        sparse_bytes += len(json.dumps(observation, allow_nan=False).encode())
+        _require(sparse_bytes <= 1_000_000, "sparse_observation_byte_limit")
+        _require(context_digest({k: v for k, v in observation.items() if k != "report_sha256"}) == observation.get("report_sha256"), "sparse_observation_hash_mismatch")
+        _require(observation.get("authority") == "context_only" and
+            all(observation.get(k) is False for k in ("proof_authority", "qualified", "admitted", "source_semantics_verified", "slots_filled")),
+            "sparse_context_cannot_grant_authority")
+        _require(type(observation.get("revision")) is str and re.fullmatch(r"[0-9a-f]{40}", observation["revision"]) is not None,
+            "pinned_sparse_revision_required")
+        query = observation.get("query")
+        _require(query in {s["question"] for s in declared} and query not in sparse, "unmatched_or_duplicate_sparse_query")
+        _require(observation.get("partition") == partition, "foreign_sparse_partition")
+        _require(type(observation.get("candidates")) is list and len(observation["candidates"]) <= 100, "bounded_sparse_candidates_required")
+        for hit in observation["candidates"]:
+            _require(type(hit) is dict and hit.get("span_id") in data["spans"], "unregistered_sparse_context")
+            row = data["spans"][hit["span_id"]]
+            _require(row["partition"] == partition and all(hit.get(k) == row[k] for k in ("text", "source_ref", "span", "partition")), "sparse_context_differs_from_index")
+            _require(hit.get("excerpt_sha256") == row["text_sha256"], "sparse_excerpt_hash_mismatch")
+            _require(hit.get("authority") == "context_only" and
+                all(hit.get(k) is False for k in ("proof_authority", "qualified", "admitted", "source_semantics_verified", "slots_filled")),
+                "sparse_candidate_cannot_grant_authority")
+            _require(hit.get("corpus_repo_id") == observation.get("repo_id") and hit.get("corpus_revision") == observation["revision"],
+                "sparse_candidate_corpus_mismatch")
+            _require(type(hit.get("score")) in (int, float) and math.isfinite(hit["score"]), "finite_sparse_score_required")
+        # Integrity is checked, but caller-supplied ranking provenance is not
+        # upgraded to proof or source truth by this join.
+        sparse[query] = json.loads(json.dumps(observation))
     candidates = {}
     diagnostics = []
     stats = {"bm25_queries": 0, "graph_visits": 0, "unique_context_bytes": 0}
@@ -239,14 +284,23 @@ def prepare_context_bundle(index, *, source_span_id, slots, fixtures=(), limits=
     if queue:
         diagnostics.append("graph_traversal_incomplete")
     results = []
+    lexical_cache = {}
     for slot in declared:
         found = []
         hits = []
         if not expired():
-            stats["bm25_queries"] += 1
-            hits = index.search(slot["question"], partition=partition,
-                top_k=min(4096, limits.max_candidates_per_slot + 1))
-        proposed = shared + [(h["id"], {"method": "bm25", "score": h["score"],
+            if slot["question"] not in lexical_cache:
+                stats["bm25_queries"] += 1
+                lexical_cache[slot["question"]] = index.search(slot["question"], partition=partition,
+                    top_k=min(4096, limits.max_candidates_per_slot + 1))
+            hits = lexical_cache[slot["question"]]
+        external = sparse.get(slot["question"])
+        external_hits = [] if external is None else external["candidates"]
+        if external is not None and external.get("status") == "partial":
+            diagnostics.append("partial_sparse_retrieval:" + slot["slot_id"])
+        proposed = shared + [(h["span_id"], {"method": "pinned_sparse_bm25", "score": h["score"],
+            "observation_sha256": external["report_sha256"], "governing_scope_verified": False}) for h in external_hits]
+        proposed += [(h["id"], {"method": "bm25", "score": h["score"],
             "governing_scope_verified": False}) for h in hits]
         positions = {}
         for key, reason in proposed:
@@ -278,14 +332,17 @@ def prepare_context_bundle(index, *, source_span_id, slots, fixtures=(), limits=
     if expired():
         diagnostics.append("deadline_exhausted")
     request = {"source_span_id": source_span_id, "slots": declared,
-        "fixtures": list(fixtures), "limits": vars(limits)}
+        "fixtures": list(fixtures), "sparse_observations": list(sparse_observations), "limits": vars(limits)}
     report = {"schema": SCHEMA, "index_sha256": index.index_sha256,
+        "producer_pins": dict(_PRODUCER_PINS),
         "index_revision": data["revision"], "request": request, "selected_source": selected,
         "artifacts": candidates, "slots": results, "diagnostics": sorted(set(diagnostics)),
         "telemetry": stats, "status": "incomplete" if diagnostics else "prepared",
         "source_resolved_slot_count": 0, "fixture_slot_count": len(assumptions),
+        "external_index_partition_isolation_verified": False,
         "next_action": "review_scope_and_formalize_link_before_target_preparation", **AUTHORITY}
     report["bundle_sha256"] = context_digest(report)
+    _guard_producers()
     return report
 
 
@@ -299,6 +356,7 @@ def validate_context_bundle(bundle, *, index):
     _require(bundle.get("status") == "prepared", "complete_context_retrieval_required")
     request = bundle["request"]
     expected = prepare_context_bundle(index, source_span_id=request["source_span_id"],
-        slots=request["slots"], fixtures=request["fixtures"], limits=ContextLimits(**request["limits"]))
+        slots=request["slots"], fixtures=request["fixtures"], sparse_observations=request["sparse_observations"],
+        limits=ContextLimits(**request["limits"]))
     _require(expected == bundle, "context_bundle_differs_from_index_replay")
     return True

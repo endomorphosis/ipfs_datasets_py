@@ -185,10 +185,13 @@ def prepare_companion(domain):
     expected_ids = set(audit.BLOCKERS[domain])
     _require({p["projection_id"] for p in report["superseded_v7_qualifier_observations"]} == expected_ids,
              "companion must replace exactly the historically blocked projections")
+    companion_payload = ({"source_text": inputs["source_text"], "document": inputs["document"].to_dict()}
+        if domain == "legal_ir" else {"ui_training_row": deepcopy(inputs["ui_training_row"])})
     fixture = {"schema": SCHEMA, "domain_id": domain, "companion_source_id": identity,
         "original_source_id": row["source_id"], "original_group_id": row["group_id"],
         "original_input_payload": original["input_payload"], "original_input_payload_sha256": original["input_payload_sha256"],
         "original_report_sha256": original_report["report_sha256"], "original_source_digest": original_report["source_digest"],
+        "companion_input_payload": companion_payload, "companion_input_payload_sha256": _digest(companion_payload),
         "companion_source_ref": source.to_dict(), "companion_source_digest": report["source_digest"],
         "companion_report_sha256": report["report_sha256"], "assumptions": assumptions,
         "assumptions_sha256": _digest(assumptions), "legal_auxiliary_view_relation": relation,

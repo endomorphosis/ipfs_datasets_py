@@ -19,7 +19,8 @@ MAX_RETURN_BYTES = 1024 * 1024
 _REVISION = re.compile(r"[0-9a-f]{40}")
 _FALSE = {"proof_authority": False, "source_semantics_verified": False,
           "slots_filled": False, "qualified": False, "admitted": False,
-          "formalized": False, "enqueued": False}
+          "formalized": False, "enqueued": False, "roundtrip_ok": False,
+          "execution_authority": False, "supervisor_importable": False}
 
 
 def _raw(value):
@@ -200,6 +201,8 @@ class PinnedSparseContextRetriever:
             "fetch_trace": trace, "candidates": accepted, "exclusions": exclusions,
             "candidate_bytes": used, "max_candidate_bytes": max_bytes, "top_k": top_k,
             "search_calls": 1, "authority": "context_only", "transport_scope": "explicit_injected_client",
+            "candidate_partition_filtered": True, "index_partition_isolated": False,
+            "holdout_safe_claim": False,
             "slot_binding_policy": "retrieval_never_selects_a_semantic_interpretation",
             **_FALSE}
         result["report_sha256"] = _sha(_raw(result))
