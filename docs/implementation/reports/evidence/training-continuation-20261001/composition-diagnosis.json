@@ -1,0 +1,3315 @@
+{
+  "admitted": false,
+  "before_after_tuning_trajectory_available": false,
+  "checkpoint_sha256": "62c82fc1016e835e447113839b7fb67bd2f1fe8b6b45fec5711a47cdf00e4dec",
+  "formalized": false,
+  "gradient_alignment": {
+    "formula": {
+      "all": {
+        "cosine": 0.0039125364273786545,
+        "train_norm": 0.0027780334930866957,
+        "tune_norm": 0.8758854866027832
+      },
+      "decoder": {
+        "cosine": -0.07951907813549042,
+        "train_norm": 0.002642994513735175,
+        "tune_norm": 0.2438579499721527
+      },
+      "projection": {
+        "cosine": 0.0844300389289856,
+        "train_norm": 0.0008556045359000564,
+        "tune_norm": 0.8412579298019409
+      }
+    },
+    "joint": {
+      "all": {
+        "cosine": -0.010405773296952248,
+        "train_norm": 0.002733000088483095,
+        "tune_norm": 0.8757508993148804
+      },
+      "decoder": {
+        "cosine": -0.07951907813549042,
+        "train_norm": 0.002642994513735175,
+        "tune_norm": 0.2438579499721527
+      },
+      "projection": {
+        "cosine": 0.045028477907180786,
+        "train_norm": 0.0006956121069379151,
+        "tune_norm": 0.8411178588867188
+      }
+    },
+    "reconstruction": {
+      "all": {
+        "cosine": 0.7251675128936768,
+        "train_norm": 0.0014051466714590788,
+        "tune_norm": 0.0017919057281687856
+      },
+      "decoder": {
+        "cosine": 0.0,
+        "train_norm": 0.0,
+        "tune_norm": 0.0
+      },
+      "projection": {
+        "cosine": 0.7251675128936768,
+        "train_norm": 0.0014051466714590788,
+        "tune_norm": 0.0017919057281687856
+      }
+    }
+  },
+  "optimizer_steps": 0,
+  "parameter_mutation": false,
+  "partitions_read": [
+    "training",
+    "tuning"
+  ],
+  "qualified": false,
+  "roundtrip_ok": false,
+  "schema": "retained-formula-composition-diagnosis/v1",
+  "sealed_targets_read": false,
+  "seed_count": 1,
+  "source_hashes": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/autoformal/__init__.py": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py": "ad9603c7b4dd80736aa9bb32dc4ffc537149f1d111b265c95b6dbedc5dbfe8aa",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/current_v2/__init__.py": "c56a5ae87ece7c31ab5d257a87fb93e501a2e63d1df131f21f22d432e589c3eb",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/__init__.py": "bdbe2843741514298d49ce2c5ed8aab1c1aeb447b8cae515c81aaa7e0f02dae6",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/MANIFEST.json": "d354fd562b722bf66ac52563aff379253517fbc25bd487898ef5b292b0389cc0",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/__init__.py": "695e6758d9fb9573e5604dfbe6e16e813a4c9cb3b5f3fa7f75b8ace68e01193d",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/codec.py": "05067257eecae4701d3274f1403ea05d4bfe717f14bdc9be3027424009d846a1",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/decompiler.py": "e8a34dc7aff799e2b43e95f52e6cbf4a89a62a7406d80ac477f46d0e1a09cc14",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/flogic_optimizer.py": "c2ed9c3b3376002764d7b7d46ca35889ccf88f129aa3144ade6fc418c390e453",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/kg_bridge.py": "336f67eed3cfb45b8bbda10c88a487b53b8b0e78a95fc1469b649f4165bb2ab9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/MANIFEST.json": "f44966d10d21f6f97ef89d967f411f5d86fe7195a0aa212269e3c785e27ddfa3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/__init__.py": "209d89df0ac32061a5237d87d19e42bbd0ddd60b0ad8ac939b44cc18c5156b36",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/spacy_modal_codec.py": "16ec4e141d5cb2f9d37cd4db42733921bc046e17fee12afc43ab31ca7a60cd59",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/MANIFEST.json": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/__init__.py": "6e694ea02e8530c8fc207fd82769b1f29a13b3ceac504e902f8b26202bda26b4",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/frame_bm25_selector.py": "612d472efaf9cb5bb2f57914125d9fc87cde3a55f14dc5a105cc80f268df430a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_family_evaluator.py": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_grammar_decoder.py": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_semantic_metrics.py": "cee46ad09daae3ae74cd359e8e25fb9fd592eee92c59730d42caf30db60c38da",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_modal_parser.py": "5415bf565171b17db1d4a03c715e974645a59018addb852cf67fc3c71d462406",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_samples.py": "51ce99dc83279c570bc57334c1cdc4cb72fa4b94c5b8c81101bb6252f0a614de",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder.py": "5f504f08854a239eda60c588d78766681818f724b7b59f1851f46a4fdc2129bd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_batching.py": "6538fc6f4bf3c7e7ba94c7ef8b4fa00833ca4f728b4bf90a2684096b2f70dc5a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_checkpoint.py": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_cuda.py": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_factorized_heads.py": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_feature_capacity.py": "76608ad29c95cf3178fc59d7c76c6c7f4ca5b9907b338f9558c88d3d8a3b93ba",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_legacy_distillation.py": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_migration.py": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_transaction.py": "d86a5721643bab9a51d1587aef117f925c53ebcdd8fd767964cacbd7859b810b",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_version.py": "f38530f5a8a10cd5969447e16e7d6a86542b8e9eeeb2d2a2dab69454ab250fc2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_tensor_state.py": "ee81537f1af3c3ca939f371cc9e4384adb317d6c7803dac22271d5dce0948d3f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_ir.py": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_prover_router.py": "46fe3a0a83b8e0e86c9bbb9dbfab15a2a4a8401fbe661bd58b512a93ffd47388",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_registry.py": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/projection_profiler.py": "c5c5179cce6df49f694523b999f61cc8a842fa71424af956893400d574e3b4e8",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/prover_integration.py": "5417a7a5da2d3fb8eb3cc3b40e4db11b8e6d592d67f3808c0cbfd0dc5f13c1cb",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/snapshot_evaluator.py": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/active_training.py": "01d0a99517b19d74a8a5ec6bf03d2a975593c2a397d4b57312fbfcb16b97d86e",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_frame_scope.py": "ad7b87cc3c4b97b1eaad015304ccc620d918006bf42f6a8afc9a5f80b321763f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_teacher.py": "f79c336fa35c69b63dca14420b65a37408eb00373e97c8ed61187f4756bfb433",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic.py": "baca84b44f7eda33466ffdc75170d904f480aafb47a779131337d90ed9a7bca3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_cached.py": "37d588f5df5df1b0f8fff4a4b2de7aed5757024fda8f16c18f29004f380b9ca9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_teacher.py": "529b7758fe2db751a9ae37bc50a6b8c8126c6b12b4d344cf1cb61324a5e2c869",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_view_reuse.py": "bc172008fcecc3b81e32dd4bc6e293ef407293da0c81f57e496a7e18d629f819",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py": "27616770fb7a21f2dbeacbe883fa0dd289a79ec6cad95589c2d4ed7fd37dd80a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_curriculum.py": "ef4c5be57e38fdb30d9db336c409dc18c9954f0a3cf8e9db65004e6ac03c5483",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py": "1f717aeaa0e8c4ae9220976428b2764fc2a7f6d99a74940806c2762b10896376",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_training_profiles.py": "49e0d2ceb5b9ce6ec2204a2130ea2bcd886cde1543a9b86584e29358737b3960",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_teacher_distillation.py": "adca358567c1520905c9bffec8166c01bfebe0dc6a8c63ad39940cb78ba43ff3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "2ab5ee184dc2267aad3d0263ae2bf43c8972779a536162dd25511c16737d96d4",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py": "5dda48e79614f49c2e2c8b107811bde37260355f7d4ca4e0e54a88d883725204",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula_schema.py": "29283726c67b64db0203bd007c287f8dabe158ec3d3b897c5ba8a7d1ce08f70d",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/scripts/ops/legal_ir/compare_formula_reconstruction_training.py": "35f9882fd9ffdaea4c383b5abad9662d4a8eb09d21ee0617c7b5304de2c68062",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/scripts/ops/legal_ir/evaluate_actor_composition_curriculum.py": "134d7d8ab4a5afe302e4147074b587597f123cdcc4686f687d34b5d9d57e0f84",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/scripts/ops/legal_ir/validate_teacher_student_transfer.py": "2324ef47a4a1752c99b96fe25c807b738f2ac858ba02853a72d9628aa4d8eccf",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/tests/fixtures/logic/actor_composition_panel.json": "6415ff97feaf49d0a05cbd15749f970a52814b9f63405b66d2f4ddc4525d69f5",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/tests/fixtures/logic/legacy_teacher_distillation.json": "43520883f76513b7bc3716c71ccb55a27ef4e91b22628b7b59a58682e0b3648f"
+  },
+  "training_executed": false,
+  "training_loss_windows": [
+    {
+      "first_step": 1,
+      "joint_loss": {
+        "max": 3.6456069946289062,
+        "mean": 1.1706168586015702,
+        "min": 0.3988499343395233
+      },
+      "last_step": 100,
+      "reconstruction_mse": {
+        "max": 0.04477238282561302,
+        "mean": 0.008389430915703997,
+        "min": 0.0013155877823010087
+      },
+      "token_cross_entropy": {
+        "max": 3.600834608078003,
+        "mean": 1.1622274234890937,
+        "min": 0.39602673053741455
+      }
+    },
+    {
+      "first_step": 101,
+      "joint_loss": {
+        "max": 0.4213051199913025,
+        "mean": 0.3406205058097839,
+        "min": 0.26596030592918396
+      },
+      "last_step": 200,
+      "reconstruction_mse": {
+        "max": 0.009483851492404938,
+        "mean": 0.002982639380497858,
+        "min": 0.0009537267033010721
+      },
+      "token_cross_entropy": {
+        "max": 0.4191834330558777,
+        "mean": 0.3376378646492958,
+        "min": 0.2614454925060272
+      }
+    },
+    {
+      "first_step": 201,
+      "joint_loss": {
+        "max": 0.31397080421447754,
+        "mean": 0.24121448040008545,
+        "min": 0.15385659039020538
+      },
+      "last_step": 300,
+      "reconstruction_mse": {
+        "max": 0.008381426334381104,
+        "mean": 0.003306637190980837,
+        "min": 0.0016745079774409533
+      },
+      "token_cross_entropy": {
+        "max": 0.31213489174842834,
+        "mean": 0.2379078434407711,
+        "min": 0.1456124633550644
+      }
+    },
+    {
+      "first_step": 301,
+      "joint_loss": {
+        "max": 0.25165805220603943,
+        "mean": 0.17112273715436457,
+        "min": 0.11209529638290405
+      },
+      "last_step": 400,
+      "reconstruction_mse": {
+        "max": 0.014820996671915054,
+        "mean": 0.005353501394856721,
+        "min": 0.002436247654259205
+      },
+      "token_cross_entropy": {
+        "max": 0.24113263189792633,
+        "mean": 0.16576923564076423,
+        "min": 0.10875309258699417
+      }
+    },
+    {
+      "first_step": 401,
+      "joint_loss": {
+        "max": 0.17157082259655,
+        "mean": 0.11371830843389034,
+        "min": 0.06948696076869965
+      },
+      "last_step": 500,
+      "reconstruction_mse": {
+        "max": 0.010957952588796616,
+        "mean": 0.006403885760810226,
+        "min": 0.0023066385183483362
+      },
+      "token_cross_entropy": {
+        "max": 0.16329705715179443,
+        "mean": 0.10731442250311375,
+        "min": 0.06268453598022461
+      }
+    },
+    {
+      "first_step": 501,
+      "joint_loss": {
+        "max": 0.09073874354362488,
+        "mean": 0.057613905668258664,
+        "min": 0.03034592792391777
+      },
+      "last_step": 600,
+      "reconstruction_mse": {
+        "max": 0.006993707735091448,
+        "mean": 0.00476103114662692,
+        "min": 0.0031257979571819305
+      },
+      "token_cross_entropy": {
+        "max": 0.0848383978009224,
+        "mean": 0.05285287450999022,
+        "min": 0.025522055104374886
+      }
+    },
+    {
+      "first_step": 601,
+      "joint_loss": {
+        "max": 0.1452515423297882,
+        "mean": 0.03684041874483228,
+        "min": 0.01628607138991356
+      },
+      "last_step": 700,
+      "reconstruction_mse": {
+        "max": 0.011784590780735016,
+        "mean": 0.005566014328505844,
+        "min": 0.0033288118429481983
+      },
+      "token_cross_entropy": {
+        "max": 0.1334669440984726,
+        "mean": 0.03127440443262458,
+        "min": 0.012229993008077145
+      }
+    },
+    {
+      "first_step": 701,
+      "joint_loss": {
+        "max": 0.020803209394216537,
+        "mean": 0.014157612510025501,
+        "min": 0.009659690782427788
+      },
+      "last_step": 800,
+      "reconstruction_mse": {
+        "max": 0.004364276770502329,
+        "mean": 0.0028664465120527894,
+        "min": 0.00190063810441643
+      },
+      "token_cross_entropy": {
+        "max": 0.016868645325303078,
+        "mean": 0.011291166078299284,
+        "min": 0.007228253409266472
+      }
+    },
+    {
+      "first_step": 801,
+      "joint_loss": {
+        "max": 0.01330241747200489,
+        "mean": 0.009179756939411164,
+        "min": 0.0070524150505661964
+      },
+      "last_step": 900,
+      "reconstruction_mse": {
+        "max": 0.002492210827767849,
+        "mean": 0.001891774603864178,
+        "min": 0.0014577736146748066
+      },
+      "token_cross_entropy": {
+        "max": 0.011083785444498062,
+        "mean": 0.007287982306443155,
+        "min": 0.005166457034647465
+      }
+    },
+    {
+      "first_step": 901,
+      "joint_loss": {
+        "max": 0.008546159602701664,
+        "mean": 0.0067721577873453495,
+        "min": 0.005455194506794214
+      },
+      "last_step": 1000,
+      "reconstruction_mse": {
+        "max": 0.0018934325780719519,
+        "mean": 0.0014638167235534638,
+        "min": 0.0011728662066161633
+      },
+      "token_cross_entropy": {
+        "max": 0.0070088766515254974,
+        "mean": 0.0053083410765975714,
+        "min": 0.0041050985455513
+      }
+    }
+  ],
+  "tuning_details": [
+    {
+      "expected": {
+        "rules": [
+          {
+            "action": "publish",
+            "actor": "registrar",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "notices",
+            "temporal": []
+          }
+        ]
+      },
+      "free": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9970465302467346,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9970465302467346,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 0.0029535130597651005,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"custodian\"]",
+          "correct": false,
+          "expected_probability": 0.13699185848236084,
+          "expected_rank": 3,
+          "expected_token": "[\"atom\",\"actor\",\"registrar\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.613574743270874,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            },
+            {
+              "probability": 0.1846981644630432,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            },
+            {
+              "probability": 0.13699185848236084,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            },
+            {
+              "probability": 0.057802677154541016,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"submit\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.8129565715789795,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            },
+            {
+              "probability": 0.16560178995132446,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.013640952296555042,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.005020615179091692,
+              "token": "[\"atom\",\"action\",\"disclose\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"reports\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9916433095932007,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.0066260844469070435,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.000924757041502744,
+              "token": "[\"atom\",\"object\",\"notices\"]"
+            },
+            {
+              "probability": 0.0006294476916082203,
+              "token": "[\"atom\",\"object\",\"records\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.99858558177948,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 0.0014144941233098507,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9992212057113647,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.0007533947355113924,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 2.538846092647873e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ],
+      "id": "us-code-diagnostic-composition-registrar-publication-898ce2ba6a04815f",
+      "nearest": {
+        "condition": [
+          {
+            "cosine": 0.9485902786254883,
+            "source_text": "The custodian shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9476876258850098,
+            "source_text": "The registrar shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9234102368354797,
+            "source_text": "The board shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "projected": [
+          {
+            "cosine": 0.8188242316246033,
+            "source_text": "The registrar shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.7748939990997314,
+            "source_text": "The custodian shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.7715134024620056,
+            "source_text": "The registrar shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ],
+        "raw": [
+          {
+            "cosine": 0.9576615691184998,
+            "source_text": "The administrator shall publish notices.",
+            "target": {
+              "rules": [
+                {
+                  "action": "publish",
+                  "actor": "administrator",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "notices",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9445182085037231,
+            "source_text": "The board shall publish notices.",
+            "target": {
+              "rules": [
+                {
+                  "action": "publish",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "notices",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9436147212982178,
+            "source_text": "The registrar shall submit reports.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "reports",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "predicted": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "custodian",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "reports",
+            "temporal": []
+          }
+        ]
+      },
+      "source_text": "The registrar shall publish notices.",
+      "teacher_forced": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9970465302467346,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9970465302467346,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 0.0029535130597651005,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"custodian\"]",
+          "correct": false,
+          "expected_probability": 0.13699185848236084,
+          "expected_rank": 3,
+          "expected_token": "[\"atom\",\"actor\",\"registrar\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.613574743270874,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            },
+            {
+              "probability": 0.1846981644630432,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            },
+            {
+              "probability": 0.13699185848236084,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            },
+            {
+              "probability": 0.057802677154541016,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"publish\"]",
+          "correct": true,
+          "expected_probability": 0.44150272011756897,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"publish\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.44150272011756897,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            },
+            {
+              "probability": 0.3485119342803955,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.1839243769645691,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.015260633081197739,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"notices\"]",
+          "correct": true,
+          "expected_probability": 0.9965271353721619,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"object\",\"notices\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9965271353721619,
+              "token": "[\"atom\",\"object\",\"notices\"]"
+            },
+            {
+              "probability": 0.0018546488136053085,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.0009221401414833963,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.000482976611237973,
+              "token": "[\"atom\",\"object\",\"applications\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": true,
+          "expected_probability": 0.9991244673728943,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"exceptions\"]",
+          "gold_prefix_aligned": true,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9991244673728943,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 0.0008755844901315868,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": true,
+          "expected_probability": 0.9990949630737305,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"temporal\"]",
+          "gold_prefix_aligned": true,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9990949630737305,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.0008756843162700534,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 2.9406659450614825e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "expected": {
+        "rules": [
+          {
+            "action": "review",
+            "actor": "board",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "applications",
+            "temporal": []
+          }
+        ]
+      },
+      "free": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9992948770523071,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9992948770523071,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 0.0007051575812511146,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"board\"]",
+          "correct": true,
+          "expected_probability": 0.9752702116966248,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"board\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.9752702116966248,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            },
+            {
+              "probability": 0.01327825989574194,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            },
+            {
+              "probability": 0.007933326996862888,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            },
+            {
+              "probability": 0.0025379236321896315,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"publish\"]",
+          "correct": false,
+          "expected_probability": 0.030432699248194695,
+          "expected_rank": 2,
+          "expected_token": "[\"atom\",\"action\",\"review\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.9437848329544067,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            },
+            {
+              "probability": 0.030432699248194695,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.017481854185461998,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.008025698363780975,
+              "token": "[\"atom\",\"action\",\"disclose\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"notices\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9964423775672913,
+              "token": "[\"atom\",\"object\",\"notices\"]"
+            },
+            {
+              "probability": 0.002230173908174038,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.0006604720838367939,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.00045857636723667383,
+              "token": "[\"atom\",\"object\",\"applications\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9991331696510315,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 0.0008668127120472491,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9990975856781006,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.0008732773130759597,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 2.9200913559179753e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ],
+      "id": "us-code-diagnostic-composition-board-review-457d65b80926b3c7",
+      "nearest": {
+        "condition": [
+          {
+            "cosine": 0.9992303252220154,
+            "source_text": "The board shall publish notices.",
+            "target": {
+              "rules": [
+                {
+                  "action": "publish",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "notices",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.939815104007721,
+            "source_text": "The board shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9252651929855347,
+            "source_text": "The custodian shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ],
+        "projected": [
+          {
+            "cosine": 0.9226304888725281,
+            "source_text": "The board shall publish notices.",
+            "target": {
+              "rules": [
+                {
+                  "action": "publish",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "notices",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8321121335029602,
+            "source_text": "The board shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8220779895782471,
+            "source_text": "The clerk shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ],
+        "raw": [
+          {
+            "cosine": 0.9492807388305664,
+            "source_text": "The administrator shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "administrator",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9384873509407043,
+            "source_text": "The clerk shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9374501705169678,
+            "source_text": "The inspector shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "inspector",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "predicted": {
+        "rules": [
+          {
+            "action": "publish",
+            "actor": "board",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "notices",
+            "temporal": []
+          }
+        ]
+      },
+      "source_text": "The board shall review applications.",
+      "teacher_forced": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9992948770523071,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9992948770523071,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 0.0007051575812511146,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"board\"]",
+          "correct": true,
+          "expected_probability": 0.9752702116966248,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"board\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.9752702116966248,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            },
+            {
+              "probability": 0.01327825989574194,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            },
+            {
+              "probability": 0.007933326996862888,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            },
+            {
+              "probability": 0.0025379236321896315,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"publish\"]",
+          "correct": false,
+          "expected_probability": 0.030432699248194695,
+          "expected_rank": 2,
+          "expected_token": "[\"atom\",\"action\",\"review\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.9437848329544067,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            },
+            {
+              "probability": 0.030432699248194695,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.017481854185461998,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.008025698363780975,
+              "token": "[\"atom\",\"action\",\"disclose\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"applications\"]",
+          "correct": true,
+          "expected_probability": 0.9964908957481384,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"object\",\"applications\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9964908957481384,
+              "token": "[\"atom\",\"object\",\"applications\"]"
+            },
+            {
+              "probability": 0.0022261047270148993,
+              "token": "[\"atom\",\"object\",\"the file for at least 20 days\"]"
+            },
+            {
+              "probability": 0.0009054269175976515,
+              "token": "[\"atom\",\"object\",\"notices\"]"
+            },
+            {
+              "probability": 0.0003594287554733455,
+              "token": "[\"atom\",\"object\",\"records\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": true,
+          "expected_probability": 0.9994113445281982,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"exceptions\"]",
+          "gold_prefix_aligned": true,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9994113445281982,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 0.0005887061706744134,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": true,
+          "expected_probability": 0.9989829659461975,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"temporal\"]",
+          "gold_prefix_aligned": true,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9989829659461975,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.0009853276424109936,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 3.1704388675279915e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "expected": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "inspector",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "reports",
+            "temporal": []
+          }
+        ]
+      },
+      "free": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9999666213989258,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9999666213989258,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 3.333744461997412e-05,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"inspector\"]",
+          "correct": true,
+          "expected_probability": 0.9803012013435364,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"inspector\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.9803012013435364,
+              "token": "[\"atom\",\"actor\",\"inspector\"]"
+            },
+            {
+              "probability": 0.01395648717880249,
+              "token": "[\"atom\",\"actor\",\"administrator\"]"
+            },
+            {
+              "probability": 0.0041581206023693085,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            },
+            {
+              "probability": 0.0009153925930149853,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"submit\"]",
+          "correct": true,
+          "expected_probability": 0.9845261573791504,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"submit\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.9845261573791504,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            },
+            {
+              "probability": 0.010404818691313267,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.004841572605073452,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.00018343565170653164,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"backup report\"]",
+          "correct": false,
+          "expected_probability": 0.010761428624391556,
+          "expected_rank": 2,
+          "expected_token": "[\"atom\",\"object\",\"reports\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9839922785758972,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.010761428624391556,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.0020672495011240244,
+              "token": "[\"atom\",\"object\",\"records\"]"
+            },
+            {
+              "probability": 0.0018540887394919991,
+              "token": "[\"atom\",\"object\",\"the file for at least 20 days\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"exceptions\",\"emergency\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.995547890663147,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            },
+            {
+              "probability": 0.004452163353562355,
+              "token": "[\"end\",\"exceptions\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"temporal\",\"within 10 days\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 15,
+          "top": [
+            {
+              "probability": 0.9971152544021606,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            },
+            {
+              "probability": 0.002660781145095825,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 0.0002239802124677226,
+              "token": "[\"end\",\"temporal\"]"
+            }
+          ]
+        }
+      ],
+      "id": "us-code-diagnostic-composition-inspector-report-7fa34562daf3999a",
+      "nearest": {
+        "condition": [
+          {
+            "cosine": 0.9805482029914856,
+            "source_text": "The inspector shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "inspector",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.940268874168396,
+            "source_text": "The inspector shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "inspector",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9123568534851074,
+            "source_text": "The inspector shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "inspector",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ],
+        "projected": [
+          {
+            "cosine": 0.9103442430496216,
+            "source_text": "The inspector shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "inspector",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8220802545547485,
+            "source_text": "The inspector shall publish notices.",
+            "target": {
+              "rules": [
+                {
+                  "action": "publish",
+                  "actor": "inspector",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "notices",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8135784268379211,
+            "source_text": "The inspector shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "inspector",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ],
+        "raw": [
+          {
+            "cosine": 0.951604962348938,
+            "source_text": "The administrator shall submit reports.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "administrator",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "reports",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9474854469299316,
+            "source_text": "The inspector shall publish notices.",
+            "target": {
+              "rules": [
+                {
+                  "action": "publish",
+                  "actor": "inspector",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "notices",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9386314153671265,
+            "source_text": "The clerk shall submit reports.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "reports",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "predicted": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "inspector",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "modality": "O",
+            "object": "backup report",
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      },
+      "source_text": "The inspector shall submit reports.",
+      "teacher_forced": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9999666213989258,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9999666213989258,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 3.333744461997412e-05,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"inspector\"]",
+          "correct": true,
+          "expected_probability": 0.9803012013435364,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"inspector\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.9803012013435364,
+              "token": "[\"atom\",\"actor\",\"inspector\"]"
+            },
+            {
+              "probability": 0.01395648717880249,
+              "token": "[\"atom\",\"actor\",\"administrator\"]"
+            },
+            {
+              "probability": 0.0041581206023693085,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            },
+            {
+              "probability": 0.0009153925930149853,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"submit\"]",
+          "correct": true,
+          "expected_probability": 0.9845261573791504,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"submit\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.9845261573791504,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            },
+            {
+              "probability": 0.010404818691313267,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.004841572605073452,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.00018343565170653164,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"backup report\"]",
+          "correct": false,
+          "expected_probability": 0.010761428624391556,
+          "expected_rank": 2,
+          "expected_token": "[\"atom\",\"object\",\"reports\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9839922785758972,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.010761428624391556,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.0020672495011240244,
+              "token": "[\"atom\",\"object\",\"records\"]"
+            },
+            {
+              "probability": 0.0018540887394919991,
+              "token": "[\"atom\",\"object\",\"the file for at least 20 days\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": true,
+          "expected_probability": 0.9996090531349182,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"exceptions\"]",
+          "gold_prefix_aligned": true,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9996090531349182,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 0.0003909866791218519,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": true,
+          "expected_probability": 0.9971945285797119,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"temporal\"]",
+          "gold_prefix_aligned": true,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9971945285797119,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.0027448032051324844,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 6.058970029698685e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "expected": {
+        "rules": [
+          {
+            "action": "disclose",
+            "actor": "administrator",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "free": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"F\"]",
+          "correct": true,
+          "expected_probability": 0.5894125699996948,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"F\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.5894125699996948,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            },
+            {
+              "probability": 0.4105874300003052,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"administrator\"]",
+          "correct": true,
+          "expected_probability": 0.6889960169792175,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"administrator\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.6889960169792175,
+              "token": "[\"atom\",\"actor\",\"administrator\"]"
+            },
+            {
+              "probability": 0.2137630730867386,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            },
+            {
+              "probability": 0.0646863654255867,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            },
+            {
+              "probability": 0.015473836101591587,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"disclose\"]",
+          "correct": true,
+          "expected_probability": 0.9708153009414673,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"disclose\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.9708153009414673,
+              "token": "[\"atom\",\"action\",\"disclose\"]"
+            },
+            {
+              "probability": 0.01555282436311245,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.007850868627429008,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            },
+            {
+              "probability": 0.00551965506747365,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"records\"]",
+          "correct": true,
+          "expected_probability": 0.9970057606697083,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"object\",\"records\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9970057606697083,
+              "token": "[\"atom\",\"object\",\"records\"]"
+            },
+            {
+              "probability": 0.0009655475150793791,
+              "token": "[\"atom\",\"object\",\"applications\"]"
+            },
+            {
+              "probability": 0.0009629639680497348,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.000820632791146636,
+              "token": "[\"atom\",\"object\",\"the file for at least 20 days\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": true,
+          "expected_probability": 0.9994516968727112,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"exceptions\"]",
+          "gold_prefix_aligned": true,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9994516968727112,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 0.0005483417771756649,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": true,
+          "expected_probability": 0.9986170530319214,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"temporal\"]",
+          "gold_prefix_aligned": true,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9986170530319214,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.0013468291144818068,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 3.6040561099071056e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ],
+      "id": "us-code-diagnostic-composition-administrator-prohibition-25604046d5913d05",
+      "nearest": {
+        "condition": [
+          {
+            "cosine": 0.8385842442512512,
+            "source_text": "The clerk shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8379632234573364,
+            "source_text": "The administrator shall submit reports.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "administrator",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "reports",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8056368827819824,
+            "source_text": "The custodian shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ],
+        "projected": [
+          {
+            "cosine": 0.8080887198448181,
+            "source_text": "The clerk shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8051819205284119,
+            "source_text": "The custodian shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.7635154724121094,
+            "source_text": "The registrar shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ],
+        "raw": [
+          {
+            "cosine": 0.9590276479721069,
+            "source_text": "The custodian shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9586613178253174,
+            "source_text": "The board shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9570057392120361,
+            "source_text": "The clerk shall not disclose records.",
+            "target": {
+              "rules": [
+                {
+                  "action": "disclose",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "F",
+                  "object": "records",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "predicted": {
+        "rules": [
+          {
+            "action": "disclose",
+            "actor": "administrator",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "source_text": "The administrator shall not disclose records.",
+      "teacher_forced": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"F\"]",
+          "correct": true,
+          "expected_probability": 0.5894125699996948,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"F\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.5894125699996948,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            },
+            {
+              "probability": 0.4105874300003052,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"administrator\"]",
+          "correct": true,
+          "expected_probability": 0.6889960169792175,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"administrator\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.6889960169792175,
+              "token": "[\"atom\",\"actor\",\"administrator\"]"
+            },
+            {
+              "probability": 0.2137630730867386,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            },
+            {
+              "probability": 0.0646863654255867,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            },
+            {
+              "probability": 0.015473836101591587,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"disclose\"]",
+          "correct": true,
+          "expected_probability": 0.9708153009414673,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"disclose\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.9708153009414673,
+              "token": "[\"atom\",\"action\",\"disclose\"]"
+            },
+            {
+              "probability": 0.01555282436311245,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.007850868627429008,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            },
+            {
+              "probability": 0.00551965506747365,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"records\"]",
+          "correct": true,
+          "expected_probability": 0.9970057606697083,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"object\",\"records\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9970057606697083,
+              "token": "[\"atom\",\"object\",\"records\"]"
+            },
+            {
+              "probability": 0.0009655475150793791,
+              "token": "[\"atom\",\"object\",\"applications\"]"
+            },
+            {
+              "probability": 0.0009629639680497348,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.000820632791146636,
+              "token": "[\"atom\",\"object\",\"the file for at least 20 days\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": true,
+          "expected_probability": 0.9994516968727112,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"exceptions\"]",
+          "gold_prefix_aligned": true,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9994516968727112,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 0.0005483417771756649,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": true,
+          "expected_probability": 0.9986170530319214,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"temporal\"]",
+          "gold_prefix_aligned": true,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9986170530319214,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.0013468291144818068,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 3.6040561099071056e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "expected": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "custodian",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the file for at least 20 days",
+            "temporal": [
+              "20 days"
+            ]
+          }
+        ]
+      },
+      "free": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9990535378456116,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9990535378456116,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 0.000946480839047581,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"custodian\"]",
+          "correct": true,
+          "expected_probability": 0.9161691665649414,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"custodian\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.9161691665649414,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            },
+            {
+              "probability": 0.04672488942742348,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            },
+            {
+              "probability": 0.022524220868945122,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            },
+            {
+              "probability": 0.011209070682525635,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"retain\"]",
+          "correct": true,
+          "expected_probability": 0.4763167202472687,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"retain\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.4763167202472687,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.42522308230400085,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            },
+            {
+              "probability": 0.08583452552556992,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.0068845972418785095,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"the file for at least 20 days\"]",
+          "correct": true,
+          "expected_probability": 0.994946300983429,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"object\",\"the file for at least 20 days\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.994946300983429,
+              "token": "[\"atom\",\"object\",\"the file for at least 20 days\"]"
+            },
+            {
+              "probability": 0.0019154894398525357,
+              "token": "[\"atom\",\"object\",\"applications\"]"
+            },
+            {
+              "probability": 0.0012920850422233343,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.0009689622675068676,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": true,
+          "expected_probability": 0.9999457597732544,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"exceptions\"]",
+          "gold_prefix_aligned": true,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9999457597732544,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 5.4227635700954124e-05,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"temporal\",\"20 days\"]",
+          "correct": true,
+          "expected_probability": 0.9933347702026367,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"temporal\",\"20 days\"]",
+          "gold_prefix_aligned": true,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9933347702026367,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 0.004809574224054813,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.001855642069131136,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": true,
+          "expected_probability": 0.9999847412109375,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"temporal\"]",
+          "gold_prefix_aligned": true,
+          "step": 15,
+          "top": [
+            {
+              "probability": 0.9999847412109375,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 1.5276013073162176e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ],
+      "id": "us-code-diagnostic-composition-custodian-minimum-f6df907cbb8bb47d",
+      "nearest": {
+        "condition": [
+          {
+            "cosine": 0.9194371700286865,
+            "source_text": "The custodian shall submit reports.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "reports",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9001322388648987,
+            "source_text": "The custodian shall publish notices.",
+            "target": {
+              "rules": [
+                {
+                  "action": "publish",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "notices",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8995305299758911,
+            "source_text": "The custodian shall review applications.",
+            "target": {
+              "rules": [
+                {
+                  "action": "review",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "applications",
+                  "temporal": []
+                }
+              ]
+            }
+          }
+        ],
+        "projected": [
+          {
+            "cosine": 0.862232506275177,
+            "source_text": "The custodian shall publish notices.",
+            "target": {
+              "rules": [
+                {
+                  "action": "publish",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "notices",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8429274559020996,
+            "source_text": "The custodian shall submit reports.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "custodian",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "reports",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8171725869178772,
+            "source_text": "The registrar shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "raw": [
+          {
+            "cosine": 0.9568602442741394,
+            "source_text": "The clerk shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9498697519302368,
+            "source_text": "The registrar shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9485787749290466,
+            "source_text": "The board shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "predicted": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "custodian",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the file for at least 20 days",
+            "temporal": [
+              "20 days"
+            ]
+          }
+        ]
+      },
+      "source_text": "The custodian shall retain the file for at least 20 days.",
+      "teacher_forced": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9990535378456116,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9990535378456116,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 0.000946480839047581,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"custodian\"]",
+          "correct": true,
+          "expected_probability": 0.9161691665649414,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"custodian\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.9161691665649414,
+              "token": "[\"atom\",\"actor\",\"custodian\"]"
+            },
+            {
+              "probability": 0.04672488942742348,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            },
+            {
+              "probability": 0.022524220868945122,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            },
+            {
+              "probability": 0.011209070682525635,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"retain\"]",
+          "correct": true,
+          "expected_probability": 0.4763167202472687,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"retain\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.4763167202472687,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.42522308230400085,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            },
+            {
+              "probability": 0.08583452552556992,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.0068845972418785095,
+              "token": "[\"atom\",\"action\",\"publish\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"the file for at least 20 days\"]",
+          "correct": true,
+          "expected_probability": 0.994946300983429,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"object\",\"the file for at least 20 days\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.994946300983429,
+              "token": "[\"atom\",\"object\",\"the file for at least 20 days\"]"
+            },
+            {
+              "probability": 0.0019154894398525357,
+              "token": "[\"atom\",\"object\",\"applications\"]"
+            },
+            {
+              "probability": 0.0012920850422233343,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.0009689622675068676,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": true,
+          "expected_probability": 0.9999457597732544,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"exceptions\"]",
+          "gold_prefix_aligned": true,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9999457597732544,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 5.4227635700954124e-05,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"temporal\",\"20 days\"]",
+          "correct": true,
+          "expected_probability": 0.9933347702026367,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"temporal\",\"20 days\"]",
+          "gold_prefix_aligned": true,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9933347702026367,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 0.004809574224054813,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.001855642069131136,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": true,
+          "expected_probability": 0.9999847412109375,
+          "expected_rank": 1,
+          "expected_token": "[\"end\",\"temporal\"]",
+          "gold_prefix_aligned": true,
+          "step": 15,
+          "top": [
+            {
+              "probability": 0.9999847412109375,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 1.5276013073162176e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "expected": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "clerk",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "modality": "O",
+            "object": "backup report",
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      },
+      "free": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9996248483657837,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9996248483657837,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 0.00037518044700846076,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"clerk\"]",
+          "correct": true,
+          "expected_probability": 0.9528476595878601,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"clerk\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.9528476595878601,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            },
+            {
+              "probability": 0.019628696143627167,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            },
+            {
+              "probability": 0.014200150035321712,
+              "token": "[\"atom\",\"actor\",\"administrator\"]"
+            },
+            {
+              "probability": 0.011840768158435822,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"submit\"]",
+          "correct": true,
+          "expected_probability": 0.9919866323471069,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"submit\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.9919866323471069,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            },
+            {
+              "probability": 0.004138166084885597,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.0034800125285983086,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.00034134957240894437,
+              "token": "[\"atom\",\"action\",\"disclose\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"reports\"]",
+          "correct": false,
+          "expected_probability": 0.011081921868026257,
+          "expected_rank": 2,
+          "expected_token": "[\"atom\",\"object\",\"backup report\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9863908290863037,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.011081921868026257,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.001448766328394413,
+              "token": "[\"atom\",\"object\",\"records\"]"
+            },
+            {
+              "probability": 0.000873166078235954,
+              "token": "[\"atom\",\"object\",\"notices\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"exceptions\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9986065030097961,
+              "token": "[\"end\",\"exceptions\"]"
+            },
+            {
+              "probability": 0.0013934929156675935,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"end\",\"temporal\"]",
+          "correct": null,
+          "expected_probability": null,
+          "expected_rank": null,
+          "expected_token": null,
+          "gold_prefix_aligned": false,
+          "step": 14,
+          "top": [
+            {
+              "probability": 0.9992030262947083,
+              "token": "[\"end\",\"temporal\"]"
+            },
+            {
+              "probability": 0.0007712193764746189,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 2.5682316845632158e-05,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            }
+          ]
+        }
+      ],
+      "id": "us-code-diagnostic-composition-clerk-deadline-7e7d2e446b73d53f",
+      "nearest": {
+        "condition": [
+          {
+            "cosine": 0.9972963929176331,
+            "source_text": "The clerk shall submit reports.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "reports",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9450313448905945,
+            "source_text": "The administrator shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "administrator",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9448275566101074,
+            "source_text": "The clerk shall retain the file for at least 20 days.",
+            "target": {
+              "rules": [
+                {
+                  "action": "retain",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "the file for at least 20 days",
+                  "temporal": [
+                    "20 days"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "projected": [
+          {
+            "cosine": 0.902916669845581,
+            "source_text": "The clerk shall submit reports.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "clerk",
+                  "conditions": [],
+                  "exceptions": [],
+                  "modality": "O",
+                  "object": "reports",
+                  "temporal": []
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8386486768722534,
+            "source_text": "The administrator shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "administrator",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.8166548013687134,
+            "source_text": "The registrar shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "raw": [
+          {
+            "cosine": 0.9707868695259094,
+            "source_text": "The registrar shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "registrar",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9668328762054443,
+            "source_text": "The administrator shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "administrator",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "cosine": 0.9616116285324097,
+            "source_text": "The board shall submit backup report within 10 days unless emergency.",
+            "target": {
+              "rules": [
+                {
+                  "action": "submit",
+                  "actor": "board",
+                  "conditions": [],
+                  "exceptions": [
+                    "emergency"
+                  ],
+                  "modality": "O",
+                  "object": "backup report",
+                  "temporal": [
+                    "within 10 days"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "predicted": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "clerk",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "reports",
+            "temporal": []
+          }
+        ]
+      },
+      "source_text": "The clerk shall submit backup report within 10 days unless emergency.",
+      "teacher_forced": [
+        {
+          "chosen_token": "[\"atom\",\"modality\",\"O\"]",
+          "correct": true,
+          "expected_probability": 0.9996248483657837,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"modality\",\"O\"]",
+          "gold_prefix_aligned": true,
+          "step": 2,
+          "top": [
+            {
+              "probability": 0.9996248483657837,
+              "token": "[\"atom\",\"modality\",\"O\"]"
+            },
+            {
+              "probability": 0.00037518044700846076,
+              "token": "[\"atom\",\"modality\",\"F\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"actor\",\"clerk\"]",
+          "correct": true,
+          "expected_probability": 0.9528476595878601,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"actor\",\"clerk\"]",
+          "gold_prefix_aligned": true,
+          "step": 4,
+          "top": [
+            {
+              "probability": 0.9528476595878601,
+              "token": "[\"atom\",\"actor\",\"clerk\"]"
+            },
+            {
+              "probability": 0.019628696143627167,
+              "token": "[\"atom\",\"actor\",\"registrar\"]"
+            },
+            {
+              "probability": 0.014200150035321712,
+              "token": "[\"atom\",\"actor\",\"administrator\"]"
+            },
+            {
+              "probability": 0.011840768158435822,
+              "token": "[\"atom\",\"actor\",\"board\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"action\",\"submit\"]",
+          "correct": true,
+          "expected_probability": 0.9919866323471069,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"action\",\"submit\"]",
+          "gold_prefix_aligned": true,
+          "step": 6,
+          "top": [
+            {
+              "probability": 0.9919866323471069,
+              "token": "[\"atom\",\"action\",\"submit\"]"
+            },
+            {
+              "probability": 0.004138166084885597,
+              "token": "[\"atom\",\"action\",\"retain\"]"
+            },
+            {
+              "probability": 0.0034800125285983086,
+              "token": "[\"atom\",\"action\",\"review\"]"
+            },
+            {
+              "probability": 0.00034134957240894437,
+              "token": "[\"atom\",\"action\",\"disclose\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"object\",\"reports\"]",
+          "correct": false,
+          "expected_probability": 0.011081921868026257,
+          "expected_rank": 2,
+          "expected_token": "[\"atom\",\"object\",\"backup report\"]",
+          "gold_prefix_aligned": true,
+          "step": 8,
+          "top": [
+            {
+              "probability": 0.9863908290863037,
+              "token": "[\"atom\",\"object\",\"reports\"]"
+            },
+            {
+              "probability": 0.011081921868026257,
+              "token": "[\"atom\",\"object\",\"backup report\"]"
+            },
+            {
+              "probability": 0.001448766328394413,
+              "token": "[\"atom\",\"object\",\"records\"]"
+            },
+            {
+              "probability": 0.000873166078235954,
+              "token": "[\"atom\",\"object\",\"notices\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"exceptions\",\"emergency\"]",
+          "correct": true,
+          "expected_probability": 0.9970757961273193,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"exceptions\",\"emergency\"]",
+          "gold_prefix_aligned": true,
+          "step": 12,
+          "top": [
+            {
+              "probability": 0.9970757961273193,
+              "token": "[\"atom\",\"exceptions\",\"emergency\"]"
+            },
+            {
+              "probability": 0.002924239495769143,
+              "token": "[\"end\",\"exceptions\"]"
+            }
+          ]
+        },
+        {
+          "chosen_token": "[\"atom\",\"temporal\",\"within 10 days\"]",
+          "correct": true,
+          "expected_probability": 0.9964750409126282,
+          "expected_rank": 1,
+          "expected_token": "[\"atom\",\"temporal\",\"within 10 days\"]",
+          "gold_prefix_aligned": true,
+          "step": 15,
+          "top": [
+            {
+              "probability": 0.9964750409126282,
+              "token": "[\"atom\",\"temporal\",\"within 10 days\"]"
+            },
+            {
+              "probability": 0.003269749926403165,
+              "token": "[\"atom\",\"temporal\",\"20 days\"]"
+            },
+            {
+              "probability": 0.00025516300229355693,
+              "token": "[\"end\",\"temporal\"]"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

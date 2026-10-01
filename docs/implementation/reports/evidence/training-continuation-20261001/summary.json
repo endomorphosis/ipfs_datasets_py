@@ -1,0 +1,938 @@
+{
+  "admitted": false,
+  "archived_teacher_weights_changed": false,
+  "base_commit": "021e499f743b90122551cd781e6d209ad9ffc751",
+  "checkpoint_promotion_performed": false,
+  "constitution_formalized": false,
+  "current": {
+    "actual_schema_builds": 8,
+    "actual_schema_passes": 8,
+    "checkpoint_selection_performed": false,
+    "embedding_source_count": 54,
+    "evaluation_targets_used": false,
+    "limits": [
+      "same six exposed development sources across seeds, not eighteen independent examples",
+      "compiler weak labels, not independent gold",
+      "augmentation changes wording diversity and minibatch order",
+      "one seed has worse embedding MSE",
+      "no full logic-family or temporal-kind-sidecar coverage"
+    ],
+    "paired_exact_count_deltas": {
+      "1729": {
+        "added_wording": 0,
+        "original_training": 0,
+        "tuning": 3
+      },
+      "1730": {
+        "added_wording": 0,
+        "original_training": 0,
+        "tuning": 2
+      },
+      "1731": {
+        "added_wording": 0,
+        "original_training": 0,
+        "tuning": 3
+      }
+    },
+    "peak_parent_rss_bytes": 946913280,
+    "preparation": {
+      "admitted": false,
+      "augmentation_rules_and_temporal_sidecars_exact": true,
+      "checkpoint_promotion_performed": false,
+      "compiler_seconds": 1.9207748179323971,
+      "compiler_wall_seconds_per_span": 0.03556990403578513,
+      "compiler_weak_target_count": 54,
+      "files": {
+        "added_wording": {
+          "bytes": 7301,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/targets-added_wording.json",
+          "sha256": "22b027bdfb61c78f589e80a712a3ba6f245376b066a588d94a6fe2b693876dff"
+        },
+        "compiler_observations": {
+          "bytes": 293041,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/compiler-observations.json",
+          "sha256": "c07a2b28ace453c7e94ed0697a6351729b56a6a6d668c5dddc69e98c15879418"
+        },
+        "embedding_production": {
+          "bytes": 14469,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/embedding-production.json",
+          "sha256": "695891fe9b1ac6ec237277e0c0ae0051ca0e0a92f3372184cd35409797b42a1d"
+        },
+        "original_training": {
+          "bytes": 7133,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/targets-original_training.json",
+          "sha256": "7114ac73047faeef5f4c95ab902ce550cd074b6cf0536f0f667d8fb34d999f6b"
+        },
+        "samples": {
+          "bytes": 580255,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/student-samples.json",
+          "sha256": "84209006a2e7ece5dd9150fe903fa89c500a91122e58eacc309975a3525ff068"
+        },
+        "tuning": {
+          "bytes": 1784,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/targets-tuning.json",
+          "sha256": "56b5e726d4337adab88cbcdc48a104012d747d48c6a42301da2ff0934b87b708"
+        }
+      },
+      "formalized": false,
+      "independent_generalization_verified": false,
+      "independent_text_to_logic": false,
+      "legacy_teacher_prediction_executed": false,
+      "plan_sha256": "bec7fb76364eb0c6926dc8af7a603675bb24dfd9ec73881c5ce386105c22eab5",
+      "preparation_seconds": 7.856055818032473,
+      "promotion_performed": false,
+      "proof_authority": false,
+      "publication_performed": false,
+      "qualified": false,
+      "roundtrip_ok": false,
+      "schema": "formula-training-augmentation-preparation/v1",
+      "semantic_correctness_verified": false,
+      "shared_targets_prepared_once": true,
+      "source_count": 54,
+      "teacher_weights_loaded": false
+    },
+    "rows": [
+      {
+        "arm": "augmented48",
+        "checkpoint": {
+          "admitted": false,
+          "bytes": 1671722,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/seed-1729-augmented48-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "cecf0a052b86ae50cbd3e46c72f3310706e4e4b2e1f96a67c3330af9c1e3f544"
+        },
+        "exact_rules": {
+          "added_wording": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "all_fit": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 48,
+            "total": 48
+          },
+          "original_training": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "tuning": {
+            "complete": false,
+            "fraction": 0.6666666666666666,
+            "matched": 4,
+            "total": 6
+          }
+        },
+        "inference_row_invocations": 102,
+        "inference_seconds": 4.65963180991821,
+        "inference_seconds_per_row_invocation": 0.04568266480311971,
+        "raw_sparse_core_unchanged": true,
+        "reload_prediction_exact": true,
+        "resume_checkpoint_exact": true,
+        "row_presentations": 6000,
+        "seed": 1729,
+        "training_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.0040053695847745985,
+          "rows_evaluated": 48,
+          "teacher_forcing": true,
+          "token_count": 744,
+          "token_cross_entropy": 0.00588962595324002,
+          "used_for_fit_or_selection": false
+        },
+        "training_seconds": 16.570786512922496,
+        "tuning_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.004897975362837315,
+          "rows_evaluated": 6,
+          "teacher_forcing": true,
+          "token_count": 93,
+          "token_cross_entropy": 0.10870920866727829,
+          "used_for_fit_or_selection": false
+        }
+      },
+      {
+        "arm": "original24",
+        "checkpoint": {
+          "admitted": false,
+          "bytes": 1672031,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/seed-1729-original24-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "44d35a51ee7c90afe3a2b3ad07584754c973b383748f15799368afd3d2fd66f0"
+        },
+        "exact_rules": {
+          "added_wording": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "all_fit": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "original_training": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "tuning": {
+            "complete": false,
+            "fraction": 0.16666666666666666,
+            "matched": 1,
+            "total": 6
+          }
+        },
+        "inference_row_invocations": 78,
+        "inference_seconds": 3.5847866381518543,
+        "inference_seconds_per_row_invocation": 0.0459588030532289,
+        "raw_sparse_core_unchanged": true,
+        "reload_prediction_exact": true,
+        "resume_checkpoint_exact": true,
+        "row_presentations": 6000,
+        "seed": 1729,
+        "training_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.0020163644512649626,
+          "rows_evaluated": 24,
+          "teacher_forcing": true,
+          "token_count": 372,
+          "token_cross_entropy": 0.004594282829202712,
+          "used_for_fit_or_selection": false
+        },
+        "training_seconds": 19.68816928891465,
+        "tuning_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.0021720475051552057,
+          "rows_evaluated": 6,
+          "teacher_forcing": true,
+          "token_count": 93,
+          "token_cross_entropy": 0.16519905626773834,
+          "used_for_fit_or_selection": false
+        }
+      },
+      {
+        "arm": "augmented48",
+        "checkpoint": {
+          "admitted": false,
+          "bytes": 1670686,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/seed-1730-augmented48-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "859175144dda230ce45424cafabcda30e1f37ad0a3eb4193c7992f3931f2470d"
+        },
+        "exact_rules": {
+          "added_wording": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "all_fit": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 48,
+            "total": 48
+          },
+          "original_training": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "tuning": {
+            "complete": false,
+            "fraction": 0.6666666666666666,
+            "matched": 4,
+            "total": 6
+          }
+        },
+        "inference_row_invocations": 102,
+        "inference_seconds": 4.651406637858599,
+        "inference_seconds_per_row_invocation": 0.045602025861358815,
+        "raw_sparse_core_unchanged": true,
+        "reload_prediction_exact": true,
+        "resume_checkpoint_exact": true,
+        "row_presentations": 6000,
+        "seed": 1730,
+        "training_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.001132609075284563,
+          "rows_evaluated": 48,
+          "teacher_forcing": true,
+          "token_count": 744,
+          "token_cross_entropy": 0.00406304926245964,
+          "used_for_fit_or_selection": false
+        },
+        "training_seconds": 15.351209765998647,
+        "tuning_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.0010534498142078519,
+          "rows_evaluated": 6,
+          "teacher_forcing": true,
+          "token_count": 93,
+          "token_cross_entropy": 0.07126577943563461,
+          "used_for_fit_or_selection": false
+        }
+      },
+      {
+        "arm": "original24",
+        "checkpoint": {
+          "admitted": false,
+          "bytes": 1671550,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/seed-1730-original24-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "a5ce7b161efc0141d1432614e71040127618aecdfd6e92476a41f590c2b6fddd"
+        },
+        "exact_rules": {
+          "added_wording": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "all_fit": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "original_training": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "tuning": {
+            "complete": false,
+            "fraction": 0.3333333333333333,
+            "matched": 2,
+            "total": 6
+          }
+        },
+        "inference_row_invocations": 78,
+        "inference_seconds": 3.5597791320178658,
+        "inference_seconds_per_row_invocation": 0.045638194000229046,
+        "raw_sparse_core_unchanged": true,
+        "reload_prediction_exact": true,
+        "resume_checkpoint_exact": true,
+        "row_presentations": 6000,
+        "seed": 1730,
+        "training_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.0011534261575434357,
+          "rows_evaluated": 24,
+          "teacher_forcing": true,
+          "token_count": 372,
+          "token_cross_entropy": 0.0037724863586356483,
+          "used_for_fit_or_selection": false
+        },
+        "training_seconds": 16.222991603892297,
+        "tuning_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.001121360226534307,
+          "rows_evaluated": 6,
+          "teacher_forcing": true,
+          "token_count": 93,
+          "token_cross_entropy": 0.18624603748321533,
+          "used_for_fit_or_selection": false
+        }
+      },
+      {
+        "arm": "augmented48",
+        "checkpoint": {
+          "admitted": false,
+          "bytes": 1671065,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/seed-1731-augmented48-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "9c996c7a629b6a7a1cb839853327dec2b9240d805cefae4ab860fe06a0ed3151"
+        },
+        "exact_rules": {
+          "added_wording": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "all_fit": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 48,
+            "total": 48
+          },
+          "original_training": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "tuning": {
+            "complete": false,
+            "fraction": 0.5,
+            "matched": 3,
+            "total": 6
+          }
+        },
+        "inference_row_invocations": 102,
+        "inference_seconds": 4.693881244165823,
+        "inference_seconds_per_row_invocation": 0.04601844357025316,
+        "raw_sparse_core_unchanged": true,
+        "reload_prediction_exact": true,
+        "resume_checkpoint_exact": true,
+        "row_presentations": 6000,
+        "seed": 1731,
+        "training_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.004827610740903765,
+          "rows_evaluated": 48,
+          "teacher_forcing": true,
+          "token_count": 744,
+          "token_cross_entropy": 0.006858911316451286,
+          "used_for_fit_or_selection": false
+        },
+        "training_seconds": 15.760906957089901,
+        "tuning_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.005557460710406303,
+          "rows_evaluated": 6,
+          "teacher_forcing": true,
+          "token_count": 93,
+          "token_cross_entropy": 0.12053124606609344,
+          "used_for_fit_or_selection": false
+        }
+      },
+      {
+        "arm": "original24",
+        "checkpoint": {
+          "admitted": false,
+          "bytes": 1669636,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/current-augmentation-r1/seed-1731-original24-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "1ee4cdae8d0b9d66a6a87badc8a92870b60e8f0a7500ee41490ae702070cd563"
+        },
+        "exact_rules": {
+          "added_wording": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "all_fit": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "original_training": {
+            "complete": true,
+            "fraction": 1.0,
+            "matched": 24,
+            "total": 24
+          },
+          "tuning": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 6
+          }
+        },
+        "inference_row_invocations": 78,
+        "inference_seconds": 3.605453511001542,
+        "inference_seconds_per_row_invocation": 0.04622376296155823,
+        "raw_sparse_core_unchanged": true,
+        "reload_prediction_exact": true,
+        "resume_checkpoint_exact": true,
+        "row_presentations": 6000,
+        "seed": 1731,
+        "training_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.007697927299886942,
+          "rows_evaluated": 24,
+          "teacher_forcing": true,
+          "token_count": 372,
+          "token_cross_entropy": 0.016476266201265077,
+          "used_for_fit_or_selection": false
+        },
+        "training_seconds": 15.244515289086848,
+        "tuning_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.006847497541457415,
+          "rows_evaluated": 6,
+          "teacher_forcing": true,
+          "token_count": 93,
+          "token_cross_entropy": 0.16846299171447754,
+          "used_for_fit_or_selection": false
+        }
+      }
+    ],
+    "seeds": [
+      1729,
+      1730,
+      1731
+    ],
+    "training_inference_probes_schema_seconds": 188.702071452979,
+    "training_sources_augmented": 48,
+    "training_sources_original": 24,
+    "tuning_sources": 6
+  },
+  "formalized": false,
+  "independent_generalization_verified": false,
+  "legacy": {
+    "formula_fidelity_improvement_claimed": false,
+    "linguistic_observations_exact": true,
+    "proposals_budget_persists": true,
+    "results": {
+      "manual_restart_with_rate_reset": {
+        "accepted_updates": 12,
+        "after": {
+          "cross_entropy_entropy_loss": 0.0,
+          "cross_entropy_excess_loss": 0.2462926105219185,
+          "cross_entropy_loss": 0.2462926105219185,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 3
+        },
+        "before": {
+          "cross_entropy_entropy_loss": 0.0,
+          "cross_entropy_excess_loss": 0.28825451936105756,
+          "cross_entropy_loss": 0.28825451936105756,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 3
+        },
+        "bridge_off_evaluate_seconds": 0.05647612898610532,
+        "bridge_off_evaluate_seconds_per_span": 0.018825376328701775,
+        "checkpoint_load_seconds": 0.21760253584943712,
+        "checkpoint_save_seconds": 0.020564357051625848,
+        "complete_weights_sha256": "f570d2a6c2b8026012212333662b4722547d7b9bfcda85eebb03b2b69451f19b",
+        "proposals": 12,
+        "raw_reconstruction_after": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.441569,
+                0.371269,
+                0.0,
+                -0.719106,
+                -0.38738,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.486704,
+                0.409219,
+                0.543203,
+                0.299448,
+                0.0,
+                0.0,
+                0.0,
+                0.459261
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.13851,
+                0.627004,
+                0.227552,
+                0.526832,
+                0.0,
+                0.0,
+                0.508281,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "raw_reconstruction_before": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.441569,
+                0.371269,
+                0.0,
+                -0.719106,
+                -0.38738,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.486704,
+                0.409219,
+                0.543203,
+                0.299448,
+                0.0,
+                0.0,
+                0.0,
+                0.459261
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.13851,
+                0.627004,
+                0.227552,
+                0.526832,
+                0.0,
+                0.0,
+                0.508281,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "training_seconds": 4.863310735905543
+      },
+      "persisted_session_resume": {
+        "accepted_updates": 12,
+        "after": {
+          "cross_entropy_entropy_loss": 0.0,
+          "cross_entropy_excess_loss": 0.16220758380091002,
+          "cross_entropy_loss": 0.16220758380091002,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 3
+        },
+        "before": {
+          "cross_entropy_entropy_loss": 0.0,
+          "cross_entropy_excess_loss": 0.28825451936105756,
+          "cross_entropy_loss": 0.28825451936105756,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 3
+        },
+        "bridge_off_evaluate_seconds": 0.06841803505085409,
+        "bridge_off_evaluate_seconds_per_span": 0.022806011683618028,
+        "checkpoint_load_seconds": 0.37508657621219754,
+        "checkpoint_save_seconds": 0.03673904808238149,
+        "complete_weights_sha256": "dd2b9efb46e6c9d724273cec75f07a09a12ef0eca9344a62344fee71df059613",
+        "proposals": 12,
+        "raw_reconstruction_after": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.441569,
+                0.371269,
+                0.0,
+                -0.719106,
+                -0.38738,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.486704,
+                0.409219,
+                0.543203,
+                0.299448,
+                0.0,
+                0.0,
+                0.0,
+                0.459261
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.13851,
+                0.627004,
+                0.227552,
+                0.526832,
+                0.0,
+                0.0,
+                0.508281,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "raw_reconstruction_before": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.441569,
+                0.371269,
+                0.0,
+                -0.719106,
+                -0.38738,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.486704,
+                0.409219,
+                0.543203,
+                0.299448,
+                0.0,
+                0.0,
+                0.0,
+                0.459261
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.13851,
+                0.627004,
+                0.227552,
+                0.526832,
+                0.0,
+                0.0,
+                0.508281,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "training_seconds": 6.143649019766599
+      },
+      "uninterrupted": {
+        "accepted_updates": 12,
+        "after": {
+          "cross_entropy_entropy_loss": 0.0,
+          "cross_entropy_excess_loss": 0.16220758380091002,
+          "cross_entropy_loss": 0.16220758380091002,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 3
+        },
+        "before": {
+          "cross_entropy_entropy_loss": 0.0,
+          "cross_entropy_excess_loss": 0.28825451936105756,
+          "cross_entropy_loss": 0.28825451936105756,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 3
+        },
+        "bridge_off_evaluate_seconds": 0.05396314896643162,
+        "bridge_off_evaluate_seconds_per_span": 0.01798771632214387,
+        "checkpoint_load_seconds": 0.0,
+        "checkpoint_save_seconds": 0.0,
+        "complete_weights_sha256": "dd2b9efb46e6c9d724273cec75f07a09a12ef0eca9344a62344fee71df059613",
+        "proposals": 12,
+        "raw_reconstruction_after": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.441569,
+                0.371269,
+                0.0,
+                -0.719106,
+                -0.38738,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.486704,
+                0.409219,
+                0.543203,
+                0.299448,
+                0.0,
+                0.0,
+                0.0,
+                0.459261
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.13851,
+                0.627004,
+                0.227552,
+                0.526832,
+                0.0,
+                0.0,
+                0.508281,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "raw_reconstruction_before": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.441569,
+                0.371269,
+                0.0,
+                -0.719106,
+                -0.38738,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.486704,
+                0.409219,
+                0.543203,
+                0.299448,
+                0.0,
+                0.0,
+                0.0,
+                0.459261
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.13851,
+                0.627004,
+                0.227552,
+                0.526832,
+                0.0,
+                0.0,
+                0.508281,
+                0.0
+              ],
+              "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "training_seconds": 4.338912287959829
+      }
+    },
+    "resumed_weights_and_metrics_equal_uninterrupted": true,
+    "throughput_improvement_claimed": false,
+    "vector_reconstruction_improvement_claimed": false
+  },
+  "measurement": {
+    "bridge_names": [],
+    "bridge_on_evaluate": null,
+    "compute_device": "cpu",
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 0,
+    "metric_disk_cache": false,
+    "temperature": 0,
+    "use_sample_memory": false
+  },
+  "qualified": false,
+  "roundtrip_ok": false,
+  "schema": "training-continuation-release/v1",
+  "semantic_encoder_weights_downloaded": false,
+  "validation": {
+    "actual_canonical_legal_builds": 1,
+    "actual_generated_schema_builds": 8,
+    "canonical_gate_count": 3,
+    "empty_vocabulary_abstains": true,
+    "unique_passing_tests": 279
+  }
+}

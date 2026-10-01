@@ -1,0 +1,26 @@
+{
+  "base_commit": "021e499f743b90122551cd781e6d209ad9ffc751",
+  "source_export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-continuation-release-20261001/source",
+  "baseline_validation_commit": "8a7f6598e4069548a4815953efd27608b8c90163",
+  "owned_paths": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/feature_training_session.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_training_augmentation.py",
+    "scripts/ops/legal_ir/compare_legacy_training_resume.py",
+    "scripts/ops/legal_ir/compare_formula_training_augmentation.py",
+    "tests/unit/logic/test_legacy_feature_training_session.py",
+    "tests/unit/logic/test_compare_formula_training_augmentation.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_formula_training_augmentation.py",
+    "tests/fixtures/logic/actor_composition_must_training.json"
+  ],
+  "owned_sha256": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/feature_training_session.py": "da81793951b1254dbd44781954a1d1a7d6624e75ca39e59671a9e3a111550f0f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_training_augmentation.py": "aeb8a1f5f5f046cc275315c45c3123a29a9b7dbef1e856188b769dbfc4ae9388",
+    "scripts/ops/legal_ir/compare_legacy_training_resume.py": "8b037758c910e935b6e5b827d116138501d23fdf108e8f9defb1b9c1abd78925",
+    "scripts/ops/legal_ir/compare_formula_training_augmentation.py": "f672087b02675d6493c637ea5a25ea9351fce0ddf6ffd61384a1b61e6981cbe7",
+    "tests/unit/logic/test_legacy_feature_training_session.py": "bb8d0fea61b6f891b2828ea3abeacdc2046aa141af624ef34005a8b1533a12df",
+    "tests/unit/logic/test_compare_formula_training_augmentation.py": "d6fd5385aced05476e0d8abc7c301e0b9f44dad1276dea237a687ed39463079f",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_formula_training_augmentation.py": "361b99d056a55855d4656feb1ff4bcf1a11e886e7d2bb4b718d9c6568005e46b",
+    "tests/fixtures/logic/actor_composition_must_training.json": "59365ce423ff0754c0e6e16c5fec4a99c8d43de4ed0a11505f81d0165d7be7f8"
+  },
+  "validation_commit": "77d62cfc8b95b42c3f156db7927ea4c40250e573"
+}

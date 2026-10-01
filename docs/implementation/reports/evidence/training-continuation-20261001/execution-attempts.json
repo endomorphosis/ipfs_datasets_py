@@ -1,0 +1,12 @@
+{
+  "diagnostic_note": "The read-only composition diagnosis used the prior frozen raw-gain10 head, not a retrained or promoted model.",
+  "native_attempts_completed": 2,
+  "native_current_attempts": [
+    "current-augmentation-r1"
+  ],
+  "native_legacy_attempts": [
+    "legacy-resume-r1"
+  ],
+  "provenance_note": "Native source export uses committed base plus eight explicitly hashed additions; unrelated dirty checkout edits excluded.",
+  "tests_note": "Final legacy thirty-test suite was rerun solely to capture authentic JUnit/log evidence after the earlier stdout-only pass; source bytes unchanged."
+}

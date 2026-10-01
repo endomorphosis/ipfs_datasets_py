@@ -1,0 +1,262 @@
+{
+  "admitted": false,
+  "evaluation_labels_used": false,
+  "formalized": false,
+  "independent_legal_gold": false,
+  "lake_executed": false,
+  "model_predictions_executed": false,
+  "parent_curriculum_manifest_sha256": "2e8c4e2726e97b5faf87f9d7aa52e98354ce2385fc8d4a44f231d8967c1c2095",
+  "qualified": false,
+  "roundtrip_ok": false,
+  "rows": [
+    {
+      "actor": "registrar",
+      "corpus": "authored_fixture",
+      "id": "composition-registrar-report-must-v1",
+      "norm_template_id": "report",
+      "parent_id": "composition-registrar-report",
+      "parent_source_sha256": "eae42612383f5081fd784e577f5353ba51fc469c5601c05722b405964cb511ef",
+      "split": "training",
+      "text": "The registrar must submit reports."
+    },
+    {
+      "actor": "registrar",
+      "corpus": "authored_fixture",
+      "id": "composition-registrar-prohibition-must-v1",
+      "norm_template_id": "prohibition",
+      "parent_id": "composition-registrar-prohibition",
+      "parent_source_sha256": "4747f8ca6f172b763b22f29c70f16fa9df282f33d9e6a50e6e7281faf8ccf9af",
+      "split": "training",
+      "text": "The registrar must not disclose records."
+    },
+    {
+      "actor": "registrar",
+      "corpus": "authored_fixture",
+      "id": "composition-registrar-minimum-must-v1",
+      "norm_template_id": "minimum",
+      "parent_id": "composition-registrar-minimum",
+      "parent_source_sha256": "e314aafb266a8754e348f5ea6156c2198f85033540ea2866a7b06d555c01d95b",
+      "split": "training",
+      "text": "The registrar must retain the file for at least 20 days."
+    },
+    {
+      "actor": "registrar",
+      "corpus": "authored_fixture",
+      "id": "composition-registrar-deadline-must-v1",
+      "norm_template_id": "deadline",
+      "parent_id": "composition-registrar-deadline",
+      "parent_source_sha256": "b681dee2151590fc470f0bd614dc1eb122728b4f031d7da312159004e3d42585",
+      "split": "training",
+      "text": "The registrar must submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "board",
+      "corpus": "authored_fixture",
+      "id": "composition-board-prohibition-must-v1",
+      "norm_template_id": "prohibition",
+      "parent_id": "composition-board-prohibition",
+      "parent_source_sha256": "c33c45d429c75c710e75380c2d3088f41a3e7ea11438aa6869985d8d666056f9",
+      "split": "training",
+      "text": "The board must not disclose records."
+    },
+    {
+      "actor": "board",
+      "corpus": "authored_fixture",
+      "id": "composition-board-minimum-must-v1",
+      "norm_template_id": "minimum",
+      "parent_id": "composition-board-minimum",
+      "parent_source_sha256": "d2f468ba1a90d4ad41f5e931f3e2fda04c1bffe5d076e05fcca0723bd28e4bfd",
+      "split": "training",
+      "text": "The board must retain the file for at least 20 days."
+    },
+    {
+      "actor": "board",
+      "corpus": "authored_fixture",
+      "id": "composition-board-deadline-must-v1",
+      "norm_template_id": "deadline",
+      "parent_id": "composition-board-deadline",
+      "parent_source_sha256": "fcb8d9657f0b6f12e46800dfa72590394b73b12b85c59b0ff84ed7aa1d5b73d0",
+      "split": "training",
+      "text": "The board must submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "board",
+      "corpus": "authored_fixture",
+      "id": "composition-board-publication-must-v1",
+      "norm_template_id": "publication",
+      "parent_id": "composition-board-publication",
+      "parent_source_sha256": "e6463426b78fbb31293c6f850115057b9d59e0fb8695e327c369118afe106578",
+      "split": "training",
+      "text": "The board must publish notices."
+    },
+    {
+      "actor": "inspector",
+      "corpus": "authored_fixture",
+      "id": "composition-inspector-minimum-must-v1",
+      "norm_template_id": "minimum",
+      "parent_id": "composition-inspector-minimum",
+      "parent_source_sha256": "038832ff6751a585542284a575db5fcae60ff8a28f4decbe8abe63ec37e10c60",
+      "split": "training",
+      "text": "The inspector must retain the file for at least 20 days."
+    },
+    {
+      "actor": "inspector",
+      "corpus": "authored_fixture",
+      "id": "composition-inspector-deadline-must-v1",
+      "norm_template_id": "deadline",
+      "parent_id": "composition-inspector-deadline",
+      "parent_source_sha256": "3cf2b5b6664bac3f6fc8f1db8c2fd13e66b54d8a3974707e02614e9811ca9ea3",
+      "split": "training",
+      "text": "The inspector must submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "inspector",
+      "corpus": "authored_fixture",
+      "id": "composition-inspector-publication-must-v1",
+      "norm_template_id": "publication",
+      "parent_id": "composition-inspector-publication",
+      "parent_source_sha256": "53275456890ae0f252ff72dcd8ad3bcca1b8b0f409f5d83603a214c6e85d6d00",
+      "split": "training",
+      "text": "The inspector must publish notices."
+    },
+    {
+      "actor": "inspector",
+      "corpus": "authored_fixture",
+      "id": "composition-inspector-review-must-v1",
+      "norm_template_id": "review",
+      "parent_id": "composition-inspector-review",
+      "parent_source_sha256": "da3e34e559c59e6d614d9da9283507862e7a0c00ff4e011a1967e1fc368c2b44",
+      "split": "training",
+      "text": "The inspector must review applications."
+    },
+    {
+      "actor": "administrator",
+      "corpus": "authored_fixture",
+      "id": "composition-administrator-report-must-v1",
+      "norm_template_id": "report",
+      "parent_id": "composition-administrator-report",
+      "parent_source_sha256": "c5acbc550c6143cb3245000480eb17938e683d91efdf0f1f6d481493a88399b6",
+      "split": "training",
+      "text": "The administrator must submit reports."
+    },
+    {
+      "actor": "administrator",
+      "corpus": "authored_fixture",
+      "id": "composition-administrator-deadline-must-v1",
+      "norm_template_id": "deadline",
+      "parent_id": "composition-administrator-deadline",
+      "parent_source_sha256": "0a971330a2f6a6acdcfc64ee7c7bdf7ac4d5d9bf4327d00f633c63ae3a6e5d01",
+      "split": "training",
+      "text": "The administrator must submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "administrator",
+      "corpus": "authored_fixture",
+      "id": "composition-administrator-publication-must-v1",
+      "norm_template_id": "publication",
+      "parent_id": "composition-administrator-publication",
+      "parent_source_sha256": "dd9165a0a7bd3aef62097f97a1a815bc7550abdcf3bd6f965fc8107f5236719f",
+      "split": "training",
+      "text": "The administrator must publish notices."
+    },
+    {
+      "actor": "administrator",
+      "corpus": "authored_fixture",
+      "id": "composition-administrator-review-must-v1",
+      "norm_template_id": "review",
+      "parent_id": "composition-administrator-review",
+      "parent_source_sha256": "55e06192441efd1f824e0191a4814bfcf2a0b623df3cd95a1797d2bf6ce717c5",
+      "split": "training",
+      "text": "The administrator must review applications."
+    },
+    {
+      "actor": "custodian",
+      "corpus": "authored_fixture",
+      "id": "composition-custodian-report-must-v1",
+      "norm_template_id": "report",
+      "parent_id": "composition-custodian-report",
+      "parent_source_sha256": "063d910a0469b8a68022da9efcda3bf12009a4a764d5982252d881a731bd5878",
+      "split": "training",
+      "text": "The custodian must submit reports."
+    },
+    {
+      "actor": "custodian",
+      "corpus": "authored_fixture",
+      "id": "composition-custodian-prohibition-must-v1",
+      "norm_template_id": "prohibition",
+      "parent_id": "composition-custodian-prohibition",
+      "parent_source_sha256": "4fc28b9046f91dbe7e3387979536f2b1b7473dfe47b3a56ca202cb9ee4f7fd69",
+      "split": "training",
+      "text": "The custodian must not disclose records."
+    },
+    {
+      "actor": "custodian",
+      "corpus": "authored_fixture",
+      "id": "composition-custodian-publication-must-v1",
+      "norm_template_id": "publication",
+      "parent_id": "composition-custodian-publication",
+      "parent_source_sha256": "e29c0ddfa4232ed95bd7b18c17dcb866e9c24c5d381f2c8d524e1debbfa97481",
+      "split": "training",
+      "text": "The custodian must publish notices."
+    },
+    {
+      "actor": "custodian",
+      "corpus": "authored_fixture",
+      "id": "composition-custodian-review-must-v1",
+      "norm_template_id": "review",
+      "parent_id": "composition-custodian-review",
+      "parent_source_sha256": "69dc2418d9711f5567ac69fdb03055bb4c031c9fe0accb45b7d47d03821e8f31",
+      "split": "training",
+      "text": "The custodian must review applications."
+    },
+    {
+      "actor": "clerk",
+      "corpus": "authored_fixture",
+      "id": "composition-clerk-report-must-v1",
+      "norm_template_id": "report",
+      "parent_id": "composition-clerk-report",
+      "parent_source_sha256": "914bf512771d881bad1616db1d45d500096c17d9162a7a7af96d621c53f7c607",
+      "split": "training",
+      "text": "The clerk must submit reports."
+    },
+    {
+      "actor": "clerk",
+      "corpus": "authored_fixture",
+      "id": "composition-clerk-prohibition-must-v1",
+      "norm_template_id": "prohibition",
+      "parent_id": "composition-clerk-prohibition",
+      "parent_source_sha256": "e076f7bbd6425a0b8cde26a3cfa11669576b13f5884463db9a801feed4cdfcab",
+      "split": "training",
+      "text": "The clerk must not disclose records."
+    },
+    {
+      "actor": "clerk",
+      "corpus": "authored_fixture",
+      "id": "composition-clerk-minimum-must-v1",
+      "norm_template_id": "minimum",
+      "parent_id": "composition-clerk-minimum",
+      "parent_source_sha256": "067f71e8bce16a797fa95553a106970228f3390d3ca5b691604d295e161775b0",
+      "split": "training",
+      "text": "The clerk must retain the file for at least 20 days."
+    },
+    {
+      "actor": "clerk",
+      "corpus": "authored_fixture",
+      "id": "composition-clerk-review-must-v1",
+      "norm_template_id": "review",
+      "parent_id": "composition-clerk-review",
+      "parent_source_sha256": "6c3b0ce9d856caf651839b44116c949e964c3d5747d48c53eda3125809636cf5",
+      "split": "training",
+      "text": "The clerk must review applications."
+    }
+  ],
+  "schema": "authored-training-must-augmentation/v1",
+  "scope": "authored training-only source paraphrases; compile and screen labels separately",
+  "semantic_correctness_verified": false,
+  "transformation": {
+    "id": "shall_to_must_training_v1",
+    "occurrences_per_parent": 1,
+    "replacement": " must ",
+    "source": " shall "
+  }
+}

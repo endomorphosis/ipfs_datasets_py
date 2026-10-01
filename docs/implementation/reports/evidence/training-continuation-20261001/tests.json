@@ -1,0 +1,10 @@
+{
+  "all_suites_passed": true,
+  "suites": {
+    "augmentation-runner-tests.xml": 22,
+    "augmentation-tests.xml": 18,
+    "integration-tests.xml": 209,
+    "legacy-session-tests.xml": 30
+  },
+  "unique_passing_tests": 279
+}
