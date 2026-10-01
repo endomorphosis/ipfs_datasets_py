@@ -1,0 +1,231 @@
+{
+  "schema": "native-modality-projection-release/v1",
+  "tests": 251,
+  "failures": 0,
+  "skips": 0,
+  "native_formula_cases_passed": 32,
+  "modalities": {
+    "intent_ir": {
+      "lake_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "IntentIR"
+      ],
+      "lake_status": "passed",
+      "projections_passed": 15,
+      "projections_total": 23,
+      "preparation_build_audit_wall_seconds": 3.2203753981739283,
+      "strict_training_allowed": false,
+      "blocked": [
+        {
+          "projection_id": "intent-extended/datalog/default/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:intent-extended/datalog/default/v1"
+        },
+        {
+          "projection_id": "intent-route/norms/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:intent-route/norms/v1"
+        },
+        {
+          "projection_id": "intent-route/facts/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:intent-route/facts/v1"
+        },
+        {
+          "projection_id": "intent-extended/horn_chc/default/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:intent-extended/horn_chc/default/v1"
+        },
+        {
+          "projection_id": "intent-route/action-hoare/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:intent-route/action-hoare/v1"
+        },
+        {
+          "projection_id": "intent-route/workflow-temporal/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:intent-route/workflow-temporal/v1"
+        },
+        {
+          "projection_id": "intent-extended/transition_system/default/v1",
+          "reason": "native_state_document_required"
+        },
+        {
+          "projection_id": "intent-extended/transition_system/tla_plus/v1",
+          "reason": "TLA_artifact_semantics_require_additional_Lean_lowering"
+        }
+      ]
+    },
+    "security_ir": {
+      "lake_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "SecurityIR"
+      ],
+      "lake_status": "passed",
+      "projections_passed": 10,
+      "projections_total": 16,
+      "preparation_build_audit_wall_seconds": 2.8532885548193008,
+      "strict_training_allowed": false,
+      "blocked": [
+        {
+          "projection_id": "hyperproperty.ir/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:hyperproperty.ir/v1"
+        },
+        {
+          "projection_id": "program.program_contract/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:program.program_contract/v1"
+        },
+        {
+          "projection_id": "program.program_ir/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:program.program_ir/v1"
+        },
+        {
+          "projection_id": "separation_logic.heap_model/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:separation_logic.heap_model/v1"
+        },
+        {
+          "projection_id": "separation_logic.ir/v1",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:separation_logic.ir/v1"
+        },
+        {
+          "projection_id": "security_ir/transition/tla_plus/v3",
+          "reason": "TLA_artifact_semantics_require_additional_Lean_lowering"
+        }
+      ]
+    },
+    "ui_ux_ir": {
+      "lake_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "UIUXIR"
+      ],
+      "lake_status": "passed",
+      "projections_passed": 10,
+      "projections_total": 16,
+      "preparation_build_audit_wall_seconds": 2.8822032590396702,
+      "strict_training_allowed": false,
+      "blocked": [
+        {
+          "projection_id": "ui_ux_ir:dcec",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:ui_ux_ir:dcec"
+        },
+        {
+          "projection_id": "ui_ux_ir:event_calculus",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:ui_ux_ir:event_calculus"
+        },
+        {
+          "projection_id": "ui_ux_ir:interface_bindings",
+          "reason": "actual_native_frame_triples_required"
+        },
+        {
+          "projection_id": "ui_ux_ir:tdfol",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:ui_ux_ir:tdfol"
+        },
+        {
+          "projection_id": "ui_ux_ir/event_prefix/native/v2",
+          "reason": "no_semantics_preserving_Lean_emitter_for_projection:ui_ux_ir/event_prefix/native/v2"
+        },
+        {
+          "projection_id": "ui_ux_ir/declared_state/tla_plus/v2",
+          "reason": "TLA_artifact_semantics_require_additional_Lean_lowering"
+        }
+      ]
+    },
+    "legal_ir": {
+      "lake_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake",
+        "build",
+        "LegalIR"
+      ],
+      "lake_status": "passed",
+      "projections_passed": 9,
+      "projections_total": 11,
+      "preparation_build_audit_wall_seconds": 6.658288136124611,
+      "strict_training_allowed": false,
+      "blocked": [
+        {
+          "projection_id": "legal-ir/modal-family/deontic/v3",
+          "reason": "native_projection_not_ready"
+        },
+        {
+          "projection_id": "legal-ir/modal-family/temporal/v3",
+          "reason": "native_projection_not_ready"
+        }
+      ]
+    }
+  },
+  "strict_training_smoke": {
+    "scope": "two authored training sources, one tuning source; not heldout or natural-language fidelity",
+    "source_count": 3,
+    "projection_occurrences": 27,
+    "optimizer_steps": 2,
+    "training_gate_passed": true,
+    "before_objective": 0.001113658980810743,
+    "after_objective": 0.001113658980810743,
+    "selected_epoch": 0,
+    "total_wall_seconds": 16.856526139890775,
+    "native_preparation_and_Lake_seconds": 11.692730584880337,
+    "numerical_elapsed_seconds": 0.8054460021667182,
+    "loss_coverage": {
+      "training": {
+        "all_emitted_projections_have_loss": true,
+        "projection_occurrences": 18,
+        "rows_per_projection": {
+          "legal-ir/canonical-norms/v1": 2,
+          "legal_ir/native_formula/CEC/v3": 2,
+          "legal_ir/native_formula/DCEC/v3": 2,
+          "legal_ir/native_formula/DFOL/v3": 2,
+          "legal_ir/native_formula/FOL/v3": 2,
+          "legal_ir/native_formula/TDFOL/v3": 2,
+          "legal_ir/native_formula/TFOL/v3": 2,
+          "legal_ir/native_formula/frame_logic/v3": 2,
+          "legal_ir/native_formula/propositional/v3": 2
+        },
+        "scope": "retained_structural_features_only",
+        "unknown_atoms_are_not_reconstructed": true
+      },
+      "tuning": {
+        "all_emitted_projections_have_loss": true,
+        "projection_occurrences": 9,
+        "rows_per_projection": {
+          "legal-ir/canonical-norms/v1": 1,
+          "legal_ir/native_formula/CEC/v3": 1,
+          "legal_ir/native_formula/DCEC/v3": 1,
+          "legal_ir/native_formula/DFOL/v3": 1,
+          "legal_ir/native_formula/FOL/v3": 1,
+          "legal_ir/native_formula/TDFOL/v3": 1,
+          "legal_ir/native_formula/TFOL/v3": 1,
+          "legal_ir/native_formula/frame_logic/v3": 1,
+          "legal_ir/native_formula/propositional/v3": 1
+        },
+        "scope": "retained_structural_features_only",
+        "unknown_atoms_are_not_reconstructed": true
+      }
+    },
+    "feature_selection": {
+      "method": "training_document_frequency_equal_projection_budget",
+      "available_atoms": {
+        "legal_ir/native_formula/DCEC/v3": 168,
+        "legal-ir/canonical-norms/v1": 16,
+        "legal_ir/native_formula/DFOL/v3": 110,
+        "legal_ir/native_formula/CEC/v3": 153,
+        "legal_ir/native_formula/FOL/v3": 127,
+        "legal_ir/native_formula/frame_logic/v3": 239,
+        "legal_ir/native_formula/propositional/v3": 197,
+        "legal_ir/native_formula/TDFOL/v3": 125,
+        "legal_ir/native_formula/TFOL/v3": 109
+      },
+      "retained_atoms": {
+        "legal_ir/native_formula/DCEC/v3": 168,
+        "legal-ir/canonical-norms/v1": 16,
+        "legal_ir/native_formula/DFOL/v3": 110,
+        "legal_ir/native_formula/CEC/v3": 153,
+        "legal_ir/native_formula/FOL/v3": 127,
+        "legal_ir/native_formula/frame_logic/v3": 239,
+        "legal_ir/native_formula/propositional/v3": 197,
+        "legal_ir/native_formula/TDFOL/v3": 125,
+        "legal_ir/native_formula/TFOL/v3": 109
+      }
+    },
+    "checkpoint_sha256": "ecd9cdeab11e9fc69270898f65df5b78a31d8afcf6ddf7ba14274c39ae1443e7"
+  },
+  "admitted": false,
+  "qualified": false,
+  "constitution_formalized": false
+}

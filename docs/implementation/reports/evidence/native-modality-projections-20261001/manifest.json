@@ -1,0 +1,430 @@
+{
+  "schema": "native-modality-projection-evidence/v1",
+  "base_commit": "7ee5f61ede2b503e83459db7a064f8cb959cef9e",
+  "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modality-projections-20261001/source",
+  "candidate_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/family_training_v3.py": "03109202932cdd65d66bfedb4693241cdeabbda820082b2aef3b3175e86d4918",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_formula_evidence.py": "3286b28b2877f6bbcd452511624512fb882c36480430e1024263346a4fe3da29",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lake.py": "13f48a5efbe9ca415a4f276e431b74aad4b0cb9cd4c80905e1b452d6356c4d1a",
+    "ipfs_datasets_py/logic/formalization/autoencoder/projection_validation_contract.py": "1da3568685db514a96c1c7ed52f3cdda6fbf38755fb6cae1072eabcdfd59c35a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_validated.py": "13a186ea28ef2b8ef010082f6370ef5333f2fb59b19e6ee0a5cd3024e995353c",
+    "scripts/ops/autoencoder/check_native_projection_lake.py": "0ff52eb34a3155d4cf2caacea751ca743ec6faee86e77795c7816dde9eca525b",
+    "scripts/ops/autoencoder/smoke_validated_projection_training.py": "b3fdbc282276ba5ba2e3685d00751a543304dc1c64d855f25220225d391f0aec",
+    "tests/unit/logic/formalization/autoencoder/test_family_training_v3.py": "6eb1d28dda00dce1d68c23650517560f3a7aeafa30db8b695ef1093bbcdded64",
+    "tests/unit/logic/formalization/autoencoder/test_native_formula_evidence.py": "216c5b6bc87123fec13047f3cad1c5a91f4ebb9fec8e3523dafeafdeefeb5d9a",
+    "tests/unit/logic/formalization/autoencoder/test_native_family_lake.py": "3c751516a83efb3f81cca61b0c977f317239c418204bb9db09d9ccd37a48d5df",
+    "tests/unit/logic/formalization/autoencoder/test_projection_validation_contract.py": "373af094c4dacad48e559e285244b4d2660e26775354513346a4299fc2a6afe5",
+    "tests/unit/logic/formalization/autoencoder/test_validated_family_training.py": "df20558601446781902adf5f2dc5789204b14c875f74136062ba9b904f13dbad",
+    "tests/unit/logic/formalization/autoencoder/test_validated_family_training_native.py": "4dac74f7dcc115392a570084a799082f46bdb003ad229123f3589df38c8aa103",
+    "docs/autoencoders/native_projection_validation.md": "29d0416b24b9466da8a446c0919a80f6aaa8981f5c755e33f1f9f1a9d36a1700",
+    "docs/autoencoders/reconstruction_training.md": "a5c7777c8059505158ee15d339ee3e4994b0796b0fd479d89f7d4d2e89cfe7a8"
+  },
+  "tests": {
+    "path": "release-tests-r2.xml",
+    "passed": 251,
+    "skipped": 0
+  },
+  "final_matrix": "matrix-r3/summary.json",
+  "final_training": "training-r2/summary.json",
+  "superseded_attempts": {
+    "matrix-r1": "Superseded after term-kind/read-frame/bounds audit fixes.",
+    "matrix-r2": "Actual SecurityIR/UIUXIR build rejected reserved Lean binder; fixed and rebuilt.",
+    "training-r1": "Successful integration before final state emitter syntax fix; repeated against final sources.",
+    "canonical-formula-regression-tests.xml": "Missing benchmark fixture in export; restored committed fixture and all62passed in r2."
+  },
+  "hardware_and_measurement_scope": "Shared host; full suite, native matrix and strict training smoke ran in separate parallel processes. Fresh Lake workspace per build; validation timings, not bridge or corpus throughput.",
+  "bridge_evaluation_executed": false,
+  "external_provers_executed": false,
+  "weights_downloaded": false,
+  "archive": {
+    "file": "native-projection-validation.tar.gz",
+    "sha256": "620a552c60cc726562665c7d77967baf14435ba16d12b60481bddd1dd54e0e76",
+    "bytes": 825087,
+    "members": [
+      {
+        "path": "canonical-formula-regression-tests-r2.log",
+        "bytes": 1477
+      },
+      {
+        "path": "canonical-formula-regression-tests-r2.xml",
+        "bytes": 11566
+      },
+      {
+        "path": "canonical-formula-regression-tests.log",
+        "bytes": 2608
+      },
+      {
+        "path": "canonical-formula-regression-tests.xml",
+        "bytes": 12600
+      },
+      {
+        "path": "family-v3-legal-fix-tests.log",
+        "bytes": 1541
+      },
+      {
+        "path": "family-v3-legal-fix-tests.xml",
+        "bytes": 18288
+      },
+      {
+        "path": "family-v3-tests-r1.log",
+        "bytes": 1214
+      },
+      {
+        "path": "family-v3-tests-r1.xml",
+        "bytes": 3995
+      },
+      {
+        "path": "family-v3-tests.log",
+        "bytes": 1531
+      },
+      {
+        "path": "family-v3-tests.xml",
+        "bytes": 17579
+      },
+      {
+        "path": "gate-probes/Eight.lean",
+        "bytes": 2584
+      },
+      {
+        "path": "gate-probes/eight.json",
+        "bytes": 958
+      },
+      {
+        "path": "matrix-r1/intent_ir/IntentIR.lean",
+        "bytes": 15085
+      },
+      {
+        "path": "matrix-r1/intent_ir/native-targets.json",
+        "bytes": 277973
+      },
+      {
+        "path": "matrix-r1/intent_ir/receipt.json",
+        "bytes": 83602
+      },
+      {
+        "path": "matrix-r1/legal_ir/LegalIR.lean",
+        "bytes": 3304
+      },
+      {
+        "path": "matrix-r1/legal_ir/native-targets.json",
+        "bytes": 80805
+      },
+      {
+        "path": "matrix-r1/legal_ir/receipt.json",
+        "bytes": 96250
+      },
+      {
+        "path": "matrix-r1/security_ir/SecurityIR.lean",
+        "bytes": 3929
+      },
+      {
+        "path": "matrix-r1/security_ir/native-targets.json",
+        "bytes": 141119
+      },
+      {
+        "path": "matrix-r1/security_ir/receipt.json",
+        "bytes": 64924
+      },
+      {
+        "path": "matrix-r1/summary.json",
+        "bytes": 252151
+      },
+      {
+        "path": "matrix-r1/ui_ux_ir/UIUXIR.lean",
+        "bytes": 3974
+      },
+      {
+        "path": "matrix-r1/ui_ux_ir/native-targets.json",
+        "bytes": 253119
+      },
+      {
+        "path": "matrix-r1/ui_ux_ir/receipt.json",
+        "bytes": 71361
+      },
+      {
+        "path": "matrix-r1.log",
+        "bytes": 12082
+      },
+      {
+        "path": "matrix-r2/intent_ir/IntentIR.lean",
+        "bytes": 15159
+      },
+      {
+        "path": "matrix-r2/intent_ir/native-targets.json",
+        "bytes": 277973
+      },
+      {
+        "path": "matrix-r2/intent_ir/receipt.json",
+        "bytes": 83709
+      },
+      {
+        "path": "matrix-r2/legal_ir/LegalIR.lean",
+        "bytes": 3378
+      },
+      {
+        "path": "matrix-r2/legal_ir/native-targets.json",
+        "bytes": 87756
+      },
+      {
+        "path": "matrix-r2/legal_ir/receipt.json",
+        "bytes": 96292
+      },
+      {
+        "path": "matrix-r2/security_ir/SecurityIR.lean",
+        "bytes": 4173
+      },
+      {
+        "path": "matrix-r2/security_ir/native-targets.json",
+        "bytes": 141119
+      },
+      {
+        "path": "matrix-r2/security_ir/receipt.json",
+        "bytes": 66326
+      },
+      {
+        "path": "matrix-r2/summary.json",
+        "bytes": 254439
+      },
+      {
+        "path": "matrix-r2/ui_ux_ir/UIUXIR.lean",
+        "bytes": 4234
+      },
+      {
+        "path": "matrix-r2/ui_ux_ir/native-targets.json",
+        "bytes": 253119
+      },
+      {
+        "path": "matrix-r2/ui_ux_ir/receipt.json",
+        "bytes": 72737
+      },
+      {
+        "path": "matrix-r2.log",
+        "bytes": 12080
+      },
+      {
+        "path": "matrix-r3/intent_ir/IntentIR.lean",
+        "bytes": 15159
+      },
+      {
+        "path": "matrix-r3/intent_ir/native-targets.json",
+        "bytes": 277973
+      },
+      {
+        "path": "matrix-r3/intent_ir/receipt.json",
+        "bytes": 83709
+      },
+      {
+        "path": "matrix-r3/legal_ir/LegalIR.lean",
+        "bytes": 3378
+      },
+      {
+        "path": "matrix-r3/legal_ir/native-targets.json",
+        "bytes": 87756
+      },
+      {
+        "path": "matrix-r3/legal_ir/receipt.json",
+        "bytes": 96292
+      },
+      {
+        "path": "matrix-r3/security_ir/SecurityIR.lean",
+        "bytes": 4181
+      },
+      {
+        "path": "matrix-r3/security_ir/native-targets.json",
+        "bytes": 141119
+      },
+      {
+        "path": "matrix-r3/security_ir/receipt.json",
+        "bytes": 65350
+      },
+      {
+        "path": "matrix-r3/summary.json",
+        "bytes": 252492
+      },
+      {
+        "path": "matrix-r3/ui_ux_ir/UIUXIR.lean",
+        "bytes": 4242
+      },
+      {
+        "path": "matrix-r3/ui_ux_ir/native-targets.json",
+        "bytes": 253119
+      },
+      {
+        "path": "matrix-r3/ui_ux_ir/receipt.json",
+        "bytes": 71801
+      },
+      {
+        "path": "matrix-r3.log",
+        "bytes": 12083
+      },
+      {
+        "path": "native-family-lake-tests-r2.xml",
+        "bytes": 7143
+      },
+      {
+        "path": "native-family-lake-tests-r3.xml",
+        "bytes": 5640
+      },
+      {
+        "path": "native-family-lake-tests-r4.xml",
+        "bytes": 6001
+      },
+      {
+        "path": "native-family-lake-tests.xml",
+        "bytes": 3855
+      },
+      {
+        "path": "owned-files.json",
+        "bytes": 1180
+      },
+      {
+        "path": "projection-policy-tests.log",
+        "bytes": 1230
+      },
+      {
+        "path": "projection-policy-tests.xml",
+        "bytes": 7774
+      },
+      {
+        "path": "release-tests-r2.log",
+        "bytes": 2607
+      },
+      {
+        "path": "release-tests-r2.xml",
+        "bytes": 47000
+      },
+      {
+        "path": "release-tests.log",
+        "bytes": 2604
+      },
+      {
+        "path": "release-tests.xml",
+        "bytes": 46639
+      },
+      {
+        "path": "training-r1/checkpoint/family_checkpoint.json",
+        "bytes": 345410
+      },
+      {
+        "path": "training-r1/source-0/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-r1/source-0/receipt.json",
+        "bytes": 79108
+      },
+      {
+        "path": "training-r1/source-0/targets.json",
+        "bytes": 75750
+      },
+      {
+        "path": "training-r1/source-0/validation.json",
+        "bytes": 20512
+      },
+      {
+        "path": "training-r1/source-1/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-r1/source-1/receipt.json",
+        "bytes": 79108
+      },
+      {
+        "path": "training-r1/source-1/targets.json",
+        "bytes": 75750
+      },
+      {
+        "path": "training-r1/source-1/validation.json",
+        "bytes": 20512
+      },
+      {
+        "path": "training-r1/source-2/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-r1/source-2/receipt.json",
+        "bytes": 79108
+      },
+      {
+        "path": "training-r1/source-2/targets.json",
+        "bytes": 75750
+      },
+      {
+        "path": "training-r1/source-2/validation.json",
+        "bytes": 20512
+      },
+      {
+        "path": "training-r1/summary.json",
+        "bytes": 221104
+      },
+      {
+        "path": "training-r1.log",
+        "bytes": 11111
+      },
+      {
+        "path": "training-r2/checkpoint/family_checkpoint.json",
+        "bytes": 345408
+      },
+      {
+        "path": "training-r2/source-0/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-r2/source-0/receipt.json",
+        "bytes": 79108
+      },
+      {
+        "path": "training-r2/source-0/targets.json",
+        "bytes": 75750
+      },
+      {
+        "path": "training-r2/source-0/validation.json",
+        "bytes": 20512
+      },
+      {
+        "path": "training-r2/source-1/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-r2/source-1/receipt.json",
+        "bytes": 79108
+      },
+      {
+        "path": "training-r2/source-1/targets.json",
+        "bytes": 75750
+      },
+      {
+        "path": "training-r2/source-1/validation.json",
+        "bytes": 20512
+      },
+      {
+        "path": "training-r2/source-2/LegalIR.lean",
+        "bytes": 3424
+      },
+      {
+        "path": "training-r2/source-2/receipt.json",
+        "bytes": 79108
+      },
+      {
+        "path": "training-r2/source-2/targets.json",
+        "bytes": 75750
+      },
+      {
+        "path": "training-r2/source-2/validation.json",
+        "bytes": 20512
+      },
+      {
+        "path": "training-r2/summary.json",
+        "bytes": 221102
+      },
+      {
+        "path": "training-r2.log",
+        "bytes": 11111
+      }
+    ]
+  },
+  "admitted": false,
+  "qualified": false,
+  "constitution_formalized": false
+}
