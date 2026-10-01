@@ -15,7 +15,6 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from copy import deepcopy
 from dataclasses import dataclass, field
-from functools import reduce
 import hashlib
 import json
 import math
@@ -25,7 +24,7 @@ import time
 
 from . import native_family_lake_v5 as native
 from . import projection_validation_contract_v5 as validation
-from ...hammers import models, policy, portfolio, translation
+from ...hammers import models, policy, portfolio, translation, semantic_routing
 from ...parsers import modal
 from ....optimizers.logic_theorem_optimizer import resource_scheduler as resources
 
@@ -35,7 +34,7 @@ MAX_BATCH_BYTES = 128 * 1024 * 1024
 FALSE = {"admitted": False, "qualified": False, "formalized": False,
          "roundtrip_ok": False, "source_semantics_verified": False,
          "training_executed": False, "checkpoint_promoted": False}
-_MODULES = (native, validation, models, policy, portfolio, translation, modal, resources)
+_MODULES = (native, validation, models, policy, portfolio, translation, semantic_routing, modal, resources)
 _PINS = {str(Path(m.__file__).resolve()): hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
          for m in _MODULES}
 _PINS[str(Path(__file__).resolve())] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
@@ -51,6 +50,7 @@ def _digest(value):
 
 def _guard():
     native._guard()
+    semantic_routing._guard()
     for path, digest in _PINS.items():
         if hashlib.sha256(Path(path).read_bytes()).hexdigest() != digest:
             raise ValueError("parallel projection producer changed after import")
@@ -95,22 +95,8 @@ class PortfolioDiagnosticJob:
     executable_overrides: dict = field(default_factory=dict)
 
 
-def _propositional_term(node, depth=0):
-    if depth > 64 or node.get("binders"):
-        raise ValueError("bounded binder-free propositional AST required")
-    kind, arguments = node["kind"], node["arguments"]
-    if kind == "predicate" and not arguments:
-        return translation.Const(node["symbol"], translation.PROP_SORT)
-    if kind in ("true", "false") and not arguments:
-        return translation.BoolLit(kind == "true")
-    children = [_propositional_term(child, depth + 1) for child in arguments]
-    if kind == "not" and len(children) == 1:
-        return translation.Not(children[0])
-    if kind in ("and", "or") and len(children) >= 2:
-        return reduce(translation.And if kind == "and" else translation.Or, children)
-    if kind in ("implies", "iff") and len(children) == 2:
-        return (translation.Implies if kind == "implies" else translation.Iff)(*children)
-    raise ValueError("unsupported native propositional operator: " + str(kind))
+# Compatibility alias; the checked routing owner owns this closed fragment.
+_propositional_term = semantic_routing._propositional_term
 
 
 def _diagnostic(job, target, solver_timeout_seconds, solver_memory_mb, max_workers):
@@ -130,19 +116,11 @@ def _diagnostic(job, target, solver_timeout_seconds, solver_memory_mb, max_worke
     payload = row["payload"]
     if row["logic_family"] != "propositional" or payload.get("ast_format") != "shared_logic":
         raise ValueError("diagnostic currently supports explicit native propositional targets only")
-    parsed = modal.parse_modal(payload["printed"], modal.profile_k())
-    if not parsed.ok or parsed.diagnostics or parsed.root.to_dict() != payload["native_ast"]:
-        raise ValueError("diagnostic native AST differs from exact target parser replay")
-    term = _propositional_term(parsed.root.to_dict())
-    attempts, translations = [], []
-    owner = translation.TranslationContext(request_id=job.job_id)
-    for solver in job.solver_names:
-        spec = policy.solver_spec(solver)
-        record = owner.translate(source_construct="projection:" + row["target_sha256"], term=term, target=spec.target)
-        if record.status is not models.TranslationStatus.SUPPORTED or record.obligations:
-            raise ValueError("complete native propositional translation required")
-        attempts.append(portfolio.PortfolioAttemptSpec(translation=record, solver_name=solver))
-        translations.append(record.to_dict())
+    attempts, routing = semantic_routing.prepare_family_portfolio(
+        request_id=job.job_id, source_construct="projection:" + row["target_sha256"],
+        logic_family=row["logic_family"], ast_format=payload["ast_format"],
+        printed=payload["printed"], native_ast=payload["native_ast"], solver_names=job.solver_names)
+    translations = [attempt.translation.to_dict() for attempt in attempts]
     run_policy = policy.PortfolioPolicy(
         hammer_policy=models.HammerPolicy(timeout_seconds=solver_timeout_seconds,
             allowed_solvers=list(job.solver_names), network_allowed=False),
@@ -156,7 +134,7 @@ def _diagnostic(job, target, solver_timeout_seconds, solver_memory_mb, max_worke
         "report_sha256": _digest(target.report), "projection_id": row["projection_id"],
         "target_sha256": row["target_sha256"], "payload_sha256": _digest(payload),
         "relation": "exact_propositional_native_ast_translation", "source_meaning_relation_verified": False,
-        "translations": translations,
+        "translations": translations, "semantic_routing": routing,
         "verdict_scope": "SMT inputs assert the formula: SAT is satisfiability, not a proof of validity; ATP uses its documented target semantics."}
     return attempts, run_policy, binding
 
@@ -268,10 +246,15 @@ def run_parallel_projection_checks(native_jobs, *, portfolio_jobs=(), scheduler=
         target = by_id[job.target_job_id]
         _guard()
         native.prepare_native_family_lean(target.report, source_inputs=target.source_inputs)
-        runner = portfolio.SolverPortfolio(run_policy, resource_scheduler=scheduler,
-            resource_lane=resources.ResourceLane.HAMMER_LEAN.value,
-            resource_wait_timeout_seconds=lease_wait_timeout_seconds)
-        result = runner.run(job.job_id, attempts)
+        row = next(row for row in target.report["projections"] if row["projection_id"] == job.projection_id)
+        payload = row["payload"]
+        result = semantic_routing.run_family_portfolio(
+            expected_routing=binding["semantic_routing"], run_policy=run_policy,
+            resource_scheduler=scheduler, resource_lane=resources.ResourceLane.HAMMER_LEAN.value,
+            resource_wait_timeout_seconds=lease_wait_timeout_seconds,
+            request_id=job.job_id, source_construct="projection:" + row["target_sha256"],
+            logic_family=row["logic_family"], ast_format=payload["ast_format"],
+            printed=payload["printed"], native_ast=payload["native_ast"], solver_names=job.solver_names)
         native.prepare_native_family_lean(target.report, source_inputs=target.source_inputs)
         _guard()
         receipt = {"job_id": job.job_id, "kind": "portfolio_diagnostic", "status": "completed",

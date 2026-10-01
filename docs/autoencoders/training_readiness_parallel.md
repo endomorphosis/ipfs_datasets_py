@@ -12,6 +12,9 @@ feature reconstruction head also have different training requirements. Nothing
 here turns authored fixtures, weak labels, a solver verdict or a stored receipt
 into a reviewed source-language target. The Constitution remains unformalized.
 
+For the checked solver capability routes and optional independent decoder-block
+optimizer, see [family routing and refinement](family_routing_and_refinement.md).
+
 ## Public entry points
 
 | Owner | Entry point | Purpose |
