@@ -1,0 +1,120 @@
+{
+  "schema": "native-guarded-intent-release/v1",
+  "date": "2026-10-01",
+  "base_commit": "2a2d351d0082e09b2a3b5c89a91d44803ae790fc",
+  "tests": {
+    "distinct_passed": 71,
+    "skipped": 0,
+    "xml": [
+      "guarded-helper-tests-r2.xml",
+      "authored-guarded-tests-r1.xml",
+      "family-v6-tests-final.xml",
+      "guarded-compatibility-tests-r1.xml"
+    ],
+    "backend_doubles_are_not_native_evidence": true
+  },
+  "default_matrix": {
+    "passed_projection_checks": 63,
+    "total_projection_checks": 66,
+    "named_formula_cases_passed": 32,
+    "actual_Lake_builds": 4,
+    "SANY_checks": 3,
+    "domains": {
+      "intent_ir": {
+        "passed": 23,
+        "emitted": 23,
+        "wall_seconds": 4.729715923080221,
+        "library": "IntentIR",
+        "strict_training_allowed": false
+      },
+      "security_ir": {
+        "passed": 16,
+        "emitted": 16,
+        "wall_seconds": 3.488726364914328,
+        "library": "SecurityIR",
+        "strict_training_allowed": false
+      },
+      "ui_ux_ir": {
+        "passed": 15,
+        "emitted": 16,
+        "wall_seconds": 3.7834696951322258,
+        "library": "UIUXIR",
+        "strict_training_allowed": false
+      },
+      "legal_ir": {
+        "passed": 9,
+        "emitted": 11,
+        "wall_seconds": 6.745333133963868,
+        "library": "LegalIR",
+        "strict_training_allowed": false
+      }
+    },
+    "opaque_Legal_UI_rows_remain_blocked": true,
+    "all_modality_training_gates_passed": false
+  },
+  "guarded_smoke": {
+    "integration_passed": true,
+    "positive_source_count": 3,
+    "train_sources": 2,
+    "tuning_sources": 1,
+    "positive_projection_occurrences": 69,
+    "actual_positive_Lake_builds": 3,
+    "positive_SANY_checks": 3,
+    "optimizer_steps": 2,
+    "total_wall_seconds": 28.593488562852144,
+    "native_and_diagnostic_seconds": 22.530583802843466,
+    "numerical_preparation_seconds": 1.9366257868241519,
+    "optimization_seconds": 0.03269978193566203,
+    "initial_tuning_objective": 0.0007063833560527163,
+    "selected_tuning_objective": 0.0007063004818080111,
+    "selected_epoch": 0,
+    "selected_calibration_families": [
+      "tdfol"
+    ],
+    "all_active_projections_have_loss": true,
+    "scope": "authored finite assumptions and exact source-bound predicate/effect joins; not source inference, heldout fidelity or 8D/384D decoder training",
+    "diagnostic": {
+      "all_native_projections_passed": false,
+      "initial_valuation_count": 2,
+      "configuration_count": 4,
+      "deadlock_count": 1,
+      "false_precondition_count": 1,
+      "deadlock_free": false,
+      "strict_training_allowed": false,
+      "all_four_guarded_targets_rejected_before_training": true,
+      "excluded_from_training_and_tuning": true,
+      "model_checker_executed": false,
+      "diagnostic_scope": "exhaustive native finite-state enumeration and live strict-gate rejection; no TLC or source execution",
+      "qualified": false,
+      "admitted": false,
+      "formalized": false,
+      "source_semantics_verified": false,
+      "source_decoder_trained": false,
+      "constitution_formalized": false,
+      "download_calls": 0,
+      "expected_failure_preserved": true
+    },
+    "negative_other_declarations_Lake_builds": 1,
+    "negative_passed_projection_checks": 19,
+    "negative_blocked_guarded_projection_count": 4,
+    "diagnostic_SANY_checks": 0
+  },
+  "optimizer_diagnosis": {
+    "receipt": "evidence/optimizer-readonly-diagnosis.json",
+    "input_artifacts_and_sources_archived": true,
+    "read_only": true,
+    "new_holdout": false,
+    "first_step_only_gradient_probe": true,
+    "conclusion": "All eight prior Adam epoch candidates worsened aggregate tuning loss; no deadline expired; per-family gate was not the sole cause.",
+    "optimizer_implementation_changed": false
+  },
+  "source_decoder_trained": false,
+  "admitted": false,
+  "qualified": false,
+  "source_semantics_verified": false,
+  "constitution_formalized": false,
+  "weights_downloaded": false,
+  "external_model_checker_executed": false,
+  "Mathlib_imported": false,
+  "timing_scope": "fresh native workspaces on shared host concurrent with tests; authored integration, not bridge-on or legal-span speed benchmark"
+}
