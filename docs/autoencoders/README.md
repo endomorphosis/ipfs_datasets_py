@@ -153,3 +153,11 @@ When APIs change, update the guide, argument table, and runnable example. Check
 links and Python/shell syntax, and execute only relevant bounded examples.
 Documentation validation must not become an unattended corpus run, checkpoint
 overwrite, Hub upload, or model download.
+
+## Published structured 384D development profiles
+
+The [experimental checkpoint catalog](experimental_structured_checkpoints.md) records
+five append-only Hub artifacts, immutable revision/hash pins, and the supervisor
+consumption path. The canonical Legal package now retains the original trained
+head and source binding matching the released runtime; all 32 training and 8 tuning
+inputs were replayed before publication. No Legal weights were overwritten.

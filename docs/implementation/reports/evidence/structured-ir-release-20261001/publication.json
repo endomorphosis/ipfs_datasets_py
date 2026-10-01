@@ -1,0 +1,17 @@
+{
+  "schema": "structured-ir-publication/v1",
+  "code_revision": "2d93857e78ceedc7f055637c887afeaa40653993",
+  "experimental_checkpoints": 5,
+  "canonical_legal_package_repaired": true,
+  "trained_legal_parent_unchanged": true,
+  "fresh_download_and_offline_inference_verified": true,
+  "canonical_other_domains_unchanged": true,
+  "rejected_checkpoints_excluded": true,
+  "authority_changed": false,
+  "public_repositories": [
+    "Publicus/intent-ir-autoencoder",
+    "Publicus/legal-ir-autoencoder",
+    "Publicus/security-ir-autoencoder",
+    "Publicus/ui-ux-ir-autoencoder"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "pin": {
+    "schema": "ir-384-hub-descriptor/v1",
+    "domain_id": "legal_ir",
+    "repository_id": "Publicus/legal-ir-autoencoder",
+    "revision": "51522f1e1594a790facfa87d4c57cf932e53a824",
+    "release_prefix": "releases/20261001-legal-source-binding-v2",
+    "manifest_sha256": "190c585f5fd4aee96876c765ef600f62b8b1797d0865e3d60367315a1b907145"
+  },
+  "cold_download_verified": true,
+  "offline_runtime_replay_verified": true,
+  "numerical_outputs_exact": true,
+  "original_parent_unchanged": true,
+  "replay_result_sha256": "62295cd1c238e8ac157bc5c2ca25ebfdfa1dc42d7960acc7d1805ff03177b291",
+  "original_head_binding_optimizer_unchanged": true,
+  "proof_authority": false
+}

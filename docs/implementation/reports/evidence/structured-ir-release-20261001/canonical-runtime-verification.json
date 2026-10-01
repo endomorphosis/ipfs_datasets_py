@@ -1,0 +1,54 @@
+{
+  "security_ir": {
+    "descriptor": {
+      "domain_id": "security_ir",
+      "manifest_sha256": "d9fc241c7c6a039068681fab18b6a36fbcbd1752c2683ba1dc16423ce94aba2a",
+      "release_prefix": "releases/20261002-384-development-v1",
+      "repository_id": "Publicus/security-ir-autoencoder",
+      "revision": "f690dc079ff0d87f96d9e779f25b82b182ce8383",
+      "schema": "ir-384-hub-descriptor/v1"
+    },
+    "catalog_load_verified": true,
+    "numerical_replay_matches": true,
+    "offline_reload_matches": true
+  },
+  "ui_ux_ir": {
+    "descriptor": {
+      "domain_id": "ui_ux_ir",
+      "manifest_sha256": "8faf96d5f3deb284cc2a0e8065c6c9c5a9e9983e097b9f205d4b93c1431f0f2e",
+      "release_prefix": "releases/20261002-384-development-v1",
+      "repository_id": "Publicus/ui-ux-ir-autoencoder",
+      "revision": "c9d7fe7c674a2993c054736ed45cd2b5e90f33ca",
+      "schema": "ir-384-hub-descriptor/v1"
+    },
+    "catalog_load_verified": true,
+    "numerical_replay_matches": true,
+    "offline_reload_matches": true
+  },
+  "intent_ir": {
+    "descriptor": {
+      "domain_id": "intent_ir",
+      "manifest_sha256": "250b6bf9cd93e32ee2db77498432d4dc5c7d705f333f9d99e92de69cdf2c727f",
+      "release_prefix": "releases/20261002-384-development-v1",
+      "repository_id": "Publicus/intent-ir-autoencoder",
+      "revision": "da986a94f096b62a23e387739c83623adb65e92d",
+      "schema": "ir-384-hub-descriptor/v1"
+    },
+    "catalog_load_verified": true,
+    "numerical_replay_matches": true,
+    "offline_reload_matches": true
+  },
+  "legal_ir": {
+    "descriptor": {
+      "domain_id": "legal_ir",
+      "manifest_sha256": "190c585f5fd4aee96876c765ef600f62b8b1797d0865e3d60367315a1b907145",
+      "release_prefix": "releases/20261001-legal-source-binding-v2",
+      "repository_id": "Publicus/legal-ir-autoencoder",
+      "revision": "51522f1e1594a790facfa87d4c57cf932e53a824",
+      "schema": "ir-384-hub-descriptor/v1"
+    },
+    "catalog_load_verified": true,
+    "numerical_replay_matches": true,
+    "offline_reload_matches": true
+  }
+}
