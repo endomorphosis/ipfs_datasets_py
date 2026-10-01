@@ -1,0 +1,271 @@
+{
+  "admitted": false,
+  "checkpoint_bytes_after": 398209746,
+  "checkpoint_bytes_before": 398209746,
+  "checkpoint_identity": {
+    "compatibility_architecture_relabelled": true,
+    "exact_published_legacy_teacher": true,
+    "lineage_ancestry_verified": false,
+    "loaded_architecture_version": "proof_aware_auxiliary_heads_v2",
+    "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+    "raw_declared_architecture_version": null,
+    "read_only_checkpoint_load": true,
+    "sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+    "size_bytes": 398209746
+  },
+  "checkpoint_inode_unchanged": true,
+  "checkpoint_path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+  "checkpoint_read_only": true,
+  "checkpoint_sha256_after": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+  "checkpoint_sha256_before": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+  "checkpoint_unchanged": true,
+  "configuration": {
+    "bridge_names": [],
+    "bridge_on_evaluation_executed": false,
+    "compute_device": "cpu",
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_target_count": 0,
+    "metric_disk_cache": false,
+    "temperature": 0,
+    "use_sample_memory": false,
+    "workers": 1
+  },
+  "created_at_utc": "2026-10-01T02:39:59.681750+00:00",
+  "dimension": 8,
+  "fidelity_verified": false,
+  "formalized": false,
+  "inference_seconds": 0.5002358029596508,
+  "lake": {
+    "admitted": false,
+    "executed": false
+  },
+  "linguistic_identity": {
+    "backend": "historical_blank_en",
+    "codec_manifest_sha256": "f44966d10d21f6f97ef89d967f411f5d86fe7195a0aa212269e3c785e27ddfa3",
+    "encoder_model_name": "definitely_missing_legal_model",
+    "language": "en",
+    "model_files_sha256": null,
+    "model_version": null,
+    "numerical_manifest_sha256": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+    "package": null,
+    "pipeline": [
+      "sentencizer"
+    ],
+    "pipeline_config_sha256": "f6537620e8e40049a6d6aeef40fdf4a64ae5b0f68f409fe4a58b431d2e1debc5",
+    "profile_id": "legacy-linguistic-features-8d/v1",
+    "profile_source_sha256": "baca84b44f7eda33466ffdc75170d904f480aafb47a779131337d90ed9a7bca3",
+    "source_revision": "ddf6b79467b68159650df81befc288c8553df664",
+    "spacy_version": "3.8.14",
+    "used_fallback_model": true
+  },
+  "load_seconds": 15.086804394843057,
+  "original_pipeline_ancestry_verified": false,
+  "peak_rss_kib": 2125488,
+  "pipeline_configuration": "assumed_explicit_compatibility_profile_not_producer_verified",
+  "reconstruction_warning": "Preserved historical target-aware safe projection can return the input target vector; vector agreement is diagnostic only.",
+  "rows": [
+    {
+      "admitted": false,
+      "decoded_vector": [
+        -0.530834,
+        0.446323,
+        -0.326599,
+        -0.031692,
+        0.0,
+        0.400546,
+        0.0,
+        0.500903
+      ],
+      "dimension": 8,
+      "embedding_model": "linguistic:spacy-feature-hash8d:7e5626d02fe6065c8ea2066cbdc3b041ac63af6886cf3cac5ced2227b5d38f89",
+      "encoded": {
+        "embedding_projection": [
+          -0.530834,
+          0.446323,
+          -0.326599,
+          -0.031692,
+          0.0,
+          0.400546,
+          0.0,
+          0.500903
+        ],
+        "family_distribution": {
+          "alethic": 0.028267712533511354,
+          "conditional_normative": 0.028267712533511354,
+          "deontic": 0.7290339149207565,
+          "doxastic": 0.028267712533511354,
+          "dynamic": 0.028267712533511354,
+          "epistemic": 0.028267712533511354,
+          "frame": 0.07309209734466393,
+          "hybrid": 0.028267712533511354,
+          "temporal": 0.028267712533511354
+        },
+        "sample_id": "us-code-authored-smoke-1-a3ac221caadcf903",
+        "selected_frame": "administrative_notice_hearing",
+        "target_family": "deontic",
+        "target_family_distribution": {
+          "deontic": 1.0
+        }
+      },
+      "fidelity_verified": false,
+      "inference_seconds": 0.4214552459307015,
+      "input_linguistic_vector": [
+        -0.530834,
+        0.446323,
+        -0.326599,
+        -0.031692,
+        0.0,
+        0.400546,
+        0.0,
+        0.500903
+      ],
+      "linguistic_formula_origin": "frozen_linguistic_ir_compiler",
+      "linguistic_formulas": [
+        {
+          "conditions": [],
+          "exceptions": [],
+          "formula_id": "us-code-authored-smoke-1-a3ac221caadcf903:spacy:f0001",
+          "metadata": {
+            "cue": "shall",
+            "cue_end_char": 16,
+            "cue_start_char": 11,
+            "encoder": "spacy_modal_codec_v1"
+          },
+          "operator": {
+            "family": "deontic",
+            "label": "obligation",
+            "symbol": "O",
+            "system": "D"
+          },
+          "predicate": {
+            "arguments": [
+              "actor:agency",
+              "scope:disclose_records"
+            ],
+            "name": "disclose_records",
+            "role": "clause"
+          },
+          "provenance": {
+            "citation": "Authored diagnostic 1; not a statute",
+            "end_char": 38,
+            "source_id": "us-code-authored-smoke-1-a3ac221caadcf903",
+            "start_char": 0
+          }
+        }
+      ],
+      "sample_id": "us-code-authored-smoke-1-a3ac221caadcf903",
+      "semantic_qualification": false,
+      "source_kind": "authored_diagnostic",
+      "source_text": "The agency shall not disclose records.",
+      "use_sample_memory": false,
+      "vector_origin": "deterministic_linguistic_feature_hash",
+      "wall_seconds": 0.44402469508349895
+    },
+    {
+      "admitted": false,
+      "decoded_vector": [
+        0.096906,
+        0.438673,
+        0.070949,
+        -0.787362,
+        0.0,
+        0.0,
+        0.416177,
+        0.0
+      ],
+      "dimension": 8,
+      "embedding_model": "linguistic:spacy-feature-hash8d:7e5626d02fe6065c8ea2066cbdc3b041ac63af6886cf3cac5ced2227b5d38f89",
+      "encoded": {
+        "embedding_projection": [
+          0.096906,
+          0.438673,
+          0.070949,
+          -0.787362,
+          0.0,
+          0.0,
+          0.416177,
+          0.0
+        ],
+        "family_distribution": {
+          "alethic": 0.017006311842973403,
+          "conditional_normative": 0.017006311842973403,
+          "deontic": 0.7602022832433606,
+          "doxastic": 0.017006311842973403,
+          "dynamic": 0.06896399522177592,
+          "epistemic": 0.017006311842973403,
+          "frame": 0.0439733848017138,
+          "hybrid": 0.017006311842973403,
+          "temporal": 0.041828777518282644
+        },
+        "sample_id": "us-code-authored-smoke-2-e2ecad6414304bf2",
+        "selected_frame": "administrative_notice_hearing",
+        "target_family": "deontic",
+        "target_family_distribution": {
+          "deontic": 1.0
+        }
+      },
+      "fidelity_verified": false,
+      "inference_seconds": 0.07878055702894926,
+      "input_linguistic_vector": [
+        0.096906,
+        0.438673,
+        0.070949,
+        -0.787362,
+        0.0,
+        0.0,
+        0.416177,
+        0.0
+      ],
+      "linguistic_formula_origin": "frozen_linguistic_ir_compiler",
+      "linguistic_formulas": [
+        {
+          "conditions": [],
+          "exceptions": [],
+          "formula_id": "us-code-authored-smoke-2-e2ecad6414304bf2:spacy:f0001",
+          "metadata": {
+            "cue": "shall",
+            "cue_end_char": 17,
+            "cue_start_char": 12,
+            "encoder": "spacy_modal_codec_v1"
+          },
+          "operator": {
+            "family": "deontic",
+            "label": "obligation",
+            "symbol": "O",
+            "system": "D"
+          },
+          "predicate": {
+            "arguments": [
+              "actor:officer",
+              "scope:retain_file_days"
+            ],
+            "name": "retain_file_days",
+            "role": "clause"
+          },
+          "provenance": {
+            "citation": "Authored diagnostic 2; not a statute",
+            "end_char": 55,
+            "source_id": "us-code-authored-smoke-2-e2ecad6414304bf2",
+            "start_char": 0
+          }
+        }
+      ],
+      "sample_id": "us-code-authored-smoke-2-e2ecad6414304bf2",
+      "semantic_qualification": false,
+      "source_kind": "authored_diagnostic",
+      "source_text": "The officer shall retain the file for at least 20 days.",
+      "use_sample_memory": false,
+      "vector_origin": "deterministic_linguistic_feature_hash",
+      "wall_seconds": 0.09210922894999385
+    }
+  ],
+  "sample_count": 2,
+  "schema": "legacy-linguistic-retained-teacher-readonly/v1",
+  "semantic_qualification": false,
+  "training_executed": false,
+  "training_profile": "legacy-linguistic-features-8d/v1",
+  "wall_seconds": 16.143991576042026,
+  "wall_seconds_per_span": 0.2680669620167464,
+  "weights_downloaded": false,
+  "weights_saved": false
+}

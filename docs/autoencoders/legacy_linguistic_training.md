@@ -6,6 +6,10 @@ trainer. It rejects latent-to-formula targets and checkpoints. The experimental
 [joint latent formula head](modal_joint_formula_training.md) remains a separate
 opt-in path and has not established real legal fidelity.
 
+See the [2026-10-01 validation report](legacy_linguistic_validation_20261001.md)
+for actual training, retained-teacher compatibility, resume checks and observed
+historical semantic limitations.
+
 ## What is preserved
 
 The codec comes from `ddf6b79467b68159650df81befc288c8553df664`.

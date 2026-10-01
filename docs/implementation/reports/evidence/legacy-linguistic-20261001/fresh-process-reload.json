@@ -1,0 +1,22 @@
+{
+  "schema": "legacy-linguistic-fresh-process-reload/v1",
+  "source_commit": "09105a738f652844a4dd6ae3a9003bc46c695c18",
+  "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-linguistic-20261001/release-source",
+  "parent_receipt_sha256": "e3390311952b554a1ca6dfe21b580ecd13c8a72f9956003e6027857eb36449f6",
+  "results": [
+    {
+      "backend": "historical_blank_en",
+      "sample_count": 5,
+      "exact_reload_outputs": true
+    },
+    {
+      "backend": "local_en_core_web_sm",
+      "sample_count": 5,
+      "exact_reload_outputs": true
+    }
+  ],
+  "passed": true,
+  "admitted": false,
+  "formula_fidelity_verified": false,
+  "elapsed_seconds": 2.1965761119499803
+}
