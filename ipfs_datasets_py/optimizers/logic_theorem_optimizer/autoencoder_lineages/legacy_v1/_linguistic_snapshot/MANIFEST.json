@@ -1,0 +1,30 @@
+{
+  "dependency_scope": "four relative imports use the separately verified frozen numerical snapshot; canonical compiler/proofs remain shared",
+  "relocation_edits": [
+    {
+      "after": "from .._snapshot.legal_modal_parser import",
+      "before": "from .legal_modal_parser import"
+    },
+    {
+      "after": "from .._snapshot.legal_samples import",
+      "before": "from .legal_samples import"
+    },
+    {
+      "after": "from .._snapshot.modal_ir import",
+      "before": "from .modal_ir import"
+    },
+    {
+      "after": "from .._snapshot.modal_registry import",
+      "before": "from .modal_registry import"
+    }
+  ],
+  "schema": "legacy-linguistic-codec-snapshot/v1",
+  "source_bytes": 306359,
+  "source_git_blob": "3e6cddfad55ba38a6304c74062468d32881e21fe",
+  "source_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+  "source_revision": "ddf6b79467b68159650df81befc288c8553df664",
+  "source_sha256": "49446ed1e1289ac5cf8cc07e65f67968adc12666ebb66cf951107c9d8c591617",
+  "vendored_bytes": 306403,
+  "vendored_path": "spacy_modal_codec.py",
+  "vendored_sha256": "16ec4e141d5cb2f9d37cd4db42733921bc046e17fee12afc43ab31ca7a60cd59"
+}

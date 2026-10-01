@@ -13,6 +13,10 @@ baseline; this speed port preserves its objective, search and acceptance rules.
 See the [history audit](legacy_speed_history.md) for retained optimizations and
 the separately scoped ports still needed.
 
+The explicit [legacy linguistic profile](legacy_linguistic_training.md) preserves
+the historical spaCy feature decoder and original sparse training independently
+of the experimental latent-to-formula head, with bound checkpoint/resume metadata.
+
 ## The two lines
 
 | Identity | Code reference | Weights and role |
