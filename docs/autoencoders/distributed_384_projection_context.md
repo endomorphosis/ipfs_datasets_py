@@ -102,6 +102,10 @@ hyperproperties, authorization policies, and additional cataloged families.
 adapter availability. Availability does not establish applicability, a valid
 interpretation, or complete semantic coverage.
 
+The [supplemental native Lean routes](native_supplemental_lean.md) document the
+closed authorization, concurrency, cryptographic protocol, and refinement
+fragments, their explicit blockers, replay checks, and resource limits.
+
 The CLI exposes this inventory with `projection-families --domain security_ir`.
 The older `profiles` command retains the frozen numerical training profile's
 requirements; its defaults differ from the newer projection command's defaults.

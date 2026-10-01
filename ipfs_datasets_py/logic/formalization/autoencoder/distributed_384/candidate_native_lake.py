@@ -1,7 +1,7 @@
-"""Replay-bound native builds with one audited CodeUnit program extension.
+"""Replay-bound builds with audited program and supplemental interpretations.
 
-The frozen v5 gate still owns every existing lowering. Only its blocked,
-source-joined scalar Security program is extended, after exact inverse replay.
+The frozen v5 gate still owns every existing lowering. Its blocked source-joined
+program and four supplemental families have additive, explicitly closed routes.
 Issued handles record real backend execution, never source truth or admission.
 """
 from copy import deepcopy
@@ -14,15 +14,18 @@ import weakref
 from . import codeunit_program_lean as program
 from .contracts import digest, raw, require
 from .. import native_family_lake_v5 as previous
+from .. import native_supplemental_lean as supplemental
+from ..native_family_lean_emitters import UnsupportedNativeLean
 
-SCHEMA = "distributed-384-candidate-native-lake/v1"
+SCHEMA = "distributed-384-candidate-native-lake/v2"
 FALSE = previous.FALSE
 _REGISTRY = weakref.WeakKeyDictionary()
 
 
 def _pins():
     return {str(Path(path).resolve()): hashlib.sha256(Path(path).read_bytes()).hexdigest()
-            for path in (__file__, program.__file__)}
+            for path in (__file__, program.__file__, supplemental.__file__,
+                         *(module.__file__ for module in supplemental.PRODUCERS))}
 
 
 _IMPORTED = _pins()
@@ -129,7 +132,7 @@ def _preparation_digest(prepared):
 
 
 def prepare_native_family_lean(report, *, source_inputs, source_text, candidate):
-    """Preserve v5 results and extend only an exactly replayed joined program."""
+    """Preserve v5 results and extend only exact replayed native fragments."""
     _guard()
     identity = _identity(report, source_inputs, source_text, candidate)
     original = previous.prepare_native_family_lean(report, source_inputs=source_inputs)
@@ -139,18 +142,30 @@ def prepare_native_family_lean(report, *, source_inputs, source_text, candidate)
     require(len(recognized) <= 1, "one source-joined native program projection required")
     for index, (projection, row) in enumerate(zip(report["projections"], prepared["per_projection"])):
         require(projection["projection_id"] == row["projection_id"], "native projection order changed")
-        if not _recognizes(report, projection) or row["semantic_lowering_supported"]:
+        joined_program = _recognizes(report, projection)
+        supplementary = supplemental.recognizes(projection, report["domain_id"])
+        if not (joined_program or supplementary) or row["semantic_lowering_supported"]:
             continue
-        require(projection["ready_for_training"] is True, "joined native program is not ready")
-        source, lowering = program.emit_program(projection["payload"], code_unit=source_inputs.get("code_unit"),
-            source_text=source_text, candidate=candidate)
-        require(type(source) is str and source.strip(), "nonempty audited native program lowering required")
+        prior = deepcopy(row)
+        try:
+            if not projection["ready_for_training"]:
+                raise UnsupportedNativeLean("native_projection_not_ready")
+            if joined_program:
+                source, lowering = program.emit_program(projection["payload"], code_unit=source_inputs.get("code_unit"),
+                    source_text=source_text, candidate=candidate)
+            else:
+                source, lowering = supplemental.emit_projection(projection, domain=report["domain_id"])
+        except UnsupportedNativeLean as error:
+            # A known route does not make unsupported declarations disappear.
+            row.update(reason=str(error)[:2000], previous_lowering_observation=prior,
+                       attempted_extension="audited_program" if joined_program else "native_supplemental")
+            continue
+        require(type(source) is str and source.strip(), "nonempty audited native lowering required")
         wrapped = "namespace Projection_" + str(index) + "\n" + source + "\nend Projection_" + str(index)
         extensions.append(wrapped)
-        prior = deepcopy(row)
         row.update(parser_status="passed", lake_status="not_run", semantic_lowering_supported=True,
             reason=None, lowering=lowering, lean_declarations_sha256=hashlib.sha256(wrapped.encode()).hexdigest(),
-            previous_lowering_observation=prior, extension_profile=program.PROFILE)
+            previous_lowering_observation=prior, extension_profile=lowering["profile"])
     if extensions:
         prepared["lean_source"] += "\nnamespace " + prepared["library"] + "\n" + "\n\n".join(extensions) + "\nend " + prepared["library"] + "\n"
     require(len(prepared["lean_source"].encode()) <= 4 * 1024 * 1024, "candidate native Lean module exceeds byte bound")
