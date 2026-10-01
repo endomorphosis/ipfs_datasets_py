@@ -1,0 +1,1350 @@
+{
+  "admitted": false,
+  "authored_intent_ui": {
+    "admitted": false,
+    "heldout": false,
+    "learned_output": false,
+    "model_inference_used": false,
+    "proof_authority": false,
+    "qualified": false,
+    "runs": [
+      {
+        "actual_backend_executed": true,
+        "admitted": false,
+        "all_auxiliary_families_supported": true,
+        "all_requested_dependencies_supported": false,
+        "all_requested_native_checks_passed": false,
+        "auxiliary_family_coverage": [],
+        "blocked_projections": [],
+        "candidate_sha256": "cb128b57f6f626d614ddb40e89c40ffe79a42f37087d129c50f5f2cce0faf72c",
+        "complete_native_checks": 23,
+        "context_sha256": "223df981bbe71d2b26199d9a29ab43c87231ec6455f64c1ff031175eda827ebc",
+        "domain_id": "intent_ir",
+        "elapsed_seconds": 13.549067173851654,
+        "families_supported": 11,
+        "family_count": 16,
+        "heldout": false,
+        "immutable_candidate_source_context_verified": true,
+        "label": "intent-guarded-maximal",
+        "lake_passed": 23,
+        "learned_output": false,
+        "missing_requested_families": [
+          "authorization",
+          "refinement"
+        ],
+        "model_inference_used": false,
+        "native_check_scope": "syntax_and_types_only",
+        "proof_authority": false,
+        "qualified": false,
+        "requested_families": [
+          "authorization",
+          "datalog",
+          "dcec",
+          "deontic",
+          "event_calculus",
+          "first_order",
+          "frame_logic",
+          "higher_order",
+          "horn_chc",
+          "intention_agency",
+          "program",
+          "propositional",
+          "refinement",
+          "tdfol",
+          "temporal",
+          "transition_system"
+        ],
+        "runtime_behavior_attested": false,
+        "scope": "authored native candidates and explicit source-bound context declarations; no learned decoder, holdout, corpus or semantic-truth claim",
+        "source_semantics_verified": false,
+        "source_sha256": "17a5f81c1938bf8d4b5c051b82c8ac631828a536d9fb53ab7efdc27ec7f35ee8",
+        "status": "partial",
+        "syntax_checks": [
+          {
+            "SANY_version_banner_observed": true,
+            "admitted": false,
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+              "-Xmx128m",
+              "-cp",
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+              "tla2sany.SANY",
+              "-error-codes",
+              "BoundedNativeState.tla"
+            ],
+            "executed": true,
+            "java_version_output": "\nNOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \nopenjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+            "level_checking_enabled": true,
+            "matching_module_parse_observed": true,
+            "matching_module_semantic_processing_observed": true,
+            "model_checker_executed": false,
+            "model_sha256": "18ec86195abc893a6ff9f4d66035b666e177b808e2bb74a0564abd715da4ba29",
+            "output_truncated": false,
+            "projection_id": "intent_ir/guarded/tla_plus/v1",
+            "returncode": 0,
+            "status": "passed",
+            "stderr": "NOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \n",
+            "stdout": "\n****** SANY2 Version 2.2 created 08 July 2020\n\nParsing file /tmp/logic-tool-fkl2jgbc/BoundedNativeState.tla\nParsing file /tmp/tlc-7613911602265967581/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-7613911602265967581/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-7613911602265967581/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module BoundedNativeState\nLinting of module BoundedNativeState\n",
+            "timed_out": false,
+            "tool_sha256": {
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+            }
+          }
+        ],
+        "total_projections": 23,
+        "training_executed": false
+      },
+      {
+        "actual_backend_executed": true,
+        "admitted": false,
+        "all_auxiliary_families_supported": true,
+        "all_requested_dependencies_supported": true,
+        "all_requested_native_checks_passed": true,
+        "auxiliary_family_coverage": [],
+        "blocked_projections": [],
+        "candidate_sha256": "cb128b57f6f626d614ddb40e89c40ffe79a42f37087d129c50f5f2cce0faf72c",
+        "complete_native_checks": 18,
+        "context_sha256": "223df981bbe71d2b26199d9a29ab43c87231ec6455f64c1ff031175eda827ebc",
+        "domain_id": "intent_ir",
+        "elapsed_seconds": 12.468777162022889,
+        "families_supported": 11,
+        "family_count": 11,
+        "heldout": false,
+        "immutable_candidate_source_context_verified": true,
+        "label": "intent-guarded-scoped",
+        "lake_passed": 18,
+        "learned_output": false,
+        "missing_requested_families": [],
+        "model_inference_used": false,
+        "native_check_scope": "syntax_and_types_only",
+        "proof_authority": false,
+        "qualified": false,
+        "requested_families": [
+          "datalog",
+          "deontic",
+          "event_calculus",
+          "first_order",
+          "frame_logic",
+          "horn_chc",
+          "intention_agency",
+          "program",
+          "propositional",
+          "temporal",
+          "transition_system"
+        ],
+        "runtime_behavior_attested": false,
+        "scope": "authored native candidates and explicit source-bound context declarations; no learned decoder, holdout, corpus or semantic-truth claim",
+        "source_semantics_verified": false,
+        "source_sha256": "17a5f81c1938bf8d4b5c051b82c8ac631828a536d9fb53ab7efdc27ec7f35ee8",
+        "status": "passed",
+        "syntax_checks": [
+          {
+            "SANY_version_banner_observed": true,
+            "admitted": false,
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+              "-Xmx128m",
+              "-cp",
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+              "tla2sany.SANY",
+              "-error-codes",
+              "BoundedNativeState.tla"
+            ],
+            "executed": true,
+            "java_version_output": "\nNOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \nopenjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+            "level_checking_enabled": true,
+            "matching_module_parse_observed": true,
+            "matching_module_semantic_processing_observed": true,
+            "model_checker_executed": false,
+            "model_sha256": "18ec86195abc893a6ff9f4d66035b666e177b808e2bb74a0564abd715da4ba29",
+            "output_truncated": false,
+            "projection_id": "intent_ir/guarded/tla_plus/v1",
+            "returncode": 0,
+            "status": "passed",
+            "stderr": "NOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \n",
+            "stdout": "\n****** SANY2 Version 2.2 created 08 July 2020\n\nParsing file /tmp/logic-tool-r2kxbzr7/BoundedNativeState.tla\nParsing file /tmp/tlc-16185324378366868156/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-16185324378366868156/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-16185324378366868156/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module BoundedNativeState\nLinting of module BoundedNativeState\n",
+            "timed_out": false,
+            "tool_sha256": {
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+            }
+          }
+        ],
+        "total_projections": 18,
+        "training_executed": false
+      },
+      {
+        "actual_backend_executed": true,
+        "admitted": false,
+        "all_auxiliary_families_supported": true,
+        "all_requested_dependencies_supported": false,
+        "all_requested_native_checks_passed": false,
+        "auxiliary_family_coverage": [],
+        "blocked_projections": [],
+        "candidate_sha256": "8a5a6f039573cf5d46b5e9e9fe2c9c81941529ea1317907db326db8b5f8ae768",
+        "complete_native_checks": 15,
+        "context_sha256": "75c3094ba266b50e6959f25b91f8438a791d5d4f3b41b1328b460f8b93a26ce2",
+        "domain_id": "ui_ux_ir",
+        "elapsed_seconds": 6.717506484128535,
+        "families_supported": 9,
+        "family_count": 11,
+        "heldout": false,
+        "immutable_candidate_source_context_verified": true,
+        "label": "ui-confirmation-maximal",
+        "lake_passed": 15,
+        "learned_output": false,
+        "missing_requested_families": [
+          "authorization",
+          "program"
+        ],
+        "model_inference_used": false,
+        "native_check_scope": "syntax_and_types_only",
+        "proof_authority": false,
+        "qualified": false,
+        "requested_families": [
+          "authorization",
+          "dcec",
+          "deontic",
+          "event_calculus",
+          "first_order",
+          "frame_logic",
+          "program",
+          "propositional",
+          "tdfol",
+          "temporal",
+          "transition_system"
+        ],
+        "runtime_behavior_attested": false,
+        "scope": "authored native candidates and explicit source-bound context declarations; no learned decoder, holdout, corpus or semantic-truth claim",
+        "source_semantics_verified": false,
+        "source_sha256": "11e369ea5112eabedc4dafabffdbdde6cfe88fc595f15c0e404fa03e0fa8f9ff",
+        "status": "partial",
+        "syntax_checks": [
+          {
+            "SANY_version_banner_observed": true,
+            "admitted": false,
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+              "-Xmx128m",
+              "-cp",
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+              "tla2sany.SANY",
+              "-error-codes",
+              "BoundedNativeState.tla"
+            ],
+            "executed": true,
+            "java_version_output": "\nNOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \nopenjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+            "level_checking_enabled": true,
+            "matching_module_parse_observed": true,
+            "matching_module_semantic_processing_observed": true,
+            "model_checker_executed": false,
+            "model_sha256": "6a23edc6d109dcb925d8e9d087ea50f9f300db58173b6792dedddd359b50448f",
+            "output_truncated": false,
+            "projection_id": "ui_ux_ir/bounded_state/tla_plus/v4",
+            "returncode": 0,
+            "status": "passed",
+            "stderr": "NOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \n",
+            "stdout": "\n****** SANY2 Version 2.2 created 08 July 2020\n\nParsing file /tmp/logic-tool-erqb78sf/BoundedNativeState.tla\nParsing file /tmp/tlc-961837653061963082/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-961837653061963082/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-961837653061963082/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module BoundedNativeState\nLinting of module BoundedNativeState\n",
+            "timed_out": false,
+            "tool_sha256": {
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+            }
+          }
+        ],
+        "total_projections": 15,
+        "training_executed": false
+      },
+      {
+        "actual_backend_executed": true,
+        "admitted": false,
+        "all_auxiliary_families_supported": true,
+        "all_requested_dependencies_supported": true,
+        "all_requested_native_checks_passed": true,
+        "auxiliary_family_coverage": [],
+        "blocked_projections": [],
+        "candidate_sha256": "8a5a6f039573cf5d46b5e9e9fe2c9c81941529ea1317907db326db8b5f8ae768",
+        "complete_native_checks": 15,
+        "context_sha256": "75c3094ba266b50e6959f25b91f8438a791d5d4f3b41b1328b460f8b93a26ce2",
+        "domain_id": "ui_ux_ir",
+        "elapsed_seconds": 6.846532849129289,
+        "families_supported": 9,
+        "family_count": 9,
+        "heldout": false,
+        "immutable_candidate_source_context_verified": true,
+        "label": "ui-confirmation-scoped",
+        "lake_passed": 15,
+        "learned_output": false,
+        "missing_requested_families": [],
+        "model_inference_used": false,
+        "native_check_scope": "syntax_and_types_only",
+        "proof_authority": false,
+        "qualified": false,
+        "requested_families": [
+          "dcec",
+          "deontic",
+          "event_calculus",
+          "first_order",
+          "frame_logic",
+          "propositional",
+          "tdfol",
+          "temporal",
+          "transition_system"
+        ],
+        "runtime_behavior_attested": false,
+        "scope": "authored native candidates and explicit source-bound context declarations; no learned decoder, holdout, corpus or semantic-truth claim",
+        "source_semantics_verified": false,
+        "source_sha256": "11e369ea5112eabedc4dafabffdbdde6cfe88fc595f15c0e404fa03e0fa8f9ff",
+        "status": "passed",
+        "syntax_checks": [
+          {
+            "SANY_version_banner_observed": true,
+            "admitted": false,
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+              "-Xmx128m",
+              "-cp",
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+              "tla2sany.SANY",
+              "-error-codes",
+              "BoundedNativeState.tla"
+            ],
+            "executed": true,
+            "java_version_output": "\nNOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \nopenjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+            "level_checking_enabled": true,
+            "matching_module_parse_observed": true,
+            "matching_module_semantic_processing_observed": true,
+            "model_checker_executed": false,
+            "model_sha256": "6a23edc6d109dcb925d8e9d087ea50f9f300db58173b6792dedddd359b50448f",
+            "output_truncated": false,
+            "projection_id": "ui_ux_ir/bounded_state/tla_plus/v4",
+            "returncode": 0,
+            "status": "passed",
+            "stderr": "NOTE: Picked up JDK_JAVA_OPTIONS: \nPicked up JAVA_TOOL_OPTIONS: \nPicked up _JAVA_OPTIONS: \n",
+            "stdout": "\n****** SANY2 Version 2.2 created 08 July 2020\n\nParsing file /tmp/logic-tool-kw2o4kbw/BoundedNativeState.tla\nParsing file /tmp/tlc-8556994952221444164/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-8556994952221444164/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-8556994952221444164/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module BoundedNativeState\nLinting of module BoundedNativeState\n",
+            "timed_out": false,
+            "tool_sha256": {
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+            }
+          }
+        ],
+        "total_projections": 15,
+        "training_executed": false
+      },
+      {
+        "actual_backend_executed": true,
+        "admitted": false,
+        "all_auxiliary_families_supported": true,
+        "all_requested_dependencies_supported": false,
+        "all_requested_native_checks_passed": false,
+        "auxiliary_family_coverage": [],
+        "blocked_projections": [
+          {
+            "lake_status": "blocked",
+            "parser_status": "blocked",
+            "projection_id": "intent_ir/guarded/action_contract/v1",
+            "reason": "native_projection_not_ready"
+          },
+          {
+            "lake_status": "blocked",
+            "parser_status": "blocked",
+            "projection_id": "intent_ir/guarded/workflow/v1",
+            "reason": "native_projection_not_ready"
+          },
+          {
+            "lake_status": "blocked",
+            "parser_status": "blocked",
+            "projection_id": "intent_ir/guarded/state/v1",
+            "reason": "native_projection_not_ready"
+          },
+          {
+            "lake_status": "blocked",
+            "parser_status": "blocked",
+            "projection_id": "intent_ir/guarded/tla_plus/v1",
+            "reason": "native_projection_not_ready"
+          }
+        ],
+        "candidate_sha256": "8e69a9df57e1e6adc798ab3ec9bc3ed56c2722fa8a21271ee8f54ee933d52598",
+        "complete_native_checks": 19,
+        "context_sha256": "fe2b62051ebe1b8e3a2af53160f810800904e21fcaa0b6463eb608281425ca94",
+        "domain_id": "intent_ir",
+        "elapsed_seconds": 13.21988049801439,
+        "families_supported": 8,
+        "family_count": 16,
+        "heldout": false,
+        "immutable_candidate_source_context_verified": true,
+        "label": "intent-false-precondition-diagnostic",
+        "lake_passed": 19,
+        "learned_output": false,
+        "missing_requested_families": [
+          "authorization",
+          "refinement",
+          "transition_system"
+        ],
+        "model_inference_used": false,
+        "native_check_scope": "syntax_and_types_only",
+        "proof_authority": false,
+        "qualified": false,
+        "requested_families": [
+          "authorization",
+          "datalog",
+          "dcec",
+          "deontic",
+          "event_calculus",
+          "first_order",
+          "frame_logic",
+          "higher_order",
+          "horn_chc",
+          "intention_agency",
+          "program",
+          "propositional",
+          "refinement",
+          "tdfol",
+          "temporal",
+          "transition_system"
+        ],
+        "runtime_behavior_attested": false,
+        "scope": "authored native candidates and explicit source-bound context declarations; no learned decoder, holdout, corpus or semantic-truth claim",
+        "source_semantics_verified": false,
+        "source_sha256": "58d9e7712fcc8baf3bc91a8c7974aa31a24d31758fbbf3458146ca1d75ebd9ed",
+        "status": "partial",
+        "syntax_checks": [],
+        "total_projections": 23,
+        "training_executed": false
+      }
+    ],
+    "runtime_behavior_attested": false,
+    "schema": "authored-intent-ui-candidate-native-evidence/v1",
+    "scope": "authored native candidates and explicit source-bound context declarations; no learned decoder, holdout, corpus or semantic-truth claim",
+    "script_sha256": "234eb25fedfbff73c4e38ceba885d1b0d771aa99c8421b425130af38830bb56d",
+    "source_semantics_verified": false,
+    "tools": {
+      "java": {
+        "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java",
+        "sha256": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a"
+      },
+      "lake": {
+        "path": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf"
+      },
+      "tla2tools": {
+        "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+        "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+      }
+    },
+    "training_executed": false
+  },
+  "authored_security": {
+    "admitted": false,
+    "applicability_reviews_created": false,
+    "candidate_sha256": "3cbbc43010f0a11fcb121b0e62b00eea3033cc22322ac37838e68a5bee36d3cd",
+    "context_sha256": "517c09fa3397cba7d8ca6150115729bb7e8bed2ee8d2a28112d1df76b6a0d422",
+    "formulas_inferred_from_code": false,
+    "model_inference_executed": false,
+    "promotion_performed": false,
+    "proof_authority": false,
+    "qualified": false,
+    "real_world_evaluation": false,
+    "records": [
+      {
+        "all_requested_native_checks_passed": false,
+        "all_required_families_supported": false,
+        "emitted_projections": 19,
+        "family_statuses": {
+          "authorization": "missing_context",
+          "concurrency": "missing_context",
+          "cryptographic_protocol": "missing_context",
+          "dcec": "supported",
+          "deontic": "supported",
+          "event_calculus": "supported",
+          "first_order": "supported",
+          "frame_logic": "supported",
+          "hyperproperty": "supported",
+          "program": "supported",
+          "propositional": "supported",
+          "refinement": "missing_context",
+          "separation_logic": "supported",
+          "tdfol": "supported",
+          "temporal": "supported",
+          "transition_system": "supported"
+        },
+        "lake_build_executed": true,
+        "lake_passed": 15,
+        "name": "all-native-16",
+        "report_sha256": "c6dfd3b697e189d22dbc9ca1f035d0cd281b2cc15e53b252abd1e8f6f0bae420",
+        "requested_families": [
+          "authorization",
+          "concurrency",
+          "cryptographic_protocol",
+          "dcec",
+          "deontic",
+          "event_calculus",
+          "first_order",
+          "frame_logic",
+          "hyperproperty",
+          "program",
+          "propositional",
+          "refinement",
+          "separation_logic",
+          "tdfol",
+          "temporal",
+          "transition_system"
+        ],
+        "sany_checks": 1,
+        "sany_passed": 1,
+        "unsupported_native_rows": [
+          {
+            "projection_id": "security_ir/supplemental/authorization/v2",
+            "reason": "no_semantics_preserving_Lean_emitter_for_projection:security_ir/supplemental/authorization/v2"
+          },
+          {
+            "projection_id": "security_ir/supplemental/concurrency/v2",
+            "reason": "no_semantics_preserving_Lean_emitter_for_projection:security_ir/supplemental/concurrency/v2"
+          },
+          {
+            "projection_id": "security_ir/supplemental/protocol/v2",
+            "reason": "no_semantics_preserving_Lean_emitter_for_projection:security_ir/supplemental/protocol/v2"
+          },
+          {
+            "projection_id": "security_ir/supplemental/refinement/v2",
+            "reason": "no_semantics_preserving_Lean_emitter_for_projection:security_ir/supplemental/refinement/v2"
+          }
+        ]
+      },
+      {
+        "all_requested_native_checks_passed": true,
+        "all_required_families_supported": true,
+        "emitted_projections": 15,
+        "family_statuses": {
+          "dcec": "supported",
+          "deontic": "supported",
+          "event_calculus": "supported",
+          "first_order": "supported",
+          "frame_logic": "supported",
+          "hyperproperty": "supported",
+          "program": "supported",
+          "propositional": "supported",
+          "separation_logic": "supported",
+          "tdfol": "supported",
+          "temporal": "supported",
+          "transition_system": "supported"
+        },
+        "lake_build_executed": true,
+        "lake_passed": 15,
+        "name": "supported-native-12",
+        "report_sha256": "009786ceb289537e5c9d0812c6c9f620359a6d1b1a2d16d17f22ac61c165ef3a",
+        "requested_families": [
+          "dcec",
+          "deontic",
+          "event_calculus",
+          "first_order",
+          "frame_logic",
+          "hyperproperty",
+          "program",
+          "propositional",
+          "separation_logic",
+          "tdfol",
+          "temporal",
+          "transition_system"
+        ],
+        "sany_checks": 1,
+        "sany_passed": 1,
+        "unsupported_native_rows": []
+      }
+    ],
+    "schema": "authored-security-context-native-checks/v1",
+    "scope": "native projection API fixtures; source-bound caller declarations, not learned output or source fidelity",
+    "source_fixture": "tests.fixtures.logic.source_reconstruction_v3",
+    "source_semantics_verified": false,
+    "source_sha256": "10b91f530e244b6adcb9e14999de4e00a53d2988335fb9da06bf6ae0a682c3c9",
+    "supplemental_models_inferred_from_code": false,
+    "tool_sha256": {
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+      "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java": "0cd543f9949605b5eccb1d2b98c2b8637bb0953f0b5087208393b4b7ded73c1a",
+      "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+    },
+    "training_executed": false
+  },
+  "checkpoint_comparisons": [
+    {
+      "all_requested_dependencies_supported": false,
+      "all_requested_native_checks_passed": false,
+      "auxiliary_families": [
+        {
+          "family_id": "program",
+          "status": "supported"
+        },
+        {
+          "family_id": "transition_system",
+          "status": "missing_context"
+        }
+      ],
+      "checked_families": 5,
+      "checkpoint": {
+        "bytes": 447990,
+        "sha256": "a3d8550144bbd10d7a2aebe8da034dbcb0114d3f698c7cdb1ea496a99d7a2308"
+      },
+      "context_scope": "candidate-only",
+      "domain_id": "intent_ir",
+      "full_tuning_rows": 120,
+      "native_complete_checks": 11,
+      "native_projection_count": 11,
+      "selected_families": 8,
+      "summary_path": "checkpoints-run-03/intent_ir/candidate-only/summary.json",
+      "supported_families": 5,
+      "tuning_rows": 1
+    },
+    {
+      "all_requested_dependencies_supported": false,
+      "all_requested_native_checks_passed": true,
+      "auxiliary_families": [
+        {
+          "family_id": "program",
+          "status": "supported"
+        },
+        {
+          "family_id": "transition_system",
+          "status": "missing_context"
+        }
+      ],
+      "checked_families": 8,
+      "checkpoint": {
+        "bytes": 447990,
+        "sha256": "a3d8550144bbd10d7a2aebe8da034dbcb0114d3f698c7cdb1ea496a99d7a2308"
+      },
+      "context_scope": "explicit-context",
+      "domain_id": "intent_ir",
+      "full_tuning_rows": 120,
+      "native_complete_checks": 19,
+      "native_projection_count": 19,
+      "selected_families": 8,
+      "summary_path": "checkpoints-run-03/intent_ir/explicit-context/summary.json",
+      "supported_families": 8,
+      "tuning_rows": 1
+    },
+    {
+      "all_requested_dependencies_supported": false,
+      "all_requested_native_checks_passed": false,
+      "auxiliary_families": [],
+      "checked_families": 1,
+      "checkpoint": {
+        "bytes": 493355,
+        "sha256": "2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5"
+      },
+      "context_scope": "candidate-only",
+      "domain_id": "security_ir",
+      "full_tuning_rows": 120,
+      "native_complete_checks": null,
+      "native_projection_count": null,
+      "selected_families": 9,
+      "summary_path": "checkpoints-run-03/security_ir/candidate-only/summary.json",
+      "supported_families": 1,
+      "tuning_rows": 1
+    },
+    {
+      "all_requested_dependencies_supported": true,
+      "all_requested_native_checks_passed": true,
+      "auxiliary_families": [],
+      "checked_families": 9,
+      "checkpoint": {
+        "bytes": 493355,
+        "sha256": "2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5"
+      },
+      "context_scope": "explicit-context",
+      "domain_id": "security_ir",
+      "full_tuning_rows": 120,
+      "native_complete_checks": 9,
+      "native_projection_count": 9,
+      "selected_families": 9,
+      "summary_path": "checkpoints-run-03/security_ir/explicit-context/summary.json",
+      "supported_families": 9,
+      "tuning_rows": 1
+    },
+    {
+      "all_requested_dependencies_supported": false,
+      "all_requested_native_checks_passed": false,
+      "auxiliary_families": [],
+      "checked_families": 1,
+      "checkpoint": {
+        "bytes": 383180,
+        "sha256": "94d535f43fde2c95be0ad794faad85f3f7d4625a05066e244b61cd9ff66d304a"
+      },
+      "context_scope": "candidate-only",
+      "domain_id": "ui_ux_ir",
+      "full_tuning_rows": 120,
+      "native_complete_checks": 1,
+      "native_projection_count": 1,
+      "selected_families": 8,
+      "summary_path": "checkpoints-run-03/ui_ux_ir/candidate-only/summary.json",
+      "supported_families": 1,
+      "tuning_rows": 1
+    },
+    {
+      "all_requested_dependencies_supported": true,
+      "all_requested_native_checks_passed": true,
+      "auxiliary_families": [],
+      "checked_families": 8,
+      "checkpoint": {
+        "bytes": 383180,
+        "sha256": "94d535f43fde2c95be0ad794faad85f3f7d4625a05066e244b61cd9ff66d304a"
+      },
+      "context_scope": "explicit-context",
+      "domain_id": "ui_ux_ir",
+      "full_tuning_rows": 120,
+      "native_complete_checks": 9,
+      "native_projection_count": 9,
+      "selected_families": 8,
+      "summary_path": "checkpoints-run-03/ui_ux_ir/explicit-context/summary.json",
+      "supported_families": 8,
+      "tuning_rows": 1
+    },
+    {
+      "all_requested_dependencies_supported": false,
+      "all_requested_native_checks_passed": false,
+      "auxiliary_families": [],
+      "checked_families": 1,
+      "checkpoint": {
+        "bytes": 447408,
+        "sha256": "dc02475b033e1e849e880e3c3cb30e2f2a432e5e54022296e571731d16139543"
+      },
+      "context_scope": "candidate-only",
+      "domain_id": "legal_ir",
+      "full_tuning_rows": 120,
+      "native_complete_checks": 1,
+      "native_projection_count": 1,
+      "selected_families": 8,
+      "summary_path": "checkpoints-run-03/legal_ir/candidate-only/summary.json",
+      "supported_families": 1,
+      "tuning_rows": 1
+    },
+    {
+      "all_requested_dependencies_supported": true,
+      "all_requested_native_checks_passed": true,
+      "auxiliary_families": [],
+      "checked_families": 8,
+      "checkpoint": {
+        "bytes": 447408,
+        "sha256": "dc02475b033e1e849e880e3c3cb30e2f2a432e5e54022296e571731d16139543"
+      },
+      "context_scope": "explicit-context",
+      "domain_id": "legal_ir",
+      "full_tuning_rows": 120,
+      "native_complete_checks": 9,
+      "native_projection_count": 9,
+      "selected_families": 8,
+      "summary_path": "checkpoints-run-03/legal_ir/explicit-context/summary.json",
+      "supported_families": 8,
+      "tuning_rows": 1
+    }
+  ],
+  "code_commit": "34352be1fec864758db6f49dfcd5c98e30b8d970",
+  "evidence_archive": {
+    "bytes": 2069749,
+    "path": "evidence.tar.gz",
+    "sha256": "d92176083295cee5b7f5b2ba8103d0be5ba88d717f472cc062047640acf96d77"
+  },
+  "files": [
+    {
+      "bytes": 8185,
+      "path": "checkpoints-run-03/intent_ir/candidate-only/inference-inputs.json",
+      "sha256": "281a111d7c5d1e7b6f1d9b43fb7084ee5620d6aabe490c6c81cab36482d74945"
+    },
+    {
+      "bytes": 8705,
+      "path": "checkpoints-run-03/intent_ir/candidate-only/inference.json",
+      "sha256": "a6333ff02f144b7acd3e9d69b6364a4c6a4886d0b3a80e442402e99f75f8472c"
+    },
+    {
+      "bytes": 929,
+      "path": "checkpoints-run-03/intent_ir/candidate-only/job.json",
+      "sha256": "2f09dfadda0a9c1a37492b0db3ab52625dec53ad6e35af8312c49d6bdd64c622"
+    },
+    {
+      "bytes": 19993,
+      "path": "checkpoints-run-03/intent_ir/candidate-only/native-0/IntentIR.lean",
+      "sha256": "c424a319944752b20bf02d95ab4665923c86366b48c7fca935293c299d0871e0"
+    },
+    {
+      "bytes": 99360,
+      "path": "checkpoints-run-03/intent_ir/candidate-only/native-0/receipt.json",
+      "sha256": "8beae0127bfece8873190fdf7e567cad4b6f1e1911449a5bd3bd0de0bcded5bc"
+    },
+    {
+      "bytes": 353289,
+      "path": "checkpoints-run-03/intent_ir/candidate-only/reports/d061b53c3c11a9f56c3325f41d4257792601244408ac7af6202ca442eeaa32c5.json",
+      "sha256": "544327d9e68c53e130a18e32342998b6b865bf2aa6a3dfdfeadf7e0669b70ce1"
+    },
+    {
+      "bytes": 2296,
+      "path": "checkpoints-run-03/intent_ir/candidate-only/summary.json",
+      "sha256": "1a19119a8d149e82444c30e11c53c1e368c82cc49f56d8e72ad9f40d4be39d29"
+    },
+    {
+      "bytes": 1395,
+      "path": "checkpoints-run-03/intent_ir/declared-context.json",
+      "sha256": "83f13e10e89aef4acfec2fae41daf4f4671ed72da2cda10a9410c45b3fd15c25"
+    },
+    {
+      "bytes": 1395,
+      "path": "checkpoints-run-03/intent_ir/explicit-context/contexts.json",
+      "sha256": "83f13e10e89aef4acfec2fae41daf4f4671ed72da2cda10a9410c45b3fd15c25"
+    },
+    {
+      "bytes": 8185,
+      "path": "checkpoints-run-03/intent_ir/explicit-context/inference-inputs.json",
+      "sha256": "281a111d7c5d1e7b6f1d9b43fb7084ee5620d6aabe490c6c81cab36482d74945"
+    },
+    {
+      "bytes": 8705,
+      "path": "checkpoints-run-03/intent_ir/explicit-context/inference.json",
+      "sha256": "a6333ff02f144b7acd3e9d69b6364a4c6a4886d0b3a80e442402e99f75f8472c"
+    },
+    {
+      "bytes": 1015,
+      "path": "checkpoints-run-03/intent_ir/explicit-context/job.json",
+      "sha256": "7c4dd34f8882c94610f343a385824500b7850da5334729eb3392f6ae3c10cbbf"
+    },
+    {
+      "bytes": 21875,
+      "path": "checkpoints-run-03/intent_ir/explicit-context/native-0/IntentIR.lean",
+      "sha256": "0fe4d14ab6dd19f563ca96359abef4971bebd89620ca9c0de899d6c685d99684"
+    },
+    {
+      "bytes": 111074,
+      "path": "checkpoints-run-03/intent_ir/explicit-context/native-0/receipt.json",
+      "sha256": "ce3a4f023196fcd0b6e379fcde73a17f4a5ecf62144f9f3519914ef41aa73f16"
+    },
+    {
+      "bytes": 429817,
+      "path": "checkpoints-run-03/intent_ir/explicit-context/reports/e8dddac0447173cf9e484369a99fcb495d1fbf4b90d4b1c28e0288e47878f9e4.json",
+      "sha256": "a0887fa943f2b943c9052a9ae945e1ddfa06d017e6c3b23e90f472d54a3b5218"
+    },
+    {
+      "bytes": 2381,
+      "path": "checkpoints-run-03/intent_ir/explicit-context/summary.json",
+      "sha256": "dd59dc8c3e05acee5be46a8418236f401cf9d9a39b9930e18b5308f572bda290"
+    },
+    {
+      "bytes": 8160,
+      "path": "checkpoints-run-03/legal_ir/candidate-only/inference-inputs.json",
+      "sha256": "bb01d2ff18442e9228df29992fe08702e64ea26bdbabb92aaee692c6f45fb749"
+    },
+    {
+      "bytes": 8711,
+      "path": "checkpoints-run-03/legal_ir/candidate-only/inference.json",
+      "sha256": "1f92568a4f10f499e7fce9b53548750f6df6e4d3717f0eff21b354892c6f8ed7"
+    },
+    {
+      "bytes": 927,
+      "path": "checkpoints-run-03/legal_ir/candidate-only/job.json",
+      "sha256": "7e52f7762cd77cee854b4a35014a17f89736257f40a591d30333098ed3e73b9e"
+    },
+    {
+      "bytes": 1566,
+      "path": "checkpoints-run-03/legal_ir/candidate-only/native-0/LegalIR.lean",
+      "sha256": "269615c5ba1eb38c1f7c1b3d2a7daccddab1872e9b4e2b393a152a8fb29e0b6a"
+    },
+    {
+      "bytes": 69778,
+      "path": "checkpoints-run-03/legal_ir/candidate-only/native-0/receipt.json",
+      "sha256": "cfbc30f79830afb3f8b152f8910da39e283c07b5d825cd4a1e196b79929a4efa"
+    },
+    {
+      "bytes": 170432,
+      "path": "checkpoints-run-03/legal_ir/candidate-only/reports/bb761059c0fc3caeac3d51a1f267c6821a252121efcde16acd5f5777711fff62.json",
+      "sha256": "3764eadc3a97380f6d6c372f933128f4d80fa89ab814d3408458466410b9b0e7"
+    },
+    {
+      "bytes": 2293,
+      "path": "checkpoints-run-03/legal_ir/candidate-only/summary.json",
+      "sha256": "d8880e0dfbcfcd30299eea9d8270030e9e1dbd1c7ce1d005e503868f244271cd"
+    },
+    {
+      "bytes": 1393,
+      "path": "checkpoints-run-03/legal_ir/declared-context.json",
+      "sha256": "e4d6b85d6f99b23c6d7ee227043da1ef879ae2110bdeeeb9c1ffdbca99d5e6df"
+    },
+    {
+      "bytes": 1393,
+      "path": "checkpoints-run-03/legal_ir/explicit-context/contexts.json",
+      "sha256": "e4d6b85d6f99b23c6d7ee227043da1ef879ae2110bdeeeb9c1ffdbca99d5e6df"
+    },
+    {
+      "bytes": 8160,
+      "path": "checkpoints-run-03/legal_ir/explicit-context/inference-inputs.json",
+      "sha256": "bb01d2ff18442e9228df29992fe08702e64ea26bdbabb92aaee692c6f45fb749"
+    },
+    {
+      "bytes": 8711,
+      "path": "checkpoints-run-03/legal_ir/explicit-context/inference.json",
+      "sha256": "1f92568a4f10f499e7fce9b53548750f6df6e4d3717f0eff21b354892c6f8ed7"
+    },
+    {
+      "bytes": 1013,
+      "path": "checkpoints-run-03/legal_ir/explicit-context/job.json",
+      "sha256": "39dc490938506baaf195a523ded8b0e573ea5336b785c1fec91bdd64568f9dbe"
+    },
+    {
+      "bytes": 3432,
+      "path": "checkpoints-run-03/legal_ir/explicit-context/native-0/LegalIR.lean",
+      "sha256": "db306680ab616631d9988ded863967fb7b1219e270310059617e82340cb43051"
+    },
+    {
+      "bytes": 81425,
+      "path": "checkpoints-run-03/legal_ir/explicit-context/native-0/receipt.json",
+      "sha256": "66e0d73e2dc57a5ce534cbdf23e9563b26713ca827217dda9cb9219fbdb8129d"
+    },
+    {
+      "bytes": 251044,
+      "path": "checkpoints-run-03/legal_ir/explicit-context/reports/e4d940e600d768ca59a02f76bef190eeb62e113ecf133a13ed603c0d578f6257.json",
+      "sha256": "118bcee86364ec6b469c5915647e5430a7e791987e84a9e859a0d07968b18e70"
+    },
+    {
+      "bytes": 2376,
+      "path": "checkpoints-run-03/legal_ir/explicit-context/summary.json",
+      "sha256": "bf8eb8f909b17fbc067eb7e001d4cc9331f38c67323f53ae19cf61f195be1cc3"
+    },
+    {
+      "bytes": 8905,
+      "path": "checkpoints-run-03/results.json",
+      "sha256": "4919218ecb987ef09f5d9582ab0b3b98817eac7a9b2e02367a37df150b5510d6"
+    },
+    {
+      "bytes": 8269,
+      "path": "checkpoints-run-03/security_ir/candidate-only/inference-inputs.json",
+      "sha256": "1b78a97a9914f10b355abb891ce909ec30a31bb5d462bdbafd1c7b34c96ba805"
+    },
+    {
+      "bytes": 8868,
+      "path": "checkpoints-run-03/security_ir/candidate-only/inference.json",
+      "sha256": "a10ebc8fe6b288d48d6de3d2d037d3342484b72d37cb8f207c72e866b8a865b2"
+    },
+    {
+      "bytes": 943,
+      "path": "checkpoints-run-03/security_ir/candidate-only/job.json",
+      "sha256": "8638f2f200d87db17c4671af035b7adee14d9d5583bb5f829c50122987f3ab58"
+    },
+    {
+      "bytes": 6719,
+      "path": "checkpoints-run-03/security_ir/candidate-only/native-0/SecuritySourcePrograms.lean",
+      "sha256": "14289b6a4053c3ccd4a33be1552508d77b2fde3278204e2d220a413256204a95"
+    },
+    {
+      "bytes": 38992,
+      "path": "checkpoints-run-03/security_ir/candidate-only/native-0/receipt.json",
+      "sha256": "62bd04b3c8ed12a11fbf97b0e8988b39317296b42a7a90dc617ef964d989a6cd"
+    },
+    {
+      "bytes": 53672,
+      "path": "checkpoints-run-03/security_ir/candidate-only/reports/8996faa1673a46a78b3292337ddda1c1771a0f8e1780c5ab86e095a3c53054fd.json",
+      "sha256": "25c401c1184a6845f148a3fd00a7f56ed5a0952629feefa4151b2d1faac7cefb"
+    },
+    {
+      "bytes": 2384,
+      "path": "checkpoints-run-03/security_ir/candidate-only/summary.json",
+      "sha256": "8fa4deef5629e270e0fa99bedd54462a822da72e7cc6f90acc83d085fbf34304"
+    },
+    {
+      "bytes": 2075,
+      "path": "checkpoints-run-03/security_ir/declared-context.json",
+      "sha256": "1737bd82fcc2955520900026e80d588bb879f9dd4f2bcaa118bd010e563c5f3b"
+    },
+    {
+      "bytes": 2075,
+      "path": "checkpoints-run-03/security_ir/explicit-context/contexts.json",
+      "sha256": "1737bd82fcc2955520900026e80d588bb879f9dd4f2bcaa118bd010e563c5f3b"
+    },
+    {
+      "bytes": 8269,
+      "path": "checkpoints-run-03/security_ir/explicit-context/inference-inputs.json",
+      "sha256": "1b78a97a9914f10b355abb891ce909ec30a31bb5d462bdbafd1c7b34c96ba805"
+    },
+    {
+      "bytes": 8868,
+      "path": "checkpoints-run-03/security_ir/explicit-context/inference.json",
+      "sha256": "a10ebc8fe6b288d48d6de3d2d037d3342484b72d37cb8f207c72e866b8a865b2"
+    },
+    {
+      "bytes": 1029,
+      "path": "checkpoints-run-03/security_ir/explicit-context/job.json",
+      "sha256": "46c7b1b8db429444fffadd4afef92b8d686f8b4afbd53811bd6dad17b49222f5"
+    },
+    {
+      "bytes": 21850,
+      "path": "checkpoints-run-03/security_ir/explicit-context/native-0/SecurityIR.lean",
+      "sha256": "684bdef1a45d50499f1ceb7d1ad8b7a2fa9f6edd821fa129d00ff74a78bc35d5"
+    },
+    {
+      "bytes": 89657,
+      "path": "checkpoints-run-03/security_ir/explicit-context/native-0/receipt.json",
+      "sha256": "703d7961da38c6e1775e8afa4ea84a1d7ebd5aeaf8810ce1ae1ccb2c703881dc"
+    },
+    {
+      "bytes": 252938,
+      "path": "checkpoints-run-03/security_ir/explicit-context/reports/3200ce2f9ba289b5948e97e3d029c749b610054ff94b222c0572a69de90a914b.json",
+      "sha256": "1b8c6773103021ac739c05a522ae93f66556b3cd37a2d80506fd6311d53d93a3"
+    },
+    {
+      "bytes": 2466,
+      "path": "checkpoints-run-03/security_ir/explicit-context/summary.json",
+      "sha256": "dd64b3e4490ed91e7e8e20885ef7ee60a9a58f8f6f3f06faf1dfe6465baa285a"
+    },
+    {
+      "bytes": 8218,
+      "path": "checkpoints-run-03/ui_ux_ir/candidate-only/inference-inputs.json",
+      "sha256": "1397997691c09f148f712019a43b787f065f202a483a8bb79dbc73a799eee0f6"
+    },
+    {
+      "bytes": 8698,
+      "path": "checkpoints-run-03/ui_ux_ir/candidate-only/inference.json",
+      "sha256": "72f2e3524411f2427303da2b34d044b9bf0cfeeac53acc90bbb5941659df1264"
+    },
+    {
+      "bytes": 927,
+      "path": "checkpoints-run-03/ui_ux_ir/candidate-only/job.json",
+      "sha256": "8566fadcecf7f22fa805090a19e98cdebed231d64b6d61b1285e405b95110289"
+    },
+    {
+      "bytes": 1516,
+      "path": "checkpoints-run-03/ui_ux_ir/candidate-only/native-0/UIUXIR.lean",
+      "sha256": "5300a936a970cf46764725891d3dc015352909dfa307973ec319701fb4d80d07"
+    },
+    {
+      "bytes": 51626,
+      "path": "checkpoints-run-03/ui_ux_ir/candidate-only/native-0/receipt.json",
+      "sha256": "6688ff830f46b7016ee621ebaccedb97fa685ec14bb4ac3e5213c76de647208e"
+    },
+    {
+      "bytes": 160773,
+      "path": "checkpoints-run-03/ui_ux_ir/candidate-only/reports/68bf043e3a856bc57a8662de5d686547f3376994ca9423502b31f1aa7fe493ba.json",
+      "sha256": "131b5af0faf52c5495140690f7b832922219e572c3117343828c6f01f3573e91"
+    },
+    {
+      "bytes": 2292,
+      "path": "checkpoints-run-03/ui_ux_ir/candidate-only/summary.json",
+      "sha256": "67763e7ec7a4714869ec372088504841b52370f6e4381831e00cb86ac5051a39"
+    },
+    {
+      "bytes": 1393,
+      "path": "checkpoints-run-03/ui_ux_ir/declared-context.json",
+      "sha256": "89d9163311532fcc7c6bf7d6d2eb03a5085a905bce7e14369e0381d4be1f60b9"
+    },
+    {
+      "bytes": 1393,
+      "path": "checkpoints-run-03/ui_ux_ir/explicit-context/contexts.json",
+      "sha256": "89d9163311532fcc7c6bf7d6d2eb03a5085a905bce7e14369e0381d4be1f60b9"
+    },
+    {
+      "bytes": 8218,
+      "path": "checkpoints-run-03/ui_ux_ir/explicit-context/inference-inputs.json",
+      "sha256": "1397997691c09f148f712019a43b787f065f202a483a8bb79dbc73a799eee0f6"
+    },
+    {
+      "bytes": 8698,
+      "path": "checkpoints-run-03/ui_ux_ir/explicit-context/inference.json",
+      "sha256": "72f2e3524411f2427303da2b34d044b9bf0cfeeac53acc90bbb5941659df1264"
+    },
+    {
+      "bytes": 1013,
+      "path": "checkpoints-run-03/ui_ux_ir/explicit-context/job.json",
+      "sha256": "5c27768ef4859cd9a28725cfc2ea812f653b035ef3be5fb07987a245f3542cdb"
+    },
+    {
+      "bytes": 3382,
+      "path": "checkpoints-run-03/ui_ux_ir/explicit-context/native-0/UIUXIR.lean",
+      "sha256": "e6e8ee5ce0ee9aa881e9ca4ae48eb72b687a636ea923ae714b0610fa5d81fb0c"
+    },
+    {
+      "bytes": 63277,
+      "path": "checkpoints-run-03/ui_ux_ir/explicit-context/native-0/receipt.json",
+      "sha256": "8befc1e39280d9f9040a95a7502daa2e8c0ff1b3b3ea00bc7861912cdd8a2d75"
+    },
+    {
+      "bytes": 240810,
+      "path": "checkpoints-run-03/ui_ux_ir/explicit-context/reports/3f24e6a32f967e20983f19035686a80a525f8efb12fda9beef1ce79cfd0ae943.json",
+      "sha256": "1ad10a238a732ec7a31417375b5d5b4e49b62cfd4ac289ad717a672fc862f459"
+    },
+    {
+      "bytes": 2376,
+      "path": "checkpoints-run-03/ui_ux_ir/explicit-context/summary.json",
+      "sha256": "1a7701ba7e76f96ce88202485636f33e3d54c714473ec7a1a433de3bf114424b"
+    },
+    {
+      "bytes": 56721,
+      "path": "family-catalog.json",
+      "sha256": "070137fb5ce34f7edd2fb439602202db37b4ed2ad173caf91770d9b599fe4cc8"
+    },
+    {
+      "bytes": 5163,
+      "path": "intent-ui-authored/run-04/intent-false-precondition-diagnostic/inputs.json",
+      "sha256": "d8b24b2f5b82bdf86ed2db63828de489cf210384234dc8d9f20413317c47e631"
+    },
+    {
+      "bytes": 23915,
+      "path": "intent-ui-authored/run-04/intent-false-precondition-diagnostic/native-build/IntentIR.lean",
+      "sha256": "9682f976475e6cf1b9cf336a26da747388a9b62d16f055ad628d1a34e2b950c9"
+    },
+    {
+      "bytes": 131374,
+      "path": "intent-ui-authored/run-04/intent-false-precondition-diagnostic/native-build/receipt.json",
+      "sha256": "df3317dd36e0ef743a84808c7054238d0405ad67d18ef2830c84d22da9bc777e"
+    },
+    {
+      "bytes": 899769,
+      "path": "intent-ui-authored/run-04/intent-false-precondition-diagnostic/prepared.json",
+      "sha256": "96078f0a6d6fe2ccb2a53572862fc8f3d31669290def8bfa4566889ad0f01054"
+    },
+    {
+      "bytes": 1006655,
+      "path": "intent-ui-authored/run-04/intent-false-precondition-diagnostic/result.json",
+      "sha256": "f7cc8c7b37f991d8eb158a5f993e5059486b2f45fd3abc2cd3e7ed7acbe37675"
+    },
+    {
+      "bytes": 2058,
+      "path": "intent-ui-authored/run-04/intent-false-precondition-diagnostic/summary.json",
+      "sha256": "f5e1f377752b3ee194f024b800377c71fe4d14b809a1b21c7623be60c5ef99e2"
+    },
+    {
+      "bytes": 5134,
+      "path": "intent-ui-authored/run-04/intent-guarded-maximal/inputs.json",
+      "sha256": "13d6940695fd79d454c091190e6054cca4125627b8d3ab5592bd4193ed3147e0"
+    },
+    {
+      "bytes": 52535,
+      "path": "intent-ui-authored/run-04/intent-guarded-maximal/native-build/IntentIR.lean",
+      "sha256": "2345e99073a69b12052f16e441be98f6f5d8c5789830985755799052a5bf3f33"
+    },
+    {
+      "bytes": 182052,
+      "path": "intent-ui-authored/run-04/intent-guarded-maximal/native-build/receipt.json",
+      "sha256": "bbbc90185bfb5dfcfb3a18206872f47ac445e91fe7c786ebfcd9d438605596fb"
+    },
+    {
+      "bytes": 888645,
+      "path": "intent-ui-authored/run-04/intent-guarded-maximal/prepared.json",
+      "sha256": "c039e7d6a341def01951668d86aac09472718817d79a1d9685759bcc5dacf751"
+    },
+    {
+      "bytes": 1016578,
+      "path": "intent-ui-authored/run-04/intent-guarded-maximal/result.json",
+      "sha256": "fbae7c313c6fc6b01584a02a1b6e94787463b6654ef721cd249e82569e0dcf48"
+    },
+    {
+      "bytes": 3834,
+      "path": "intent-ui-authored/run-04/intent-guarded-maximal/summary.json",
+      "sha256": "bf7961d60157138f66de2d2495e298b7562dc5125fb52ac53295408d897b7736"
+    },
+    {
+      "bytes": 5282,
+      "path": "intent-ui-authored/run-04/intent-guarded-scoped/inputs.json",
+      "sha256": "df34d41670a3862f291f54034dc31f80f99f1668f56b9043f428cf57c21f10a1"
+    },
+    {
+      "bytes": 49728,
+      "path": "intent-ui-authored/run-04/intent-guarded-scoped/native-build/IntentIR.lean",
+      "sha256": "6dcf19ee33f1ac4856ff668dcc0e84b027304bb84cedcde98c23d3f682b87357"
+    },
+    {
+      "bytes": 172925,
+      "path": "intent-ui-authored/run-04/intent-guarded-scoped/native-build/receipt.json",
+      "sha256": "7f2187a06d8f8fcface3113501cfea983d7653c7405e8364513d371112e73d7d"
+    },
+    {
+      "bytes": 837973,
+      "path": "intent-ui-authored/run-04/intent-guarded-scoped/prepared.json",
+      "sha256": "672be019509122171ca3922bfe2381aa1f6dab79de7fb4d78f71da2cfcf405be"
+    },
+    {
+      "bytes": 959550,
+      "path": "intent-ui-authored/run-04/intent-guarded-scoped/result.json",
+      "sha256": "882a0ce2ef55db1b58e477dc2e20f0294003460523b70fa01962b5a7c5aaed73"
+    },
+    {
+      "bytes": 3746,
+      "path": "intent-ui-authored/run-04/intent-guarded-scoped/summary.json",
+      "sha256": "8d90530334c96efcc87c158674087769f7ed76e650d8bce0eaadf0f79c9bfd10"
+    },
+    {
+      "bytes": 18187,
+      "path": "intent-ui-authored/run-04/summary.json",
+      "sha256": "d80ad4c4d94d6a2d5193105919bd20e01fe3245761c0066aa1dbd653cf31b14e"
+    },
+    {
+      "bytes": 6464,
+      "path": "intent-ui-authored/run-04/ui-confirmation-maximal/inputs.json",
+      "sha256": "a4f0dfb7e1c722d68e5e8d07b800f38963e21a3ff6c8b81a19d1db0fcfbf6bfa"
+    },
+    {
+      "bytes": 14913,
+      "path": "intent-ui-authored/run-04/ui-confirmation-maximal/native-build/UIUXIR.lean",
+      "sha256": "770cbdd76d7ed312524072f64cdf9f6459eedd348e83ff947835ee0de391f3fa"
+    },
+    {
+      "bytes": 85953,
+      "path": "intent-ui-authored/run-04/ui-confirmation-maximal/native-build/receipt.json",
+      "sha256": "2dddf6b69adbbe8faf2358ebbb61867ccd8fbaec09025bf7b569f2ff8c0b0016"
+    },
+    {
+      "bytes": 355958,
+      "path": "intent-ui-authored/run-04/ui-confirmation-maximal/prepared.json",
+      "sha256": "59837eb889620ede7126af923eb14091b5b31c6b9741bfc7d6e3aacd94f1f237"
+    },
+    {
+      "bytes": 426770,
+      "path": "intent-ui-authored/run-04/ui-confirmation-maximal/result.json",
+      "sha256": "94e6d79f9c0935f38601d1a44e9ab68a9ef4570ca452601e690042165c4b9250"
+    },
+    {
+      "bytes": 3763,
+      "path": "intent-ui-authored/run-04/ui-confirmation-maximal/summary.json",
+      "sha256": "888926c96d733c4eee2736360656e218c34d70daf959c887c346d0dc951379ca"
+    },
+    {
+      "bytes": 6577,
+      "path": "intent-ui-authored/run-04/ui-confirmation-scoped/inputs.json",
+      "sha256": "04888f75121c179e3827770c1a05ae48db273a19ba44f9992a623cf8f83f7b4a"
+    },
+    {
+      "bytes": 14913,
+      "path": "intent-ui-authored/run-04/ui-confirmation-scoped/native-build/UIUXIR.lean",
+      "sha256": "770cbdd76d7ed312524072f64cdf9f6459eedd348e83ff947835ee0de391f3fa"
+    },
+    {
+      "bytes": 85903,
+      "path": "intent-ui-authored/run-04/ui-confirmation-scoped/native-build/receipt.json",
+      "sha256": "9fcdb0491251002ab9ae4435e7167457141f4f3bfa2f5e05c417ed90add1229a"
+    },
+    {
+      "bytes": 354861,
+      "path": "intent-ui-authored/run-04/ui-confirmation-scoped/prepared.json",
+      "sha256": "74baf781408a3a9ca6d786f28eb836576bde2f9f3a5bfb82e7fceba3f693e549"
+    },
+    {
+      "bytes": 425564,
+      "path": "intent-ui-authored/run-04/ui-confirmation-scoped/result.json",
+      "sha256": "80c023d23f820269ade7693d1435c26ba3cc24226a4c0712e1ebc6186f9ca738"
+    },
+    {
+      "bytes": 3710,
+      "path": "intent-ui-authored/run-04/ui-confirmation-scoped/summary.json",
+      "sha256": "1b8b640f39b2f0d615179d578d6f1ae7a13ca8cc1c5ebe8a33e6e52112410948"
+    },
+    {
+      "bytes": 8768,
+      "path": "intent-ui-authored/run_authored_checks.py",
+      "sha256": "234eb25fedfbff73c4e38ceba885d1b0d771aa99c8421b425130af38830bb56d"
+    },
+    {
+      "bytes": 3327,
+      "path": "publication/receipts.json",
+      "sha256": "717f94bffdc454d57e76b431a60fcc00ac0a2019120a322ed973232a7c87fe9c"
+    },
+    {
+      "bytes": 5780,
+      "path": "publish_evidence.py",
+      "sha256": "6fcde2d8f7c84948a73a2287820acd89b1f64ef56e3f93e37b16776663093080"
+    },
+    {
+      "bytes": 3598,
+      "path": "run_checkpoint_checks.py",
+      "sha256": "13e4fd9feb64c81f34f9342b7832e63962455dfbcd66a0097ddfd7151fc29dd1"
+    },
+    {
+      "bytes": 6774,
+      "path": "security-authored/reproduce.py",
+      "sha256": "2a5f62f0686279b0b231399a28fa1c4f9bab2bf73092dfb9282347d280db5c5d"
+    },
+    {
+      "bytes": 30569,
+      "path": "security-authored/run-02/all-native-16/native/SecurityIR.lean",
+      "sha256": "49d234950a759915f36ae03521a026d17b8d361d30df17be0b8ea9086f43eb07"
+    },
+    {
+      "bytes": 112540,
+      "path": "security-authored/run-02/all-native-16/native/receipt.json",
+      "sha256": "7cac90660a846b7d5d94b710f41219edcd563e54d8470cf4990082101855b2a5"
+    },
+    {
+      "bytes": 573807,
+      "path": "security-authored/run-02/all-native-16/report.json",
+      "sha256": "ea53c24f1d4e438ef91d256e61bb834dbe265e884b8c6013134c4e59525801b9"
+    },
+    {
+      "bytes": 3720,
+      "path": "security-authored/run-02/audit.txt",
+      "sha256": "ada326a7f3d466717e0baf9919be04c50c7601edb9c4a54064d39ec8dce39e10"
+    },
+    {
+      "bytes": 31173,
+      "path": "security-authored/run-02/context.json",
+      "sha256": "665c03a6956573246d6bd993a7b39f57328146011d2f3794cff2e8a310148184"
+    },
+    {
+      "bytes": 731,
+      "path": "security-authored/run-02/pytest-projections-v2.log",
+      "sha256": "301169678c2e4b5171b9b56dfb1c0671e374b3b2e57df6285654ae2457917c38"
+    },
+    {
+      "bytes": 624,
+      "path": "security-authored/run-02/source-candidate.json",
+      "sha256": "064432d9f4772db465002f131a20e7a3ccae2a109820cf15b0da0915e24d92e9"
+    },
+    {
+      "bytes": 3832,
+      "path": "security-authored/run-02/summary.json",
+      "sha256": "13bb071912c11b91b4fd0773074f62374f05d9e905a04f0e7825b5b06890d2a3"
+    },
+    {
+      "bytes": 30563,
+      "path": "security-authored/run-02/supported-native-12/native/SecurityIR.lean",
+      "sha256": "92c553ac9fa30b057296c5a81050c786dd8526df485f6f113d562e827c2d30d7"
+    },
+    {
+      "bytes": 109181,
+      "path": "security-authored/run-02/supported-native-12/native/receipt.json",
+      "sha256": "d324f31f7b5ae8ff7c7ce0c0b88fd9a33f77f2ed74e231321f486671877f96a0"
+    },
+    {
+      "bytes": 367532,
+      "path": "security-authored/run-02/supported-native-12/report.json",
+      "sha256": "dadcdefbfe2c499c639d9c429dc85a9fc660e561ff74f1f4f1df0b828186f9ca"
+    },
+    {
+      "bytes": 877,
+      "path": "security-authored/run-02/validation.json",
+      "sha256": "500db0cf8caa711c05b8ce765c85e2d72462c0c7fc81959a84869b44b2c6e050"
+    }
+  ],
+  "formulas_inferred_by_model": false,
+  "new_holdout_evaluation": false,
+  "promotion_performed": false,
+  "proof_authority": false,
+  "qualified": false,
+  "schema": "distributed384-projection-context-development-summary/v1",
+  "scope": "bounded authored checkpoint tuning predictions and separately authored native context controls; not a natural-corpus benchmark",
+  "source_semantics_verified": false,
+  "tests": {
+    "deduplicated_passed": 696,
+    "deduplication": "The 11 earlier qualification cases in regressions are rerun within qualification_final; counted once.",
+    "paired_export_final": {
+      "passed": 36
+    },
+    "projections_final": {
+      "passed": 59
+    },
+    "qualification_final": {
+      "passed": 13
+    },
+    "regressions": {
+      "passed": 494,
+      "skipped": 3
+    },
+    "upstream_integration": {
+      "passed": 105
+    }
+  },
+  "training_executed": false,
+  "weights_changed": false
+}

@@ -1,0 +1,47 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 497 items
+
+tests/unit/logic/formalization/autoencoder/test_distributed_384_profiles.py . [  0%]
+..................................                                       [  7%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_numerics.py . [  7%]
+............................................sss                          [ 16%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_integrity.py . [ 16%]
+....................................                                     [ 24%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_runner.py . [ 24%]
+............                                                             [ 26%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_exchange.py . [ 26%]
+............................                                             [ 32%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_store.py . [ 32%]
+.............................                                            [ 38%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_projection_inputs.py . [ 38%]
+......................                                                   [ 43%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_legal_ui_inputs.py . [ 43%]
+.....................................                                    [ 50%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_codeunit_program_lean.py . [ 51%]
+.........                                                                [ 52%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_candidate_native_lake.py . [ 53%]
+......................                                                   [ 57%]
+tests/unit/logic/formalization/autoencoder/test_distributed_384_qualification.py . [ 57%]
+..........                                                               [ 59%]
+tests/unit/logic/formalization/autoencoder/test_structured_source_384.py . [ 59%]
+......................................                                   [ 67%]
+tests/unit/logic/formalization/autoencoder/test_source_program_lake_384.py . [ 67%]
+........                                                                 [ 69%]
+tests/unit/logic/formalization/autoencoder/test_family_training_v5.py .. [ 69%]
+................                                                         [ 73%]
+tests/unit/logic/formalization/autoencoder/test_family_training_v6.py .. [ 73%]
+...............                                                          [ 76%]
+tests/unit/logic/formalization/autoencoder/test_family_training_v7.py .. [ 76%]
+..........................................                               [ 85%]
+tests/unit/logic/formalization/autoencoder/test_context_declaration_bridge.py . [ 85%]
+.....................................                                    [ 92%]
+tests/unit/logic/formalization/autoencoder/test_native_intent_guarded_lean.py . [ 93%]
+..................................                                       [100%]
+
+================== 494 passed, 3 skipped in 214.40s (0:03:34) ==================

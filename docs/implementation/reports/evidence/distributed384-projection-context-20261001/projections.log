@@ -1,0 +1,11 @@
+Recorded tool-session pytest result (stdout tail; intermediate progress omitted).
+Working directory: /tmp/ir-release-datasets-20261001
+Command: IR384_TEST_LAKE_EXECUTABLE=/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake IR384_TEST_JAVA_EXECUTABLE=/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/advisors/temurin-jdk/17.0.20+8/jdk/bin/java IR384_TEST_TLA2TOOLS_JAR=/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar python -m pytest -q tests/unit/logic/formalization/autoencoder/test_distributed_384_projections_v2.py
+
+collected 59 items
+
+...               [100%]
+
+======================== 59 passed in 114.82s (0:01:54) ========================
+
+Process exit code: 0
