@@ -5,6 +5,10 @@ policies. It does not infer missing meanings from opaque prose. The default
 uninterpreted Legal/UI rows remain blocked, and neither supplied interpretations
 nor a successful library build establishes source fidelity or admission.
 
+For the source-level diagnosis of the three remaining default projections and
+the context-resolution implementation plan, see
+[Resolving missing context and semantics](projection_context_resolution.md).
+
 ## Entry points
 
 Use the following versioned modules together under `ipfs_datasets_py`:

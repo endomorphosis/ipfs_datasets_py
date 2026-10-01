@@ -1,0 +1,147 @@
+{
+  "schema": "projection-context-audit-results/v1",
+  "baseline_commit": "6bd6eaabd2d3dde46e664b7386efb134253eb928",
+  "scope": "read-only exact authored fixture diagnosis and finite illustrative countermodels; no automatic context resolution",
+  "diagnosis_report_sha256": "a0072a9b115dca0a7a4ff9143ccc352741811e0d3468f7a83900f1b089a3eab2",
+  "fresh_diagnostic_runs_match": true,
+  "counts": {
+    "Lake_executions": 0,
+    "SANY_executions": 0,
+    "projections": 27,
+    "semantic_blockers": 3,
+    "source_grouped_review_items": 2,
+    "sources": 2,
+    "supplied_formula_cases": 16,
+    "supported_preparations": 24
+  },
+  "test_results": {
+    "receipt": "projection-context-audit-tests-r2.xml",
+    "passed": 16,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "wall_seconds": 19.486
+  },
+  "counterexamples": {
+    "receipt": "counterexamples-r2/summary.json",
+    "actual_Lake_builds": 4,
+    "positive_libraries": 2,
+    "deliberately_false_claims_rejected": 2,
+    "claims_checked": {
+      "LegalIR": 9,
+      "UIUXIR": 6
+    },
+    "wall_seconds": 1.2951068668626249,
+    "toolchain": "leanprover/lean4:v4.30.0",
+    "tool_hashes": {
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lake": "8c987aee79f105bc2ff21772b958b219c8921a51b8ca2df8af410a2b17bd8701",
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.30.0/bin/lean": "e215cbe9eab0914b49761e9e486d388e2e701cf876d1079d1ba733c48edb2d7b"
+    },
+    "tool_hashes_unchanged": true,
+    "production_projection_validation": false,
+    "source_interpretation_selected": false
+  },
+  "root_causes": [
+    {
+      "source_id": "legal_ir:pair:0:2:0",
+      "domain_id": "legal_ir",
+      "source_digest": "2c5a192e2a7c47bc3a4c42ec3952a642f64a88152ef67fc76daa22b69d0736b7",
+      "semantic_blockers": {
+        "legal-ir/modal-family/deontic/v3": "native_projection_not_ready",
+        "legal-ir/modal-family/temporal/v3": "native_projection_not_ready"
+      },
+      "diagnosis": {
+        "automatic_resolution": "none_no_time_policy_inferred",
+        "classification": [
+          "uninterpreted_retained_qualifier",
+          "underspecified_authored_time_contract"
+        ],
+        "distinguishing_tests": [
+          "origin_0_vs_origin_5_can_change_a_deadline_for_the_same_event",
+          "event_at_exact_deadline_vs_one_tick_late",
+          "obligation_of_eventually_vs_eventually_of_obligation"
+        ],
+        "finding": "The duration literal survives in both formula partitions; its anchor and clock contract are not declared.",
+        "loss_observation": "qualifier_text_retained_not_dropped; bounded_operator_not_constructed",
+        "missing_semantic_slots": [
+          "deadline_origin_or_trigger",
+          "clock_domain_and_day_convention",
+          "interval_boundary_convention",
+          "deontic_and_temporal_scope_join"
+        ],
+        "needed_context": "For corpus rows retrieve exact parent/trigger/definition sources; this fixture has none.",
+        "resolution_owner": "fixture_author_and_legal_temporal_semantics_owner",
+        "resolution_requirements": [
+          "Retain the original unresolved fixture as a negative regression.",
+          "Author a separately identified complete trigger/clock/scope declaration without treating it as inferred source meaning.",
+          "Bind both partitions to one coherent source-bound qualifier interpretation; retain every original formula.",
+          "Replay all projections and run actual Lake with unchanged policy/floor requirements before strict training."
+        ],
+        "stage": "authored_typed_IR_to_native_temporal_deontic_interpretation"
+      }
+    },
+    {
+      "source_id": "ui_ux_ir:pair:0:2:0",
+      "domain_id": "ui_ux_ir",
+      "source_digest": "fced663ff33c1e6c10cce14232057a82a5f618b829464ae00703d95e5779d010",
+      "semantic_blockers": {
+        "ui_ux_ir:tdfol": "UI_before_requires_explicit_occurrence_and_precedence_semantics"
+      },
+      "diagnosis": {
+        "automatic_resolution": "none_no_token_policy_or_runtime_events_invented",
+        "classification": [
+          "flattened_occurrence_relation",
+          "missing_authored_confirmation_policy"
+        ],
+        "distinguishing_tests": [
+          "same_action_different_request",
+          "stale_confirmation",
+          "cancellation",
+          "reused_token",
+          "same_tick_different_sequence_order",
+          "activation_is_not_confirmation"
+        ],
+        "finding": "The binding supplies high-risk confirmation intent; flattened before strings do not specify occurrence correlation or policy scope. The synthetic activate event and pending-to-finished edge establish neither invocation nor completion.",
+        "loss_observation": "original_binding_retained_in_source; before_formula_does_not_encode_a_complete_occurrence_policy",
+        "missing_semantic_slots": [
+          "action_request_occurrence_correlation",
+          "confirmation_lifetime",
+          "event_order_and_clock",
+          "cancellation_and_reuse_policy",
+          "trace_origin_and_observation_scope"
+        ],
+        "needed_context": "Recover an existing source-bound policy/trace if supplied; do not fabricate confirmation events from activate.",
+        "policy_status": "occurrence_scope_and_lifecycle_not_declared",
+        "resolution_owner": "UI_binding_and_runtime_policy_owner",
+        "resolution_requirements": [
+          "Retain the original underspecified binding as a negative regression.",
+          "Supply separately versioned request/token policy inputs or implement another explicitly declared occurrence profile.",
+          "Keep policy interpretation, observed trace conformance, event authenticity and backend authorization separate.",
+          "A finite observed prefix is not a whole-workflow guarantee; an empty prefix is not successful execution.",
+          "Preserve all native binding fields and TDFOL formulas; replay every family then run actual Lake/SANY as required."
+        ],
+        "stage": "structured_UI_binding_to_TDFOL_precedence_interpretation",
+        "trace_join_status": "no_request_token_confirmation_trace_supplied; observed_compliance_not_evaluated"
+      }
+    }
+  ],
+  "next_implementation": [
+    "typed source/context bundle and review router",
+    "bounded governing-source hydration",
+    "single scoped Legal AST and derived projection mapping",
+    "versioned UI policy provider and separate redacted trace adapter",
+    "context-aware incremental target invalidation and holdout grouping"
+  ],
+  "not_implemented": [
+    "automatic corpus context resolution",
+    "UI policy inference",
+    "supervisor import of context review work",
+    "new production projection profile"
+  ],
+  "existing_training_gates_changed": false,
+  "model_weights_changed": false,
+  "source_semantics_verified": false,
+  "qualified": false,
+  "admitted": false,
+  "constitution_formalized": false
+}
