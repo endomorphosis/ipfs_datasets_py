@@ -1,0 +1,1372 @@
+[
+  {
+    "citation": "authored-probe:obligation",
+    "coverage": [
+      "deontic"
+    ],
+    "id": "obligation",
+    "section": "1",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The agency shall submit reports.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:prohibition",
+    "coverage": [
+      "deontic",
+      "negation"
+    ],
+    "id": "prohibition",
+    "section": "2",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The agency shall not disclose records.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:must_not",
+    "coverage": [
+      "deontic",
+      "negation"
+    ],
+    "id": "must_not",
+    "section": "3",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The officer must not alter the record.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:permission",
+    "coverage": [
+      "deontic"
+    ],
+    "id": "permission",
+    "section": "4",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The applicant may request review.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:may_not",
+    "coverage": [
+      "deontic",
+      "negation",
+      "numeric"
+    ],
+    "id": "may_not",
+    "section": "5",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The civil penalty may not exceed $100 per day.",
+    "title": "0"
+  },
+  {
+    "additional_references": [
+      {
+        "id": "pilot_cases.json:exception_with_window",
+        "reference_gold_ir": {
+          "rules": [
+            {
+              "action": "submit",
+              "actor": "company_a",
+              "conditions": [],
+              "exceptions": [
+                "emergency"
+              ],
+              "modality": "O",
+              "object": "backup_report",
+              "temporal": [
+                "within_10_days"
+              ]
+            }
+          ]
+        },
+        "source_ref": "tests/fixtures/semantic_roundtrip/pilot_cases.json"
+      }
+    ],
+    "citation": "authored-probe:deadline_exception",
+    "coverage": [
+      "deontic",
+      "temporal",
+      "exception"
+    ],
+    "id": "deadline_exception",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "submit",
+          "actor": "company_a",
+          "conditions": [],
+          "exceptions": [
+            "emergency"
+          ],
+          "modality": "O",
+          "object": "backup_report",
+          "temporal": [
+            "within_10_days"
+          ]
+        }
+      ]
+    },
+    "section": "6",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "Company A shall submit backup report within 10 days unless emergency.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:minimum_duration",
+    "coverage": [
+      "deontic",
+      "temporal",
+      "numeric"
+    ],
+    "id": "minimum_duration",
+    "section": "7",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The officer shall retain the file for at least 20 days.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:conditional",
+    "coverage": [
+      "conditional_normative",
+      "deontic",
+      "exception"
+    ],
+    "id": "conditional",
+    "section": "8",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "If the application is complete, the agency must issue written notice unless waived.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:deadline_by",
+    "coverage": [
+      "temporal",
+      "deontic",
+      "date"
+    ],
+    "id": "deadline_by",
+    "section": "9",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The Secretary shall provide notice by January 1, 2030.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:within_place",
+    "coverage": [
+      "deontic",
+      "non_temporal_within"
+    ],
+    "id": "within_place",
+    "section": "10",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The Secretary shall designate a team within the Department of Agriculture.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:by_actor",
+    "coverage": [
+      "deontic",
+      "non_temporal_by"
+    ],
+    "id": "by_actor",
+    "section": "11",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The Secretary shall provide notice by the Comptroller.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:calendar_may",
+    "coverage": [
+      "deontic",
+      "temporal",
+      "date",
+      "multi_clause"
+    ],
+    "id": "calendar_may",
+    "section": "12",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The Secretary shall make the payment after May 13, 2002, and a producer may request review.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:knowledge",
+    "coverage": [
+      "epistemic"
+    ],
+    "id": "knowledge",
+    "section": "13",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The officer knows that the permit is valid.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:knowledge_negation",
+    "coverage": [
+      "epistemic",
+      "negation"
+    ],
+    "id": "knowledge_negation",
+    "section": "14",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The officer does not know whether the permit is valid.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:belief",
+    "coverage": [
+      "doxastic"
+    ],
+    "id": "belief",
+    "section": "15",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The agency believes that the applicant is eligible.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:necessity",
+    "coverage": [
+      "alethic"
+    ],
+    "id": "necessity",
+    "section": "16",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "It is necessary that the filing is complete.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:possibility",
+    "coverage": [
+      "alethic"
+    ],
+    "id": "possibility",
+    "section": "17",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "It is possible that the permit is invalid.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:dynamic",
+    "coverage": [
+      "dynamic",
+      "temporal"
+    ],
+    "id": "dynamic",
+    "section": "18",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "After the hearing, the agency issues a final order.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:frame",
+    "coverage": [
+      "frame",
+      "definition"
+    ],
+    "id": "frame",
+    "section": "19",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The term vessel means a watercraft.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:hybrid",
+    "coverage": [
+      "hybrid",
+      "temporal"
+    ],
+    "id": "hybrid",
+    "section": "20",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "This section applies at the time of the hearing.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:universal",
+    "coverage": [
+      "deontic",
+      "quantification"
+    ],
+    "id": "universal",
+    "section": "21",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "Every applicant shall submit a signed form.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:existential",
+    "coverage": [
+      "deontic",
+      "quantification"
+    ],
+    "id": "existential",
+    "section": "22",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "There is an officer who may approve the request.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:conjunction",
+    "coverage": [
+      "deontic",
+      "conjunction"
+    ],
+    "id": "conjunction",
+    "section": "23",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The agency shall retain records and publish notices.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:disjunction",
+    "coverage": [
+      "deontic",
+      "disjunction"
+    ],
+    "id": "disjunction",
+    "section": "24",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The agency may publish notice or send written notice.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:unless_scope",
+    "coverage": [
+      "deontic",
+      "exception"
+    ],
+    "id": "unless_scope",
+    "section": "25",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "Unless the permit is revoked, the applicant may operate the vessel.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:except_scope",
+    "coverage": [
+      "deontic",
+      "exception",
+      "cross_reference"
+    ],
+    "id": "except_scope",
+    "section": "26",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "Except as provided in subsection (b), the Secretary shall issue a determination.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:condition_negation",
+    "coverage": [
+      "deontic",
+      "conditional_normative",
+      "negation"
+    ],
+    "id": "condition_negation",
+    "section": "27",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "If the application is not complete, the agency shall reject the application.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:upper_bound",
+    "coverage": [
+      "deontic",
+      "temporal",
+      "numeric"
+    ],
+    "id": "upper_bound",
+    "section": "28",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The officer shall retain the file for no more than 20 days.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:nonoperative",
+    "coverage": [
+      "nonoperative",
+      "title"
+    ],
+    "id": "nonoperative",
+    "section": "29",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "This chapter may be cited as the Public Records Act.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:constitution_negative",
+    "coverage": [
+      "constitution",
+      "authority",
+      "negative_admission_control"
+    ],
+    "id": "constitution_negative",
+    "section": "30",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "All legislative Powers herein granted shall be vested in a Congress of the United States, which shall consist of a Senate and House of Representatives.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:plain_fact",
+    "coverage": [
+      "propositional",
+      "frame"
+    ],
+    "id": "plain_fact",
+    "section": "31",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The courthouse is a public building.",
+    "title": "0"
+  },
+  {
+    "citation": "authored-probe:deadline_24",
+    "coverage": [
+      "deontic",
+      "temporal",
+      "numeric"
+    ],
+    "id": "deadline_24",
+    "section": "32",
+    "semantic_gold": false,
+    "source_kind": "authored_diagnostic_probe",
+    "text": "The officer shall notify the agency within 24 hours.",
+    "title": "0"
+  },
+  {
+    "citation": "8 U.S.C. 606",
+    "coverage": [
+      "historical_uscode_excerpt",
+      "long_context",
+      "editorial_or_multi_clause"
+    ],
+    "id": "uscode_8_606_todo_text",
+    "section": "606",
+    "semantic_gold": false,
+    "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+    "source_kind": "historical_repository_uscode_excerpt",
+    "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+    "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+    "source_symbol": "_USCODE_8_606_TODO_TEXT",
+    "text": "U.S.C. Title 8 - ALIENS AND NATIONALITY 8 U.S.C. United States Code, 2024 Edition Title 8 - ALIENS AND NATIONALITY CHAPTER 11 - NATIONALITY SUBCHAPTER II - NATIONALITY AT BIRTH Sec. 606 - Transferred From the U.S. Government Publishing Office, www.gpo.gov \u00a7606. Transferred Editorial Notes Codification Section transferred to section 1421l of Title 48, Territories and Insular Possessions. That section was later repealed. See section 1407 of this title.",
+    "text_sha256": "9828d116cfc0c592bf6c70103701e9fa2cb4de505025c1bc2c0e2ecaf670e5a5",
+    "title": "8"
+  },
+  {
+    "citation": "46 U.S.C. 115",
+    "coverage": [
+      "historical_uscode_excerpt",
+      "long_context",
+      "editorial_or_multi_clause"
+    ],
+    "id": "uscode_46_115_todo_text",
+    "section": "115",
+    "semantic_gold": false,
+    "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+    "source_kind": "historical_repository_uscode_excerpt",
+    "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+    "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+    "source_symbol": "_USCODE_46_115_TODO_TEXT",
+    "text": "\u00a7115. Vessel In this title, the term \"vessel\" has the meaning given that term in section 3 of title 1. (Pub. L. 109\u2013304, \u00a74, Oct. 6, 2006, 120 Stat. 1487.) Historical and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 115 46:2101(45).",
+    "text_sha256": "ede4e6bc9000aa25484a604d7cf4b8ca0b8596bce49125677da3304cddbc7f7b",
+    "title": "46"
+  },
+  {
+    "citation": "36 U.S.C. 110105",
+    "coverage": [
+      "historical_uscode_excerpt",
+      "long_context",
+      "editorial_or_multi_clause"
+    ],
+    "id": "uscode_36_110105_todo_text",
+    "section": "110105",
+    "semantic_gold": false,
+    "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+    "source_kind": "historical_repository_uscode_excerpt",
+    "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+    "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+    "source_symbol": "_USCODE_36_110105_TODO_TEXT",
+    "text": "U.S.C. Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, CEREMONIES, AND ORGANIZATIONS 36 U.S.C. United States Code, 2024 Edition Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, CEREMONIES, AND ORGANIZATIONS Subtitle II - Patriotic and National Organizations Part B - Organizations CHAPTER 1101 - JEWISH WAR VETERANS OF THE UNITED STATES OF AMERICA, INCORPORATED Sec. 110105 - Governing body From the U.S. Government Publishing Office, www.gpo.gov \u00a7110105. Governing body (a) Board of Directors .\u2014The board of directors and the responsibilities of the board are as provided in the articles of incorporation. (b) Officers .\u2014The officers and the election of officers are as provided in the articles of incorporation. (Pub. L. 105\u2013225, Aug. 12, 1998, 112 Stat. 1367.) Historical and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 110105(a) 36:2706. Aug. 21, 1984, Pub. L. 98\u2013391, \u00a7\u00a76, 7, 98 Stat. 1359. 110105(b) 36:2707.",
+    "text_sha256": "d682e8bf23978c71b81ee55dd1da4311948992e1e957929b7580ac65d1d4b49a",
+    "title": "36"
+  },
+  {
+    "citation": "25 U.S.C. 450",
+    "coverage": [
+      "historical_uscode_excerpt",
+      "long_context",
+      "editorial_or_multi_clause"
+    ],
+    "id": "uscode_25_450_todo_text",
+    "section": "450",
+    "semantic_gold": false,
+    "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+    "source_kind": "historical_repository_uscode_excerpt",
+    "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+    "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+    "source_symbol": "_USCODE_25_450_TODO_TEXT",
+    "text": "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 14 - MISCELLANEOUS SUBCHAPTER II - INDIAN SELF-DETERMINATION AND EDUCATION ASSISTANCE Sec. 450 - Transferred From the U.S. Government Publishing Office, www.gpo.gov \u00a7450. Transferred Editorial Notes Codification Section 450 was editorially reclassified as section 5301 of this title.",
+    "text_sha256": "6a38eff6fbd9c23da8cd7302345320699b557a00b2d08fe41421f46e3624e6f2",
+    "title": "25"
+  },
+  {
+    "citation": "10 U.S.C. 167",
+    "coverage": [
+      "historical_uscode_excerpt",
+      "long_context",
+      "editorial_or_multi_clause"
+    ],
+    "id": "uscode_10_167_packet_519_text",
+    "section": "167",
+    "semantic_gold": false,
+    "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+    "source_kind": "historical_repository_uscode_excerpt",
+    "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+    "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+    "source_symbol": "_USCODE_10_167_PACKET_519_TEXT",
+    "text": "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, 2024 Edition Title 10 - ARMED FORCES PART I - ORGANIZATION AND GENERAL MILITARY POWERS CHAPTER 6 - COMBATANT COMMANDS Sec. 167 - Unified combatant command for special operations forces From the U.S. Government Publishing Office, www.gpo.gov \u00a7167. Unified combatant command for special operations forces (a) Establishment. With the advice and assistance of the Chairman of the Joint Chiefs of Staff, the President, through the Secretary of Defense, shall establish under section 161 of this title a unified combatant command for special operations forces. (b) Assignment of Forces. Unless otherwise directed by the Secretary of Defense, all active and reserve special operations forces of the armed forces stationed in the United States shall be assigned to the special operations command. (c) Grade of Commander. The commander of the special operations command shall hold the grade of general or admiral while serving in that position. (d) Command of Activity or Mission. Unless otherwise directed by the President or the Secretary of Defense, a special operations activity or mission shall be conducted under the command of the commander of the unified combatant command in whose geographic area the activity or mission is to be conducted.",
+    "text_sha256": "2e66b77dcda3c251751ce46ac72b16d66f0c1fb75ca0cc4c5457a527faf8e146",
+    "title": "10"
+  },
+  {
+    "citation": "38 U.S.C. 8112",
+    "coverage": [
+      "historical_uscode_excerpt",
+      "long_context",
+      "editorial_or_multi_clause"
+    ],
+    "id": "uscode_38_8112_packet_519_text",
+    "section": "8112",
+    "semantic_gold": false,
+    "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+    "source_kind": "historical_repository_uscode_excerpt",
+    "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+    "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+    "source_symbol": "_USCODE_38_8112_PACKET_519_TEXT",
+    "text": "U.S.C. Title 38 - VETERANS' BENEFITS 38 U.S.C. United States Code, 2024 Edition Title 38 - VETERANS' BENEFITS PART VI - ACQUISITION AND DISPOSITION OF PROPERTY CHAPTER 81 - ACQUISITION AND OPERATION OF HOSPITAL AND DOMICILIARY FACILITIES; PROCUREMENT AND SUPPLY; ENHANCED-USE LEASES OF REAL PROPERTY SUBCHAPTER I - ACQUISITION AND OPERATION OF MEDICAL FACILITIES Sec. 8112 - Partial relinquishment of legislative jurisdiction From the U.S. Government Publishing Office, www.gpo.gov \u00a78112. Partial relinquishment of legislative jurisdiction The Secretary, on behalf of the United States, may relinquish to the State in which any lands or interests under the supervision or control of the Secretary are situated, such measure of legislative jurisdiction over such lands or interests as is necessary to establish concurrent jurisdiction between the Federal Government and the State concerned. Such partial relinquishment of legislative jurisdiction shall be initiated by filing a notice with the Governor of the State concerned and shall take effect upon acceptance by such State. Editorial Notes Prior Provisions Provisions similar to those comprising this section were contained in former section 5007 of this title prior to the general revision of this subchapter by Pub. L. 96-22.",
+    "text_sha256": "48e4d86e117001c1e25c7a125b78c62014b8c1fc8464a72705ddf53d237dc478",
+    "title": "38"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "pilot_cases.json:legal_doc_1",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "maintain",
+          "actor": "financial_institutions",
+          "conditions": [
+            "transaction_amount_exceeds_10000"
+          ],
+          "exceptions": [],
+          "modality": "O",
+          "object": "transaction_records",
+          "temporal": [
+            "for_five_years"
+          ]
+        },
+        {
+          "action": "report",
+          "actor": "banks",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "suspicious_activities_to_financial_crimes_enforcement_network",
+          "temporal": [
+            "within_30_days_of_detection"
+          ]
+        },
+        {
+          "action": "disclose",
+          "actor": "banks",
+          "conditions": [],
+          "exceptions": [
+            "explicit_consent",
+            "required_by_law_enforcement_agencies"
+          ],
+          "modality": "F",
+          "object": "customer_information_to_third_parties",
+          "temporal": []
+        }
+      ]
+    },
+    "section": "legal_doc_1",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/pilot_cases.json",
+    "text": "Federal Law Section 1201: All financial institutions must maintain records of all transactions exceeding $10,000 for a period of five years. Banks are required to report suspicious activities to the Financial Crimes Enforcement Network within 30 days of detection.\n\nHowever, banks cannot disclose customer information to third parties without explicit consent, except when required by law enforcement agencies.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "pilot_cases.json:exec_order_1",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "implement",
+          "actor": "federal_agencies",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "zero_trust_cybersecurity_frameworks",
+          "temporal": [
+            "within_90_days"
+          ]
+        },
+        {
+          "action": "report",
+          "actor": "government_contractors",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "cybersecurity_incidents",
+          "temporal": [
+            "within_24_hours"
+          ]
+        },
+        {
+          "action": "use",
+          "actor": "federal_agencies",
+          "conditions": [
+            "in_government_communications"
+          ],
+          "exceptions": [],
+          "modality": "F",
+          "object": "chinese_manufactured_telecommunications_equipment",
+          "temporal": []
+        },
+        {
+          "action": "receive",
+          "actor": "federal_employees",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "mandatory_cybersecurity_training",
+          "temporal": [
+            "annually"
+          ]
+        }
+      ]
+    },
+    "section": "exec_order_1",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/pilot_cases.json",
+    "text": "Executive Order 14028: Federal agencies must implement zero-trust cybersecurity frameworks within 90 days. All government contractors are required to report cybersecurity incidents within 24 hours.\n\nAgencies cannot use Chinese-manufactured telecommunications equipment in any government communications. Federal employees shall receive mandatory cybersecurity training annually.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "pilot_cases.json:corp_policy_1",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "report",
+          "actor": "employees",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "conflicts_of_interest_to_ethics_committee",
+          "temporal": [
+            "within_10_days_of_discovery"
+          ]
+        },
+        {
+          "action": "complete",
+          "actor": "managers",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "ethics_training_and_certifications",
+          "temporal": [
+            "annually"
+          ]
+        },
+        {
+          "action": "accept",
+          "actor": "employees",
+          "conditions": [
+            "gift_value_over_25"
+          ],
+          "exceptions": [],
+          "modality": "F",
+          "object": "gifts_from_clients_or_vendors",
+          "temporal": []
+        },
+        {
+          "action": "maintain",
+          "actor": "staff",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "proprietary_information_and_customer_data",
+          "temporal": [
+            "at_all_times"
+          ]
+        }
+      ]
+    },
+    "section": "corp_policy_1",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/pilot_cases.json",
+    "text": "Corporate Code of Conduct Section 3.1: All employees must report conflicts of interest to the Ethics Committee within 10 days of discovery. Managers are required to complete annual ethics training and certifications.\n\nEmployees cannot accept gifts valued over $25 from clients or vendors. All staff shall maintain confidentiality of proprietary information and customer data at all times.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "pilot_cases.json:construction_contract",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "complete",
+          "actor": "contractor",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "all_construction_work",
+          "temporal": [
+            "by_december_31_2024"
+          ]
+        },
+        {
+          "action": "ensure",
+          "actor": "contractor",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "work_compliance_with_city_building_codes_and_standards",
+          "temporal": []
+        },
+        {
+          "action": "maintain",
+          "actor": "contractor",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "comprehensive_insurance_coverage",
+          "temporal": []
+        },
+        {
+          "action": "pay",
+          "actor": "client",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "contractor",
+          "temporal": [
+            "within_30_days_of_completion"
+          ]
+        },
+        {
+          "action": "withhold",
+          "actor": "client",
+          "conditions": [
+            "work_does_not_meet_specifications"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "payment",
+          "temporal": []
+        },
+        {
+          "action": "inspect",
+          "actor": "client",
+          "conditions": [
+            "with_24_hours_advance_notice"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "work",
+          "temporal": [
+            "at_any_time"
+          ]
+        },
+        {
+          "action": "use",
+          "actor": "contractor",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "F",
+          "object": "materials_not_meeting_specification_requirements",
+          "temporal": []
+        },
+        {
+          "action": "subcontract",
+          "actor": "contractor",
+          "conditions": [],
+          "exceptions": [
+            "prior_written_approval"
+          ],
+          "modality": "F",
+          "object": "work",
+          "temporal": []
+        },
+        {
+          "action": "terminate",
+          "actor": "either_party",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "P",
+          "object": "agreement",
+          "temporal": [
+            "with_30_days_written_notice"
+          ]
+        },
+        {
+          "action": "complete",
+          "actor": "contractor",
+          "conditions": [
+            "upon_termination_notice"
+          ],
+          "exceptions": [],
+          "modality": "O",
+          "object": "work_in_progress",
+          "temporal": []
+        },
+        {
+          "action": "resolve",
+          "actor": "parties",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "disputes_through_binding_arbitration_in_springfield_illinois",
+          "temporal": []
+        },
+        {
+          "action": "attempt",
+          "actor": "parties",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "mediation",
+          "temporal": [
+            "before_arbitration"
+          ]
+        }
+      ]
+    },
+    "section": "construction_contract",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/pilot_cases.json",
+    "text": "1. WORK OBLIGATIONS\nThe Contractor shall complete all construction work by December 31, 2024.\nThe Contractor must ensure all work meets city building codes and standards.\nThe Contractor is required to maintain comprehensive insurance coverage.\n\n2. PAYMENT TERMS\nThe Client shall pay the Contractor within 30 days of completion.\nThe Client may withhold payment if work does not meet specifications.\n\n3. INSPECTIONS AND COMPLIANCE\nThe Client may inspect the work at any time with 24 hours advance notice.\nThe Contractor must not use materials that do not meet specification requirements.\nThe Contractor shall not subcontract work without prior written approval.\n\n4. TERMINATION\nEither party may terminate this agreement with 30 days written notice.\nThe Contractor must complete all work in progress upon termination notice.\n\n5. DISPUTE RESOLUTION\nAll disputes shall be resolved through binding arbitration in Springfield, Illinois.\nThe parties must attempt mediation before proceeding to arbitration.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "holdout_cases.json:missing_temporal",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "delete",
+          "actor": "controller",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "records",
+          "temporal": [
+            "after_30_days"
+          ]
+        }
+      ]
+    },
+    "section": "missing_temporal",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "text": "The controller must delete the records after 30 days.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "holdout_cases.json:low_confidence_object",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "retain",
+          "actor": "controller",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "records",
+          "temporal": []
+        }
+      ]
+    },
+    "section": "low_confidence_object",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "text": "The controller must retain the records if requested.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "holdout_cases.json:contradictory_modality",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "disclose",
+          "actor": "processor",
+          "conditions": [],
+          "exceptions": [
+            "unless_required_by_law"
+          ],
+          "modality": "F",
+          "object": "personal_data",
+          "temporal": []
+        }
+      ]
+    },
+    "section": "contradictory_modality",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "text": "The processor must disclose personal data and shall not disclose personal data unless required by law.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "holdout_cases.json:legal_doc_2",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "share",
+          "actor": "financial_institutions",
+          "conditions": [
+            "for_marketing_purposes"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "customer_data_with_affiliated_companies",
+          "temporal": []
+        },
+        {
+          "action": "waive",
+          "actor": "credit_unions",
+          "conditions": [
+            "for_members_in_good_standing"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "transaction_fees",
+          "temporal": []
+        },
+        {
+          "action": "engage",
+          "actor": "banks",
+          "conditions": [
+            "based_on_race_gender_or_religious_affiliation"
+          ],
+          "exceptions": [],
+          "modality": "F",
+          "object": "discriminatory_lending_practices",
+          "temporal": []
+        },
+        {
+          "action": "provide",
+          "actor": "institutions",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "equal_access_to_financial_services",
+          "temporal": []
+        }
+      ]
+    },
+    "section": "legal_doc_2",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "text": "State Regulation 405.7: Financial institutions may share customer data with affiliated companies for marketing purposes. Credit unions are allowed to waive transaction fees for members in good standing.\n\nAll banks must not engage in discriminatory lending practices based on race, gender, or religious affiliation. Institutions shall provide equal access to financial services.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "holdout_cases.json:privacy_act_amendment",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "share",
+          "actor": "banks",
+          "conditions": [],
+          "exceptions": [
+            "explicit_written_consent_from_the_customer"
+          ],
+          "modality": "F",
+          "object": "customer_data_with_any_external_entity",
+          "temporal": []
+        },
+        {
+          "action": "delete",
+          "actor": "financial_institutions",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "all_customer_data",
+          "temporal": [
+            "within_30_days_of_account_closure"
+          ]
+        }
+      ]
+    },
+    "section": "privacy_act_amendment",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "text": "Privacy Act Amendment: Banks cannot share customer data with any external entity, including affiliated companies, without explicit written consent from the customer. Financial institutions must delete all customer data within 30 days of account closure.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "holdout_cases.json:fed_reg_1",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "obtain",
+          "actor": "telecommunications_companies",
+          "conditions": [
+            "before_making_robocalls_to_wireless_numbers"
+          ],
+          "exceptions": [],
+          "modality": "O",
+          "object": "prior_express_written_consent",
+          "temporal": []
+        },
+        {
+          "action": "maintain",
+          "actor": "companies",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "do_not_call_registry",
+          "temporal": []
+        },
+        {
+          "action": "honor",
+          "actor": "companies",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "all_requests",
+          "temporal": [
+            "within_30_days"
+          ]
+        },
+        {
+          "action": "block",
+          "actor": "telecom_providers",
+          "conditions": [
+            "under_any_circumstances"
+          ],
+          "exceptions": [],
+          "modality": "F",
+          "object": "emergency_calls",
+          "temporal": []
+        },
+        {
+          "action": "provide",
+          "actor": "carriers",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "free_access_to_emergency_services_including_911",
+          "temporal": []
+        }
+      ]
+    },
+    "section": "fed_reg_1",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "text": "Federal Communications Commission Rule 47 CFR 64.1200: Telecommunications companies must obtain prior express written consent before making robocalls to wireless numbers. Companies are required to maintain a Do Not Call registry and honor all requests within 30 days.\n\nTelecom providers shall not block emergency calls under any circumstances. All carriers must provide free access to emergency services including 911.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "holdout_cases.json:dept_memo_1",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "use",
+          "actor": "military_contractors",
+          "conditions": [
+            "approved_through_defense_security_cooperation_agency"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "foreign_manufactured_equipment",
+          "temporal": []
+        },
+        {
+          "action": "report",
+          "actor": "contractors",
+          "conditions": [
+            "for_classified_projects"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "security_incidents",
+          "temporal": [
+            "within_72_hours"
+          ]
+        },
+        {
+          "action": "complete",
+          "actor": "dod_personnel",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "cybersecurity_certification",
+          "temporal": [
+            "every_two_years"
+          ]
+        },
+        {
+          "action": "share",
+          "actor": "contractors",
+          "conditions": [
+            "with_non_us_persons"
+          ],
+          "exceptions": [],
+          "modality": "F",
+          "object": "classified_information",
+          "temporal": []
+        }
+      ]
+    },
+    "section": "dept_memo_1",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "text": "Department of Defense Memorandum: Military contractors may use foreign-manufactured equipment if approved through the Defense Security Cooperation Agency. Contractors are allowed up to 72 hours to report security incidents for classified projects.\n\nAll DOD personnel must complete cybersecurity certification every two years. Contractors shall not share classified information with non-US persons.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "typed_deontic_reference"
+    ],
+    "id": "holdout_cases.json:hr_handbook",
+    "reference_gold_ir": {
+      "rules": [
+        {
+          "action": "accept",
+          "actor": "staff_members",
+          "conditions": [
+            "up_to_50_in_value",
+            "from_approved_business_partners"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "promotional_items_and_gifts",
+          "temporal": []
+        },
+        {
+          "action": "discuss",
+          "actor": "employees",
+          "conditions": [
+            "with_industry_colleagues"
+          ],
+          "exceptions": [],
+          "modality": "P",
+          "object": "general_business_practices",
+          "temporal": []
+        },
+        {
+          "action": "engage",
+          "actor": "workers",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "F",
+          "object": "insider_trading",
+          "temporal": []
+        },
+        {
+          "action": "share",
+          "actor": "workers",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "F",
+          "object": "material_non_public_information",
+          "temporal": []
+        },
+        {
+          "action": "report",
+          "actor": "employees",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "violations_of_company_policy_to_hr",
+          "temporal": [
+            "within_5_business_days"
+          ]
+        }
+      ]
+    },
+    "section": "hr_handbook",
+    "source_kind": "existing_semantic_roundtrip_fixture",
+    "source_ref": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "text": "Employee Handbook Chapter 7: Staff members may accept promotional items and gifts up to $50 in value from approved business partners. Employees are allowed to discuss general business practices with industry colleagues.\n\nAll workers must not engage in insider trading or share material non-public information. Employees shall report violations of company policy to HR within 5 business days.",
+    "title": "fixture"
+  },
+  {
+    "coverage": [
+      "unreviewed_real_uscode"
+    ],
+    "id": "uscode-local:1:5:273",
+    "independently_reviewed_gold": false,
+    "section": "5",
+    "section_end_char": 596,
+    "section_start_char": 273,
+    "section_text_sha256": "e4019257fe7d907148ec4e25695a43ab7d0fda34bbd11d573532ced61ce62874",
+    "source_kind": "local_uscode_punctuation_bounded_excerpt",
+    "source_ref": "https://www.govinfo.gov/content/pkg/USCODE-2024-title1/html/USCODE-2024-title1-chap1-sec5.htm",
+    "text": "\"Company\" or \"association\" as including successors and assigns The word \"company\" or \"association\", when used in reference to a corporation, shall be deemed to embrace the words \"successors and assigns of such company or association\", in like manner as if these last-named words, or words of similar import, were expressed.",
+    "title": "1"
+  },
+  {
+    "coverage": [
+      "unreviewed_real_uscode"
+    ],
+    "id": "uscode-local:10:101:1765",
+    "independently_reviewed_gold": false,
+    "section": "101",
+    "section_end_char": 1994,
+    "section_start_char": 1765,
+    "section_text_sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330",
+    "source_kind": "local_uscode_punctuation_bounded_excerpt",
+    "source_ref": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+    "text": "(7) The term \"executive part of the department\" means the executive part of the Department of Defense, Department of the Army, Department of the Navy, or Department of the Air Force, as the case may be, at the seat of government.",
+    "title": "10"
+  },
+  {
+    "coverage": [
+      "unreviewed_real_uscode"
+    ],
+    "id": "uscode-local:11:101:210",
+    "independently_reviewed_gold": false,
+    "section": "101",
+    "section_end_char": 477,
+    "section_start_char": 210,
+    "section_text_sha256": "01af2a641bc1ded1a29759bdea80ada43057ac3ac723e05b2bacb1c3296e854d",
+    "source_kind": "local_uscode_punctuation_bounded_excerpt",
+    "source_ref": "https://www.govinfo.gov/content/pkg/USCODE-2024-title11/html/USCODE-2024-title11-chap1-sec101.htm",
+    "text": "Definitions In this title the following definitions shall apply: (1) The term \"accountant\" means accountant authorized under applicable law to practice public accounting, and includes professional accounting association, corporation, or partnership, if so authorized.",
+    "title": "11"
+  },
+  {
+    "coverage": [
+      "unreviewed_real_uscode"
+    ],
+    "id": "uscode-local:12:1:727",
+    "independently_reviewed_gold": false,
+    "section": "1",
+    "section_end_char": 891,
+    "section_start_char": 727,
+    "section_text_sha256": "8bf4a3b0c302b59516d0641f592d1ae9b3924890cd65352554086778e7e20ff5",
+    "source_kind": "local_uscode_punctuation_bounded_excerpt",
+    "source_ref": "https://www.govinfo.gov/content/pkg/USCODE-2024-title12/html/USCODE-2024-title12-chap1-sec1.htm",
+    "text": "(b) Comptroller of the Currency (1) In general The chief officer of the Office of the Comptroller of the Currency shall be known as the Comptroller of the Currency.",
+    "title": "12"
+  },
+  {
+    "coverage": [
+      "unreviewed_real_uscode"
+    ],
+    "id": "uscode-local:13:11:250",
+    "independently_reviewed_gold": false,
+    "section": "11",
+    "section_end_char": 436,
+    "section_start_char": 250,
+    "section_text_sha256": "053db58d704e18411e615964600c307d24cc8e1ed63e1b6d6f7182c5210fb994",
+    "source_kind": "local_uscode_punctuation_bounded_excerpt",
+    "source_ref": "https://www.govinfo.gov/content/pkg/USCODE-2024-title13/html/USCODE-2024-title13-chap1-subchapI-sec11.htm",
+    "text": "Authorization of appropriations There is authorized to be appropriated, out of the Treasury of the United States, such sums as may be necessary to carry out all provisions of this title.",
+    "title": "13"
+  },
+  {
+    "coverage": [
+      "unreviewed_real_uscode"
+    ],
+    "id": "uscode-local:14:101:298",
+    "independently_reviewed_gold": false,
+    "section": "101",
+    "section_end_char": 469,
+    "section_start_char": 298,
+    "section_text_sha256": "483245bcb5504136b527a610605792ed0accdb71995ec43cc297ccd76dd977a1",
+    "source_kind": "local_uscode_punctuation_bounded_excerpt",
+    "source_ref": "https://www.govinfo.gov/content/pkg/USCODE-2024-title14/html/USCODE-2024-title14-subtitleI-chap1-sec101.htm",
+    "text": "Establishment of Coast Guard The Coast Guard, established January 28, 1915, shall be a military service and a branch of the armed forces of the United States at all times.",
+    "title": "14"
+  },
+  {
+    "coverage": [
+      "unreviewed_real_uscode"
+    ],
+    "id": "uscode-local:15:1:537",
+    "independently_reviewed_gold": false,
+    "section": "1",
+    "section_end_char": 926,
+    "section_start_char": 537,
+    "section_text_sha256": "3998a3082dc6219617d4353eebcb828d9bdf1f564b45cdaf05f5feb55d7347d9",
+    "source_kind": "local_uscode_punctuation_bounded_excerpt",
+    "source_ref": "https://www.govinfo.gov/content/pkg/USCODE-2024-title15/html/USCODE-2024-title15-chap1-sec1.htm",
+    "text": "Every person who shall make any contract or engage in any combination or conspiracy hereby declared to be illegal shall be deemed guilty of a felony, and, on conviction thereof, shall be punished by fine not exceeding $100,000,000 if a corporation, or, if any other person, $1,000,000, or by imprisonment not exceeding 10 years, or by both said punishments, in the discretion of the court.",
+    "title": "15"
+  },
+  {
+    "coverage": [
+      "unreviewed_real_uscode"
+    ],
+    "id": "uscode-local:16:460oo:847",
+    "independently_reviewed_gold": false,
+    "section": "460oo",
+    "section_end_char": 1056,
+    "section_start_char": 847,
+    "section_text_sha256": "7df4d5a031c2379c882bad26d652b13a40056dd5aad602a0314f5554a59e140a",
+    "source_kind": "local_uscode_punctuation_bounded_excerpt",
+    "source_ref": "https://www.govinfo.gov/content/pkg/USCODE-2024-title16/html/USCODE-2024-title16-chap1-subchapC-sec460oo.htm",
+    "text": "(b) Administration The recreation area shall comprise approximately one hundred fifty-six thousand nine hundred acres as generally depicted on a map entitled \"Oregon Cascades Recreation Area\" dated March 1984.",
+    "title": "16"
+  }
+]

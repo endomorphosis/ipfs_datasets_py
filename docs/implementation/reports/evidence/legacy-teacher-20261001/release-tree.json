@@ -1,0 +1,41 @@
+{
+  "base_commit": "0ced2e533c9090d21aba602c3550c5ff5ecd45eb",
+  "staged_tree": "31ef6db45c7851457f3fd1e2f8bfda5583f95470",
+  "owned_paths": [
+    "docs/autoencoders/README.md",
+    "docs/autoencoders/legacy_teacher_fidelity.md",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/MANIFEST.json",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/__init__.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/codec.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/decompiler.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/flogic_optimizer.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/kg_bridge.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_frame_scope.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_teacher.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_cached.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_teacher.py",
+    "scripts/ops/legal_ir/legacy_teacher_history.py",
+    "scripts/ops/legal_ir/validate_legacy_linguistic_teacher.py",
+    "tests/fixtures/logic/legacy_teacher_panel.json",
+    "tests/unit/logic/test_legacy_daemon_frame_scope.py",
+    "tests/unit/logic/test_legacy_daemon_teacher.py",
+    "tests/unit/logic/test_legacy_linguistic_cached.py",
+    "tests/unit/logic/test_legacy_linguistic_teacher.py",
+    "tests/unit/logic/test_legacy_teacher_validation.py"
+  ],
+  "exported_paths": [
+    "ipfs_datasets_py",
+    "scripts/ops/legal_ir",
+    "scripts/__init__.py",
+    "tests/unit/logic",
+    "tests/unit/optimizers/logic_theorem_optimizer",
+    "tests/fixtures",
+    "tests/conftest.py",
+    "tests/__init__.py",
+    "pyproject.toml",
+    "setup.py"
+  ],
+  "export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/source",
+  "local_validation_commit": "6865da92b409211c4331d9787e14593ebb75686b",
+  "export_git_objects_read_only_alternate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/objects"
+}

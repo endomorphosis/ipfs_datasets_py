@@ -1,0 +1,819 @@
+{
+  "admitted": false,
+  "all_58_case_profile_parity": true,
+  "canonical_gates": {
+    "admitted": false,
+    "formalized": false,
+    "lake_executed": false,
+    "passed": true,
+    "roundtrip_ok": false,
+    "rows": [
+      {
+        "admitted": false,
+        "compile_seconds": 0.014738751109689474,
+        "compiler": {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "submit",
+                "actor": "Company A",
+                "conditions": [],
+                "exceptions": [
+                  "emergency"
+                ],
+                "modality": "O",
+                "object": "backup report",
+                "temporal": [
+                  "within 10 days"
+                ]
+              }
+            ]
+          },
+          "canonical_ir_cid": "baguqeera6cjbeahzv5xrerwjlohpv7ra77q3ri43sdsebyzq6uemxotdu4vq",
+          "component_trace": [
+            {
+              "component_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+              "component_interface": "TypedDeonticCanonicalConstructor@1",
+              "config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+              "deterministic": true,
+              "input_cid": "baguqeerauzof6svkl7oihdgfimwm23wo4ukobgyr4vdxxhzcnosno6gq4hrq",
+              "input_codec": "dag-json",
+              "model_receipt_cid": null,
+              "output_cid": "baguqeera6cjbeahzv5xrerwjlohpv7ra77q3ri43sdsebyzq6uemxotdu4vq",
+              "output_codec": "dag-json"
+            }
+          ],
+          "diagnostics": [
+            {
+              "code": "compiler.measured_path",
+              "end": null,
+              "message": "The measured deterministic typed-deontic path completed without guidance, repair, model use, or fallback.",
+              "severity": "info",
+              "source_cid": null,
+              "start": null
+            }
+          ],
+          "error": null,
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "provenance": {
+            "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+            "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+            "deterministic": true,
+            "fallback_allowed": false,
+            "fallback_used": false,
+            "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+            "interface": "CanonicalStructuredTextCompiler@1",
+            "learned_stages": [],
+            "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+            "model_call_count": 0,
+            "parser_semantics_revision": "structured_exceptions_numeric_hours_v1",
+            "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+            "provenance_cid": "baguqeeragcbpe5acfj7ya23rhmkzoickylvwbpjdfwuxms3lcamu7hhzgqya",
+            "request_cid": "baguqeerauzof6svkl7oihdgfimwm23wo4ukobgyr4vdxxhzcnosno6gq4hrq",
+            "selection_basis": "replacement_bounded_tie_policy",
+            "selection_lineage_is_historical": true,
+            "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+            "terminal_stage": "complete"
+          },
+          "request_cid": "baguqeerauzof6svkl7oihdgfimwm23wo4ukobgyr4vdxxhzcnosno6gq4hrq",
+          "result_cid": "baguqeeraas7uwth6vnw4ivio2jv7z7rhtwfd7h57jiogdnhz5ntcn6b5phba",
+          "result_cid_codec": "dag-json",
+          "result_cid_scope": "identity_payload",
+          "source_map_receipt": {
+            "canonical_ir_cid": "baguqeera6cjbeahzv5xrerwjlohpv7ra77q3ri43sdsebyzq6uemxotdu4vq",
+            "entries": [
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 68,
+                "field_path": "/rules/0/action",
+                "rule_cid": "baguqeeraoquguzathlirqxr34h3ubykxacj54gwu6c7chm3fvhbxas7etmqq",
+                "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 68,
+                "field_path": "/rules/0/actor",
+                "rule_cid": "baguqeeraoquguzathlirqxr34h3ubykxacj54gwu6c7chm3fvhbxas7etmqq",
+                "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 68,
+                "field_path": "/rules/0/conditions",
+                "rule_cid": "baguqeeraoquguzathlirqxr34h3ubykxacj54gwu6c7chm3fvhbxas7etmqq",
+                "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 68,
+                "field_path": "/rules/0/exceptions",
+                "rule_cid": "baguqeeraoquguzathlirqxr34h3ubykxacj54gwu6c7chm3fvhbxas7etmqq",
+                "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 68,
+                "field_path": "/rules/0/modality",
+                "rule_cid": "baguqeeraoquguzathlirqxr34h3ubykxacj54gwu6c7chm3fvhbxas7etmqq",
+                "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 68,
+                "field_path": "/rules/0/object",
+                "rule_cid": "baguqeeraoquguzathlirqxr34h3ubykxacj54gwu6c7chm3fvhbxas7etmqq",
+                "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 68,
+                "field_path": "/rules/0/temporal",
+                "rule_cid": "baguqeeraoquguzathlirqxr34h3ubykxacj54gwu6c7chm3fvhbxas7etmqq",
+                "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+                "start": 0
+              }
+            ],
+            "interface": "CanonicalSourceMapReceipt@1",
+            "receipt_cid": "baguqeera3qlefrlx7f2jzddqypl7ouh44vipyzsuogcqiyfhvs4mfwse2bxa",
+            "request_cid": "baguqeerauzof6svkl7oihdgfimwm23wo4ukobgyr4vdxxhzcnosno6gq4hrq"
+          },
+          "status": "success",
+          "unsupported_semantics": []
+        },
+        "decompiled_text": "Company A must submit backup report within 10 days unless emergency.",
+        "empty_vocabulary": {
+          "canonical_ir": null,
+          "canonical_ir_cid": null,
+          "component_trace": [],
+          "diagnostics": [
+            {
+              "code": "typed_deontic.unmapped_required_atom",
+              "end": 68,
+              "message": "The typed deontic record could not map required actor, action fields into the caller-supplied vocabulary.",
+              "severity": "error",
+              "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+              "start": 0
+            }
+          ],
+          "error": {
+            "code": "unsupported_semantics",
+            "details": {
+              "affected_norm_count": 1,
+              "unsupported_semantic_count": 1
+            },
+            "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+            "retryable": false
+          },
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "provenance": {
+            "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+            "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+            "deterministic": true,
+            "fallback_allowed": false,
+            "fallback_used": false,
+            "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+            "interface": "CanonicalStructuredTextCompiler@1",
+            "learned_stages": [],
+            "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+            "model_call_count": 0,
+            "parser_semantics_revision": "structured_exceptions_numeric_hours_v1",
+            "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+            "provenance_cid": "baguqeeracofuv47vmk6edb6dla6o466bgxk3fhk73djwsgu3yartubj5eiuq",
+            "request_cid": "baguqeeragtb3s2hobnho4it4ddggzlop55itgzbzbkupw3gxuiwo3il2x6gq",
+            "selection_basis": "replacement_bounded_tie_policy",
+            "selection_lineage_is_historical": true,
+            "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+            "terminal_stage": "canonical_projection"
+          },
+          "request_cid": "baguqeeragtb3s2hobnho4it4ddggzlop55itgzbzbkupw3gxuiwo3il2x6gq",
+          "result_cid": "baguqeeranqahgcf4vq6lboetuudxkbrwaxu5f3bbhdbjs3njctfzsruszsha",
+          "result_cid_codec": "dag-json",
+          "result_cid_scope": "identity_payload",
+          "source_map_receipt": null,
+          "status": "abstained",
+          "unsupported_semantics": [
+            {
+              "code": "typed_deontic.unmapped_required_atom",
+              "disposition": "abstain",
+              "end": 68,
+              "message": "The typed deontic record could not map required actor, action fields into the caller-supplied vocabulary.",
+              "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm",
+              "start": 0
+            }
+          ]
+        },
+        "formalized": false,
+        "lake_executed": false,
+        "lean_pattern": null,
+        "parser_vocabulary": {
+          "actions": [
+            "submit"
+          ],
+          "actors": [
+            "Company A"
+          ],
+          "objects": [
+            "backup report"
+          ],
+          "qualifiers": [
+            "emergency",
+            "within 10 days"
+          ]
+        },
+        "roundtrip_ok": false,
+        "rule_with_parser_sidecars": {
+          "action": "submit",
+          "actor": "Company A",
+          "conditions": [],
+          "exceptions": [
+            "emergency"
+          ],
+          "modality": "O",
+          "object": "backup report",
+          "temporal": [
+            "within 10 days"
+          ],
+          "temporal_records": [
+            {
+              "quantity": 10,
+              "temporal_kind": "within_duration",
+              "value": "10 days"
+            }
+          ]
+        },
+        "semantic_qualification": false,
+        "source_text": "Company A shall submit backup report within 10 days unless emergency.",
+        "vocabulary_seconds": 0.017207151046022773
+      },
+      {
+        "admitted": false,
+        "compile_seconds": 0.012550850864499807,
+        "compiler": {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "disclose",
+                "actor": "agency",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "F",
+                "object": "records",
+                "temporal": []
+              }
+            ]
+          },
+          "canonical_ir_cid": "baguqeera5ak66lihi4mnptqxtvtlvjtufvirmhxhouya455lro3akntsh4iq",
+          "component_trace": [
+            {
+              "component_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+              "component_interface": "TypedDeonticCanonicalConstructor@1",
+              "config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+              "deterministic": true,
+              "input_cid": "baguqeeralbqkubdmbasu4yfpoetnirzkazdznvkpcasyw7wk3l22oxp34csq",
+              "input_codec": "dag-json",
+              "model_receipt_cid": null,
+              "output_cid": "baguqeera5ak66lihi4mnptqxtvtlvjtufvirmhxhouya455lro3akntsh4iq",
+              "output_codec": "dag-json"
+            }
+          ],
+          "diagnostics": [
+            {
+              "code": "compiler.measured_path",
+              "end": null,
+              "message": "The measured deterministic typed-deontic path completed without guidance, repair, model use, or fallback.",
+              "severity": "info",
+              "source_cid": null,
+              "start": null
+            }
+          ],
+          "error": null,
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "provenance": {
+            "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+            "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+            "deterministic": true,
+            "fallback_allowed": false,
+            "fallback_used": false,
+            "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+            "interface": "CanonicalStructuredTextCompiler@1",
+            "learned_stages": [],
+            "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+            "model_call_count": 0,
+            "parser_semantics_revision": "structured_exceptions_numeric_hours_v1",
+            "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+            "provenance_cid": "baguqeerawfrr7elrpzqqur33qloxtvjknmzkwdic6v4dhpctx53azid3jlmq",
+            "request_cid": "baguqeeralbqkubdmbasu4yfpoetnirzkazdznvkpcasyw7wk3l22oxp34csq",
+            "selection_basis": "replacement_bounded_tie_policy",
+            "selection_lineage_is_historical": true,
+            "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+            "terminal_stage": "complete"
+          },
+          "request_cid": "baguqeeralbqkubdmbasu4yfpoetnirzkazdznvkpcasyw7wk3l22oxp34csq",
+          "result_cid": "baguqeerau2rfuc5u55ssit74xbsmoaaduxdjsoulr6xmydmfowwm3bx3ra3q",
+          "result_cid_codec": "dag-json",
+          "result_cid_scope": "identity_payload",
+          "source_map_receipt": {
+            "canonical_ir_cid": "baguqeera5ak66lihi4mnptqxtvtlvjtufvirmhxhouya455lro3akntsh4iq",
+            "entries": [
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 37,
+                "field_path": "/rules/0/action",
+                "rule_cid": "baguqeera66uaok22o24gq5wjoddx52g7azolspbuxdi2ovvz55gtl27mvlta",
+                "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 37,
+                "field_path": "/rules/0/actor",
+                "rule_cid": "baguqeera66uaok22o24gq5wjoddx52g7azolspbuxdi2ovvz55gtl27mvlta",
+                "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 37,
+                "field_path": "/rules/0/conditions",
+                "rule_cid": "baguqeera66uaok22o24gq5wjoddx52g7azolspbuxdi2ovvz55gtl27mvlta",
+                "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 37,
+                "field_path": "/rules/0/exceptions",
+                "rule_cid": "baguqeera66uaok22o24gq5wjoddx52g7azolspbuxdi2ovvz55gtl27mvlta",
+                "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 37,
+                "field_path": "/rules/0/modality",
+                "rule_cid": "baguqeera66uaok22o24gq5wjoddx52g7azolspbuxdi2ovvz55gtl27mvlta",
+                "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 37,
+                "field_path": "/rules/0/object",
+                "rule_cid": "baguqeera66uaok22o24gq5wjoddx52g7azolspbuxdi2ovvz55gtl27mvlta",
+                "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 37,
+                "field_path": "/rules/0/temporal",
+                "rule_cid": "baguqeera66uaok22o24gq5wjoddx52g7azolspbuxdi2ovvz55gtl27mvlta",
+                "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+                "start": 0
+              }
+            ],
+            "interface": "CanonicalSourceMapReceipt@1",
+            "receipt_cid": "baguqeeraqzgs74hdxpys72tu6b2upz23hmcxpc5goravs7vdc4o6mnh4wqwa",
+            "request_cid": "baguqeeralbqkubdmbasu4yfpoetnirzkazdznvkpcasyw7wk3l22oxp34csq"
+          },
+          "status": "success",
+          "unsupported_semantics": []
+        },
+        "decompiled_text": "Agency must not disclose records.",
+        "empty_vocabulary": {
+          "canonical_ir": null,
+          "canonical_ir_cid": null,
+          "component_trace": [],
+          "diagnostics": [
+            {
+              "code": "typed_deontic.unmapped_required_atom",
+              "end": 37,
+              "message": "The typed deontic record could not map required actor, action fields into the caller-supplied vocabulary.",
+              "severity": "error",
+              "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+              "start": 0
+            }
+          ],
+          "error": {
+            "code": "unsupported_semantics",
+            "details": {
+              "affected_norm_count": 1,
+              "unsupported_semantic_count": 1
+            },
+            "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+            "retryable": false
+          },
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "provenance": {
+            "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+            "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+            "deterministic": true,
+            "fallback_allowed": false,
+            "fallback_used": false,
+            "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+            "interface": "CanonicalStructuredTextCompiler@1",
+            "learned_stages": [],
+            "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+            "model_call_count": 0,
+            "parser_semantics_revision": "structured_exceptions_numeric_hours_v1",
+            "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+            "provenance_cid": "baguqeeragzamsorgswrnxgtimcnoegxjdxhlygom72zykngl56dsqvnsc65q",
+            "request_cid": "baguqeerao2nfgztwgkm4ugvx7sdbbbzd32u2zuldbdsvq6nmcoqpq437ov7a",
+            "selection_basis": "replacement_bounded_tie_policy",
+            "selection_lineage_is_historical": true,
+            "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+            "terminal_stage": "canonical_projection"
+          },
+          "request_cid": "baguqeerao2nfgztwgkm4ugvx7sdbbbzd32u2zuldbdsvq6nmcoqpq437ov7a",
+          "result_cid": "baguqeeralrn5ar2inxfkvxfj3app4kx5c3ohapimqghgxsn2l4byjk53fraa",
+          "result_cid_codec": "dag-json",
+          "result_cid_scope": "identity_payload",
+          "source_map_receipt": null,
+          "status": "abstained",
+          "unsupported_semantics": [
+            {
+              "code": "typed_deontic.unmapped_required_atom",
+              "disposition": "abstain",
+              "end": 37,
+              "message": "The typed deontic record could not map required actor, action fields into the caller-supplied vocabulary.",
+              "source_cid": "bafkreidwzwgmky2lxpmqbaunhmd3ubntarjmzixuhhgkganqdzjer56txa",
+              "start": 0
+            }
+          ]
+        },
+        "formalized": false,
+        "lake_executed": false,
+        "lean_pattern": null,
+        "parser_vocabulary": {
+          "actions": [
+            "disclose"
+          ],
+          "actors": [
+            "agency"
+          ],
+          "objects": [
+            "records"
+          ],
+          "qualifiers": []
+        },
+        "roundtrip_ok": false,
+        "rule_with_parser_sidecars": {
+          "action": "disclose",
+          "actor": "agency",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "F",
+          "object": "records",
+          "temporal": [],
+          "temporal_records": []
+        },
+        "semantic_qualification": false,
+        "source_text": "The agency shall not disclose records.",
+        "vocabulary_seconds": 0.0053448539692908525
+      },
+      {
+        "admitted": false,
+        "compile_seconds": 0.013414590852335095,
+        "compiler": {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "retain",
+                "actor": "officer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the file for at least 20 days",
+                "temporal": [
+                  "20 days"
+                ]
+              }
+            ]
+          },
+          "canonical_ir_cid": "baguqeerarvyfjs7nckxgk7chy6e6aqpij3ecd76s26jxphkhtaoo3ohekwga",
+          "component_trace": [
+            {
+              "component_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+              "component_interface": "TypedDeonticCanonicalConstructor@1",
+              "config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+              "deterministic": true,
+              "input_cid": "baguqeerai224sd4lp53yb62v42ebi2egm5nxcufyrbvneqfnognkqi7myz7q",
+              "input_codec": "dag-json",
+              "model_receipt_cid": null,
+              "output_cid": "baguqeerarvyfjs7nckxgk7chy6e6aqpij3ecd76s26jxphkhtaoo3ohekwga",
+              "output_codec": "dag-json"
+            }
+          ],
+          "diagnostics": [
+            {
+              "code": "compiler.measured_path",
+              "end": null,
+              "message": "The measured deterministic typed-deontic path completed without guidance, repair, model use, or fallback.",
+              "severity": "info",
+              "source_cid": null,
+              "start": null
+            }
+          ],
+          "error": null,
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "provenance": {
+            "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+            "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+            "deterministic": true,
+            "fallback_allowed": false,
+            "fallback_used": false,
+            "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+            "interface": "CanonicalStructuredTextCompiler@1",
+            "learned_stages": [],
+            "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+            "model_call_count": 0,
+            "parser_semantics_revision": "structured_exceptions_numeric_hours_v1",
+            "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+            "provenance_cid": "baguqeeradllvahdwvw7des3gq4h3f7llsu3uqdyqwi4nyzzydwdmk6ywmfea",
+            "request_cid": "baguqeerai224sd4lp53yb62v42ebi2egm5nxcufyrbvneqfnognkqi7myz7q",
+            "selection_basis": "replacement_bounded_tie_policy",
+            "selection_lineage_is_historical": true,
+            "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+            "terminal_stage": "complete"
+          },
+          "request_cid": "baguqeerai224sd4lp53yb62v42ebi2egm5nxcufyrbvneqfnognkqi7myz7q",
+          "result_cid": "baguqeeraeipwy3gz6l6ghtbei3rxpuwcpfgs42jjxe4qnya3e5txpdcredwq",
+          "result_cid_codec": "dag-json",
+          "result_cid_scope": "identity_payload",
+          "source_map_receipt": {
+            "canonical_ir_cid": "baguqeerarvyfjs7nckxgk7chy6e6aqpij3ecd76s26jxphkhtaoo3ohekwga",
+            "entries": [
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 54,
+                "field_path": "/rules/0/action",
+                "rule_cid": "baguqeeraqrhyy3p356tk7n2uxpopm2ndhxyqibxxrh5ubimu7h6jt25pgj7q",
+                "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 54,
+                "field_path": "/rules/0/actor",
+                "rule_cid": "baguqeeraqrhyy3p356tk7n2uxpopm2ndhxyqibxxrh5ubimu7h6jt25pgj7q",
+                "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 54,
+                "field_path": "/rules/0/conditions",
+                "rule_cid": "baguqeeraqrhyy3p356tk7n2uxpopm2ndhxyqibxxrh5ubimu7h6jt25pgj7q",
+                "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 54,
+                "field_path": "/rules/0/exceptions",
+                "rule_cid": "baguqeeraqrhyy3p356tk7n2uxpopm2ndhxyqibxxrh5ubimu7h6jt25pgj7q",
+                "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 54,
+                "field_path": "/rules/0/modality",
+                "rule_cid": "baguqeeraqrhyy3p356tk7n2uxpopm2ndhxyqibxxrh5ubimu7h6jt25pgj7q",
+                "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 54,
+                "field_path": "/rules/0/object",
+                "rule_cid": "baguqeeraqrhyy3p356tk7n2uxpopm2ndhxyqibxxrh5ubimu7h6jt25pgj7q",
+                "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+                "start": 0
+              },
+              {
+                "attribution": "coarse:typed_deontic_record_span",
+                "end": 54,
+                "field_path": "/rules/0/temporal",
+                "rule_cid": "baguqeeraqrhyy3p356tk7n2uxpopm2ndhxyqibxxrh5ubimu7h6jt25pgj7q",
+                "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+                "start": 0
+              }
+            ],
+            "interface": "CanonicalSourceMapReceipt@1",
+            "receipt_cid": "baguqeeranyzqbikovrd4mttjytr5zcinlsxdclpdm6bzxmtqu7364za73b3a",
+            "request_cid": "baguqeerai224sd4lp53yb62v42ebi2egm5nxcufyrbvneqfnognkqi7myz7q"
+          },
+          "status": "success",
+          "unsupported_semantics": []
+        },
+        "decompiled_text": "Officer must retain the file for at least 20 days.",
+        "empty_vocabulary": {
+          "canonical_ir": null,
+          "canonical_ir_cid": null,
+          "component_trace": [],
+          "diagnostics": [
+            {
+              "code": "typed_deontic.unmapped_required_atom",
+              "end": 54,
+              "message": "The typed deontic record could not map required actor, action fields into the caller-supplied vocabulary.",
+              "severity": "error",
+              "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+              "start": 0
+            }
+          ],
+          "error": {
+            "code": "unsupported_semantics",
+            "details": {
+              "affected_norm_count": 1,
+              "unsupported_semantic_count": 1
+            },
+            "message": "1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+            "retryable": false
+          },
+          "interface": "CanonicalStructuredTextCompiler@1",
+          "provenance": {
+            "compiler_config_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+            "constructor_adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+            "constructor_interface": "TypedDeonticCanonicalConstructor@1",
+            "deterministic": true,
+            "fallback_allowed": false,
+            "fallback_used": false,
+            "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+            "implementation_representative_arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+            "interface": "CanonicalStructuredTextCompiler@1",
+            "learned_stages": [],
+            "measured_adapter_raw_cid": "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny",
+            "model_call_count": 0,
+            "parser_semantics_revision": "structured_exceptions_numeric_hours_v1",
+            "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+            "provenance_cid": "baguqeerank2f5vcpjli7dc4jjk3j6u4gct5urtwpcvbkb5jksq2ojagaaryq",
+            "request_cid": "baguqeeraewx4ewzbfwgpybsdvhmozy4emispfxhpcgpgirpqwa6ew6xezgnq",
+            "selection_basis": "replacement_bounded_tie_policy",
+            "selection_lineage_is_historical": true,
+            "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+            "terminal_stage": "canonical_projection"
+          },
+          "request_cid": "baguqeeraewx4ewzbfwgpybsdvhmozy4emispfxhpcgpgirpqwa6ew6xezgnq",
+          "result_cid": "baguqeerarxhnrtldfm6aqg27kngudpha3cdxtyro5pgnnqqextvd4bec2gna",
+          "result_cid_codec": "dag-json",
+          "result_cid_scope": "identity_payload",
+          "source_map_receipt": null,
+          "status": "abstained",
+          "unsupported_semantics": [
+            {
+              "code": "typed_deontic.unmapped_required_atom",
+              "disposition": "abstain",
+              "end": 54,
+              "message": "The typed deontic record could not map required actor, action fields into the caller-supplied vocabulary.",
+              "source_cid": "bafkreifmqitalqgudcozq327oqxnnb5bq66mxjroz7rmjymbqizij3fpne",
+              "start": 0
+            }
+          ]
+        },
+        "formalized": false,
+        "lake_executed": false,
+        "lean_pattern": {
+          "fail": 19,
+          "kind": "threshold",
+          "meet": 20
+        },
+        "parser_vocabulary": {
+          "actions": [
+            "retain"
+          ],
+          "actors": [
+            "officer"
+          ],
+          "objects": [
+            "the file for at least 20 days"
+          ],
+          "qualifiers": [
+            "20 days"
+          ]
+        },
+        "roundtrip_ok": false,
+        "rule_with_parser_sidecars": {
+          "action": "retain",
+          "actor": "officer",
+          "conditions": [],
+          "exceptions": [],
+          "modality": "O",
+          "object": "the file for at least 20 days",
+          "temporal": [
+            "20 days"
+          ],
+          "temporal_records": [
+            {
+              "quantity": 20,
+              "temporal_kind": "minimum_duration",
+              "value": "20 days"
+            }
+          ]
+        },
+        "semantic_qualification": false,
+        "source_text": "The officer shall retain the file for at least 20 days.",
+        "vocabulary_seconds": 0.0054291419219225645
+      }
+    ],
+    "sample_count": 3,
+    "semantic_qualification": false,
+    "statement_lock_sha256": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+    "wall_seconds_per_span": 0.022895113254586857
+  },
+  "formalized": false,
+  "lake": {
+    "admitted": false,
+    "command": [
+      "/home/barberb/.elan/toolchains/leanprover--lean4---v4.26.0/bin/lake",
+      "build",
+      "Legal"
+    ],
+    "deadline_non_renderable": true,
+    "elapsed_seconds": 4.532763388939202,
+    "formalized": false,
+    "independent_formula_generation": false,
+    "lake_executed": true,
+    "lake_ok": true,
+    "log": "\u2714 [2/3] Built Legal (129ms)\nBuild completed successfully (3 jobs).\ninfo: legal: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+    "returncode": 0,
+    "roundtrip_ok": false,
+    "scope": "numeric 19/20 boundary from canonical minimum-duration gate; not source-to-formula fidelity",
+    "semantic_qualification": false,
+    "source_sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+  },
+  "resolved_logic_tree": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "roundtrip_ok": false,
+  "scope": "Canonical workspace v3 before final frame lifetime/configuration guard changes; not the final release benchmark",
+  "source_hashes": {
+    "/home/barberb/lift_coding/JevOps/jevops/statement_lock.py": "dc377f8359cac300023e225d694494ea631943298c44667ec44e1352de1e6237",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/__init__.py": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "9d957c6ffbc3ac011fee0ee56f14c31ed36fc28f44c3ab468e208711cb7e0d59",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py": "ad9603c7b4dd80736aa9bb32dc4ffc537149f1d111b265c95b6dbedc5dbfe8aa",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/__init__.py": "bdbe2843741514298d49ce2c5ed8aab1c1aeb447b8cae515c81aaa7e0f02dae6",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/MANIFEST.json": "d354fd562b722bf66ac52563aff379253517fbc25bd487898ef5b292b0389cc0",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/__init__.py": "695e6758d9fb9573e5604dfbe6e16e813a4c9cb3b5f3fa7f75b8ace68e01193d",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/codec.py": "05067257eecae4701d3274f1403ea05d4bfe717f14bdc9be3027424009d846a1",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/decompiler.py": "e8a34dc7aff799e2b43e95f52e6cbf4a89a62a7406d80ac477f46d0e1a09cc14",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/flogic_optimizer.py": "c2ed9c3b3376002764d7b7d46ca35889ccf88f129aa3144ade6fc418c390e453",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/kg_bridge.py": "336f67eed3cfb45b8bbda10c88a487b53b8b0e78a95fc1469b649f4165bb2ab9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/MANIFEST.json": "f44966d10d21f6f97ef89d967f411f5d86fe7195a0aa212269e3c785e27ddfa3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/__init__.py": "209d89df0ac32061a5237d87d19e42bbd0ddd60b0ad8ac939b44cc18c5156b36",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/spacy_modal_codec.py": "16ec4e141d5cb2f9d37cd4db42733921bc046e17fee12afc43ab31ca7a60cd59",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/MANIFEST.json": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/__init__.py": "6e694ea02e8530c8fc207fd82769b1f29a13b3ceac504e902f8b26202bda26b4",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/frame_bm25_selector.py": "612d472efaf9cb5bb2f57914125d9fc87cde3a55f14dc5a105cc80f268df430a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_family_evaluator.py": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_grammar_decoder.py": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_semantic_metrics.py": "cee46ad09daae3ae74cd359e8e25fb9fd592eee92c59730d42caf30db60c38da",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_modal_parser.py": "5415bf565171b17db1d4a03c715e974645a59018addb852cf67fc3c71d462406",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_samples.py": "51ce99dc83279c570bc57334c1cdc4cb72fa4b94c5b8c81101bb6252f0a614de",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder.py": "5f504f08854a239eda60c588d78766681818f724b7b59f1851f46a4fdc2129bd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_batching.py": "6538fc6f4bf3c7e7ba94c7ef8b4fa00833ca4f728b4bf90a2684096b2f70dc5a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_checkpoint.py": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_cuda.py": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_factorized_heads.py": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_feature_capacity.py": "76608ad29c95cf3178fc59d7c76c6c7f4ca5b9907b338f9558c88d3d8a3b93ba",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_legacy_distillation.py": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_migration.py": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_transaction.py": "d86a5721643bab9a51d1587aef117f925c53ebcdd8fd767964cacbd7859b810b",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_version.py": "f38530f5a8a10cd5969447e16e7d6a86542b8e9eeeb2d2a2dab69454ab250fc2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_tensor_state.py": "ee81537f1af3c3ca939f371cc9e4384adb317d6c7803dac22271d5dce0948d3f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_ir.py": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_prover_router.py": "46fe3a0a83b8e0e86c9bbb9dbfab15a2a4a8401fbe661bd58b512a93ffd47388",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_registry.py": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/projection_profiler.py": "c5c5179cce6df49f694523b999f61cc8a842fa71424af956893400d574e3b4e8",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/prover_integration.py": "5417a7a5da2d3fb8eb3cc3b40e4db11b8e6d592d67f3808c0cbfd0dc5f13c1cb",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/snapshot_evaluator.py": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_teacher.py": "a27c0c4c84593e1d759e55f4c3425b487d837c30ae29efa24c9869c0465a342c",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic.py": "baca84b44f7eda33466ffdc75170d904f480aafb47a779131337d90ed9a7bca3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_cached.py": "37d588f5df5df1b0f8fff4a4b2de7aed5757024fda8f16c18f29004f380b9ca9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_teacher.py": "529b7758fe2db751a9ae37bc50a6b8c8126c6b12b4d344cf1cb61324a5e2c869",
+    "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/legacy_teacher_history.py": "3f2786d8bc66188b08d213bd4c8ea7a5562a3d115663b2720dc1890138d4e24b",
+    "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/validate_legacy_linguistic_teacher.py": "577de88618b53dd806707e9945293dc2ff58ee38892fc9047cac9aff3140dd83"
+  },
+  "source_report": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-integrated-20261001-v3/report.json",
+  "source_report_sha256": "5bc4b76a7d82c3258d09b9fe5097f232e0f81c21cc47a8dbdbc6edcf58e49cf4"
+}

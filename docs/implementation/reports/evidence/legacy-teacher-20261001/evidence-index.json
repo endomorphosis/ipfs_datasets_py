@@ -1,0 +1,91 @@
+{
+  "admitted": false,
+  "archived_teacher_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+  "files": {
+    "Legal.lean": {
+      "bytes": 169,
+      "sha256": "ff11b78454ea1cbc3c816dcc989336aa8790a5606ea0321321c164cb8070ab3d"
+    },
+    "cases.json": {
+      "bytes": 48989,
+      "sha256": "40ed383ed2ae2469f78a96e0d31864cd8f0bdbe3f99a92fb54cc8f324320859b"
+    },
+    "history.json": {
+      "bytes": 221780,
+      "sha256": "4a943d6f23120ddfe270e061a7491694141c808b4375cc170f480b24300f270e"
+    },
+    "release-lake-recheck.xml": {
+      "bytes": 679,
+      "sha256": "8e6f735059f902de3800b1085d3c3c4bdf18f5316505c97616f7ef0481978ea1"
+    },
+    "release-report.json": {
+      "bytes": 874823,
+      "sha256": "1c7ccac323eddcb1599c55f63e17ec6c47e38f9876ccb0f5075fe151457e360b"
+    },
+    "release-run.log": {
+      "bytes": 12209,
+      "sha256": "110d750822de33d9178b29e5947858ac39dc86c0e37c38a2a8784454f0bf2725"
+    },
+    "release-tests-initial.xml": {
+      "bytes": 48482,
+      "sha256": "3d242787d1099563863151c7bff706c0b0a655856380910636c10e3a5923be5e"
+    },
+    "release-tree.json": {
+      "bytes": 2466,
+      "sha256": "4205360f8a07f88c45c83ac2ec764fcd966d851e6abb74b46dbe61a864ed78cf"
+    },
+    "test-summary.json": {
+      "bytes": 1162,
+      "sha256": "967664c1d016f6055a04347c7d768abfda487395bc27c1838efe7dbc1dadbbf5"
+    },
+    "workspace-gates.json": {
+      "bytes": 46616,
+      "sha256": "40be044a2f340764c9e4c3f39d8ed6538edf617db7a3337db7e156d4e7d18d58"
+    }
+  },
+  "formalized": false,
+  "historical_reference": "21f2dc2c52940c8552be1515d893e107d0564387",
+  "release_tree": {
+    "base_commit": "0ced2e533c9090d21aba602c3550c5ff5ecd45eb",
+    "export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/source",
+    "export_git_objects_read_only_alternate": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/objects",
+    "exported_paths": [
+      "ipfs_datasets_py",
+      "scripts/ops/legal_ir",
+      "scripts/__init__.py",
+      "tests/unit/logic",
+      "tests/unit/optimizers/logic_theorem_optimizer",
+      "tests/fixtures",
+      "tests/conftest.py",
+      "tests/__init__.py",
+      "pyproject.toml",
+      "setup.py"
+    ],
+    "local_validation_commit": "6865da92b409211c4331d9787e14593ebb75686b",
+    "owned_paths": [
+      "docs/autoencoders/README.md",
+      "docs/autoencoders/legacy_teacher_fidelity.md",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/MANIFEST.json",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/__init__.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/codec.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/decompiler.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/flogic_optimizer.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/kg_bridge.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_frame_scope.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_teacher.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_cached.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_teacher.py",
+      "scripts/ops/legal_ir/legacy_teacher_history.py",
+      "scripts/ops/legal_ir/validate_legacy_linguistic_teacher.py",
+      "tests/fixtures/logic/legacy_teacher_panel.json",
+      "tests/unit/logic/test_legacy_daemon_frame_scope.py",
+      "tests/unit/logic/test_legacy_daemon_teacher.py",
+      "tests/unit/logic/test_legacy_linguistic_cached.py",
+      "tests/unit/logic/test_legacy_linguistic_teacher.py",
+      "tests/unit/logic/test_legacy_teacher_validation.py"
+    ],
+    "staged_tree": "31ef6db45c7851457f3fd1e2f8bfda5583f95470"
+  },
+  "roundtrip_ok": false,
+  "schema": "legacy-teacher-release-evidence/v1"
+}

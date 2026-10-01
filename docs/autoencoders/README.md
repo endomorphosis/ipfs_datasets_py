@@ -17,6 +17,7 @@ belong to their named backend; they are not interchangeable across backends.
 | Train native categorical decoders and check actual outputs with Lake | [Native formula training](native_formula_training.md) |
 | Train a source-only learned formula decoder | [Learned legal formula training](learned_legal_formula_training.md) |
 | Preserve and train the old 8D linguistic/IR feature decoder | [Legacy linguistic training](legacy_linguistic_training.md) |
+| Reproduce the September 17 teacher and prepare screened distillation targets | [Historical teacher fidelity, fixes and performance](legacy_teacher_fidelity.md) |
 | Recover historical 8D training optimizations | [Legacy speed history and selective ports](legacy_speed_history.md) |
 | Try native UI/UX learning from real compiler output | [Runnable native quickstart](native_feature_quickstart.md) |
 | Train UI DOM/IDL bindings, resume, and choose HF datasets | [UI training, datasets and bindings](ui_datasets_and_bindings.md) |

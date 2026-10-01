@@ -1,0 +1,543 @@
+{
+  "schema": "legacy-linguistic-history-panel/v1",
+  "purpose": "Exact historical replay and separately reported semantic diagnostics; no equivalence gold or qualification. Historical US Code excerpts are repository fixtures, not independently verified current law.",
+  "baseline_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+  "cases": [
+    {
+      "id": "obligation",
+      "text": "The agency shall submit reports.",
+      "title": "0",
+      "section": "1",
+      "citation": "authored-probe:obligation",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "prohibition",
+      "text": "The agency shall not disclose records.",
+      "title": "0",
+      "section": "2",
+      "citation": "authored-probe:prohibition",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "negation"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "must_not",
+      "text": "The officer must not alter the record.",
+      "title": "0",
+      "section": "3",
+      "citation": "authored-probe:must_not",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "negation"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "permission",
+      "text": "The applicant may request review.",
+      "title": "0",
+      "section": "4",
+      "citation": "authored-probe:permission",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "may_not",
+      "text": "The civil penalty may not exceed $100 per day.",
+      "title": "0",
+      "section": "5",
+      "citation": "authored-probe:may_not",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "negation",
+        "numeric"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "deadline_exception",
+      "text": "Company A shall submit backup report within 10 days unless emergency.",
+      "title": "0",
+      "section": "6",
+      "citation": "authored-probe:deadline_exception",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "temporal",
+        "exception"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "minimum_duration",
+      "text": "The officer shall retain the file for at least 20 days.",
+      "title": "0",
+      "section": "7",
+      "citation": "authored-probe:minimum_duration",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "temporal",
+        "numeric"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "conditional",
+      "text": "If the application is complete, the agency must issue written notice unless waived.",
+      "title": "0",
+      "section": "8",
+      "citation": "authored-probe:conditional",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "conditional_normative",
+        "deontic",
+        "exception"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "deadline_by",
+      "text": "The Secretary shall provide notice by January 1, 2030.",
+      "title": "0",
+      "section": "9",
+      "citation": "authored-probe:deadline_by",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "temporal",
+        "deontic",
+        "date"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "within_place",
+      "text": "The Secretary shall designate a team within the Department of Agriculture.",
+      "title": "0",
+      "section": "10",
+      "citation": "authored-probe:within_place",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "non_temporal_within"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "by_actor",
+      "text": "The Secretary shall provide notice by the Comptroller.",
+      "title": "0",
+      "section": "11",
+      "citation": "authored-probe:by_actor",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "non_temporal_by"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "calendar_may",
+      "text": "The Secretary shall make the payment after May 13, 2002, and a producer may request review.",
+      "title": "0",
+      "section": "12",
+      "citation": "authored-probe:calendar_may",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "temporal",
+        "date",
+        "multi_clause"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "knowledge",
+      "text": "The officer knows that the permit is valid.",
+      "title": "0",
+      "section": "13",
+      "citation": "authored-probe:knowledge",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "epistemic"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "knowledge_negation",
+      "text": "The officer does not know whether the permit is valid.",
+      "title": "0",
+      "section": "14",
+      "citation": "authored-probe:knowledge_negation",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "epistemic",
+        "negation"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "belief",
+      "text": "The agency believes that the applicant is eligible.",
+      "title": "0",
+      "section": "15",
+      "citation": "authored-probe:belief",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "doxastic"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "necessity",
+      "text": "It is necessary that the filing is complete.",
+      "title": "0",
+      "section": "16",
+      "citation": "authored-probe:necessity",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "alethic"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "possibility",
+      "text": "It is possible that the permit is invalid.",
+      "title": "0",
+      "section": "17",
+      "citation": "authored-probe:possibility",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "alethic"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "dynamic",
+      "text": "After the hearing, the agency issues a final order.",
+      "title": "0",
+      "section": "18",
+      "citation": "authored-probe:dynamic",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "dynamic",
+        "temporal"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "frame",
+      "text": "The term vessel means a watercraft.",
+      "title": "0",
+      "section": "19",
+      "citation": "authored-probe:frame",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "frame",
+        "definition"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "hybrid",
+      "text": "This section applies at the time of the hearing.",
+      "title": "0",
+      "section": "20",
+      "citation": "authored-probe:hybrid",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "hybrid",
+        "temporal"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "universal",
+      "text": "Every applicant shall submit a signed form.",
+      "title": "0",
+      "section": "21",
+      "citation": "authored-probe:universal",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "quantification"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "existential",
+      "text": "There is an officer who may approve the request.",
+      "title": "0",
+      "section": "22",
+      "citation": "authored-probe:existential",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "quantification"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "conjunction",
+      "text": "The agency shall retain records and publish notices.",
+      "title": "0",
+      "section": "23",
+      "citation": "authored-probe:conjunction",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "conjunction"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "disjunction",
+      "text": "The agency may publish notice or send written notice.",
+      "title": "0",
+      "section": "24",
+      "citation": "authored-probe:disjunction",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "disjunction"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "unless_scope",
+      "text": "Unless the permit is revoked, the applicant may operate the vessel.",
+      "title": "0",
+      "section": "25",
+      "citation": "authored-probe:unless_scope",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "exception"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "except_scope",
+      "text": "Except as provided in subsection (b), the Secretary shall issue a determination.",
+      "title": "0",
+      "section": "26",
+      "citation": "authored-probe:except_scope",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "exception",
+        "cross_reference"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "condition_negation",
+      "text": "If the application is not complete, the agency shall reject the application.",
+      "title": "0",
+      "section": "27",
+      "citation": "authored-probe:condition_negation",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "conditional_normative",
+        "negation"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "upper_bound",
+      "text": "The officer shall retain the file for no more than 20 days.",
+      "title": "0",
+      "section": "28",
+      "citation": "authored-probe:upper_bound",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "temporal",
+        "numeric"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "nonoperative",
+      "text": "This chapter may be cited as the Public Records Act.",
+      "title": "0",
+      "section": "29",
+      "citation": "authored-probe:nonoperative",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "nonoperative",
+        "title"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "constitution_negative",
+      "text": "All legislative Powers herein granted shall be vested in a Congress of the United States, which shall consist of a Senate and House of Representatives.",
+      "title": "0",
+      "section": "30",
+      "citation": "authored-probe:constitution_negative",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "constitution",
+        "authority",
+        "negative_admission_control"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "plain_fact",
+      "text": "The courthouse is a public building.",
+      "title": "0",
+      "section": "31",
+      "citation": "authored-probe:plain_fact",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "propositional",
+        "frame"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "deadline_24",
+      "text": "The officer shall notify the agency within 24 hours.",
+      "title": "0",
+      "section": "32",
+      "citation": "authored-probe:deadline_24",
+      "source_kind": "authored_diagnostic_probe",
+      "coverage": [
+        "deontic",
+        "temporal",
+        "numeric"
+      ],
+      "semantic_gold": false
+    },
+    {
+      "id": "uscode_8_606_todo_text",
+      "text": "U.S.C. Title 8 - ALIENS AND NATIONALITY 8 U.S.C. United States Code, 2024 Edition Title 8 - ALIENS AND NATIONALITY CHAPTER 11 - NATIONALITY SUBCHAPTER II - NATIONALITY AT BIRTH Sec. 606 - Transferred From the U.S. Government Publishing Office, www.gpo.gov §606. Transferred Editorial Notes Codification Section transferred to section 1421l of Title 48, Territories and Insular Possessions. That section was later repealed. See section 1407 of this title.",
+      "title": "8",
+      "section": "606",
+      "citation": "8 U.S.C. 606",
+      "source_kind": "historical_repository_uscode_excerpt",
+      "coverage": [
+        "historical_uscode_excerpt",
+        "long_context",
+        "editorial_or_multi_clause"
+      ],
+      "semantic_gold": false,
+      "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+      "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+      "source_symbol": "_USCODE_8_606_TODO_TEXT",
+      "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+      "text_sha256": "9828d116cfc0c592bf6c70103701e9fa2cb4de505025c1bc2c0e2ecaf670e5a5"
+    },
+    {
+      "id": "uscode_46_115_todo_text",
+      "text": "§115. Vessel In this title, the term \"vessel\" has the meaning given that term in section 3 of title 1. (Pub. L. 109–304, §4, Oct. 6, 2006, 120 Stat. 1487.) Historical and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 115 46:2101(45).",
+      "title": "46",
+      "section": "115",
+      "citation": "46 U.S.C. 115",
+      "source_kind": "historical_repository_uscode_excerpt",
+      "coverage": [
+        "historical_uscode_excerpt",
+        "long_context",
+        "editorial_or_multi_clause"
+      ],
+      "semantic_gold": false,
+      "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+      "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+      "source_symbol": "_USCODE_46_115_TODO_TEXT",
+      "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+      "text_sha256": "ede4e6bc9000aa25484a604d7cf4b8ca0b8596bce49125677da3304cddbc7f7b"
+    },
+    {
+      "id": "uscode_36_110105_todo_text",
+      "text": "U.S.C. Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, CEREMONIES, AND ORGANIZATIONS 36 U.S.C. United States Code, 2024 Edition Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, CEREMONIES, AND ORGANIZATIONS Subtitle II - Patriotic and National Organizations Part B - Organizations CHAPTER 1101 - JEWISH WAR VETERANS OF THE UNITED STATES OF AMERICA, INCORPORATED Sec. 110105 - Governing body From the U.S. Government Publishing Office, www.gpo.gov §110105. Governing body (a) Board of Directors .—The board of directors and the responsibilities of the board are as provided in the articles of incorporation. (b) Officers .—The officers and the election of officers are as provided in the articles of incorporation. (Pub. L. 105–225, Aug. 12, 1998, 112 Stat. 1367.) Historical and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 110105(a) 36:2706. Aug. 21, 1984, Pub. L. 98–391, §§6, 7, 98 Stat. 1359. 110105(b) 36:2707.",
+      "title": "36",
+      "section": "110105",
+      "citation": "36 U.S.C. 110105",
+      "source_kind": "historical_repository_uscode_excerpt",
+      "coverage": [
+        "historical_uscode_excerpt",
+        "long_context",
+        "editorial_or_multi_clause"
+      ],
+      "semantic_gold": false,
+      "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+      "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+      "source_symbol": "_USCODE_36_110105_TODO_TEXT",
+      "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+      "text_sha256": "d682e8bf23978c71b81ee55dd1da4311948992e1e957929b7580ac65d1d4b49a"
+    },
+    {
+      "id": "uscode_25_450_todo_text",
+      "text": "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 14 - MISCELLANEOUS SUBCHAPTER II - INDIAN SELF-DETERMINATION AND EDUCATION ASSISTANCE Sec. 450 - Transferred From the U.S. Government Publishing Office, www.gpo.gov §450. Transferred Editorial Notes Codification Section 450 was editorially reclassified as section 5301 of this title.",
+      "title": "25",
+      "section": "450",
+      "citation": "25 U.S.C. 450",
+      "source_kind": "historical_repository_uscode_excerpt",
+      "coverage": [
+        "historical_uscode_excerpt",
+        "long_context",
+        "editorial_or_multi_clause"
+      ],
+      "semantic_gold": false,
+      "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+      "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+      "source_symbol": "_USCODE_25_450_TODO_TEXT",
+      "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+      "text_sha256": "6a38eff6fbd9c23da8cd7302345320699b557a00b2d08fe41421f46e3624e6f2"
+    },
+    {
+      "id": "uscode_10_167_packet_519_text",
+      "text": "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, 2024 Edition Title 10 - ARMED FORCES PART I - ORGANIZATION AND GENERAL MILITARY POWERS CHAPTER 6 - COMBATANT COMMANDS Sec. 167 - Unified combatant command for special operations forces From the U.S. Government Publishing Office, www.gpo.gov §167. Unified combatant command for special operations forces (a) Establishment. With the advice and assistance of the Chairman of the Joint Chiefs of Staff, the President, through the Secretary of Defense, shall establish under section 161 of this title a unified combatant command for special operations forces. (b) Assignment of Forces. Unless otherwise directed by the Secretary of Defense, all active and reserve special operations forces of the armed forces stationed in the United States shall be assigned to the special operations command. (c) Grade of Commander. The commander of the special operations command shall hold the grade of general or admiral while serving in that position. (d) Command of Activity or Mission. Unless otherwise directed by the President or the Secretary of Defense, a special operations activity or mission shall be conducted under the command of the commander of the unified combatant command in whose geographic area the activity or mission is to be conducted.",
+      "title": "10",
+      "section": "167",
+      "citation": "10 U.S.C. 167",
+      "source_kind": "historical_repository_uscode_excerpt",
+      "coverage": [
+        "historical_uscode_excerpt",
+        "long_context",
+        "editorial_or_multi_clause"
+      ],
+      "semantic_gold": false,
+      "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+      "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+      "source_symbol": "_USCODE_10_167_PACKET_519_TEXT",
+      "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+      "text_sha256": "2e66b77dcda3c251751ce46ac72b16d66f0c1fb75ca0cc4c5457a527faf8e146"
+    },
+    {
+      "id": "uscode_38_8112_packet_519_text",
+      "text": "U.S.C. Title 38 - VETERANS' BENEFITS 38 U.S.C. United States Code, 2024 Edition Title 38 - VETERANS' BENEFITS PART VI - ACQUISITION AND DISPOSITION OF PROPERTY CHAPTER 81 - ACQUISITION AND OPERATION OF HOSPITAL AND DOMICILIARY FACILITIES; PROCUREMENT AND SUPPLY; ENHANCED-USE LEASES OF REAL PROPERTY SUBCHAPTER I - ACQUISITION AND OPERATION OF MEDICAL FACILITIES Sec. 8112 - Partial relinquishment of legislative jurisdiction From the U.S. Government Publishing Office, www.gpo.gov §8112. Partial relinquishment of legislative jurisdiction The Secretary, on behalf of the United States, may relinquish to the State in which any lands or interests under the supervision or control of the Secretary are situated, such measure of legislative jurisdiction over such lands or interests as is necessary to establish concurrent jurisdiction between the Federal Government and the State concerned. Such partial relinquishment of legislative jurisdiction shall be initiated by filing a notice with the Governor of the State concerned and shall take effect upon acceptance by such State. Editorial Notes Prior Provisions Provisions similar to those comprising this section were contained in former section 5007 of this title prior to the general revision of this subchapter by Pub. L. 96-22.",
+      "title": "38",
+      "section": "8112",
+      "citation": "38 U.S.C. 8112",
+      "source_kind": "historical_repository_uscode_excerpt",
+      "coverage": [
+        "historical_uscode_excerpt",
+        "long_context",
+        "editorial_or_multi_clause"
+      ],
+      "semantic_gold": false,
+      "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387",
+      "source_path": "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+      "source_symbol": "_USCODE_38_8112_PACKET_519_TEXT",
+      "source_file_sha256": "60131d7c41e388a2773fb486aaf6b3ed38e130159510b491329402e02ee3fc22",
+      "text_sha256": "48e4d86e117001c1e25c7a125b78c62014b8c1fc8464a72705ddf53d237dc478"
+    }
+  ]
+}

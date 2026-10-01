@@ -1,0 +1,597 @@
+{
+  "codec_configuration": {
+    "parser_backend": "spacy",
+    "spacy_model_name": "definitely_missing_legal_model",
+    "use_flogic": true
+  },
+  "constructor_fallbacks": {
+    "compiler_quality_embedding_weight_scale": 0.5,
+    "compiler_quality_family_logit_scale": 1.0,
+    "cosine_reconstruction_weight": 0.25,
+    "decompiler_plan_embedding_weight_scale": 0.5,
+    "decompiler_plan_family_logit_scale": 1.0,
+    "decompiler_plan_legal_ir_view_logit_scale": 1.0,
+    "embedding_head_update_normalization": 0.5,
+    "family_embedding_weight_scale": 0.5,
+    "family_legal_ir_view_embedding_weight_scale": 0.5,
+    "family_logit_head_update_normalization": 0.5,
+    "family_semantic_slot_embedding_weight_scale": 0.5,
+    "family_semantic_slot_legal_ir_view_embedding_weight_scale": 0.5,
+    "family_semantic_slot_legal_ir_view_logit_scale": 1.0,
+    "feature_activity_reference": 64,
+    "feature_embedding_weight_scale": 0.5,
+    "feature_family_logit_scale": 1.0,
+    "feature_logit_clip": 24.0,
+    "legal_ir_view_embedding_weight_scale": 0.5,
+    "legal_ir_view_family_logit_scale": 1.0,
+    "legal_ir_view_head_update_normalization": 0.5,
+    "legal_ir_view_logit_scale": 1.0,
+    "logic_signature_embedding_weight_scale": 0.5,
+    "logic_signature_family_logit_scale": 1.0,
+    "logic_signature_legal_ir_view_logit_scale": 1.0,
+    "max_authority_jurisdiction_features": 64,
+    "max_canonical_ir_graph_features": 64,
+    "max_clause_topology_features": 64,
+    "max_codec_feature_keys": 64,
+    "max_compiler_contract_features": 64,
+    "max_compiler_latent_profile_features": 48,
+    "max_constraint_grounding_features": 64,
+    "max_contrastive_ir_boundary_features": 64,
+    "max_cycle_consistency_features": 64,
+    "max_decompiler_surface_template_features": 48,
+    "max_defeasible_priority_features": 64,
+    "max_definition_grounding_features": 64,
+    "max_discourse_flow_features": 64,
+    "max_enforcement_remedy_features": 64,
+    "max_entity_binding_features": 64,
+    "max_equivalence_prototype_features": 48,
+    "max_legal_ir_token_bigram_features": 12,
+    "max_legal_ir_token_features": 24,
+    "max_legal_ir_token_trigram_features": 8,
+    "max_legal_semantic_frame_features": 64,
+    "max_logic_view_contract_features": 64,
+    "max_normative_polarity_features": 48,
+    "max_objective_residual_features": 64,
+    "max_procedural_lifecycle_features": 64,
+    "max_proof_obligation_features": 64,
+    "max_provenance_alignment_features": 64,
+    "max_quantifier_scope_features": 64,
+    "max_reference_dependency_features": 64,
+    "max_repair_plan_features": 64,
+    "max_round_trip_bridge_features": 64,
+    "max_semantic_slot_interactions": 24,
+    "max_temporal_validity_features": 64,
+    "max_token_bigram_features": 24,
+    "max_token_features": 48,
+    "max_token_trigram_features": 12,
+    "predicate_argument_embedding_weight_scale": 0.5,
+    "predicate_argument_family_logit_scale": 1.0,
+    "predicate_argument_legal_ir_view_logit_scale": 1.0,
+    "round_trip_signal_embedding_weight_scale": 0.5,
+    "round_trip_signal_family_logit_scale": 1.0,
+    "round_trip_signal_legal_ir_view_logit_scale": 1.0,
+    "semantic_slot_embedding_weight_scale": 0.5,
+    "semantic_slot_family_logit_scale": 1.0,
+    "semantic_slot_interaction_weight": 0.35,
+    "semantic_slot_legal_ir_view_embedding_weight_scale": 0.5,
+    "semantic_slot_legal_ir_view_family_logit_scale": 1.0,
+    "semantic_slot_legal_ir_view_logit_scale": 1.0
+  },
+  "constructor_provenance": {
+    "expressions": {
+      "compiler_quality_embedding_weight_scale": {
+        "argument_name": "autoencoder_compiler_quality_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_compiler_quality_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "compiler_quality_family_logit_scale": {
+        "argument_name": "autoencoder_compiler_quality_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_compiler_quality_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "compute_device": {
+        "expression": "args.autoencoder_device"
+      },
+      "cosine_reconstruction_weight": {
+        "argument_name": "autoencoder_cosine_reconstruction_weight",
+        "expression": "float(getattr(args, 'autoencoder_cosine_reconstruction_weight', 0.25))",
+        "fallback_default": 0.25
+      },
+      "decompiler_plan_embedding_weight_scale": {
+        "argument_name": "autoencoder_decompiler_plan_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_decompiler_plan_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "decompiler_plan_family_logit_scale": {
+        "argument_name": "autoencoder_decompiler_plan_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_decompiler_plan_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "decompiler_plan_legal_ir_view_logit_scale": {
+        "argument_name": "autoencoder_decompiler_plan_legal_ir_view_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_decompiler_plan_legal_ir_view_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "embedding_head_update_normalization": {
+        "argument_name": "autoencoder_embedding_head_update_normalization",
+        "expression": "float(getattr(args, 'autoencoder_embedding_head_update_normalization', 0.5))",
+        "fallback_default": 0.5
+      },
+      "family_embedding_weight_scale": {
+        "argument_name": "autoencoder_family_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_family_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "family_legal_ir_view_embedding_weight_scale": {
+        "argument_name": "autoencoder_family_legal_ir_view_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_family_legal_ir_view_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "family_logit_head_update_normalization": {
+        "argument_name": "autoencoder_family_logit_head_update_normalization",
+        "expression": "float(getattr(args, 'autoencoder_family_logit_head_update_normalization', 0.5))",
+        "fallback_default": 0.5
+      },
+      "family_semantic_slot_embedding_weight_scale": {
+        "argument_name": "autoencoder_family_semantic_slot_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_family_semantic_slot_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "family_semantic_slot_legal_ir_view_embedding_weight_scale": {
+        "argument_name": "autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_family_semantic_slot_legal_ir_view_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "family_semantic_slot_legal_ir_view_logit_scale": {
+        "argument_name": "autoencoder_family_semantic_slot_legal_ir_view_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_family_semantic_slot_legal_ir_view_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "feature_activity_reference": {
+        "argument_name": "autoencoder_feature_activity_reference",
+        "expression": "int(getattr(args, 'autoencoder_feature_activity_reference', 64))",
+        "fallback_default": 64
+      },
+      "feature_codec": {
+        "expression": "feature_codec"
+      },
+      "feature_embedding_weight_scale": {
+        "argument_name": "autoencoder_feature_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_feature_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "feature_family_logit_scale": {
+        "argument_name": "autoencoder_feature_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_feature_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "feature_logit_clip": {
+        "argument_name": "autoencoder_feature_logit_clip",
+        "expression": "float(getattr(args, 'autoencoder_feature_logit_clip', 24.0))",
+        "fallback_default": 24.0
+      },
+      "legal_ir_view_embedding_weight_scale": {
+        "argument_name": "autoencoder_legal_ir_view_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_legal_ir_view_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "legal_ir_view_family_logit_scale": {
+        "argument_name": "autoencoder_legal_ir_view_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_legal_ir_view_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "legal_ir_view_head_update_normalization": {
+        "argument_name": "autoencoder_legal_ir_view_head_update_normalization",
+        "expression": "float(getattr(args, 'autoencoder_legal_ir_view_head_update_normalization', 0.5))",
+        "fallback_default": 0.5
+      },
+      "legal_ir_view_logit_scale": {
+        "argument_name": "autoencoder_legal_ir_view_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_legal_ir_view_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "logic_signature_embedding_weight_scale": {
+        "argument_name": "autoencoder_logic_signature_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_logic_signature_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "logic_signature_family_logit_scale": {
+        "argument_name": "autoencoder_logic_signature_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_logic_signature_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "logic_signature_legal_ir_view_logit_scale": {
+        "argument_name": "autoencoder_logic_signature_legal_ir_view_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_logic_signature_legal_ir_view_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "max_authority_jurisdiction_features": {
+        "argument_name": "autoencoder_max_authority_jurisdiction_features",
+        "expression": "int(getattr(args, 'autoencoder_max_authority_jurisdiction_features', 64))",
+        "fallback_default": 64
+      },
+      "max_canonical_ir_graph_features": {
+        "argument_name": "autoencoder_max_canonical_ir_graph_features",
+        "expression": "int(getattr(args, 'autoencoder_max_canonical_ir_graph_features', 64))",
+        "fallback_default": 64
+      },
+      "max_clause_topology_features": {
+        "argument_name": "autoencoder_max_clause_topology_features",
+        "expression": "int(getattr(args, 'autoencoder_max_clause_topology_features', 64))",
+        "fallback_default": 64
+      },
+      "max_codec_feature_keys": {
+        "argument_name": "autoencoder_max_codec_feature_keys",
+        "expression": "int(getattr(args, 'autoencoder_max_codec_feature_keys', 64))",
+        "fallback_default": 64
+      },
+      "max_compiler_contract_features": {
+        "argument_name": "autoencoder_max_compiler_contract_features",
+        "expression": "int(getattr(args, 'autoencoder_max_compiler_contract_features', 64))",
+        "fallback_default": 64
+      },
+      "max_compiler_latent_profile_features": {
+        "argument_name": "autoencoder_max_compiler_latent_profile_features",
+        "expression": "int(getattr(args, 'autoencoder_max_compiler_latent_profile_features', 48))",
+        "fallback_default": 48
+      },
+      "max_constraint_grounding_features": {
+        "argument_name": "autoencoder_max_constraint_grounding_features",
+        "expression": "int(getattr(args, 'autoencoder_max_constraint_grounding_features', 64))",
+        "fallback_default": 64
+      },
+      "max_contrastive_ir_boundary_features": {
+        "argument_name": "autoencoder_max_contrastive_ir_boundary_features",
+        "expression": "int(getattr(args, 'autoencoder_max_contrastive_ir_boundary_features', 64))",
+        "fallback_default": 64
+      },
+      "max_cycle_consistency_features": {
+        "argument_name": "autoencoder_max_cycle_consistency_features",
+        "expression": "int(getattr(args, 'autoencoder_max_cycle_consistency_features', 64))",
+        "fallback_default": 64
+      },
+      "max_decompiler_surface_template_features": {
+        "argument_name": "autoencoder_max_decompiler_surface_template_features",
+        "expression": "int(getattr(args, 'autoencoder_max_decompiler_surface_template_features', 48))",
+        "fallback_default": 48
+      },
+      "max_defeasible_priority_features": {
+        "argument_name": "autoencoder_max_defeasible_priority_features",
+        "expression": "int(getattr(args, 'autoencoder_max_defeasible_priority_features', 64))",
+        "fallback_default": 64
+      },
+      "max_definition_grounding_features": {
+        "argument_name": "autoencoder_max_definition_grounding_features",
+        "expression": "int(getattr(args, 'autoencoder_max_definition_grounding_features', 64))",
+        "fallback_default": 64
+      },
+      "max_discourse_flow_features": {
+        "argument_name": "autoencoder_max_discourse_flow_features",
+        "expression": "int(getattr(args, 'autoencoder_max_discourse_flow_features', 64))",
+        "fallback_default": 64
+      },
+      "max_enforcement_remedy_features": {
+        "argument_name": "autoencoder_max_enforcement_remedy_features",
+        "expression": "int(getattr(args, 'autoencoder_max_enforcement_remedy_features', 64))",
+        "fallback_default": 64
+      },
+      "max_entity_binding_features": {
+        "argument_name": "autoencoder_max_entity_binding_features",
+        "expression": "int(getattr(args, 'autoencoder_max_entity_binding_features', 64))",
+        "fallback_default": 64
+      },
+      "max_equivalence_prototype_features": {
+        "argument_name": "autoencoder_max_equivalence_prototype_features",
+        "expression": "int(getattr(args, 'autoencoder_max_equivalence_prototype_features', 48))",
+        "fallback_default": 48
+      },
+      "max_legal_ir_token_bigram_features": {
+        "argument_name": "autoencoder_max_legal_ir_token_bigram_features",
+        "expression": "int(getattr(args, 'autoencoder_max_legal_ir_token_bigram_features', 12))",
+        "fallback_default": 12
+      },
+      "max_legal_ir_token_features": {
+        "argument_name": "autoencoder_max_legal_ir_token_features",
+        "expression": "int(getattr(args, 'autoencoder_max_legal_ir_token_features', 24))",
+        "fallback_default": 24
+      },
+      "max_legal_ir_token_trigram_features": {
+        "argument_name": "autoencoder_max_legal_ir_token_trigram_features",
+        "expression": "int(getattr(args, 'autoencoder_max_legal_ir_token_trigram_features', 8))",
+        "fallback_default": 8
+      },
+      "max_legal_semantic_frame_features": {
+        "argument_name": "autoencoder_max_legal_semantic_frame_features",
+        "expression": "int(getattr(args, 'autoencoder_max_legal_semantic_frame_features', 64))",
+        "fallback_default": 64
+      },
+      "max_logic_view_contract_features": {
+        "argument_name": "autoencoder_max_logic_view_contract_features",
+        "expression": "int(getattr(args, 'autoencoder_max_logic_view_contract_features', 64))",
+        "fallback_default": 64
+      },
+      "max_normative_polarity_features": {
+        "argument_name": "autoencoder_max_normative_polarity_features",
+        "expression": "int(getattr(args, 'autoencoder_max_normative_polarity_features', 48))",
+        "fallback_default": 48
+      },
+      "max_objective_residual_features": {
+        "argument_name": "autoencoder_max_objective_residual_features",
+        "expression": "int(getattr(args, 'autoencoder_max_objective_residual_features', 64))",
+        "fallback_default": 64
+      },
+      "max_procedural_lifecycle_features": {
+        "argument_name": "autoencoder_max_procedural_lifecycle_features",
+        "expression": "int(getattr(args, 'autoencoder_max_procedural_lifecycle_features', 64))",
+        "fallback_default": 64
+      },
+      "max_proof_obligation_features": {
+        "argument_name": "autoencoder_max_proof_obligation_features",
+        "expression": "int(getattr(args, 'autoencoder_max_proof_obligation_features', 64))",
+        "fallback_default": 64
+      },
+      "max_provenance_alignment_features": {
+        "argument_name": "autoencoder_max_provenance_alignment_features",
+        "expression": "int(getattr(args, 'autoencoder_max_provenance_alignment_features', 64))",
+        "fallback_default": 64
+      },
+      "max_quantifier_scope_features": {
+        "argument_name": "autoencoder_max_quantifier_scope_features",
+        "expression": "int(getattr(args, 'autoencoder_max_quantifier_scope_features', 64))",
+        "fallback_default": 64
+      },
+      "max_reference_dependency_features": {
+        "argument_name": "autoencoder_max_reference_dependency_features",
+        "expression": "int(getattr(args, 'autoencoder_max_reference_dependency_features', 64))",
+        "fallback_default": 64
+      },
+      "max_repair_plan_features": {
+        "argument_name": "autoencoder_max_repair_plan_features",
+        "expression": "int(getattr(args, 'autoencoder_max_repair_plan_features', 64))",
+        "fallback_default": 64
+      },
+      "max_round_trip_bridge_features": {
+        "argument_name": "autoencoder_max_round_trip_bridge_features",
+        "expression": "int(getattr(args, 'autoencoder_max_round_trip_bridge_features', 64))",
+        "fallback_default": 64
+      },
+      "max_semantic_slot_interactions": {
+        "argument_name": "autoencoder_max_semantic_slot_interactions",
+        "expression": "int(getattr(args, 'autoencoder_max_semantic_slot_interactions', 24))",
+        "fallback_default": 24
+      },
+      "max_temporal_validity_features": {
+        "argument_name": "autoencoder_max_temporal_validity_features",
+        "expression": "int(getattr(args, 'autoencoder_max_temporal_validity_features', 64))",
+        "fallback_default": 64
+      },
+      "max_token_bigram_features": {
+        "argument_name": "autoencoder_max_token_bigram_features",
+        "expression": "int(getattr(args, 'autoencoder_max_token_bigram_features', 24))",
+        "fallback_default": 24
+      },
+      "max_token_features": {
+        "argument_name": "autoencoder_max_token_features",
+        "expression": "int(getattr(args, 'autoencoder_max_token_features', 48))",
+        "fallback_default": 48
+      },
+      "max_token_trigram_features": {
+        "argument_name": "autoencoder_max_token_trigram_features",
+        "expression": "int(getattr(args, 'autoencoder_max_token_trigram_features', 12))",
+        "fallback_default": 12
+      },
+      "predicate_argument_embedding_weight_scale": {
+        "argument_name": "autoencoder_predicate_argument_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_predicate_argument_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "predicate_argument_family_logit_scale": {
+        "argument_name": "autoencoder_predicate_argument_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_predicate_argument_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "predicate_argument_legal_ir_view_logit_scale": {
+        "argument_name": "autoencoder_predicate_argument_legal_ir_view_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_predicate_argument_legal_ir_view_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "round_trip_signal_embedding_weight_scale": {
+        "argument_name": "autoencoder_round_trip_signal_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_round_trip_signal_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "round_trip_signal_family_logit_scale": {
+        "argument_name": "autoencoder_round_trip_signal_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_round_trip_signal_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "round_trip_signal_legal_ir_view_logit_scale": {
+        "argument_name": "autoencoder_round_trip_signal_legal_ir_view_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_round_trip_signal_legal_ir_view_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "semantic_slot_embedding_weight_scale": {
+        "argument_name": "autoencoder_semantic_slot_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_semantic_slot_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "semantic_slot_family_logit_scale": {
+        "argument_name": "autoencoder_semantic_slot_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_semantic_slot_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "semantic_slot_interaction_weight": {
+        "argument_name": "autoencoder_semantic_slot_interaction_weight",
+        "expression": "float(getattr(args, 'autoencoder_semantic_slot_interaction_weight', 0.35))",
+        "fallback_default": 0.35
+      },
+      "semantic_slot_legal_ir_view_embedding_weight_scale": {
+        "argument_name": "autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale",
+        "expression": "float(getattr(args, 'autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale', 0.5))",
+        "fallback_default": 0.5
+      },
+      "semantic_slot_legal_ir_view_family_logit_scale": {
+        "argument_name": "autoencoder_semantic_slot_legal_ir_view_family_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_semantic_slot_legal_ir_view_family_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "semantic_slot_legal_ir_view_logit_scale": {
+        "argument_name": "autoencoder_semantic_slot_legal_ir_view_logit_scale",
+        "expression": "float(getattr(args, 'autoencoder_semantic_slot_legal_ir_view_logit_scale', 1.0))",
+        "fallback_default": 1.0
+      },
+      "state": {
+        "expression": "state"
+      }
+    },
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+    "sha256": "806c06d74da6e4a2cb9946665461c32bbbbfcb63324616220930776d72a12846"
+  },
+  "files": [
+    {
+      "relocation_edits": [
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.frame_bm25_selector import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import",
+          "count": 1
+        },
+        {
+          "after": "from .flogic_optimizer import",
+          "before": "from ipfs_datasets_py.logic.flogic_optimizer import",
+          "count": 1
+        }
+      ],
+      "source_bytes": 32093,
+      "source_path": "ipfs_datasets_py/logic/flogic_optimizer.py",
+      "source_sha256": "4c8976c96fed438df12e530a5cf7d4b92327d94ee8c3b89c401521cfcf995d51",
+      "vendored_path": "flogic_optimizer.py",
+      "vendored_sha256": "c2ed9c3b3376002764d7b7d46ca35889ccf88f129aa3144ade6fc418c390e453"
+    },
+    {
+      "relocation_edits": [
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.frame_bm25_selector import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import",
+          "count": 1
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_ir import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import",
+          "count": 1
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_registry import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import",
+          "count": 1
+        }
+      ],
+      "source_bytes": 882461,
+      "source_path": "ipfs_datasets_py/logic/modal/decompiler.py",
+      "source_sha256": "2aa99133971449edbb66d1f9b4023b7a97d9d2a2df3cb4f4ca7de0c481b15213",
+      "vendored_path": "decompiler.py",
+      "vendored_sha256": "e8a34dc7aff799e2b43e95f52e6cbf4a89a62a7406d80ac477f46d0e1a09cc14"
+    },
+    {
+      "relocation_edits": [
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_ir import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import",
+          "count": 1
+        }
+      ],
+      "source_bytes": 59559,
+      "source_path": "ipfs_datasets_py/logic/modal/kg_bridge.py",
+      "source_sha256": "163e130cf18ae636f2f2b56dfb5c4d18622afa6a7733a6394d43940ce68d14fc",
+      "vendored_path": "kg_bridge.py",
+      "vendored_sha256": "336f67eed3cfb45b8bbda10c88a487b53b8b0e78a95fc1469b649f4165bb2ab9"
+    },
+    {
+      "relocation_edits": [
+        {
+          "after": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._linguistic_snapshot.spacy_modal_codec",
+          "before": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec",
+          "count": 1
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.frame_bm25_selector import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import",
+          "count": 1
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.legal_modal_parser import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import",
+          "count": 1
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.legal_samples import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import",
+          "count": 1
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_autoencoder import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import",
+          "count": 1
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_ir import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import",
+          "count": 1
+        },
+        {
+          "after": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_lineages.legacy_v1._snapshot.modal_registry import",
+          "before": "from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import",
+          "count": 1
+        },
+        {
+          "after": "from .flogic_optimizer import",
+          "before": "from ipfs_datasets_py.logic.flogic_optimizer import",
+          "count": 1
+        }
+      ],
+      "source_bytes": 497526,
+      "source_path": "ipfs_datasets_py/logic/modal/codec.py",
+      "source_sha256": "ecd57906b6ca534caf29598c4c983d019b5021f3bc71a38257900e5b9361b5f3",
+      "vendored_path": "codec.py",
+      "vendored_sha256": "05067257eecae4701d3274f1403ea05d4bfe717f14bdc9be3027424009d846a1"
+    }
+  ],
+  "producer_configuration_verified": false,
+  "reference_revision": "ddf6b79467b68159650df81befc288c8553df664",
+  "schema": "legacy-daemon-codec-snapshot/v1",
+  "scope": "Historical deterministic BM25/F-logic codec, numerical snapshot and linguistic codec preserved. Canonical compiler and proof infrastructure remain current workspace services.",
+  "shared_dependencies": [
+    {
+      "path": "ipfs_datasets_py/knowledge_graphs/migration/formats.py",
+      "sha256": "fa34c6fbea7ea046d6e1aa5d8e17bd29a0be16edfa368ee4b472a58ad69b6d71"
+    },
+    {
+      "path": "ipfs_datasets_py/knowledge_graphs/neo4j_compat/legal_ir_projection.py",
+      "sha256": "46aef69ebaf89bc50ff3f2cd5858326a1d258d8a4c9a6edfc80e24126a4da4f8"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/flogic/__init__.py",
+      "sha256": "7e1fbc019acccd9c859bfbf37885b0096fd73238925b43445d57b658284f7ee2"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/flogic/ergoai_wrapper.py",
+      "sha256": "309e05f0154243bc483e1cac657d9d520e34d27ece96972495b156934ed00854"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/flogic/flogic_proof_cache.py",
+      "sha256": "28dea77d3d2bbbb2d31c11ad8f3fd1a26c57e01428da1b8e165e2ae062ea527e"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/flogic/flogic_types.py",
+      "sha256": "0a5029b76db7bb9b32f80f455e1c3c304c551ed66badb0aaef65f9d3bbf13bb4"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/flogic/flogic_zkp_integration.py",
+      "sha256": "27c61696fce52dadb8f86c58c63f71e67ffffbf7af456378a7037262b1982d4c"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/flogic/semantic_normalizer.py",
+      "sha256": "d2d1f1514b47883b93816771228efb78a79651bc7b55a153249a6abc6e1fb45f"
+    }
+  ],
+  "source_revision": "21f2dc2c52940c8552be1515d893e107d0564387"
+}

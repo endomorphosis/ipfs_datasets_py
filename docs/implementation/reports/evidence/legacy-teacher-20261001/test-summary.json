@@ -1,0 +1,35 @@
+{
+  "admitted": false,
+  "environment_correction": "Initialized an independent local validation Git repository bound to the same staged tree, with read-only access to local historical objects; did not weaken the tree pin",
+  "final_passed_checks": 256,
+  "formalized": false,
+  "initial_result": "254 passed; two joint-formula Lake checks failed closed because isolated source export lacked its own .git metadata",
+  "production_changes_for_recheck": false,
+  "recheck_result": "Both failed checks passed with real Lake execution",
+  "roundtrip_ok": false,
+  "suites": [
+    {
+      "errors": "0",
+      "failures": "2",
+      "file": "release-tests-initial.xml",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "256",
+      "time": "108.348",
+      "timestamp": "2026-10-01T03:35:57.261576+00:00"
+    },
+    {
+      "errors": "0",
+      "failures": "0",
+      "file": "release-lake-recheck.xml",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "2",
+      "time": "9.712",
+      "timestamp": "2026-10-01T03:38:47.101903+00:00"
+    }
+  ],
+  "unique_selected_checks": 256
+}
