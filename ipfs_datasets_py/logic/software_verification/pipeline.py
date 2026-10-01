@@ -87,7 +87,7 @@ from ipfs_datasets_py.logic.software_verification.vc import (
 
 SOURCE_TO_VERIFICATION_PIPELINE_INTERFACE: Final = "SourceToVerificationPipeline@1"
 PIPELINE_SCHEMA_VERSION: Final = "source-to-verification-pipeline/v1"
-PIPELINE_VERSION: Final = "1.0.0"
+PIPELINE_VERSION: Final = "1.0.1"
 
 # Solver-facing VC rules that lower into theorem-by-negation SMT queries.
 _SOLVER_RULES: Final[frozenset[VCRuleKind]] = frozenset(
@@ -334,7 +334,12 @@ class SourceToVerificationResult:
 
     @property
     def proved(self) -> bool:
-        if not self.obligation_results:
+        if (
+            self.status is not PipelineStatus.SUCCESS
+            or self.unsupported_constructs
+            or self.disagreement_quarantined
+            or not self.obligation_results
+        ):
             return False
         for item in self.obligation_results:
             report = item.differential
@@ -627,8 +632,6 @@ class _SmtLowering:
                 return term_true() if value else term_false()
             if isinstance(value, int) and not isinstance(value, bool):
                 return term_int(value)
-            if value is None:
-                return term_int(0)
             raise UnsupportedConstructError(
                 f"literal expression {expr.expression_id} has unsupported value {value!r}"
             )
@@ -685,19 +688,64 @@ class _SmtLowering:
     def body_assumptions(
         self, function: ProgramFunction
     ) -> tuple[SmtNamedAssertion, ...]:
-        """Encode straight-line body facts: assignments and result-return equalities."""
+        """Encode a single-assignment, single-return straight-line fragment.
+
+        This encoder has neither SSA renaming nor path-sensitive execution.
+        Reject those forms before adding equations: simultaneous equalities
+        for sequential writes or alternate returns can be contradictory and
+        make an arbitrary postcondition appear proved by both solvers.
+        """
+
+        if len(function.cfg.blocks) != 1 or function.cfg.edges:
+            raise UnsupportedConstructError(
+                "path-sensitive CFG semantics are not supported by the straight-line SMT body"
+            )
+        assigned = set(function.parameter_symbol_ids)
+        returned = False
+
+        def require_defined_value(expression_id: str) -> None:
+            pending = [expression_id]
+            visited: set[str] = set()
+            while pending:
+                current = pending.pop()
+                if current in visited:
+                    continue
+                visited.add(current)
+                expression = self.expressions.get(current)
+                if expression is None:
+                    raise UnsupportedConstructError("body expression is missing from ProgramIR")
+                if any(symbol_id not in assigned for symbol_id in expression.symbol_ids):
+                    raise UnsupportedConstructError(
+                        "read before local definition or unmodeled global requires binding semantics"
+                    )
+                pending.extend(expression.operand_ids)
 
         assumptions: list[SmtNamedAssertion] = []
         index = 0
         for command_id in function.cfg.command_ids:
             command = self.commands.get(command_id)
             if command is None:
-                continue
+                raise UnsupportedConstructError("body command is missing from ProgramIR")
+            if returned:
+                raise UnsupportedConstructError(
+                    "commands after return require control-flow semantics"
+                )
+            if command.attributes.get("branch_condition") is not None:
+                raise UnsupportedConstructError(
+                    "branch metadata requires path-sensitive CFG semantics"
+                )
             if command.kind is CommandKind.ASSIGN:
-                if not command.target_symbol_ids or not command.expression_ids:
-                    continue
+                if len(command.target_symbol_ids) != 1 or len(command.expression_ids) != 1:
+                    raise UnsupportedConstructError("assignment must have one target and value")
+                target_id = command.target_symbol_ids[0]
+                if target_id in assigned:
+                    raise UnsupportedConstructError(
+                        "sequential reassignment requires SSA semantics"
+                    )
+                require_defined_value(command.expression_ids[0])
                 target = self.declare_symbol(command.target_symbol_ids[0])
                 value = self.term_for_expression(command.expression_ids[0])
+                assigned.add(target_id)
                 assumptions.append(
                     SmtNamedAssertion(
                         formula=term_eq(term_symbol(target), value),
@@ -707,7 +755,11 @@ class _SmtLowering:
                 index += 1
             elif command.kind is CommandKind.RETURN:
                 if not command.expression_ids or not function.result_symbol_id:
-                    continue
+                    raise UnsupportedConstructError(
+                        "implicit/null return is outside the integer SMT body fragment"
+                    )
+                returned = True
+                require_defined_value(command.expression_ids[0])
                 result_name = self.declare_symbol(function.result_symbol_id)
                 value = self.term_for_expression(command.expression_ids[0])
                 assumptions.append(
@@ -718,32 +770,22 @@ class _SmtLowering:
                 )
                 index += 1
             elif command.kind is CommandKind.ASSUME:
-                # Path-condition fragments retained as named assumptions.
-                for expr_id in command.expression_ids:
-                    try:
-                        formula = self.term_for_expression(expr_id)
-                    except UnsupportedConstructError:
-                        continue
-                    assumptions.append(
-                        SmtNamedAssertion(
-                            formula=formula,
-                            name=f"body_assume_{index}",
-                        )
-                    )
-                    index += 1
-            elif command.kind in {
-                CommandKind.CALL,
-                CommandKind.THROW,
-                CommandKind.HAVOC,
-                CommandKind.ALLOCATE,
-                CommandKind.DEALLOCATE,
-                CommandKind.ATOMIC,
-                CommandKind.UNDEFINED,
-            }:
+                raise UnsupportedConstructError(
+                    "body assumptions require independently checked path semantics"
+                )
+            elif command.kind is CommandKind.SKIP and not (
+                command.expression_ids or command.attributes or command.effects.performs_io
+            ):
+                continue
+            else:
                 raise UnsupportedConstructError(
                     f"command kind {command.kind.value} cannot be encoded in the "
                     "straight-line SMT body fragment"
                 )
+        if not returned:
+            raise UnsupportedConstructError(
+                "body must have one explicit terminal return in the integer SMT fragment"
+            )
         return tuple(assumptions)
 
 

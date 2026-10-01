@@ -95,10 +95,11 @@ REQUIRED_LANE_IDS = (
     "runtime_temporal_monitoring",
 )
 
-# Assert-free supported fragment used for live solver generation. The manifest
-# resource_counter retains assert statements that the frontend classifies as
-# unsupported; those outcomes are recorded as unsupported, not as live proofs.
-SUPPORTED_RESOURCE_POSITIVE = """\
+# The positive fragment has branches and remains unsupported until the source
+# adapter constructs faithful CFG edges. Removing asserts does not make its
+# linearized branch observations sound for proof. The straight-line negative
+# still produces an actual solver counterexample.
+BRANCHING_RESOURCE_POSITIVE = """\
 def resource_counter(n, budget):
     if n < 0:
         return budget
@@ -581,13 +582,13 @@ def run_contracts_case(
     evidence_class = "fixture"
     result_status = "compiled"
 
-    # Live generation via supported-fragment mutation pair (assert-free).
+    # Run both sources, retaining unsupported control flow on the positive.
     if _solvers_available():
         pipeline = SourceToVerificationPipeline(bounds=_bounds())
         if kind == "positive":
             pipe = pipeline.run(
-                SUPPORTED_RESOURCE_POSITIVE,
-                path="sources/resource_counter_supported_positive.py",
+                BRANCHING_RESOURCE_POSITIVE,
+                path="sources/resource_counter_branching_positive.py",
                 contracts=list(RESOURCE_CONTRACTS),
             )
         else:
@@ -601,6 +602,7 @@ def run_contracts_case(
         )
         run_identity["pipeline_proved"] = bool(pipe.proved)
         run_identity["pipeline_disproved"] = bool(pipe.disproved)
+        diagnostics.extend(pipe.diagnostics)
         if pipe.bindings is not None:
             run_identity["program_id"] = pipe.bindings.source.program_id
             run_identity["pipeline_source_sha256"] = pipe.bindings.source.content_sha256
@@ -660,7 +662,7 @@ def run_contracts_case(
     # Manifest source with asserts is never a production proof claim.
     if adapted.status is SourceAdapterStatus.PARTIAL and kind == "positive":
         diagnostics.append(
-            "manifest resource_counter asserts → adapter partial; live proof uses supported fragment"
+            "manifest resource_counter asserts and branch control flow remain unsupported"
         )
 
     return CaseRun(
@@ -1248,7 +1250,9 @@ def test_report_does_not_hardcode_synthetic_readiness_percentage(
 
 
 @pytest.mark.skipif(not _solvers_available(), reason="z3/cvc5 not on PATH")
-def test_contracts_lane_live_generation_when_solvers_present(all_runs: list[CaseRun]) -> None:
+def test_contracts_lane_distinguishes_unsupported_branch_from_live_counterexample(
+    all_runs: list[CaseRun],
+) -> None:
     positives = [
         r
         for r in all_runs
@@ -1260,8 +1264,10 @@ def test_contracts_lane_live_generation_when_solvers_present(all_runs: list[Case
         if r.lane_id == "contracts_resources" and r.kind == "negative"
     ]
     assert positives and negatives
-    assert positives[0].evidence_class == "live"
-    assert positives[0].result_status == "proved"
+    assert positives[0].evidence_class == "unsupported"
+    assert positives[0].result_status == "unsupported"
+    assert positives[0].run_identity["pipeline_proved"] is False
+    assert any("path_sensitive_cfg" in item for item in positives[0].diagnostics)
     assert negatives[0].evidence_class == "live"
     assert negatives[0].generated_witness
     assert "model" in negatives[0].witness_summary.lower() or negatives[0].witness_summary

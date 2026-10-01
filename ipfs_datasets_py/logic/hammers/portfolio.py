@@ -69,7 +69,7 @@ import re
 import sys
 import threading
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
@@ -579,6 +579,20 @@ class SolverPortfolio:
             raise ValueError("resource_wait_timeout_seconds cannot be negative")
         self.resource_wait_timeout_seconds = resource_wait_timeout_seconds
 
+    def _execution_budget(self, solver_name: str) -> SolverBudget:
+        """Apply a bounded SMT/ATP default without constraining ITP fallbacks."""
+        budget = self.policy.budget_for(solver_name)
+        config = self.resource_scheduler.config
+        if config.proof_safety_enabled and budget.memory_mb is None:
+            capacity = config.total_memory_mb - config.reserved_memory_mb - sum(
+                item.memory_mb for lane, item in config.reservations().items()
+                if lane != self.resource_lane
+            )
+            if capacity <= 0:
+                raise PolicyError("no memory capacity remains for solver execution")
+            budget = replace(budget, memory_mb=min(1024, capacity))
+        return budget
+
     def resolve_attempts(
         self, attempts: Sequence[PortfolioAttemptSpec]
     ) -> Tuple[List[_ResolvedAttempt], List[Dict[str, str]]]:
@@ -700,7 +714,24 @@ class SolverPortfolio:
         cancelled_ids: List[str] = []
 
         max_workers = min(len(permitted), max(1, int(self.policy.max_parallel_processes)))
-        budgets = [self.policy.budget_for(spec.solver_name) for spec, _ in permitted]
+        budgets = [self._execution_budget(spec.solver_name) for spec, _ in permitted]
+        if self.resource_scheduler.config.proof_safety_enabled:
+            if any(budget.memory_mb is None for budget in budgets):
+                raise PolicyError("proof safety requires an explicit memory_mb budget for every solver")
+            config = self.resource_scheduler.config
+            reservations = config.reservations()
+            cpu_capacity = config.total_cpu_slots - sum(
+                item.cpu_slots for lane, item in reservations.items() if lane != self.resource_lane
+            )
+            memory_capacity = config.total_memory_mb - config.reserved_memory_mb - sum(
+                item.memory_mb for lane, item in reservations.items() if lane != self.resource_lane
+            )
+            max_workers = min(max_workers, cpu_capacity, config.total_child_process_slots)
+            largest_budgets = sorted((int(budget.memory_mb) for budget in budgets), reverse=True)
+            while max_workers > 0 and sum(largest_budgets[:max_workers]) > memory_capacity:
+                max_workers -= 1
+            if max_workers <= 0:
+                raise PolicyError("solver budget cannot fit the safe proof resource envelope")
         concurrent_memory = sum(
             sorted((int(budget.memory_mb or 0) for budget in budgets), reverse=True)[:max_workers]
         )
@@ -709,6 +740,7 @@ class SolverPortfolio:
             self.resource_lane,
             cpu_slots=max_workers,
             memory_mb=concurrent_memory,
+            child_process_slots=max_workers if self.resource_scheduler.config.proof_safety_enabled else 0,
             parent_lease=parent_lease,
             timeout=self.resource_wait_timeout_seconds,
             cancel_event=portfolio_cancel_event,
@@ -717,7 +749,7 @@ class SolverPortfolio:
             with supervised_temporary_directory(prefix="itp_hammer_portfolio_") as tmp_dir:
                 work_items = []
                 for index, (spec, executable_path) in enumerate(permitted):
-                    budget = self.policy.budget_for(spec.solver_name)
+                    budget = self._execution_budget(spec.solver_name)
                     attempt_id = (
                         f"{request_id}:{spec.translation.translation_id}:{spec.solver_name}:{index}"
                     )
@@ -798,6 +830,7 @@ class SolverPortfolio:
                 self.resource_lane,
                 cpu_slots=1,
                 memory_mb=int(budget.memory_mb or 0),
+                child_process_slots=1 if self.resource_scheduler.config.proof_safety_enabled else 0,
                 parent_lease=portfolio_lease,
                 timeout=self.resource_wait_timeout_seconds,
                 cancel_event=cancel_event,

@@ -1,0 +1,385 @@
+{
+  "schema": "gte-migration-preparation-config/v1",
+  "dimension": 384,
+  "vector_space_id": "thenlper/gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2:precision=float32:input_policy=exact_source_no_truncation",
+  "max_rows": 5000,
+  "checkpoints": [
+    {
+      "id": "legal_ir-source-sequence",
+      "path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+      "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+    },
+    {
+      "id": "intent_ir-source-sequence",
+      "path": "artifacts/source-reconstruction-v2-20261001/run-01/intent_ir/raw_ce-1729-checkpoint.json",
+      "sha256": "e8470c66411798f0368755ca379ba4ec8c022595118ed259df6a45b0d8999410"
+    },
+    {
+      "id": "security_ir-source-sequence",
+      "path": "artifacts/source-reconstruction-v2-20261001/run-01/security_ir/raw_ce-1729-checkpoint.json",
+      "sha256": "cae15b8907664d0ff21f1acfd8f9a7b13657126455847dbc33d839172f4f28cf"
+    },
+    {
+      "id": "ui_ux_ir-source-sequence",
+      "path": "artifacts/source-reconstruction-v2-20261001/run-01/ui_ux_ir/raw_ce-1729-checkpoint.json",
+      "sha256": "e4500483c685b46192ea7994a14d3237d42026f86dfe73723029da20d29b24aa"
+    },
+    {
+      "id": "legal-structured-source",
+      "path": "artifacts/source-reconstruction-v2-20261001/structured-01/legal_ir/checkpoint.json",
+      "sha256": "2ac54a5c3789d7c7a29d6b6a0db5e3a3a69e41c8b335e7ada62e80ecc845f8f3"
+    },
+    {
+      "id": "legal-grouped-structured-source",
+      "path": "artifacts/source-native-v3-20261001/run-02/legal_ir/augmented-0-checkpoint.json",
+      "sha256": "c8e42b07f5a6a5374e96d2e2334fb5daf7a2c66ad8d0eccaf06e990425424e08"
+    },
+    {
+      "id": "legal-native-family-feature",
+      "path": "artifacts/ir-training-complete-20261002/run-02/legal_ir/ridge_path-1729/family_checkpoint.json",
+      "sha256": "df41abe4bfe03ea2976ac1d48405eda145c0ff15a8a406bf2d432ee644f73885"
+    },
+    {
+      "id": "intent-paired-copy",
+      "path": "artifacts/intent-ir-compositional-20260930/curriculum-copy-01/model/candidate.json",
+      "sha256": "5c7393a32ea887b930acb62b2b8763199cda3d19253953cc02f84c06a89e4a4b"
+    },
+    {
+      "id": "legal-published-sparse-package",
+      "path": "artifacts/ir-384-hub-release-20261002/packages/legal_ir/checkpoint.json",
+      "sha256": "26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "source-v3-legal_ir-train",
+      "path": "artifacts/source-native-v3-20261001/run-02/legal_ir/train.json",
+      "sha256": "00f4074cca56daed9f766e74c90d3d35e608bfb1058c24db99fc30250314704f",
+      "domain_id": "legal_ir",
+      "split": "train",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-legal_ir-validation",
+      "path": "artifacts/source-native-v3-20261001/run-02/legal_ir/validation.json",
+      "sha256": "6a07b7a4d7c73802fc4a31a2666adcb312706fcc3deffbc46626d9d8914d43c9",
+      "domain_id": "legal_ir",
+      "split": "validation",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-legal_ir-test",
+      "path": "artifacts/source-native-v3-20261001/run-02/legal_ir/test.json",
+      "sha256": "33288ea40ee902788bb012b98dd48a767405c18090b92981ef82d680ddee0d72",
+      "domain_id": "legal_ir",
+      "split": "test",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-legal_ir-canary",
+      "path": "artifacts/source-native-v3-20261001/run-02/legal_ir/canary.json",
+      "sha256": "ac7c55bb4d70f1428d5ecd81595b0546fa325bfb7f4c9ab67ad010dcdba813ec",
+      "domain_id": "legal_ir",
+      "split": "canary",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-intent_ir-train",
+      "path": "artifacts/source-native-v3-20261001/run-02/intent_ir/train.json",
+      "sha256": "9d642ce65ac25ec9cb05b14db34aecb3584a648b6c2da4c3cb15c40ef1e7f8aa",
+      "domain_id": "intent_ir",
+      "split": "train",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-intent_ir-validation",
+      "path": "artifacts/source-native-v3-20261001/run-02/intent_ir/validation.json",
+      "sha256": "8478295c9c2a2e7158c8fdede1e3b5043e7278c0531020e4e8e0c7ffd27be404",
+      "domain_id": "intent_ir",
+      "split": "validation",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-intent_ir-test",
+      "path": "artifacts/source-native-v3-20261001/run-02/intent_ir/test.json",
+      "sha256": "775e8f91e4d485d34c58f256624670c32fe2a1c44f951f660027a0759c58aacc",
+      "domain_id": "intent_ir",
+      "split": "test",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-intent_ir-canary",
+      "path": "artifacts/source-native-v3-20261001/run-02/intent_ir/canary.json",
+      "sha256": "38dc9c77b3a9bb4ca584b7baef2cd9f84ecb6290ad781b4a6dbcff2744b2474b",
+      "domain_id": "intent_ir",
+      "split": "canary",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-security_ir-train",
+      "path": "artifacts/source-native-v3-20261001/run-02/security_ir/train.json",
+      "sha256": "99d856ef2a70f1a44c992f6f31dd35cd1f491db93f147065db51aa635d7c6876",
+      "domain_id": "security_ir",
+      "split": "train",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "python",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-security_ir-validation",
+      "path": "artifacts/source-native-v3-20261001/run-02/security_ir/validation.json",
+      "sha256": "e719430c2db18dde3d3e49ca831755a4569c975f2eff12bd1db7dba2c82cf8b3",
+      "domain_id": "security_ir",
+      "split": "validation",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "python",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-security_ir-test",
+      "path": "artifacts/source-native-v3-20261001/run-02/security_ir/test.json",
+      "sha256": "e2e590c68d00454600ce355bbc5bae57843786bd52704d61f7fb85dec761ac25",
+      "domain_id": "security_ir",
+      "split": "test",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "python",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-security_ir-canary",
+      "path": "artifacts/source-native-v3-20261001/run-02/security_ir/canary.json",
+      "sha256": "014c2029ed820a8431a11d636db342a97364611ad676aef67ebc789093014aed",
+      "domain_id": "security_ir",
+      "split": "canary",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "python",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-ui_ux_ir-train",
+      "path": "artifacts/source-native-v3-20261001/run-02/ui_ux_ir/train.json",
+      "sha256": "5522c6558ca5cb327c3c5716bc46a8b1a46b98a84fe8309320eeef2b1aace6e2",
+      "domain_id": "ui_ux_ir",
+      "split": "train",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-ui_ux_ir-validation",
+      "path": "artifacts/source-native-v3-20261001/run-02/ui_ux_ir/validation.json",
+      "sha256": "459e5e618b7ef429ee1b546a67c7bee2a7625948f69e3b33181e61791742ab36",
+      "domain_id": "ui_ux_ir",
+      "split": "validation",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-ui_ux_ir-test",
+      "path": "artifacts/source-native-v3-20261001/run-02/ui_ux_ir/test.json",
+      "sha256": "f559f236b6b99371670ac1414b421488ff97e9db2cea8d7899a5d9cecb77c124",
+      "domain_id": "ui_ux_ir",
+      "split": "test",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    },
+    {
+      "id": "source-v3-ui_ux_ir-canary",
+      "path": "artifacts/source-native-v3-20261001/run-02/ui_ux_ir/canary.json",
+      "sha256": "3fb02ae29045164cef41da8ebdea3e737d96b4b61f4d59f325c3037f8a1fb93c",
+      "domain_id": "ui_ux_ir",
+      "split": "canary",
+      "rows_key": "rows",
+      "group_field": "group_id",
+      "document_field": "group_id",
+      "source_language": "en",
+      "target_origin": "authored",
+      "evaluation_role": "development",
+      "source_exposure": "archived_diagnostic_exposed",
+      "document_identity_policy": "synthetic_composition_group_as_document_unit_original_document_spans_absent"
+    }
+  ],
+  "source_files": [
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_384.py",
+      "sha256": "fb3a5aa8ec005e98a2c62dc1d7e3e807a75820fedc156a8080c1f18063d17da7"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_training_v2.py",
+      "sha256": "8de8096e895de9df08ccf5352dfd704806823296821d98b5badf08bb553a52e4"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/structured_source_384.py",
+      "sha256": "3f9ca9ce7b4cf2a2d10d6aeb1fae78543c468133d2fa0df9fcb32f63f89e90f7"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/grouped_source_training_384.py",
+      "sha256": "c6dda0f85937f7ece993cf0bc82aebc72144457507db218cf83f9c9b495994a4"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/complete_training.py",
+      "sha256": "3237d133cf9c67c616e6cc9420e263534dfc4ba4bc1c2b866f3948fdcdcd417a"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/checkpoint_hub.py",
+      "sha256": "c9f4979b629c56f61dae380d9f947aa288792ff9b4bf6fd8a1c40223888b1a7b"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_document.py",
+      "sha256": "ca14c73abe5116e076d71a496dd14b49402ed666d248672a7afc2d433b807191"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/security/checkpoint_migration.py",
+      "sha256": "8f773dedc39c50981638595f8cf2f21ae4673dd1b609bf79b5d87eaf549e4d48"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/security/security_cve_source_context.py",
+      "sha256": "515be9aa5209c3547be8ef3bef75b541c00073bab74eac0445002b8ed13e2318"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/coherent_spans.py",
+      "sha256": "96cf37e04d07694c36e271d7da899c755132acf4e17f31dd788d623951393101"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/token_windows.py",
+      "sha256": "d0c148f0214a43905edba78595c814d310c319c29a90c99b7a3f0c63036a0e38"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/ml/embeddings/window_boundaries.py",
+      "sha256": "8f9c3ba901768b5c24ea6a2ddbcd7c878b18051d736b4a436b9e3ac2009e49e2"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py",
+      "sha256": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/domain_384_autoencoder.py",
+      "sha256": "66c5ee320f9c7aacd3b246d0666c7fc3ee928e4679892e1e90c838e1b291dbc6"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_receipt_set.py",
+      "sha256": "7ed4aeff1bec961690b31e2f2ea17975aa6523d947ce12a1c1ee24517bc1475c"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py",
+      "sha256": "e8f000712a553eb5b6ba13ad188bf21f57758952a1c7319da29e7265432bebf2"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_teacher_distillation.py",
+      "sha256": "adca358567c1520905c9bffec8166c01bfebe0dc6a8c63ad39940cb78ba43ff3"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paired_text.py",
+      "sha256": "0097b0128e21bcf386380490ae39023c9a15a44111088fb913f9fab5c366c9a3"
+    },
+    {
+      "path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paired_copy.py",
+      "sha256": "bb23ea196d90e3fd8fc667599cf2904793f2f27c90f7ff82ba34aacc10c8f238"
+    },
+    {
+      "path": "artifacts/source-native-v3-20261001/run-02/preparation.json",
+      "sha256": "688d06be83671d0274801958fcc47c725c5023f0ca9e41a8330cff657eafb914"
+    }
+  ]
+}

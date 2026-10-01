@@ -62,7 +62,10 @@ _FLOAT_FORMATS = {
 }
 _MAX_MANIFEST_BYTES = 4 * 1024 * 1024
 _MAX_PAYLOAD_BYTES = 8 * 1024 * 1024 * 1024
-_MAX_INDEX_BYTES = 512 * 1024 * 1024
+# The published canonical state stores one index path per logit. Its key
+# index is about 671 MiB, above the previous 512 MiB bound. The length
+# prefix is a uint32, so the cap stays below 4 GiB.
+_MAX_INDEX_BYTES = 2 * 1024 * 1024 * 1024
 _MAX_TABLE_VALUES = 1_000_000_000
 _NUMERIC_PACK_BATCH_VALUES = 4096
 

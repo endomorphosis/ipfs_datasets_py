@@ -23,6 +23,8 @@ belong to their named backend; they are not interchangeable across backends.
 | Transfer screened teacher evidence into separately embedded 384D formula training | [Teacher-to-student preparation and smoke](teacher_student_transfer.md) |
 | Detect actor shortcuts and compare balanced formula training data | [Actor composition and free-running evaluation](actor_composition_evaluation.md) |
 | Improve 8D feature updates and compare 384D reconstruction profiles | [Separate reconstruction-training paths](reconstruction_training.md) |
+| Plan transfer from GTE-small to 768D multilingual GTE with longer context | [384D to 768D logic IR migration plan](gte_multilingual_migration_plan.md) |
+| Inventory pinned checkpoints and audit transfer corpus partitions | [GTE migration preparation tools and first audit](gte_migration_preparation.md) |
 | Train the current latent projection and formula decoder together | [Joint formula training](modal_joint_formula_training.md) |
 | Recover historical 8D training optimizations | [Legacy speed history and selective ports](legacy_speed_history.md) |
 | Try native UI/UX learning from real compiler output | [Runnable native quickstart](native_feature_quickstart.md) |

@@ -1,0 +1,46 @@
+{
+  "schema": "datasets-release-test-summary/v1",
+  "source_checkout": "isolated HEAD plus explicit release manifest; PYTHONPATH points only to isolated checkout",
+  "unique_tests": 3529,
+  "counts": {
+    "passed": 3442,
+    "skipped": 87
+  },
+  "receipts": [
+    {
+      "path": "datasets-release-tests-02.xml",
+      "sha256": "2412ae26cafcf8c774650caacca195dbfdccc6c97be6d6ad95a5d2934f11ff9a"
+    },
+    {
+      "path": "datasets-release-tests-03.xml",
+      "sha256": "0fa451d4d9a6bddb05a3886ab2a779e6a56cee4bc120c3ea0c6cc335a333ab0a"
+    }
+  ],
+  "latest_result_wins_for_repeated_tests": true,
+  "skip_reasons": {
+    "explicit real canonical CVE export and immutable manifest hash required": 1,
+    "explicit pinned public qualification artifacts not configured": 1,
+    "could not import 'tree_sitter': No module named 'tree_sitter'": 19,
+    "local legal-initialized development parent absent": 4,
+    "frozen rich child descriptor is not installed; set INTENT_RICH_TEST_CHECKPOINT": 44,
+    "local development checkpoint absent": 1,
+    "set INTENT_SOURCE_FORM_CHECKPOINT to the explicit source-form pilot child": 4,
+    "installed leaf continuation checkpoint required": 9,
+    "training-03 search child is not installed; set INTENT_RICH_SEARCH_TEST_CHECKPOINT": 3,
+    "set IPFS_DATASETS_PUBLIC_BOTTLE_FIXTURE to the exact permitted public input": 1
+  },
+  "corrections": [
+    {
+      "kind": "test_setup",
+      "detail": "runnable examples generated current solver receipts using native FVT_021_WRITE_LIVE_REPORT hook; no borrowed historical fixture"
+    },
+    {
+      "kind": "test_portability",
+      "detail": "optional exact-SHA public Bottle input now requires explicit IPFS_DATASETS_PUBLIC_BOTTLE_FIXTURE; omitted in final rerun"
+    },
+    {
+      "kind": "test_numerical_contract",
+      "detail": "batched session FP32 confidence/projection/loss values compared at1e-6absolute/relative; keys/types/sequences and all nonfloat outputs exact; implementation weights and production code unchanged"
+    }
+  ]
+}

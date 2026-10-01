@@ -1,0 +1,388 @@
+{
+  "schema": "gte-multilingual-migration-work-items/v1",
+  "kind": "proposed_plan_not_runtime_configuration",
+  "planning_date": "2026-10-01",
+  "target_month": "2026-11",
+  "plan": "gte_multilingual_migration_plan.md",
+  "review": "gte_multilingual_migration_review.json",
+  "scope": {
+    "domains": [
+      "legal_ir",
+      "intent_ir",
+      "security_ir",
+      "ui_ux_ir"
+    ],
+    "default_first_domain": "legal_ir",
+    "first_domain_status": "default_assumption_user_can_override",
+    "teacher_model": "thenlper/gte-small",
+    "teacher_dimension": 384,
+    "teacher_max_input_tokens": 512,
+    "student_model": "Alibaba-NLP/gte-multilingual-base",
+    "student_dimension": 768,
+    "student_max_input_tokens": 8192,
+    "student_encoder_initially_frozen": true
+  },
+  "gate_definitions": {
+    "G0": "Source and data identity, provenance and split audit",
+    "G1": "Teacher scope, coverage and independent source fidelity",
+    "G2": "768D producer contract and reference numerical evidence",
+    "G3": "Short-context fidelity: teacher parity plus absolute accuracy, or separately preregistered absolute reference-supervised gate",
+    "G4": "Long-context scope and same-source comparison",
+    "G5": "Full local package compatibility and resource budget; WP09 provides resource evidence, WP10 completes package evidence"
+  },
+  "proposed_thresholds": {
+    "measured": false,
+    "freeze_before_selection": true,
+    "teacher_exact_ir_accuracy": 0.95,
+    "teacher_supported_scope_coverage": 0.9,
+    "minimum_initial_independent_groups_per_scope": 50,
+    "challenge_critical_error_count": 0,
+    "maximum_short_transfer_accuracy_regression_percentage_points": 1
+  },
+  "evaluation_protocol": {
+    "fitting_splits": [
+      "train"
+    ],
+    "selection_splits": [
+      "validation"
+    ],
+    "independent_evaluation_splits": [
+      "fresh_sealed_test",
+      "fresh_sealed_canary"
+    ],
+    "metadata_is_neural_input": false,
+    "main_comparison_minimum_seeds": 3,
+    "actual_seeds": "declare_and_freeze_at_experiment_setup",
+    "long_context_target_tokenizer_limits": [
+      512,
+      1024,
+      2048,
+      4096,
+      8192
+    ],
+    "canary_group_relationship": "Record actual relationship; canaries sharing test groups do not add independent group count",
+    "prior_exposed_panels": "Regression only; never independent final selection evidence",
+    "student_final_cohort": "Remains sealed during teacher repairs and student selection",
+    "cross_split_connected_groups": "Quarantine without rewriting established split membership",
+    "fitting_and_selection_supervision_exports": "Train/validation only; sealed evaluation never joins export",
+    "reference_prefix_logits": "Target-conditioned training evidence; targets and reference prefixes absent at generated inference",
+    "sequence_kd_compatibility": "Same canonical prefix, output codec and token identities required; raw versus grammar-masked distributions recorded; no timestep alignment across different output tokenizations"
+  },
+  "execution": {
+    "run_training": false,
+    "download_weights": false,
+    "upload_artifacts": false,
+    "schedule_automation": false,
+    "change_default_model": false
+  },
+  "work_items": [
+    {
+      "id": "WP01",
+      "title": "Baseline inventory",
+      "depends_on": [],
+      "gates": [
+        "G0"
+      ],
+      "period": "October 2026",
+      "deliverables": [
+        "Per-domain teacher pipeline and scope inventory",
+        "Checkpoint, producer, implementation and transform identities",
+        "Tensor shape and vocabulary inventory",
+        "Exposed versus independent evaluation inventory"
+      ],
+      "acceptance": [
+        "Complete selected pipeline replays from its actual inputs",
+        "Source and model identities recorded without treating Git HEAD as full dirty-tree provenance"
+      ],
+      "status": "in_progress",
+      "completed_outputs": [
+        "Dependency-free checkpoint and tensor inventory with schema checks",
+        "Pinned nine-checkpoint local inventory and exact input/implementation manifest"
+      ],
+      "outstanding_acceptance": [
+        "Selected teacher runtime replay from exact inputs",
+        "Complete runtime/embedding provenance validation and independent output scope"
+      ]
+    },
+    {
+      "id": "WP02",
+      "title": "384D teacher readiness",
+      "depends_on": [
+        "WP01"
+      ],
+      "gates": [
+        "G1"
+      ],
+      "period": "October 2026 and as needed",
+      "deliverables": [
+        "Fresh grouped tuning and independent evaluation cohorts",
+        "Frozen teacher checkpoint per supported output profile",
+        "Free-running fidelity, coverage and challenge-set report"
+      ],
+      "acceptance": [
+        "Declared criteria frozen before candidate selection",
+        "Teacher supervision limited to qualified scope",
+        "Low structural feature loss is not used as source-decoder qualification"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "WP03",
+      "title": "Canonical transfer corpus",
+      "depends_on": [
+        "WP01"
+      ],
+      "gates": [
+        "G0"
+      ],
+      "period": "October 2026",
+      "deliverables": [
+        "Source, reference-target and explicit context manifests",
+        "Connected leakage groups and immutable split memberships",
+        "Join rejection and usable coverage inventory"
+      ],
+      "acceptance": [
+        "No forbidden group/source/document/vector overlap",
+        "Target origin and reference evidence retained",
+        "Corpus availability is not treated as completed embedding or label coverage",
+        "Newly discovered connections across established splits are quarantined rather than repartitioned"
+      ],
+      "status": "in_progress",
+      "completed_outputs": [
+        "Reusable connected-component leakage and contradiction audit",
+        "Pinned corrected authored source panel with 2640 row bindings",
+        "720 archived test/canary rows quarantined without altering split memberships"
+      ],
+      "outstanding_acceptance": [
+        "Native target and external producer validation",
+        "Original-document and materialized-context contracts for natural corpora",
+        "Fresh independent sealed source/group cohorts"
+      ]
+    },
+    {
+      "id": "WP04",
+      "title": "768D embedding producer",
+      "depends_on": [
+        "WP01"
+      ],
+      "gates": [
+        "G2"
+      ],
+      "period": "October 2026 to November 7",
+      "deliverables": [
+        "Versioned local 768D producer and receipt profiles",
+        "Pinned model and external code assets",
+        "Versioned receipt-set and corpus join support",
+        "Token, pooling, precision and offline replay fixtures"
+      ],
+      "acceptance": [
+        "Finite normalized 768D CLS vectors",
+        "No silent truncation; token count includes special tokens",
+        "External implementation revision pinned separately",
+        "Character and byte bounds audited independently",
+        "No weights downloaded as part of this planning deliverable"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "WP05",
+      "title": "Frozen teacher supervision export",
+      "depends_on": [
+        "WP02",
+        "WP03"
+      ],
+      "gates": [
+        "G1"
+      ],
+      "period": "November 1 to 7 for ready scopes",
+      "deliverables": [
+        "Hard outputs, optional probabilities/logits and matching states",
+        "Supervision mask, disagreement and provenance records",
+        "Codec vocabulary alignment and prefix policy"
+      ],
+      "acceptance": [
+        "Export digests replay against frozen teacher",
+        "Teacher targets do not overwrite references",
+        "Unsupported or contradictory supervision is masked and counted",
+        "Training/selection exports never include sealed evaluation; prefix origins recorded"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "WP06",
+      "title": "Adapter transfer experiments",
+      "depends_on": [
+        "WP03",
+        "WP04"
+      ],
+      "gates": [
+        "G3"
+      ],
+      "period": "November 1 to 14",
+      "deliverables": [
+        "Learned affine 768-to-384 bridge and explicit wrapper for a qualified differentiable raw-embedding sequence teacher",
+        "Frozen and selectively tuned inherited-decoder arms",
+        "Supervised student baseline and masked KD experiment"
+      ],
+      "acceptance": [
+        "Selected teacher transform convention preserved",
+        "Adapted vectors have their own provenance and never counterfeit old producer receipts",
+        "Teacher checkpoint unchanged",
+        "Training-only adapter preprocessing and free-running evaluation",
+        "Nonzero finite adapter gradients through the differentiable teacher logits",
+        "Sparse-core and NumPy teachers use exported alignment/supervision; no untested gradient path or raw-vector head shortcut"
+      ],
+      "status": "planned",
+      "branch_prerequisites": {
+        "reference_supervised_baseline": [
+          "WP03",
+          "WP04"
+        ],
+        "teacher_transfer_and_distillation": [
+          "WP02",
+          "WP03",
+          "WP04",
+          "WP05"
+        ]
+      }
+    },
+    {
+      "id": "WP07",
+      "title": "Native 768D decoder branch",
+      "depends_on": [
+        "WP06"
+      ],
+      "gates": [
+        "G3"
+      ],
+      "period": "November 8 to 21",
+      "deliverables": [
+        "New dimension-dependent projection and conditioning architecture",
+        "Token-identity transfer inventory for compatible tensors",
+        "Fresh optimizer provenance and versioned student checkpoint",
+        "Transfer and KD ablations against fresh supervised head"
+      ],
+      "acceptance": [
+        "Shapes and vector-space profiles validated explicitly",
+        "No zero-padding or prefix equality claim",
+        "Matched grouped comparison separates transfer benefit from encoder benefit"
+      ],
+      "status": "planned",
+      "branch_prerequisites": {
+        "reference_supervised_native_head": [
+          "WP03",
+          "WP04",
+          "WP06"
+        ],
+        "compatible_teacher_tensor_transfer_and_kd": [
+          "WP02",
+          "WP05",
+          "WP06"
+        ]
+      }
+    },
+    {
+      "id": "WP08",
+      "title": "Long context and optional language extension",
+      "depends_on": [
+        "WP03",
+        "WP04",
+        "WP06"
+      ],
+      "gates": [
+        "G4"
+      ],
+      "period": "November 15 to 21 and follow-up as needed",
+      "deliverables": [
+        "Materialized context receipt and token-counted assembly policy",
+        "Progressive 512/1024/2048/4096/8192 target-tokenizer cohorts",
+        "Whole-document versus hierarchical/chunked comparison",
+        "Versioned variable-output or typed-unit assembly contracts",
+        "Separately qualified multilingual cohorts when ready"
+      ],
+      "acceptance": [
+        "Same original sources and fair context treatment in comparisons",
+        "Document reference targets support long-range dependencies",
+        "Local teacher labels are not treated as document-level gold",
+        "Input, output and custom copy-token limits audited independently",
+        "Translations share source-group partitions",
+        "Same document targets, source/context access and declared assembly factor; all overlap/scoring/assembly costs counted",
+        "Multilingual claims require versioned segmentation and source-scope validators beyond current English grammars"
+      ],
+      "status": "planned",
+      "entry_gate": "Applicable short-source fidelity gate passed by frozen selected teacher-transfer or reference-supervised student"
+    },
+    {
+      "id": "WP09",
+      "title": "Independent evaluation and profiling",
+      "depends_on": [
+        "WP03",
+        "WP04"
+      ],
+      "gates": [
+        "G3",
+        "G4"
+      ],
+      "period": "Continuous harness; November 22 to 30 finalist evaluation",
+      "deliverables": [
+        "Pre-registered grouped evaluation harness",
+        "Frozen-finalist paired comparison with uncertainty",
+        "Per-domain/family/language/length fidelity and coverage",
+        "Encoder, decoder, source-check and tool-execution resource profiles"
+      ],
+      "acceptance": [
+        "Harness can be built before transfer; scoring waits for frozen selected arms",
+        "All failures, unsupported inputs and overruns retained in accounting",
+        "Absolute fidelity and teacher parity reported separately",
+        "No deployment capacity assumption from unavailable GPU memory telemetry"
+      ],
+      "status": "planned",
+      "produces_for_downstream_gate": {
+        "G5": "Resource evidence only; package compatibility completed by WP10"
+      },
+      "gate_scope": "Per evaluated profile; unsupported context remains a reported gap rather than a successful G4"
+    },
+    {
+      "id": "WP10",
+      "title": "Versioned runtime and local package",
+      "depends_on": [
+        "WP04",
+        "WP09"
+      ],
+      "gates": [
+        "G5"
+      ],
+      "period": "November 22 to 30 after selected student exists",
+      "deliverables": [
+        "Explicit 768D runtime dispatch and closed package manifest",
+        "Offline local package replay and incompatibility checks",
+        "384D backward compatibility fixtures",
+        "Adoption report and documentation"
+      ],
+      "acceptance": [
+        "Final packaging consumes qualified selected student and WP09 resource evidence, then completes G5 package checks",
+        "Existing default 384D selection remains source compatible",
+        "No publication, deployment or scheduled automation performed by planning"
+      ],
+      "status": "planned"
+    }
+  ],
+  "implementation_progress": {
+    "phase": "baseline_inventory_and_archived_corpus_audit",
+    "guide": "gte_migration_preparation.md",
+    "configuration": "../../configs/autoencoders/gte_migration_preparation_v1.json",
+    "run_summary": "../../../../artifacts/gte-migration-preparation-20261001/run-01/summary.json",
+    "run_manifest_sha256": "611b6394e2f538ce2c3f43ff1c3d4b5a5ff92a7ab8e7040ae8810ff9d56f251e",
+    "tests_passed": 77,
+    "checkpoint_files": 9,
+    "corpus_rows": 2640,
+    "reference_complete_training_rows": 1440,
+    "reference_complete_tuning_rows": 480,
+    "quarantined_archived_evaluation_rows": 720,
+    "independent_sealed_cohorts_verified": 0,
+    "teacher_replay_executed": false,
+    "native_targets_validated": false,
+    "embedding_producers_verified": false,
+    "teacher_qualified": false
+  }
+}

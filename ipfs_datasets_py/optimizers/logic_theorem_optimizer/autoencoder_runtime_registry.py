@@ -22,6 +22,7 @@ NATIVE_DOMAINS = ("intent_ir", "security_ir", "ui_ux_ir")
 LEGAL_VERSIONS = ("legacy_v1", "legacy_v1_optimized", "current_v2")
 LEARNED_FORMULA_VERSION = "source_conditioned_formula_v1"
 NATIVE_FORMULA_VERSION = "native_formula_v1"
+PUBLISHED_384_VERSION = "published_384_v1"
 MAX_CANDIDATE_BYTES = 32 * 1024 * 1024
 
 
@@ -58,6 +59,15 @@ def describe_runtime(domain, version):
     requirements = describe_logic_requirements(domain)
     paths = [("autoencoder_runtime_registry.py", Path(__file__)),
              ("autoencoder_logic_requirements.py", root / "autoencoder_logic_requirements.py")]
+    if version == PUBLISHED_384_VERSION:
+        from ...logic.formalization.autoencoder.checkpoint_hub import RUNTIMES
+        return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+                "runtime_id": domain + ":" + version, "lineage_id": RUNTIMES[domain],
+                "input_representation": "gte_small_384d_source_embeddings", "dimension": 384,
+                "state_schema": "ir-384-hub-package/v1", "integrated": True,
+                "capabilities": ["load_checkpoint", "infer"], "release_stage": "development",
+                "source_identity": _source_identity(paths),
+                "qualification_requirements": requirements, **features.FALSE}
     if domain in NATIVE_DOMAINS and version == NATIVE_FORMULA_VERSION:
         paths.extend((name, Path(__file__).with_name(name)) for name in (
             "native_formula_training.py", "native_formula_checkpoint.py"))
@@ -147,7 +157,8 @@ def list_runtimes():
     legal = [version for version in LEGAL_VERSIONS if
              ((namespace / (version + ".py")) if version == "legacy_v1_optimized"
               else (namespace / version / "__init__.py")).is_file()]
-    return [describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION)] + [
+    return [describe_runtime(domain, PUBLISHED_384_VERSION) for domain in ("legal_ir", *NATIVE_DOMAINS)] + [
+        describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION)] + [
         describe_runtime(domain, version) for domain in NATIVE_DOMAINS
         for version in ("native_v1", "native_v2", NATIVE_FORMULA_VERSION)]
 
@@ -458,6 +469,9 @@ def open_runtime(domain, version, **binding):
     """Select explicitly. Dimensions, source metadata, and filenames never dispatch."""
     descriptor = describe_runtime(domain, version)
     _require(descriptor["integrated"], descriptor.get("unsupported_reason", "runtime is not integrated"))
+    if version == PUBLISHED_384_VERSION:
+        from ...logic.formalization.autoencoder.checkpoint_hub import open_autoencoder
+        return open_autoencoder(domain, **binding)
     if domain in NATIVE_DOMAINS and version == NATIVE_FORMULA_VERSION:
         return NativeFormulaRuntime(domain, **binding)
     if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:

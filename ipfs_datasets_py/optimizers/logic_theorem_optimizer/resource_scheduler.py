@@ -38,6 +38,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry impor
     ResourceSnapshot,
     collect_resource_snapshot,
 )
+from .proof_resource_safety import ProofHostResources, collect_proof_host_resources
 
 
 RESOURCE_SCHEDULER_SCHEMA_VERSION = "legal-ir-global-resource-scheduler-v1"
@@ -401,11 +402,71 @@ class ResourceSchedulerConfig:
         compare=False,
         repr=False,
     )
+    proof_safety_enabled: bool = False
+    proof_memory_headroom_mb: int = 0
+    proof_memory_stall_percent: float = 2.0
+    proof_cpu_stall_percent: float = 50.0
+    proof_io_stall_percent: float = 10.0
+    proof_backoff_seconds: float = 2.0
+    max_waiting_requests: Optional[int] = None
+    proof_resource_sampler: Callable[[], ProofHostResources] = field(
+        default=collect_proof_host_resources, compare=False, repr=False,
+    )
+
+    @classmethod
+    def for_proof_host(cls, **overrides: Any) -> "ResourceSchedulerConfig":
+        """Conservative host/container-aware profile for shared proof workers.
+
+        Keep 20% CPU and RAM outside the proof envelope. Explicit capacity
+        environment settings are capped by detected safe capacity. Install
+        the same configuration in every client of the shared state file.
+        """
+        sampler = overrides.get("proof_resource_sampler", collect_proof_host_resources)
+        host = sampler()
+        cpu = max(1, int(host.cpu_slots * 0.8))
+        memory = max(1, int(host.total_memory_mb * 0.8))
+        cpu = min(cpu, int(os.environ.get(DEFAULT_CPU_ENV, cpu)))
+        memory = min(memory, int(os.environ.get(DEFAULT_MEMORY_ENV, memory)))
+        defaults: Dict[str, Any] = {
+            "total_cpu_slots": cpu,
+            "total_memory_mb": memory,
+            "total_child_process_slots": min(cpu, _default_child_process_slots()),
+            "lane_reservations": {"validation": LaneReservation(cpu_slots=max(1, cpu // 8))}
+                if cpu > 1 else {},
+            "proof_safety_enabled": True,
+            "proof_resource_sampler": sampler,
+            "proof_memory_headroom_mb": max(1, host.total_memory_mb - memory),
+            "max_waiting_requests": 256,
+        }
+        defaults.update(overrides)
+        config = cls(**defaults)
+        config.validate()
+        return config
 
     def reservations(self) -> Dict[str, LaneReservation]:
         return _normalise_reservations(self.lane_reservations)
 
     def validate(self) -> None:
+        if (isinstance(self.proof_backoff_seconds, bool)
+                or not math.isfinite(float(self.proof_backoff_seconds))
+                or self.proof_backoff_seconds < 0):
+            raise ResourceConfigurationError("proof_backoff_seconds must be finite and non-negative")
+        if self.max_waiting_requests is not None and (
+            isinstance(self.max_waiting_requests, bool)
+            or not isinstance(self.max_waiting_requests, int)
+            or self.max_waiting_requests <= 0
+        ):
+            raise ResourceConfigurationError("max_waiting_requests must be positive or None")
+        if not isinstance(self.proof_safety_enabled, bool):
+            raise ResourceConfigurationError("proof_safety_enabled must be a bool")
+        if (isinstance(self.proof_memory_headroom_mb, bool)
+                or not isinstance(self.proof_memory_headroom_mb, int)
+                or self.proof_memory_headroom_mb < 0):
+            raise ResourceConfigurationError("proof_memory_headroom_mb must be non-negative")
+        for name in ("proof_memory_stall_percent", "proof_cpu_stall_percent", "proof_io_stall_percent"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not math.isfinite(float(value)) or not 0 <= value <= 100:
+                raise ResourceConfigurationError(f"{name} must be between 0 and 100")
         if isinstance(self.total_cpu_slots, bool) or not isinstance(self.total_cpu_slots, int):
             raise ResourceConfigurationError("total_cpu_slots must be an integer")
         if isinstance(self.total_memory_mb, bool) or not isinstance(self.total_memory_mb, int):
@@ -481,6 +542,13 @@ class ResourceSchedulerConfig:
 
     def persisted_dict(self) -> Dict[str, Any]:
         return {
+            "max_waiting_requests": self.max_waiting_requests,
+            "proof_safety_enabled": self.proof_safety_enabled,
+            "proof_memory_headroom_mb": self.proof_memory_headroom_mb,
+            "proof_memory_stall_percent": self.proof_memory_stall_percent,
+            "proof_cpu_stall_percent": self.proof_cpu_stall_percent,
+            "proof_io_stall_percent": self.proof_io_stall_percent,
+            "proof_backoff_seconds": self.proof_backoff_seconds,
             "total_cpu_slots": self.total_cpu_slots,
             "total_memory_mb": self.total_memory_mb,
             "total_gpu_memory_mb": self.total_gpu_memory_mb,
@@ -712,7 +780,7 @@ class GlobalResourceScheduler:
     """One process-safe scheduler shared by all host-local runtime lanes."""
 
     def __init__(self, config: Optional[ResourceSchedulerConfig] = None) -> None:
-        self.config = config or ResourceSchedulerConfig()
+        self.config = config or default_resource_scheduler_config()
         self.config.validate()
         self.state_path = Path(self.config.state_path).expanduser().resolve()
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -820,6 +888,13 @@ class GlobalResourceScheduler:
         # admission behavior, so an active scheduler can be upgraded safely.
         stored.setdefault("total_unified_memory_mb", None)
         stored.setdefault("total_child_process_slots", 64)
+        stored.setdefault("max_waiting_requests", None)
+        stored.setdefault("proof_safety_enabled", False)
+        stored.setdefault("proof_memory_headroom_mb", 0)
+        stored.setdefault("proof_memory_stall_percent", 2.0)
+        stored.setdefault("proof_cpu_stall_percent", 50.0)
+        stored.setdefault("proof_io_stall_percent", 10.0)
+        stored.setdefault("proof_backoff_seconds", 2.0)
         if stored == expected:
             state["config"] = expected
             return
@@ -963,6 +1038,24 @@ class GlobalResourceScheduler:
         return ""
 
     def _pressure_allows(self, waiter: Mapping[str, Any]) -> tuple[bool, str]:
+        if self.config.proof_safety_enabled:
+            try:
+                host = self.config.proof_resource_sampler()
+                if int(waiter["memory_mb"]) <= 0:
+                    return False, "proof_memory_reservation_required"
+                if host.available_memory_mb < (
+                    self.config.proof_memory_headroom_mb + int(waiter["memory_mb"])
+                ):
+                    return False, "proof_memory_headroom"
+                for observed, threshold, reason in (
+                    (host.memory_stall_percent, self.config.proof_memory_stall_percent, "proof_memory_stall"),
+                    (host.cpu_stall_percent, self.config.proof_cpu_stall_percent, "proof_cpu_stall"),
+                    (host.io_stall_percent, self.config.proof_io_stall_percent, "proof_io_stall"),
+                ):
+                    if observed >= threshold:
+                        return False, reason
+            except Exception:
+                return False, "proof_resource_telemetry_unknown"
         if (
             self.config.max_memory_percent is None
             and self.config.max_swap_percent is None
@@ -1067,8 +1160,38 @@ class GlobalResourceScheduler:
         )
 
     def _can_grant(self, state: Mapping[str, Any], waiter: Mapping[str, Any]) -> bool:
+        if self.config.proof_safety_enabled:
+            # Treat every outstanding envelope as not yet materialized. This
+            # deliberately overestimates demand rather than letting simultaneous
+            # admissions all spend the same live MemAvailable measurement.
+            now = time.time()
+            backoff = state.setdefault("proof_backoff", {})
+            if now < float(backoff.get("until", 0)):
+                return False
+            reason = ""
+            try:
+                host = self.config.proof_resource_sampler()
+                reserved = self._root_usage(state)[1]
+                additional = 0 if waiter.get("parent_lease_id") else int(waiter["memory_mb"])
+                if host.available_memory_mb < self.config.proof_memory_headroom_mb + reserved + additional:
+                    reason = "proof_memory_headroom"
+                for observed, threshold, label in (
+                    (host.memory_stall_percent, self.config.proof_memory_stall_percent, "proof_memory_stall"),
+                    (host.cpu_stall_percent, self.config.proof_cpu_stall_percent, "proof_cpu_stall"),
+                    (host.io_stall_percent, self.config.proof_io_stall_percent, "proof_io_stall"),
+                ):
+                    if observed >= threshold:
+                        reason = label
+            except Exception:
+                reason = "proof_resource_telemetry_unknown"
+            if reason:
+                backoff.update(until=now + self.config.proof_backoff_seconds, reason=reason)
+                return False
+            backoff.clear()
         if waiter.get("parent_lease_id"):
-            return self._child_can_grant(state, waiter)
+            return self._child_can_grant(state, waiter) and (
+                not self.config.proof_safety_enabled or self._pressure_allows(waiter)[0]
+            )
         return self._root_can_grant(state, waiter)
 
     def _is_fair_turn(self, state: Mapping[str, Any], waiter: Mapping[str, Any]) -> bool:
@@ -1169,6 +1292,8 @@ class GlobalResourceScheduler:
             raise ResourceConfigurationError("cpu_slots must be a positive integer")
         if isinstance(memory_mb, bool) or not isinstance(memory_mb, int) or memory_mb < 0:
             raise ResourceConfigurationError("memory_mb must be a non-negative integer")
+        if self.config.proof_safety_enabled and memory_mb == 0:
+            raise ResourceConfigurationError("proof safety requires a positive memory_mb reservation")
         if (
             isinstance(gpu_memory_mb, bool)
             or not isinstance(gpu_memory_mb, int)
@@ -1250,6 +1375,9 @@ class GlobalResourceScheduler:
             with self._locked_state() as state:
                 self._recover_stale_locked(state, now_wall)
                 if waiter_id not in state["waiters"]:
+                    if (self.config.max_waiting_requests is not None
+                            and len(state["waiters"]) >= self.config.max_waiting_requests):
+                        raise ResourceUnavailableError("resource admission queue is full; retry later")
                     if parent_id:
                         parent_record = state["leases"].get(parent_id)
                         if parent_record is None:
@@ -1355,6 +1483,9 @@ class GlobalResourceScheduler:
 
             if terminal is None and granted_record is None:
                 wait_for = self.config.poll_interval_seconds
+                if self.config.proof_safety_enabled:
+                    remaining_backoff = float(state.get("proof_backoff", {}).get("until", 0)) - time.time()
+                    wait_for = max(wait_for, min(1.0, remaining_backoff))
                 if deadline is not None:
                     wait_for = min(wait_for, max(0.0, deadline - time.monotonic()))
                 if cancel_event is not None and hasattr(cancel_event, "wait"):
@@ -1543,6 +1674,7 @@ class GlobalResourceScheduler:
                 "active_root_lease_count": len(state["leases"]) - active_children,
                 "active_child_lease_count": active_children,
                 "waiting_request_count": len(state["waiters"]),
+                "proof_backoff": dict(state.get("proof_backoff", {})),
                 "saturation": {
                     "saturated": cpu >= self.config.total_cpu_slots
                     or memory >= self.config.total_memory_mb - self.config.reserved_memory_mb
@@ -1650,12 +1782,19 @@ _GLOBAL_SCHEDULERS: Dict[str, GlobalResourceScheduler] = {}
 _GLOBAL_SCHEDULERS_LOCK = threading.Lock()
 
 
+def default_resource_scheduler_config() -> ResourceSchedulerConfig:
+    """Use conservative admission unless an operator explicitly opts out."""
+    if os.environ.get("IPFS_DATASETS_PROOF_RESOURCE_SAFETY", "1") == "0":
+        return ResourceSchedulerConfig()
+    return ResourceSchedulerConfig.for_proof_host()
+
+
 def get_global_resource_scheduler(
     config: Optional[ResourceSchedulerConfig] = None,
 ) -> GlobalResourceScheduler:
     """Return the process-local facade for the shared host state file."""
 
-    effective = config or ResourceSchedulerConfig()
+    effective = config or default_resource_scheduler_config()
     key = str(Path(effective.state_path).expanduser().resolve())
     with _GLOBAL_SCHEDULERS_LOCK:
         scheduler = _GLOBAL_SCHEDULERS.get(key)

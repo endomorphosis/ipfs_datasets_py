@@ -68,7 +68,7 @@ def test_catalog_has_closed_versions_and_limited_source_identity():
     assert len({item["runtime_id"] for item in catalog}) == len(catalog)
     for domain in interface.NATIVE_DOMAINS:
         selected = {item["runtime_version"]: item for item in catalog if item["domain"] == domain}
-        assert set(selected) == {"native_v1", "native_v2", "native_formula_v1"}
+        assert set(selected) == {"native_v1", "native_v2", "native_formula_v1", "published_384_v1"}
         assert selected["native_formula_v1"]["integrated"]
         assert selected["native_formula_v1"]["formal_decoder"]["trained_neural_decoder"]
         assert selected["native_v1"]["integrated"]
