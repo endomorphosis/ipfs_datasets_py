@@ -1,0 +1,56 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/formula-release-51c286548
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 565 items
+
+tests/unit/logic/test_paired_span_census.py ............................ [  4%]
+...................................                                      [ 11%]
+tests/unit/logic/test_span_cache_exchange.py ................            [ 13%]
+tests/unit/logic/test_span_cache_exchange_outputs.py ................... [ 17%]
+..............                                                           [ 19%]
+tests/unit/logic/test_span_cache_exchange_validation.py ................ [ 22%]
+....                                                                     [ 23%]
+tests/unit/logic/test_import_span_cache_exchange.py .................... [ 26%]
+..................                                                       [ 30%]
+tests/unit/logic/test_index_span_exchange_outputs.py ................... [ 33%]
+                                                                         [ 33%]
+tests/unit/logic/test_publish_span_cache_exchange.py ............        [ 35%]
+tests/unit/logic/test_family_qualification.py .......................... [ 40%]
+........................................................................ [ 52%]
+..                                                                       [ 53%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_formula_fleet.py . [ 53%]
+........                                                                 [ 54%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_formula_exchange.py . [ 55%]
+.............................................................            [ 65%]
+tests/unit/optimizers/logic_theorem_optimizer/test_formula_checkpoint_exchange_cli.py . [ 66%]
+...                                                                      [ 66%]
+tests/unit/optimizers/logic_theorem_optimizer/test_paired_span_publication.py . [ 66%]
+....                                                                     [ 67%]
+tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_publication.py . [ 67%]
+..............                                                           [ 70%]
+tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_cuda_runner.py . [ 70%]
+...................................                                      [ 76%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_runtime_registry.py . [ 76%]
+..............                                                           [ 79%]
+tests/unit/optimizers/logic_theorem_optimizer/test_native_formula_runtime.py . [ 79%]
+.............                                                            [ 81%]
+tests/unit/optimizers/logic_theorem_optimizer/test_native_formula_training.py . [ 81%]
+....................                                                     [ 85%]
+tests/unit/optimizers/logic_theorem_optimizer/test_native_formula_cli.py . [ 85%]
+.............                                                            [ 87%]
+tests/unit/optimizers/logic_theorem_optimizer/test_learned_formula_runtime.py . [ 87%]
+............                                                             [ 90%]
+tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_learning.py . [ 90%]
+...........                                                              [ 92%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_decoded_schema.py . [ 92%]
+......                                                                   [ 93%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_schema_lake.py . [ 93%]
+................................                                         [ 99%]
+tests/unit/duckdb_control/test_autoencoder_quack.py ....                 [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-integration-20261001/validation/release.xml -
+======================== 565 passed in 86.82s (0:01:26) ========================

@@ -1,0 +1,77 @@
+{
+  "admitted": false,
+  "credentials_included": false,
+  "files": [
+    {
+      "bytes": 762454,
+      "path": "census.json",
+      "sha256": "3c1bb05cf4df5f6e64b24d83c502c7c5a0961cbd2b14ed5ec3a635b2f7b65d3a"
+    },
+    {
+      "bytes": 7710,
+      "path": "corrected-tests.xml",
+      "sha256": "2daa6b200f8083b3106defa6ce4e8e96f04616cddd3090c43ba5e2862ba0054a"
+    },
+    {
+      "bytes": 1145,
+      "path": "final-boundaries-tests.xml",
+      "sha256": "84c6095055707c8347e75f0708773b41c0d2ba3be716c2d04613b40b17789bf9"
+    },
+    {
+      "bytes": 256255,
+      "path": "fleet.json",
+      "sha256": "e1cdbdda710c93080004bf9f2b3b2660af5d2f9d5aaf5a70cffd95098b4e5371"
+    },
+    {
+      "bytes": 12764,
+      "path": "harnesses/census.py",
+      "sha256": "a5d4452da5965c47d30adce9dc646d063f1fc20c780b9d6cc940ee3a953a7d04"
+    },
+    {
+      "bytes": 3785,
+      "path": "harnesses/package_evidence.py",
+      "sha256": "abbce83d88489263d5201369f0d1cae81f56314d33a64e8c6e2d15de0d3daf16"
+    },
+    {
+      "bytes": 806,
+      "path": "historical-paired-v1.json",
+      "sha256": "070d4b3015818af69df1f3bdaa12aedf1dbcbb9fa018a09cb57faa586b88e947"
+    },
+    {
+      "bytes": 116847,
+      "path": "installed-tests.xml",
+      "sha256": "a6d0b9092178b1a9fec159eeb062fceffd7c27fde7717b722f241ced886c9be9"
+    },
+    {
+      "bytes": 29602,
+      "path": "originals.json",
+      "sha256": "c26320409e9b867c366e8d664c4941186d0a2779bad5503aaa1ad9a279898842"
+    },
+    {
+      "bytes": 1562,
+      "path": "release-test-files.txt",
+      "sha256": "6d53f70a80175e6f7e53bee74902ef84c4e60e4becc329ded0f07c38cef84cd4"
+    },
+    {
+      "bytes": 100361,
+      "path": "release-tests.xml",
+      "sha256": "745992473bbce6002f812a558b3fdc548474f6e6627f3d6f16409d48de0cca0b"
+    },
+    {
+      "bytes": 4613,
+      "path": "release-output.txt",
+      "sha256": "d71fe2a19df51cef24d4331af36d417ccc6136e73149947b6a05cffbcb0bfac8"
+    },
+    {
+      "bytes": 4512,
+      "path": "summary.json",
+      "sha256": "919562909e75d06f64466bafc57d978f3c3ac5e13af837bbcb66a6de21c48659"
+    }
+  ],
+  "formalized": false,
+  "implementation_commit": "51c286548d16fbe8da13fce5e314e8f14a7a23ed",
+  "private_assignments_included": false,
+  "qualified": false,
+  "schema": "decoder-integration-evidence/v1",
+  "weights_included": false
+}

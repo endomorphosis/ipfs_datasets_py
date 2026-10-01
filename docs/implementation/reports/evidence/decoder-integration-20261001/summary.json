@@ -1,0 +1,140 @@
+{
+  "admitted": false,
+  "case_counts_are_not_additive": true,
+  "census": {
+    "bridge_names": [],
+    "bridge_workers": 1,
+    "compiler_compiled_count": 3,
+    "decoded_count": 3,
+    "exchange_goals_by_kind": {
+      "repair_packet": 2,
+      "training_goal": 2
+    },
+    "index_remote_source_closure_verified": false,
+    "known_lost_emergency_preserved": true,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_target_count": 0,
+    "max_rss_kib": 713416,
+    "metadata_only_no_false_semantic_goals": true,
+    "metric_cache_used": false,
+    "metric_disk_cache": false,
+    "not_a_bridge_on_speed_measurement": true,
+    "paired_goal_count": 2,
+    "sample_count": 4,
+    "source_kind": "authored_integration_clauses_three_prior_heldout_plus_one_OOV",
+    "source_unchanged": true,
+    "timings": {
+      "compiler_seconds": 0.2768632830120623,
+      "compiler_seconds_per_span": 0.06921582075301558,
+      "exchange_export_readback_retry_seconds": 0.07320627407170832,
+      "import_dry_plan_seconds": 0.6115587938111275,
+      "inference_seconds": 0.21785106998868287,
+      "inference_seconds_per_span": 0.054462767497170717,
+      "output_index_seconds": 0.4282316640019417,
+      "paired_export_readback_seconds": 0.22600200399756432,
+      "total_seconds": 2.6356974691152573
+    }
+  },
+  "constitution_formalized": false,
+  "credentials_in_evidence": false,
+  "fleet": {
+    "actual_schema_lake_builds": 8,
+    "full_family_backend_validation": false,
+    "heads_promoted": false,
+    "rerun_statuses": [
+      [
+        "already_completed",
+        "already_completed"
+      ],
+      [
+        "completed",
+        "completed"
+      ],
+      [
+        "already_completed",
+        "already_completed"
+      ]
+    ],
+    "rerun_worker_capacities": [
+      2,
+      2,
+      0
+    ],
+    "test_scheduler_scope": "isolated namespace and ledger; actual hardware probes, installed Quack, one DuckDB owner, real reservations",
+    "worker_count": 2,
+    "worker_domains": [
+      "intent_ir",
+      "ui_ux_ir"
+    ]
+  },
+  "formalized": false,
+  "implementation_commit": "51c286548d16fbe8da13fce5e314e8f14a7a23ed",
+  "known_semantic_failure": "learned legal decoder drops emergency exception on authored held-out clause; discrepancy preserved",
+  "qualified": false,
+  "release_scope": "isolated sparse checkout of exact commit, not shared dirty working tree",
+  "release_worktree": "/tmp/formula-release-51c286548",
+  "schema": "decoder-integration-validation/v1",
+  "supervisor_enqueued": false,
+  "test_environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HF_HUB_OFFLINE": "1",
+    "IPFS_DATASETS_RUN_NATIVE_STORAGE_PROBE": "1",
+    "PYTHONPATH": "<isolated checkout>"
+  },
+  "test_invocation": "python3 -m pytest -q <files listed in release-test-files.txt> --junitxml=<output>",
+  "tests": {
+    "corrected": {
+      "errors": "0",
+      "failed_cases": [],
+      "failures": "0",
+      "skipped": "0",
+      "tests": "42",
+      "time": "30.095"
+    },
+    "final-boundaries": {
+      "errors": "0",
+      "failed_cases": [],
+      "failures": "0",
+      "skipped": "0",
+      "tests": "5",
+      "time": "13.090"
+    },
+    "installed": {
+      "errors": "0",
+      "failed_cases": [
+        "test_full_learned_formula_and_provenance_survive_verified_export_and_goal_binding",
+        "test_rehashed_census_cannot_rebind_a_learned_receipt_to_another_model",
+        "test_learned_paired_comparison_does_not_require_fabricated_text_or_vector_scores[False]",
+        "test_learned_paired_comparison_does_not_require_fabricated_text_or_vector_scores[True]",
+        "test_metadata_only_comparison_is_recomputed_before_suppressing_work[False]",
+        "test_metadata_only_comparison_is_recomputed_before_suppressing_work[True]",
+        "test_resource_backed_cli_finishes_and_completed_retry_does_not_retrain"
+      ],
+      "failures": "7",
+      "skipped": "0",
+      "tests": "565",
+      "time": "71.671"
+    },
+    "release": {
+      "errors": "0",
+      "failed_cases": [],
+      "failures": "0",
+      "skipped": "0",
+      "tests": "565",
+      "time": "86.814"
+    }
+  },
+  "transport": {
+    "automatic_global_head_coordination": false,
+    "domains": [
+      "legal_ir",
+      "intent_ir",
+      "security_ir",
+      "ui_ux_ir"
+    ],
+    "format": "exact parent-bound JSON subtree postimages or complete anchors",
+    "hub_test_scope": "injected offline client; no live upload or weight download",
+    "live_cross_machine_sync_verified": false
+  },
+  "weights_in_evidence": false
+}
