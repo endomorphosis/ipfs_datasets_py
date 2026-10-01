@@ -1,0 +1,2109 @@
+{
+  "schema": "native-semantic-projection-evidence-manifest/v1",
+  "base_commit": "aad94108806836ea5f7a8d9bf9fbbe1c98b1e2c9",
+  "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native-semantic-projections-20261001/source",
+  "reviewed_candidate_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/family_training_v5.py": "b97534f9435a770a275a408bab160cdc1b1b1a1dc21142d271a2ab2e7c55f37f",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters_v3.py": "1df55f2679990fca270b9d59ba68f2aac7fc75bca73a96f5d0b7aa09f38a8ff9",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lake_v3.py": "1528142dce280a41425ef8a54927eea224586aed8ea1ece5fd2a1b027c36828a",
+    "ipfs_datasets_py/logic/formalization/autoencoder/projection_validation_contract_v3.py": "a563865cef8782262480fc9e785e6084e89a5acb692c370d17fd7f83e1004984",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_security_lean.py": "32b2605b43329ecc9eed496d78f819d09a642c734d911cc6542d393eb7e6949d",
+    "ipfs_datasets_py/logic/formalization/autoencoder/intent_semantic_training_views.py": "985558706be7e0c4b4e446f92d938eaa6c14569f04f0d9aa4d6847fef183a087",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_intent_semantic_lean.py": "77946b46eec746610ab294b3c1205c1b99c4f0818d0ddcedff1de46e23231bab",
+    "ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_validated_v3.py": "0e1cd8a9651e380500b78be8d3486e0e8db1ac1b0aa98b7f37c9a6da71ee7e85",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/authored_semantic_projection_panel.py": "81f920155f1629b64086045a789d51a79514b50ea5f0b3e94dedcbfe7ed308e2",
+    "scripts/ops/autoencoder/check_native_projection_lake_v3.py": "eb427ab42982ef1b59803d24b3417019cf688fc8ea625dc64744b8db28b5b11b",
+    "scripts/ops/autoencoder/smoke_semantic_projection_training.py": "7f64ec2f7542ffa2236b17649a318e4d281b63ba833bc26635804bcd576451b1",
+    "tests/unit/logic/formalization/autoencoder/test_native_security_lean.py": "2f08f19557c72174af3138d2118d17528968212cd92c5dd108623ec1f27fd4b7",
+    "tests/unit/logic/formalization/autoencoder/test_intent_semantic_training_views.py": "fc20dd2645baefe6988f2cd68e88126cec1048b54a2eb660ddfedcf44a9cd801",
+    "tests/unit/logic/formalization/autoencoder/test_native_qualified_lean.py": "7456be3f0d8d352ceeef09cdb1faa37c936eb8b08e652bd1396d07c1b72adb2e",
+    "tests/unit/logic/formalization/autoencoder/test_semantic_projection_gate.py": "1c6f5d8122a28647ae6f914e1f3bf5c57d6db585f0248294971cec68a9a0653f",
+    "tests/unit/logic/formalization/autoencoder/test_family_training_v5.py": "56e49709e2ebf456616a627a3f7ee2af3a795d286b7c3f233d95214cc6dfbb0e",
+    "docs/autoencoders/native_semantic_projections_v3.md": "3bbc56ce9e84b87823fa2719224b3e8309fd375ec95434ffc0397540cc929edb",
+    "tests/unit/logic/formalization/autoencoder/test_authored_semantic_projection_panel.py": "ef2de6b1a30aecb64f7fa810cb59330cacd5e6202a794aa052695780f406ed21"
+  },
+  "archive": {
+    "path": "native-semantic-projections.tar.gz",
+    "sha256": "16667fcbde19d403cf832d356a0f8f01498cc96b4b7e18ff350b970a9f49b4b8",
+    "bytes": 3532880,
+    "member_count": 517
+  },
+  "results_sha256": "c55a04c1611f076818b4be6ac317bf77863fb34a9df7c862f5776cbe7608a4d3",
+  "source_producer_pins_verified_for_all_final_native_receipts": true,
+  "final_receipts": [
+    "evidence/matrix-v3-r3/summary.json",
+    "evidence/authored-training-r1/summary.json"
+  ],
+  "retained_attempt_scope": "Failed matrix and authored-precondition attempts plus early test logs retained. Exact before-fix Intent adapter and authored panel snapshots included; early development logs are not all independently replayable.",
+  "archive_members": {
+    "evidence/authored-fixture-preparation-r1.json": {
+      "sha256": "a2d0aeeeeb9b4f7e0fb02b43542aeb7740f8fee1606ef0d9b7ed9f5d4e82cf87",
+      "bytes": 9957
+    },
+    "evidence/authored-fixture-preparation-r1.log": {
+      "sha256": "6fa7b09aa297e8301276114f9f4aac008d9721cf11980dae2f05f6eb0df85b8f",
+      "bytes": 21654
+    },
+    "evidence/authored-fixture-preparation-r2.json": {
+      "sha256": "3d362a8144f06b6cdcc29d9c624e3eee6a29990f2e3645fffde08f5051d5eb56",
+      "bytes": 2682
+    },
+    "evidence/authored-fixture-preparation-r2.log": {
+      "sha256": "5e0966540ff1d4f82cd2d92ea461f6256ed004c03068402d6321465a42e06229",
+      "bytes": 15897
+    },
+    "evidence/authored-panel-before-effect-only.py": {
+      "sha256": "08005070f122fa9c08d8b95d5aaae6deb5da2fea08a77ea836560c6d9c5bbbea",
+      "bytes": 7976
+    },
+    "evidence/authored-panel-tests-r1.log": {
+      "sha256": "b6ab754e163c8dbcaf5a17a5849f05e4c34f6c1290a386ac9a582d11bbbfc977",
+      "bytes": 1247
+    },
+    "evidence/authored-panel-tests-r1.xml": {
+      "sha256": "30329bcbbd8c196d4a67756904315450b3fb947e74cd8a66d623195f558b85bf",
+      "bytes": 1105
+    },
+    "evidence/authored-training-r1.log": {
+      "sha256": "1d75d49bf3910103db0425bad281f8e2f99d143d28b3b3f33b0f132db42f9b77",
+      "bytes": 52327
+    },
+    "evidence/authored-training-r1/intent_ir/checkpoint/family_checkpoint.json": {
+      "sha256": "6e0a4ed6f6588b3a01528d405c0a305c7afb5b98afac196f7bc85e17d3caf803",
+      "bytes": 977165
+    },
+    "evidence/authored-training-r1/intent_ir/source-0-fixture.json": {
+      "sha256": "0e1525f248676b49eff03c38c2316bb2b4a5e409ea4762de0cc75694e89f4333",
+      "bytes": 1982
+    },
+    "evidence/authored-training-r1/intent_ir/source-0-prepared-targets.json": {
+      "sha256": "5163a0b84b3e7a40a7b1b23e1ded0e0007d6eefc3a13578e4a576844aa4540ff",
+      "bytes": 505625
+    },
+    "evidence/authored-training-r1/intent_ir/source-0/IntentIR.lean": {
+      "sha256": "2fdb517f4351166f841ea6572529934f301007b9bd01983ee8932de8cb15ac26",
+      "bytes": 31522
+    },
+    "evidence/authored-training-r1/intent_ir/source-0/receipt.json": {
+      "sha256": "be4c0e2f3a2527af40326c1dbf0d80a4e52738f69152dc13ac6d0b0c38c2a100",
+      "bytes": 173220
+    },
+    "evidence/authored-training-r1/intent_ir/source-0/validation.json": {
+      "sha256": "0234ae7441b2daad94c7a7818f45408e2474d7afc31b049f47e5fb363d28d3c5",
+      "bytes": 29149
+    },
+    "evidence/authored-training-r1/intent_ir/source-1-fixture.json": {
+      "sha256": "bc54d687fd320a04d6b7d980809e92991a1ef4a2b87ff01e0af23a86eed9e978",
+      "bytes": 1982
+    },
+    "evidence/authored-training-r1/intent_ir/source-1-prepared-targets.json": {
+      "sha256": "07f5259f144e775b92f5ea30a181922e3ecd954d530bd15c123439d1e4eb6c99",
+      "bytes": 506055
+    },
+    "evidence/authored-training-r1/intent_ir/source-1/IntentIR.lean": {
+      "sha256": "42ea2ee21cb56660ed9f699657b81bd96221e181a96ba0953915bded014db9cf",
+      "bytes": 31562
+    },
+    "evidence/authored-training-r1/intent_ir/source-1/receipt.json": {
+      "sha256": "2b44ff0064c6781a837b3f019f426fcf5cebf83569a597554a4ed691acbc0cb6",
+      "bytes": 173532
+    },
+    "evidence/authored-training-r1/intent_ir/source-1/validation.json": {
+      "sha256": "4081f2124bb414f7bebb80fb3214836efa0b7351871e00c409c12d169a94b73d",
+      "bytes": 29149
+    },
+    "evidence/authored-training-r1/intent_ir/source-2-fixture.json": {
+      "sha256": "b9e4da14dc4dbcd3b3e5c8eb31a9aebc7d1aeae9064d9456b36c3fe6aa23d2e2",
+      "bytes": 1983
+    },
+    "evidence/authored-training-r1/intent_ir/source-2-prepared-targets.json": {
+      "sha256": "16240b3e9744bf1d6e899234f0adf7948278c588a328805d4217a7aa9e938de9",
+      "bytes": 506055
+    },
+    "evidence/authored-training-r1/intent_ir/source-2/IntentIR.lean": {
+      "sha256": "f32e0513c6db5885d99ab1887a6f0cee6a8e967b1c94ae6ff9a265822bf75c36",
+      "bytes": 31562
+    },
+    "evidence/authored-training-r1/intent_ir/source-2/receipt.json": {
+      "sha256": "66aca9d495cbbaa5f427e4e9f17ffb52965592e637519b284ea23c0a157c7222",
+      "bytes": 173535
+    },
+    "evidence/authored-training-r1/intent_ir/source-2/validation.json": {
+      "sha256": "4f87bd7e55157783c8a5fc7cc650cc24cc34141c59074d6335c7de95e0e77b6c",
+      "bytes": 29149
+    },
+    "evidence/authored-training-r1/intent_ir/summary.json": {
+      "sha256": "dbf0495c2ad3d289dd26b5f0c5f6773587ab1886aabbcc7213639a38aaae4a93",
+      "bytes": 398629
+    },
+    "evidence/authored-training-r1/intent_ir/training-gate.json": {
+      "sha256": "aa032c6bffc45af221afce787fbc812ee1089e871cce3bab0f49d57679fa456b",
+      "bytes": 70428
+    },
+    "evidence/authored-training-r1/intent_ir/tuning-gate.json": {
+      "sha256": "e53c70456b75c9bda9896bf8ab56273e1b846ee2b55479298683de12a07ec10f",
+      "bytes": 37970
+    },
+    "evidence/authored-training-r1/legal_ir/checkpoint/family_checkpoint.json": {
+      "sha256": "dac1d4f2c8d2caf7de222d7828a8cf621a4abcde8bddd847efe69b82bfff31b5",
+      "bytes": 463326
+    },
+    "evidence/authored-training-r1/legal_ir/source-0-fixture.json": {
+      "sha256": "6ef4e604b12d1f389529d23bc9df4efaae276d95748693486e7df135342ce808",
+      "bytes": 5507
+    },
+    "evidence/authored-training-r1/legal_ir/source-0-prepared-targets.json": {
+      "sha256": "67772c2752366b69424990557a8167873bfd0629d8d28aba0c052343fbbc152c",
+      "bytes": 103102
+    },
+    "evidence/authored-training-r1/legal_ir/source-0/LegalIR.lean": {
+      "sha256": "60fd47b1edfa005310475f8601ee9ebf6c26bf854dfe0c2d31a8e161a7f103e2",
+      "bytes": 4261
+    },
+    "evidence/authored-training-r1/legal_ir/source-0/receipt.json": {
+      "sha256": "1deaa0fa00eaff2d68355572007a9593f605e16a5297a1cb142aa12071bfb22e",
+      "bytes": 106756
+    },
+    "evidence/authored-training-r1/legal_ir/source-0/validation.json": {
+      "sha256": "f29d0cfa3aa5bd9b67f2fba104a70d95524e6b587defe174f1ff8d7f10d0fd52",
+      "bytes": 24266
+    },
+    "evidence/authored-training-r1/legal_ir/source-1-fixture.json": {
+      "sha256": "5f98c7b45fea84f270b7fb4ac08f71e54006188c764e77e3ee6ab6001d0e46ec",
+      "bytes": 5507
+    },
+    "evidence/authored-training-r1/legal_ir/source-1-prepared-targets.json": {
+      "sha256": "c7b527c39317dca8e09c5521cb9df7d205f2e262e713e764c531891c187ee36d",
+      "bytes": 103093
+    },
+    "evidence/authored-training-r1/legal_ir/source-1/LegalIR.lean": {
+      "sha256": "89e3fa0f1e153ec1e0bfb8737a5e07005da19df9ae7936d31cf30f11b7e63f3d",
+      "bytes": 4258
+    },
+    "evidence/authored-training-r1/legal_ir/source-1/receipt.json": {
+      "sha256": "314c8065e735fc43b629c9316c6e1bb31dcd5b83e4dc7c33592e788d8b99e272",
+      "bytes": 106753
+    },
+    "evidence/authored-training-r1/legal_ir/source-1/validation.json": {
+      "sha256": "7f1b65d8fbe50dbbed2fc30dc47a61259e7b302e64c4062b9f5cf53ca6107d9f",
+      "bytes": 24266
+    },
+    "evidence/authored-training-r1/legal_ir/source-2-fixture.json": {
+      "sha256": "dd81ca899b6bfc2632674fee84b60f7017e008009817284543507b60ba910e2b",
+      "bytes": 5513
+    },
+    "evidence/authored-training-r1/legal_ir/source-2-prepared-targets.json": {
+      "sha256": "1383492bd50051449c3c87da6b473d44845e46fd4b099308f542d3c6461b3048",
+      "bytes": 103102
+    },
+    "evidence/authored-training-r1/legal_ir/source-2/LegalIR.lean": {
+      "sha256": "4f52ecdd6412fd0d7407a142a6c8dd89d69c4ec942284e1aa076f027bdb35992",
+      "bytes": 4261
+    },
+    "evidence/authored-training-r1/legal_ir/source-2/receipt.json": {
+      "sha256": "9f271506a578fcdcbf34b8b008a61207c2369cf47fb3cbde444f8a830592c8c8",
+      "bytes": 106756
+    },
+    "evidence/authored-training-r1/legal_ir/source-2/validation.json": {
+      "sha256": "6e44a49eb591ae5bac122afe4d106d60120684021d79a599c44f35fff460c116",
+      "bytes": 24266
+    },
+    "evidence/authored-training-r1/legal_ir/summary.json": {
+      "sha256": "259c717547f136bd491f1b2589b040007396cd210c3f2e6e42b5fe65be9ab2be",
+      "bytes": 261089
+    },
+    "evidence/authored-training-r1/legal_ir/training-gate.json": {
+      "sha256": "e58641020cd404fcc052a1cda18ab03e99e83ddb9a4801ff84c15ba49ec8f386",
+      "bytes": 60108
+    },
+    "evidence/authored-training-r1/legal_ir/tuning-gate.json": {
+      "sha256": "37f0f87d50905bf7f46638ea2db49d3ce81a6331244f659aff5b2d7d6d6650bb",
+      "bytes": 32937
+    },
+    "evidence/authored-training-r1/security_ir/checkpoint/family_checkpoint.json": {
+      "sha256": "559dc85a0ca41bd23e667f7ec7f74bc32d7df602c4b97e46e95ca7ca09ae7230",
+      "bytes": 755061
+    },
+    "evidence/authored-training-r1/security_ir/source-0-fixture.json": {
+      "sha256": "a34f0faa55af0c9f573ca403450373e53b10d1bd9523c1c9891e7b33bca7f30c",
+      "bytes": 2030
+    },
+    "evidence/authored-training-r1/security_ir/source-0-prepared-targets.json": {
+      "sha256": "92667fdc0a65b9a1f93bfded23522ffc7ce128d54650f2cf965486d581d5cd5d",
+      "bytes": 152666
+    },
+    "evidence/authored-training-r1/security_ir/source-0/SecurityIR.lean": {
+      "sha256": "6e6b4a5649a316aa16c60064e065e4de07e7e8a2db5f6a5e3fe95c2b85aacc9c",
+      "bytes": 14081
+    },
+    "evidence/authored-training-r1/security_ir/source-0/receipt.json": {
+      "sha256": "2a318cd08836e2d4165601539fbe4f2d600b191158c8422aba993b89a76f7683",
+      "bytes": 91275
+    },
+    "evidence/authored-training-r1/security_ir/source-0/validation.json": {
+      "sha256": "8d6792d33a4f23f2eb40eb1685a84680059e2bd3e245c980403d412e4802f2fa",
+      "bytes": 26004
+    },
+    "evidence/authored-training-r1/security_ir/source-1-fixture.json": {
+      "sha256": "7a3d1d8dc295666e3fbc3133cb0c23e386ef534c623a48d59c3f84591b0ebd95",
+      "bytes": 2029
+    },
+    "evidence/authored-training-r1/security_ir/source-1-prepared-targets.json": {
+      "sha256": "a818a3ea61d49e97e15cd9fe12949ea649577edaa1877bccd9c7e6ffaa30d149",
+      "bytes": 152631
+    },
+    "evidence/authored-training-r1/security_ir/source-1/SecurityIR.lean": {
+      "sha256": "6e6b4a5649a316aa16c60064e065e4de07e7e8a2db5f6a5e3fe95c2b85aacc9c",
+      "bytes": 14081
+    },
+    "evidence/authored-training-r1/security_ir/source-1/receipt.json": {
+      "sha256": "276da7ae33025ead9e6aec200b9cd8bd32d9571a8055cc03a9a2a7fa151e8e76",
+      "bytes": 91275
+    },
+    "evidence/authored-training-r1/security_ir/source-1/validation.json": {
+      "sha256": "a5549bd29620a607a57852fabb4107001cbbd8aa2bbe78491822a9b458ba6d07",
+      "bytes": 26004
+    },
+    "evidence/authored-training-r1/security_ir/source-2-fixture.json": {
+      "sha256": "52551ff13740edb9c088ae625037573ad03e3dc54f082360ad094e0dcc46913e",
+      "bytes": 2036
+    },
+    "evidence/authored-training-r1/security_ir/source-2-prepared-targets.json": {
+      "sha256": "cb339d82c761e915ebbe3b52e7ffdb4ee2f4ed66f68b35d642d7eb5c2e1a3d6d",
+      "bytes": 152666
+    },
+    "evidence/authored-training-r1/security_ir/source-2/SecurityIR.lean": {
+      "sha256": "6e6b4a5649a316aa16c60064e065e4de07e7e8a2db5f6a5e3fe95c2b85aacc9c",
+      "bytes": 14081
+    },
+    "evidence/authored-training-r1/security_ir/source-2/receipt.json": {
+      "sha256": "3450a7916383b6e3555befd8a23b8517b07c0c1fecdabcfa0f46a6d6a1dfb795",
+      "bytes": 91275
+    },
+    "evidence/authored-training-r1/security_ir/source-2/validation.json": {
+      "sha256": "ee599fdcbce4288655a978bbf9e07410d2f02bf06c1f4e8dd28363e2fc59e922",
+      "bytes": 26004
+    },
+    "evidence/authored-training-r1/security_ir/summary.json": {
+      "sha256": "02a1e0995e54255b9fa1abc20b051b0d34de916e9ac555a7d7927ceb277cc4f0",
+      "bytes": 327173
+    },
+    "evidence/authored-training-r1/security_ir/training-gate.json": {
+      "sha256": "001d4209220e2ef1dc3c9c86c0f5845a0983d38d9019dd4505cc4279ad1019b6",
+      "bytes": 61869
+    },
+    "evidence/authored-training-r1/security_ir/tuning-gate.json": {
+      "sha256": "028aac1cafd28689f55c00299d2a0688b890c5a8d0d5399a6f685f2cd18b1376",
+      "bytes": 33076
+    },
+    "evidence/authored-training-r1/summary.json": {
+      "sha256": "b3908139bd58cdf9bb30b8b81f2199e9141f1fec465574dc16830bb12ae26cd0",
+      "bytes": 1485543
+    },
+    "evidence/authored-training-r1/ui_ux_ir/checkpoint/family_checkpoint.json": {
+      "sha256": "068353957a9254ab669bf95e4b4611598f299f0311f98da54d841a15d5c35f61",
+      "bytes": 965154
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-0-fixture.json": {
+      "sha256": "1d2171b66c7e0fbc69d1abee052a128479397c2ce73774c32b825c5d9375a043",
+      "bytes": 4507
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-0-prepared-targets.json": {
+      "sha256": "0e9a94ca346f7e9525a63b4c0a36e182e48009e5ed8c75f53eb87242c4369d3f",
+      "bytes": 276856
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-0/UIUXIR.lean": {
+      "sha256": "2afcf09777e588e16aa7d3c580d192102ffadd763e994c582e13de003aa4a9b9",
+      "bytes": 13109
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-0/receipt.json": {
+      "sha256": "eee123f383eac65099c986e075ce90decab5b419ce6579ce6808cb0bfc22bf6a",
+      "bytes": 97622
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-0/validation.json": {
+      "sha256": "9dc92842473a8b15833f1d7c5a1c4fc5134fd7881510572dc67e62b45bab0b44",
+      "bytes": 26582
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-1-fixture.json": {
+      "sha256": "51c439f13963e8426b1914bdb5240836d5257a2a1be8cb1cad5963bb7f36b18d",
+      "bytes": 4505
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-1-prepared-targets.json": {
+      "sha256": "9da64a02ed98037042d08b3f35dec5ff74853dc8345d511a91d10c42ac6b65cb",
+      "bytes": 276796
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-1/UIUXIR.lean": {
+      "sha256": "26edd860dc5f0e98d9debc247defe54c1a4402bd5470466a97bb9ae743a4876d",
+      "bytes": 13099
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-1/receipt.json": {
+      "sha256": "b4886ae69074ea2b9ef5338dc43438aab2ecea25e0e84e4d3c0710b080500bb1",
+      "bytes": 97611
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-1/validation.json": {
+      "sha256": "6ba69b7b059e39eaa6a018ec09fe1e63ab6c812b7ba3348ed4c11e26fc07306a",
+      "bytes": 26582
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-2-fixture.json": {
+      "sha256": "b814d5419a38c02ae7cdb6419a5052d9505a2ed4b7dbc46ff5c804e30c138ca0",
+      "bytes": 4513
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-2-prepared-targets.json": {
+      "sha256": "e8bbf7e845649020341c0a8fa032411bc2e1f220baf8bf89fb721f3e300d5f30",
+      "bytes": 276886
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-2/UIUXIR.lean": {
+      "sha256": "1524e17925e323bbc8f6b90182440d946f3019ceeaddd2f6c7eec3ebec79aa8e",
+      "bytes": 13109
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-2/receipt.json": {
+      "sha256": "3bcaf810095e98041d637d4705881773e304f690622f0d5a8a9d7411a3d0a51a",
+      "bytes": 97622
+    },
+    "evidence/authored-training-r1/ui_ux_ir/source-2/validation.json": {
+      "sha256": "c5b201e3274715b976cac6fb028b7fe8446eed63a9359f326e7f392adb706f08",
+      "bytes": 26582
+    },
+    "evidence/authored-training-r1/ui_ux_ir/summary.json": {
+      "sha256": "df844a17ad11ed7fa340c88d27f2d9c711ea1861b4f882f2627a033e3a80df4a",
+      "bytes": 358961
+    },
+    "evidence/authored-training-r1/ui_ux_ir/training-gate.json": {
+      "sha256": "360594b0c2951470dfc16460fefcc982fa24a54e598e8a8138c3bf1176c69e0c",
+      "bytes": 64579
+    },
+    "evidence/authored-training-r1/ui_ux_ir/tuning-gate.json": {
+      "sha256": "3a18a7fcec5577568c1d28a59877b02811fa6e208c3fde5770c1c639b15ab0b2",
+      "bytes": 34956
+    },
+    "evidence/capture_security_semantic_examples.py": {
+      "sha256": "fb604e6b911bbe28fae55f5cb6e120eb674c50231782287093fc0a226ebe3739",
+      "bytes": 1890
+    },
+    "evidence/family-v5-tests.log": {
+      "sha256": "3159e0805dd28c377632f7cff9b2832fbc5620993d5c4569fa514fdbc9a981b4",
+      "bytes": 1225
+    },
+    "evidence/family-v5-tests.xml": {
+      "sha256": "8583e8291c0aae72259f2ed23b024fac20b1628919dd1fc38616f616021922d1",
+      "bytes": 3615
+    },
+    "evidence/intent-authored-state-gap-r1.json": {
+      "sha256": "9b2b1245c1f129a6e72e6e52941506a535ecfd17bbfd3ee0e05ebef4bf1cf344",
+      "bytes": 11788
+    },
+    "evidence/intent-semantic-before-request-replay-fix.py": {
+      "sha256": "32258a24f72cb8b0631b20b458d6e6f877ec760ba249b17124639ebf1d620ba3",
+      "bytes": 13700
+    },
+    "evidence/intent-semantic-before-rich-fix.py": {
+      "sha256": "de1f61539d88dd945f707dffd57547e388ac88acc84949c5dbde2d3879689855",
+      "bytes": 12824
+    },
+    "evidence/intent-semantic-tests-r1.log": {
+      "sha256": "1cc78fc29d9f0040dde08f06dbf2251328af5d90b4eb743c6321683afe6e7708",
+      "bytes": 33000
+    },
+    "evidence/intent-semantic-tests-r1.xml": {
+      "sha256": "1d04860b7d49a7ab1e2a8af07e51f7a810fa8ee839edb3efb8e50c53a8d415e0",
+      "bytes": 32890
+    },
+    "evidence/intent-semantic-tests-r2.log": {
+      "sha256": "492a128df831253eaff15e3a6a1d3acb84790054229e6952bc18c358f90f78f4",
+      "bytes": 1245
+    },
+    "evidence/intent-semantic-tests-r2.xml": {
+      "sha256": "fe55c654afad64193d0c96a0d1b6d76c38b044504d73a787568fffd952234bd4",
+      "bytes": 5065
+    },
+    "evidence/intent-semantic-tests-r3.log": {
+      "sha256": "2242308cf6db62b36ea0a8c7668231c58afac263a47354180d5e2bca0f7d54c9",
+      "bytes": 1245
+    },
+    "evidence/intent-semantic-tests-r3.xml": {
+      "sha256": "542c152cb8f241df7e92ddc9c390d09bc920af9f1eeeac3ea86e78e197955ff7",
+      "bytes": 5445
+    },
+    "evidence/intent-semantic-tests-r4.log": {
+      "sha256": "65dddd04fa5b7106e0208876fa960b06f53516ed88e490da3390f3fc4b6b84be",
+      "bytes": 1245
+    },
+    "evidence/intent-semantic-tests-r4.xml": {
+      "sha256": "978f33d8d2c3d4c0d382246795c69d29e41d67baa3fc3271d41f005ba7833e07",
+      "bytes": 5810
+    },
+    "evidence/intent-semantic-tests-r5.log": {
+      "sha256": "054347d23d6a10ee59fe195c2242429e52b3066b4c9db19d38cc8748db316784",
+      "bytes": 1245
+    },
+    "evidence/intent-semantic-tests-r5.xml": {
+      "sha256": "866b08510a1241838f72f5484adaca8003ff0d70015a8d28764d22ad82705de0",
+      "bytes": 6007
+    },
+    "evidence/matrix-v3-r1.log": {
+      "sha256": "432a465000a28f62eb47b42900de8260ff442ec75023200ce825bb1e7b1247d0",
+      "bytes": 3695
+    },
+    "evidence/matrix-v3-r1/failure.txt": {
+      "sha256": "3ad8bbaa5675054b9c3008071036d5e0a04ee3a0375c4ebdd092173b5c9b124d",
+      "bytes": 2603
+    },
+    "evidence/matrix-v3-r2.log": {
+      "sha256": "165eb120def8125d3403928a7717d1c969c36e5dc52afdd6d62a154be99df7ae",
+      "bytes": 5281
+    },
+    "evidence/matrix-v3-r2/failure.txt": {
+      "sha256": "4cf857ba5312267457205b7881def9b9d936690ac3c29fae71239d4437dfc789",
+      "bytes": 3643
+    },
+    "evidence/matrix-v3-r2/intent_ir-prepared-targets.json": {
+      "sha256": "b53ad1c7ed1bcf79bf54963c77e0838b34ab0c5c0fddae34517e903a8c56ceb2",
+      "bytes": 337155
+    },
+    "evidence/matrix-v3-r3.log": {
+      "sha256": "f4652a22541a0e274d6f037c7dcd9ce4d605162a26a94d6ccdb240280438ffba",
+      "bytes": 12542
+    },
+    "evidence/matrix-v3-r3/intent_ir-prepared-targets.json": {
+      "sha256": "50bfc8a4af499f27eb8f3ddefe755e90dc47ae22d85a642d6573b131710762dc",
+      "bytes": 337155
+    },
+    "evidence/matrix-v3-r3/intent_ir/IntentIR.lean": {
+      "sha256": "3d1bb2b0ddfb4ed2170432acc1fe7649255bddd03e6ed3e2a7b7b6039c8abf8b",
+      "bytes": 23456
+    },
+    "evidence/matrix-v3-r3/intent_ir/batch-validation.json": {
+      "sha256": "d5926d1982cfad99030d3baa1724ab56cf903d2809b37db85c7d6f7770aa1c9c",
+      "bytes": 36490
+    },
+    "evidence/matrix-v3-r3/intent_ir/native-targets.json": {
+      "sha256": "50bfc8a4af499f27eb8f3ddefe755e90dc47ae22d85a642d6573b131710762dc",
+      "bytes": 337155
+    },
+    "evidence/matrix-v3-r3/intent_ir/receipt.json": {
+      "sha256": "9b222f7c178e1e670a5b74aae0452babba12c467ed7ceec0bf1cc1da84ff8fa1",
+      "bytes": 135181
+    },
+    "evidence/matrix-v3-r3/intent_ir/validation.json": {
+      "sha256": "207113a509aafcd8b7d860eace374a72034c9a6193f1f88d83bc17d9b2d2ab8e",
+      "bytes": 27784
+    },
+    "evidence/matrix-v3-r3/legal_ir-prepared-targets.json": {
+      "sha256": "a49c33cf155f9a092e4bed5f77d70edfb70d45e1b5ec56f455f22edbd9266ba2",
+      "bytes": 89396
+    },
+    "evidence/matrix-v3-r3/legal_ir/LegalIR.lean": {
+      "sha256": "565385b09d3a91e618c9161db7e2b99c2d3f4167b0fcc52489720f7c369e2d68",
+      "bytes": 3378
+    },
+    "evidence/matrix-v3-r3/legal_ir/batch-validation.json": {
+      "sha256": "55cceda746345d611c5871ba79c740e0d18dc93aeacc078a12e59ed5fe647595",
+      "bytes": 31812
+    },
+    "evidence/matrix-v3-r3/legal_ir/native-targets.json": {
+      "sha256": "a49c33cf155f9a092e4bed5f77d70edfb70d45e1b5ec56f455f22edbd9266ba2",
+      "bytes": 89396
+    },
+    "evidence/matrix-v3-r3/legal_ir/receipt.json": {
+      "sha256": "6a6eb1758ff6f12a6787da36ac8e23311fdcb3ea0d5b7d15e6030fc10d6397eb",
+      "bytes": 103564
+    },
+    "evidence/matrix-v3-r3/legal_ir/validation.json": {
+      "sha256": "cd9d8405a40bb68014486a9e630775dba230d4b8259f982a0410f1d693394be5",
+      "bytes": 22838
+    },
+    "evidence/matrix-v3-r3/security_ir-prepared-targets.json": {
+      "sha256": "92667fdc0a65b9a1f93bfded23522ffc7ce128d54650f2cf965486d581d5cd5d",
+      "bytes": 152666
+    },
+    "evidence/matrix-v3-r3/security_ir/SecurityIR.lean": {
+      "sha256": "6e6b4a5649a316aa16c60064e065e4de07e7e8a2db5f6a5e3fe95c2b85aacc9c",
+      "bytes": 14081
+    },
+    "evidence/matrix-v3-r3/security_ir/batch-validation.json": {
+      "sha256": "e89c9c183ac53f70cb46af9c431936ae165855141068d537d38d78616a1c2f55",
+      "bytes": 31722
+    },
+    "evidence/matrix-v3-r3/security_ir/native-targets.json": {
+      "sha256": "92667fdc0a65b9a1f93bfded23522ffc7ce128d54650f2cf965486d581d5cd5d",
+      "bytes": 152666
+    },
+    "evidence/matrix-v3-r3/security_ir/receipt.json": {
+      "sha256": "e5fa5697e75d28add6db5934383cc91545fe8ce3f460465b0e83f64416ff1da3",
+      "bytes": 91518
+    },
+    "evidence/matrix-v3-r3/security_ir/validation.json": {
+      "sha256": "a337d8db9988b36ffa064f998ed30b4c0acf85a20f0364c578e826bbfff26129",
+      "bytes": 24419
+    },
+    "evidence/matrix-v3-r3/summary.json": {
+      "sha256": "3e22250893cc2ef56b2bb52e00d045477508332298827fdb9e922ec48700d008",
+      "bytes": 441880
+    },
+    "evidence/matrix-v3-r3/ui_ux_ir-prepared-targets.json": {
+      "sha256": "db51e56d3b739ee7678736d3552cb8ed22165e89cdb66f7c3d4172cf96a572ee",
+      "bytes": 268630
+    },
+    "evidence/matrix-v3-r3/ui_ux_ir/UIUXIR.lean": {
+      "sha256": "636ef696d5fded4ac074588993dc7d69ad978c772d271c0cc8bfb9aef4fac5ec",
+      "bytes": 11937
+    },
+    "evidence/matrix-v3-r3/ui_ux_ir/batch-validation.json": {
+      "sha256": "6c15eaee9d0c11b0720f2a79e17a315ea7c4188f1f3c0ae85f034de8d3abfabf",
+      "bytes": 33669
+    },
+    "evidence/matrix-v3-r3/ui_ux_ir/native-targets.json": {
+      "sha256": "db51e56d3b739ee7678736d3552cb8ed22165e89cdb66f7c3d4172cf96a572ee",
+      "bytes": 268630
+    },
+    "evidence/matrix-v3-r3/ui_ux_ir/receipt.json": {
+      "sha256": "a0de4f34bdde3c01eea8de7fb6384cbcd4c14c440f494f03e9e5666c1e5427cc",
+      "bytes": 95307
+    },
+    "evidence/matrix-v3-r3/ui_ux_ir/validation.json": {
+      "sha256": "b226b84b074fba119c77d304753076908632ad4f1e757c7424baa1f98f8d2cc6",
+      "bytes": 25024
+    },
+    "evidence/native-security-semantic-examples.json": {
+      "sha256": "455e7f8b1a699c5869038ee68f391169cab5c304b40f2147af7bf6cc7baf6872",
+      "bytes": 14354
+    },
+    "evidence/native-security-semantic-examples.log": {
+      "sha256": "415a4a8870ce795749ad7dbd6fccd9ef09212a294a7f070e468843c04f20ac21",
+      "bytes": 391
+    },
+    "evidence/native-security-tests-r1.log": {
+      "sha256": "04f7b574a48df353e253875c0a3bfca6b956948d3ed3c30bd63a92cdc1c2c782",
+      "bytes": 2129
+    },
+    "evidence/native-security-tests-r1.xml": {
+      "sha256": "d579b98bda4212df1ec543d8ca4b03ed80e4b97f1480a731a7aac13b2872da15",
+      "bytes": 4408
+    },
+    "evidence/native-security-tests-r2.log": {
+      "sha256": "9c3afdd9bf9eff16e3cef126bd4a3067feed46d280977641ef5bd4c753bbc306",
+      "bytes": 3720
+    },
+    "evidence/native-security-tests-r2.xml": {
+      "sha256": "f03b800ee830af321454be65e294e78a05f722ea5b337de7fb0c32fbb5dba8f7",
+      "bytes": 6554
+    },
+    "evidence/native-security-tests-r3.log": {
+      "sha256": "636071fa5668452c40af439a505e2ffa2549cc1ec004f54c96e3faea0d94ef5e",
+      "bytes": 1235
+    },
+    "evidence/native-security-tests-r3.xml": {
+      "sha256": "940d29f3baa4e227773a32cddb61423a165b98f745b099e994824f91c82357d2",
+      "bytes": 4336
+    },
+    "evidence/qualified-tests.log": {
+      "sha256": "6a101d03abfe1369150762d518042e97eb05f5a74b1bb1e327486ef23422ec3b",
+      "bytes": 1227
+    },
+    "evidence/qualified-tests.xml": {
+      "sha256": "ccd8db83b1933d5421d1651cdcee3b6048de6a2a494623661fffb009686e4c65",
+      "bytes": 7331
+    },
+    "evidence/semantic-gate-tests-r1.log": {
+      "sha256": "2364999ae12ebb4c2984536bd9ff92a4fa473658b78920a85f07abec22d1cc1b",
+      "bytes": 1236
+    },
+    "evidence/semantic-gate-tests-r1.xml": {
+      "sha256": "0c69eb42a4435376340c047034f7e06da7f610fc49f3356c02722c53397d5a64",
+      "bytes": 1317
+    },
+    "evidence/semantic-native-and-panel-tests.log": {
+      "sha256": "f2d439abc9db9815c776ecb86193ba82d8aaae7a4e768ccac7b4a092cc646a48",
+      "bytes": 2093
+    },
+    "evidence/semantic-native-and-panel-tests.xml": {
+      "sha256": "48bc4c90a4dffc82f64c75c828324041702f46c0022c04298cf2152b1f68264a",
+      "bytes": 1286
+    },
+    "evidence/semantic-projection-tests-r1.log": {
+      "sha256": "59c8346b29a87d6beefff52da619fb33545df58aa91f83def5327c535385d98b",
+      "bytes": 19610
+    },
+    "evidence/semantic-projection-tests-r1.xml": {
+      "sha256": "2257dda6aaa7b0b20cca5aef256d38fffff19dc00d23ec5be98caf52cdea84f0",
+      "bytes": 21951
+    },
+    "source/docs/autoencoders/native_semantic_projections_v3.md": {
+      "sha256": "3bbc56ce9e84b87823fa2719224b3e8309fd375ec95434ffc0397540cc929edb",
+      "bytes": 12047
+    },
+    "source/ipfs_datasets_py/logic/CEC/__init__.py": {
+      "sha256": "8f4f1468b80c29eb7f6af4c02907adccc6bad5df1c7f22de5be7731a52b04b6b",
+      "bytes": 3407
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/__init__.py": {
+      "sha256": "7c467c25a9abdc899a46266ed21582443dbd412fb07acf129d5fb34a90be9dc6",
+      "bytes": 7228
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/cec_proof_cache.py": {
+      "sha256": "8a40f17c0b82d7f8b9dfb8654d53c5f9472852acbcc830fdb3f3d98221f71bf3",
+      "bytes": 18314
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/cec_zkp_integration.py": {
+      "sha256": "8284720a83162918a9785ec31d2e44dfbb2dd948a0f653b451745b0f8e3ab962",
+      "bytes": 19473
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": {
+      "sha256": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+      "bytes": 9131
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/dcec_core.py": {
+      "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+      "bytes": 57189
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/dcec_english_grammar.py": {
+      "sha256": "2b87f9e7d256dd236c65147eabfc55bd3d481e74be63c80c23f6720d33cba0b2",
+      "bytes": 26343
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": {
+      "sha256": "3309196821c2ff357ecf587cba7b79bb997db3a0d003b2eec0b55126d8eab6b9",
+      "bytes": 18383
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/dcec_namespace.py": {
+      "sha256": "9e6903c74d3b95634f86f4f67392ca61bf9a284b577294d2b12ff001d9fbeb24",
+      "bytes": 13580
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": {
+      "sha256": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+      "bytes": 14204
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": {
+      "sha256": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+      "bytes": 15038
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/exceptions.py": {
+      "sha256": "cbbbafacf70d1c7355d7c930f48c5f71fc711765aa4789a817e5c229c8e60622",
+      "bytes": 10095
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/grammar_engine.py": {
+      "sha256": "df787f7656894c063eaad5e16bc78168f1fd7c301a0907639dfb466b5f286293",
+      "bytes": 14472
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/__init__.py": {
+      "sha256": "46d1d7677be5038b9006cfa6738940dd306aa404736295cf58d201a4a398c641",
+      "bytes": 4312
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/base.py": {
+      "sha256": "5776e79206eb65fc3d2e898e48c374cba6fde09dbc48661d1ffb8417f2d99646",
+      "bytes": 2387
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/cognitive.py": {
+      "sha256": "329334034ecfbb55fcb306c0d084a2a31f658a85af2ecb1edaef1c6ad7de7813",
+      "bytes": 24462
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/deontic.py": {
+      "sha256": "8ef29a48e2e132f595ead529d446f7180745920ffae790feac985c121b4a6ddb",
+      "bytes": 15450
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/modal.py": {
+      "sha256": "4ddf941cb2c2920699ec0e7f48d34b68a727da40a8868bd161c56eb315c2e4ef",
+      "bytes": 9218
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/propositional.py": {
+      "sha256": "feb45f9807bc2d1cd38738006cb98cc553aa652918ee1158e8b106131ccd86bb",
+      "bytes": 15934
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/resolution.py": {
+      "sha256": "8a5078e2e5ed25c350b8d28d6173f0013c6f78d075bfe5ca4b0516d46cbfcd82",
+      "bytes": 15219
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/specialized.py": {
+      "sha256": "6a3d14356a1b076c7c943d7bd30da7d7694c03bae9da0d3ccf5a8bf848e7de96",
+      "bytes": 16154
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/inference_rules/temporal.py": {
+      "sha256": "08d09c5be78e72168a4f4edef74840e766f65e1b9a9e4601f3000308254b9eaf",
+      "bytes": 23768
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/legal_ir_lifecycle.py": {
+      "sha256": "0e70084ecacfed64efa46716d13e5ecfd6a44686df5546a67716eb5cadc4a7fd",
+      "bytes": 4694
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/modal_tableaux.py": {
+      "sha256": "5910e250b1aa61221f22318e6cea6858df3ee1701fe631634f9e1977ae671235",
+      "bytes": 17450
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/nl_converter.py": {
+      "sha256": "016b8e4893b9825e2f3b0a95d331691736433a1cdae430dde2d831862e0bf254",
+      "bytes": 15938
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/problem_parser.py": {
+      "sha256": "fd946d11ca07fcf09db67f91f3a90680f8b7024c373be09c514ff91a957682d3",
+      "bytes": 10061
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/prover_core.py": {
+      "sha256": "c734b6cfbd05cd73bb5836d0635c1d9bb95ce3d722567e5afd082a4edb963487",
+      "bytes": 19007
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/prover_core_extended_rules.py": {
+      "sha256": "07e26b65dba0a2f6be6bf7f36424a25da28d4c1e440e703b6985044684d9b253",
+      "bytes": 51196
+    },
+    "source/ipfs_datasets_py/logic/CEC/native/shadow_prover.py": {
+      "sha256": "90049debb68b2ae19238ee4637bd3b5a3124a7f06bb9448cd3567621df95d496",
+      "bytes": 22696
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/__init__.py": {
+      "sha256": "42c252ba4fb85301b649bc3afe497a2799d27460b9556e57c7398b5441ba13e8",
+      "bytes": 11004
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py": {
+      "sha256": "c0306a55184bc6baabf7528bf7a255604ff8c49d2c510afde13eae2e8108ff88",
+      "bytes": 3636
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/__init__.py": {
+      "sha256": "96a6aae98c7d6ee877559b847f455f57e60a81c476468c61d77d6fde86b774b1",
+      "bytes": 1866
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/base.py": {
+      "sha256": "3763cc86f14697a68cb7a38dab9c7e6a9d0160910b73ba1ea2e965cd89d6e905",
+      "bytes": 4332
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/cec_delegate.py": {
+      "sha256": "ebaf1bde83b2c00d5b0028fa34f43c52e6e0628d19bb8ffeb1a6c1987b61a9ef",
+      "bytes": 6937
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/forward_chaining.py": {
+      "sha256": "0c56b8663063aeb30c5bbbda045a3f723ab26fffe08e23b14f3c94e866392f09",
+      "bytes": 12658
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/modal_tableaux.py": {
+      "sha256": "ffc1489b684e0630b7940b2ba688ddb99142f7fcce203e06fbfa55643826d1c4",
+      "bytes": 12397
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/strategies/strategy_selector.py": {
+      "sha256": "5b7b71c5256dca709917fd6e8d55fd014d7ec0d4a216b56cff1b633b2143f501",
+      "bytes": 8483
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": {
+      "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "bytes": 28721
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/tdfol_dcec_parser.py": {
+      "sha256": "848dc057d5ae4a1f8c55117defbd393c82ec04ffd35bbcdfbb963ff82ea2ef89",
+      "bytes": 12047
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": {
+      "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "bytes": 29788
+    },
+    "source/ipfs_datasets_py/logic/TDFOL/tdfol_prover.py": {
+      "sha256": "41fa83374a9e7b188255476710e778a056a3090ee1fdfe3b151caa6359855476",
+      "bytes": 24431
+    },
+    "source/ipfs_datasets_py/logic/autoformal/__init__.py": {
+      "sha256": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03",
+      "bytes": 52609
+    },
+    "source/ipfs_datasets_py/logic/autoformal/family_qualification.py": {
+      "sha256": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+      "bytes": 37698
+    },
+    "source/ipfs_datasets_py/logic/autoformal/tree_pin.py": {
+      "sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d",
+      "bytes": 1948
+    },
+    "source/ipfs_datasets_py/logic/backends/process.py": {
+      "sha256": "742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f",
+      "bytes": 50468
+    },
+    "source/ipfs_datasets_py/logic/backends/registry.py": {
+      "sha256": "1f23870b82c98c8d34d0ac7c380244940c63d0fa4176dd6e8b7ef023c3d162eb",
+      "bytes": 67564
+    },
+    "source/ipfs_datasets_py/logic/backends/results.py": {
+      "sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+      "bytes": 27160
+    },
+    "source/ipfs_datasets_py/logic/backends/tla/compiler.py": {
+      "sha256": "f06c6244cd68191b29139d6476a5a4c5a2c2a167bdc06b4951665a02fba5b573",
+      "bytes": 75294
+    },
+    "source/ipfs_datasets_py/logic/backends/toolchain_roles.py": {
+      "sha256": "1f5ffbf35e9171b77474da7fb7a1eeb91579a3d09fc0f99d480abfd49aaaf3e0",
+      "bytes": 53880
+    },
+    "source/ipfs_datasets_py/logic/bridge/__init__.py": {
+      "sha256": "9f2e770a994fe25ad591040b8717c821adbb4370e3c12bf8b3af3da65cd65ce4",
+      "bytes": 5409
+    },
+    "source/ipfs_datasets_py/logic/bridge/canonical.py": {
+      "sha256": "1c8b3244ce3f172abc7da01c64688667c796540b4f079e77f96dd061f88c7194",
+      "bytes": 17858
+    },
+    "source/ipfs_datasets_py/logic/bridge/conformance.py": {
+      "sha256": "62bff57c8ed8119105eae33b4ee9fb95d2a1c524d727cd7a0adc63955fa14007",
+      "bytes": 14571
+    },
+    "source/ipfs_datasets_py/logic/bridge/constructs.py": {
+      "sha256": "6b6861261cc093f3223f7bc7694c3a47f80d1c3eaba85c3c5eabc7b565d751d7",
+      "bytes": 5766
+    },
+    "source/ipfs_datasets_py/logic/bridge/decompiler.py": {
+      "sha256": "5f93e8f0c72d8f32208948a25d89d4c88df6845d71eaba713d42b0d50f089a2b",
+      "bytes": 25221
+    },
+    "source/ipfs_datasets_py/logic/bridge/migrations.py": {
+      "sha256": "3319a2081c62793c12e477e2a7c00c45d4617f0df5e4a423625fbfc8ee088583",
+      "bytes": 10408
+    },
+    "source/ipfs_datasets_py/logic/bridge/multiview.py": {
+      "sha256": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+      "bytes": 188632
+    },
+    "source/ipfs_datasets_py/logic/bridge/recompilation.py": {
+      "sha256": "6e8200aa06541a1ce9c6aead4d5274df6ca38a024a273adf137ee840600b6385",
+      "bytes": 17092
+    },
+    "source/ipfs_datasets_py/logic/bridge/registry.py": {
+      "sha256": "267d5065864c6778601fc8ebb23a5b4c57ef74856fc1b1b974b96bf283e47569",
+      "bytes": 14516
+    },
+    "source/ipfs_datasets_py/logic/bridge/schema.py": {
+      "sha256": "ad8fa56383ecde7749f5585e8bd12c6e43d4a721c287f5671fe54d97059dc18b",
+      "bytes": 1342
+    },
+    "source/ipfs_datasets_py/logic/bridge/translation.py": {
+      "sha256": "b0835236d09dcf4520af9644918a407e27f12a6a75903cac44eff6a72993d141",
+      "bytes": 34707
+    },
+    "source/ipfs_datasets_py/logic/bridge/types.py": {
+      "sha256": "713160f546ee4e0c28a77b23b6f3c6264d8e5cdd7bb12535b5e28a271464591c",
+      "bytes": 15825
+    },
+    "source/ipfs_datasets_py/logic/common/__init__.py": {
+      "sha256": "e574c74067e7059cc506b32c780bc0444de89c63b55dade3df00ae9fd563431e",
+      "bytes": 2438
+    },
+    "source/ipfs_datasets_py/logic/common/bounded_cache.py": {
+      "sha256": "29a450b5fc08c5577964774035717dc5d7be85c159cfd502fba5252c4ec9c9fa",
+      "bytes": 6656
+    },
+    "source/ipfs_datasets_py/logic/common/converters.py": {
+      "sha256": "f530c453775f2c1a4a2f8a26aa647df1f725be109078df258288eab33a427fde",
+      "bytes": 13962
+    },
+    "source/ipfs_datasets_py/logic/common/errors.py": {
+      "sha256": "10d21acd8d0fd6049297a1b36d10db1fcc09146095f1dabfe5a686b887f4b8cf",
+      "bytes": 2268
+    },
+    "source/ipfs_datasets_py/logic/common/feature_detection.py": {
+      "sha256": "a285d84f9b13ee3c2c54023e07ccf9da94ce93e6736362c1881421db9e509d76",
+      "bytes": 4875
+    },
+    "source/ipfs_datasets_py/logic/common/proof_cache.py": {
+      "sha256": "b68c36ff934ba6ee7a308162ee7035c78f4c522a5483e85e536b428db8485b36",
+      "bytes": 168205
+    },
+    "source/ipfs_datasets_py/logic/common/utility_monitor.py": {
+      "sha256": "ef23631a622dfd555cefcdf69793e78a7c64a115c7451aea4dfff5389b014985",
+      "bytes": 6398
+    },
+    "source/ipfs_datasets_py/logic/common/validators.py": {
+      "sha256": "e58dbba7d3f346545e2ff572928ed9c7bb9adc71b20e8cc8dc816a7fc060e0c7",
+      "bytes": 8374
+    },
+    "source/ipfs_datasets_py/logic/config.py": {
+      "sha256": "438f3a9c5d1b50939c4559e28070169c53c3f8e224066f350a2ceb1005a52c4d",
+      "bytes": 10059
+    },
+    "source/ipfs_datasets_py/logic/conformance/__init__.py": {
+      "sha256": "fd3fd8ae6484f5e462e3fc674cdac2301cb08a19a2e0903e3a958410b0c9f3f2",
+      "bytes": 78
+    },
+    "source/ipfs_datasets_py/logic/conformance/matrix.py": {
+      "sha256": "19f4a231943898a5b633aef36341627a308110f16035d3a346084bf828714db2",
+      "bytes": 73852
+    },
+    "source/ipfs_datasets_py/logic/conformance/ui_ux_logic_gate_v2.py": {
+      "sha256": "38c231d28f4ef1f406be0fb328e05c0206ba86a0d74b36803946415c5480fee9",
+      "bytes": 60756
+    },
+    "source/ipfs_datasets_py/logic/deontic/__init__.py": {
+      "sha256": "1eeb1a57e388c37415facf3989a26d3b960b176b4bf1e65eef66e106c1aadb4b",
+      "bytes": 2644
+    },
+    "source/ipfs_datasets_py/logic/deontic/analyzer.py": {
+      "sha256": "8953235974d062f968334106c952d0978cc31a58408206bb56c26da174f29d6c",
+      "bytes": 19375
+    },
+    "source/ipfs_datasets_py/logic/deontic/compiler_repairs.py": {
+      "sha256": "53ff5b4b6cf3303f46569f43e748b5d15a75b1895dbb4c4a054b541e9fc5569e",
+      "bytes": 2743
+    },
+    "source/ipfs_datasets_py/logic/deontic/converter.py": {
+      "sha256": "e1749ca0403f34834374b5089d78523f1866d53d3ec923137b6fb526fdffe7c8",
+      "bytes": 27572
+    },
+    "source/ipfs_datasets_py/logic/deontic/decoder.py": {
+      "sha256": "051a5e7a98ef2cf8a63326218cebeabcca2c528f6839a1a3cb11756ee7c1aab9",
+      "bytes": 31862
+    },
+    "source/ipfs_datasets_py/logic/deontic/exports.py": {
+      "sha256": "ac46bf1efa79925620199b56f6f1dbde34c92889a0a2a474cc6b9e408ea3c3de",
+      "bytes": 221362
+    },
+    "source/ipfs_datasets_py/logic/deontic/formula_builder.py": {
+      "sha256": "dc53e7c4875a2afa98e100177c0d70e224e1945048f18993333f72c313529109",
+      "bytes": 395573
+    },
+    "source/ipfs_datasets_py/logic/deontic/graph.py": {
+      "sha256": "5a595b05f5bec6d74f6c8c06129cc7f1a7860a2beff98d1f28b9fde6635bdfde",
+      "bytes": 22853
+    },
+    "source/ipfs_datasets_py/logic/deontic/ir.py": {
+      "sha256": "a6bafa2aa4b1e8d9c368d4c4354e56b924888d43eb1f817c11058767f17f3416",
+      "bytes": 114441
+    },
+    "source/ipfs_datasets_py/logic/deontic/knowledge_base.py": {
+      "sha256": "a6e59bf538caa19cfeff6e02aa5da0b964b83c73396d05e58c3830e39dd97d9a",
+      "bytes": 7285
+    },
+    "source/ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py": {
+      "sha256": "abb138e7b51dbb071b9ab98865e3fb6c64dfd6a6cc5674a0853d523f00a7797a",
+      "bytes": 11583
+    },
+    "source/ipfs_datasets_py/logic/deontic/metrics.py": {
+      "sha256": "5a2f92bc24154e14d3d2e3b6e73dcc128e6183957b5832b9bc1d72e60f7370da",
+      "bytes": 15413
+    },
+    "source/ipfs_datasets_py/logic/deontic/prover_syntax.py": {
+      "sha256": "1946190c1d1ec8e8ea659c0d7c9a0a8da29f2f6b0aca8326193a95a57deaad31",
+      "bytes": 67553
+    },
+    "source/ipfs_datasets_py/logic/deontic/support_map.py": {
+      "sha256": "e48a537061611eee0cacff129839ce04992db838b86a3edbe8f422f1018fda84",
+      "bytes": 6124
+    },
+    "source/ipfs_datasets_py/logic/deontic/utils/__init__.py": {
+      "sha256": "6b3ede4588f4d18b84b6a06ebc774b8d3755627a0b5313147de7838503032f3c",
+      "bytes": 112
+    },
+    "source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": {
+      "sha256": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+      "bytes": 305902
+    },
+    "source/ipfs_datasets_py/logic/external_provers/__init__.py": {
+      "sha256": "d8f4cc8fd9f940630ec03260aa00242878ec806c84ea9530579052c14a17e592",
+      "bytes": 5652
+    },
+    "source/ipfs_datasets_py/logic/external_provers/deterministic_router.py": {
+      "sha256": "e2e46a43722048394f5ce9dc901dd6da2f2fc9c0bbc0008b53e41c964a28cbda",
+      "bytes": 6626
+    },
+    "source/ipfs_datasets_py/logic/external_provers/formula_analyzer.py": {
+      "sha256": "e3eef67bba868310c6622892c3dd091ee442241049ddc1b7f477879e0e65ba00",
+      "bytes": 26768
+    },
+    "source/ipfs_datasets_py/logic/external_provers/interactive/__init__.py": {
+      "sha256": "0c68e8ff21db27cf87d49ef41ce981c563486d499826f4876c1266e05769f4cc",
+      "bytes": 249
+    },
+    "source/ipfs_datasets_py/logic/external_provers/interactive/coq_prover_bridge.py": {
+      "sha256": "aec2c8fbcc906fface28c11719fa9474916afffb0e0ed747081d4d2247fba586",
+      "bytes": 14094
+    },
+    "source/ipfs_datasets_py/logic/external_provers/interactive/lean_prover_bridge.py": {
+      "sha256": "a395de8c036764429dfe6dc12745624c9ec3c22a28534c0ed8ccf1060e5d5a40",
+      "bytes": 14210
+    },
+    "source/ipfs_datasets_py/logic/external_provers/lazy_installer.py": {
+      "sha256": "cb931fffed2004c44105bb554f8444157a910b8460e53beb05584c2a8a6e3dbe",
+      "bytes": 64131
+    },
+    "source/ipfs_datasets_py/logic/external_provers/neural/__init__.py": {
+      "sha256": "58c43ffa990044f972b53f753065473c56b62e971742070e01693703d39ca3fc",
+      "bytes": 291
+    },
+    "source/ipfs_datasets_py/logic/external_provers/neural/symbolicai_prover_bridge.py": {
+      "sha256": "8954a923838ddf23426aa05a7722dcd47091f93fede0e0dabac225c42f636ec3",
+      "bytes": 17707
+    },
+    "source/ipfs_datasets_py/logic/external_provers/prover_router.py": {
+      "sha256": "cc4048edefd664f3d8c1392fe3400c9059caf353f04b96d42d4f5b21edca9b9d",
+      "bytes": 48048
+    },
+    "source/ipfs_datasets_py/logic/external_provers/smt/__init__.py": {
+      "sha256": "1fda00d8cf473e2376a60d3ac60c2b5966e72d510b8c0097cee762cf90ae790e",
+      "bytes": 274
+    },
+    "source/ipfs_datasets_py/logic/external_provers/smt/cvc5_prover_bridge.py": {
+      "sha256": "754230f095393fb63bf4df79d5a9d9868f06c30a05e616c6538c31eca4dcc964",
+      "bytes": 19263
+    },
+    "source/ipfs_datasets_py/logic/external_provers/smt/z3_prover_bridge.py": {
+      "sha256": "36be1c8349ef7c821ae4af3141625175db4e1fb51f7dbc50d889f59d70f22afa",
+      "bytes": 19836
+    },
+    "source/ipfs_datasets_py/logic/families/aliases.py": {
+      "sha256": "a04094403e16fdf2a4391881afb79e08bed4cda5679ae26a5b6d066b62c67b5a",
+      "bytes": 44402
+    },
+    "source/ipfs_datasets_py/logic/families/canonical_catalog.py": {
+      "sha256": "348639b3dd82d6382da85ad039c5c675e083400c50ad28cb20b8ada5e54a43ba",
+      "bytes": 25583
+    },
+    "source/ipfs_datasets_py/logic/families/generated_catalog.py": {
+      "sha256": "361b70bacadc4b2f2ccdf7fadbc9fb7cbae6cf10d6996a2d7af177c90e02d0c2",
+      "bytes": 25762
+    },
+    "source/ipfs_datasets_py/logic/families/models.py": {
+      "sha256": "1a92305ef498812e3757147179907d4ddf4a4518371034fc2363922d5d5fed3f",
+      "bytes": 36277
+    },
+    "source/ipfs_datasets_py/logic/families/namespaces.py": {
+      "sha256": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d",
+      "bytes": 34262
+    },
+    "source/ipfs_datasets_py/logic/families/profile_catalog_v3.py": {
+      "sha256": "5897d3a1452f3c7582362604d37cbf4967f6616bfeaad88f892908ab67d21313",
+      "bytes": 41089
+    },
+    "source/ipfs_datasets_py/logic/families/provider_matrix_v2.py": {
+      "sha256": "4899175677bfa640f3c2593ee100a681a2da54a7592a0f0785be8ac90d9248a6",
+      "bytes": 37915
+    },
+    "source/ipfs_datasets_py/logic/families/providers.py": {
+      "sha256": "3e2eb9098896385925f8f42e468e0d4e366b34bf3e66a2040651c999c189f9ff",
+      "bytes": 50969
+    },
+    "source/ipfs_datasets_py/logic/families/registry.py": {
+      "sha256": "669c4d90dbbac1014bd3dced401027be0391d304477b904f9da04d5a2d6c0450",
+      "bytes": 51399
+    },
+    "source/ipfs_datasets_py/logic/families/registry_v3.py": {
+      "sha256": "1d42b53ca826281406e6e176f024b084ce7b3c234bfb8665cfdaa71fa293e76b",
+      "bytes": 33929
+    },
+    "source/ipfs_datasets_py/logic/formalization/__init__.py": {
+      "sha256": "91c60c1dfbf9038b8271ae6b1495dbbaf0be8d6ce438524c33f4f7a586f17266",
+      "bytes": 2073
+    },
+    "source/ipfs_datasets_py/logic/formalization/advisor.py": {
+      "sha256": "381dfb0b25bcca013b253a13f66feecb9111877833f1ae067b94e10024cacf96",
+      "bytes": 51325
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py": {
+      "sha256": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073",
+      "bytes": 97
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/domain_targets.py": {
+      "sha256": "b373c8b26310a761525459880de7fa7ba052e0fde57f1d0cbe2ddd9d2f85b586",
+      "bytes": 15447
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/family_training.py": {
+      "sha256": "e42e5314a59966ade1163e062817484357feb97e86158e21360ad39fa1558e64",
+      "bytes": 33473
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/family_training_v2.py": {
+      "sha256": "c5b66780a5ed5b5247f3de1467d34ed17cba89bf250e9b2490218fe9e71f2e02",
+      "bytes": 17679
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/family_training_v3.py": {
+      "sha256": "03109202932cdd65d66bfedb4693241cdeabbda820082b2aef3b3175e86d4918",
+      "bytes": 19760
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/family_training_v4.py": {
+      "sha256": "5af04f8c3f6f1a378b69d85e8169cd167f442a0e6e7ad17baaedd6157dcd455c",
+      "bytes": 6831
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/family_training_v5.py": {
+      "sha256": "b97534f9435a770a275a408bab160cdc1b1b1a1dc21142d271a2ab2e7c55f37f",
+      "bytes": 6433
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/intent_semantic_training_views.py": {
+      "sha256": "985558706be7e0c4b4e446f92d938eaa6c14569f04f0d9aa4d6847fef183a087",
+      "bytes": 14121
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lake_v3.py": {
+      "sha256": "1528142dce280a41425ef8a54927eea224586aed8ea1ece5fd2a1b027c36828a",
+      "bytes": 14423
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": {
+      "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+      "bytes": 29000
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters_v2.py": {
+      "sha256": "a980bed6bb2aded90ba49af8e8c85d4d9e448c6dbc4e877f5ae3bec83d61ed09",
+      "bytes": 666
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters_v3.py": {
+      "sha256": "1df55f2679990fca270b9d59ba68f2aac7fc75bca73a96f5d0b7aa09f38a8ff9",
+      "bytes": 702
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_formula_evidence.py": {
+      "sha256": "3286b28b2877f6bbcd452511624512fb882c36480430e1024263346a4fe3da29",
+      "bytes": 13767
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_intent_lean.py": {
+      "sha256": "b2039fb5dd9579fb2ed26ff3e652005c0caf6858c2956b4b66ca2f71dd9c7a67",
+      "bytes": 20471
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_intent_semantic_lean.py": {
+      "sha256": "77946b46eec746610ab294b3c1205c1b99c4f0818d0ddcedff1de46e23231bab",
+      "bytes": 4947
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_program_lean.py": {
+      "sha256": "14d9a4aebb305ffaa26ca30c9ab154b12df9acdd77b10a033da9f1928d7e3288",
+      "bytes": 19008
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": {
+      "sha256": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+      "bytes": 18936
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_security_lean.py": {
+      "sha256": "32b2605b43329ecc9eed496d78f819d09a642c734d911cc6542d393eb7e6949d",
+      "bytes": 16037
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_tla_projection.py": {
+      "sha256": "e1611c42195afbb1a436df9216e26dcc7b1d5630bcb23bd6a8b55c9e7b5f9cdc",
+      "bytes": 28084
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/native_ui_lean.py": {
+      "sha256": "f772fbbcc900d008f732001ac4bf48a4bdbe8577ae2a214fad8fde1964f34239",
+      "bytes": 21130
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/projection_validation_contract_v3.py": {
+      "sha256": "a563865cef8782262480fc9e785e6084e89a5acb692c370d17fd7f83e1004984",
+      "bytes": 18551
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/ui_native_training_views.py": {
+      "sha256": "16fa66defc9f01a9acffbdefb41b55c24273c16bf86dc03658630cb1949f8866",
+      "bytes": 8923
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/ui_targets.py": {
+      "sha256": "3a510ae3d3e3590250781fbf763dc3767ff635e1dc495bb79ecf75cc54261a80",
+      "bytes": 10272
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/ui_training_inputs.py": {
+      "sha256": "39d892919e5e5108c589c35d9e586bd4eb294e93146a3174d271dc084398dd9f",
+      "bytes": 21441
+    },
+    "source/ipfs_datasets_py/logic/formalization/checkpoints.py": {
+      "sha256": "96aa08e22eb99bebc0b0f84019227f0a504ca67aa2252fbf3253850343e95f46",
+      "bytes": 54378
+    },
+    "source/ipfs_datasets_py/logic/formalization/compiler.py": {
+      "sha256": "2d4c63025e3d0004774c3a1d688193187f115b181085d7825d46c9d72581b03c",
+      "bytes": 35152
+    },
+    "source/ipfs_datasets_py/logic/formalization/features.py": {
+      "sha256": "a5abe46dbb9c90f83699f8d7922676bc41335e26413d73ae173c9fd9b66bb23c",
+      "bytes": 13308
+    },
+    "source/ipfs_datasets_py/logic/formalization/samples.py": {
+      "sha256": "90b5efa905eb9d3fb980cb628d32a180d37fa9097fb252b3aad006a3eb628695",
+      "bytes": 13082
+    },
+    "source/ipfs_datasets_py/logic/formalization/typed_slots.py": {
+      "sha256": "12bc865d038238e43caa0d2f61f0a81e8e9cb44bc8876479fbecffc4155747cf",
+      "bytes": 17623
+    },
+    "source/ipfs_datasets_py/logic/formalization/views.py": {
+      "sha256": "509fdf2d7334559c7ef176d504d5a6a9d8645c99c00c779d14cb3d08c51f9ae2",
+      "bytes": 29888
+    },
+    "source/ipfs_datasets_py/logic/hammers/__init__.py": {
+      "sha256": "915318c85c85ab62c3ed1307f23598a4d837ae9abe4b714fe3d25e3f7080d9c0",
+      "bytes": 17135
+    },
+    "source/ipfs_datasets_py/logic/hammers/corpus.py": {
+      "sha256": "cb0abbba45e927e4f2cb96698ad9511165ec27da7a91615312060a677f0a6457",
+      "bytes": 36242
+    },
+    "source/ipfs_datasets_py/logic/hammers/fallbacks.py": {
+      "sha256": "8a777b664f670ecca86eb39d004e46cdf2bf8e6058febd9d375aaa33067d16ca",
+      "bytes": 63615
+    },
+    "source/ipfs_datasets_py/logic/hammers/frontends/__init__.py": {
+      "sha256": "728f609f5893cd55b2e98dd1b86323c5540d95015ceb2bec4381e94c68147a75",
+      "bytes": 2942
+    },
+    "source/ipfs_datasets_py/logic/hammers/frontends/base.py": {
+      "sha256": "34e79546f2d5e3e2487b79948f0f964504a61fd83dd6dca25cdd35e146c4e7eb",
+      "bytes": 23956
+    },
+    "source/ipfs_datasets_py/logic/hammers/frontends/coq.py": {
+      "sha256": "3c5d0f7d40890d138e6552aa751b2dd5a2ed47d06d1123c12358daaf0b38610c",
+      "bytes": 11010
+    },
+    "source/ipfs_datasets_py/logic/hammers/frontends/isabelle.py": {
+      "sha256": "37348064100d50306abb80a29fbddb391e32cab65910857b458f6ab0589242cc",
+      "bytes": 12482
+    },
+    "source/ipfs_datasets_py/logic/hammers/frontends/lean.py": {
+      "sha256": "bf9b85389a8616424db741fd49d2951a2565a2d47ddfb39a3d856851162b6325",
+      "bytes": 12403
+    },
+    "source/ipfs_datasets_py/logic/hammers/learned_selector.py": {
+      "sha256": "a2f47a93b81452e8c17cbbb38bae972197fd9b0ac9ea7a908149eb23d09fe1d6",
+      "bytes": 54361
+    },
+    "source/ipfs_datasets_py/logic/hammers/models.py": {
+      "sha256": "fa73245e1091f3c6d8a13eee0e6d11876d76c2db944228188f6e21474e79736c",
+      "bytes": 55431
+    },
+    "source/ipfs_datasets_py/logic/hammers/policy.py": {
+      "sha256": "bbebb2b8c93f4f22b0726b51f062cf13ed29576f0854cb18cf54d96c453589a1",
+      "bytes": 21665
+    },
+    "source/ipfs_datasets_py/logic/hammers/portfolio.py": {
+      "sha256": "56c97895365fd469813a15edc1923c166cef3832fade8e29261add88270e2a1a",
+      "bytes": 35886
+    },
+    "source/ipfs_datasets_py/logic/hammers/premise_selection.py": {
+      "sha256": "ab84a3d42d376aa097313dda48ee37029a36855c4f181213db3fb94626ed0ab3",
+      "bytes": 41069
+    },
+    "source/ipfs_datasets_py/logic/hammers/process_lifecycle.py": {
+      "sha256": "526905da3d3ea14b9d16695ae903cf30f792714a91aca5a09ff640bb0ec9a676",
+      "bytes": 37576
+    },
+    "source/ipfs_datasets_py/logic/hammers/proof_cache.py": {
+      "sha256": "a34b2d84d86069e79096d1c30fb892c4e6634a3666f05a71355421ac81aefb55",
+      "bytes": 29752
+    },
+    "source/ipfs_datasets_py/logic/hammers/provenance.py": {
+      "sha256": "1ff7640f131dadf803dfae4b49582afe1b41ab826ffcd5c21aa9139e67563dd2",
+      "bytes": 51394
+    },
+    "source/ipfs_datasets_py/logic/hammers/receipts.py": {
+      "sha256": "3ab3dbca22230ff477fe4de42c3fa414776d2615b22373bd86d370bbb05de3d8",
+      "bytes": 41508
+    },
+    "source/ipfs_datasets_py/logic/hammers/reconstruction.py": {
+      "sha256": "a877144bdfb8079a3ec835ddcd0116cdd1b9deacc3ee85fa12cc4ec2be1c8fb8",
+      "bytes": 28394
+    },
+    "source/ipfs_datasets_py/logic/hammers/reconstructors/__init__.py": {
+      "sha256": "92caaa9bcbdadaaf04b7685297c1fd01a1b8aa4d98e9369a2e8a3c977301ff61",
+      "bytes": 2924
+    },
+    "source/ipfs_datasets_py/logic/hammers/reconstructors/coq.py": {
+      "sha256": "168912cad9cee9397f7d784129e8fae1f00be620e7597a0a67dbd078ff8e7685",
+      "bytes": 11991
+    },
+    "source/ipfs_datasets_py/logic/hammers/reconstructors/isabelle.py": {
+      "sha256": "1b50599e822dca9a267a7715785be36458e5ae2b0cc51b1e8d4f91b262a2d255",
+      "bytes": 10839
+    },
+    "source/ipfs_datasets_py/logic/hammers/reconstructors/lean.py": {
+      "sha256": "86677cfa36f05bcb1b9f328619b7763da4522a231f0a947647b9828788f8d1d0",
+      "bytes": 12674
+    },
+    "source/ipfs_datasets_py/logic/hammers/smtlib.py": {
+      "sha256": "c51e5cd1c91dbb8a37b9811009028b28b4bac0a16b8edcf563c0ac663a2c460f",
+      "bytes": 15873
+    },
+    "source/ipfs_datasets_py/logic/hammers/tptp.py": {
+      "sha256": "eca360a242c680e6fc65dd2a3e8fe7d773f3f986530758b6d2d20aa3e3648a83",
+      "bytes": 20233
+    },
+    "source/ipfs_datasets_py/logic/hammers/translation.py": {
+      "sha256": "681e71953840b1ed0cb2880f40b7fbe360c6f523ceb542d5271d7e7d5f698996",
+      "bytes": 49139
+    },
+    "source/ipfs_datasets_py/logic/integration/__init__.py": {
+      "sha256": "11c1b240f9c1fb53653322c57f9150847ac62c43491da61b5dede542b4cc9b41",
+      "bytes": 14312
+    },
+    "source/ipfs_datasets_py/logic/integration/bridges/__init__.py": {
+      "sha256": "29318996a3da62e07d7f2a9b254c86e2d951762f1f07ceb27253551f32e3c911",
+      "bytes": 890
+    },
+    "source/ipfs_datasets_py/logic/integration/bridges/base_prover_bridge.py": {
+      "sha256": "7ab2875dffacd2902bdf654889b3174663600ab8d4ef6cb3e608f8e7a8fa342f",
+      "bytes": 8682
+    },
+    "source/ipfs_datasets_py/logic/integration/bridges/symbolic_fol_bridge.py": {
+      "sha256": "b57e0ce04f2c9cac468aff5bb112103158c483794e3836543ad86d1155443c60",
+      "bytes": 30665
+    },
+    "source/ipfs_datasets_py/logic/integration/bridges/tdfol_cec_bridge.py": {
+      "sha256": "2e749fa4e503ceb4c4809c50e9de9e161476dac9d0fc2b6720b1c3efeaba5ba4",
+      "bytes": 14118
+    },
+    "source/ipfs_datasets_py/logic/integration/bridges/tdfol_grammar_bridge.py": {
+      "sha256": "dd0a58f378446468be07e21257dea0fa0e73ce64460d7efa629cd7377e30a957",
+      "bytes": 21884
+    },
+    "source/ipfs_datasets_py/logic/integration/bridges/tdfol_shadowprover_bridge.py": {
+      "sha256": "158cd95bc5120ebcf7305371c6b15d8b6a8e6804533d01da1cf6f7830076fc22",
+      "bytes": 20763
+    },
+    "source/ipfs_datasets_py/logic/integration/caching/__init__.py": {
+      "sha256": "2528f3aaabea7e1e6641065b3e1e7fdd71b0d93e4b9b82d4ebb5d08a753e8f3c",
+      "bytes": 1571
+    },
+    "source/ipfs_datasets_py/logic/integration/caching/proof_cache.py": {
+      "sha256": "fc622a211e94b398ddff1b310817d1946f4f0cdd9bdbcb071d9448b4a1bc156b",
+      "bytes": 3988
+    },
+    "source/ipfs_datasets_py/logic/integration/converters/__init__.py": {
+      "sha256": "39c7ab8a267e9fab2c40fb89b6d82a8db24a037d4db013771830b9354508df96",
+      "bytes": 1646
+    },
+    "source/ipfs_datasets_py/logic/integration/converters/deontic_logic_core.py": {
+      "sha256": "8e4b2e21bf19349c6c11dd29b8ceefa21403aa44eca610ecc27c3cdaa59ab504",
+      "bytes": 19507
+    },
+    "source/ipfs_datasets_py/logic/integration/converters/logic_translation_core.py": {
+      "sha256": "d861ff8b2ed620f57638d7b01412bf755c4208f909783dcc68c18adec15519d9",
+      "bytes": 25889
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/__init__.py": {
+      "sha256": "83380d7c173252bfec336a913a928a277ebee40d55d0e18d9f34c6ab3c8325ea",
+      "bytes": 40876
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/_deontic_conflict_mixin.py": {
+      "sha256": "1c7adc16d2cb50e078c5c4d1d34a21416f49298f6ba250ea27fa830135b8456d",
+      "bytes": 12532
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/deontological_reasoning.py": {
+      "sha256": "eb3220a1b3077dda67a88019e4ab718e0d7a0e0ba4041e4c8e9a5ab96f867690",
+      "bytes": 18570
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/deontological_reasoning_types.py": {
+      "sha256": "8a3d2586dff09f97fc7403b0d62f4de127f11abcc3ab06ea71e6ea21c899d48a",
+      "bytes": 6574
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/deontological_reasoning_utils.py": {
+      "sha256": "793db8e66b9dde4bf070454253b949274f864090348220ffe9b82e71df17534a",
+      "bytes": 9035
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/hammer.py": {
+      "sha256": "57dac4673a9f128498727b2ccdb5b91d26ac94cf35a3e6d28acce075510866ee",
+      "bytes": 44130
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/hammer_backends.py": {
+      "sha256": "eb0e1d7c86fc09b62707fe6f4f701c58bb24af8200f5a415c94f5f6eec22ee23",
+      "bytes": 18638
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/hammer_guidance.py": {
+      "sha256": "c8f0e0ffd460fa06d2c5dfd269537a8d3dcc4b050de044ea89fa33cac437e8d7",
+      "bytes": 13063
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_ambiguity.py": {
+      "sha256": "d18f6e95b15adf3530135538efd7bc239201d5d4e53ff149179fa348e4133bc0",
+      "bytes": 46284
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_backend_conformance.py": {
+      "sha256": "1b3bcfeffb2122c9dfdac77a5d02c07a90f66feb2977bfda66331b88b7735172",
+      "bytes": 52434
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_build_manifest.py": {
+      "sha256": "6657719e82597fe95a989cef91d39f2b6ec52815c9a47582ba0c0132b076fbcf",
+      "bytes": 48540
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_canonical_adapter.py": {
+      "sha256": "4fd3fe388e0092916e053cefe8c483010774af18586cc26310a969586137aad7",
+      "bytes": 5341
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_canonical_pipeline.py": {
+      "sha256": "715638c2f245f5055f8f5077bc03be62e7d27b3c9796edc9d687e25f8bdfa0b8",
+      "bytes": 17393
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_citations.py": {
+      "sha256": "5cba3369b0ed0e293710c1cd87ed0cc215094345656a1920c2d66b313c254418",
+      "bytes": 77369
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_compiler_api.py": {
+      "sha256": "5bf17c8d055b98b5b7df876884b2f59b0ebba5c64851e6a0e98c0dccf052e302",
+      "bytes": 48391
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_contract_telemetry.py": {
+      "sha256": "f7d4200c27298cec4755caf8d8b9f1f9383d84d83bda8e7d2d474949ec952eb4",
+      "bytes": 46320
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_diagnostics.py": {
+      "sha256": "99828c40f513488aeb212de6b3dc23f634f1ace7cdd2007281d7ac173462c59e",
+      "bytes": 51846
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer.py": {
+      "sha256": "2ef7f5247d2b26b0cbc0b1930da7768206b834e92dd909cdff675b7789a6eda5",
+      "bytes": 20392
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer_coverage.py": {
+      "sha256": "52b79737cd96de829f82a601982ecb2dc9cd2150f65de2ddcc8b25026166a61a",
+      "bytes": 51816
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer_translation.py": {
+      "sha256": "d51a68f4743fb2b67407253f5110236c42b41f99ce756fde9bccf4d14047cce2",
+      "bytes": 29270
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_incremental_compiler.py": {
+      "sha256": "3acf9464cca97fd20b81f217ae38d361a0869e29af0963bb4b5b558bc1a640d0",
+      "bytes": 54099
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_interop.py": {
+      "sha256": "07a1892a35b24e53c171c8af3b435949cb6efe731ea71acf827505fea2ea397e",
+      "bytes": 69369
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_learned_guidance.py": {
+      "sha256": "2068698a282fa30b3eece259c6b8dddc28c2f0f518b1cc169384c17d03229ba8",
+      "bytes": 54518
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_obligations.py": {
+      "sha256": "982f1cfad15976c162e71e809ada5b00794bb67b8ae42c981b80a8fc7d24ae1b",
+      "bytes": 29049
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_pass_manager.py": {
+      "sha256": "85754f1dc77e1445fb33a58d8c831985ad6cf1ff0180c5f77454283ab47ea83a",
+      "bytes": 64526
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_premise_security.py": {
+      "sha256": "6d5650b7b0e112a16171a43637d80886eff643255b41516ba0ce52d5dc54df06",
+      "bytes": 29576
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_premise_selection.py": {
+      "sha256": "4eff0eb9f556953314a14191bbc3fbb3b7a4da3d9e0695713f3c101277605cfe",
+      "bytes": 26200
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_premises.py": {
+      "sha256": "a63691985673b41b25cfabf020c28c416b2fdc76dc1312d43e00be27147ab2b2",
+      "bytes": 26632
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_carrying_artifacts.py": {
+      "sha256": "9dc3760742ebee2e9230844aa6b6d840837b000d349cd89df19aa2dfdcbe9d1a",
+      "bytes": 73458
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_feedback.py": {
+      "sha256": "b25a909cf1a85743ba701867152d6588cf3eae2707e4deb68374a4b5579fa17c",
+      "bytes": 57466
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_router.py": {
+      "sha256": "d1f7e330390f9ca6f81d876c0103dd261c2a24ebb27f43b685c48a11a7861af2",
+      "bytes": 56155
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_rule_distillation.py": {
+      "sha256": "b5d7a0861f956ae4b73a2c80cece279aa0aa16a7cf9bae3b6a73f936b6c845d1",
+      "bytes": 69138
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_schema_evolution.py": {
+      "sha256": "d00790b8ca82e901743d8ed6dd96c85fe440aeccb69880ee4d0cd2ba109de2ef",
+      "bytes": 57104
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_semantic_diff.py": {
+      "sha256": "c33186618bd302d594e946b97b869b3fc817ce470c57325a544f07d7c793a453",
+      "bytes": 64364
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_source_maps.py": {
+      "sha256": "7f7a3e7b1d40ef3d5a923cfad06ae6e0e8488a4fd42a32eebf58d83403300cd7",
+      "bytes": 55424
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_subgoals.py": {
+      "sha256": "01ff0a587a22d6b27ec73d47862b9a098eadd55b707b9e2619ea0fb3f8195813",
+      "bytes": 21601
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_symbols.py": {
+      "sha256": "9c7fe139e2bfd04096769dd866c38ab8d7e18fa9ad0699206be3425b293d003d",
+      "bytes": 71188
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_temporal_authority.py": {
+      "sha256": "a4e14b94f03df2df56625840c75ec0dddf760f43d541f8ee8d2efa85e054ebe5",
+      "bytes": 80724
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_verified_gap_repairs.py": {
+      "sha256": "3698f736765422a172c259f3e5beef466e3da0b64b3fd22e4936afa938785de0",
+      "bytes": 42396
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/legal_ir_view_contracts.py": {
+      "sha256": "086997b67133df2437435b417324b11ede49b503ca92f5af6c67146c765fd875",
+      "bytes": 60130
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/logic_verification.py": {
+      "sha256": "5e6567922a4a27ac5fb27498ce593af6fe00660cf131def591af90f90eadd752",
+      "bytes": 27932
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/logic_verification_types.py": {
+      "sha256": "2497b95aad3f4699a9245bacefd68f73616152f433f570ee379186a94ad50004",
+      "bytes": 5532
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/logic_verification_utils.py": {
+      "sha256": "5616914a5995e71e4e1146c39eb130df071013eb4912a194ec550b99d1b54ff2",
+      "bytes": 9725
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/proof_execution_engine.py": {
+      "sha256": "a6965f1acc686c85e8ccbf6a8d8120d14c191cccf82187098addb2de922219c6",
+      "bytes": 35709
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/proof_execution_engine_types.py": {
+      "sha256": "299e3e7362a38185f6c52a08ced8377c682055123962517c27204815958bcd54",
+      "bytes": 2693
+    },
+    "source/ipfs_datasets_py/logic/integration/reasoning/proof_execution_engine_utils.py": {
+      "sha256": "10e3f130f5bb2e2b23a11d8bbb59ce7ca01b9624c5b32607e1b95f2c899ccb19",
+      "bytes": 5914
+    },
+    "source/ipfs_datasets_py/logic/integration/symbolic_fol_bridge.py": {
+      "sha256": "9377276e6a22dd909355a9878144546867efaf8031f8c2884de614f7e25deddc",
+      "bytes": 208
+    },
+    "source/ipfs_datasets_py/logic/integrations/__init__.py": {
+      "sha256": "bdb2341ef1aa175864b322be35079f1043ad4aabfe5c81a9b01227d7a41af776",
+      "bytes": 1457
+    },
+    "source/ipfs_datasets_py/logic/integrations/typesafe_advisor.py": {
+      "sha256": "f8647ffcf8dc1266030182a05929e51de5f4bc701f610f00ee544fb24f552b52",
+      "bytes": 78186
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/__init__.py": {
+      "sha256": "c9e0ab4195220234fa047c4e675e3f0fd1c72669c86eaeefa9cb57c92afa2b47",
+      "bytes": 2258
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/canonicalize.py": {
+      "sha256": "3609047cc8c99437d77461b4f7ea0e05d193a31bf0d20a7e80b7b0c10a8cff87",
+      "bytes": 1495
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/decoder.py": {
+      "sha256": "7bab5781c07e00b54b0283d3a2962926f75935caedc80eceb23264cb388be257",
+      "bytes": 24220
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/advisor.py": {
+      "sha256": "e8dc5f9aa8af9cce4c56ea3660e2277ee91517329fd3c200158ea7d44fb0a01f",
+      "bytes": 29067
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/checkpoint_policy.py": {
+      "sha256": "34090d67343d067570277857d80ba5b82f6a2da9f9a2d71a1a490510eff27974",
+      "bytes": 15120
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/compiler.py": {
+      "sha256": "b9eb0aeab9fef143609a09860713548fa617d53de800c8c82643aac4390f2d9b",
+      "bytes": 59085
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/decompiler.py": {
+      "sha256": "4a06beefbc7d29bbcfcbd0dcff6268db6e3aeecab977629ea5553fcd5b311174",
+      "bytes": 32432
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/extended_projections.py": {
+      "sha256": "20163bc5eb509065475bbe85716467b106f0b9dd74a1aa530bb61755600697eb",
+      "bytes": 7882
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/features.py": {
+      "sha256": "05c69cef36824b445c0cea8074b8c969480d41a301e4bb5aa2dd1d5210c107a0",
+      "bytes": 5604
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/guarded_workflow.py": {
+      "sha256": "27f57fe52c30c59d24386acf7e66785270ed33351791ad72b9d6f55d8df08b57",
+      "bytes": 22461
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/instruction_scope.py": {
+      "sha256": "d7e5c9bbcf628d83ccc65dc6af78652e67e9cedfee100be67e17bc32581e3152",
+      "bytes": 17111
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/lean_projection.py": {
+      "sha256": "aef6ff43d470857e67dbbc16707d213db0acac2439c1eddf1538a6f8eb930ed7",
+      "bytes": 9771
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": {
+      "sha256": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+      "bytes": 22238
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/projection_contracts.py": {
+      "sha256": "86386464d599b4fc5af66b3e6f634e797594bbde0c3e2bcff087d802c478fdaf",
+      "bytes": 6460
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/rich_grammar.py": {
+      "sha256": "6c40ac99d7e339651b6029764f94b12430ca515d4c5f7426770b013499efe92b",
+      "bytes": 11527
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/rich_logic.py": {
+      "sha256": "3b97b839f5a2afa451f76a9c330f9e485e47ed1f62d80e568a424a92ec5433eb",
+      "bytes": 19832
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/state_projections.py": {
+      "sha256": "d22aa49f30252bf70c63ab76ee8338a045751f37d8cfeb5314c0587a0658ccb1",
+      "bytes": 21237
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/structural_projections.py": {
+      "sha256": "c03ce3a4a083c463a3ced8d8dd8e08b9693711e35829cf8f44b9b007ab1bd6b9",
+      "bytes": 18947
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/typed_compiler.py": {
+      "sha256": "e7b361f0e03b97995e4665c051d32d8635ac7445b7893bf3a5eb4ae30a507c3b",
+      "bytes": 83760
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/formalize/workflow_state.py": {
+      "sha256": "075283eb7eebb4426f535db2e20b714b6a208910c31e71c3c44752bca0464e0f",
+      "bytes": 16074
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/graphrag/corpus_projector.py": {
+      "sha256": "2192e20f17fe4d625c2b21b2460915c1b798457dfd1fff3016e3019e6891e09c",
+      "bytes": 46700
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/graphrag/ontology.py": {
+      "sha256": "b7578d181cc6967383a7466c4e5079237819b27130ea1bf08282a8abf4c258d4",
+      "bytes": 25947
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/graphrag/retrieval.py": {
+      "sha256": "c54484421a6d4a6c45e8fe6fb75a53fc4788a9014fcfe6c4da76bd9046dcf6bd",
+      "bytes": 30952
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/graphrag/semantic_projector.py": {
+      "sha256": "5f7cec8a6fa2e21c8f680b286eb4cdea96bf7532f312a45a67c4d7f85385a162",
+      "bytes": 49951
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/protocols.py": {
+      "sha256": "adb0ae8eaf2e55bf587ac76baa90d8303b61e0df246c03c30b56cb31a9643780",
+      "bytes": 1693
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/schema.py": {
+      "sha256": "93d38e4724c5f34aab7f39f050742e98ef0c8d80e2ff70459d2401541505fc56",
+      "bytes": 27163
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/source_adapters/__init__.py": {
+      "sha256": "d60f048c70a7b90c668e1bc8064eaf78eafadfb7c579db47c63ad51b70fac5aa",
+      "bytes": 732
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/source_adapters/policy.py": {
+      "sha256": "cfa048dda6ffb1fdd70de99491997e1e5968f97c5a8abdf9346e59a446d8daa8",
+      "bytes": 33406
+    },
+    "source/ipfs_datasets_py/logic/intent_ir/source_adapters/skillcenter.py": {
+      "sha256": "3d10d1b7a78df0184b44ee05747d27581761b7d687c2b5bf78891c6fa2597636",
+      "bytes": 21084
+    },
+    "source/ipfs_datasets_py/logic/ir_core/__init__.py": {
+      "sha256": "4c0070482e009dd7cb9875e91124d48683da37d53f691cccb306ec50f23c946c",
+      "bytes": 6942
+    },
+    "source/ipfs_datasets_py/logic/ir_core/canonical.py": {
+      "sha256": "339b5778581c19525a7685edf432aaf124cd12e02d37cd0eca88cb25ab86c0d0",
+      "bytes": 14098
+    },
+    "source/ipfs_datasets_py/logic/ir_core/claims.py": {
+      "sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+      "bytes": 16176
+    },
+    "source/ipfs_datasets_py/logic/ir_core/diagnostics.py": {
+      "sha256": "508fd3c2dce94a1eb1e2dff19f8f578ccec2d1e94eb1db2742f75783e23ff198",
+      "bytes": 20110
+    },
+    "source/ipfs_datasets_py/logic/ir_core/evidence.py": {
+      "sha256": "826743829d2964b97e13720b5ea52907de77f6b18e8886e5a3c0fb6a977fdeff",
+      "bytes": 12653
+    },
+    "source/ipfs_datasets_py/logic/ir_core/identity.py": {
+      "sha256": "606bffc1f938c59f44651eeb65cb9c0738e16e465aabba0ad82ef05e3b5b3b0e",
+      "bytes": 8911
+    },
+    "source/ipfs_datasets_py/logic/ir_core/protocols.py": {
+      "sha256": "b452a7095a2524f0ea3f4e4f3a395643d3257cd6f42e3c77f8e1817df62f6fed",
+      "bytes": 57414
+    },
+    "source/ipfs_datasets_py/logic/ir_core/provenance.py": {
+      "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+      "bytes": 31891
+    },
+    "source/ipfs_datasets_py/logic/ir_core/schema_registry.py": {
+      "sha256": "1b214ea190a41c6a451377a03bc71ea84f6703314293ef78c5f269082eee4fbe",
+      "bytes": 31823
+    },
+    "source/ipfs_datasets_py/logic/legal_document.py": {
+      "sha256": "b44785f720df1a60495bb7086a78fc00325a5d653a7e1782c0712fb7691454f2",
+      "bytes": 20391
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/__init__.py": {
+      "sha256": "38b169f6f7a40c40880bec32ef23730e9a3c6c47b6441e3b39e80fa5a9d1f4c2",
+      "bytes": 2594
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": {
+      "sha256": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+      "bytes": 38352
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "bytes": 109257
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": {
+      "sha256": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+      "bytes": 14528
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py": {
+      "sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+      "bytes": 27010
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/typed_adapter.py": {
+      "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2",
+      "bytes": 66185
+    },
+    "source/ipfs_datasets_py/logic/modal/__init__.py": {
+      "sha256": "8305b15bf8d51229a2d3e8e99105bb8c07b1d051c11a1ffc53a0a55cd5c53c3a",
+      "bytes": 38854
+    },
+    "source/ipfs_datasets_py/logic/modal/lean_runtime.py": {
+      "sha256": "4c660537439a6780eda9ef08f0c2e3f79f6a100843c295116c050f3e7d0b1d6e",
+      "bytes": 3656
+    },
+    "source/ipfs_datasets_py/logic/observability/__init__.py": {
+      "sha256": "1717b799910505659791daf992e4f1e74c12eb22fe89eb615fc6ffb8494072e3",
+      "bytes": 1107
+    },
+    "source/ipfs_datasets_py/logic/observability/structured_logging.py": {
+      "sha256": "2f06d3dbad09038150c8eec3f9bcc5eb0c7aa680c4eec61a7f7a886c53acbcac",
+      "bytes": 37438
+    },
+    "source/ipfs_datasets_py/logic/parsers/__init__.py": {
+      "sha256": "e75f0c2ffea0f0706a3d1768a794849e6c013b6647dc59ba331f44797c233386",
+      "bytes": 8980
+    },
+    "source/ipfs_datasets_py/logic/parsers/event_calculus.py": {
+      "sha256": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390",
+      "bytes": 59003
+    },
+    "source/ipfs_datasets_py/logic/parsers/flogic.py": {
+      "sha256": "85ac4353d2bd15fee7cfcf345a4f7afe33d27baca49b1b273f08a217298d1bb7",
+      "bytes": 78083
+    },
+    "source/ipfs_datasets_py/logic/parsers/legacy_modal.py": {
+      "sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+      "bytes": 71642
+    },
+    "source/ipfs_datasets_py/logic/parsers/modal.py": {
+      "sha256": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942",
+      "bytes": 99829
+    },
+    "source/ipfs_datasets_py/logic/parsers/rules.py": {
+      "sha256": "14b04bd0e77a99a7f99a7c76e0f126552f9fc256d94bfb53280c3a75131c24ed",
+      "bytes": 105593
+    },
+    "source/ipfs_datasets_py/logic/profile_g.py": {
+      "sha256": "4ca5dcc601f30c723467f425a6a03a7c5b1f644c2239a0f4a489705f1b715f03",
+      "bytes": 54035
+    },
+    "source/ipfs_datasets_py/logic/security/__init__.py": {
+      "sha256": "9dd53503031216c91e0ff2a1daff1de1c60267feb70921e3dd14ba2d6feb9c22",
+      "bytes": 3808
+    },
+    "source/ipfs_datasets_py/logic/security/audit_log.py": {
+      "sha256": "2bde85b266eb150b46ba8e493c7eb9efca82c53126a71bd60ff454bac80e38a0",
+      "bytes": 11848
+    },
+    "source/ipfs_datasets_py/logic/security/input_validation.py": {
+      "sha256": "7b7eea813e7809a1b4d113ba59ef7f649ff7f53148d1ee66a1f1ad92a03c596d",
+      "bytes": 2858
+    },
+    "source/ipfs_datasets_py/logic/security/llm_circuit_breaker.py": {
+      "sha256": "626624251d296a4b33af39267788976897736bd468a111a7996cb902f648885e",
+      "bytes": 16416
+    },
+    "source/ipfs_datasets_py/logic/security/rate_limiting.py": {
+      "sha256": "ca7a3a7752e782534462433a485971bb35d0c90dc3a0e84ae52a84b14eb3d70c",
+      "bytes": 4258
+    },
+    "source/ipfs_datasets_py/logic/security_ir/__init__.py": {
+      "sha256": "5a3147119b8c7f9b09242510281f001ad9facdcc3b796e79fdd5251342659818",
+      "bytes": 7457
+    },
+    "source/ipfs_datasets_py/logic/security_ir/code_logic_projection.py": {
+      "sha256": "e6328d747d54f26835b8da24c87a9a80eff6951bdc936c87243307574a85788b",
+      "bytes": 14373
+    },
+    "source/ipfs_datasets_py/logic/security_ir/cvefixes/schemas.py": {
+      "sha256": "f385f3a7e03f7e26ccecf208b49d74792f076b4447d2fe5db7affbf278806665",
+      "bytes": 28674
+    },
+    "source/ipfs_datasets_py/logic/software_verification/authorization.py": {
+      "sha256": "78f04e9231f9d04d98ab3597e52e8bb8c49d63047544657d33491b161effeeb7",
+      "bytes": 95747
+    },
+    "source/ipfs_datasets_py/logic/software_verification/concurrency.py": {
+      "sha256": "4d47e1ffd235282b841ae00644832ec9105fc90ee9dbf05ced901f937e0e346a",
+      "bytes": 71898
+    },
+    "source/ipfs_datasets_py/logic/software_verification/contracts.py": {
+      "sha256": "0238a345e5c35aec78801891562e896d719bca0424eab8ad790d5da2c239c5aa",
+      "bytes": 36669
+    },
+    "source/ipfs_datasets_py/logic/software_verification/heap.py": {
+      "sha256": "62e61bcd48cd17201dcd52f5e9d9458da44ef6c2af3dbe7b64587d77ac8c8e1b",
+      "bytes": 44622
+    },
+    "source/ipfs_datasets_py/logic/software_verification/hyperproperties.py": {
+      "sha256": "c49cb173aa9cd9cbbb69f72e461c0c7c048264cbbd7b92af7fd3c7390bd69ecb",
+      "bytes": 88932
+    },
+    "source/ipfs_datasets_py/logic/software_verification/program.py": {
+      "sha256": "f051f42d64c5f993451972924953cc7eaa6d17df097235ddabfd5d791d406f91",
+      "bytes": 58065
+    },
+    "source/ipfs_datasets_py/logic/software_verification/protocol.py": {
+      "sha256": "46e69f306c9eb2368d5d1abe589b10dfa10d09ab2e0ef3018585c76bd7c6335a",
+      "bytes": 81092
+    },
+    "source/ipfs_datasets_py/logic/software_verification/refinement.py": {
+      "sha256": "975b8493035f414e82a611499c119aab9843b0b8546bd1cb82d04344f170874d",
+      "bytes": 56593
+    },
+    "source/ipfs_datasets_py/logic/software_verification/separation.py": {
+      "sha256": "b8f2985c26c8fc2db6f6bbbd4c5959554d6ce6f21d228618eba2d47f3ea5a9a4",
+      "bytes": 56048
+    },
+    "source/ipfs_datasets_py/logic/software_verification/state.py": {
+      "sha256": "085841a600ed8f8fde202e720d1f70e5a0432e4bf80d20ff11fe60c90107c54c",
+      "bytes": 35431
+    },
+    "source/ipfs_datasets_py/logic/software_verification/syntax_bridge.py": {
+      "sha256": "cc46f305dede1cadb358a524f30dbb894b84ab062f0c083c3138c7e43f271116",
+      "bytes": 47941
+    },
+    "source/ipfs_datasets_py/logic/software_verification/temporal.py": {
+      "sha256": "56d8a6d3a5e7f11dd9f4d9d2096ec0f787a481b006abac311d212bbc622558dc",
+      "bytes": 48463
+    },
+    "source/ipfs_datasets_py/logic/software_verification/trace.py": {
+      "sha256": "4751f221cbe8ae8f2b328e3db3faf620b57288df9c3d22baba6e289f80523512",
+      "bytes": 28653
+    },
+    "source/ipfs_datasets_py/logic/software_verification/transitions.py": {
+      "sha256": "982d7e3a243fb70f5f797b7b6efdb45faebb3895945b06c04a9421fbe4ba7d86",
+      "bytes": 47121
+    },
+    "source/ipfs_datasets_py/logic/software_verification/translations.py": {
+      "sha256": "c418cf45efd69dd01ced3eb2e05f9bc411ab12855fa408401d1ba74839df6dda",
+      "bytes": 28440
+    },
+    "source/ipfs_datasets_py/logic/software_verification/vc.py": {
+      "sha256": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9",
+      "bytes": 81752
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/__init__.py": {
+      "sha256": "20dd418d90360cdb42c64ba8b87bedcdb640228b460ef6c6ae60312365130e81",
+      "bytes": 8285
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/algebra.py": {
+      "sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+      "bytes": 45735
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/ast.py": {
+      "sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+      "bytes": 56966
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/contracts.py": {
+      "sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+      "bytes": 75291
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/diagnostics.py": {
+      "sha256": "a291db3c2cea04ae8dd9221a5e5ddbebd419679c02a5a008034e3755e7650d8f",
+      "bytes": 10752
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/extensions.py": {
+      "sha256": "4842bef325044b0bce9f14958d385864ba8d34273bc48618188f451f6832edf9",
+      "bytes": 52639
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/lexer.py": {
+      "sha256": "f666e9759323508f4e90964c0d71164645af9ce1de60bed778e5f64f7f4a3aea",
+      "bytes": 27534
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/registry.py": {
+      "sha256": "eff5ca12d748eff1e9463b737a8243c97d89cac51e1b604fe2c765aed885cb44",
+      "bytes": 27560
+    },
+    "source/ipfs_datasets_py/logic/syntax_core/signatures.py": {
+      "sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+      "bytes": 30488
+    },
+    "source/ipfs_datasets_py/logic/types/__init__.py": {
+      "sha256": "60359f47e39c12483d2ffa702d66b611ecba8451678d7a1f7e228e30e795402e",
+      "bytes": 3873
+    },
+    "source/ipfs_datasets_py/logic/types/bridge_types.py": {
+      "sha256": "5ec9c47e1d5c527f66a01ec0790335ff70d784e6d3e20cc2dd73e1bc647449ad",
+      "bytes": 3009
+    },
+    "source/ipfs_datasets_py/logic/types/common_types.py": {
+      "sha256": "0ad8f7b7e6f38540414c94dc9d6da6aba9665d4dee6283499d8a637a53dfc500",
+      "bytes": 2859
+    },
+    "source/ipfs_datasets_py/logic/types/deontic_types.py": {
+      "sha256": "6fa123ecf0afb1d3293736c24633043aeb3349a3b3f7728247bfd08ea8cafe94",
+      "bytes": 10681
+    },
+    "source/ipfs_datasets_py/logic/types/fol_types.py": {
+      "sha256": "d1debd330e7a3102a1580efcbc6e06b863ee8ca9d78b2e34a60cd98b5ba1e902",
+      "bytes": 3529
+    },
+    "source/ipfs_datasets_py/logic/types/proof_types.py": {
+      "sha256": "8c96df27865d86cd54ae242497e4d9ddeaf89c5cd7484718b521dccf123fcb97",
+      "bytes": 741
+    },
+    "source/ipfs_datasets_py/logic/types/translation_types.py": {
+      "sha256": "5a0e4314692fdd4945bfd3c9b04d80e2fda86aa7f4b264f4c9c21964afe1343e",
+      "bytes": 2591
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/__init__.py": {
+      "sha256": "851b72ba64049ca073bae47752c12c4aa253c8be03420bcd9b63f2f966377773",
+      "bytes": 3486
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/__init__.py": {
+      "sha256": "6e40eb0d6f1d2ac22d33100353658c1696e99205a4f0246b96e66552a205ba70",
+      "bytes": 938
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/compiler.py": {
+      "sha256": "0f6b4729775b257d2c014e6082bba2c412266a08426204b62e67ea90d690ea51",
+      "bytes": 17830
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/contracts.py": {
+      "sha256": "6073f56d616cb35aa904e55ce801ceb43a911ee06773e0e397fda48ebcdd9e70",
+      "bytes": 5974
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/dcec.py": {
+      "sha256": "b988b9302971102ad8e3ae5fac4e78b543ba18ec8d3a4e68115ab8cc06046085",
+      "bytes": 2968
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/decompiler.py": {
+      "sha256": "115a78c57139f07b3c50ebd998c14fa22ce64aae2ead6a0a8c9f2a85e1389b3f",
+      "bytes": 39999
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/event_calculus.py": {
+      "sha256": "371948b54db7ddc4f2c9e66e7b198a26d96d198a2b4076f916b1781e02905e28",
+      "bytes": 2713
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/flogic.py": {
+      "sha256": "2671912bf789bf3c8ea6412023006c0436a3fd838b7e787a41f9743e102a6909",
+      "bytes": 3004
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/ontology.py": {
+      "sha256": "18fcfd6bf616672ca8c9571b5519ba408b3a145da99c9c6eff7998c93f668592",
+      "bytes": 7859
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/roundtrip.py": {
+      "sha256": "5ea38b379244651f13c1346d1c4ef21ea9863744d6a70f97e6ac32a9acd8f78e",
+      "bytes": 29709
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/formalize/tdfol.py": {
+      "sha256": "7c16f8fd4fc2b9f843728daab40d4600ef4dd66b2c8b71c159255ca12a327a8b",
+      "bytes": 3029
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/model/__init__.py": {
+      "sha256": "2c63b38d1b8d609159a77aad5473c9fa79b2a4b855c49186b848d0081115f381",
+      "bytes": 872
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/model/behavior.py": {
+      "sha256": "98b65818c54d5bddc816e6ee20183c96dc9813c4430e3d40fc1b0d53ac8e6724",
+      "bytes": 4799
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/model/bindings.py": {
+      "sha256": "325499d1e4664e7d75dcb850a2d3259769e4f42ff2dd6e60fef2b48416c9befe",
+      "bytes": 18860
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/model/components.py": {
+      "sha256": "72567a0e24bae8d2c0cac70bd06e4b7249016de271c35be6d215bccd054018c5",
+      "bytes": 36079
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/model/experience.py": {
+      "sha256": "3f5d9908c23441f6f26b4272295c921e681dd928292d2afbcd2ed0f7ac5c04ed",
+      "bytes": 3433
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/model/modality.py": {
+      "sha256": "973b575a2d28758e856a912797f9ac81ab345acd03b0c974284ee034e465c2ab",
+      "bytes": 28044
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/runtime/__init__.py": {
+      "sha256": "80cf9c7e484a89e7cea818e769830e7019177da94d91f4f9e5f0e50e3c63e93b",
+      "bytes": 890
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/runtime/events.py": {
+      "sha256": "ac58b7168bc2e2e1831859af3db517df0b23c01f74cab6077a7d37b5a7507722",
+      "bytes": 3919
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/runtime/idl_projection.py": {
+      "sha256": "20ea93e46469a5bb37fcf27bc89d01c9ed2f03e745a7db6b34f854608fa9fd8d",
+      "bytes": 15641
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/runtime/mediator.py": {
+      "sha256": "da3b5658bc7209ec8993fc27720bc76c3e3ffcc947e41c78ec6209f7b2b481c0",
+      "bytes": 33118
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/runtime/state_machine.py": {
+      "sha256": "bff5ce88b3fc58446bb2c14683ea83f6e55c44d70822919417e3529b4f52e957",
+      "bytes": 39587
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/schema.py": {
+      "sha256": "8a7b0cc90151043514d263b1a2655d6d41a2835dacd6b56018ba5c0c89961855",
+      "bytes": 120714
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/source_adapters/__init__.py": {
+      "sha256": "80bf60732205f15e150f0dcd7c7cf5401caf2d2f227ebc4851e45e809466272a",
+      "bytes": 2269
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/source_adapters/dom_aria.py": {
+      "sha256": "57ecb5f487985e9c3e47da30fb22db77d71c208a5e79fbc0d7f7d585483b6f9e",
+      "bytes": 53181
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/source_adapters/mcp_idl.py": {
+      "sha256": "eab84b723a4ea351dfa4a58d2f9381f05a4a7c9c4b085c6574a647ef8f3275aa",
+      "bytes": 5193
+    },
+    "source/ipfs_datasets_py/logic/ui_ux_ir/source_adapters/mcp_idl_identity.py": {
+      "sha256": "ad854ff01b25a6c8c9fbc36ef13d11069ee6e0923d0e6b906cac7c073f0b94e9",
+      "bytes": 31340
+    },
+    "source/ipfs_datasets_py/logic/zkp/__init__.py": {
+      "sha256": "ea2eb0e91ae023d2b2180189c26fda4bf9fac3a9d0b1189cbe415676b2af3151",
+      "bytes": 8817
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/authored_semantic_projection_panel.py": {
+      "sha256": "81f920155f1629b64086045a789d51a79514b50ea5f0b3e94dedcbfe7ed308e2",
+      "bytes": 8715
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_validated_v3.py": {
+      "sha256": "0e1cd8a9651e380500b78be8d3486e0e8db1ac1b0aa98b7f37c9a6da71ee7e85",
+      "bytes": 21891
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py": {
+      "sha256": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743",
+      "bytes": 7283
+    },
+    "source/pyproject.toml": {
+      "sha256": "fb2a6d807cb75f3bc2f206561340f98c8421e7b912f2e0c065a5421ff6f69654",
+      "bytes": 33841
+    },
+    "source/pytest.ini": {
+      "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff",
+      "bytes": 1536
+    },
+    "source/scripts/ops/autoencoder/check_native_projection_lake_v3.py": {
+      "sha256": "eb427ab42982ef1b59803d24b3417019cf688fc8ea625dc64744b8db28b5b11b",
+      "bytes": 7715
+    },
+    "source/scripts/ops/autoencoder/smoke_semantic_projection_training.py": {
+      "sha256": "7f64ec2f7542ffa2236b17649a318e4d281b63ba833bc26635804bcd576451b1",
+      "bytes": 10559
+    },
+    "source/tests/conftest.py": {
+      "sha256": "0a255dc653799cb980d7edbb1d7b2e3c8f0d81b091d4986aa712e1e8e12b7f10",
+      "bytes": 20716
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_authored_semantic_projection_panel.py": {
+      "sha256": "ef2de6b1a30aecb64f7fa810cb59330cacd5e6202a794aa052695780f406ed21",
+      "bytes": 1834
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_family_training_v5.py": {
+      "sha256": "56e49709e2ebf456616a627a3f7ee2af3a795d286b7c3f233d95214cc6dfbb0e",
+      "bytes": 13305
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_intent_semantic_training_views.py": {
+      "sha256": "fc20dd2645baefe6988f2cd68e88126cec1048b54a2eb660ddfedcf44a9cd801",
+      "bytes": 13542
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_native_qualified_lean.py": {
+      "sha256": "7456be3f0d8d352ceeef09cdb1faa37c936eb8b08e652bd1396d07c1b72adb2e",
+      "bytes": 13310
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_native_security_lean.py": {
+      "sha256": "2f08f19557c72174af3138d2118d17528968212cd92c5dd108623ec1f27fd4b7",
+      "bytes": 12886
+    },
+    "source/tests/unit/logic/formalization/autoencoder/test_semantic_projection_gate.py": {
+      "sha256": "1c6f5d8122a28647ae6f914e1f3bf5c57d6db585f0248294971cec68a9a0653f",
+      "bytes": 6740
+    }
+  }
+}

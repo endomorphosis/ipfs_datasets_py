@@ -1,0 +1,183 @@
+{
+  "schema": "native-semantic-projection-release/v1",
+  "date": "2026-10-01",
+  "validated_base_commit": "aad94108806836ea5f7a8d9bf9fbbe1c98b1e2c9",
+  "new_target_schema": "domain-family-training-targets/v5",
+  "native_gate_schema": "native-family-modality-lake/v3",
+  "tests": {
+    "distinct_passed": 116,
+    "unresolved_skips": 0,
+    "xml": [
+      "semantic-projection-tests-r1.xml",
+      "semantic-native-and-panel-tests.xml"
+    ],
+    "initial_missing_explicit_Lake_skip_resolved": true,
+    "backend_doubles_are_not_native_evidence": true
+  },
+  "default_matrix": {
+    "previous_passed_projections": 57,
+    "passed_projections": 63,
+    "emitted_projections": 66,
+    "named_formula_cases_passed": 32,
+    "actual_modality_Lake_builds": 4,
+    "SANY_checks": 3,
+    "all_modality_training_gates_passed": false,
+    "domains": {
+      "intent_ir": {
+        "library": "IntentIR",
+        "wall_seconds": 4.656283690128475,
+        "passed": 23,
+        "emitted": 23,
+        "strict_training_allowed": false,
+        "remaining_blockers": []
+      },
+      "security_ir": {
+        "library": "SecurityIR",
+        "wall_seconds": 3.3967495809774846,
+        "passed": 16,
+        "emitted": 16,
+        "strict_training_allowed": false,
+        "remaining_blockers": []
+      },
+      "ui_ux_ir": {
+        "library": "UIUXIR",
+        "wall_seconds": 3.498272137949243,
+        "passed": 15,
+        "emitted": 16,
+        "strict_training_allowed": false,
+        "remaining_blockers": [
+          {
+            "projection_id": "ui_ux_ir:tdfol",
+            "reason": "UI_before_requires_explicit_occurrence_and_precedence_semantics"
+          }
+        ]
+      },
+      "legal_ir": {
+        "library": "LegalIR",
+        "wall_seconds": 6.62082500802353,
+        "passed": 9,
+        "emitted": 11,
+        "strict_training_allowed": false,
+        "remaining_blockers": [
+          {
+            "projection_id": "legal-ir/modal-family/deontic/v3",
+            "reason": "native_projection_not_ready"
+          },
+          {
+            "projection_id": "legal-ir/modal-family/temporal/v3",
+            "reason": "native_projection_not_ready"
+          }
+        ]
+      }
+    }
+  },
+  "authored_training_smoke": {
+    "integration_passed": true,
+    "total_wall_seconds": 69.71954880305566,
+    "actual_modality_Lake_builds": 12,
+    "SANY_checks": 9,
+    "projection_occurrences": 198,
+    "optimizer_steps": 8,
+    "all_training_and_tuning_gates_passed": true,
+    "all_projection_losses_present": true,
+    "domains": {
+      "intent_ir": {
+        "source_count": 3,
+        "training_source_count": 2,
+        "tuning_source_count": 1,
+        "projection_counts": [
+          23,
+          23,
+          23
+        ],
+        "total_wall_seconds": 19.241879688808694,
+        "native_preparation_and_Lake_seconds": 13.030584367923439,
+        "numerical_preparation_seconds": 1.852349316002801,
+        "optimization_seconds": 0.21263882308267057,
+        "before_objective": 0.0006823964485592756,
+        "selected_objective": 0.0006823587504569383,
+        "selected_calibration_families": [
+          "tdfol"
+        ],
+        "selected_epoch": 0,
+        "optimizer_steps": 2
+      },
+      "security_ir": {
+        "source_count": 3,
+        "training_source_count": 2,
+        "tuning_source_count": 1,
+        "projection_counts": [
+          16,
+          16,
+          16
+        ],
+        "total_wall_seconds": 14.785935879917815,
+        "native_preparation_and_Lake_seconds": 10.361337559996173,
+        "numerical_preparation_seconds": 1.2402045060880482,
+        "optimization_seconds": 0.013247487135231495,
+        "before_objective": 0.0010871949355854835,
+        "selected_objective": 0.0010871949355854835,
+        "selected_calibration_families": [],
+        "selected_epoch": 0,
+        "optimizer_steps": 2
+      },
+      "ui_ux_ir": {
+        "source_count": 3,
+        "training_source_count": 2,
+        "tuning_source_count": 1,
+        "projection_counts": [
+          16,
+          16,
+          16
+        ],
+        "total_wall_seconds": 15.350112243089825,
+        "native_preparation_and_Lake_seconds": 10.405632039066404,
+        "numerical_preparation_seconds": 1.3820128829684108,
+        "optimization_seconds": 0.013049772009253502,
+        "before_objective": 0.0006716553560826431,
+        "selected_objective": 0.0006716553560826431,
+        "selected_calibration_families": [],
+        "selected_epoch": 0,
+        "optimizer_steps": 2
+      },
+      "legal_ir": {
+        "source_count": 3,
+        "training_source_count": 2,
+        "tuning_source_count": 1,
+        "projection_counts": [
+          11,
+          11,
+          11
+        ],
+        "total_wall_seconds": 20.324590798001736,
+        "native_preparation_and_Lake_seconds": 13.01409077597782,
+        "numerical_preparation_seconds": 2.0126569541171193,
+        "optimization_seconds": 0.01028320798650384,
+        "before_objective": 0.0010270593752379738,
+        "selected_objective": 0.001027024955691008,
+        "selected_calibration_families": [
+          "deontic",
+          "temporal"
+        ],
+        "selected_epoch": 0,
+        "optimizer_steps": 2
+      }
+    },
+    "scope": "authored structural integration with caller interpretations and repeated formulas; not corpus holdout fidelity or learned text decoding"
+  },
+  "remaining_limitations": [
+    "opaque Legal/UI qualifiers require explicit caller interpretations; no automatic source fidelity",
+    "Intent action preconditions have no reviewed state binding and remain blocking",
+    "unsupported heap ownership/fractional, timed hyperproperties and richer control flow remain blocked",
+    "two Adam epochs rejected for every domain; only tiny Intent/Legal calibration gains",
+    "historical 8D/current 384D source decoders unchanged and not trained by this auxiliary smoke"
+  ],
+  "admitted": false,
+  "qualified": false,
+  "source_semantics_verified": false,
+  "constitution_formalized": false,
+  "weights_downloaded": false,
+  "external_model_checker_executed": false,
+  "Mathlib_imported": false,
+  "speed_measurement_scope": "fresh Lake workspaces on shared host concurrent with tests; not bridge-on evaluation or legal-span throughput"
+}
