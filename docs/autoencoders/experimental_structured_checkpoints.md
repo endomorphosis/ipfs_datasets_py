@@ -66,6 +66,8 @@ The accelerator supervisor consumes that file through its existing configuration
   "checkpoint_path": "/absolute/path/to/downloaded-regular-file.json",
   "checkpoint_sha256": "<exact digest from descriptor>",
   "decoder": "structured",
+  "embedding_snapshot_path": null,
+  "lake": null,
   "input_view": "guarded_ast_normalized"
 }
 ```
