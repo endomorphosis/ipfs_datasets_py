@@ -1,0 +1,514 @@
+{
+  "actors": [
+    "auditor",
+    "coordinator",
+    "delegate",
+    "manager",
+    "supervisor",
+    "treasurer",
+    "trustee",
+    "secretary"
+  ],
+  "admitted": false,
+  "compiler_labels_present": false,
+  "formalized": false,
+  "independent_legal_gold": false,
+  "lake_executed": false,
+  "model_predictions_present": false,
+  "norm_templates": [
+    {
+      "action_surface": "submit",
+      "id": "report",
+      "text_template": "The {actor} shall submit reports."
+    },
+    {
+      "action_surface": "disclose",
+      "id": "prohibition",
+      "text_template": "The {actor} shall not disclose records."
+    },
+    {
+      "action_surface": "retain",
+      "id": "minimum",
+      "text_template": "The {actor} shall retain the file for at least 20 days."
+    },
+    {
+      "action_surface": "submit",
+      "id": "deadline",
+      "text_template": "The {actor} shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "action_surface": "publish",
+      "id": "publication",
+      "text_template": "The {actor} shall publish notices."
+    },
+    {
+      "action_surface": "review",
+      "id": "review",
+      "text_template": "The {actor} shall review applications."
+    }
+  ],
+  "qualified": false,
+  "roundtrip_ok": false,
+  "rows": [
+    {
+      "actor": "auditor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-auditor-report",
+      "norm_template_id": "report",
+      "split": "sealed_evaluation",
+      "text": "The auditor shall submit reports."
+    },
+    {
+      "actor": "auditor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-auditor-prohibition",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The auditor shall not disclose records."
+    },
+    {
+      "actor": "auditor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-auditor-minimum",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The auditor shall retain the file for at least 20 days."
+    },
+    {
+      "actor": "auditor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-auditor-deadline",
+      "norm_template_id": "deadline",
+      "split": "sealed_evaluation",
+      "text": "The auditor shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "auditor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-auditor-publication",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The auditor shall publish notices."
+    },
+    {
+      "actor": "auditor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-auditor-review",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The auditor shall review applications."
+    },
+    {
+      "actor": "coordinator",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-coordinator-report",
+      "norm_template_id": "report",
+      "split": "tuning",
+      "text": "The coordinator shall submit reports."
+    },
+    {
+      "actor": "coordinator",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-coordinator-prohibition",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The coordinator shall not disclose records."
+    },
+    {
+      "actor": "coordinator",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-coordinator-minimum",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The coordinator shall retain the file for at least 20 days."
+    },
+    {
+      "actor": "coordinator",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-coordinator-deadline",
+      "norm_template_id": "deadline",
+      "split": "tuning",
+      "text": "The coordinator shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "coordinator",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-coordinator-publication",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The coordinator shall publish notices."
+    },
+    {
+      "actor": "coordinator",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-coordinator-review",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The coordinator shall review applications."
+    },
+    {
+      "actor": "delegate",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-delegate-report",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The delegate shall submit reports."
+    },
+    {
+      "actor": "delegate",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-delegate-prohibition",
+      "norm_template_id": "prohibition",
+      "split": "sealed_evaluation",
+      "text": "The delegate shall not disclose records."
+    },
+    {
+      "actor": "delegate",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-delegate-minimum",
+      "norm_template_id": "minimum",
+      "split": "tuning",
+      "text": "The delegate shall retain the file for at least 20 days."
+    },
+    {
+      "actor": "delegate",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-delegate-deadline",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The delegate shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "delegate",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-delegate-publication",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The delegate shall publish notices."
+    },
+    {
+      "actor": "delegate",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-delegate-review",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The delegate shall review applications."
+    },
+    {
+      "actor": "manager",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-manager-report",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The manager shall submit reports."
+    },
+    {
+      "actor": "manager",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-manager-prohibition",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The manager shall not disclose records."
+    },
+    {
+      "actor": "manager",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-manager-minimum",
+      "norm_template_id": "minimum",
+      "split": "sealed_evaluation",
+      "text": "The manager shall retain the file for at least 20 days."
+    },
+    {
+      "actor": "manager",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-manager-deadline",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The manager shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "manager",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-manager-publication",
+      "norm_template_id": "publication",
+      "split": "tuning",
+      "text": "The manager shall publish notices."
+    },
+    {
+      "actor": "manager",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-manager-review",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The manager shall review applications."
+    },
+    {
+      "actor": "supervisor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-supervisor-report",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The supervisor shall submit reports."
+    },
+    {
+      "actor": "supervisor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-supervisor-prohibition",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The supervisor shall not disclose records."
+    },
+    {
+      "actor": "supervisor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-supervisor-minimum",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The supervisor shall retain the file for at least 20 days."
+    },
+    {
+      "actor": "supervisor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-supervisor-deadline",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The supervisor shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "supervisor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-supervisor-publication",
+      "norm_template_id": "publication",
+      "split": "sealed_evaluation",
+      "text": "The supervisor shall publish notices."
+    },
+    {
+      "actor": "supervisor",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-supervisor-review",
+      "norm_template_id": "review",
+      "split": "tuning",
+      "text": "The supervisor shall review applications."
+    },
+    {
+      "actor": "treasurer",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-treasurer-report",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The treasurer shall submit reports."
+    },
+    {
+      "actor": "treasurer",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-treasurer-prohibition",
+      "norm_template_id": "prohibition",
+      "split": "tuning",
+      "text": "The treasurer shall not disclose records."
+    },
+    {
+      "actor": "treasurer",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-treasurer-minimum",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The treasurer shall retain the file for at least 20 days."
+    },
+    {
+      "actor": "treasurer",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-treasurer-deadline",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The treasurer shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "treasurer",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-treasurer-publication",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The treasurer shall publish notices."
+    },
+    {
+      "actor": "treasurer",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-treasurer-review",
+      "norm_template_id": "review",
+      "split": "sealed_evaluation",
+      "text": "The treasurer shall review applications."
+    },
+    {
+      "actor": "trustee",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-trustee-report",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The trustee shall submit reports."
+    },
+    {
+      "actor": "trustee",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-trustee-prohibition",
+      "norm_template_id": "prohibition",
+      "split": "sealed_evaluation",
+      "text": "The trustee shall not disclose records."
+    },
+    {
+      "actor": "trustee",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-trustee-minimum",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The trustee shall retain the file for at least 20 days."
+    },
+    {
+      "actor": "trustee",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-trustee-deadline",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The trustee shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "trustee",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-trustee-publication",
+      "norm_template_id": "publication",
+      "split": "tuning",
+      "text": "The trustee shall publish notices."
+    },
+    {
+      "actor": "trustee",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-trustee-review",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The trustee shall review applications."
+    },
+    {
+      "actor": "secretary",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-secretary-report",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The secretary shall submit reports."
+    },
+    {
+      "actor": "secretary",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-secretary-prohibition",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The secretary shall not disclose records."
+    },
+    {
+      "actor": "secretary",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-secretary-minimum",
+      "norm_template_id": "minimum",
+      "split": "sealed_evaluation",
+      "text": "The secretary shall retain the file for at least 20 days."
+    },
+    {
+      "actor": "secretary",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-secretary-deadline",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The secretary shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "actor": "secretary",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-secretary-publication",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The secretary shall publish notices."
+    },
+    {
+      "actor": "secretary",
+      "corpus": "authored_fixture",
+      "id": "action-disjoint-v1-secretary-review",
+      "norm_template_id": "review",
+      "split": "tuning",
+      "text": "The secretary shall review applications."
+    }
+  ],
+  "schema": "authored-action-disjoint-holdout-curriculum/v1",
+  "scope": "authored compositional source panel; no independent legal gold",
+  "semantic_correctness_verified": false,
+  "split_policy": {
+    "candidate_freeze_required_before_sealed_labels_or_predictions": true,
+    "pair_keys": [
+      [
+        "actor",
+        "norm_template_id"
+      ],
+      [
+        "actor",
+        "action_surface"
+      ]
+    ],
+    "sealed_by_actor": {
+      "auditor": [
+        "report",
+        "deadline"
+      ],
+      "coordinator": [],
+      "delegate": [
+        "prohibition"
+      ],
+      "manager": [
+        "minimum"
+      ],
+      "secretary": [
+        "minimum"
+      ],
+      "supervisor": [
+        "publication"
+      ],
+      "treasurer": [
+        "review"
+      ],
+      "trustee": [
+        "prohibition"
+      ]
+    },
+    "sealed_evaluation_count": 8,
+    "submit_templates_co_located": true,
+    "training_count": 32,
+    "tuning_by_actor": {
+      "auditor": [],
+      "coordinator": [
+        "report",
+        "deadline"
+      ],
+      "delegate": [
+        "minimum"
+      ],
+      "manager": [
+        "publication"
+      ],
+      "secretary": [
+        "review"
+      ],
+      "supervisor": [
+        "review"
+      ],
+      "treasurer": [
+        "prohibition"
+      ],
+      "trustee": [
+        "publication"
+      ]
+    },
+    "tuning_count": 8
+  },
+  "training_augmentation": {
+    "id": "shall_to_must_training_v1",
+    "replacement": " must ",
+    "source": " shall ",
+    "variants_per_training_parent": 1
+  }
+}

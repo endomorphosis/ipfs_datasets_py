@@ -1,0 +1,12 @@
+{
+  "unique_passing_tests": 340,
+  "suites": {
+    "integration-tests.xml": 239,
+    "curriculum-tests.xml": 29,
+    "holdout-runner-tests.xml": 18,
+    "legacy-prepared-tests.xml": 17,
+    "current-prepared-benchmark-tests.xml": 37
+  },
+  "all_final_suites_passed": true,
+  "prior_failed_attempts_preserved": true
+}

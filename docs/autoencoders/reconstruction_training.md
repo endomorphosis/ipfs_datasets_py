@@ -410,3 +410,201 @@ Legal`**. All six current heads reload and resume exactly. The three canonical
 gates and empty-vocabulary abstention pass. Schema builds are structural checks;
 no model is promoted, no law span is admitted by these metrics, and the
 Constitution remains unformalized.
+
+## Prepared training and fresh holdouts
+
+The next opt-in training paths remove repeated work while preserving the
+reference update equations and checkpoint formats. Both keep the same strict
+qualification requirements. They do not change the default runtime trainer.
+
+For 8D, import `PreparedFeatureTrainingSession` and `load_training_session`
+from
+[prepared_feature_training.py](../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/prepared_feature_training.py).
+Use the same constructor, `advance`, save and resume calls as the session
+example above. This path prepares training inputs and the initial tuning
+evaluation once per `advance`, then reuses the last accepted evaluation.
+Every proposal still checks input/source identity, uses a sparse transaction,
+and applies the original strict objective and regression checks. Rejected,
+failed and late proposals roll back. Reuse ends when the call ends; it is not
+a persistent prediction cache. The saved prepared-session envelope pins its
+own implementation and contains an unchanged reference checkpoint bundle.
+
+For 384D, use
+[modal_latent_formula_prepared.py](../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula_prepared.py):
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_latent_formula_prepared import train_model
+
+result = train_model(
+    runtime.model, training_samples, training_targets,
+    validation_samples=tuning_samples, validation_targets=tuning_targets,
+    formula_options=profile["formula_options"],  # omit when resuming an attached head
+    epochs=1000, max_optimizer_steps=1000, max_seconds=120,
+)
+head = runtime.model.save_formula_checkpoint("workspace/test-logs/prepared-head.json")
+```
+
+This path validates and encodes each fixed target once per call, prepares the
+latent/embedding/target tensors, and caches each epoch's permutation. Individual
+batches retain the exact reference row order, padding width, dtype and tensor
+layout. Both backward traversals, clipping, finite checks, Adam settings and
+loss observations stay intact. The returned report separately identifies the
+prepared trainer; the resulting head retains its original decoder compatibility.
+The lower-level `train(checkpoint, train_rows, tune_rows, ...)` entry point is
+also available for callers that already own validated formula-training rows.
+
+Both paths currently run on CPU. Launch CPU workers with
+`CUDA_VISIBLE_DEVICES=''` before importing Torch and use one Torch/BLAS thread
+per benchmark worker. The controlled comparisons use the same environment for
+reference and prepared paths. This does not change existing CUDA workers.
+Reported row throughput counts optimizer presentations, including repeated
+epochs; it is not distinct legal spans formalized per second.
+
+The fresh source panel is
+[action_disjoint_holdout_curriculum.json](../../tests/fixtures/logic/action_disjoint_holdout_curriculum.json).
+It has 32 training, eight tuning and eight sealed sentences, plus 32 optional
+training-only “must” variants. All eight actors and all six syntax templates
+occur in training. Actor/action pairs are disjoint across partitions: plain
+report and deadline-report clauses for the same actor stay together. The eight
+holdout rows cover seven actors and seven actor/action pairs, so they are not
+eight statistically independent legal cases. This tests new combinations of
+known vocabulary, not unseen actors or independent legal truth.
+
+The current-model experiment deliberately has separate commands:
+
+```bash
+export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+PYTHONPATH="$PWD" CUDA_VISIBLE_DEVICES='' python3 scripts/ops/legal_ir/evaluate_training_holdouts.py \
+  --phase prepare --output-directory workspace/test-logs/fresh-holdout-run
+PYTHONPATH="$PWD" CUDA_VISIBLE_DEVICES='' python3 scripts/ops/legal_ir/evaluate_training_holdouts.py \
+  --phase fit --output-directory workspace/test-logs/fresh-holdout-run
+PYTHONPATH="$PWD" CUDA_VISIBLE_DEVICES='' python3 scripts/ops/legal_ir/evaluate_training_holdouts.py \
+  --phase evaluate --output-directory workspace/test-logs/fresh-holdout-run
+```
+
+Preparation processes only the 72 development sources. Fitting compares
+original32 and augmented64 at seeds 1729, 1730 and 1731, with 1,000 updates of
+eight rows each. All six scored heads must be frozen and load successfully
+before any sealed sentence is embedded, compiled or scored. The runner refuses
+to refit a frozen or exposed campaign and retains failed attempts; use a new
+declared experiment directory for another attempt. Once results are inspected,
+these holdouts are exposed and must become development data for subsequent
+selection. No result is automatically promoted.
+
+### Measured prepared-training throughput
+
+The frozen 2026-10-01 comparison uses package base
+`43c8c6e42690d82798ddd12d19c454de98d72a2e` plus the thirteen listed additions.
+Three paired runs alternate reference/prepared order after an unscored warmup.
+Both benchmark processes overlapped on the shared host; the numbers are a
+bounded measurement under that load, not a dedicated-machine capacity estimate.
+Fresh holdout fitting started only after both timing comparisons finished.
+
+| Path | Reference | Prepared | Observation |
+| --- | ---: | ---: | --- |
+| 8D, twelve proposals on three training / three tuning rows | 5.549 s | 4.586 s | Median wall time; approximately **21.0% more proposals/second** |
+| 8D training row presentations/second | 6.49 | 7.85 | Thirty-six presentations divided by median wall time |
+| 384D, 1,000 updates on 48 training rows, batch six | 16.036 s | 14.529 s | Mean wall time over three runs |
+| 384D training row presentations/second | 374.16 | 412.97 | Aggregate rate; approximately **10.4% higher throughput** |
+
+The 8D paired speed ratios are 1.210, 1.230 and 1.196. Evaluations fall from
+36 to 14 per twelve proposals. Complete weights, accepted proposals, losses,
+learning rates and scheduler states match exactly. Training wall time per
+distinct training span across the twelve proposals falls from 1.850 to 1.529
+seconds at the median; that denominator is three, not thirty-six.
+
+The 384D paired ratios are 1.085, 1.139 and 1.089. Each run processes 6,000 row
+presentations and 93,000 target-loss tokens. Mean wall time per presentation
+falls from 0.002673 to 0.002421 seconds. Every complete checkpoint, Adam moment,
+batch loss, gradient diagnostic and progress counter matches the reference,
+including a real one-update resume across backends. The prepared tensor cache
+uses 154,368 bytes for this 48-row comparison and takes about 0.0125 seconds
+to construct. Tensor preparation is included in the reported trainer time.
+
+All measurements use CPU, temperature zero, sample memory disabled, bridge
+names `[]`, metric target count zero, provers off, metric disk cache off, and
+one metric worker. Targets and imported code are warm; these are not cold
+parser measurements or bridge-on legal-IR speed results. The 384D comparison
+has no tuning or holdout rows. The 8D three-row tuning set selects proposals.
+No distinct-span inference or legal-formalization throughput gain is claimed.
+
+A later discrepancy justified a separate repeat with startup thread limits.
+The first timing process had `OMP_NUM_THREADS`, `MKL_NUM_THREADS` and
+`OPENBLAS_NUM_THREADS` unset, despite Torch intra-op threads being one. Probes
+showed a separate OpenBLAS pool with twenty threads. Setting all three variables
+to one before Python started preserved the exact checkpoints and gave:
+
+| 384D thread-capped comparison | Reference | Prepared |
+| --- | ---: | ---: |
+| Mean seconds / 1,000 updates, three pairs | 5.232 | 3.271 |
+| Optimizer steps/second | 191.13 | 305.68 |
+| Training row presentations/second | 1,146.76 | **1,834.07** |
+| Mean seconds / row presentation | 0.000872 | **0.000545** |
+
+Within the capped comparison, prepared training has **59.9% higher aggregate
+throughput**; the median paired ratio is 1.555. Across the two environment
+runs, prepared time changes from 14.529 to 3.271 seconds, and the combined
+earlier-reference to capped-prepared ratio is 4.902. That combined ratio
+includes both environment and preparation changes under shared-host load;
+it is not the isolated effect of tensor caching. The three thread limits were
+changed together, so the full gain cannot be attributed to OpenBLAS alone.
+All six capped-run checkpoints also match the earlier uncapped checkpoints
+exactly. Both timing campaigns and the probes are retained.
+
+### Fresh holdout findings
+
+The [holdout and throughput evidence](../implementation/reports/evidence/holdout-throughput-20261001/)
+retains every candidate and failed prediction. Both lineages finished fitting
+before the cross-lineage holdout barrier opened. Neither used the new eight
+sealed sources to choose an update, learning rate, data arm or checkpoint.
+
+For the preserved 8D numerical model, held-out family CE is **0.386683** before
+training, **0.312386** after twelve fixed-rate proposals, and **0.182041** after
+twelve adaptive-rate proposals. All proposals were accepted under the unchanged
+tuning guards. This is an improvement in reusable feature-family prediction on
+the withheld actor/action combinations. Raw and safe embedding MSE remain zero,
+cosine remains one, and linguistic observations are identical. There is no
+learned-formula-fidelity or vector-reconstruction improvement claim.
+
+The new 384D comparison does **not** reproduce the earlier tuning improvement
+as consistent held-out exact reconstruction:
+
+| Seed | Original32 exact | Augmented64 exact | Original token CE | Augmented token CE | Original embedding MSE | Augmented embedding MSE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1729 | 1/8 | 0/8 | 0.350540 | 0.318781 | 0.001963 | 0.003171 |
+| 1730 | 1/8 | 2/8 | 0.171270 | 0.161305 | 0.001506 | 0.006498 |
+| 1731 | 3/8 | 0/8 | 0.239534 | 0.204221 | 0.001451 | 0.001990 |
+
+Augmentation lowers teacher-forced token CE in every seed, but exact generated
+rules worsen in two seeds and embedding reconstruction MSE worsens in all
+three. These are repeated observations on the same eight correlated sources,
+not 24 independent legal cases. The augmentation is **not promoted or
+recommended as a proven holdout-quality improvement**. The prepared trainer's
+exact equivalence to the reference remains useful independently of this data
+experiment. Six training runs complete the same 1,000-update budget; original
+training exact counts are 32/32, 31/32 and 31/32, versus augmented-arm original
+counts 32/32, 26/32 and 31/32. Strong training fit alone is insufficient.
+
+Current-model held-out inference takes 0.0493–0.0631 seconds per span across
+the six eight-row evaluations, excluding embeddings, compilation and Lake.
+The legacy eight-row bridge-off evaluations take 1.287, 1.344 and 1.357 seconds
+for untrained, fixed and adaptive models, or 0.1609, 0.1681 and 0.1697 seconds
+per span. The bridge/prover/cache/worker/memory flags are the same ones listed
+above. No inference speedup or bridge-on speedup is established.
+
+The legacy diagnostic also exposes an end-to-end cost outside the optimized
+proposal loop: preparing forty development observations takes 56.82 seconds.
+Their receipt is 138.82 MB, almost entirely verbose symbolic observations;
+the actual training/tuning sample fields occupy only 132 KB. Sealed observations
+add 25.25 MB, and the evaluation process peaks at 1.44 GB RSS while retaining
+three models and diagnostic evidence. These artifacts are archived once, with
+hashes, rather than duplicated as expanded documentation. No total-memory or
+full-pipeline speed improvement is claimed for that diagnostic.
+
+Final checks: **340 unique passing tests**, **six exact current-head reload
+and one-update resume checks**, **sixteen actual schema Lake builds** on the
+two seed-1729 heads' complete eight-row holdout panels, and **one actual
+canonical `lake build Legal`**. The canonical three gates and empty-vocabulary
+abstention remain green. The schema builds pass despite the formula errors
+above: they establish structural validity, not agreement with source law.
+Qualification stays false and the Constitution remains unformalized.

@@ -1,0 +1,36 @@
+{
+  "base_commit": "43c8c6e42690d82798ddd12d19c454de98d72a2e",
+  "source_export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/holdout-throughput-release-20261001/source",
+  "baseline_validation_commit": "9d30e110fabf1da2cb92da75d2a322ac55205d8d",
+  "owned_paths": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_holdout_curriculum.py",
+    "tests/fixtures/logic/action_disjoint_holdout_curriculum.json",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_formula_holdout_curriculum.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/prepared_feature_training.py",
+    "tests/unit/logic/test_legacy_prepared_feature_training.py",
+    "scripts/ops/legal_ir/compare_legacy_prepared_training.py",
+    "tests/unit/logic/test_compare_legacy_prepared_training.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula_prepared.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula_prepared.py",
+    "scripts/ops/legal_ir/benchmark_prepared_formula_training.py",
+    "tests/unit/logic/test_benchmark_prepared_formula_training.py",
+    "scripts/ops/legal_ir/evaluate_training_holdouts.py",
+    "tests/unit/logic/test_evaluate_training_holdouts.py"
+  ],
+  "owned_sha256": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_holdout_curriculum.py": "7dac7adb80516368372fce2f0244f4afc89b3296074ec82d8ac354b1e63e7e02",
+    "tests/fixtures/logic/action_disjoint_holdout_curriculum.json": "727899d48ba4c8ffc64f858b7c0a6998415b2e46db3dfaba8a7b96f1b4f8f78d",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_formula_holdout_curriculum.py": "a52a755528e7f676914c82159cc4df7b168b54cb1e180bb77f7a00db2fea024a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/prepared_feature_training.py": "df44c2925f67513c9f2fbd20e9589c635e40cbd5bf4e53da3a9a9c5572c0e5d6",
+    "tests/unit/logic/test_legacy_prepared_feature_training.py": "5b154aa605e0eb01384c129fc7ee6bd35079b6f157bc3c6e2cd50f06aa0c9f92",
+    "scripts/ops/legal_ir/compare_legacy_prepared_training.py": "be625bd8935ff22eba2be64e171b0d0fc439e980cc42789fa2d33fd64acbfa8e",
+    "tests/unit/logic/test_compare_legacy_prepared_training.py": "a5f44a14f9fb312e01f2761fcf7ba325a1289a6069d8872cae450ddedc83857c",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula_prepared.py": "61df6005769620981780fdb43a9e414dc2f9e5f132a462b6c637e404995ad3a7",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_latent_formula_prepared.py": "376c5e3c984fb41ef62385e712516b1cd8e2d2203501d442cbf8bd2670b91944",
+    "scripts/ops/legal_ir/benchmark_prepared_formula_training.py": "4d71d8ec4332cf8dd06dfdfff76d31da81edf8ca1a90230bc7589b6e348f84d2",
+    "tests/unit/logic/test_benchmark_prepared_formula_training.py": "4b86064ad55c1996d7662b0f51fd82ac9afae44e24fbe90fb5385168e2589c92",
+    "scripts/ops/legal_ir/evaluate_training_holdouts.py": "3afa583e3a7b48b0acff7cdda8422cf12c2cbbfbc4364f743b28fb0637b32cb9",
+    "tests/unit/logic/test_evaluate_training_holdouts.py": "9bc4de2fb41016210bda0822cf4df772ff6d2098007ea468183a5543b70a17f3"
+  },
+  "validation_commit": "8a42679d478c96370e5030925e981dbad4189a0d"
+}

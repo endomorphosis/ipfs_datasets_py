@@ -1,0 +1,17 @@
+{
+  "candidate_promotion_performed": false,
+  "current_throughput_attempts": [
+    "current-throughput-r1",
+    "current-throughput-threadcaps-r2"
+  ],
+  "failed_test_attempt": "legacy-prepared-tests-r1.xml: 14 passed, 2 failed assertions expected ValueError; actual established guard exception was RuntimeError. Test expectations fixed without runtime changes; final17passed.",
+  "final_unique_tests": 340,
+  "formula_quality_limits": "new augmentation worsened exact heldout rules at two of three seeds; no quality promotion",
+  "fresh_holdout_attempts": {
+    "current": 1,
+    "legacy": 1
+  },
+  "holdout_refitting_performed": false,
+  "profile_attempt": "initial legacy profiling script name shadowed stdlib profile; retained failed log and successful renamed-script run.",
+  "second_throughput_reason": "fresh-fit timing discrepancy justified startup thread-cap probe and controlled repeated comparison; all prior outcomes retained"
+}

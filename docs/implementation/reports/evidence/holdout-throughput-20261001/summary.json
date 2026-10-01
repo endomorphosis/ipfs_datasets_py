@@ -1,0 +1,1018 @@
+{
+  "admitted": false,
+  "base_commit": "43c8c6e42690d82798ddd12d19c454de98d72a2e",
+  "checkpoint_promotion_performed": false,
+  "constitution_formalized": false,
+  "current_holdout": {
+    "actor_action_pair_count": 7,
+    "actor_count": 7,
+    "all_augmented_embedding_mse_worse": true,
+    "all_augmented_token_cross_entropy_lower": true,
+    "augmentation_has_consistent_exact_reconstruction_gain": false,
+    "augmentation_recommended_as_proven_quality_gain": false,
+    "compiler_weak_labels": true,
+    "future_use": "exposed development data after this evaluation; not a fresh holdout for later selection",
+    "independent_legal_gold": false,
+    "opened_after_all_current_and_legacy_candidates_frozen": true,
+    "results": [
+      {
+        "candidate": "1729/augmented64",
+        "head": {
+          "admitted": false,
+          "bytes": 1677924,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/holdout-throughput-release-20261001/current-holdout-r1/1729-augmented64-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "bdc0a1c74563d7ed66ea9ebcafd60535da325037535c353db33513062a3e2ddc"
+        },
+        "heldout_exact": {
+          "complete": false,
+          "fraction": 0.0,
+          "matched": 0,
+          "total": 8
+        },
+        "heldout_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.003171325894072652,
+          "rows_evaluated": 8,
+          "teacher_forcing": true,
+          "token_count": 124,
+          "token_cross_entropy": 0.3187808692455292,
+          "used_for_fit_or_selection": false
+        },
+        "inference_seconds": 0.4161104711238295,
+        "inference_seconds_per_span": 0.052013808890478685,
+        "optimizer_steps": 1000,
+        "reload_exact": true,
+        "resume_exact": true,
+        "training_exact": {
+          "complete": true,
+          "fraction": 1.0,
+          "matched": 32,
+          "total": 32
+        },
+        "training_seconds": 3.6650256088469177,
+        "tuning_exact": {
+          "complete": false,
+          "fraction": 0.25,
+          "matched": 2,
+          "total": 8
+        }
+      },
+      {
+        "candidate": "1729/original32",
+        "head": {
+          "admitted": false,
+          "bytes": 1678190,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/holdout-throughput-release-20261001/current-holdout-r1/1729-original32-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "969461ab82a2806e54ad33ba242a1eb62d032fa1b3cfc808b77c66dcc965aa62"
+        },
+        "heldout_exact": {
+          "complete": false,
+          "fraction": 0.125,
+          "matched": 1,
+          "total": 8
+        },
+        "heldout_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.0019629979506134987,
+          "rows_evaluated": 8,
+          "teacher_forcing": true,
+          "token_count": 124,
+          "token_cross_entropy": 0.3505403697490692,
+          "used_for_fit_or_selection": false
+        },
+        "inference_seconds": 0.39744875486940145,
+        "inference_seconds_per_span": 0.04968109435867518,
+        "optimizer_steps": 1000,
+        "reload_exact": true,
+        "resume_exact": true,
+        "training_exact": {
+          "complete": true,
+          "fraction": 1.0,
+          "matched": 32,
+          "total": 32
+        },
+        "training_seconds": 3.593148231972009,
+        "tuning_exact": {
+          "complete": false,
+          "fraction": 0.0,
+          "matched": 0,
+          "total": 8
+        }
+      },
+      {
+        "candidate": "1730/augmented64",
+        "head": {
+          "admitted": false,
+          "bytes": 1677030,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/holdout-throughput-release-20261001/current-holdout-r1/1730-augmented64-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "663c2c3d62e0e0adc4fa4c940d77d48a2a9c8da81881ee54cbf0246dbb20b166"
+        },
+        "heldout_exact": {
+          "complete": false,
+          "fraction": 0.25,
+          "matched": 2,
+          "total": 8
+        },
+        "heldout_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.006497690919786692,
+          "rows_evaluated": 8,
+          "teacher_forcing": true,
+          "token_count": 124,
+          "token_cross_entropy": 0.16130515933036804,
+          "used_for_fit_or_selection": false
+        },
+        "inference_seconds": 0.3982463818974793,
+        "inference_seconds_per_span": 0.04978079773718491,
+        "optimizer_steps": 1000,
+        "reload_exact": true,
+        "resume_exact": true,
+        "training_exact": {
+          "complete": false,
+          "fraction": 0.8125,
+          "matched": 26,
+          "total": 32
+        },
+        "training_seconds": 4.009232498006895,
+        "tuning_exact": {
+          "complete": false,
+          "fraction": 0.25,
+          "matched": 2,
+          "total": 8
+        }
+      },
+      {
+        "candidate": "1730/original32",
+        "head": {
+          "admitted": false,
+          "bytes": 1678641,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/holdout-throughput-release-20261001/current-holdout-r1/1730-original32-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "d2d10438293711aea8039082dfc2313924b5896158ad06ef84ee2e18cb5e5ede"
+        },
+        "heldout_exact": {
+          "complete": false,
+          "fraction": 0.125,
+          "matched": 1,
+          "total": 8
+        },
+        "heldout_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.0015061417361721396,
+          "rows_evaluated": 8,
+          "teacher_forcing": true,
+          "token_count": 124,
+          "token_cross_entropy": 0.17127001285552979,
+          "used_for_fit_or_selection": false
+        },
+        "inference_seconds": 0.50502037582919,
+        "inference_seconds_per_span": 0.06312754697864875,
+        "optimizer_steps": 1000,
+        "reload_exact": true,
+        "resume_exact": true,
+        "training_exact": {
+          "complete": false,
+          "fraction": 0.96875,
+          "matched": 31,
+          "total": 32
+        },
+        "training_seconds": 3.6022991971112788,
+        "tuning_exact": {
+          "complete": false,
+          "fraction": 0.25,
+          "matched": 2,
+          "total": 8
+        }
+      },
+      {
+        "candidate": "1731/augmented64",
+        "head": {
+          "admitted": false,
+          "bytes": 1677743,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/holdout-throughput-release-20261001/current-holdout-r1/1731-augmented64-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "f5dac308a7aecedb2e728d14966d5670b1e73b8b72102a7189235615688f0527"
+        },
+        "heldout_exact": {
+          "complete": false,
+          "fraction": 0.0,
+          "matched": 0,
+          "total": 8
+        },
+        "heldout_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.001990167424082756,
+          "rows_evaluated": 8,
+          "teacher_forcing": true,
+          "token_count": 124,
+          "token_cross_entropy": 0.20422135293483734,
+          "used_for_fit_or_selection": false
+        },
+        "inference_seconds": 0.39882843918167055,
+        "inference_seconds_per_span": 0.04985355489770882,
+        "optimizer_steps": 1000,
+        "reload_exact": true,
+        "resume_exact": true,
+        "training_exact": {
+          "complete": false,
+          "fraction": 0.96875,
+          "matched": 31,
+          "total": 32
+        },
+        "training_seconds": 4.2590727030765265,
+        "tuning_exact": {
+          "complete": false,
+          "fraction": 0.125,
+          "matched": 1,
+          "total": 8
+        }
+      },
+      {
+        "candidate": "1731/original32",
+        "head": {
+          "admitted": false,
+          "bytes": 1677501,
+          "core_weights_included": false,
+          "formalized": false,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/holdout-throughput-release-20261001/current-holdout-r1/1731-original32-head.json",
+          "promotion_performed": false,
+          "qualified": false,
+          "roundtrip_ok": false,
+          "sha256": "9bd755f340a913a62ec9a604dba0371dcaee14b365be8f54d17b20aa1055dd12"
+        },
+        "heldout_exact": {
+          "complete": false,
+          "fraction": 0.375,
+          "matched": 3,
+          "total": 8
+        },
+        "heldout_loss": {
+          "complete": true,
+          "reconstruction_mse": 0.0014507038285955787,
+          "rows_evaluated": 8,
+          "teacher_forcing": true,
+          "token_count": 124,
+          "token_cross_entropy": 0.23953433334827423,
+          "used_for_fit_or_selection": false
+        },
+        "inference_seconds": 0.3946219999343157,
+        "inference_seconds_per_span": 0.04932774999178946,
+        "optimizer_steps": 1000,
+        "reload_exact": true,
+        "resume_exact": true,
+        "training_exact": {
+          "complete": false,
+          "fraction": 0.96875,
+          "matched": 31,
+          "total": 32
+        },
+        "training_seconds": 3.615855830023065,
+        "tuning_exact": {
+          "complete": false,
+          "fraction": 0.25,
+          "matched": 2,
+          "total": 8
+        }
+      }
+    ],
+    "sample_count": 8,
+    "seeds": [
+      1729,
+      1730,
+      1731
+    ]
+  },
+  "formalized": false,
+  "legacy_holdout": {
+    "admitted": false,
+    "after_exposure_scope": "diagnostic for future tuning",
+    "bridge_names": [],
+    "formalized": false,
+    "formula_training_executed": false,
+    "frozen_fit_sha256": "949932b827fff1f9e93cc70378290f3cb22f3b4bcb129326cd2e8b04a78a94fb",
+    "independent_formula_reconstruction_verified": false,
+    "independent_generalization_verified": false,
+    "lake_executed": false,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 0,
+    "metric_disk_cache": false,
+    "no_independent_formula_fidelity_claim": true,
+    "peak_rss_bytes": 1435627520,
+    "promotion_performed": false,
+    "proof_authority": false,
+    "publication_performed": false,
+    "qualified": false,
+    "results": {
+      "adaptive_rate": {
+        "admitted": false,
+        "bridge_off_evaluate_seconds": 1.357382212067023,
+        "formalized": false,
+        "formula_training_executed": false,
+        "independent_formula_reconstruction_verified": false,
+        "independent_generalization_verified": false,
+        "lake_executed": false,
+        "linguistic_observations_exact": true,
+        "metrics": {
+          "cross_entropy_entropy_loss": 0.1373265360835137,
+          "cross_entropy_excess_loss": 0.044714565386665545,
+          "cross_entropy_loss": 0.18204110147017924,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 8
+        },
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_reconstruction": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.288729,
+                0.242762,
+                0.0,
+                -0.665081,
+                0.0,
+                0.0,
+                0.0,
+                0.644492
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-auditor-report-89f0c9ddc117be36"
+            },
+            {
+              "raw_cosine": 0.9999999999999999,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.633396,
+                0.23876,
+                0.130918,
+                -0.474694,
+                0.300922,
+                -0.251004,
+                -0.134214,
+                0.357433
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-auditor-deadline-726c198df64bae07"
+            },
+            {
+              "raw_cosine": 1.0000000000000002,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.248875,
+                0.578807,
+                -0.423545,
+                -0.041099,
+                0.0,
+                0.0,
+                0.0,
+                0.649588
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-delegate-prohibition-3b95eed768e097fe"
+            },
+            {
+              "raw_cosine": 0.9999999999999999,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.103958,
+                0.470597,
+                -0.232978,
+                -0.844661,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-manager-minimum-c0887bb3451e051d"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.421308,
+                0.354234,
+                0.0,
+                -0.472313,
+                -0.369606,
+                0.486985,
+                0.0,
+                -0.316505
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-supervisor-publication-82f4c4196ca51a39"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.527525,
+                0.153971,
+                0.417296,
+                -0.591388,
+                0.0,
+                -0.417296,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-treasurer-review-bdf0b0b3253d5916"
+            },
+            {
+              "raw_cosine": 0.9999999999999998,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.619487,
+                0.520863,
+                0.043148,
+                -0.036984,
+                0.0,
+                0.0,
+                0.0,
+                0.584558
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-trustee-prohibition-a970ffb5c9a95afb"
+            },
+            {
+              "raw_cosine": 1.0000000000000002,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.08936,
+                0.404513,
+                0.065424,
+                -0.72605,
+                0.0,
+                -0.544936,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-secretary-minimum-a23fb51a3b3e2488"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "roundtrip_ok": false,
+        "sample_count": 8,
+        "semantic_correctness_verified": false,
+        "teacher_weights_loaded": false,
+        "wall_seconds_per_span": 0.16967277650837786
+      },
+      "fixed_rate": {
+        "admitted": false,
+        "bridge_off_evaluate_seconds": 1.3444182670209557,
+        "formalized": false,
+        "formula_training_executed": false,
+        "independent_formula_reconstruction_verified": false,
+        "independent_generalization_verified": false,
+        "lake_executed": false,
+        "linguistic_observations_exact": true,
+        "metrics": {
+          "cross_entropy_entropy_loss": 0.1373265360835137,
+          "cross_entropy_excess_loss": 0.1750592014924416,
+          "cross_entropy_loss": 0.31238573757595534,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 8
+        },
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_reconstruction": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.288729,
+                0.242762,
+                0.0,
+                -0.665081,
+                0.0,
+                0.0,
+                0.0,
+                0.644492
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-auditor-report-89f0c9ddc117be36"
+            },
+            {
+              "raw_cosine": 0.9999999999999999,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.633396,
+                0.23876,
+                0.130918,
+                -0.474694,
+                0.300922,
+                -0.251004,
+                -0.134214,
+                0.357433
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-auditor-deadline-726c198df64bae07"
+            },
+            {
+              "raw_cosine": 1.0000000000000002,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.248875,
+                0.578807,
+                -0.423545,
+                -0.041099,
+                0.0,
+                0.0,
+                0.0,
+                0.649588
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-delegate-prohibition-3b95eed768e097fe"
+            },
+            {
+              "raw_cosine": 0.9999999999999999,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.103958,
+                0.470597,
+                -0.232978,
+                -0.844661,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-manager-minimum-c0887bb3451e051d"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.421308,
+                0.354234,
+                0.0,
+                -0.472313,
+                -0.369606,
+                0.486985,
+                0.0,
+                -0.316505
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-supervisor-publication-82f4c4196ca51a39"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.527525,
+                0.153971,
+                0.417296,
+                -0.591388,
+                0.0,
+                -0.417296,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-treasurer-review-bdf0b0b3253d5916"
+            },
+            {
+              "raw_cosine": 0.9999999999999998,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.619487,
+                0.520863,
+                0.043148,
+                -0.036984,
+                0.0,
+                0.0,
+                0.0,
+                0.584558
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-trustee-prohibition-a970ffb5c9a95afb"
+            },
+            {
+              "raw_cosine": 1.0000000000000002,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.08936,
+                0.404513,
+                0.065424,
+                -0.72605,
+                0.0,
+                -0.544936,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-secretary-minimum-a23fb51a3b3e2488"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "roundtrip_ok": false,
+        "sample_count": 8,
+        "semantic_correctness_verified": false,
+        "teacher_weights_loaded": false,
+        "wall_seconds_per_span": 0.16805228337761946
+      },
+      "untrained": {
+        "admitted": false,
+        "bridge_off_evaluate_seconds": 1.2871427140198648,
+        "formalized": false,
+        "formula_training_executed": false,
+        "independent_formula_reconstruction_verified": false,
+        "independent_generalization_verified": false,
+        "lake_executed": false,
+        "linguistic_observations_exact": true,
+        "metrics": {
+          "cross_entropy_entropy_loss": 0.1373265360835137,
+          "cross_entropy_excess_loss": 0.24935658841515299,
+          "cross_entropy_loss": 0.3866831244986667,
+          "embedding_cosine_similarity": 1.0,
+          "legal_ir_target_count": 0,
+          "reconstruction_loss": 0.0,
+          "sample_count": 8
+        },
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_reconstruction": {
+          "mean_raw_cosine": 1.0,
+          "mean_raw_mse": 0.0,
+          "rows": [
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.288729,
+                0.242762,
+                0.0,
+                -0.665081,
+                0.0,
+                0.0,
+                0.0,
+                0.644492
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-auditor-report-89f0c9ddc117be36"
+            },
+            {
+              "raw_cosine": 0.9999999999999999,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.633396,
+                0.23876,
+                0.130918,
+                -0.474694,
+                0.300922,
+                -0.251004,
+                -0.134214,
+                0.357433
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-auditor-deadline-726c198df64bae07"
+            },
+            {
+              "raw_cosine": 1.0000000000000002,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.248875,
+                0.578807,
+                -0.423545,
+                -0.041099,
+                0.0,
+                0.0,
+                0.0,
+                0.649588
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-delegate-prohibition-3b95eed768e097fe"
+            },
+            {
+              "raw_cosine": 0.9999999999999999,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.103958,
+                0.470597,
+                -0.232978,
+                -0.844661,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-manager-minimum-c0887bb3451e051d"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.421308,
+                0.354234,
+                0.0,
+                -0.472313,
+                -0.369606,
+                0.486985,
+                0.0,
+                -0.316505
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-supervisor-publication-82f4c4196ca51a39"
+            },
+            {
+              "raw_cosine": 1.0,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.527525,
+                0.153971,
+                0.417296,
+                -0.591388,
+                0.0,
+                -0.417296,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-treasurer-review-bdf0b0b3253d5916"
+            },
+            {
+              "raw_cosine": 0.9999999999999998,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                -0.619487,
+                0.520863,
+                0.043148,
+                -0.036984,
+                0.0,
+                0.0,
+                0.0,
+                0.584558
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-trustee-prohibition-a970ffb5c9a95afb"
+            },
+            {
+              "raw_cosine": 1.0000000000000002,
+              "raw_mse": 0.0,
+              "raw_vector": [
+                0.08936,
+                0.404513,
+                0.065424,
+                -0.72605,
+                0.0,
+                -0.544936,
+                0.0,
+                0.0
+              ],
+              "sample_id": "us-code-authored-action-disjoint-feature-diagnostic-action-disjoint-v1-secretary-minimum-a23fb51a3b3e2488"
+            }
+          ],
+          "scope": "pre-safety additive vector versus deterministic linguistic hash; not independent semantic embedding"
+        },
+        "roundtrip_ok": false,
+        "sample_count": 8,
+        "semantic_correctness_verified": false,
+        "teacher_weights_loaded": false,
+        "wall_seconds_per_span": 0.1608928392524831
+      }
+    },
+    "roundtrip_ok": false,
+    "sample_memory": false,
+    "schema": "legacy-prepared-holdout-evaluation/v1",
+    "semantic_correctness_verified": false,
+    "target_origin": "preserved linguistic IR feature-family targets; not independent formula labels",
+    "teacher_weights_loaded": false
+  },
+  "limits": [
+    "authored weak-labeled actor/action combinations, not independent legal gold or sampled federal laws",
+    "same eight correlated sources are reused across three seeds",
+    "typed deontic formula head does not establish full logic-family coverage or typed temporal-kind sidecars",
+    "legacy symbolic observations remain verbose; proposal-loop gains do not establish full-pipeline memory or throughput improvements"
+  ],
+  "qualified": false,
+  "roundtrip_ok": false,
+  "schema": "holdout-throughput-release/v1",
+  "throughput": {
+    "bridge_names": [],
+    "bridge_on_evaluate": null,
+    "concurrency_note": "r1 current and legacy benchmark processes overlapped; r2 ran later under different shared-host load. No dedicated-host capacity estimate.",
+    "current_thread_capped": {
+      "aggregate_ratio": 1.5993499719771411,
+      "all_numeric_results_exact": true,
+      "median_paired_wall_speedup": 1.5554311419745888,
+      "summary": {
+        "prepared": {
+          "optimizer_steps_per_second_aggregate": 305.678425958212,
+          "row_presentations_per_second_aggregate": 1834.0705557492722,
+          "wall_seconds_max": 3.487090239999816,
+          "wall_seconds_mean": 3.2714117683159807,
+          "wall_seconds_median": 3.166556152049452,
+          "wall_seconds_min": 3.1605889128986746,
+          "wall_seconds_stdev": 0.18680686375686723
+        },
+        "reference": {
+          "optimizer_steps_per_second_aggregate": 191.12666477889618,
+          "row_presentations_per_second_aggregate": 1146.7599886733772,
+          "wall_seconds_max": 5.423928754171357,
+          "wall_seconds_mean": 5.2321323199818535,
+          "wall_seconds_median": 5.406922627938911,
+          "wall_seconds_min": 4.865545577835292,
+          "wall_seconds_stdev": 0.3175872820510618
+        }
+      }
+    },
+    "current_uncapped": {
+      "all_numeric_results_exact": true,
+      "median_paired_wall_speedup": 1.0888697569865253,
+      "summary": {
+        "prepared": {
+          "optimizer_steps_per_second_aggregate": 68.82822363120738,
+          "row_presentations_per_second_aggregate": 412.9693417872442,
+          "wall_seconds_max": 14.92854617885314,
+          "wall_seconds_mean": 14.528923561330885,
+          "wall_seconds_median": 14.549510488985106,
+          "wall_seconds_min": 14.108714016154408,
+          "wall_seconds_stdev": 0.410303619215697
+        },
+        "reference": {
+          "optimizer_steps_per_second_aggregate": 62.359993823045016,
+          "row_presentations_per_second_aggregate": 374.1599629382701,
+          "wall_seconds_max": 16.255242449929938,
+          "wall_seconds_mean": 16.035922050243244,
+          "wall_seconds_median": 16.070235532941297,
+          "wall_seconds_min": 15.782288167858496,
+          "wall_seconds_stdev": 0.2383369454230299
+        }
+      }
+    },
+    "environment_note": "r1 capped Torch intra-op only; r2 additionally set OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 before Python. Changes were joint, not a single-variable OpenBLAS ablation.",
+    "legacy": {
+      "measurements": [
+        {
+          "accepted_updates": 12,
+          "complete_weights_sha256": "dd2b9efb46e6c9d724273cec75f07a09a12ef0eca9344a62344fee71df059613",
+          "elapsed_seconds": 5.549399868818,
+          "engine": "reference",
+          "evaluation_calls": 36,
+          "metrics": {
+            "cross_entropy_entropy_loss": 0.0,
+            "cross_entropy_excess_loss": 0.16220758380091002,
+            "cross_entropy_loss": 0.16220758380091002,
+            "embedding_cosine_similarity": 1.0,
+            "legal_ir_target_count": 0,
+            "reconstruction_loss": 0.0,
+            "sample_count": 3
+          },
+          "proposals_per_second": 2.1623959858124175,
+          "repetition": 1,
+          "seconds_per_distinct_training_span": 1.8497999562726666,
+          "training_row_presentations_per_second": 6.487187957437253
+        },
+        {
+          "accepted_updates": 12,
+          "complete_weights_sha256": "dd2b9efb46e6c9d724273cec75f07a09a12ef0eca9344a62344fee71df059613",
+          "elapsed_seconds": 4.586351937847212,
+          "engine": "prepared",
+          "evaluation_calls": 14,
+          "metrics": {
+            "cross_entropy_entropy_loss": 0.0,
+            "cross_entropy_excess_loss": 0.16220758380091002,
+            "cross_entropy_loss": 0.16220758380091002,
+            "embedding_cosine_similarity": 1.0,
+            "legal_ir_target_count": 0,
+            "reconstruction_loss": 0.0,
+            "sample_count": 3
+          },
+          "proposals_per_second": 2.6164586064524045,
+          "repetition": 1,
+          "seconds_per_distinct_training_span": 1.528783979282404,
+          "training_row_presentations_per_second": 7.8493758193572125
+        },
+        {
+          "accepted_updates": 12,
+          "complete_weights_sha256": "dd2b9efb46e6c9d724273cec75f07a09a12ef0eca9344a62344fee71df059613",
+          "elapsed_seconds": 4.4947872690390795,
+          "engine": "prepared",
+          "evaluation_calls": 14,
+          "metrics": {
+            "cross_entropy_entropy_loss": 0.0,
+            "cross_entropy_excess_loss": 0.16220758380091002,
+            "cross_entropy_loss": 0.16220758380091002,
+            "embedding_cosine_similarity": 1.0,
+            "legal_ir_target_count": 0,
+            "reconstruction_loss": 0.0,
+            "sample_count": 3
+          },
+          "proposals_per_second": 2.66975927485116,
+          "repetition": 2,
+          "seconds_per_distinct_training_span": 1.4982624230130266,
+          "training_row_presentations_per_second": 8.00927782455348
+        },
+        {
+          "accepted_updates": 12,
+          "complete_weights_sha256": "dd2b9efb46e6c9d724273cec75f07a09a12ef0eca9344a62344fee71df059613",
+          "elapsed_seconds": 5.528964357916266,
+          "engine": "reference",
+          "evaluation_calls": 36,
+          "metrics": {
+            "cross_entropy_entropy_loss": 0.0,
+            "cross_entropy_excess_loss": 0.16220758380091002,
+            "cross_entropy_loss": 0.16220758380091002,
+            "embedding_cosine_similarity": 1.0,
+            "legal_ir_target_count": 0,
+            "reconstruction_loss": 0.0,
+            "sample_count": 3
+          },
+          "proposals_per_second": 2.1703883807495754,
+          "repetition": 2,
+          "seconds_per_distinct_training_span": 1.8429881193054218,
+          "training_row_presentations_per_second": 6.511165142248727
+        },
+        {
+          "accepted_updates": 12,
+          "complete_weights_sha256": "dd2b9efb46e6c9d724273cec75f07a09a12ef0eca9344a62344fee71df059613",
+          "elapsed_seconds": 5.629322408000007,
+          "engine": "reference",
+          "evaluation_calls": 36,
+          "metrics": {
+            "cross_entropy_entropy_loss": 0.0,
+            "cross_entropy_excess_loss": 0.16220758380091002,
+            "cross_entropy_loss": 0.16220758380091002,
+            "embedding_cosine_similarity": 1.0,
+            "legal_ir_target_count": 0,
+            "reconstruction_loss": 0.0,
+            "sample_count": 3
+          },
+          "proposals_per_second": 2.1316952788041457,
+          "repetition": 3,
+          "seconds_per_distinct_training_span": 1.876440802666669,
+          "training_row_presentations_per_second": 6.395085836412437
+        },
+        {
+          "accepted_updates": 12,
+          "complete_weights_sha256": "dd2b9efb46e6c9d724273cec75f07a09a12ef0eca9344a62344fee71df059613",
+          "elapsed_seconds": 4.705061346990988,
+          "engine": "prepared",
+          "evaluation_calls": 14,
+          "metrics": {
+            "cross_entropy_entropy_loss": 0.0,
+            "cross_entropy_excess_loss": 0.16220758380091002,
+            "cross_entropy_loss": 0.16220758380091002,
+            "embedding_cosine_similarity": 1.0,
+            "legal_ir_target_count": 0,
+            "reconstruction_loss": 0.0,
+            "sample_count": 3
+          },
+          "proposals_per_second": 2.550444960228695,
+          "repetition": 3,
+          "seconds_per_distinct_training_span": 1.5683537823303293,
+          "training_row_presentations_per_second": 7.651334880686085
+        }
+      ],
+      "median_seconds": {
+        "prepared": 4.586351937847212,
+        "reference": 5.549399868818
+      },
+      "paired_ratios": [
+        1.209981253951225,
+        1.2300836562390367,
+        1.1964397470821735
+      ],
+      "reference_over_prepared_ratio": 1.209981253951225,
+      "weights_losses_scheduler_exact": true
+    },
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 0,
+    "metric_disk_cache": false,
+    "prior_reference_to_capped_prepared_ratio": 4.901835411106939,
+    "temperature": 0,
+    "timing_scope": "warm trainer calls; repeated optimizer row presentations, not distinct law spans formalized",
+    "use_sample_memory": false
+  },
+  "validation": {
+    "actual_canonical_legal_builds": 1,
+    "actual_schema_lake_builds": 16,
+    "actual_schema_passes": 16,
+    "canonical_gate_count": 3,
+    "empty_vocabulary_abstains": true,
+    "unique_passing_tests": 340
+  }
+}
