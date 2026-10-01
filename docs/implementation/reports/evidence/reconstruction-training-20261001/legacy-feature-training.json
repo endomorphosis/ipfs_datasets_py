@@ -1,0 +1,1081 @@
+{
+  "admitted": false,
+  "formalized": false,
+  "full_report_archive_member": "legacy-training/report.json",
+  "full_report_sha256": "2538ec9e1c062acb43a33753b011179cf97379058508453284114609fa5b905c",
+  "plan": {
+    "adaptive_growth_factor": 1.5,
+    "admitted": false,
+    "arms": [
+      "original_cap1",
+      "original_cap3",
+      "active_fixed",
+      "active_adaptive"
+    ],
+    "bridge_names": [],
+    "epochs": 6,
+    "formalized": false,
+    "formula_training_executed": false,
+    "git_head": "f16091506024bf9e1944c4c7172aaa0448e5f763",
+    "independent_generalization_verified": false,
+    "initial_learning_rate": 0.01,
+    "lake_executed": false,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "legal_ir_target_count": 0,
+    "max_learning_rate": 0.35,
+    "max_line_search_attempts": 1,
+    "max_seconds_per_arm": 60,
+    "metric_disk_cache": false,
+    "model": "fresh historical daemon 8D, blank English, original defaults, CPU",
+    "no_weight_downloads": true,
+    "objective": "unchanged historical strict family CE plus target-aware reconstruction",
+    "promotion_performed": false,
+    "proof_authority": false,
+    "publication_performed": false,
+    "qualified": false,
+    "resolved_logic_tree": {
+      "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "parser": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    },
+    "roundtrip_ok": false,
+    "sample_memory": false,
+    "schema": "legacy-active-feature-comparison-plan/v1",
+    "semantic_correctness_verified": false,
+    "source_hashes": {
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/autoformal/__init__.py": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py": "ad9603c7b4dd80736aa9bb32dc4ffc537149f1d111b265c95b6dbedc5dbfe8aa",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/__init__.py": "bdbe2843741514298d49ce2c5ed8aab1c1aeb447b8cae515c81aaa7e0f02dae6",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/MANIFEST.json": "d354fd562b722bf66ac52563aff379253517fbc25bd487898ef5b292b0389cc0",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/__init__.py": "695e6758d9fb9573e5604dfbe6e16e813a4c9cb3b5f3fa7f75b8ace68e01193d",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/codec.py": "05067257eecae4701d3274f1403ea05d4bfe717f14bdc9be3027424009d846a1",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/decompiler.py": "e8a34dc7aff799e2b43e95f52e6cbf4a89a62a7406d80ac477f46d0e1a09cc14",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/flogic_optimizer.py": "c2ed9c3b3376002764d7b7d46ca35889ccf88f129aa3144ade6fc418c390e453",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/kg_bridge.py": "336f67eed3cfb45b8bbda10c88a487b53b8b0e78a95fc1469b649f4165bb2ab9",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/MANIFEST.json": "f44966d10d21f6f97ef89d967f411f5d86fe7195a0aa212269e3c785e27ddfa3",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/__init__.py": "209d89df0ac32061a5237d87d19e42bbd0ddd60b0ad8ac939b44cc18c5156b36",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/spacy_modal_codec.py": "16ec4e141d5cb2f9d37cd4db42733921bc046e17fee12afc43ab31ca7a60cd59",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/MANIFEST.json": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/__init__.py": "6e694ea02e8530c8fc207fd82769b1f29a13b3ceac504e902f8b26202bda26b4",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/frame_bm25_selector.py": "612d472efaf9cb5bb2f57914125d9fc87cde3a55f14dc5a105cc80f268df430a",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_family_evaluator.py": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_grammar_decoder.py": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_semantic_metrics.py": "cee46ad09daae3ae74cd359e8e25fb9fd592eee92c59730d42caf30db60c38da",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_modal_parser.py": "5415bf565171b17db1d4a03c715e974645a59018addb852cf67fc3c71d462406",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_samples.py": "51ce99dc83279c570bc57334c1cdc4cb72fa4b94c5b8c81101bb6252f0a614de",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder.py": "5f504f08854a239eda60c588d78766681818f724b7b59f1851f46a4fdc2129bd",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_batching.py": "6538fc6f4bf3c7e7ba94c7ef8b4fa00833ca4f728b4bf90a2684096b2f70dc5a",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_checkpoint.py": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_cuda.py": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_factorized_heads.py": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_feature_capacity.py": "76608ad29c95cf3178fc59d7c76c6c7f4ca5b9907b338f9558c88d3d8a3b93ba",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_legacy_distillation.py": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_migration.py": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_transaction.py": "d86a5721643bab9a51d1587aef117f925c53ebcdd8fd767964cacbd7859b810b",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_version.py": "f38530f5a8a10cd5969447e16e7d6a86542b8e9eeeb2d2a2dab69454ab250fc2",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_tensor_state.py": "ee81537f1af3c3ca939f371cc9e4384adb317d6c7803dac22271d5dce0948d3f",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_ir.py": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_prover_router.py": "46fe3a0a83b8e0e86c9bbb9dbfab15a2a4a8401fbe661bd58b512a93ffd47388",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_registry.py": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/projection_profiler.py": "c5c5179cce6df49f694523b999f61cc8a842fa71424af956893400d574e3b4e8",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/prover_integration.py": "5417a7a5da2d3fb8eb3cc3b40e4db11b8e6d592d67f3808c0cbfd0dc5f13c1cb",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/snapshot_evaluator.py": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/active_training.py": "01d0a99517b19d74a8a5ec6bf03d2a975593c2a397d4b57312fbfcb16b97d86e",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_frame_scope.py": "ad7b87cc3c4b97b1eaad015304ccc620d918006bf42f6a8afc9a5f80b321763f",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_teacher.py": "f79c336fa35c69b63dca14420b65a37408eb00373e97c8ed61187f4756bfb433",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic.py": "baca84b44f7eda33466ffdc75170d904f480aafb47a779131337d90ed9a7bca3",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_cached.py": "37d588f5df5df1b0f8fff4a4b2de7aed5757024fda8f16c18f29004f380b9ca9",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_teacher.py": "529b7758fe2db751a9ae37bc50a6b8c8126c6b12b4d344cf1cb61324a5e2c869",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_view_reuse.py": "bc172008fcecc3b81e32dd4bc6e293ef407293da0c81f57e496a7e18d629f819",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py": "5dda48e79614f49c2e2c8b107811bde37260355f7d4ca4e0e54a88d883725204",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/scripts/ops/legal_ir/compare_legacy_active_training.py": "4f5bfc1536ea82cb6cbba18f8c27b154d81a8ff6806dc8f04f10204f0d55adb4"
+    },
+    "sources": {
+      "training": [
+        "The agency shall submit reports.",
+        "The agency shall not disclose records.",
+        "The officer shall retain the file for at least 20 days."
+      ],
+      "tuning": [
+        "The board shall submit notices.",
+        "The board shall not disclose documents.",
+        "The clerk shall retain records for at least 20 days."
+      ]
+    },
+    "teacher_weights_loaded": false,
+    "temperature": 0
+  },
+  "qualified": false,
+  "results": {
+    "active_adaptive": {
+      "accepted_epochs": 6,
+      "admitted": false,
+      "after": {
+        "cosine_loss": 0.0,
+        "cross_entropy_entropy_loss": 0.0,
+        "cross_entropy_excess_loss": 0.26580110030657234,
+        "cross_entropy_loss": 0.26580110030657234,
+        "decoded_embeddings": {
+          "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef": [
+            -0.441569,
+            0.371269,
+            0.0,
+            -0.719106,
+            -0.38738,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf": [
+            -0.486704,
+            0.409219,
+            0.543203,
+            0.299448,
+            0.0,
+            0.0,
+            0.0,
+            0.459261
+          ],
+          "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849": [
+            0.13851,
+            0.627004,
+            0.227552,
+            0.526832,
+            0.0,
+            0.0,
+            0.508281,
+            0.0
+          ]
+        },
+        "embedding_cosine_similarity": 1.0,
+        "frame_ranking_loss": 0.0,
+        "legal_ir_grammar_rejection_reasons": {},
+        "legal_ir_losses": {},
+        "legal_ir_predicted_view_distribution": {},
+        "legal_ir_target_count": 0,
+        "legal_ir_target_hashes": {},
+        "legal_ir_view_distribution": {},
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "decompiler": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "deontic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "external_provers": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "frame_logic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "kg": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "tdfol": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          }
+        },
+        "reconstruction_loss": 0.0,
+        "sample_count": 3,
+        "sample_embedding_metrics": [
+          {
+            "citation": "authored feature diagnostic:tuning-0",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef",
+            "text_shape": "board|submit|notices"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-1",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf",
+            "text_shape": "board|not|disclose|documents"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-2",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849",
+            "text_shape": "clerk|retain|records|least|days"
+          }
+        ],
+        "symbolic_validity_penalty": 0.0
+      },
+      "before": {
+        "cosine_loss": 0.0,
+        "cross_entropy_entropy_loss": 0.0,
+        "cross_entropy_excess_loss": 0.28825451936105756,
+        "cross_entropy_loss": 0.28825451936105756,
+        "decoded_embeddings": {
+          "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef": [
+            -0.441569,
+            0.371269,
+            0.0,
+            -0.719106,
+            -0.38738,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf": [
+            -0.486704,
+            0.409219,
+            0.543203,
+            0.299448,
+            0.0,
+            0.0,
+            0.0,
+            0.459261
+          ],
+          "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849": [
+            0.13851,
+            0.627004,
+            0.227552,
+            0.526832,
+            0.0,
+            0.0,
+            0.508281,
+            0.0
+          ]
+        },
+        "embedding_cosine_similarity": 1.0,
+        "frame_ranking_loss": 0.0,
+        "legal_ir_grammar_rejection_reasons": {},
+        "legal_ir_losses": {},
+        "legal_ir_predicted_view_distribution": {},
+        "legal_ir_target_count": 0,
+        "legal_ir_target_hashes": {},
+        "legal_ir_view_distribution": {},
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "decompiler": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "deontic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "external_provers": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "frame_logic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "kg": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "tdfol": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          }
+        },
+        "reconstruction_loss": 0.0,
+        "sample_count": 3,
+        "sample_embedding_metrics": [
+          {
+            "citation": "authored feature diagnostic:tuning-0",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef",
+            "text_shape": "board|submit|notices"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-1",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf",
+            "text_shape": "board|not|disclose|documents"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-2",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849",
+            "text_shape": "clerk|retain|records|least|days"
+          }
+        ],
+        "symbolic_validity_penalty": 0.0
+      },
+      "bridge_off_evaluate_wall_seconds": 0.0540007259696722,
+      "bridge_off_evaluate_wall_seconds_per_span": 0.018000241989890736,
+      "family_cross_entropy_delta": 0.022453419054485224,
+      "final_state_identity": "11a2b7f2e002a29ca3c2b329c9deb08dc4bfc15dd642e89c69a94a0b04ffbc33",
+      "formalized": false,
+      "formula_training_executed": false,
+      "independent_generalization_verified": false,
+      "initial_state_identity": "a3dbdce9987b416eff3def3ca97f2984b3bde0a475aab4c95041dc3847d35929",
+      "lake_executed": false,
+      "linguistic_observations_exact": true,
+      "numeric_sparse_weights_changed": true,
+      "promotion_performed": false,
+      "proof_authority": false,
+      "proposals": 6,
+      "publication_performed": false,
+      "qualified": false,
+      "raw_mse_after": 0.0,
+      "raw_mse_before": 0.0,
+      "raw_reconstruction_unchanged": true,
+      "resident_bytes_after_training": 904323072,
+      "resident_bytes_before_training": 901799936,
+      "roundtrip_ok": false,
+      "sample_memory_empty": true,
+      "semantic_correctness_verified": false,
+      "teacher_weights_loaded": false,
+      "training_wall_seconds": 2.358507229015231,
+      "training_wall_seconds_per_training_span": 0.7861690763384104
+    },
+    "active_fixed": {
+      "accepted_epochs": 6,
+      "admitted": false,
+      "after": {
+        "cosine_loss": 0.0,
+        "cross_entropy_entropy_loss": 0.0,
+        "cross_entropy_excess_loss": 0.2814537194992662,
+        "cross_entropy_loss": 0.28145371949926623,
+        "decoded_embeddings": {
+          "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef": [
+            -0.441569,
+            0.371269,
+            0.0,
+            -0.719106,
+            -0.38738,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf": [
+            -0.486704,
+            0.409219,
+            0.543203,
+            0.299448,
+            0.0,
+            0.0,
+            0.0,
+            0.459261
+          ],
+          "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849": [
+            0.13851,
+            0.627004,
+            0.227552,
+            0.526832,
+            0.0,
+            0.0,
+            0.508281,
+            0.0
+          ]
+        },
+        "embedding_cosine_similarity": 1.0,
+        "frame_ranking_loss": 0.0,
+        "legal_ir_grammar_rejection_reasons": {},
+        "legal_ir_losses": {},
+        "legal_ir_predicted_view_distribution": {},
+        "legal_ir_target_count": 0,
+        "legal_ir_target_hashes": {},
+        "legal_ir_view_distribution": {},
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "decompiler": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "deontic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "external_provers": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "frame_logic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "kg": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "tdfol": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          }
+        },
+        "reconstruction_loss": 0.0,
+        "sample_count": 3,
+        "sample_embedding_metrics": [
+          {
+            "citation": "authored feature diagnostic:tuning-0",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef",
+            "text_shape": "board|submit|notices"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-1",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf",
+            "text_shape": "board|not|disclose|documents"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-2",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849",
+            "text_shape": "clerk|retain|records|least|days"
+          }
+        ],
+        "symbolic_validity_penalty": 0.0
+      },
+      "before": {
+        "cosine_loss": 0.0,
+        "cross_entropy_entropy_loss": 0.0,
+        "cross_entropy_excess_loss": 0.28825451936105756,
+        "cross_entropy_loss": 0.28825451936105756,
+        "decoded_embeddings": {
+          "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef": [
+            -0.441569,
+            0.371269,
+            0.0,
+            -0.719106,
+            -0.38738,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf": [
+            -0.486704,
+            0.409219,
+            0.543203,
+            0.299448,
+            0.0,
+            0.0,
+            0.0,
+            0.459261
+          ],
+          "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849": [
+            0.13851,
+            0.627004,
+            0.227552,
+            0.526832,
+            0.0,
+            0.0,
+            0.508281,
+            0.0
+          ]
+        },
+        "embedding_cosine_similarity": 1.0,
+        "frame_ranking_loss": 0.0,
+        "legal_ir_grammar_rejection_reasons": {},
+        "legal_ir_losses": {},
+        "legal_ir_predicted_view_distribution": {},
+        "legal_ir_target_count": 0,
+        "legal_ir_target_hashes": {},
+        "legal_ir_view_distribution": {},
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "decompiler": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "deontic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "external_provers": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "frame_logic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "kg": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "tdfol": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          }
+        },
+        "reconstruction_loss": 0.0,
+        "sample_count": 3,
+        "sample_embedding_metrics": [
+          {
+            "citation": "authored feature diagnostic:tuning-0",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef",
+            "text_shape": "board|submit|notices"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-1",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf",
+            "text_shape": "board|not|disclose|documents"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-2",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849",
+            "text_shape": "clerk|retain|records|least|days"
+          }
+        ],
+        "symbolic_validity_penalty": 0.0
+      },
+      "bridge_off_evaluate_wall_seconds": 0.05253774602897465,
+      "bridge_off_evaluate_wall_seconds_per_span": 0.017512582009658217,
+      "family_cross_entropy_delta": 0.006800799861791329,
+      "final_state_identity": "f659e9b709fb5bd26f8e4bd22dfeefed0c3288ddf150cdaa0b7c01fb38bfcaee",
+      "formalized": false,
+      "formula_training_executed": false,
+      "independent_generalization_verified": false,
+      "initial_state_identity": "a3dbdce9987b416eff3def3ca97f2984b3bde0a475aab4c95041dc3847d35929",
+      "lake_executed": false,
+      "linguistic_observations_exact": true,
+      "numeric_sparse_weights_changed": true,
+      "promotion_performed": false,
+      "proof_authority": false,
+      "proposals": 6,
+      "publication_performed": false,
+      "qualified": false,
+      "raw_mse_after": 0.0,
+      "raw_mse_before": 0.0,
+      "raw_reconstruction_unchanged": true,
+      "resident_bytes_after_training": 902782976,
+      "resident_bytes_before_training": 896630784,
+      "roundtrip_ok": false,
+      "sample_memory_empty": true,
+      "semantic_correctness_verified": false,
+      "teacher_weights_loaded": false,
+      "training_wall_seconds": 2.579408575082198,
+      "training_wall_seconds_per_training_span": 0.8598028583607326
+    },
+    "original_cap1": {
+      "accepted_epochs": 0,
+      "admitted": false,
+      "after": {
+        "cosine_loss": 0.0,
+        "cross_entropy_entropy_loss": 0.0,
+        "cross_entropy_excess_loss": 0.28825451936105756,
+        "cross_entropy_loss": 0.28825451936105756,
+        "decoded_embeddings": {
+          "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef": [
+            -0.441569,
+            0.371269,
+            0.0,
+            -0.719106,
+            -0.38738,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf": [
+            -0.486704,
+            0.409219,
+            0.543203,
+            0.299448,
+            0.0,
+            0.0,
+            0.0,
+            0.459261
+          ],
+          "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849": [
+            0.13851,
+            0.627004,
+            0.227552,
+            0.526832,
+            0.0,
+            0.0,
+            0.508281,
+            0.0
+          ]
+        },
+        "embedding_cosine_similarity": 1.0,
+        "frame_ranking_loss": 0.0,
+        "legal_ir_grammar_rejection_reasons": {},
+        "legal_ir_losses": {},
+        "legal_ir_predicted_view_distribution": {},
+        "legal_ir_target_count": 0,
+        "legal_ir_target_hashes": {},
+        "legal_ir_view_distribution": {},
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "decompiler": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "deontic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "external_provers": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "frame_logic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "kg": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "tdfol": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          }
+        },
+        "reconstruction_loss": 0.0,
+        "sample_count": 3,
+        "sample_embedding_metrics": [
+          {
+            "citation": "authored feature diagnostic:tuning-0",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef",
+            "text_shape": "board|submit|notices"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-1",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf",
+            "text_shape": "board|not|disclose|documents"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-2",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849",
+            "text_shape": "clerk|retain|records|least|days"
+          }
+        ],
+        "symbolic_validity_penalty": 0.0
+      },
+      "before": {
+        "cosine_loss": 0.0,
+        "cross_entropy_entropy_loss": 0.0,
+        "cross_entropy_excess_loss": 0.28825451936105756,
+        "cross_entropy_loss": 0.28825451936105756,
+        "decoded_embeddings": {
+          "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef": [
+            -0.441569,
+            0.371269,
+            0.0,
+            -0.719106,
+            -0.38738,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf": [
+            -0.486704,
+            0.409219,
+            0.543203,
+            0.299448,
+            0.0,
+            0.0,
+            0.0,
+            0.459261
+          ],
+          "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849": [
+            0.13851,
+            0.627004,
+            0.227552,
+            0.526832,
+            0.0,
+            0.0,
+            0.508281,
+            0.0
+          ]
+        },
+        "embedding_cosine_similarity": 1.0,
+        "frame_ranking_loss": 0.0,
+        "legal_ir_grammar_rejection_reasons": {},
+        "legal_ir_losses": {},
+        "legal_ir_predicted_view_distribution": {},
+        "legal_ir_target_count": 0,
+        "legal_ir_target_hashes": {},
+        "legal_ir_view_distribution": {},
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "decompiler": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "deontic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "external_provers": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "frame_logic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "kg": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "tdfol": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          }
+        },
+        "reconstruction_loss": 0.0,
+        "sample_count": 3,
+        "sample_embedding_metrics": [
+          {
+            "citation": "authored feature diagnostic:tuning-0",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef",
+            "text_shape": "board|submit|notices"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-1",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf",
+            "text_shape": "board|not|disclose|documents"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-2",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849",
+            "text_shape": "clerk|retain|records|least|days"
+          }
+        ],
+        "symbolic_validity_penalty": 0.0
+      },
+      "bridge_off_evaluate_wall_seconds": 0.035067122196778655,
+      "bridge_off_evaluate_wall_seconds_per_span": 0.011689040732259551,
+      "family_cross_entropy_delta": 0.0,
+      "final_state_identity": "a3dbdce9987b416eff3def3ca97f2984b3bde0a475aab4c95041dc3847d35929",
+      "formalized": false,
+      "formula_training_executed": false,
+      "independent_generalization_verified": false,
+      "initial_state_identity": "a3dbdce9987b416eff3def3ca97f2984b3bde0a475aab4c95041dc3847d35929",
+      "lake_executed": false,
+      "linguistic_observations_exact": true,
+      "numeric_sparse_weights_changed": false,
+      "promotion_performed": false,
+      "proof_authority": false,
+      "proposals": 1,
+      "publication_performed": false,
+      "qualified": false,
+      "raw_mse_after": 0.0,
+      "raw_mse_before": 0.0,
+      "raw_reconstruction_unchanged": true,
+      "resident_bytes_after_training": 871714816,
+      "resident_bytes_before_training": 842559488,
+      "roundtrip_ok": false,
+      "sample_memory_empty": true,
+      "semantic_correctness_verified": false,
+      "teacher_weights_loaded": false,
+      "training_wall_seconds": 0.7510151870083064,
+      "training_wall_seconds_per_training_span": 0.25033839566943544
+    },
+    "original_cap3": {
+      "accepted_epochs": 6,
+      "admitted": false,
+      "after": {
+        "cosine_loss": 0.0,
+        "cross_entropy_entropy_loss": 0.0,
+        "cross_entropy_excess_loss": 0.2814537194992662,
+        "cross_entropy_loss": 0.28145371949926623,
+        "decoded_embeddings": {
+          "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef": [
+            -0.441569,
+            0.371269,
+            0.0,
+            -0.719106,
+            -0.38738,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf": [
+            -0.486704,
+            0.409219,
+            0.543203,
+            0.299448,
+            0.0,
+            0.0,
+            0.0,
+            0.459261
+          ],
+          "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849": [
+            0.13851,
+            0.627004,
+            0.227552,
+            0.526832,
+            0.0,
+            0.0,
+            0.508281,
+            0.0
+          ]
+        },
+        "embedding_cosine_similarity": 1.0,
+        "frame_ranking_loss": 0.0,
+        "legal_ir_grammar_rejection_reasons": {},
+        "legal_ir_losses": {},
+        "legal_ir_predicted_view_distribution": {},
+        "legal_ir_target_count": 0,
+        "legal_ir_target_hashes": {},
+        "legal_ir_view_distribution": {},
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "decompiler": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "deontic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "external_provers": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "frame_logic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "kg": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "tdfol": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          }
+        },
+        "reconstruction_loss": 0.0,
+        "sample_count": 3,
+        "sample_embedding_metrics": [
+          {
+            "citation": "authored feature diagnostic:tuning-0",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef",
+            "text_shape": "board|submit|notices"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-1",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf",
+            "text_shape": "board|not|disclose|documents"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-2",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849",
+            "text_shape": "clerk|retain|records|least|days"
+          }
+        ],
+        "symbolic_validity_penalty": 0.0
+      },
+      "before": {
+        "cosine_loss": 0.0,
+        "cross_entropy_entropy_loss": 0.0,
+        "cross_entropy_excess_loss": 0.28825451936105756,
+        "cross_entropy_loss": 0.28825451936105756,
+        "decoded_embeddings": {
+          "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef": [
+            -0.441569,
+            0.371269,
+            0.0,
+            -0.719106,
+            -0.38738,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf": [
+            -0.486704,
+            0.409219,
+            0.543203,
+            0.299448,
+            0.0,
+            0.0,
+            0.0,
+            0.459261
+          ],
+          "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849": [
+            0.13851,
+            0.627004,
+            0.227552,
+            0.526832,
+            0.0,
+            0.0,
+            0.508281,
+            0.0
+          ]
+        },
+        "embedding_cosine_similarity": 1.0,
+        "frame_ranking_loss": 0.0,
+        "legal_ir_grammar_rejection_reasons": {},
+        "legal_ir_losses": {},
+        "legal_ir_predicted_view_distribution": {},
+        "legal_ir_target_count": 0,
+        "legal_ir_target_hashes": {},
+        "legal_ir_view_distribution": {},
+        "legal_ir_view_family_metrics": {
+          "cec": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "decompiler": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "deontic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "external_provers": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "frame_logic": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "kg": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          },
+          "tdfol": {
+            "sample_count": 0.0,
+            "sample_weight": 0.0
+          }
+        },
+        "reconstruction_loss": 0.0,
+        "sample_count": 3,
+        "sample_embedding_metrics": [
+          {
+            "citation": "authored feature diagnostic:tuning-0",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-0-3e4f65458d35cfef",
+            "text_shape": "board|submit|notices"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-1",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-1-9e3a666cdbd1f7bf",
+            "text_shape": "board|not|disclose|documents"
+          },
+          {
+            "citation": "authored feature diagnostic:tuning-2",
+            "cosine_loss": 0.0,
+            "cosine_similarity": 1.0,
+            "reconstruction_loss": 0.0,
+            "sample_id": "us-code-authored-feature-diagnostic-tuning-2-3e8cb04bc2486849",
+            "text_shape": "clerk|retain|records|least|days"
+          }
+        ],
+        "symbolic_validity_penalty": 0.0
+      },
+      "bridge_off_evaluate_wall_seconds": 0.04848341504111886,
+      "bridge_off_evaluate_wall_seconds_per_span": 0.01616113834703962,
+      "family_cross_entropy_delta": 0.006800799861791329,
+      "final_state_identity": "f659e9b709fb5bd26f8e4bd22dfeefed0c3288ddf150cdaa0b7c01fb38bfcaee",
+      "formalized": false,
+      "formula_training_executed": false,
+      "independent_generalization_verified": false,
+      "initial_state_identity": "a3dbdce9987b416eff3def3ca97f2984b3bde0a475aab4c95041dc3847d35929",
+      "lake_executed": false,
+      "linguistic_observations_exact": true,
+      "numeric_sparse_weights_changed": true,
+      "promotion_performed": false,
+      "proof_authority": false,
+      "proposals": 18,
+      "publication_performed": false,
+      "qualified": false,
+      "raw_mse_after": 0.0,
+      "raw_mse_before": 0.0,
+      "raw_reconstruction_unchanged": true,
+      "resident_bytes_after_training": 896565248,
+      "resident_bytes_before_training": 891924480,
+      "roundtrip_ok": false,
+      "sample_memory_empty": true,
+      "semantic_correctness_verified": false,
+      "teacher_weights_loaded": false,
+      "training_wall_seconds": 4.4866395480930805,
+      "training_wall_seconds_per_training_span": 1.4955465160310268
+    }
+  },
+  "roundtrip_ok": false,
+  "schema": "legacy-active-feature-comparison-summary/v1"
+}

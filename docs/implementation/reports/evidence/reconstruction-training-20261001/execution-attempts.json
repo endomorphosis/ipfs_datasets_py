@@ -1,0 +1,37 @@
+{
+  "attempts": [
+    {
+      "completed": false,
+      "directory": "current-training",
+      "optimizer_steps": 0,
+      "reason": "new legacy helper appeared after source plan was sealed; source guard aborted preparation"
+    },
+    {
+      "completed": true,
+      "directory": "current-training-r2",
+      "heads_and_generation_identical_to_primary": true,
+      "primary": false,
+      "report_sha256": "5637dfe9055a849481a6f01846875ac1e21836f2a2efdb9aa0e452b026fed1c2",
+      "schema_builds": 30
+    },
+    {
+      "completed": true,
+      "directory": "current-training-r3",
+      "heads_and_generation_identical_to_primary": true,
+      "primary": false,
+      "report_sha256": "094492799d0732d017878d041d72296739c1fdfc964b5ed2152609de446eb244",
+      "schema_builds": 30
+    },
+    {
+      "completed": true,
+      "directory": "current-training-r4",
+      "heads_and_generation_identical_to_primary": true,
+      "primary": true,
+      "report_sha256": "f03bfc5a29e923c5fc6e6619173e2adccc37e21ea2473f9bf80d42988c8e53d1",
+      "schema_builds": 30
+    }
+  ],
+  "failed_or_superseded_runs_retained": true,
+  "legacy_run": "legacy-training",
+  "no_evaluation_partition_used_for_fit_or_selection": true
+}

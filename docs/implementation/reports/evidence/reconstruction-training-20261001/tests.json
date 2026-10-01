@@ -1,0 +1,40 @@
+{
+  "admitted": false,
+  "qualified": false,
+  "suites": [
+    {
+      "errors": "0",
+      "failures": "0",
+      "file": "current-tests.xml",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "118",
+      "time": "21.106",
+      "timestamp": "2026-10-01T06:13:11.965530+00:00"
+    },
+    {
+      "errors": "0",
+      "failures": "0",
+      "file": "legacy-tests.xml",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "71",
+      "time": "61.070",
+      "timestamp": "2026-10-01T06:18:10.520690+00:00"
+    },
+    {
+      "errors": "0",
+      "failures": "0",
+      "file": "runner-tests.xml",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "54",
+      "time": "1.082",
+      "timestamp": "2026-10-01T06:20:47.636286+00:00"
+    }
+  ],
+  "unique_passing_tests": 243
+}

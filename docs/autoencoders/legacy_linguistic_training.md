@@ -132,6 +132,13 @@ round trip does not fix these omissions. The smoke records operational success
 separately from these conflicts and coverage gaps. The frozen codec is preserved
 for reproducibility and training; it is not a qualified legal formalizer.
 
+For bridge-off feature training with a small proposal budget, the optional
+[active-family scheduler](reconstruction_training.md) can reach the existing
+family update directly. It keeps the historical strict objective and regression
+checks, rolls back rejected or late candidates, and supports bounded adaptive
+learning rates. It does not replace this preserved training API or make its
+target-aware reconstruction an independent fidelity measurement.
+
 Bridge-off evaluation has `legal_ir_target_count == 0`; its time is not a
 legal-IR performance measurement. The smoke reports that distinction, leaves
 sample memory disabled, and records whether the metric disk cache is disabled.

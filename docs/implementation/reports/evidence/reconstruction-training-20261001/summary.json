@@ -1,0 +1,190 @@
+{
+  "admitted": false,
+  "base_commit": "b1c61836b7811a8dc8aacefef38702794c2786c9",
+  "bridge_names": [],
+  "bridge_on_evaluate": null,
+  "canonical_legal_lake_builds": 1,
+  "checkpoint_promoted": false,
+  "compiler_label_sample_count": 36,
+  "compiler_label_wall_seconds_per_span": 0.057089597885755614,
+  "constitution_formalized": false,
+  "current": {
+    "baseline_v1": {
+      "condition_saturation_fraction": 0.7265625,
+      "generation_wall_seconds_per_span": 0.04753656890243292,
+      "head_sha256": "ea3e558b4b8f5275fbbd2581a5a7c2d03ba2e4a6b732d11781e8afb31f803686",
+      "trainer_elapsed_seconds": 15.434606456197798,
+      "training_exact": {
+        "complete": false,
+        "fraction": 0.5833333333333334,
+        "matched": 14,
+        "total": 24
+      },
+      "training_loss": {
+        "complete": true,
+        "reconstruction_mse": 0.003079202549997717,
+        "rows_evaluated": 24,
+        "teacher_forcing": true,
+        "token_count": 372,
+        "token_cross_entropy": 0.07091026155338172,
+        "used_for_fit_or_selection": false
+      },
+      "tuning_actor": {
+        "fraction": 0.16666666666666666,
+        "matched": 1,
+        "total": 6
+      },
+      "tuning_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      },
+      "tuning_loss": {
+        "complete": true,
+        "reconstruction_mse": 0.0026449908036738634,
+        "rows_evaluated": 6,
+        "teacher_forcing": true,
+        "token_count": 93,
+        "token_cross_entropy": 0.33401554822921753,
+        "used_for_fit_or_selection": false
+      }
+    },
+    "raw_gain10_v1": {
+      "condition_saturation_fraction": 0.2200520783662796,
+      "generation_wall_seconds_per_span": 0.04568208776569615,
+      "head_sha256": "62c82fc1016e835e447113839b7fb67bd2f1fe8b6b45fec5711a47cdf00e4dec",
+      "trainer_elapsed_seconds": 15.51137476391159,
+      "training_exact": {
+        "complete": true,
+        "fraction": 1.0,
+        "matched": 24,
+        "total": 24
+      },
+      "training_loss": {
+        "complete": true,
+        "reconstruction_mse": 0.0013182789261918515,
+        "rows_evaluated": 24,
+        "teacher_forcing": true,
+        "token_count": 372,
+        "token_cross_entropy": 0.0046053436329408035,
+        "used_for_fit_or_selection": false
+      },
+      "tuning_actor": {
+        "fraction": 0.8333333333333334,
+        "matched": 5,
+        "total": 6
+      },
+      "tuning_exact": {
+        "complete": false,
+        "fraction": 0.3333333333333333,
+        "matched": 2,
+        "total": 6
+      },
+      "tuning_loss": {
+        "complete": true,
+        "reconstruction_mse": 0.001453456818126142,
+        "rows_evaluated": 6,
+        "teacher_forcing": true,
+        "token_count": 93,
+        "token_cross_entropy": 0.1882362961769104,
+        "used_for_fit_or_selection": false
+      }
+    },
+    "reconstruction_x10_v1": {
+      "condition_saturation_fraction": 0.4817708432674408,
+      "generation_wall_seconds_per_span": 0.04581002150662243,
+      "head_sha256": "efb3d689cdbdc97236e52fb25df58ac6404a7bfdcf8bfc6ad6f8cf7be74609c9",
+      "trainer_elapsed_seconds": 15.353150404058397,
+      "training_exact": {
+        "complete": false,
+        "fraction": 0.625,
+        "matched": 15,
+        "total": 24
+      },
+      "training_loss": {
+        "complete": true,
+        "reconstruction_mse": 0.0007112741150194779,
+        "rows_evaluated": 24,
+        "teacher_forcing": true,
+        "token_count": 372,
+        "token_cross_entropy": 0.07292142356195117,
+        "used_for_fit_or_selection": false
+      },
+      "tuning_actor": {
+        "fraction": 0.16666666666666666,
+        "matched": 1,
+        "total": 6
+      },
+      "tuning_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      },
+      "tuning_loss": {
+        "complete": true,
+        "reconstruction_mse": 0.0007054236484691501,
+        "rows_evaluated": 6,
+        "teacher_forcing": true,
+        "token_count": 93,
+        "token_cross_entropy": 0.3447481691837311,
+        "used_for_fit_or_selection": false
+      }
+    }
+  },
+  "current_schema_lake_builds": 30,
+  "formalized": false,
+  "legacy": {
+    "active_adaptive": {
+      "accepted_epochs": 6,
+      "family_cross_entropy_delta": 0.022453419054485224,
+      "linguistic_observations_exact": true,
+      "proposals": 6,
+      "raw_mse_after": 0.0,
+      "raw_mse_before": 0.0,
+      "training_wall_seconds": 2.358507229015231
+    },
+    "active_fixed": {
+      "accepted_epochs": 6,
+      "family_cross_entropy_delta": 0.006800799861791329,
+      "linguistic_observations_exact": true,
+      "proposals": 6,
+      "raw_mse_after": 0.0,
+      "raw_mse_before": 0.0,
+      "training_wall_seconds": 2.579408575082198
+    },
+    "original_cap1": {
+      "accepted_epochs": 0,
+      "family_cross_entropy_delta": 0.0,
+      "linguistic_observations_exact": true,
+      "proposals": 1,
+      "raw_mse_after": 0.0,
+      "raw_mse_before": 0.0,
+      "training_wall_seconds": 0.7510151870083064
+    },
+    "original_cap3": {
+      "accepted_epochs": 6,
+      "family_cross_entropy_delta": 0.006800799861791329,
+      "linguistic_observations_exact": true,
+      "proposals": 18,
+      "raw_mse_after": 0.0,
+      "raw_mse_before": 0.0,
+      "training_wall_seconds": 4.4866395480930805
+    }
+  },
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "legal_ir_target_count": 0,
+  "metric_disk_cache": false,
+  "primary_current_run": "current-training-r4",
+  "qualified": false,
+  "roundtrip_ok": false,
+  "schema": "separate-reconstruction-training-summary/v1",
+  "teacher_weights_loaded": false,
+  "temperature": 0,
+  "tests": 243,
+  "unseen_generalization_verified": false,
+  "use_sample_memory": false,
+  "validation_commit": "fad46b4c28ef6d1276a4198623b85e5e720d0932"
+}

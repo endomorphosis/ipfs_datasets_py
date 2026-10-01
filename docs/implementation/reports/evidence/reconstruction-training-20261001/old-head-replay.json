@@ -1,0 +1,53 @@
+{
+  "admitted": false,
+  "comparisons": {
+    "training": {
+      "exact_complete_inference_report": true,
+      "output_sha256": "b995a1c3d1ca734bad506c1eeb1f0e4da28c544e7d82b080cb431027eb958377",
+      "sample_count": 24
+    },
+    "tuning": {
+      "exact_complete_inference_report": true,
+      "output_sha256": "ce49efc4dd83bb66a086a4ad9dac10e34148dae65a5d89a3730683bfa45849c1",
+      "sample_count": 6
+    }
+  },
+  "decoder_and_core_sources_identical": true,
+  "elapsed_seconds": 2.446779565885663,
+  "evaluation_target_access": false,
+  "formalized": false,
+  "head": {
+    "admitted": false,
+    "bytes": 1669116,
+    "core_weights_included": false,
+    "formalized": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/actor-composition-release-20261001/optimizer-dev/lr_0p005-head.json",
+    "promotion_performed": false,
+    "qualified": false,
+    "roundtrip_ok": false,
+    "sha256": "ea3e558b4b8f5275fbbd2581a5a7c2d03ba2e4a6b732d11781e8afb31f803686"
+  },
+  "head_unchanged": true,
+  "learning_rate": 0.005,
+  "legacy_teacher_weights_loaded": false,
+  "prior_report": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/actor-composition-release-20261001/optimizer-dev/lr_0p005-development.json",
+  "prior_report_sha256": "e3f830a691fb6615877f461495e9498b8023e89d74adf3c5d6c5db3230f88579",
+  "qualified": false,
+  "resolved_logic_tree": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "roundtrip_ok": false,
+  "schema": "reconstruction-training-old-head-replay/v1",
+  "sealed_evaluation_predictions_executed": false,
+  "semantic_qualification": false,
+  "source_hashes": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py": "ad9603c7b4dd80736aa9bb32dc4ffc537149f1d111b265c95b6dbedc5dbfe8aa",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/current_v2/__init__.py": "c56a5ae87ece7c31ab5d257a87fb93e501a2e63d1df131f21f22d432e589c3eb",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "2ab5ee184dc2267aad3d0263ae2bf43c8972779a536162dd25511c16737d96d4",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py": "5dda48e79614f49c2e2c8b107811bde37260355f7d4ca4e0e54a88d883725204",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36"
+  },
+  "training_executed": false
+}

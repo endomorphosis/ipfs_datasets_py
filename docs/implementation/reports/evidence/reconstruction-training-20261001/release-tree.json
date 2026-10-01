@@ -1,0 +1,25 @@
+{
+  "base_commit": "b1c61836b7811a8dc8aacefef38702794c2786c9",
+  "source_export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/reconstruction-training-release-20261001/source",
+  "baseline_validation_commit": "f16091506024bf9e1944c4c7172aaa0448e5f763",
+  "owned_paths": [
+    "scripts/ops/legal_ir/compare_formula_reconstruction_training.py",
+    "scripts/ops/legal_ir/compare_legacy_active_training.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_training_profiles.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/active_training.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_formula_training_profiles.py",
+    "tests/unit/logic/test_legacy_active_training.py",
+    "tests/unit/logic/test_formula_reconstruction_runner.py"
+  ],
+  "owned_sha256": {
+    "scripts/ops/legal_ir/compare_formula_reconstruction_training.py": "35f9882fd9ffdaea4c383b5abad9662d4a8eb09d21ee0617c7b5304de2c68062",
+    "scripts/ops/legal_ir/compare_legacy_active_training.py": "4f5bfc1536ea82cb6cbba18f8c27b154d81a8ff6806dc8f04f10204f0d55adb4",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_training_profiles.py": "49e0d2ceb5b9ce6ec2204a2130ea2bcd886cde1543a9b86584e29358737b3960",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/active_training.py": "01d0a99517b19d74a8a5ec6bf03d2a975593c2a397d4b57312fbfcb16b97d86e",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_formula_training_profiles.py": "09ffa7b1a3f7189b66885b9dd7bfcae37e7f14380908f09748a3ec049856f3eb",
+    "tests/unit/logic/test_legacy_active_training.py": "e93cdf2c8449356421c4de13d5d707aaaf954c0a0f62872b3e8b88eff7a97105",
+    "tests/unit/logic/test_formula_reconstruction_runner.py": "3fa9a7475b3aac743997c945e964cd060b04bf39de3a8e749cfda18da51cf09c"
+  },
+  "final_validation_commit": "fad46b4c28ef6d1276a4198623b85e5e720d0932",
+  "final_export_tree": "5600e054533b1b0dbc9112a6ed7a9bdc483437eb"
+}

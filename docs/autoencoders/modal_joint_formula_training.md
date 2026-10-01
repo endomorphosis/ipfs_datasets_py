@@ -13,6 +13,12 @@ head cannot attach to the 384D model, another core checkpoint, or the optimized
 legacy profile. No implicit conversion, weight download or architecture switch
 occurs.
 
+For bounded 384D reconstruction experiments using this unchanged decoder, see
+the [versioned training profiles](reconstruction_training.md). They compare
+input gain and reconstruction regularization with identical initial head
+weights and update budgets. A changed core configuration requires its own
+checkpoint binding; it is not a migration of existing trained weights.
+
 ## What trains
 
 The numerical core produces its raw additive embedding before sample memory or
