@@ -1,0 +1,21 @@
+{
+  "base_commit": "4425e503ab8550ec8ae0388bc88e54d63c1eb317",
+  "files": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/family_coverage_audit.py": "62d36a96943fd355fc2040a9ae8efc29a729c56b9ba95e82c83ae5085033952d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_prepared.py": "8f37efccec01c89b0e06ed6b4420f9be89bc87161dbe5d9851bba8fda9732b00",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/domain_family_training_prepared.py": "7c3a3a5ac913c70419c7ac3d677162874b1961886679f3cfff3be672304c2136",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/domain_reconstruction_panel.py": "f39096f181a0eae43241e3d1fe02cad9e2f67792e35770a5ca015e7559856817",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/intent_family_training_v2.py": "25090a26ead41a835f0b49872b3b9824b4904d29a3c423f098c4381b14e29a6d",
+    "scripts/ops/autoencoder/benchmark_domain_reconstruction.py": "77b82b8fc4027f88350c8c732be370ce19daa907735b8eb831644c7eda0d15cd",
+    "scripts/ops/autoencoder/benchmark_domain_training_throughput.py": "39fa84d73b76af358933e939581c161ac654b2c11f791545b6d11d648df3c690",
+    "scripts/ops/legal_ir/benchmark_prepared_family_training.py": "8b68078d8a6cf7c7c867b62641572599561d3605d261add70a4447fbeed20be0",
+    "tests/unit/logic/formalization/autoencoder/test_family_coverage_audit.py": "2d2f363d6beace08730a68c0ef0668c178e563d4c57a63188f12a36d3622b2bd",
+    "tests/unit/logic/formalization/autoencoder/test_intent_family_training_v2.py": "8cfcb3f02c79844ccf45baa9a7bd8ba0baa0312d2a0e3164b2fbea0e6c8d5a14",
+    "tests/unit/logic/test_benchmark_domain_reconstruction.py": "85ef3c3ecb6ebf128ecfafd5334e5549f6b29f0710d9984bce374637ebdef647",
+    "tests/unit/logic/test_benchmark_domain_training_throughput.py": "dde8e924aabfd474c2251856c462ea7312baa09340c5ea1a877ef74675aafbea",
+    "tests/unit/logic/test_benchmark_prepared_family_training.py": "556af00a03e1ca0ceda79b0adb4b072b1b1c28a7125f1f351e59e71270d380f2",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_family_training_prepared.py": "ef5d00eae72c4a90222d81f86bf9c455369d2d78ac385e7abd5b46119ae8f843",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_domain_reconstruction_panel.py": "2f6e7e5fd208727ead51332bcba770f6b8407c9bd295ab74357772c1cca889bf"
+  },
+  "source_scope": "clean git export plus only listed new files; concurrent dirty source excluded"
+}

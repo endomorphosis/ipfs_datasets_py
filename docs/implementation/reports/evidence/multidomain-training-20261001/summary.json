@@ -1,0 +1,618 @@
+{
+  "CUDA_visible_devices": "",
+  "OMP_MKL_OPENBLAS_threads": 1,
+  "actual_canonical_legal_builds": 1,
+  "actual_native_schema_builds": 4,
+  "admitted": false,
+  "all_logic_families_supported": false,
+  "all_reference_prepared_exact": true,
+  "base_commit": "4425e503ab8550ec8ae0388bc88e54d63c1eb317",
+  "bridge_names": [],
+  "constitution_formalized": false,
+  "domains": {
+    "intent_ir": {
+      "feature_coverage": {
+        "heldout": {
+          "covered_projection_rows": 120,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 8,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 8
+          },
+          "known_atom_occurrences": 28684,
+          "reported_projection_rows": 120,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 51884,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.6439777579187766,
+          "untrained_projection_ids": []
+        },
+        "training": {
+          "covered_projection_rows": 360,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 24,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 24
+          },
+          "known_atom_occurrences": 86328,
+          "reported_projection_rows": 360,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 155376,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.6428358653559726,
+          "untrained_projection_ids": []
+        },
+        "tuning": {
+          "covered_projection_rows": 120,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 8,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 8
+          },
+          "known_atom_occurrences": 28684,
+          "reported_projection_rows": 120,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 51884,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.6439777579187766,
+          "untrained_projection_ids": []
+        }
+      },
+      "heldout_effective_feature_panel": {
+        "colliding_row_groups": [],
+        "distinct_retained_feature_vectors": 8,
+        "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+        "rows": 8
+      },
+      "heldout_initial_objective": 0.00013521711063600738,
+      "heldout_objective_mean": 0.00012788165121640414,
+      "heldout_regressed_families": [
+        [],
+        [],
+        []
+      ],
+      "heldout_relative_reduction": 0.05424949094903864,
+      "heldout_trained_objectives": [
+        0.00012788165121640414,
+        0.00012788165121640414,
+        0.00012788165121640414
+      ],
+      "long_training": {
+        "full_public_training_call": {
+          "prepared": {
+            "optimizer_row_presentations_per_second": 1085.3490870884848,
+            "optimizer_steps_per_second": 180.89151451474746,
+            "seconds_max": 5.805117127951235,
+            "seconds_mean": 5.66085149293455,
+            "seconds_min": 5.557563662994653,
+            "seconds_sample_stddev": 0.12876360077555218
+          },
+          "reference": {
+            "optimizer_row_presentations_per_second": 993.858967122544,
+            "optimizer_steps_per_second": 165.64316118709067,
+            "seconds_max": 6.368300301022828,
+            "seconds_mean": 6.181963641972591,
+            "seconds_min": 5.887626109877601,
+            "seconds_sample_stddev": 0.2578954457568051
+          }
+        },
+        "prepared_optimization_and_epoch_selection_seconds_mean": 4.564566058649992,
+        "prepared_setup_including_initialization_and_calibration_seconds_mean": 0.9426188402964423,
+        "rates_count": "optimizer row presentations, including repeated epochs; not unique spans or legal-IR bridge evaluates",
+        "reference_after_feature_preparation_seconds_mean": 5.23601537461703,
+        "reference_subphase_limit": "reference timer includes initialization/calibration/optimization; no separate loop timer exists"
+      },
+      "long_wall_ratio_reference_over_prepared": 1.0920554354214123,
+      "missing_required_families": [
+        "authorization",
+        "event_calculus",
+        "intention_agency",
+        "refinement"
+      ],
+      "required_profile_floor": [
+        {
+          "family_id": "transition_system",
+          "floor_satisfied": true,
+          "missing_native_splits": [],
+          "missing_numerical_splits": [],
+          "numerical_floor_satisfied": true,
+          "profile": "tla_plus",
+          "projection_floor_satisfied": true
+        }
+      ],
+      "short_training_rows_per_second": {
+        "prepared": 388.06106239561024,
+        "reference": 402.44252047761773
+      },
+      "short_wall_ratio_reference_over_prepared": 0.9642354311118598,
+      "trained_families": [
+        "datalog",
+        "dcec",
+        "deontic",
+        "first_order",
+        "frame_logic",
+        "higher_order",
+        "horn_chc",
+        "program",
+        "tdfol",
+        "temporal",
+        "transition_system"
+      ]
+    },
+    "legal_ir": {
+      "feature_coverage": {
+        "heldout": {
+          "covered_projection_rows": 24,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 8,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 8
+          },
+          "known_atom_occurrences": 1032,
+          "reported_projection_rows": 24,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 0,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.0,
+          "untrained_projection_ids": []
+        },
+        "training": {
+          "covered_projection_rows": 72,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 24,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 24
+          },
+          "known_atom_occurrences": 3096,
+          "reported_projection_rows": 72,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 0,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.0,
+          "untrained_projection_ids": []
+        },
+        "tuning": {
+          "covered_projection_rows": 24,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 8,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 8
+          },
+          "known_atom_occurrences": 1032,
+          "reported_projection_rows": 24,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 0,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.0,
+          "untrained_projection_ids": []
+        }
+      },
+      "heldout_effective_feature_panel": {
+        "colliding_row_groups": [],
+        "distinct_retained_feature_vectors": 8,
+        "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+        "rows": 8
+      },
+      "heldout_initial_objective": 1.308953506248452e-05,
+      "heldout_objective_mean": 1.0471353756983956e-05,
+      "heldout_regressed_families": [
+        [],
+        [],
+        []
+      ],
+      "heldout_relative_reduction": 0.20002095513724139,
+      "heldout_trained_objectives": [
+        1.058307015136075e-05,
+        1.0841627151197672e-05,
+        9.989363968393443e-06
+      ],
+      "long_training": {
+        "full_public_training_call": {
+          "prepared": {
+            "optimizer_row_presentations_per_second": 6215.669726612841,
+            "optimizer_steps_per_second": 1035.9449544354736,
+            "seconds_max": 0.9896742429118603,
+            "seconds_mean": 0.9884695085541656,
+            "seconds_min": 0.9876727059017867,
+            "seconds_sample_stddev": 0.0010612934598051153
+          },
+          "reference": {
+            "optimizer_row_presentations_per_second": 5723.36164071543,
+            "optimizer_steps_per_second": 953.8936067859051,
+            "seconds_max": 1.07710597012192,
+            "seconds_mean": 1.0734949817415327,
+            "seconds_min": 1.0712417010217905,
+            "seconds_sample_stddev": 0.003159104396583755
+          }
+        },
+        "prepared_optimization_and_epoch_selection_seconds_mean": 0.9004111343529075,
+        "prepared_setup_including_initialization_and_calibration_seconds_mean": 0.0701745143936326,
+        "rates_count": "optimizer row presentations, including repeated epochs; not unique spans or legal-IR bridge evaluates",
+        "reference_after_feature_preparation_seconds_mean": 0.9929385500339171,
+        "reference_subphase_limit": "reference timer includes initialization/calibration/optimization; no separate loop timer exists"
+      },
+      "long_wall_ratio_reference_over_prepared": 1.0860172948700602,
+      "missing_required_families": [
+        "authorization",
+        "dcec",
+        "event_calculus",
+        "first_order",
+        "propositional",
+        "temporal"
+      ],
+      "required_profile_floor": [
+        {
+          "family_id": "tdfol",
+          "floor_satisfied": true,
+          "missing_native_splits": [],
+          "missing_numerical_splits": [],
+          "numerical_floor_satisfied": true,
+          "profile": "temporal_first_order",
+          "projection_floor_satisfied": true
+        }
+      ],
+      "short_training_rows_per_second": {
+        "prepared": 3357.3272005529348,
+        "reference": 3255.254180953768
+      },
+      "short_wall_ratio_reference_over_prepared": 1.0313512577130821,
+      "trained_families": [
+        "deontic",
+        "frame_logic",
+        "tdfol"
+      ]
+    },
+    "security_ir": {
+      "feature_coverage": {
+        "heldout": {
+          "covered_projection_rows": 56,
+          "effective_feature_panel": {
+            "colliding_row_groups": [
+              [
+                0,
+                2,
+                4,
+                6
+              ],
+              [
+                1,
+                3,
+                5,
+                7
+              ]
+            ],
+            "distinct_retained_feature_vectors": 2,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 8
+          },
+          "known_atom_occurrences": 7648,
+          "reported_projection_rows": 56,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 256,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.032388663967611336,
+          "untrained_projection_ids": []
+        },
+        "training": {
+          "covered_projection_rows": 168,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 24,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 24
+          },
+          "known_atom_occurrences": 23712,
+          "reported_projection_rows": 168,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 0,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.0,
+          "untrained_projection_ids": []
+        },
+        "tuning": {
+          "covered_projection_rows": 56,
+          "effective_feature_panel": {
+            "colliding_row_groups": [
+              [
+                0,
+                2,
+                4,
+                6
+              ],
+              [
+                1,
+                3,
+                5,
+                7
+              ]
+            ],
+            "distinct_retained_feature_vectors": 2,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 8
+          },
+          "known_atom_occurrences": 7648,
+          "reported_projection_rows": 56,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 256,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.032388663967611336,
+          "untrained_projection_ids": []
+        }
+      },
+      "heldout_effective_feature_panel": {
+        "colliding_row_groups": [
+          [
+            0,
+            2,
+            4,
+            6
+          ],
+          [
+            1,
+            3,
+            5,
+            7
+          ]
+        ],
+        "distinct_retained_feature_vectors": 2,
+        "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+        "rows": 8
+      },
+      "heldout_initial_objective": 0.0001615738580766801,
+      "heldout_objective_mean": 0.00016122336044057132,
+      "heldout_regressed_families": [
+        [],
+        [],
+        []
+      ],
+      "heldout_relative_reduction": 0.0021692719371870783,
+      "heldout_trained_objectives": [
+        0.00016122336044057132,
+        0.00016122336044057132,
+        0.00016122336044057132
+      ],
+      "long_training": {
+        "full_public_training_call": {
+          "prepared": {
+            "optimizer_row_presentations_per_second": 2547.370773274083,
+            "optimizer_steps_per_second": 424.5617955456805,
+            "seconds_max": 2.5289794499985874,
+            "seconds_mean": 2.4118985993166766,
+            "seconds_min": 2.340536057949066,
+            "seconds_sample_stddev": 0.10220249926836886
+          },
+          "reference": {
+            "optimizer_row_presentations_per_second": 2418.847038543598,
+            "optimizer_steps_per_second": 403.14117309059964,
+            "seconds_max": 2.5489344499073923,
+            "seconds_mean": 2.540053133619949,
+            "seconds_min": 2.525241520954296,
+            "seconds_sample_stddev": 0.01291181753062583
+          }
+        },
+        "prepared_optimization_and_epoch_selection_seconds_mean": 2.208780442364514,
+        "prepared_setup_including_initialization_and_calibration_seconds_mean": 0.139122479983295,
+        "rates_count": "optimizer row presentations, including repeated epochs; not unique spans or legal-IR bridge evaluates",
+        "reference_after_feature_preparation_seconds_mean": 2.348046101319293,
+        "reference_subphase_limit": "reference timer includes initialization/calibration/optimization; no separate loop timer exists"
+      },
+      "long_wall_ratio_reference_over_prepared": 1.053134296085076,
+      "missing_required_families": [
+        "authorization",
+        "concurrency",
+        "cryptographic_protocol",
+        "refinement"
+      ],
+      "required_profile_floor": [
+        {
+          "family_id": "transition_system",
+          "floor_satisfied": false,
+          "missing_native_splits": [
+            "training",
+            "tuning",
+            "heldout"
+          ],
+          "missing_numerical_splits": [
+            "training",
+            "tuning",
+            "heldout"
+          ],
+          "numerical_floor_satisfied": false,
+          "profile": "tla_plus",
+          "projection_floor_satisfied": false
+        }
+      ],
+      "short_training_rows_per_second": {
+        "prepared": 1376.1049965704656,
+        "reference": 1307.4160898494579
+      },
+      "short_wall_ratio_reference_over_prepared": 1.0470902057454126,
+      "trained_families": [
+        "hyperproperty",
+        "program",
+        "separation_logic",
+        "temporal",
+        "transition_system"
+      ]
+    },
+    "ui_ux_ir": {
+      "feature_coverage": {
+        "heldout": {
+          "covered_projection_rows": 56,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 8,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 8
+          },
+          "known_atom_occurrences": 20152,
+          "reported_projection_rows": 56,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 2276,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.10148029249152844,
+          "untrained_projection_ids": []
+        },
+        "training": {
+          "covered_projection_rows": 168,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 24,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 24
+          },
+          "known_atom_occurrences": 61034,
+          "reported_projection_rows": 168,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 6250,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.09288984008085131,
+          "untrained_projection_ids": []
+        },
+        "tuning": {
+          "covered_projection_rows": 56,
+          "effective_feature_panel": {
+            "colliding_row_groups": [],
+            "distinct_retained_feature_vectors": 8,
+            "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+            "rows": 8
+          },
+          "known_atom_occurrences": 20152,
+          "reported_projection_rows": 56,
+          "scope": "summed_native_projection_atom_occurrences_not_unique_tokens_or_semantic_propositions",
+          "unknown_atom_occurrences": 2276,
+          "unknown_interpretation": "absent_from_retained_training_feature_vocabulary_including_seen_training_atoms_pruned_by_budget_not_only_novel_atoms",
+          "unknown_occurrence_fraction": 0.10148029249152844,
+          "untrained_projection_ids": []
+        }
+      },
+      "heldout_effective_feature_panel": {
+        "colliding_row_groups": [],
+        "distinct_retained_feature_vectors": 8,
+        "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+        "rows": 8
+      },
+      "heldout_initial_objective": 0.0005844967243473269,
+      "heldout_objective_mean": 0.000541942982260278,
+      "heldout_regressed_families": [
+        [],
+        [],
+        []
+      ],
+      "heldout_relative_reduction": 0.07280407282789503,
+      "heldout_trained_objectives": [
+        0.000541942982260278,
+        0.000541942982260278,
+        0.000541942982260278
+      ],
+      "long_training": {
+        "full_public_training_call": {
+          "prepared": {
+            "optimizer_row_presentations_per_second": 1727.1796553118725,
+            "optimizer_steps_per_second": 287.8632758853121,
+            "seconds_max": 3.8737441739067435,
+            "seconds_mean": 3.5572443093017987,
+            "seconds_min": 3.337632715003565,
+            "seconds_sample_stddev": 0.280881428336039
+          },
+          "reference": {
+            "optimizer_row_presentations_per_second": 1557.2523963760557,
+            "optimizer_steps_per_second": 259.54206606267593,
+            "seconds_max": 4.136885920073837,
+            "seconds_mean": 3.9454105283754566,
+            "seconds_min": 3.726739080157131,
+            "seconds_sample_stddev": 0.20642147826980622
+          }
+        },
+        "prepared_optimization_and_epoch_selection_seconds_mean": 3.089777769598489,
+        "prepared_setup_including_initialization_and_calibration_seconds_mean": 0.31671718453677994,
+        "rates_count": "optimizer row presentations, including repeated epochs; not unique spans or legal-IR bridge evaluates",
+        "reference_after_feature_preparation_seconds_mean": 3.4804707089594253,
+        "reference_subphase_limit": "reference timer includes initialization/calibration/optimization; no separate loop timer exists"
+      },
+      "long_wall_ratio_reference_over_prepared": 1.1091199212993739,
+      "missing_required_families": [
+        "authorization",
+        "program"
+      ],
+      "required_profile_floor": [
+        {
+          "family_id": "transition_system",
+          "floor_satisfied": true,
+          "missing_native_splits": [],
+          "missing_numerical_splits": [],
+          "numerical_floor_satisfied": true,
+          "profile": "tla_plus",
+          "projection_floor_satisfied": true
+        }
+      ],
+      "short_training_rows_per_second": {
+        "prepared": 773.9258384719052,
+        "reference": 686.0613538920492
+      },
+      "short_wall_ratio_reference_over_prepared": 1.1260734991887968,
+      "trained_families": [
+        "dcec",
+        "event_calculus",
+        "frame_logic",
+        "tdfol",
+        "temporal",
+        "transition_system"
+      ]
+    }
+  },
+  "formalized": false,
+  "heldout_groups_per_domain": 4,
+  "heldout_samples_per_domain": 8,
+  "heldouts_fixed_before_exposure": true,
+  "heldouts_now_exposed": true,
+  "known_limits": [
+    "Security eight heldout rows collapse to two retained feature vectors",
+    "Feature budget excludes many known training atoms, especially Intent; loss does not reconstruct omitted atoms",
+    "Short Intent prepared training is slower; explicit backend selection and v2 default remain",
+    "Intent/Security/UI selected ridge calibration; subsequent equal-budget Adam proposals were not selected",
+    "Native full-family coverage and source-decoder fidelity are not established",
+    "Four existing aligned-source tests require a local development parent absent from the export",
+    "Structural optimizer continuation starts fresh Adam and max_seconds excludes preparation"
+  ],
+  "lake_validated_learned_outputs": false,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_target_count": 0,
+  "long_run_heldout_used": false,
+  "long_run_peak_rss_bytes": 914440192,
+  "measurement_scope": "auxiliary native structural reconstruction, not learned source/formula decoding",
+  "metric_disk_cache": false,
+  "performance_scope": "warm shared CPU; complete numerical train calls with target preparation separately reported; not bridge-on evaluate",
+  "qualified": false,
+  "roundtrip_ok": false,
+  "schema": "multidomain-training-release/v1",
+  "seeds": [
+    1729,
+    1730,
+    1731
+  ],
+  "short_evaluation_peak_rss_bytes": 835821568,
+  "short_freeze_sha256": "ca301383b8247e84dff3d2edef0bb312afd221fcdd2d7cc23e952ac253a5548d",
+  "source_decoder_trained": false,
+  "source_semantics_verified": false,
+  "temperature": 0,
+  "tests": {
+    "errors": 0,
+    "failures": 0,
+    "passed": 246,
+    "skip_reason": "four existing aligned Intent tests require a local legal-initialized development checkpoint",
+    "skipped": 4,
+    "tests": 250
+  },
+  "training_samples_per_domain": 24,
+  "tuning_samples_per_domain": 8,
+  "use_sample_memory": false,
+  "weights_downloaded": false,
+  "workers": 1
+}

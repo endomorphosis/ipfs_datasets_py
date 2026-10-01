@@ -1,5 +1,9 @@
 # Improving reconstruction without mixing the two lineages
 
+For shared Intent, Security, UI/UX and Legal native projection training, see
+[four-domain reconstruction training](multidomain_reconstruction_training.md).
+It keeps those structural feature heads separate from source-language decoders.
+
 The preserved 8D linguistic autoencoder and current 384D formula autoencoder
 train different components. Use the explicit opt-in APIs below. Neither changes
 the historical decoder, archived teacher, existing checkpoint source guards,

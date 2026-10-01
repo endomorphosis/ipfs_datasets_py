@@ -1,0 +1,8 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "passed": 246,
+  "skip_reason": "four existing aligned Intent tests require a local legal-initialized development checkpoint",
+  "skipped": 4,
+  "tests": 250
+}
