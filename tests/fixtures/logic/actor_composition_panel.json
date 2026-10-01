@@ -1,0 +1,361 @@
+{
+  "schema": "authored-actor-composition-panel/v1",
+  "scope": "authored compositional diagnostic; not independently reviewed legal gold",
+  "actors": [
+    "registrar",
+    "board",
+    "inspector",
+    "administrator",
+    "custodian",
+    "clerk"
+  ],
+  "norm_templates": [
+    {
+      "id": "report",
+      "action_surface": "submit",
+      "text_template": "The {actor} shall submit reports."
+    },
+    {
+      "id": "prohibition",
+      "action_surface": "disclose",
+      "text_template": "The {actor} shall not disclose records."
+    },
+    {
+      "id": "minimum",
+      "action_surface": "retain",
+      "text_template": "The {actor} shall retain the file for at least 20 days."
+    },
+    {
+      "id": "deadline",
+      "action_surface": "submit",
+      "text_template": "The {actor} shall submit backup report within 10 days unless emergency."
+    },
+    {
+      "id": "publication",
+      "action_surface": "publish",
+      "text_template": "The {actor} shall publish notices."
+    },
+    {
+      "id": "review",
+      "action_surface": "review",
+      "text_template": "The {actor} shall review applications."
+    }
+  ],
+  "split_policy": {
+    "evaluation_labels_used_for_selection": false,
+    "offset_definition": "(template_index-actor_index)%6",
+    "pair_key": [
+      "actor",
+      "norm_template_id"
+    ],
+    "sealed_evaluation_offsets": [
+      5
+    ],
+    "training_offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "tuning_offsets": [
+      4
+    ]
+  },
+  "rows": [
+    {
+      "id": "composition-registrar-report",
+      "actor": "registrar",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The registrar shall submit reports.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-registrar-prohibition",
+      "actor": "registrar",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The registrar shall not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-registrar-minimum",
+      "actor": "registrar",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The registrar shall retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-registrar-deadline",
+      "actor": "registrar",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The registrar shall submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-registrar-publication",
+      "actor": "registrar",
+      "norm_template_id": "publication",
+      "split": "tuning",
+      "text": "The registrar shall publish notices.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-registrar-review",
+      "actor": "registrar",
+      "norm_template_id": "review",
+      "split": "sealed_evaluation",
+      "text": "The registrar shall review applications.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-board-report",
+      "actor": "board",
+      "norm_template_id": "report",
+      "split": "sealed_evaluation",
+      "text": "The board shall submit reports.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-board-prohibition",
+      "actor": "board",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The board shall not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-board-minimum",
+      "actor": "board",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The board shall retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-board-deadline",
+      "actor": "board",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The board shall submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-board-publication",
+      "actor": "board",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The board shall publish notices.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-board-review",
+      "actor": "board",
+      "norm_template_id": "review",
+      "split": "tuning",
+      "text": "The board shall review applications.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-inspector-report",
+      "actor": "inspector",
+      "norm_template_id": "report",
+      "split": "tuning",
+      "text": "The inspector shall submit reports.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-inspector-prohibition",
+      "actor": "inspector",
+      "norm_template_id": "prohibition",
+      "split": "sealed_evaluation",
+      "text": "The inspector shall not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-inspector-minimum",
+      "actor": "inspector",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The inspector shall retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-inspector-deadline",
+      "actor": "inspector",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The inspector shall submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-inspector-publication",
+      "actor": "inspector",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The inspector shall publish notices.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-inspector-review",
+      "actor": "inspector",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The inspector shall review applications.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-administrator-report",
+      "actor": "administrator",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The administrator shall submit reports.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-administrator-prohibition",
+      "actor": "administrator",
+      "norm_template_id": "prohibition",
+      "split": "tuning",
+      "text": "The administrator shall not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-administrator-minimum",
+      "actor": "administrator",
+      "norm_template_id": "minimum",
+      "split": "sealed_evaluation",
+      "text": "The administrator shall retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-administrator-deadline",
+      "actor": "administrator",
+      "norm_template_id": "deadline",
+      "split": "training",
+      "text": "The administrator shall submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-administrator-publication",
+      "actor": "administrator",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The administrator shall publish notices.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-administrator-review",
+      "actor": "administrator",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The administrator shall review applications.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-custodian-report",
+      "actor": "custodian",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The custodian shall submit reports.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-custodian-prohibition",
+      "actor": "custodian",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The custodian shall not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-custodian-minimum",
+      "actor": "custodian",
+      "norm_template_id": "minimum",
+      "split": "tuning",
+      "text": "The custodian shall retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-custodian-deadline",
+      "actor": "custodian",
+      "norm_template_id": "deadline",
+      "split": "sealed_evaluation",
+      "text": "The custodian shall submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-custodian-publication",
+      "actor": "custodian",
+      "norm_template_id": "publication",
+      "split": "training",
+      "text": "The custodian shall publish notices.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-custodian-review",
+      "actor": "custodian",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The custodian shall review applications.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-clerk-report",
+      "actor": "clerk",
+      "norm_template_id": "report",
+      "split": "training",
+      "text": "The clerk shall submit reports.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-clerk-prohibition",
+      "actor": "clerk",
+      "norm_template_id": "prohibition",
+      "split": "training",
+      "text": "The clerk shall not disclose records.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-clerk-minimum",
+      "actor": "clerk",
+      "norm_template_id": "minimum",
+      "split": "training",
+      "text": "The clerk shall retain the file for at least 20 days.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-clerk-deadline",
+      "actor": "clerk",
+      "norm_template_id": "deadline",
+      "split": "tuning",
+      "text": "The clerk shall submit backup report within 10 days unless emergency.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-clerk-publication",
+      "actor": "clerk",
+      "norm_template_id": "publication",
+      "split": "sealed_evaluation",
+      "text": "The clerk shall publish notices.",
+      "corpus": "authored_fixture"
+    },
+    {
+      "id": "composition-clerk-review",
+      "actor": "clerk",
+      "norm_template_id": "review",
+      "split": "training",
+      "text": "The clerk shall review applications.",
+      "corpus": "authored_fixture"
+    }
+  ],
+  "admitted": false,
+  "formalized": false,
+  "roundtrip_ok": false,
+  "qualified": false,
+  "independent_legal_gold": false,
+  "semantic_correctness_verified": false,
+  "lake_executed": false
+}

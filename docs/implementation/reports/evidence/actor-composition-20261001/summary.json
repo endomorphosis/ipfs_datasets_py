@@ -1,0 +1,162 @@
+{
+  "ablation": {
+    "balanced": {
+      "evaluation_actor": {
+        "fraction": 0.16666666666666666,
+        "matched": 1,
+        "total": 6
+      },
+      "evaluation_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      },
+      "inference_wall_seconds_per_span": 0.05200299019149194,
+      "optimizer_steps": 1000,
+      "train_elapsed_seconds": 15.690252524102107,
+      "training_exact": {
+        "complete": false,
+        "fraction": 0.4166666666666667,
+        "matched": 10,
+        "total": 24
+      },
+      "training_rows": 24,
+      "tuning_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      }
+    },
+    "confounded_diagonal": {
+      "evaluation_actor": {
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      },
+      "evaluation_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      },
+      "inference_wall_seconds_per_span": 0.06695821749356885,
+      "optimizer_steps": 1000,
+      "train_elapsed_seconds": 15.784934252034873,
+      "training_exact": {
+        "complete": true,
+        "fraction": 1.0,
+        "matched": 6,
+        "total": 6
+      },
+      "training_rows": 6,
+      "tuning_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      }
+    }
+  },
+  "admitted": false,
+  "base_commit": "a2f0081fc75addc906af8b2c179d1be6c1577410",
+  "bridge_names": [],
+  "bridge_on_evaluate": null,
+  "checkpoint_promoted": false,
+  "compiler_label_wall_seconds_per_span": 0.039481555913678475,
+  "compiler_weak_target_count": 36,
+  "constitution_formalized": false,
+  "development": {
+    "lr_0p002": {
+      "optimizer_steps": 1000,
+      "training_elapsed_seconds": 16.925018368987367,
+      "training_exact": {
+        "complete": false,
+        "fraction": 0.125,
+        "matched": 3,
+        "total": 24
+      },
+      "tuning_actor": {
+        "fraction": 0.3333333333333333,
+        "matched": 2,
+        "total": 6
+      },
+      "tuning_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      },
+      "tuning_facet_matches": 26,
+      "tuning_reconstruction_mse": 0.0011045390274375677,
+      "tuning_token_cross_entropy": 0.2847335636615753
+    },
+    "lr_0p005": {
+      "optimizer_steps": 1000,
+      "training_elapsed_seconds": 16.354453810025007,
+      "training_exact": {
+        "complete": false,
+        "fraction": 0.5833333333333334,
+        "matched": 14,
+        "total": 24
+      },
+      "tuning_actor": {
+        "fraction": 0.16666666666666666,
+        "matched": 1,
+        "total": 6
+      },
+      "tuning_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      },
+      "tuning_facet_matches": 25,
+      "tuning_reconstruction_mse": 0.0026449908036738634,
+      "tuning_token_cross_entropy": 0.33401554822921753
+    },
+    "reference_lr_0p02": {
+      "optimizer_steps": 1000,
+      "training_elapsed_seconds": 15.690252524102107,
+      "training_exact": {
+        "complete": false,
+        "fraction": 0.4166666666666667,
+        "matched": 10,
+        "total": 24
+      },
+      "tuning_actor": {
+        "fraction": 0.16666666666666666,
+        "matched": 1,
+        "total": 6
+      },
+      "tuning_exact": {
+        "complete": false,
+        "fraction": 0.0,
+        "matched": 0,
+        "total": 6
+      },
+      "tuning_facet_matches": 32,
+      "tuning_reconstruction_mse": 0.016727030277252197,
+      "tuning_token_cross_entropy": 0.3679385483264923
+    }
+  },
+  "development_selected_by_predeclared_ranking": "lr_0p002",
+  "formalized": false,
+  "independent_evaluation_panel_now_exposed": true,
+  "lake_schema_build_count": 12,
+  "lake_schema_pass_count": 12,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "legal_ir_target_count": 0,
+  "metric_disk_cache": false,
+  "qualified": false,
+  "roundtrip_ok": false,
+  "schema": "actor-composition-summary/v1",
+  "selection_is_not_promotion": true,
+  "source_export_validation_commit": "9c0a83bd73e24e765873040707cf25216f2efda4",
+  "teacher_weights_loaded": false,
+  "temperature": 0,
+  "tests_passed": 216,
+  "use_sample_memory": false
+}

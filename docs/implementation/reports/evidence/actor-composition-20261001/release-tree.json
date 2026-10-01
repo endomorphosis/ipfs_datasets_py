@@ -1,0 +1,33 @@
+{
+  "base_commit": "a2f0081fc75addc906af8b2c179d1be6c1577410",
+  "owned_paths": [
+    "scripts/ops/legal_ir/validate_teacher_student_transfer.py",
+    "scripts/ops/legal_ir/evaluate_actor_composition_curriculum.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_curriculum.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+    "tests/fixtures/logic/actor_composition_panel.json",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_formula_curriculum.py",
+    "tests/unit/logic/test_formula_generation_metrics.py",
+    "tests/unit/logic/test_actor_composition_runner.py",
+    "scripts/ops/legal_ir/compare_actor_optimizer_rates.py",
+    "tests/unit/logic/test_compare_actor_optimizer_rates.py"
+  ],
+  "source_export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/actor-composition-release-20261001/source",
+  "local_validation_commit": "c4d3a2c88c8782b63320adf08eda58b3e70fa51c",
+  "export_tree": "e567f7c152be99a9e0e0a3fba81cf73167bda6ae",
+  "owned_sha256": {
+    "scripts/ops/legal_ir/validate_teacher_student_transfer.py": "2324ef47a4a1752c99b96fe25c807b738f2ac858ba02853a72d9628aa4d8eccf",
+    "scripts/ops/legal_ir/evaluate_actor_composition_curriculum.py": "134d7d8ab4a5afe302e4147074b587597f123cdcc4686f687d34b5d9d57e0f84",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_curriculum.py": "ef4c5be57e38fdb30d9db336c409dc18c9954f0a3cf8e9db65004e6ac03c5483",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py": "1f717aeaa0e8c4ae9220976428b2764fc2a7f6d99a74940806c2762b10896376",
+    "tests/fixtures/logic/actor_composition_panel.json": "6415ff97feaf49d0a05cbd15749f970a52814b9f63405b66d2f4ddc4525d69f5",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_formula_curriculum.py": "61fd9e21fed69d895ee04ae55bf1b6511bf0874b92fd47fdb97d8c374689c80b",
+    "tests/unit/logic/test_formula_generation_metrics.py": "ff698dc412aae307157c354720290775f7758e4d424ca2a09454c9464149e28e",
+    "tests/unit/logic/test_actor_composition_runner.py": "45645b163e3330706e663acc7793142759a21d95b60979e9e2edbc251afc1c89",
+    "scripts/ops/legal_ir/compare_actor_optimizer_rates.py": "205ff018813433b86fd4a530574462044d56ac206fb703df2c711e509bdcb069",
+    "tests/unit/logic/test_compare_actor_optimizer_rates.py": "75bee5d8e1ca77faa59136fb0736bde4889b92c602e65047235604c09bc645a0"
+  },
+  "test_validation_commit": "18d8f078be920cd440ad046b645a3f286b563be8",
+  "final_validation_commit": "9c0a83bd73e24e765873040707cf25216f2efda4",
+  "final_export_tree": "54d9f3901e327a716b177e5218e2b9a8ec00d389"
+}

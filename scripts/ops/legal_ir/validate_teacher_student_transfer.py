@@ -68,14 +68,15 @@ def source_hashes():
     return {str(path): sha(path) for path in sorted(files)}
 
 
-def produce_embeddings(directory):
+def produce_embeddings(directory, *, fixture_path=FIXTURE):
     from ipfs_datasets_py.logic.autoformal.tree_pin import require_workspace_logic_tree
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest import SourceArtifact, SourceSpan
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_production import EmbeddingInput
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_runtime import produce_native_embedding_receipt
     require_workspace_logic_tree()
-    fixture_sha = sha(FIXTURE)
-    fixture = json.loads(FIXTURE.read_text())
+    fixture_path = Path(fixture_path)
+    fixture_sha = sha(fixture_path)
+    fixture = json.loads(fixture_path.read_text())
     inputs, paths = [], {}
     (directory / 'sources').mkdir()
     for row in fixture['rows']:
@@ -91,7 +92,7 @@ def produce_embeddings(directory):
     receipt = produce_native_embedding_receipt(inputs, resolver=resolver, batch_size=16)
     artifact = receipt.save(directory / 'embeddings.json', resolver=resolver)
     require(receipt.status_counts['embedded'] == len(inputs), 'all fixed diagnostic texts must embed without truncation')
-    require(sha(FIXTURE) == fixture_sha, 'fixture changed during embedding production')
+    require(sha(fixture_path) == fixture_sha, 'fixture changed during embedding production')
     write(directory / 'embedding-production.json', dict(artifact=artifact, source_paths=paths,
         fixture_sha256=fixture_sha,
         elapsed_seconds=time.perf_counter() - started, verification=receipt.verification_summary(),

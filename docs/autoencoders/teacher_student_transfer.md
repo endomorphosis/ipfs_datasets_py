@@ -216,8 +216,10 @@ metric disk caching and sample memory, and temperature zero. Its
 `legal_ir_target_count` was zero, so these numbers are not bridge-on IR speed
 measurements or evidence of global-minimum convergence.
 
-The next experiment should balance actor/action combinations in the training
-data and reserve a broader, independently assembled panel before training.
-Report exact rules and each facet on that sealed panel. Repeated hyperparameter
-tuning against the four now-exposed holdout examples would not establish
-generalization.
+The follow-up [actor composition experiment](actor_composition_evaluation.md)
+compares a balanced actor/template curriculum with a confounded control, using
+the same initialization, formula vocabulary and update budget. It reserves a
+new evaluation partition before training and records full-rule and facet
+scores. Both arms still scored 0/6 exact on that panel; balancing the data alone
+did not solve the failure. Repeated hyperparameter tuning against either
+exposed evaluation panel would not establish generalization.

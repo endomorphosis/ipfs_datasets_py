@@ -1,0 +1,1308 @@
+{
+  "schema": "frozen-student-actor-diagnosis/v1",
+  "source_export": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source",
+  "script_sha256": "63f1950f0d4665d884c7844c6dcd920568a2c591601ad6425265ff669afe7401",
+  "head_sha256": "910ce3da7d3db011e286f0762503e9a2c1a8d80996a292d2a39f3e255992eba7",
+  "prior_report_sha256": "febb2b40a553f59accf8c6159178b77eeb7d2350433c193cccb52acbd3d01882",
+  "sample_artifact_sha256": "f1b64868cd9b87a533bc7c4db3d44336bfb2f4c89f31cd732434963c6a119c43",
+  "sources_verified": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/logic/autoformal/__init__.py": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "71daafa62c800a10db3ea7ddc948997b2a119012e9444d5007bdbd3b67487822",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "9980c3699a2407d360e8a2feedab575a4d4f5b3462ddf0ed761143f22ef61ea5",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "26b4e2e2d5d55b41ebae245b7d236bf1612c020a1d469df8bd747f83e982dfdc",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/_contract.py": "ad9603c7b4dd80736aa9bb32dc4ffc537149f1d111b265c95b6dbedc5dbfe8aa",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/current_v2/__init__.py": "c56a5ae87ece7c31ab5d257a87fb93e501a2e63d1df131f21f22d432e589c3eb",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/__init__.py": "bdbe2843741514298d49ce2c5ed8aab1c1aeb447b8cae515c81aaa7e0f02dae6",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/MANIFEST.json": "d354fd562b722bf66ac52563aff379253517fbc25bd487898ef5b292b0389cc0",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/__init__.py": "695e6758d9fb9573e5604dfbe6e16e813a4c9cb3b5f3fa7f75b8ace68e01193d",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/codec.py": "05067257eecae4701d3274f1403ea05d4bfe717f14bdc9be3027424009d846a1",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/decompiler.py": "e8a34dc7aff799e2b43e95f52e6cbf4a89a62a7406d80ac477f46d0e1a09cc14",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/flogic_optimizer.py": "c2ed9c3b3376002764d7b7d46ca35889ccf88f129aa3144ade6fc418c390e453",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_daemon_snapshot/kg_bridge.py": "336f67eed3cfb45b8bbda10c88a487b53b8b0e78a95fc1469b649f4165bb2ab9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/MANIFEST.json": "f44966d10d21f6f97ef89d967f411f5d86fe7195a0aa212269e3c785e27ddfa3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/__init__.py": "209d89df0ac32061a5237d87d19e42bbd0ddd60b0ad8ac939b44cc18c5156b36",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_linguistic_snapshot/spacy_modal_codec.py": "16ec4e141d5cb2f9d37cd4db42733921bc046e17fee12afc43ab31ca7a60cd59",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/MANIFEST.json": "58935518a2114e361855f8832ab4c38af5671296fde657053e15a9139baaa314",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/__init__.py": "6e694ea02e8530c8fc207fd82769b1f29a13b3ceac504e902f8b26202bda26b4",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/frame_bm25_selector.py": "612d472efaf9cb5bb2f57914125d9fc87cde3a55f14dc5a105cc80f268df430a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_family_evaluator.py": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_grammar_decoder.py": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_ir_semantic_metrics.py": "cee46ad09daae3ae74cd359e8e25fb9fd592eee92c59730d42caf30db60c38da",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_modal_parser.py": "5415bf565171b17db1d4a03c715e974645a59018addb852cf67fc3c71d462406",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/legal_samples.py": "51ce99dc83279c570bc57334c1cdc4cb72fa4b94c5b8c81101bb6252f0a614de",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder.py": "5f504f08854a239eda60c588d78766681818f724b7b59f1851f46a4fdc2129bd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_batching.py": "6538fc6f4bf3c7e7ba94c7ef8b4fa00833ca4f728b4bf90a2684096b2f70dc5a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_checkpoint.py": "c14ae80c49943677149c3f74af207335ac97c6ddf734dae8d453b733d8d17474",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_cuda.py": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_factorized_heads.py": "710f52b486afeb4e06a80e0ef03b4d0e0c4b8c5710537dd39a00f631fd431cea",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_feature_capacity.py": "76608ad29c95cf3178fc59d7c76c6c7f4ca5b9907b338f9558c88d3d8a3b93ba",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_legacy_distillation.py": "35e19211af17fed272bfb25e0f0cabc5ce2c93c8652af6928b348157cedf7dee",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_migration.py": "fc84de9e01de73862a747d24f861684c59b9cbf61cf91b45e7bbea80fbea1af2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_transaction.py": "d86a5721643bab9a51d1587aef117f925c53ebcdd8fd767964cacbd7859b810b",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_state_version.py": "f38530f5a8a10cd5969447e16e7d6a86542b8e9eeeb2d2a2dab69454ab250fc2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_autoencoder_tensor_state.py": "ee81537f1af3c3ca939f371cc9e4384adb317d6c7803dac22271d5dce0948d3f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_ir.py": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_prover_router.py": "46fe3a0a83b8e0e86c9bbb9dbfab15a2a4a8401fbe661bd58b512a93ffd47388",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/modal_registry.py": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/projection_profiler.py": "c5c5179cce6df49f694523b999f61cc8a842fa71424af956893400d574e3b4e8",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/prover_integration.py": "5417a7a5da2d3fb8eb3cc3b40e4db11b8e6d592d67f3808c0cbfd0dc5f13c1cb",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/_snapshot/snapshot_evaluator.py": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_frame_scope.py": "ad7b87cc3c4b97b1eaad015304ccc620d918006bf42f6a8afc9a5f80b321763f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/daemon_teacher.py": "f79c336fa35c69b63dca14420b65a37408eb00373e97c8ed61187f4756bfb433",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic.py": "baca84b44f7eda33466ffdc75170d904f480aafb47a779131337d90ed9a7bca3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_cached.py": "37d588f5df5df1b0f8fff4a4b2de7aed5757024fda8f16c18f29004f380b9ca9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_teacher.py": "529b7758fe2db751a9ae37bc50a6b8c8126c6b12b4d344cf1cb61324a5e2c869",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_lineages/legacy_v1/linguistic_view_reuse.py": "bc172008fcecc3b81e32dd4bc6e293ef407293da0c81f57e496a7e18d629f819",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py": "27616770fb7a21f2dbeacbe883fa0dd289a79ec6cad95589c2d4ed7fd37dd80a",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_teacher_distillation.py": "adca358567c1520905c9bffec8166c01bfebe0dc6a8c63ad39940cb78ba43ff3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "2ab5ee184dc2267aad3d0263ae2bf43c8972779a536162dd25511c16737d96d4",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula.py": "5dda48e79614f49c2e2c8b107811bde37260355f7d4ca4e0e54a88d883725204",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_joint_formula_schema.py": "29283726c67b64db0203bd007c287f8dabe158ec3d3b897c5ba8a7d1ce08f70d",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/scripts/ops/legal_ir/validate_teacher_student_transfer.py": "e1744e54c16fca48a51cf7e7eff1360d2f137c026a3fe38c1970f990abda71c2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/teacher-student-release-20261001/source/tests/fixtures/logic/legacy_teacher_distillation.json": "43520883f76513b7bc3716c71ccb55a27ef4e91b22628b7b59a58682e0b3648f"
+  },
+  "sample_rebuild_exact": true,
+  "prior_inference_exact": true,
+  "rows": [
+    {
+      "index": 0,
+      "id": "train-report",
+      "sample_id": "us-code-diagnostic-train-report-0fb1e8f132253d10",
+      "split": "training",
+      "source_text": "The agency shall submit reports.",
+      "expected_actor": "agency",
+      "generated_actor": "agency",
+      "target": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "agency",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "reports",
+            "temporal": []
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.0029199537821114063,
+        "agency": 0.9970735311508179,
+        "officer": 6.5889548750419635e-06
+      },
+      "actor_logits": {
+        "Company A": 11.26220989227295,
+        "agency": 17.09546661376953,
+        "officer": 5.168281555175781
+      },
+      "embedding_sha256": "8e294ea6a317beddc86aba373447ad8e9d422e8a3f53abc1f5e9b19342f21ff3",
+      "raw_latent_sha256": "ce44abd904317d8feec11423983c24639ddb5f127998335367a63b89bb74d267",
+      "projected_sha256": "51e867123d1d679599ff3527a40f1279b8bec703386979b96d16cd78643e3df4",
+      "start_hidden_sha256": "213228ea82787b693abb6df1b51277eca36c1e7823478b6b1774dfa8ca9ab674",
+      "actor_hidden_sha256": "4cf1a44740ac55a0364413bfc2e1e3b74263f9856a96b94447aa39cc6b7c685f"
+    },
+    {
+      "index": 1,
+      "id": "train-prohibition",
+      "sample_id": "us-code-diagnostic-train-prohibition-fca530bc46c6f3a4",
+      "split": "training",
+      "source_text": "The agency shall not disclose records.",
+      "expected_actor": "agency",
+      "generated_actor": "agency",
+      "target": {
+        "rules": [
+          {
+            "action": "disclose",
+            "actor": "agency",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 6.923307955730706e-05,
+        "agency": 0.9998262524604797,
+        "officer": 0.00010457622556714341
+      },
+      "actor_logits": {
+        "Company A": 5.056336879730225,
+        "agency": 14.634195327758789,
+        "officer": 5.468774795532227
+      },
+      "embedding_sha256": "88a1927adf6f8424910e8270e514a2b8794e5b73dd78d8da2332daf8866ee7d5",
+      "raw_latent_sha256": "8f0876ee2ee4709785e9c24301dce9c187f2d109b069cdce5273db74be983b6a",
+      "projected_sha256": "24ff764bde7bdb303659b52a58f48005d0bb40ec28057e5bd80fca5dd4c698c6",
+      "start_hidden_sha256": "42835310265d2cecd0eb8df632f19dff43fe9d6e0469f98d82fc89b041f3f813",
+      "actor_hidden_sha256": "aa40f81e17d7a36125e495318259ed4e7b45aec757885e0b2a743a2e5549adc8"
+    },
+    {
+      "index": 2,
+      "id": "train-minimum",
+      "sample_id": "us-code-diagnostic-train-minimum-96aec98c161198ff",
+      "split": "training",
+      "source_text": "The officer shall retain the file for at least 20 days.",
+      "expected_actor": "officer",
+      "generated_actor": "officer",
+      "target": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "officer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the file for at least 20 days",
+            "temporal": [
+              "20 days"
+            ]
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.0031502677593380213,
+        "agency": 4.8562043957645074e-05,
+        "officer": 0.9968011379241943
+      },
+      "actor_logits": {
+        "Company A": 8.517386436462402,
+        "agency": 4.344985485076904,
+        "officer": 14.274450302124023
+      },
+      "embedding_sha256": "e44fd84a7f2060456a3331c8234c3490607b828be8430704460a0dfebb1cbb2d",
+      "raw_latent_sha256": "d131f9c58b25dc7e4c30a8ee851ebca040f5aaea8ffbc57b8f96fcc2a868a742",
+      "projected_sha256": "e50b4404797364d7748f740a49ca896c6143fe1e519b6bd8b5b8a019698bd055",
+      "start_hidden_sha256": "2ef2c407dd81c6df5660c33d2f7320b35c8a3606dea6b639117aeb7ea4083820",
+      "actor_hidden_sha256": "10d5e67e2a9f73aec36e5e79c04a651ed82847494901ea7b6ee931ca50ade361"
+    },
+    {
+      "index": 3,
+      "id": "train-deadline",
+      "sample_id": "us-code-diagnostic-train-deadline-373e38b5f9b86803",
+      "split": "training",
+      "source_text": "Company A shall submit backup report within 10 days unless emergency.",
+      "expected_actor": "Company A",
+      "generated_actor": "Company A",
+      "target": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "Company A",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "modality": "O",
+            "object": "backup report",
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        [],
+        [],
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.9948194622993469,
+        "agency": 0.0023057772777974606,
+        "officer": 0.00287474668584764
+      },
+      "actor_logits": {
+        "Company A": 14.398804664611816,
+        "agency": 8.331661224365234,
+        "officer": 8.552207946777344
+      },
+      "embedding_sha256": "d543d29ae535b7b62a385d4c282bde590f52b78798490c72cb5c6c4c1c9998f0",
+      "raw_latent_sha256": "1ede7f320dc76322020c505c42c45c3e264a3c6d1668ea286ec64f5de57224c1",
+      "projected_sha256": "b104ab1a75a78d9c3bbeff97d9479bdb601fbce0f04552ebf87a405446b6d79e",
+      "start_hidden_sha256": "641a30d4583afad9d6bf3f431ab496626dfaca0fd0486a10e56901c37159514a",
+      "actor_hidden_sha256": "06cbd76dc92cbc939bc75f1feef1938bd610f7ed02022cad040afc2a1ac9484e"
+    },
+    {
+      "index": 4,
+      "id": "tune-report",
+      "sample_id": "us-code-diagnostic-tune-report-b97a3d5beda6d541",
+      "split": "tuning",
+      "source_text": "The agency must submit reports.",
+      "expected_actor": "agency",
+      "generated_actor": "agency",
+      "target": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "agency",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "reports",
+            "temporal": []
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.004469315055757761,
+        "agency": 0.9955205917358398,
+        "officer": 1.0056116479972843e-05
+      },
+      "actor_logits": {
+        "Company A": 11.373983383178711,
+        "agency": 16.780014038085938,
+        "officer": 5.27717399597168
+      },
+      "embedding_sha256": "2b14f63a024af0378d6eca5ee4d6c71ceb988d550b60d39a4982ce12448464e5",
+      "raw_latent_sha256": "342f9cc0218d7254a2506d57eec55052e974b9d7c81f65b04e735ecd2ade99c1",
+      "projected_sha256": "2d3e29c9a8f305e3870218b45b32156218884ebf60f62ad6f56063a1eeabc550",
+      "start_hidden_sha256": "51526bb3acb6fefb442db6cb2209f49b645a003729b711c8c7e4819e62f30d7f",
+      "actor_hidden_sha256": "dc68f903e675d29d6f9f0eacfa1a6423d652689938590c62a27e37bd7d2d1d48"
+    },
+    {
+      "index": 5,
+      "id": "tune-prohibition",
+      "sample_id": "us-code-diagnostic-tune-prohibition-4652e7b84cd9534f",
+      "split": "tuning",
+      "source_text": "The agency must not disclose records.",
+      "expected_actor": "agency",
+      "generated_actor": "agency",
+      "target": {
+        "rules": [
+          {
+            "action": "disclose",
+            "actor": "agency",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        [],
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 7.512055890401825e-05,
+        "agency": 0.9998071789741516,
+        "officer": 0.00011781347711803392
+      },
+      "actor_logits": {
+        "Company A": 5.1128716468811035,
+        "agency": 14.609095573425293,
+        "officer": 5.562880516052246
+      },
+      "embedding_sha256": "595880ddf95863ed3cf28ed3f658746df9476cecffe390446d76dfae22e5ebb0",
+      "raw_latent_sha256": "71b15c85461174959b4d57173f19a67eeb6a84f073d70a5bd5d7d7d4ff714647",
+      "projected_sha256": "d69d4650a8665d703500954b41033984ee9d2ad0db31b23c42807eaf6d551f91",
+      "start_hidden_sha256": "3a2de53d2029b710757caf0e93953cc127da5dcffb9a11055485807d5c7a5aee",
+      "actor_hidden_sha256": "37f0666e029e4ff4ac2cd0b7e60a1b4c9321a09907d312f1ed8db67214a19ce1"
+    },
+    {
+      "index": 6,
+      "id": "tune-minimum",
+      "sample_id": "us-code-diagnostic-tune-minimum-bc6a31d11d7978a6",
+      "split": "tuning",
+      "source_text": "The officer must retain the file for at least 20 days.",
+      "expected_actor": "officer",
+      "generated_actor": "officer",
+      "target": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "officer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the file for at least 20 days",
+            "temporal": [
+              "20 days"
+            ]
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.0025061850901693106,
+        "agency": 3.961178663303144e-05,
+        "officer": 0.9974542260169983
+      },
+      "actor_logits": {
+        "Company A": 8.414772033691406,
+        "agency": 4.267381191253662,
+        "officer": 14.401216506958008
+      },
+      "embedding_sha256": "6057d8c93a0760fbc5ddfe1962d59ffc5fd364a846219e5721f4a7e68ed5d927",
+      "raw_latent_sha256": "7813fd52f3fa44fc73bce1f9187414db59fa4ff3ff01feeb9a7ade66d0d687b4",
+      "projected_sha256": "58f03e954d3902977eb56e5e65f5618a1a7244637813becdf3eb1fd1ecb3abd9",
+      "start_hidden_sha256": "6a1838b910e72e2cc8d090ae5f546b5832046e9ac96f0ed9f9f43fde020afb73",
+      "actor_hidden_sha256": "01450380ec0d3ab348797fa06bc45f9c781a6e9dd146b7057634043ce148616c"
+    },
+    {
+      "index": 7,
+      "id": "tune-deadline",
+      "sample_id": "us-code-diagnostic-tune-deadline-7ab18617582fae26",
+      "split": "tuning",
+      "source_text": "Company A must submit backup report within 10 days unless emergency.",
+      "expected_actor": "Company A",
+      "generated_actor": "Company A",
+      "target": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "Company A",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "modality": "O",
+            "object": "backup report",
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        [],
+        [],
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.9945940375328064,
+        "agency": 0.001864877063781023,
+        "officer": 0.0035410956479609013
+      },
+      "actor_logits": {
+        "Company A": 14.339808464050293,
+        "agency": 8.0606689453125,
+        "officer": 8.701910018920898
+      },
+      "embedding_sha256": "7503db7291cc5eeb2a2fcde2e6f4b5d2b646f058989d92f1a86db87d6b71145e",
+      "raw_latent_sha256": "2e0f5715c0ba54f1470fc731c078f3148989d2f3b8eab38e9c46afa524924433",
+      "projected_sha256": "6a6202b21165beffd27acbdba5dbed2ea74cd74b22501b11a3481dc8d100eee5",
+      "start_hidden_sha256": "94367da32059c636170f3d2b14fc295a2eacea9e31a40e7a25e94fb6326a1788",
+      "actor_hidden_sha256": "13ff9c204e8a9a237313e7cb580ecdf8a018367dc5d487b83fe70be5ef2bd4b7"
+    },
+    {
+      "index": 8,
+      "id": "holdout-officer-prohibition",
+      "sample_id": "us-code-diagnostic-holdout-officer-prohibition-de65780586cbab50",
+      "split": "holdout",
+      "source_text": "The officer shall not disclose records.",
+      "expected_actor": "officer",
+      "generated_actor": "agency",
+      "target": {
+        "rules": [
+          {
+            "action": "disclose",
+            "actor": "officer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 6.0808928537881e-05,
+        "agency": 0.9998524188995361,
+        "officer": 8.68295828695409e-05
+      },
+      "actor_logits": {
+        "Company A": 4.960276126861572,
+        "agency": 14.667902946472168,
+        "officer": 5.3164873123168945
+      },
+      "nearest_training": {
+        "embedding": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9552302360534668,
+            "l2": 0.2992313802242279
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.8664930462837219,
+            "l2": 0.5167338848114014
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8303524255752563,
+            "l2": 0.5824906229972839
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.7942365407943726,
+            "l2": 0.6415036916732788
+          }
+        ],
+        "raw_latent": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9552302360534668,
+            "l2": 0.030515732243657112
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.8664931058883667,
+            "l2": 0.05269671976566315
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8303523063659668,
+            "l2": 0.05940261855721474
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.7942365407943726,
+            "l2": 0.06542078405618668
+          }
+        ],
+        "projected": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.996975302696228,
+            "l2": 0.08634975552558899
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9177042841911316,
+            "l2": 0.436541885137558
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.8051685094833374,
+            "l2": 0.6473768353462219
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.5682690143585205,
+            "l2": 0.993368923664093
+          }
+        ],
+        "start_hidden": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9991010427474976,
+            "l2": 0.2531493604183197
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.8689765334129333,
+            "l2": 2.5583600997924805
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.7137472629547119,
+            "l2": 3.9839816093444824
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.6415907144546509,
+            "l2": 4.490331649780273
+          }
+        ],
+        "actor_hidden": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9994916915893555,
+            "l2": 0.16607218980789185
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.7235614657402039,
+            "l2": 3.870023250579834
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.6399306654930115,
+            "l2": 4.33428955078125
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.6364054083824158,
+            "l2": 4.361993312835693
+          }
+        ]
+      },
+      "embedding_sha256": "601f1201309aef38c39dc99dd2eb285615f4299edeec735e7c428777c0258bd4",
+      "raw_latent_sha256": "c260b497477ee5639d579ee50037e748c3ce8c129462b213b5a56b3400656085",
+      "projected_sha256": "df82302e91f9ef412feca008e92a4fc393ca600d1a700bebb6dd996ab9320e3c",
+      "start_hidden_sha256": "51ea3013c29a13f31f02cd8f18d10d2415c2a1be53f30ac0d9ee2aa7ff7caef1",
+      "actor_hidden_sha256": "5a493a364531d1d4b30718c020fd490b7d7a6d2e006bcc5ca467d0e14fd29efd"
+    },
+    {
+      "index": 9,
+      "id": "holdout-agency-minimum",
+      "sample_id": "us-code-diagnostic-holdout-agency-minimum-589ee9a22438aa0f",
+      "split": "holdout",
+      "source_text": "The agency shall retain the file for at least 20 days.",
+      "expected_actor": "agency",
+      "generated_actor": "officer",
+      "target": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "agency",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the file for at least 20 days",
+            "temporal": [
+              "20 days"
+            ]
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.021290363743901253,
+        "agency": 0.00021683276281692088,
+        "officer": 0.978492796421051
+      },
+      "actor_logits": {
+        "Company A": 9.55698013305664,
+        "agency": 4.970096111297607,
+        "officer": 13.38473892211914
+      },
+      "nearest_training": {
+        "embedding": [
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9592975378036499,
+            "l2": 0.285315603017807
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.8837827444076538,
+            "l2": 0.4821148216724396
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.876009464263916,
+            "l2": 0.49797725677490234
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.8435664772987366,
+            "l2": 0.5593454241752625
+          }
+        ],
+        "raw_latent": [
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9592975974082947,
+            "l2": 0.02909659408032894
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.883782684803009,
+            "l2": 0.04916626214981079
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8760092258453369,
+            "l2": 0.0507839173078537
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.8435662984848022,
+            "l2": 0.05704226344823837
+          }
+        ],
+        "projected": [
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9928839206695557,
+            "l2": 0.1062583401799202
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.9493843913078308,
+            "l2": 0.3139055371284485
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9036731719970703,
+            "l2": 0.4761779010295868
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8307516574859619,
+            "l2": 0.5942121744155884
+          }
+        ],
+        "start_hidden": [
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9947501420974731,
+            "l2": 0.5375959277153015
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.9273956418037415,
+            "l2": 2.0625319480895996
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8652408123016357,
+            "l2": 2.823146343231201
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.8601446747779846,
+            "l2": 2.7097721099853516
+          }
+        ],
+        "actor_hidden": [
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9949311017990112,
+            "l2": 0.5267253518104553
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.8756433129310608,
+            "l2": 2.578411817550659
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.6828817129135132,
+            "l2": 4.1869587898254395
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.6576732993125916,
+            "l2": 4.215526103973389
+          }
+        ]
+      },
+      "embedding_sha256": "f93f0fa83f6ff47202afab13ab04277655f234074bdd0c5455e9a433a21c1258",
+      "raw_latent_sha256": "1d394d7a09d886492e3ee5a5383a51d1d02db16595bc30a640436dcfafe11df4",
+      "projected_sha256": "2d2e203bdb2a939b3aa90e7fa5ff6841b352173431a5b3cc65c8c7796b1c7f2b",
+      "start_hidden_sha256": "6090872d39cc5441bf91a5af2a9ae90ea2d77b526761b711f3fee65d62f21b02",
+      "actor_hidden_sha256": "3cf0b6796e7550bede6589af51f5becd95ccd2f39134d8b5d5572c75636093f5"
+    },
+    {
+      "index": 10,
+      "id": "holdout-company-prohibition",
+      "sample_id": "us-code-diagnostic-holdout-company-prohibition-cc01ecb2c91242a7",
+      "split": "holdout",
+      "source_text": "Company A must not disclose records.",
+      "expected_actor": "Company A",
+      "generated_actor": "agency",
+      "target": {
+        "rules": [
+          {
+            "action": "disclose",
+            "actor": "Company A",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        [],
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.00015056709526106715,
+        "agency": 0.9994335770606995,
+        "officer": 0.0004157790099270642
+      },
+      "actor_logits": {
+        "Company A": 5.288858413696289,
+        "agency": 14.089393615722656,
+        "officer": 6.304603576660156
+      },
+      "nearest_training": {
+        "embedding": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9452062845230103,
+            "l2": 0.33103981614112854
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.838439404964447,
+            "l2": 0.5684375762939453
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.838202953338623,
+            "l2": 0.5688533782958984
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.7983253002166748,
+            "l2": 0.6350979208946228
+          }
+        ],
+        "raw_latent": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9452062249183655,
+            "l2": 0.033759571611881256
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.838439404964447,
+            "l2": 0.05796948820352554
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8382027745246887,
+            "l2": 0.05801188200712204
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.7983253598213196,
+            "l2": 0.06476753205060959
+          }
+        ],
+        "projected": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.988318681716919,
+            "l2": 0.1687335968017578
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9024786353111267,
+            "l2": 0.4904339611530304
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.8760876059532166,
+            "l2": 0.534032940864563
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.6685843467712402,
+            "l2": 0.885861873626709
+          }
+        ],
+        "start_hidden": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9852914810180664,
+            "l2": 0.886233925819397
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9360493421554565,
+            "l2": 1.8349287509918213
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.8177369832992554,
+            "l2": 3.242598056793213
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.7503916621208191,
+            "l2": 3.8238184452056885
+          }
+        ],
+        "actor_hidden": [
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.9899638891220093,
+            "l2": 0.7264384031295776
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.7169492840766907,
+            "l2": 3.9555318355560303
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.6694217920303345,
+            "l2": 4.208116054534912
+          },
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.660144567489624,
+            "l2": 4.260685443878174
+          }
+        ]
+      },
+      "embedding_sha256": "ffa78240e3093b88812b8db621c8b9eab5e1e72831e7eea7ce832acdd0bff855",
+      "raw_latent_sha256": "07557f9e38bab7923bc920296b155c1e6253ce240b855edbd50d619d6858dd27",
+      "projected_sha256": "14ddc6802ea1d42bedbbaee0aa16c61c07ecb0c3a8d97393ac932d271c049619",
+      "start_hidden_sha256": "6dfd1381d804e457ec0600fe0115f414bf81a8198b62273ba4b633e094e4d795",
+      "actor_hidden_sha256": "9730c48072c8d01ced3bb530b2f26b0130a7719ae1efb4a62859921e840de4af"
+    },
+    {
+      "index": 11,
+      "id": "holdout-officer-deadline",
+      "sample_id": "us-code-diagnostic-holdout-officer-deadline-3e2785ccfc6d3771",
+      "split": "holdout",
+      "source_text": "The officer must submit backup report within 10 days unless emergency.",
+      "expected_actor": "officer",
+      "generated_actor": "Company A",
+      "target": {
+        "rules": [
+          {
+            "action": "submit",
+            "actor": "officer",
+            "conditions": [],
+            "exceptions": [
+              "emergency"
+            ],
+            "modality": "O",
+            "object": "backup report",
+            "temporal": [
+              "within 10 days"
+            ]
+          }
+        ]
+      },
+      "modal_predicate_arguments": [
+        [],
+        [],
+        []
+      ],
+      "selected_frame": "administrative_notice_hearing",
+      "actor_generated_at_token_index": 4,
+      "actor_softmax_within_grammar": {
+        "Company A": 0.9779200553894043,
+        "agency": 0.0016770189395174384,
+        "officer": 0.020402994006872177
+      },
+      "actor_logits": {
+        "Company A": 13.525187492370605,
+        "agency": 7.156777381896973,
+        "officer": 9.655441284179688
+      },
+      "nearest_training": {
+        "embedding": [
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.9598089456558228,
+            "l2": 0.28351736068725586
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9151666164398193,
+            "l2": 0.41190609335899353
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8749063014984131,
+            "l2": 0.5001872777938843
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.8121842741966248,
+            "l2": 0.6128877997398376
+          }
+        ],
+        "raw_latent": [
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.9598090648651123,
+            "l2": 0.028913207352161407
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9151667952537537,
+            "l2": 0.042006343603134155
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8749063014984131,
+            "l2": 0.051009297370910645
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.8121842741966248,
+            "l2": 0.06250253319740295
+          }
+        ],
+        "projected": [
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.9927591681480408,
+            "l2": 0.12515126168727875
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9519767761230469,
+            "l2": 0.2885858416557312
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.907919704914093,
+            "l2": 0.44825634360313416
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.8607469797134399,
+            "l2": 0.5550851821899414
+          }
+        ],
+        "start_hidden": [
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.9961873888969421,
+            "l2": 0.49214959144592285
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.9471115469932556,
+            "l2": 1.7959743738174438
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.9224766492843628,
+            "l2": 2.080716609954834
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.7698213458061218,
+            "l2": 3.556225299835205
+          }
+        ],
+        "actor_hidden": [
+          {
+            "id": "train-deadline",
+            "target_actor": "Company A",
+            "cosine": 0.9942272305488586,
+            "l2": 0.5600135922431946
+          },
+          {
+            "id": "train-minimum",
+            "target_actor": "officer",
+            "cosine": 0.8756915330886841,
+            "l2": 2.5783538818359375
+          },
+          {
+            "id": "train-report",
+            "target_actor": "agency",
+            "cosine": 0.8111635446548462,
+            "l2": 3.2303690910339355
+          },
+          {
+            "id": "train-prohibition",
+            "target_actor": "agency",
+            "cosine": 0.6528033018112183,
+            "l2": 4.238561153411865
+          }
+        ]
+      },
+      "embedding_sha256": "5c0247471a508c9f5c02a968d6bcd7a9cdc334733d8df83dfd4b2b4fc59dc3f2",
+      "raw_latent_sha256": "1b6190fcd1cfbb875a208c6cf73ac2a2c65ec2381d3c06578c995faed542bee1",
+      "projected_sha256": "6fc16ec68ea8ee376ced62172a5c010f29783c1834d91213aa9854b0121561fd",
+      "start_hidden_sha256": "1424b304d1f84a88c46b411b34dd8f4ec03b7fe42cac89cce0e49d64988c00cc",
+      "actor_hidden_sha256": "413ad68fa6a2955e15f9edf244d410d1fa0db3d56e0a38ee734d0698d48b5f23"
+    }
+  ],
+  "same_template_actor_pairs": [
+    {
+      "holdout": "holdout-officer-prohibition",
+      "reference": "train-prohibition",
+      "source_a": "The officer shall not disclose records.",
+      "source_b": "The agency shall not disclose records.",
+      "scope": "diagnostic same-template actor substitution; observed after training, not used for fit or selection",
+      "spaces": {
+        "embedding": {
+          "cosine": 0.9552302360534668,
+          "l2": 0.2992313802242279,
+          "a_norm": 1.0,
+          "b_norm": 1.0000001192092896
+        },
+        "raw_latent": {
+          "cosine": 0.9552302360534668,
+          "l2": 0.030515732243657112,
+          "a_norm": 0.10198038816452026,
+          "b_norm": 0.10198040306568146
+        },
+        "projected": {
+          "cosine": 0.996975302696228,
+          "l2": 0.08634975552558899,
+          "a_norm": 1.070598840713501,
+          "b_norm": 1.0904533863067627
+        },
+        "start_hidden": {
+          "cosine": 0.9991010427474976,
+          "l2": 0.2531493604183197,
+          "a_norm": 4.920752048492432,
+          "b_norm": 5.059749603271484
+        },
+        "actor_hidden": {
+          "cosine": 0.9994916915893555,
+          "l2": 0.16607218980789185,
+          "a_norm": 5.006754398345947,
+          "b_norm": 5.050039291381836
+        }
+      }
+    },
+    {
+      "holdout": "holdout-agency-minimum",
+      "reference": "train-minimum",
+      "source_a": "The agency shall retain the file for at least 20 days.",
+      "source_b": "The officer shall retain the file for at least 20 days.",
+      "scope": "diagnostic same-template actor substitution; observed after training, not used for fit or selection",
+      "spaces": {
+        "embedding": {
+          "cosine": 0.9592975378036499,
+          "l2": 0.285315603017807,
+          "a_norm": 1.0,
+          "b_norm": 1.0
+        },
+        "raw_latent": {
+          "cosine": 0.9592975974082947,
+          "l2": 0.02909659408032894,
+          "a_norm": 0.10198040306568146,
+          "b_norm": 0.10198038071393967
+        },
+        "projected": {
+          "cosine": 0.9928839206695557,
+          "l2": 0.1062583401799202,
+          "a_norm": 0.8921582102775574,
+          "b_norm": 0.8841074109077454
+        },
+        "start_hidden": {
+          "cosine": 0.9947501420974731,
+          "l2": 0.5375959277153015,
+          "a_norm": 5.178380966186523,
+          "b_norm": 5.060708045959473
+        },
+        "actor_hidden": {
+          "cosine": 0.9949311017990112,
+          "l2": 0.5267253518104553,
+          "a_norm": 5.137490272521973,
+          "b_norm": 5.214149475097656
+        }
+      }
+    },
+    {
+      "holdout": "holdout-company-prohibition",
+      "reference": "tune-prohibition",
+      "source_a": "Company A must not disclose records.",
+      "source_b": "The agency must not disclose records.",
+      "scope": "diagnostic same-template actor substitution; observed after training, not used for fit or selection",
+      "spaces": {
+        "embedding": {
+          "cosine": 0.9527369737625122,
+          "l2": 0.30745065212249756,
+          "a_norm": 0.9999999403953552,
+          "b_norm": 1.0
+        },
+        "raw_latent": {
+          "cosine": 0.9527369141578674,
+          "l2": 0.031353939324617386,
+          "a_norm": 0.10198038816452026,
+          "b_norm": 0.10198039561510086
+        },
+        "projected": {
+          "cosine": 0.9926102161407471,
+          "l2": 0.1348114162683487,
+          "a_norm": 1.1069267988204956,
+          "b_norm": 1.1102255582809448
+        },
+        "start_hidden": {
+          "cosine": 0.9878999590873718,
+          "l2": 0.8035137057304382,
+          "a_norm": 5.179853439331055,
+          "b_norm": 5.1331377029418945
+        },
+        "actor_hidden": {
+          "cosine": 0.9919707179069519,
+          "l2": 0.6496788859367371,
+          "a_norm": 5.134920597076416,
+          "b_norm": 5.074723720550537
+        }
+      }
+    },
+    {
+      "holdout": "holdout-officer-deadline",
+      "reference": "tune-deadline",
+      "source_a": "The officer must submit backup report within 10 days unless emergency.",
+      "source_b": "Company A must submit backup report within 10 days unless emergency.",
+      "scope": "diagnostic same-template actor substitution; observed after training, not used for fit or selection",
+      "spaces": {
+        "embedding": {
+          "cosine": 0.9616576433181763,
+          "l2": 0.2769201099872589,
+          "a_norm": 1.0,
+          "b_norm": 1.0
+        },
+        "raw_latent": {
+          "cosine": 0.9616577625274658,
+          "l2": 0.028240416198968887,
+          "a_norm": 0.10198038071393967,
+          "b_norm": 0.10198038816452026
+        },
+        "projected": {
+          "cosine": 0.9927534461021423,
+          "l2": 0.12942489981651306,
+          "a_norm": 0.9416996240615845,
+          "b_norm": 0.9976833462715149
+        },
+        "start_hidden": {
+          "cosine": 0.9971306324005127,
+          "l2": 0.4291503429412842,
+          "a_norm": 5.384231090545654,
+          "b_norm": 5.503117561340332
+        },
+        "actor_hidden": {
+          "cosine": 0.9956448674201965,
+          "l2": 0.48786401748657227,
+          "a_norm": 5.121679306030273,
+          "b_norm": 5.199506759643555
+        }
+      }
+    }
+  ],
+  "fresh_sparse_core": true,
+  "sparse_core_binding": {
+    "core_sha256": "569994a5a4e3e7801c14c9abf2091128f116114ece865c7fefd9553ce9b50409",
+    "dimension": 384,
+    "domain": "legal_ir",
+    "lineage_id": "current_legal_v2",
+    "runtime_profile": "modal-latent-joint-formula/v1"
+  },
+  "initial_embedding_scale": 0.02,
+  "initial_embedding_rotation_scale": 0.1,
+  "training_executed": false,
+  "weights_modified": false,
+  "checkpoint_loaded": "existing 384D formula head only; no398MBteacher or embedding model load",
+  "hypothesis": "training actor/action template confounding; this posthoc probe does not establish causal GRU forgetting",
+  "admitted": false,
+  "formalized": false,
+  "roundtrip_ok": false,
+  "qualified": false,
+  "heldout_used_for_fit_or_selection": false
+}

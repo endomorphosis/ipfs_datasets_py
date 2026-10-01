@@ -1,0 +1,42 @@
+{
+  "admitted": false,
+  "qualified": false,
+  "schema": "actor-composition-tests/v1",
+  "suites": [
+    {
+      "errors": "0",
+      "failures": "0",
+      "file": "release-tests.xml",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "191",
+      "time": "22.359",
+      "timestamp": "2026-10-01T05:29:38.973492+00:00"
+    },
+    {
+      "errors": "0",
+      "failures": "0",
+      "file": "phase-tests.xml",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "15",
+      "time": "1.303",
+      "timestamp": "2026-10-01T05:35:03.341877+00:00"
+    },
+    {
+      "errors": "0",
+      "failures": "0",
+      "file": "optimizer-dev-tests.xml",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "10",
+      "time": "0.034",
+      "timestamp": "2026-10-01T05:40:33.621572+00:00"
+    }
+  ],
+  "test_executions": 216,
+  "unique_passing_tests": 216
+}
