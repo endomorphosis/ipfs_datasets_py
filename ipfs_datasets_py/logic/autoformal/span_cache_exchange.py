@@ -12,12 +12,15 @@ from .supervisor_queue import SCHEMA as REPAIR_SCHEMA, canonical_bytes
 from .supervisor_todo import SCHEMA as TODO_SCHEMA
 
 CENSUS_SCHEMA_V2 = "uscode-autoformal-ae-compiler-census/v2"
-CENSUS_SCHEMA = "uscode-autoformal-ae-compiler-census/v3"
+CENSUS_SCHEMA_V3 = "uscode-autoformal-ae-compiler-census/v3"
+CENSUS_SCHEMA = "uscode-autoformal-ae-compiler-census/v4"
 GOAL_EXPORT_SCHEMA = "uscode-autoformal-supervisor-goal-export/v2"
 EXCHANGE_MANIFEST_SCHEMA_V2 = "uscode-autoformal-exchange-manifest/v2"
-EXCHANGE_MANIFEST_SCHEMA = "uscode-autoformal-exchange-manifest/v3"
+EXCHANGE_MANIFEST_SCHEMA_V3 = "uscode-autoformal-exchange-manifest/v3"
+EXCHANGE_MANIFEST_SCHEMA = "uscode-autoformal-exchange-manifest/v4"
 CENSUS_REPO_DIR_V2 = "autoformal/uscode/census"
-CENSUS_REPO_DIR = "autoformal/uscode/census-v3"
+CENSUS_REPO_DIR_V3 = "autoformal/uscode/census-v3"
+CENSUS_REPO_DIR = "autoformal/uscode/census-v4"
 GOALS_REPO_DIR = "autoformal/uscode/goals"
 MANIFEST_REPO_DIR = "autoformal/uscode/exchanges"
 _FORBIDDEN_NAMES = {"resume-checkpoint.parquet", "sealed-spans.parquet"}
@@ -77,7 +80,7 @@ _OUTPUT_JSON_COLUMNS = (
     "observed_logic_families_json",
     "observed_logic_views_json",
 )
-CENSUS_COLUMNS = CENSUS_COLUMNS_V2 + (
+CENSUS_COLUMNS_V3 = CENSUS_COLUMNS_V2 + (
     "autoencoder_output_kind",
     "autoencoder_output_status",
     "compiler_status",
@@ -85,8 +88,20 @@ CENSUS_COLUMNS = CENSUS_COLUMNS_V2 + (
     "compilation_complete",
     *_OUTPUT_JSON_COLUMNS,
 )
+_FORMULA_JSON_COLUMNS = (
+    "autoencoder_formal_outputs_json",
+    "autoencoder_canonical_ir_json",
+    "autoencoder_formula_observation_json",
+    "autoencoder_formula_provenance_json",
+)
+CENSUS_COLUMNS = CENSUS_COLUMNS_V3 + (
+    "autoencoder_formula_status",
+    "autoencoder_formula_text",
+    *_FORMULA_JSON_COLUMNS,
+)
 _MANIFEST_CENSUS_SCHEMAS = {
     EXCHANGE_MANIFEST_SCHEMA_V2: (CENSUS_SCHEMA_V2, CENSUS_COLUMNS_V2),
+    EXCHANGE_MANIFEST_SCHEMA_V3: (CENSUS_SCHEMA_V3, CENSUS_COLUMNS_V3),
     EXCHANGE_MANIFEST_SCHEMA: (CENSUS_SCHEMA, CENSUS_COLUMNS),
 }
 GOAL_COLUMNS = (
@@ -213,7 +228,7 @@ def _autoencoder_text(item):
     )
 
 
-def _explicit_outputs(item, autoencoder_text):
+def _explicit_outputs_v3(item, autoencoder_text):
     """Retain measured decoder outputs separately from source-derived targets."""
     observation = item.get("autoencoder_observation")
     observation = observation if isinstance(observation, Mapping) else item
@@ -269,6 +284,49 @@ def _explicit_outputs(item, autoencoder_text):
     }
 
 
+def _explicit_outputs(item, autoencoder_text):
+    """Expose a source-only learned receipt without relabeling compiler targets.
+
+    The entire receipt is retained, including abstentions and generated tokens.
+    Validation establishes its internal source/model binding, not authenticity,
+    semantic correctness, or Lake admission of an imported observation.
+    """
+    outputs = _explicit_outputs_v3(item, autoencoder_text)
+    observation = item.get("learned_formula_observation")
+    fields = {
+        "autoencoder_formula_status": "not_observed",
+        "autoencoder_formula_text": "",
+        "autoencoder_formal_outputs_json": "[]",
+        "autoencoder_canonical_ir_json": "null",
+        "autoencoder_formula_observation_json": "null",
+        "autoencoder_formula_provenance_json": "null",
+    }
+    if observation is not None:
+        from .learned_formula_observation import validate_learned_formula_observation
+        try:
+            decoded = validate_learned_formula_observation(
+                observation, item.get("text") or item.get("source_text") or "",
+                source_span_id=item.get("source_span_id"),
+            )
+        except (ValueError, TypeError, KeyError) as exc:
+            raise SpanEvidenceError("invalid learned formula observation: " + str(exc)) from exc
+        if item.get("model_identity") and item["model_identity"] != observation["model_identity"]:
+            raise SpanEvidenceError("learned formula model identity differs from census input")
+        fields.update(
+            autoencoder_formula_status=decoded["status"],
+            autoencoder_formula_text=decoded.get("formula_text") or "",
+            autoencoder_formal_outputs_json=_json(decoded["formal_outputs"]),
+            autoencoder_canonical_ir_json=_json(decoded.get("canonical_ir")),
+            autoencoder_formula_observation_json=_json(observation),
+            autoencoder_formula_provenance_json=_json(
+                {key: value for key, value in observation.items() if key != "inference"}
+            ),
+        )
+        outputs.update(autoencoder_output_kind="learned_source_conditioned_formula",
+                       autoencoder_output_status=decoded["status"])
+    return {**outputs, **fields}
+
+
 def _observation_evidence(row):
     """Bound goal context while retaining exact, verifiable census retrieval keys.
 
@@ -279,6 +337,10 @@ def _observation_evidence(row):
     columns = ("autoencoder_output_kind", "autoencoder_output_status", "compiler_status",
                "compiler_reason", "compilation_complete", "compiler_decompiled",
                "autoencoder_text", *_OUTPUT_JSON_COLUMNS)
+    learned = row["schema_version"] == CENSUS_SCHEMA
+    if learned:
+        columns += ("autoencoder_formula_status", "autoencoder_formula_text",
+                    *_FORMULA_JSON_COLUMNS)
     fields = {}
     remaining = 32 * 1024
     for name in columns:
@@ -289,8 +351,8 @@ def _observation_evidence(row):
             field["inline"] = json.loads(raw)
             remaining -= len(encoded)
         fields[name] = field
-    return {
-        "schema": "uscode-autoformal-output-evidence/v1",
+    evidence = {
+        "schema": "uscode-autoformal-output-evidence/v2" if learned else "uscode-autoformal-output-evidence/v1",
         "repository_id": row["repository_id"],
         "source_span_id": row["source_span_id"],
         "source_text_sha256": row["source_text_sha256"],
@@ -317,6 +379,13 @@ def _observation_evidence(row):
         "admitted": False,
         "formalized": False,
     }
+    if learned:
+        evidence["interpretation"].update({
+            "autoencoder_formal_outputs_json": "Observed source-only learned formulas, including complete typed AST payloads. Structural agreement is not semantic verification.",
+            "autoencoder_formula_text": "Display text only; the full typed AST is authoritative and retains conditions, exceptions, and temporal constraints.",
+            "autoencoder_formula_observation_json": "Exact source/model-bound inference receipt. Internal consistency does not authenticate a remote producer or grant proof authority.",
+        })
+    return evidence
 
 
 def compiled_rows_from_evidence(rows):
@@ -403,6 +472,33 @@ def _row_hash(row):
     return _sha(canonical_bytes({k: v for k, v in row.items() if k != "census_sha256"}))
 
 
+def _verified_metadata_only_comparison(item, outputs, compared):
+    """Recheck full ASTs before omitting work for redundant temporal sidecars."""
+    if (compared.get("method") != "exact_ast_and_validated_canonical_core/v2"
+            or compared.get("difference_kind") != "validated_temporal_metadata_only"
+            or compared.get("canonical_core_agrees") is not True):
+        return False
+    from .paired_span_census import _formal, compare_formal_outputs
+    compiler = item.get("compiler_result") or {}
+    left = {
+        "source_binding_verified": True, "learned_formula_capture_verified": True,
+        "complete": outputs["autoencoder_formula_status"] == "decoded",
+        "formal_outputs": [_formal({**output, "independent": True,
+            "target_conditioned": False, "syntax_status": "passed"})
+            for output in json.loads(outputs["autoencoder_formal_outputs_json"])],
+    }
+    right = {
+        "complete": compiler.get("compilation_complete") is True,
+        "formal_outputs": [_formal({"family": "typed_deontic", "format": "typed-deontic-rule/v1",
+            "payload": rule, "independent": True, "target_conditioned": False,
+            "syntax_status": "compiler_accepted"}, origin="deterministic_compiler")
+            for rule in json.loads(outputs["compiler_rules_json"])],
+    }
+    verified = compare_formal_outputs(left, right)
+    return (verified["comparable"] is True and verified["canonical_core_agrees"] is True
+            and verified["difference_kind"] == "validated_temporal_metadata_only")
+
+
 def _fingerprint(census_rows, goal_rows):
     return _sha(
         canonical_bytes(
@@ -456,6 +552,8 @@ def exchange_from_compiled(
                 "every census input needs full source text and span identity"
             )
         ae_text, scores = _autoencoder_text(item), _scores(item)
+        explicit_outputs = _explicit_outputs(item, ae_text)
+        formula_provenance = json.loads(explicit_outputs["autoencoder_formula_provenance_json"])
         supplied = item.get("comparison")
         compared = (
             dict(supplied)
@@ -486,7 +584,14 @@ def exchange_from_compiled(
                 compiler_result.get("reason") or compiler_result.get("error_code") or ""
             )
         partial_compilation = _partial_compilation(compiler_result)
-        missing_autoencoder_evidence = not ae_text or any(value is None for value in scores.values())
+        missing_autoencoder_evidence = (
+            explicit_outputs["autoencoder_formula_status"] != "decoded"
+            if formula_provenance is not None
+            else not ae_text or any(value is None for value in scores.values())
+        )
+        metadata_only = (formula_provenance is not None and strict is not False
+                         and not partial_compilation
+                         and _verified_metadata_only_comparison(item, explicit_outputs, compared))
         if partial_compilation:
             # A historical per-component roundtrip can be true while another
             # component abstains. Retain that original observation and route the
@@ -503,6 +608,20 @@ def exchange_from_compiled(
             compared.update(agrees=False, reason=reason)
         elif missing_autoencoder_evidence:
             compared.update(agrees=False, reason="inference_still_failing")
+        elif metadata_only:
+            # Preserve raw disagreement in comparison_json; do not fabricate a
+            # semantic defect for separately validated redundant display data.
+            capture["observed_formula_comparison_reason"] = str(compared.get("reason") or "")
+            compared.update(agrees=True, reason="validated_temporal_metadata_only")
+        elif formula_provenance is not None and compared.get("agrees") is not True:
+            # A paired AST census uses descriptive comparison reasons rather
+            # than the closed repair-scope names. Preserve its exact result in
+            # comparison_json and translate only the deferred work routing.
+            capture["observed_formula_comparison_reason"] = str(compared.get("reason") or "")
+            compared["reason"] = ("strict_roundtrip_failed"
+                                  if compared.get("comparable") is True
+                                  else "inference_still_failing")
+        formula_training_requested = formula_provenance is not None and compared.get("agrees") is not True
         provenance = (
             {
                 "kind": "retained_comparison",
@@ -555,17 +674,20 @@ def exchange_from_compiled(
             "input_json": _json(original),
             "comparison_json": _json(original_comparison),
             "comparison_provenance_json": _json(provenance),
-            "comparison_kind": "family_projection_not_semantic_equivalence",
+            "comparison_kind": ("retained_formula_comparison_not_semantic_equivalence"
+                                if formula_provenance is not None and isinstance(supplied, Mapping)
+                                else "family_projection_not_semantic_equivalence"),
             "metric_scope": str(
                 item.get("metric_scope") or "observational_not_heldout"
             ),
             "release_id": str(item.get("release_id") or release_id),
             "code_identity": str(item.get("code_identity") or code_identity),
-            "model_identity": str(item.get("model_identity") or model_identity),
+            "model_identity": str(item.get("model_identity") or
+                                  (formula_provenance or {}).get("model_identity") or model_identity),
             "admitted": False,
             "formalized": False,
             "wrote_compiler": False,
-            **_explicit_outputs(item, ae_text),
+            **explicit_outputs,
         }
         row["census_sha256"] = _row_hash(row)
         census_rows.append(row)
@@ -591,7 +713,8 @@ def exchange_from_compiled(
             code_identity=row["code_identity"],
             model_identity=row["model_identity"],
         )
-        if (original_train or (partial_compilation and missing_autoencoder_evidence)) and not goals.get("training_goals"):
+        if (original_train or formula_training_requested or
+                (partial_compilation and missing_autoencoder_evidence)) and not goals.get("training_goals"):
             deferred = supervisor_repair_goals(
                 [{**compared, "reason": "inference_still_failing", "agrees": False}],
                 release_id=row["release_id"],
@@ -892,7 +1015,7 @@ def _validate_goal_rows(rows, census=None):
                 )
             ):
                 raise SpanEvidenceError("goal provenance differs from census")
-            if evidence["schema_version"] == CENSUS_SCHEMA and capture.get(
+            if evidence["schema_version"] in {CENSUS_SCHEMA_V3, CENSUS_SCHEMA} and capture.get(
                 "observation_evidence"
             ) != _observation_evidence(evidence):
                 raise SpanEvidenceError("goal output context differs from census")
@@ -1108,11 +1231,19 @@ def load_exchange_bundle(
                     "census JSON evidence exceeds its row byte bound"
                 )
             _object(row[key])
-        if census_schema == CENSUS_SCHEMA:
+        if census_schema in {CENSUS_SCHEMA_V3, CENSUS_SCHEMA}:
             original = _object(row["input_json"])
-            expected_outputs = _explicit_outputs(original, _autoencoder_text(original))
+            extractor = _explicit_outputs if census_schema == CENSUS_SCHEMA else _explicit_outputs_v3
+            expected_outputs = extractor(original, _autoencoder_text(original))
             if any(row[key] != value for key, value in expected_outputs.items()):
                 raise SpanEvidenceError("explicit output columns differ from original observation")
+            if census_schema == CENSUS_SCHEMA:
+                if (row["source_span_id"] != original.get("source_span_id")
+                        or row["source_text"] != (original.get("text") or original.get("source_text"))):
+                    raise SpanEvidenceError("census source binding differs from original observation")
+                provenance = json.loads(row["autoencoder_formula_provenance_json"])
+                if provenance is not None and row["model_identity"] != provenance["model_identity"]:
+                    raise SpanEvidenceError("census model identity differs from learned formula observation")
         census[row["census_sha256"]] = row
     verified = _validate_goal_rows(tables["goals"], census)
     fingerprint = _fingerprint(tables["census"], tables["goals"])
@@ -1140,6 +1271,8 @@ def _census_version_for_rows(rows):
         return EXCHANGE_MANIFEST_SCHEMA, CENSUS_COLUMNS
     if schemas == {CENSUS_SCHEMA_V2}:
         return EXCHANGE_MANIFEST_SCHEMA_V2, CENSUS_COLUMNS_V2
+    if schemas == {CENSUS_SCHEMA_V3}:
+        return EXCHANGE_MANIFEST_SCHEMA_V3, CENSUS_COLUMNS_V3
     raise SpanEvidenceError("census versions must not be mixed within an immutable bundle")
 
 
@@ -1165,7 +1298,11 @@ def _manifest_for_pair(
         )
 
     schema, unused_columns = _census_version_for_rows(census_rows)
-    census_directory = CENSUS_REPO_DIR_V2 if schema == EXCHANGE_MANIFEST_SCHEMA_V2 else CENSUS_REPO_DIR
+    census_directory = {
+        EXCHANGE_MANIFEST_SCHEMA_V2: CENSUS_REPO_DIR_V2,
+        EXCHANGE_MANIFEST_SCHEMA_V3: CENSUS_REPO_DIR_V3,
+        EXCHANGE_MANIFEST_SCHEMA: CENSUS_REPO_DIR,
+    }[schema]
     census_remote = content_path(
         census_path_in_repo,
         census_directory + "/" + safe,

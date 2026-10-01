@@ -2,9 +2,9 @@
 
 The canonical export contains three typed Parquet tables and one immutable
 manifest per bounded inference batch. It records the source, the direct
-compiler output, the autoencoder-guided compiler output, their comparison,
+compiler output, either a captured learned formula or autoencoder-guided compiler output, their comparison,
 and deferred supervisor goals. New paired exports do not require a parallel
-v2/v3 census export. Historical census, progress and retained-output files are
+legacy census export. Historical census, progress and retained-output files are
 preserved as historical evidence.
 
 The destination is
@@ -40,15 +40,17 @@ not formalized and is never marked `roundtrip_ok` by this export.
 
 ## Tables and paths
 
-The schema identifiers are `uscode-paired-span-census/v1` and
-`uscode-paired-span-bundle/v1`. Paths are:
+New schema identifiers are `uscode-paired-span-census/v2` and
+`uscode-paired-span-bundle/v2`. Version 1 bundles remain readable with their
+original strict AST comparison. They are not rewritten or silently promoted
+to the additional version 2 comparison contract. New paths are:
 
 | Table or manifest | Repository path |
 | --- | --- |
-| Paired observations | `autoformal/uscode/paired-v1/paired_spans/<agent>/*.parquet` |
-| Deferred goals | `autoformal/uscode/paired-v1/goals/<agent>/*.parquet` |
-| Evidence artifacts | `autoformal/uscode/paired-v1/artifacts/<agent>/*.parquet` |
-| Exact bundle manifest | `autoformal/uscode/paired-v1/manifests/<agent>/*.json` |
+| Paired observations | `autoformal/uscode/paired-v2/paired_spans/<agent>/*.parquet` |
+| Deferred goals | `autoformal/uscode/paired-v2/goals/<agent>/*.parquet` |
+| Evidence artifacts | `autoformal/uscode/paired-v2/artifacts/<agent>/*.parquet` |
+| Exact bundle manifest | `autoformal/uscode/paired-v2/manifests/<agent>/*.json` |
 
 The manifest binds each table's exact filename, SHA-256, byte size and row
 count. `exporter_sha256` separately identifies the exporter source file, so a
@@ -63,9 +65,9 @@ the primary reading interface:
 | Column | Contents |
 | --- | --- |
 | `source` | Full text, span ID, text SHA-256, legal ID, source revision and Constitution flag |
-| `autoencoder` | Model identity, actual raw/projected vectors and metrics, formal candidate outputs, source binding and candidate completeness |
+| `autoencoder` | Model identity, actual raw/projected vectors and metrics, formal candidate outputs, source binding, candidate completeness, and the exact learned-capture artifact reference when present |
 | `compiler` | Direct formal candidates, canonical typed rules, canonical status/reason, decompiled text, component evidence |
-| `comparison` | Status, comparison method, independence, emitted-formula coverage, counts and differing positions |
+| `comparison` | Status, raw AST equality, validated canonical-core equality, comparison scope, independence, emitted-formula coverage, counts and differing positions |
 | `provenance` | Code/model identities, batch/agent identity, timing and bridge configuration |
 | `lake` | `not_run` with no receipt or admission in this campaign |
 | `goal_ids` | References to deferred goals |
@@ -109,12 +111,29 @@ currently provide serialization without a separate syntax validator, so
 their records retain `syntax_status=not_checked`. A diagnostic match does not
 assert syntax qualification, semantic equivalence or independent agreement.
 
-Comparison canonicalizes JSON object key order only. It retains formula IDs,
-provenance, metadata, all rule fields, component order and repeated rules.
-Consequently a difference in scaffolding can produce `diagnostic_disagree`
-without proving a legal-semantic disagreement. Conversely, actor, modality,
-negation, duration and exception differences cannot be hidden by a family
-label match, cosine score or compiler text reconstruction.
+`agrees` and `raw_agrees` retain the original exact AST comparison: object key
+order is irrelevant; list order, duplicate components and every payload field
+remain significant. `canonical_core_agrees` adds a separate, restricted view.
+It may omit only the compiler's exact three-key `temporal_records` sidecar when
+kind, integer quantity and unit are already redundantly encoded in the
+unchanged canonical rule. For example, `within 20 days` may have a sidecar
+with `temporal_kind=within_duration`, `quantity=20`, and `value="20 days"`.
+A minimum-duration record is redundant only when `at least 20 days` occurs
+in the temporal atom, or the same duration atom is paired with the exact
+object suffix `for at least 20 days`. Unknown fields, dates, anchors, mismatched
+quantities or order, and unrecognized record forms are never discarded.
+
+`difference_kind=validated_temporal_metadata_only` leaves raw disagreement
+visible but does not create a semantic repair packet. Actor, modality,
+conditions, exceptions, temporal atoms and unknown fields remain compared
+exactly. `canonical_core_agrees` means equality of this restricted
+representation, **not semantic equivalence or qualification**. A lost
+`unless emergency` remains a disagreement and creates deferred review work.
+
+For the learned legal path only, comparison recognizes the runtime's
+`family=deontic`, `format=typed-deontic-rule/v1` as the canonical compiler's
+`typed_deontic` representation. The native family, origin and full AST remain
+unchanged in retained outputs and the original capture.
 
 Unavailable and incomparable records have `agrees=null`. Source bridge targets
 never substitute for a model-generated formula. Family distributions and
@@ -128,6 +147,66 @@ An incomplete or unbound guided capture is `guided_unavailable`. Historical
 vector-only observations with no guided route retain their separate decoder
 capability gap.
 
+## Capture the independent learned legal decoder
+
+The `source_conditioned_formula_v1` lineage has an actual source-only decoder.
+Use its installed runtime adapter rather than relabeling compiler outputs:
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_runtime_registry import open_runtime
+from ipfs_datasets_py.logic.autoformal import AutoformalSession, compile_span
+from ipfs_datasets_py.logic.autoformal.paired_span_census import (
+    capture_learned_formula_observations, build_paired_census,
+    write_paired_census_bundle,
+)
+
+runtime = open_runtime("legal_ir", "source_conditioned_formula_v1",
+    checkpoint="local/checkpoint.json", expected_sha256=checkpoint_sha256)
+sources = [{"source_span_id": "span-1", "text": "The agency shall not disclose records."}]
+captures = capture_learned_formula_observations(runtime, sources)
+session = AutoformalSession()
+observations = [{**source,
+    "compiler_result": compile_span(session, source["text"], source["source_span_id"]),
+    "learned_formula_observation": capture}
+    for source, capture in zip(sources, captures)]
+bundle = build_paired_census(observations, model_identity=captures[0]["model_identity"],
+    code_identity=producer_code_identity)
+written = write_paired_census_bundle(bundle, "outbox/learned")
+```
+
+The capture accepts exactly source IDs and text, invokes the cached installed
+runtime, and records its checkpoint hash and limited runtime-file hashes.
+Each bounded observation retains the exact single-source inference receipt:
+native AST, canonical IR, display-only formula, generation token IDs, source
+hash, syntax scope, abstention reason and explicit no-target/no-training flags.
+No compiler target is passed to inference. Source compilation runs separately.
+The capture performs no training, download, upload, schema Lake build or
+admission, and never creates missing vector metrics. Load a DuckDB version
+through `load_version` when the checkpoint is registered; the capture API
+accepts the same resulting `LearnedFormulaRuntime`.
+
+The original receipt lives in an artifact with kind
+`learned_formula_observation`. `autoencoder.learned_formula_capture_verified`
+records successful contract/binding validation, with its artifact pointer in
+`autoencoder.learned_formula_observation_artifact_sha256`. It does not mean
+that the formula is legally correct, that a remote producer was authenticated,
+or that every dependency was captured. Self-addressed hashes detect corrupt
+or inconsistent records; they are not signed execution attestations. Historical
+imports validate retained hashes without demanding today's runtime-file hashes.
+
+Successful generation has status `learned_decoded`; a real decoder abstention
+has status `learned_abstained`, not a fictitious missing-decoder capability.
+Neither generation nor comparison grants qualification. Syntax evidence here
+covers only the canonical seven-field rule schema and decoder grammar; it
+does not assert the full logic-family floor. In particular, a schema-correct
+formula can still drop an exception, as the retained 11/12 legal E2E sample
+demonstrates. Lake and family semantic gates stay separate.
+
+Use one cached runtime per model-owning worker and bound `sources` to at most
+128 rows. Captures invoke each source individually so a batch receipt is not
+duplicated into every exported row. This adapter does not change the running
+legacy campaign or introduce native-decoder fleet/weight synchronization.
+
 ## Query the census
 
 For a local mirror of the published tables, DuckDB can query nested fields
@@ -135,13 +214,13 @@ without unpacking large artifacts:
 
 ```sql
 SELECT comparison.status, count(*) AS observations
-FROM read_parquet('autoformal/uscode/paired-v1/paired_spans/**/*.parquet')
+FROM read_parquet('autoformal/uscode/paired-v2/paired_spans/**/*.parquet')
 GROUP BY comparison.status
 ORDER BY observations DESC;
 
 SELECT source.span_id, source.text, compiler.status, compiler.reason,
        compiler.canonical_complete, comparison.status, goal_ids
-FROM read_parquet('autoformal/uscode/paired-v1/paired_spans/**/*.parquet')
+FROM read_parquet('autoformal/uscode/paired-v2/paired_spans/**/*.parquet')
 WHERE NOT compiler.canonical_complete
 LIMIT 20;
 
@@ -149,7 +228,7 @@ SELECT source.span_id,
        autoencoder.formal_outputs AS guided_outputs,
        compiler.formal_outputs AS direct_outputs,
        compiler.canonical_formal_outputs AS typed_rules
-FROM read_parquet('autoformal/uscode/paired-v1/paired_spans/**/*.parquet')
+FROM read_parquet('autoformal/uscode/paired-v2/paired_spans/**/*.parquet')
 WHERE comparison.status = 'diagnostic_disagree'
 LIMIT 5;
 ```
@@ -310,6 +389,8 @@ does not download that checkpoint or require it to interpret emitted labels.
 
 - Schema, comparator, native goal adapter and bounded writer/loader:
   `ipfs_datasets_py/logic/autoformal/paired_span_census.py`.
+- Actual source-only learned runtime capture and offline retained-evidence validation:
+  `ipfs_datasets_py/logic/autoformal/learned_formula_observation.py`.
 - Guided compiler observations:
   `ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_guided_compiler.py`.
 - Capacity planning:

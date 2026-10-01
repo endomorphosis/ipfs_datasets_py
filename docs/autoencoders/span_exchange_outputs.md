@@ -10,10 +10,13 @@ row, a target formula, or a compiler text round trip grants no Lake admission.
 | --- | --- | --- |
 | `autoformal/uscode/census/<agent>/*.parquet` | Historical complete observations, mostly inside `input_json` | census v2 |
 | `autoformal/uscode/census-v3/<agent>/*.parquet` | Complete observations plus explicit compiler and AE columns | census v3 |
+| `autoformal/uscode/census-v4/<agent>/*.parquet` | Full learned formula receipts, typed outputs, and source/model provenance alongside compiler and vector observations | census v4 |
 | `autoformal/uscode/goals/<agent>/*.parquet` | Bound repair packets and training goals, including acceptance criteria | goal export v2 |
-| `autoformal/uscode/exchanges/<agent>/*.manifest.json` | Exact census/goal file hashes, row counts, and identities | exchange v2 or v3 |
+| `autoformal/uscode/exchanges/<agent>/*.manifest.json` | Exact census/goal file hashes, row counts, and identities | exchange v2, v3, or v4 |
 | `autoformal/uscode/outputs/<agent>/*.parquet` | Queryable derived views of already retained observations | output index v1 |
 | `autoformal/uscode/outputs/<agent>/*.manifest.json` | Derived table hash and pinned source closure | output index v1 |
+| `autoformal/uscode/outputs-v2/<agent>/*.parquet` | Queryable retained observations including full learned formula columns | output index v2 |
+| `autoformal/uscode/outputs-v2/<agent>/*.manifest.json` | Derived table hash and pinned source closure | output index v2 |
 
 `source_span_id`, `source_text_sha256`, and `census_sha256` connect the tables.
 Different model or compiler revisions may produce distinct observations of the
@@ -27,6 +30,56 @@ and target-conditioned safety projection have separate columns. Empty
 `autoencoder_text` and `autoencoder_compiled` fields indicate that the model did
 not emit those forms. Its eight-dimensional diagnostic vectors have no verified
 semantic encoder provenance. Their reconstruction scores are diagnostic metrics.
+
+The separate `legal_ir:source_conditioned_formula_v1` runtime emits learned
+typed rules directly from source text. Capture this runtime with
+`capture_learned_formula_observations(runtime, sources)` in
+`ipfs_datasets_py.logic.autoformal.paired_span_census`, where `sources` contains
+`source_span_id` and `text`. Attach each result to its corresponding exchange
+input as `learned_formula_observation`. The capture records exact single-source
+inference, source and checkpoint hashes, runtime source identity, and model
+identity. It invokes no deterministic compiler to produce the learned rule.
+
+Keep the compiler result in `compiler_result`. For the formula census, call
+`build_paired_census` with that result and the learned capture, using the capture's
+`model_identity`; attach the resulting span's `comparison` and a reference to
+its paired observation as `comparison_provenance` before exporting the exchange.
+The exchange retains that exact comparison. Its default comparison for older
+producers is a family/text observation, so it must not be substituted for an AST
+comparison. A decoded learned formula needs no invented `autoencoder_text`,
+cosine score, or reconstruction loss. A retained AST mismatch produces both
+deferred compiler-review and training work with the same bound evidence; neither
+producer is designated as ground truth. Agreement remains observational.
+Redundant temporal display records can differ while the canonical rules are
+identical. Before omitting repair work for that case, the exchange recomputes
+the paired comparator on the full retained model and compiler ASTs. A supplied
+`canonical_core_agrees` flag alone cannot suppress a missing exception or a
+different deadline. Raw outputs and the original comparison remain unchanged.
+
+Census v4 and output index v2 expose:
+
+| Column | Meaning |
+| --- | --- |
+| `autoencoder_formula_status` | Actual decoded/abstained status, or `not_observed` |
+| `autoencoder_formal_outputs_json` | Every full model-generated typed formal output, including its AST payload |
+| `autoencoder_canonical_ir_json` | Complete model-generated canonical IR, including conditions, exceptions, and temporal constraints |
+| `autoencoder_formula_text` | Display text only; it may omit AST details and is not authoritative |
+| `autoencoder_formula_observation_json` | Exact capture envelope and full raw inference receipt, including generated token IDs and abstentions |
+| `autoencoder_formula_provenance_json` | Capture identity and provenance, excluding the duplicated inference body |
+
+The exporter validates source and checkpoint binding and refuses contradictory
+target-access, training, semantic-verification, or admission claims. Imported
+receipt hashes establish internal consistency, not producer authenticity or
+proof. Runtime source hashes are historical provenance and need not equal the
+reader's current checkout. A schema-valid learned rule can still omit an
+exception; only comparison of the complete AST exposes that error. Export
+retains the observation for repair and learning without granting qualification.
+
+Existing v2/v3 exchanges remain importable and replay with their original
+schemas, paths, hashes, and bounded goal evidence. New writes use v4. Missing
+historical learned receipts remain missing; indexing does not rerun inference
+or invent formulas. New derived indexes use `outputs-v2`, leaving v1 files
+immutable. Keep separate dataset configurations for these schemas.
 
 The source compiler's formulas are in `compiler_rules_json`, with every retained
 component in `compiler_components_json` and the complete original compiler
@@ -84,7 +137,9 @@ connection = duckdb.connect(":memory:")
 print(connection.execute("""
     SELECT source_span_id, compiler_status, compiler_rule_count,
            compiler_rules_json, autoencoder_raw_embedding,
-           autoencoder_raw_reconstruction_loss, goal_references_json
+           autoencoder_raw_reconstruction_loss,
+           autoencoder_formal_outputs_json, autoencoder_canonical_ir_json,
+           goal_references_json
     FROM read_parquet(?)
     WHERE compiler_rule_count > 0
 """, ["outputs-<sha256>.parquet"]).fetchall())
@@ -153,6 +208,10 @@ configs:
     data_files:
       - split: train
         path: autoformal/uscode/census-v3/**/*.parquet
+  - config_name: census_v4
+    data_files:
+      - split: train
+        path: autoformal/uscode/census-v4/**/*.parquet
   - config_name: supervisor_goals_v2
     data_files:
       - split: train
@@ -161,6 +220,10 @@ configs:
     data_files:
       - split: train
         path: autoformal/uscode/outputs/**/*.parquet
+  - config_name: retained_outputs_v2
+    data_files:
+      - split: train
+        path: autoformal/uscode/outputs-v2/**/*.parquet
 ```
 
 `train` is a dataset split label, not a claim that the rows are qualified
@@ -174,7 +237,7 @@ from datasets import load_dataset
 
 rows = load_dataset(
     "justicedao/uscode-autoformal-span-cache",
-    "retained_outputs_v1",
+    "retained_outputs_v2",
     split="train",
     revision="<immutable-published-commit>",
     streaming=True,
@@ -192,6 +255,11 @@ identity. Follow `source_goals_path` at `source_revision` to the full
 `packet_json` and `task_json`, including source context, observed failures,
 repair scope, and original acceptance requirements. These are exported work
 items with `handoff_status=dataset`, `enqueued=false`, and no execution authority.
+For v4, `observation_evidence` includes hashes and byte counts of the complete
+learned output, provenance, and raw receipt columns. Small values are also
+inlined; large values are retrieved by the manifest-verified census hash. The
+inline budget remains 32 KiB with at most 4 KiB per field, so large raw receipts
+do not multiply supervisor packet memory use.
 
 Use [`import_span_cache_exchange.py`](../../scripts/ops/legal_ir/import_span_cache_exchange.py)
 with the original exchange manifest to validate or prepare a later import.

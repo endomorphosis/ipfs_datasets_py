@@ -132,7 +132,7 @@ def _published(db, batch_id):
 
 def _prepare(root, batch_id, manifest_path, publication, receipt_sha):
     manifest_raw, _ = _snapshot(Path(manifest_path))
-    if json.loads(manifest_raw).get("schema") == "uscode-paired-span-bundle/v1":
+    if json.loads(manifest_raw).get("schema") in {"uscode-paired-span-bundle/v1", "uscode-paired-span-bundle/v2"}:
         from .paired_span_publication import prepare_cleanup
         return prepare_cleanup(root, batch_id, manifest_path, publication, receipt_sha)
     fingerprint = publication.get("fingerprint", "")

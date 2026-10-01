@@ -54,11 +54,11 @@ def _bundle(tmp_path, row=None):
     return receipt, exchange.load_exchange_bundle(receipt["manifest"]["path"])
 
 
-def test_v3_outputs_separate_measured_vectors_rules_and_derived_bridge_targets(tmp_path):
+def test_v4_outputs_separate_measured_vectors_rules_and_derived_bridge_targets(tmp_path):
     original = _observation()
     receipt, bundle = _bundle(tmp_path, original)
     row = bundle["census_rows"][0]
-    assert row["schema_version"] == "uscode-autoformal-ae-compiler-census/v3"
+    assert row["schema_version"] == "uscode-autoformal-ae-compiler-census/v4"
     assert row["autoencoder_output_kind"] == "embedding_reconstruction"
     assert row["autoencoder_output_status"] == "diagnostic_observed"
     assert row["autoencoder_text"] == row["autoencoder_compiled"] == ""
@@ -75,7 +75,7 @@ def test_v3_outputs_separate_measured_vectors_rules_and_derived_bridge_targets(t
     assert json.loads(row["observed_logic_views_json"]) == ["deontic_norms", "fol"]
     assert json.loads(row["observed_logic_families_json"]) == []
     assert json.loads(row["input_json"]) == original
-    assert receipt["census_path_in_repo"].startswith("autoformal/uscode/census-v3/")
+    assert receipt["census_path_in_repo"].startswith("autoformal/uscode/census-v4/")
     assert not any(row[name] for name in ("admitted", "formalized", "wrote_compiler"))
 
 
@@ -126,20 +126,25 @@ def test_large_formal_document_is_fully_retained_but_goals_use_bounded_hash_refe
     assert len(exchange.canonical_bytes(goal)) < 64 * 1024
 
 
-def _as_v2(built):
-    """Produce a historical v2 bundle with the original, smaller goal capture."""
+def _as_legacy(built, version):
+    """Produce historical v2/v3 bundles with their original goal evidence shape."""
     old = copy.deepcopy(built)
+    columns = exchange.CENSUS_COLUMNS_V2 if version == 2 else exchange.CENSUS_COLUMNS_V3
+    schema = exchange.CENSUS_SCHEMA_V2 if version == 2 else exchange.CENSUS_SCHEMA_V3
     for census in old["census_rows"]:
-        for name in set(census) - set(exchange.CENSUS_COLUMNS_V2):
+        for name in set(census) - set(columns):
             census.pop(name)
-        census["schema_version"] = exchange.CENSUS_SCHEMA_V2
+        census["schema_version"] = schema
         census["census_sha256"] = exchange._row_hash(census)
     digest = old["census_rows"][0]["census_sha256"]
     for goal in old["goal_rows"]:
         packet, task = json.loads(goal["packet_json"]), json.loads(goal["task_json"])
         assert goal["record_kind"] == "repair_packet"
         capture = packet["row"]["capture"]
-        capture.pop("observation_evidence")
+        if version == 2:
+            capture.pop("observation_evidence")
+        else:
+            capture["observation_evidence"] = exchange._observation_evidence(old["census_rows"][0])
         capture["census_sha256"] = digest
         raw = exchange.canonical_bytes(packet)
         packet_digest = hashlib.sha256(raw).hexdigest()
@@ -150,18 +155,26 @@ def _as_v2(built):
     return old
 
 
-def test_pending_v2_bundle_preserves_all_original_bytes_and_hashes(tmp_path):
-    built = _as_v2(exchange.exchange_from_compiled([_observation()], agent_id="legacy"))
+@pytest.mark.parametrize("version", [2, 3])
+def test_pending_legacy_bundle_preserves_all_original_bytes_and_hashes(tmp_path, version):
+    built = _as_legacy(exchange.exchange_from_compiled([_observation()], agent_id="legacy"), version)
     kwargs = dict(repository_id="justicedao/uscode-autoformal-span-cache", agent_id="legacy")
     first = exchange._save_bundle(built, tmp_path / "census.parquet", tmp_path / "goals.parquet", **kwargs)
     paths = [Path(first[kind]["path"]) for kind in ("census", "goals", "manifest")]
     before = {path: path.read_bytes() for path in paths}
-    assert first["census_path_in_repo"].startswith("autoformal/uscode/census/legacy/")
+    directory = "census" if version == 2 else "census-v3"
+    assert first["census_path_in_repo"].startswith(f"autoformal/uscode/{directory}/legacy/")
     loaded = exchange.load_exchange_bundle(paths[-1])
-    assert loaded["manifest"]["schema"] == exchange.EXCHANGE_MANIFEST_SCHEMA_V2
+    expected_schema = exchange.EXCHANGE_MANIFEST_SCHEMA_V2 if version == 2 else exchange.EXCHANGE_MANIFEST_SCHEMA_V3
+    assert loaded["manifest"]["schema"] == expected_schema
     assert loaded["census_rows"] == built["census_rows"]
     assert loaded["goal_rows"] == built["goal_rows"]
-    assert "observation_evidence" not in loaded["repair_packets"][0]["packet"]["row"]["capture"]
+    capture = loaded["repair_packets"][0]["packet"]["row"]["capture"]
+    if version == 2:
+        assert "observation_evidence" not in capture
+    else:
+        assert capture["observation_evidence"]["schema"] == "uscode-autoformal-output-evidence/v1"
+        assert "autoencoder_formula_observation_json" not in capture["observation_evidence"]["outputs"]
     assert exchange.pending_exchange_manifests(tmp_path) == [paths[-1]]
     repeated = exchange._save_bundle(loaded, paths[0], paths[1], **kwargs)
     assert repeated["fingerprint"] == first["fingerprint"]
@@ -248,3 +261,196 @@ def test_full_abstention_keeps_existing_reason_without_partial_trigger(tmp_path)
     assert bundle["census_rows"][0]["reason"] == "no_parser_elements"
     packet = bundle["repair_packets"][0]["packet"]
     assert "compiler_repair_trigger" not in packet["row"]["capture"]
+
+
+def _learned_observation():
+    """An authored wire fixture, not an attestation that a model generated it."""
+    from ipfs_datasets_py.logic.autoformal.learned_formula_observation import (
+        RUNTIME_ID, SCHEMA, learned_formula_model_identity,
+    )
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_learning import FALSE
+    original = _observation()
+    rule = {"actor": "agency", "action": "disclose", "object": "records", "modality": "F",
+            "conditions": [], "exceptions": [], "temporal": []}
+    formula = 'F(disclose(agency, "records"))'
+    source_hash = hashlib.sha256(original["text"].encode()).hexdigest()
+    policy = {**FALSE, "source_input_conditioned": True, "independent_text_to_logic": True,
+              "learned_formula_generation": True, "training_executed": False,
+              "teacher_forcing": False, "target_access": False}
+    decoded = {**policy, "source_sha256": source_hash, "status": "decoded", "reason": None,
+               "canonical_ir": {"rules": [rule]}, "formula_text": formula,
+               "sample_memory_used": False, "family_syntax_checked": False, "temperature": 0,
+               "generated_token_ids": [1, 3, 2], "minimum_decision_logit_margin": 0.5,
+               "syntax_scope": "canonical_rule_schema_and_decoder_grammar",
+               "formal_outputs": [{**FALSE, "family": "deontic", "format": "typed-deontic-rule/v1",
+                   "origin": "learned_source_conditioned_formula_decoder", "payload": rule,
+                   "formula_text": formula, "formula_text_role": "display_only_full_ast_is_authoritative",
+                   "syntax_scope": "canonical_rule_schema_and_decoder_grammar"}]}
+    receipt = {**policy, "schema": "learned-legal-formula-inference/v1",
+               "lineage_id": "source_conditioned_formula_v1", "checkpoint_sha256": "a" * 64,
+               "checkpoint_optimizer_steps": 1, "trained_checkpoint": True, "status": "decoded",
+               "decoded_count": 1, "decoded_formulas_generated": True, "rows": [decoded]}
+    files = {"fixture/runtime.py": "b" * 64}
+    observation = {"schema": SCHEMA, "runtime_id": RUNTIME_ID,
+        "model_identity": learned_formula_model_identity("a" * 64), "checkpoint_sha256": "a" * 64,
+        "runtime_source_identity": {"files": files, "sha256": exchange._sha(exchange.canonical_bytes(files)),
+            "scope": "listed_runtime_files_only_not_transitive_dependency_provenance"},
+        "capture_source_sha256": "c" * 64, "source_text_sha256": source_hash,
+        "source_span_id": original["source_span_id"], "row_index": 0, "inference": receipt,
+        "inference_sha256": exchange._sha(exchange.canonical_bytes(receipt)),
+        "provenance_scope": "local_runtime_capture_not_external_execution_attestation"}
+    original["learned_formula_observation"] = observation
+    return original
+
+
+def _rehash_inference(original):
+    observation = original["learned_formula_observation"]
+    observation["inference_sha256"] = exchange._sha(exchange.canonical_bytes(observation["inference"]))
+
+
+def test_full_learned_formula_and_provenance_survive_verified_export_and_goal_binding(tmp_path):
+    original = _learned_observation()
+    identity = original["learned_formula_observation"]["runtime_source_identity"]
+    identity["files"].update({f"fixture/runtime_dependency_{index}.py": "d" * 64 for index in range(100)})
+    identity["sha256"] = exchange._sha(exchange.canonical_bytes(identity["files"]))
+    unused, bundle = _bundle(tmp_path, original)
+    row = bundle["census_rows"][0]
+    observation = original["learned_formula_observation"]
+    decoded = observation["inference"]["rows"][0]
+    assert row["autoencoder_output_kind"] == "learned_source_conditioned_formula"
+    assert row["autoencoder_formula_status"] == "decoded"
+    assert json.loads(row["autoencoder_formal_outputs_json"]) == decoded["formal_outputs"]
+    assert json.loads(row["autoencoder_canonical_ir_json"]) == decoded["canonical_ir"]
+    assert row["autoencoder_formula_text"] == decoded["formula_text"]
+    assert json.loads(row["autoencoder_formula_observation_json"]) == observation
+    assert json.loads(row["input_json"]) == original
+    assert row["model_identity"] == observation["model_identity"]
+    assert json.loads(row["autoencoder_formula_provenance_json"]) == {
+        key: value for key, value in observation.items() if key != "inference"}
+    # Legacy diagnostics are still retained, not overwritten by the new formula.
+    assert json.loads(row["autoencoder_raw_decoder_json"])["embedding"] == [0.3, 0.4]
+    evidence = bundle["repair_packets"][0]["packet"]["row"]["capture"]["observation_evidence"]
+    assert evidence["schema"] == "uscode-autoformal-output-evidence/v2"
+    ref = evidence["outputs"]["autoencoder_formula_observation_json"]
+    assert "inline" not in ref
+    assert ref["sha256"] == hashlib.sha256(row["autoencoder_formula_observation_json"].encode()).hexdigest()
+    assert evidence["outputs"]["autoencoder_formal_outputs_json"]["inline"] == decoded["formal_outputs"]
+    assert all(row[key] is False for key in ("admitted", "formalized", "wrote_compiler"))
+
+
+@pytest.mark.parametrize("level,key", [
+    ("receipt", "admitted"), ("row", "qualified"), ("row", "semantic_correctness_verified"),
+    ("row", "target_access"), ("row", "teacher_forcing"), ("row", "training_executed"),
+    ("row", "roundtrip_ok"), ("output", "proof_authority"), ("output", "formalized"),
+])
+def test_learned_false_authority_and_target_claims_are_rejected_even_after_rehash(tmp_path, level, key):
+    original = _learned_observation()
+    receipt = original["learned_formula_observation"]["inference"]
+    value = receipt if level == "receipt" else receipt["rows"][0]
+    if level == "output":
+        value = value["formal_outputs"][0]
+    value[key] = True
+    _rehash_inference(original)
+    with pytest.raises(SpanEvidenceError, match="invalid learned formula"):
+        _bundle(tmp_path, original)
+    assert not list(tmp_path.glob("*.parquet"))
+
+
+@pytest.mark.parametrize("mutation", ["wrong_source", "wrong_span", "wrong_checkpoint", "wrong_schema", "bad_ast", "non_object"])
+def test_learned_malformed_and_cross_source_receipts_are_rejected(tmp_path, mutation):
+    original = _learned_observation()
+    observation = original["learned_formula_observation"]
+    if mutation == "wrong_source":
+        original["text"] += " unless emergency."
+    elif mutation == "wrong_span":
+        original["source_span_id"] = "another-span"
+    elif mutation == "wrong_checkpoint":
+        observation["inference"]["checkpoint_sha256"] = "d" * 64
+    elif mutation == "wrong_schema":
+        observation["schema"] = "invented/v1"
+    elif mutation == "bad_ast":
+        observation["inference"]["rows"][0]["canonical_ir"]["rules"][0]["temporal"] = "ten days"
+    _rehash_inference(original)
+    if mutation == "non_object":
+        original["learned_formula_observation"] = []
+    with pytest.raises(SpanEvidenceError, match="invalid learned formula"):
+        _bundle(tmp_path, original)
+
+
+def test_learned_abstention_retains_raw_receipt_without_fabricated_outputs(tmp_path):
+    original = _learned_observation()
+    receipt = original["learned_formula_observation"]["inference"]
+    receipt.update(status="abstained", decoded_count=0, decoded_formulas_generated=False)
+    receipt["rows"][0].update(status="abstained", reason="unsupported source", canonical_ir=None,
+                              formula_text=None, formal_outputs=[])
+    _rehash_inference(original)
+    unused, bundle = _bundle(tmp_path, original)
+    row = bundle["census_rows"][0]
+    assert row["autoencoder_formula_status"] == "abstained"
+    assert row["autoencoder_formal_outputs_json"] == "[]"
+    assert row["autoencoder_canonical_ir_json"] == "null"
+    assert row["autoencoder_formula_text"] == ""
+    assert json.loads(row["autoencoder_formula_observation_json"])["inference"] == receipt
+
+
+def test_rehashed_census_cannot_rebind_a_learned_receipt_to_another_model(tmp_path):
+    built = exchange.exchange_from_compiled([_learned_observation()], agent_id="test")
+    built["goal_rows"] = []
+    row = built["census_rows"][0]
+    row["model_identity"] = "another-model"
+    row["census_sha256"] = exchange._row_hash(row)
+    with pytest.raises(SpanEvidenceError, match="census model identity differs"):
+        exchange._save_bundle(built, tmp_path / "census.parquet", tmp_path / "goals.parquet",
+                              repository_id=row["repository_id"], agent_id="test")
+
+
+@pytest.mark.parametrize("agrees", [False, True])
+def test_learned_paired_comparison_does_not_require_fabricated_text_or_vector_scores(tmp_path, agrees):
+    original = _learned_observation()
+    original.pop("strict_compiler_agreement")
+    original["comparison"] = {"agrees": agrees, "comparable": True,
+        "reason": "identical_formal_representations" if agrees else "formal_output_mismatch",
+        "status": "agree" if agrees else "disagree", "capture": {}}
+    unused, bundle = _bundle(tmp_path, original)
+    row = bundle["census_rows"][0]
+    assert json.loads(row["comparison_json"]) == original["comparison"]
+    assert row["comparison_kind"] == "retained_formula_comparison_not_semantic_equivalence"
+    assert row["autoencoder_text"] == ""
+    assert row["cosine_similarity"] is row["cross_entropy_loss"] is row["reconstruction_loss"] is None
+    assert row["agrees"] is (None if agrees else False)
+    if agrees:
+        assert not bundle["goal_rows"]
+    else:
+        assert len(bundle["repair_packets"]) == len(bundle["training_goals"]) == 1
+        capture = bundle["repair_packets"][0]["packet"]["row"]["capture"]
+        assert capture["observed_formula_comparison_reason"] == "formal_output_mismatch"
+        assert row["reason"] == "strict_roundtrip_failed"
+
+
+@pytest.mark.parametrize("lost_exception", [False, True])
+def test_metadata_only_comparison_is_recomputed_before_suppressing_work(tmp_path, lost_exception):
+    original = _learned_observation()
+    original.pop("strict_compiler_agreement")
+    decoded = original["learned_formula_observation"]["inference"]["rows"][0]
+    rule = decoded["canonical_ir"]["rules"][0]
+    rule["temporal"] = ["within 10 days"]
+    # Fixture payload and canonical IR intentionally share the same rule.
+    compiler_rule = {**copy.deepcopy(rule), "temporal_records": [
+        {"temporal_kind": "within_duration", "quantity": 10, "value": "10 days"}]}
+    if lost_exception:
+        compiler_rule["exceptions"] = ["emergency"]
+    original["compiler_result"]["rules"] = [compiler_rule]
+    original["comparison"] = {"agrees": False, "comparable": True,
+        "method": "exact_ast_and_validated_canonical_core/v2", "canonical_core_agrees": True,
+        "difference_kind": "validated_temporal_metadata_only", "reason": "validated_temporal_metadata_only"}
+    _rehash_inference(original)
+    unused, bundle = _bundle(tmp_path, original)
+    row = bundle["census_rows"][0]
+    assert json.loads(row["comparison_json"]) == original["comparison"]
+    if lost_exception:
+        assert len(bundle["repair_packets"]) == len(bundle["training_goals"]) == 1
+        assert row["agrees"] is False
+    else:
+        assert row["agrees"] is None
+        assert row["reason"] == "validated_temporal_metadata_only"
+        assert not bundle["goal_rows"]

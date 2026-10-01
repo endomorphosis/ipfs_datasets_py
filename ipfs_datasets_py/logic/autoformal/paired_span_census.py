@@ -20,11 +20,19 @@ import re
 import zlib
 from typing import Any
 
+from .learned_formula_observation import (
+    capture_learned_formula_observations, learned_formula_model_identity,
+    validate_learned_formula_observation,
+)
 
-SCHEMA = "uscode-paired-span-census/v1"
-MANIFEST_SCHEMA = "uscode-paired-span-bundle/v1"
+
+SCHEMA = "uscode-paired-span-census/v2"
+MANIFEST_SCHEMA = "uscode-paired-span-bundle/v2"
+LEGACY_SCHEMA = "uscode-paired-span-census/v1"
+LEGACY_MANIFEST_SCHEMA = "uscode-paired-span-bundle/v1"
 REPOSITORY = "justicedao/uscode-autoformal-span-cache"
-REPO_PREFIX = "autoformal/uscode/paired-v1"
+REPO_PREFIX = "autoformal/uscode/paired-v2"
+LEGACY_REPO_PREFIX = "autoformal/uscode/paired-v1"
 MAX_ROWS = 128
 MAX_BYTES = 64 * 1024 * 1024
 MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
@@ -97,7 +105,7 @@ def _formal(value: Mapping, *, origin: str | None = None) -> dict:
             "syntax_status": str(value.get("syntax_status") or "not_run")}
 
 
-def compare_formal_outputs(autoencoder: Mapping, compiler: Mapping) -> dict:
+def _compare_formal_outputs_v1(autoencoder: Mapping, compiler: Mapping) -> dict:
     """Exact canonical AST comparison, preserving every field, order and duplicate.
 
     Caller must retain outputs normalized by this module. No text similarity,
@@ -147,6 +155,82 @@ def compare_formal_outputs(autoencoder: Mapping, compiler: Mapping) -> dict:
     if not agrees:
         result["mismatches"] = [str(index) for index in range(max(len(left), len(right)))
                                 if index >= len(left) or index >= len(right) or left[index] != right[index]]
+    return result
+
+
+def _canonical_core(output):
+    """Remove only provably redundant known temporal display sidecars.
+
+    This deliberately does not normalize rule atoms or reorder lists. Unknown
+    keys, dates, anchors and quantities remain in the comparison. The result is
+    a limited representation comparison, never semantic equivalence evidence.
+    """
+    payload = json.loads(output["payload_json"])
+    fields = {"modality", "actor", "action", "object", "conditions", "exceptions", "temporal"}
+    if (output["format"] != FORMAL_FORMAT or output["family"] not in {"typed_deontic", "deontic"}
+            or not isinstance(payload, dict) or set(payload) != fields | {"temporal_records"}):
+        return payload, False
+    core = {key: value for key, value in payload.items() if key != "temporal_records"}
+    try:
+        from ..legal_ir.canonical_contracts import CanonicalRule
+        if CanonicalRule.from_dict(core).to_dict() != core:
+            return payload, False
+    except (TypeError, ValueError):
+        return payload, False
+    records = payload["temporal_records"]
+    if type(records) is not list or not records or len(records) != len(core["temporal"]):
+        return payload, False
+    for atom, record in zip(core["temporal"], records):
+        if type(record) is not dict or set(record) != {"temporal_kind", "quantity", "value"}:
+            return payload, False
+        value, quantity = record["value"], record["quantity"]
+        if (type(value) is not str or type(quantity) is not int or quantity < 0
+                or re.fullmatch(str(quantity) + r" (?:business |calendar )?(?:days?|weeks?|months?|years?|hours?|minutes?|seconds?)", value) is None):
+            return payload, False
+        if record["temporal_kind"] == "within_duration":
+            redundant = atom == "within " + value
+        elif record["temporal_kind"] == "minimum_duration":
+            redundant = atom == "at least " + value or (atom == value and core["object"].endswith(" for at least " + value))
+        else:
+            redundant = False
+        if not redundant:
+            return payload, False
+    return core, True
+
+
+def compare_formal_outputs(autoencoder: Mapping, compiler: Mapping) -> dict:
+    """Keep raw equality and a narrowly validated canonical-core view separate."""
+    # Learned output uses the runtime's native family/origin labels. This
+    # explicit comparison-only alias does not replace the retained originals.
+    def comparable_side(side):
+        value = dict(side)
+        value["formal_outputs"] = [dict(output) for output in side.get("formal_outputs", [])]
+        for output in value["formal_outputs"]:
+            if (output.get("origin") == "learned_source_conditioned_formula_decoder"
+                    and side.get("learned_formula_capture_verified") is True):
+                output["origin"] = "autoencoder_decoder"
+                if output.get("family") == "deontic" and output.get("format") == FORMAL_FORMAT:
+                    output["family"] = "typed_deontic"
+        return value
+    left_side, right_side = comparable_side(autoencoder), comparable_side(compiler)
+    result = _compare_formal_outputs_v1(left_side, right_side)
+    result.update(method="exact_ast_and_validated_canonical_core/v2", raw_agrees=result["agrees"],
+                  canonical_core_agrees=None, difference_kind="not_compared",
+                  canonical_core_scope="validated_redundant_temporal_records_only_not_semantic_equivalence",
+                  canonical_core_mismatches=[])
+    if not result["comparable"]:
+        return result
+    left, right = left_side["formal_outputs"], right_side["formal_outputs"]
+    def cores(outputs):
+        return [(output["family"], output["format"], _json(_canonical_core(output)[0]).decode()) for output in outputs]
+    lc, rc = cores(left), cores(right)
+    result["canonical_core_agrees"] = lc == rc
+    result["canonical_core_mismatches"] = [str(i) for i in range(max(len(lc), len(rc)))
+        if i >= len(lc) or i >= len(rc) or lc[i] != rc[i]]
+    result["difference_kind"] = ("raw_equal" if result["raw_agrees"] else
+        "validated_temporal_metadata_only" if lc == rc else "formal_fields_differ")
+    if not result["raw_agrees"] and lc == rc:
+        result["reason"] = "validated_temporal_metadata_only"
     return result
 
 
@@ -226,7 +310,8 @@ def _portable_repairs(spans: list[dict], *, repository_id: str, agent_id: str,
             continue
         failed = not span["compiler"]["canonical_complete"]
         disagreement = (span["comparison"]["status"] in {"disagree", "diagnostic_disagree"}
-                        or (span["autoencoder"]["status"] == "guided_no_formulas"
+                        and span["comparison"].get("canonical_core_agrees") is not True
+                        or (span["autoencoder"]["status"] in {"guided_no_formulas", "learned_abstained"}
                             and span["compiler"]["complete"] is True
                             and bool(span["compiler"]["formal_outputs"])))
         if not failed and not disagreement:
@@ -245,8 +330,9 @@ def _portable_repairs(spans: list[dict], *, repository_id: str, agent_id: str,
                    "canonical_compiler_formal_output_hashes": [row["sha256"] for row in span["compiler"]["canonical_formal_outputs"]],
                    "source_target_artifact_sha256": span["source_target_artifact_sha256"],
                    "source_target_artifact_pointer": span["source_target_artifact_pointer"],
+                   "learned_formula_observation_artifact_sha256": span["autoencoder"].get("learned_formula_observation_artifact_sha256"),
                    "comparison_is_not_validation": True,
-                   "instruction": "Reproduce and investigate the retained discrepancy. A guided comparison is diagnostic and does not establish that either producer is correct. Preserve all existing regression and Lake admission gates."}
+                   "instruction": "Reproduce and investigate the retained discrepancy. A formula comparison does not establish that either producer is correct. Guided output is diagnostic; independent learned output remains an unqualified candidate. Preserve all existing regression and Lake admission gates."}
         observed = {"id": source["span_id"], "source_span_id": source["span_id"], "legal_id": source["legal_id"],
                     "text": source["text"], "decompiled": span["compiler"]["decompiled"], "reason": reason,
                     "agrees": False, "skipped": False, "capture": context}
@@ -319,11 +405,30 @@ def build_paired_census(
         cc_formal = [_formal(output) for output in direct] if direct is not None else canonical_formal
         direct_binding = _mapping(original.get("direct_formal_output_provenance", observed.get("direct_formal_output_provenance")))
         raw, projected = _mapping(observed.get("raw_decoder")), _mapping(observed.get("safety_projected_decoder"))
-        supplied_formal = original.get("model_formal_outputs", observed.get("model_formal_outputs", []))
+        learned = original.get("learned_formula_observation", observed.get("learned_formula_observation"))
+        learned_row, learned_ref = None, None
+        if learned is not None:
+            try:
+                learned_row = validate_learned_formula_observation(learned, text, source_span_id=span_id)
+            except (ValueError, TypeError) as error:
+                raise PairedCensusError(str(error)) from error
+            if learned["model_identity"] != model_identity:
+                raise PairedCensusError("learned formula model differs from census producer")
+            if any(key in value for value in (original, observed)
+                   for key in ("model_formal_outputs", "model_formal_output_provenance")):
+                raise PairedCensusError("learned capture and caller-supplied model outputs are ambiguous")
+            learned_ref = artifacts.add(learned, "learned_formula_observation")
+        supplied_formal = ([{**output, "independent": True, "target_conditioned": False,
+                             "syntax_status": "passed"} for output in learned_row["formal_outputs"]]
+                           if learned_row is not None else
+                           original.get("model_formal_outputs", observed.get("model_formal_outputs", [])))
         if not isinstance(supplied_formal, list):
             raise PairedCensusError("model formal outputs must be a list")
         ae_formal = [_formal(output) for output in supplied_formal]
-        binding = _mapping(original.get("model_formal_output_provenance", observed.get("model_formal_output_provenance")))
+        binding = ({"source_text_sha256": learned["source_text_sha256"], "model_identity": learned["model_identity"],
+                    "complete": learned_row["status"] == "decoded", "origin": "learned_source_conditioned_formula_decoder"}
+                   if learned_row is not None else
+                   _mapping(original.get("model_formal_output_provenance", observed.get("model_formal_output_provenance"))))
         bound_model = binding.get("model_identity") == model_identity
         if isinstance(binding.get("model_identity"), Mapping) and original_receipt is not None:
             model = binding["model_identity"]
@@ -334,6 +439,8 @@ def build_paired_census(
                            and model.get("bytes") == checkpoint.get("bytes"))
         bound = binding.get("source_text_sha256") == text_hash and bound_model
         ae_status = "formal_output_observed" if ae_formal else "unsupported_symbolic_decoder" if raw else "not_observed"
+        if learned_row is not None:
+            ae_status = "learned_decoded" if ae_formal else "learned_abstained"
         guided_route = binding.get("origin") == "autoencoder_guided_compiler"
         if not ae_formal and guided_route:
             ae_status = "guided_no_formulas" if bound and binding.get("complete") is True else "guided_unavailable"
@@ -368,6 +475,8 @@ def build_paired_census(
                                "embedding_model": str(representation.get("embedding_model") or ""),
                                "semantic_embeddings": representation.get("semantic_embeddings") is True,
                                "formal_outputs": ae_formal, "source_binding_verified": bound,
+                               "learned_formula_capture_verified": learned_row is not None,
+                               "learned_formula_observation_artifact_sha256": learned_ref,
                                "complete": binding.get("complete") is True,
                                "raw_vector": _vector(raw.get("embedding")),
                                "cosine_similarity": _number(raw.get("cosine_similarity")),
@@ -405,7 +514,7 @@ def build_paired_census(
         retained_size += len(_json(row))
         if retained_size + artifacts.decoded_bytes > max_bytes:
             raise PairedCensusError("bundle decoded bytes exceed bound")
-        if not ae_formal and not guided_route:
+        if not ae_formal and not guided_route and learned_row is None:
             contract = {"model_identity": model_identity, "decoder_contract": "independent_symbolic_output/v1"}
             identifier = "CAPABILITY-" + _sha(_json(contract))
             goal = goals.setdefault(identifier, _goal_base(identifier,
@@ -474,7 +583,9 @@ def build_paired_census(
     for span in paired:
         status = span["comparison"]["status"]
         existing_repair = any(goals[x]["record_kind"] == "repair_packet" for x in span["goal_ids"])
-        needs_review = status in {"disagree", "diagnostic_disagree"} or (span["compiler"]["canonical_complete"] is not True and not span["source"]["constitution"])
+        needs_review = (status in {"disagree", "diagnostic_disagree"}
+                        and span["comparison"].get("canonical_core_agrees") is not True
+                        or (span["compiler"]["canonical_complete"] is not True and not span["source"]["constitution"]))
         if needs_review and not existing_repair:
             identifier = "REVIEW-" + _sha(_json({"observation_id": span["observation_id"], "kind": "paired_formal_review"}))
             goal = _goal_base(identifier, issue=span["compiler"]["reason"] or span["comparison"]["reason"],
@@ -490,7 +601,7 @@ def build_paired_census(
             "admitted": False, "formalized": False, "enqueued": False}
 
 
-def arrow_schemas() -> dict:
+def arrow_schemas(version: str = SCHEMA) -> dict:
     """Stable schemas, including fully typed empty tables and nested lists."""
     import pyarrow as pa
     string, boolean, floating = pa.string(), pa.bool_(), pa.float64()
@@ -502,11 +613,17 @@ def arrow_schemas() -> dict:
         + [("semantic_embeddings", boolean), ("formal_outputs", formal), ("source_binding_verified", boolean), ("complete", boolean),
            ("raw_vector", vector), ("cosine_similarity", floating), ("reconstruction_loss", floating), ("projected_vector", vector),
            ("projected_cosine_similarity", floating), ("projected_reconstruction_loss", floating), ("projected_target_conditioned", boolean)])
+    if version != LEGACY_SCHEMA:
+        ae = pa.struct([*ae, ("learned_formula_capture_verified", boolean),
+                        ("learned_formula_observation_artifact_sha256", string)])
     cc = pa.struct([("status", string), ("reason", string), ("complete", boolean), ("canonical_complete", boolean), ("decompiled", string),
                     ("roundtrip_ok", boolean), ("formal_outputs", formal), ("canonical_formal_outputs", formal),
                     ("component_count", pa.int64()), ("components_artifact_sha256", string), ("components_artifact_pointer", string)])
     comparison = pa.struct([("status", string), ("comparable", boolean), ("agrees", boolean), ("independent", boolean),
         ("method", string), ("coverage_scope", string), ("reason", string), ("mismatches", strings), ("autoencoder_output_count", pa.int64()), ("compiler_output_count", pa.int64())])
+    if version != LEGACY_SCHEMA:
+        comparison = pa.struct([*comparison, ("raw_agrees", boolean), ("canonical_core_agrees", boolean),
+            ("difference_kind", string), ("canonical_core_scope", string), ("canonical_core_mismatches", strings)])
     provenance = pa.struct([(x, string) for x in ("agent_id", "code_identity", "model_identity", "batch_id")]
         + [("elapsed_seconds", floating), ("wall_seconds_per_span", floating), ("bridge_names", strings),
            ("evaluate_provers", boolean), ("disk_cache", boolean), ("parallel_workers", pa.int64()), ("sample_count", pa.int64())])
@@ -597,19 +714,21 @@ def load_paired_census_bundle(manifest_path: str | Path, *, max_bytes: int = MAX
         raise PairedCensusError("manifest must be a bounded regular file")
     manifest_raw = path.read_bytes()
     manifest = json.loads(manifest_raw)
-    if manifest.get("schema") != MANIFEST_SCHEMA or set(manifest.get("tables", {})) != set(TABLE_NAMES):
+    if manifest.get("schema") not in {MANIFEST_SCHEMA, LEGACY_MANIFEST_SCHEMA} or set(manifest.get("tables", {})) != set(TABLE_NAMES):
         raise PairedCensusError("unsupported manifest schema or tables")
+    version = LEGACY_SCHEMA if manifest["schema"] == LEGACY_MANIFEST_SCHEMA else SCHEMA
+    repo_prefix = LEGACY_REPO_PREFIX if version == LEGACY_SCHEMA else REPO_PREFIX
     if "exporter_sha256" in manifest and re.fullmatch(r"[0-9a-f]{64}", str(manifest["exporter_sha256"])) is None:
         raise PairedCensusError("invalid exporter source identity")
     if manifest.get("fingerprint") != _sha(_json({k: v for k, v in manifest.items() if k not in {"fingerprint", "path_in_repo"}})):
         raise PairedCensusError("manifest content identity differs")
     if any(manifest.get(name) is not False for name in ("admitted", "formalized", "enqueued")):
         raise PairedCensusError("bundle cannot grant authority")
-    schemas, tables, used, table_paths = arrow_schemas(), {}, 0, {}
+    schemas, tables, used, table_paths = arrow_schemas(version), {}, 0, {}
     for name in TABLE_NAMES:
         entry = manifest["tables"][name]
         relative = entry.get("path_in_repo", "")
-        if (not isinstance(relative, str) or not relative.startswith(REPO_PREFIX + "/") or ".." in Path(relative).parts
+        if (not isinstance(relative, str) or not relative.startswith(repo_prefix + "/") or ".." in Path(relative).parts
                 or "\\" in relative or Path(relative).name != entry.get("filename")):
             raise PairedCensusError("invalid bundle repository path")
         table_path = path.parent / Path(relative).name
@@ -619,7 +738,7 @@ def load_paired_census_bundle(manifest_path: str | Path, *, max_bytes: int = MAX
             manifest_relative = manifest.get("path_in_repo", "")
             relative_parts = Path(manifest_relative).parts
             absolute_parts = path.absolute().parts
-            if (not manifest_relative.startswith(REPO_PREFIX + "/") or ".." in relative_parts
+            if (not manifest_relative.startswith(repo_prefix + "/") or ".." in relative_parts
                     or "\\" in manifest_relative or len(relative_parts) >= len(absolute_parts)
                     or tuple(absolute_parts[-len(relative_parts):]) != relative_parts):
                 raise PairedCensusError("bundle tables missing from local or repository layout")
@@ -660,12 +779,39 @@ def load_paired_census_bundle(manifest_path: str | Path, *, max_bytes: int = MAX
     if len(spans) != len(tables["paired_spans"]) or len(goals) != len(tables["goals"]):
         raise PairedCensusError("duplicate observation or goal identity")
     for span in spans.values():
+        if version != LEGACY_SCHEMA and (span["schema_version"] != version
+                or span["repository_id"] != manifest["repository_id"]
+                or span["provenance"]["agent_id"] != manifest["agent_id"]):
+            raise PairedCensusError("paired observation schema or producer differs from manifest")
         checked = {key: value for key, value in span.items() if key != "observation_id"}
         checked["goal_ids"] = []
         if _sha(_json(checked)) != span["observation_id"] or _sha(span["source"]["text"].encode()) != span["source"]["text_sha256"]:
             raise PairedCensusError("paired observation identity differs")
-        if span["comparison"] != compare_formal_outputs(span["autoencoder"], span["compiler"]):
+        compare = _compare_formal_outputs_v1 if version == LEGACY_SCHEMA else compare_formal_outputs
+        if span["comparison"] != compare(span["autoencoder"], span["compiler"]):
             raise PairedCensusError("paired comparison differs from retained formal outputs")
+        if version != LEGACY_SCHEMA:
+            ae = span["autoencoder"]
+            reference = ae["learned_formula_observation_artifact_sha256"]
+            if ae["learned_formula_capture_verified"] is not (reference is not None):
+                raise PairedCensusError("learned formula capture verification lacks its evidence")
+            if reference is not None:
+                if reference not in artifacts or artifacts[reference]["kind"] != "learned_formula_observation":
+                    raise PairedCensusError("missing learned formula capture artifact")
+                learned = json.loads(decode_artifact(artifacts[reference]))
+                try:
+                    decoded = validate_learned_formula_observation(learned, span["source"]["text"],
+                        source_span_id=span["source"]["span_id"])
+                except (ValueError, TypeError) as error:
+                    raise PairedCensusError(str(error)) from error
+                expected = [_formal({**output, "independent": True, "target_conditioned": False,
+                                     "syntax_status": "passed"}) for output in decoded["formal_outputs"]]
+                if (ae["formal_outputs"] != expected or ae["model_identity"] != learned["model_identity"]
+                        or span["provenance"]["model_identity"] != learned["model_identity"]
+                        or ae["complete"] is not (decoded["status"] == "decoded")
+                        or ae["source_binding_verified"] is not True
+                        or ae["status"] != ("learned_decoded" if expected else "learned_abstained")):
+                    raise PairedCensusError("paired output differs from exact learned formula capture")
         if span["admitted"] is not False or span["formalized"] is not False or span["lake"]["admitted"] is not False:
             raise PairedCensusError("paired observation cannot grant authority")
         if span["source"]["constitution"] and span["compiler"]["roundtrip_ok"]:
@@ -728,7 +874,7 @@ def load_paired_census_bundle(manifest_path: str | Path, *, max_bytes: int = MAX
             observed = identities[span["source"]["span_id"]]
             if observed.get("text") != span["source"]["text"]:
                 raise PairedCensusError("original receipt source text differs")
-    return {"schema_version": SCHEMA, "repository_id": manifest["repository_id"], "agent_id": manifest["agent_id"],
+    return {"schema_version": version, "repository_id": manifest["repository_id"], "agent_id": manifest["agent_id"],
             **tables, "manifest": manifest, "original_receipt": original_receipt, "portable_goal_rows": portable_goals,
             "table_paths": table_paths, "manifest_sha256": _sha(manifest_raw),
             "admitted": False, "formalized": False, "enqueued": False}

@@ -112,7 +112,7 @@ def test_disagreement_uploads_census_and_reloadable_goals(tmp_path: Path):
     assert receipt["enqueued"] is False
     assert receipt["repair_packets"] == 1
     assert receipt["training_goals"] >= 1
-    assert uploads[0].startswith("autoformal/uscode/census-v3/compile-test/census-")
+    assert uploads[0].startswith("autoformal/uscode/census-v4/compile-test/census-")
     assert uploads[1].startswith("autoformal/uscode/goals/compile-test/goals-")
     assert "sealed-spans.parquet" not in "".join(uploads)
     assert "resume-checkpoint.parquet" not in "".join(uploads)

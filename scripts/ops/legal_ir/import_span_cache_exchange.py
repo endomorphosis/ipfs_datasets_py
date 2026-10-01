@@ -28,7 +28,9 @@ DEFAULT_REPOSITORY = "justicedao/uscode-autoformal-span-cache"
 DEFAULT_MAX_BYTES = 64 * 1024 * 1024
 DEFAULT_MAX_ROWS = 1000
 MAX_MANIFEST_BYTES = 1024 * 1024
-PAIRED_MANIFEST_SCHEMA = "uscode-paired-span-bundle/v1"
+PAIRED_MANIFEST_SCHEMA_V1 = "uscode-paired-span-bundle/v1"
+PAIRED_MANIFEST_SCHEMA = "uscode-paired-span-bundle/v2"
+PAIRED_MANIFEST_SCHEMAS = frozenset({PAIRED_MANIFEST_SCHEMA_V1, PAIRED_MANIFEST_SCHEMA})
 PAIRED_TABLES = ("paired_spans", "goals", "artifacts")
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _REVISION = re.compile(r"[0-9a-f]{40}\Z")
@@ -162,7 +164,7 @@ def download_bundle(
     if manifest.get("repository_id") != repository_id:
         raise ImportError("manifest repository does not match the requested repository")
     total = manifest_path.stat().st_size
-    paired = manifest.get("schema") == PAIRED_MANIFEST_SCHEMA
+    paired = manifest.get("schema") in PAIRED_MANIFEST_SCHEMAS
     descriptors = manifest.get("tables") if paired else manifest
     kinds = PAIRED_TABLES if paired else ("census", "goals")
     if not isinstance(descriptors, dict) or (paired and set(descriptors) != set(PAIRED_TABLES)):
@@ -418,7 +420,7 @@ def _body_conflict(
     origin = json.loads(str(body.get("exchange_origin_json") or "{}"))
     bundle = origin.get("evidence_bundle")
     if bundle is not None:
-        expected = ({"manifest", *PAIRED_TABLES} if origin.get("bundle_schema") == PAIRED_MANIFEST_SCHEMA
+        expected = ({"manifest", *PAIRED_TABLES} if origin.get("bundle_schema") in PAIRED_MANIFEST_SCHEMAS
                     else {"manifest", "census", "goals"})
         if not isinstance(bundle, dict) or set(bundle) != expected:
             raise ImportError("existing native row has incomplete bundle evidence")
@@ -775,7 +777,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     captured_manifest = json.loads(manifest_raw)
     if not isinstance(captured_manifest, dict):
         raise ImportError("manifest must be an object")
-    paired = captured_manifest.get("schema") == PAIRED_MANIFEST_SCHEMA
+    paired = captured_manifest.get("schema") in PAIRED_MANIFEST_SCHEMAS
     if paired:
         from ipfs_datasets_py.logic.autoformal.paired_span_census import load_paired_census_bundle
         loaded = load_paired_census_bundle(

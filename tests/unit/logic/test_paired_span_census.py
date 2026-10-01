@@ -11,6 +11,7 @@ import pytest
 from ipfs_datasets_py.logic.autoformal.paired_span_census import (
     FORMAL_FORMAT, PairedCensusError, arrow_schemas, build_paired_census,
     decode_artifact, load_paired_census_bundle, write_paired_census_bundle,
+    capture_learned_formula_observations, validate_learned_formula_observation,
 )
 
 
@@ -320,3 +321,210 @@ def test_incomplete_or_unbound_empty_guided_route_is_explicitly_unavailable():
         bundle = _build([row])
         assert bundle["paired_spans"][0]["autoencoder"]["status"] == "guided_unavailable"
         assert all(goal["record_kind"] != "capability_gap" for goal in bundle["goals"])
+
+
+def _canonical_rule(**extra):
+    return {"modality": "O", "actor": "agency", "action": "retain", "object": "the record",
+            "conditions": [], "exceptions": [], "temporal": ["within 20 days"], **extra}
+
+
+def _temporal_row(**extra):
+    core = _canonical_rule(**extra)
+    compiler = {**core, "temporal_records": [{"temporal_kind": "within_duration", "quantity": 20, "value": "20 days"}]}
+    return _with_ae(_row(rule=compiler), [core])
+
+
+def test_redundant_temporal_metadata_has_separate_raw_and_core_equality(tmp_path):
+    original = _temporal_row()
+    bundle = _build([original])
+    span = bundle["paired_spans"][0]
+    assert span["comparison"]["status"] == "disagree"
+    assert span["comparison"]["raw_agrees"] is False
+    assert span["comparison"]["canonical_core_agrees"] is True
+    assert span["comparison"]["difference_kind"] == "validated_temporal_metadata_only"
+    assert json.loads(span["compiler"]["formal_outputs"][0]["payload_json"]) == original["compiler_result"]["rules"][0]
+    assert bundle["goals"] == []
+    files = write_paired_census_bundle(bundle, tmp_path)
+    assert load_paired_census_bundle(files["manifest"]["path"])["paired_spans"] == bundle["paired_spans"]
+
+
+@pytest.mark.parametrize("mutation", ["quantity", "kind", "unit", "unknown", "anchor", "reversed", "empty"])
+def test_temporal_metadata_is_not_discarded_without_exact_redundancy(mutation):
+    row = _temporal_row()
+    rule = row["compiler_result"]["rules"][0]
+    record = rule["temporal_records"][0]
+    if mutation == "quantity":
+        record["quantity"] = 21
+    elif mutation == "kind":
+        record["temporal_kind"] = "minimum_duration"
+    elif mutation == "unit":
+        record["value"] = "20 hours"
+    elif mutation in {"unknown", "anchor"}:
+        record[mutation] = "receipt"
+    elif mutation == "reversed":
+        rule["temporal"] = ["within 10 days", "within 20 days"]
+        row["model_formal_outputs"][0]["payload"]["temporal"] = list(rule["temporal"])
+        rule["temporal_records"].append({"temporal_kind": "within_duration", "quantity": 10, "value": "10 days"})
+    else:
+        rule["temporal_records"] = []
+    bundle = _build([row])
+    assert bundle["paired_spans"][0]["comparison"]["canonical_core_agrees"] is False
+    assert bundle["goals"][0]["record_kind"] == "repair_packet"
+
+
+def test_minimum_duration_kind_is_only_redundant_when_already_explicit():
+    for atom, obj, expected in (("at least 20 days", "record", True),
+                               ("20 days", "record for at least 20 days", True),
+                               ("20 days", "record", False)):
+        row = _temporal_row(temporal=[atom], object=obj)
+        row["compiler_result"]["rules"][0]["temporal_records"][0]["temporal_kind"] = "minimum_duration"
+        assert _build([row])["paired_spans"][0]["comparison"]["canonical_core_agrees"] is expected
+
+
+@pytest.mark.parametrize("changed", [
+    {"exceptions": ["emergency"]}, {"conditions": ["court order"]}, {"actor": "officer"},
+    {"modality": "F"}, {"temporal": ["within 21 days"]}, {"unknown_facet": "retained"},
+])
+def test_core_comparison_preserves_all_changed_facets_and_unknown_fields(changed):
+    row = _temporal_row()
+    row["model_formal_outputs"][0]["payload"].update(changed)
+    bundle = _build([row])
+    assert bundle["paired_spans"][0]["comparison"]["canonical_core_agrees"] is False
+    assert bundle["goals"][0]["record_kind"] == "repair_packet"
+
+
+@pytest.fixture(scope="module")
+def actual_formula_runtime():
+    torch = pytest.importorskip("torch")
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_runtime_registry import open_runtime
+    previous = torch.get_num_threads()
+    torch.set_num_threads(1)
+    runtime = open_runtime("legal_ir", "source_conditioned_formula_v1")
+    examples = [{"id": "train", "source_text": "The agency shall retain the record within 20 days.",
+                 "canonical_ir": {"rules": [_canonical_rule()]}}]
+    try:
+        runtime.train(examples, validation_samples=[], epochs=20, max_seconds=30,
+                      hidden_size=8, embedding_dim=8, batch_size=1, learning_rate=0.02)
+        yield runtime, examples[0]["source_text"]
+    finally:
+        torch.set_num_threads(previous)
+
+
+def test_real_runtime_capture_compares_compiler_and_preserves_native_receipt(actual_formula_runtime, tmp_path, monkeypatch):
+    runtime, text = actual_formula_runtime
+    from ipfs_datasets_py.logic.autoformal import AutoformalSession, compile_span
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_formula_learning, legal_formula_codec
+    compiler = compile_span(AutoformalSession(), text, "actual")
+    before = runtime.describe()["checkpoint_sha256"]
+    def forbidden(*args, **kwargs):
+        raise AssertionError("capture attempted teacher encoding or training")
+    monkeypatch.setattr(legal_formula_codec, "encode_target", forbidden)
+    monkeypatch.setattr(legal_formula_learning, "train_decoder", forbidden)
+    capture = capture_learned_formula_observations(runtime, [{"source_span_id": "actual", "text": text}])[0]
+    decoded = validate_learned_formula_observation(capture, text, source_span_id="actual", expected_checkpoint_sha256=before)
+    assert decoded["canonical_ir"] == {"rules": [_canonical_rule()]}
+    assert runtime.describe()["checkpoint_sha256"] == before
+    assert decoded["target_access"] is decoded["teacher_forcing"] is False
+    observation = {"source_span_id": "actual", "text": text, "legal_id": "authored:actual",
+                   "compiler_result": compiler, "learned_formula_observation": capture}
+    bundle = build_paired_census([observation], code_identity="test", model_identity=capture["model_identity"])
+    span = bundle["paired_spans"][0]
+    assert span["comparison"]["independent"] is True
+    assert span["compiler"]["canonical_complete"] is True
+    assert span["comparison"]["canonical_core_agrees"] is True
+    assert span["autoencoder"]["status"] == "learned_decoded"
+    assert span["autoencoder"]["formal_outputs"][0]["origin"] == "learned_source_conditioned_formula_decoder"
+    assert span["autoencoder"]["formal_outputs"][0]["family"] == "deontic"
+    assert json.loads(span["autoencoder"]["formal_outputs"][0]["payload_json"]) == decoded["formal_outputs"][0]["payload"]
+    assert not span["admitted"] and not span["formalized"] and not span["lake"]["admitted"]
+    files = write_paired_census_bundle(bundle, tmp_path)
+    loaded = load_paired_census_bundle(files["manifest"]["path"])
+    artifact = next(row for row in loaded["artifacts"] if row["kind"] == "learned_formula_observation")
+    assert json.loads(decode_artifact(artifact)) == capture
+
+
+@pytest.mark.parametrize("mutation", ["source", "checkpoint", "target", "authority", "payload", "unknown_ir", "forged_origin",
+                                      "boolean_count", "margin", "detail", "tokens"])
+def test_forged_or_unbound_learned_receipts_fail_closed(actual_formula_runtime, mutation):
+    runtime, text = actual_formula_runtime
+    capture = capture_learned_formula_observations(runtime, [{"source_span_id": "actual", "text": text}])[0]
+    if mutation == "source":
+        capture["source_text_sha256"] = "0" * 64
+    elif mutation == "checkpoint":
+        capture["inference"]["checkpoint_sha256"] = "0" * 64
+    elif mutation == "target":
+        capture["inference"]["rows"][0]["target_access"] = True
+    elif mutation == "authority":
+        capture["inference"]["admitted"] = True
+    elif mutation == "payload":
+        capture["inference"]["rows"][0]["formal_outputs"][0]["payload"]["exceptions"] = ["emergency"]
+    elif mutation == "unknown_ir":
+        capture["inference"]["rows"][0]["canonical_ir"]["rules"][0]["unknown"] = "semantic"
+    elif mutation == "forged_origin":
+        capture["inference"]["rows"][0]["formal_outputs"][0]["origin"] = "autoencoder_guided_compiler"
+    elif mutation == "boolean_count":
+        capture["inference"]["decoded_count"] = True
+    elif mutation == "margin":
+        capture["inference"]["rows"][0]["minimum_decision_logit_margin"] = {}
+    elif mutation == "detail":
+        capture["inference"]["rows"][0]["detail"] = {}
+    else:
+        capture["inference"]["rows"][0]["generated_token_ids"] = [1, True, 2]
+    # Rehashing a malformed payload must not bypass the contract validator.
+    capture["inference_sha256"] = _sha(json.dumps(capture["inference"], sort_keys=True, separators=(",", ":"), ensure_ascii=True))
+    with pytest.raises(ValueError):
+        validate_learned_formula_observation(capture, text, source_span_id="actual")
+
+
+def test_abstention_is_recorded_without_inventing_decoder_capability_gap(actual_formula_runtime):
+    runtime, _ = actual_formula_runtime
+    text = "A spacecraft shall orbit Mars."
+    capture = capture_learned_formula_observations(runtime, [{"source_span_id": "unknown", "text": text}])[0]
+    observation = {"source_span_id": "unknown", "text": text, "learned_formula_observation": capture,
+                   "compiler_result": {"rules": [], "compilation_complete": True}}
+    bundle = build_paired_census([observation], model_identity=capture["model_identity"])
+    assert bundle["paired_spans"][0]["autoencoder"]["status"] == "learned_abstained"
+    assert bundle["paired_spans"][0]["comparison"]["agrees"] is None
+    assert not bundle["goals"]
+
+
+def test_capture_rejects_fake_runtime_and_target_bearing_input(actual_formula_runtime):
+    runtime, text = actual_formula_runtime
+    with pytest.raises(ValueError, match="installed learned formula runtime"):
+        capture_learned_formula_observations(object(), [{"source_span_id": "1", "text": text}])
+    with pytest.raises(ValueError, match="target-free"):
+        capture_learned_formula_observations(runtime, [{"source_span_id": "1", "text": text, "canonical_ir": {}}])
+
+
+@pytest.mark.parametrize("mutation", ["model", "agent", "repository", "schema"])
+def test_rehashed_bundle_cannot_change_learned_producer_identity(actual_formula_runtime, tmp_path, mutation):
+    runtime, text = actual_formula_runtime
+    capture = capture_learned_formula_observations(runtime, [{"source_span_id": "span1", "text": text}])[0]
+    original = _row(rule=_canonical_rule())
+    original.update(text=text, learned_formula_observation=capture)
+    bundle = build_paired_census([original], model_identity=capture["model_identity"])
+    row = bundle["paired_spans"][0]
+    assert not row["goal_ids"]
+    if mutation == "model":
+        row["provenance"]["model_identity"] = "wrong-checkpoint-producer"
+    elif mutation == "agent":
+        row["provenance"]["agent_id"] = "wrong-agent"
+    elif mutation == "repository":
+        row["repository_id"] = "wrong-repository"
+    else:
+        row["schema_version"] = "wrong-schema"
+    row["observation_id"] = _sha(json.dumps({key: value for key, value in row.items() if key != "observation_id"},
+                                           sort_keys=True, ensure_ascii=True, separators=(",", ":")))
+    written = write_paired_census_bundle(bundle, tmp_path)
+    with pytest.raises(PairedCensusError, match="differs from"):
+        load_paired_census_bundle(written["manifest"]["path"])
+
+
+def test_abstained_capture_rejects_malformed_token_evidence(actual_formula_runtime):
+    runtime, _ = actual_formula_runtime
+    text = "A spacecraft shall orbit Mars."
+    capture = capture_learned_formula_observations(runtime, [{"source_span_id": "unknown", "text": text}])[0]
+    capture["inference"]["rows"][0]["generated_token_ids"] = {"untrusted": "prefix"}
+    capture["inference_sha256"] = _sha(json.dumps(capture["inference"], sort_keys=True, separators=(",", ":"), ensure_ascii=True))
+    with pytest.raises(ValueError, match="token evidence"):
+        validate_learned_formula_observation(capture, text)

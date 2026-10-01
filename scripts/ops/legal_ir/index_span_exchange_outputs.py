@@ -18,7 +18,7 @@ from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[3]
 REPOSITORY = "justicedao/uscode-autoformal-span-cache"
-SCHEMA = "uscode-autoformal-output-index/v1"
+SCHEMA = "uscode-autoformal-output-index/v2"
 MAX_BYTES = 64 * 1024 * 1024
 REVISION = re.compile(r"[0-9a-f]{40}\Z")
 
@@ -120,6 +120,12 @@ def derive_rows(bundle, *, revision):
             "autoencoder_output_status": row.get("autoencoder_output_status") or str(ae.get("status") or "not_recorded"),
             "autoencoder_text": row["autoencoder_text"],
             "autoencoder_compiled": row["autoencoder_compiled"],
+            "autoencoder_formula_status": row.get("autoencoder_formula_status", "not_recorded_in_source"),
+            "autoencoder_formula_text": row.get("autoencoder_formula_text", ""),
+            "autoencoder_formal_outputs_json": row.get("autoencoder_formal_outputs_json", "[]"),
+            "autoencoder_canonical_ir_json": row.get("autoencoder_canonical_ir_json", "null"),
+            "autoencoder_formula_observation_json": row.get("autoencoder_formula_observation_json", "null"),
+            "autoencoder_formula_provenance_json": row.get("autoencoder_formula_provenance_json", "null"),
             "autoencoder_raw_embedding": _vector(raw),
             "autoencoder_raw_cosine_similarity": _number(_mapping(raw).get("cosine_similarity")),
             "autoencoder_raw_reconstruction_loss": _number(_mapping(raw).get("reconstruction_loss")),
@@ -189,7 +195,7 @@ def build_index(manifest_path, output_directory, *, revision, agent_id="retained
     pq.write_table(pa.Table.from_pylist(rows, schema=_schema(rows)), sink, compression="zstd")
     raw = sink.getvalue().to_pybytes()
     filename = "outputs-" + _sha(raw) + ".parquet"
-    prefix = "autoformal/uscode/outputs/" + agent_id + "/"
+    prefix = "autoformal/uscode/outputs-v2/" + agent_id + "/"
     sources = []
     for kind, path in (("manifest", Path(manifest_path)), ("census", Path(bundle["census_path"])), ("goals", Path(bundle["goals_path"]))):
         source_raw = _read_regular_snapshot(path, max_bytes=max_bytes)

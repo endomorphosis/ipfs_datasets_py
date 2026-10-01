@@ -53,6 +53,10 @@ def test_retained_vectors_compiler_and_goal_bindings_are_queryable(bundle, tmp_p
     assert row["census_sha256"] == original["census_sha256"]
     assert row["source_manifest_sha256"] == hashlib.sha256(bundle.read_bytes()).hexdigest()
     assert row["logic_target_availability"] == "not_recorded_in_source"
+    assert row["schema_version"] == "uscode-autoformal-output-index/v2"
+    assert row["autoencoder_formula_status"] == "not_observed"
+    assert row["autoencoder_formal_outputs_json"] == "[]"
+    assert row["autoencoder_formula_observation_json"] == "null"
     refs = json.loads(row["goal_references_json"])
     assert {ref["packet_sha256"] for ref in refs} == {goal["packet_sha256"] for goal in source["goal_rows"]}
     assert all(row[field] is False for field in ("admitted", "formalized", "enqueued", "inference_executed", "training_executed"))
@@ -92,6 +96,37 @@ def test_recorded_targets_are_separate_from_model_predictions(bundle):
     assert derived["logic_target_availability"] == "retained"
     assert derived["autoencoder_compiled"] == ""
     assert json.loads(derived["logic_target_observation_json"])["origin"] == "source_compiler"
+
+
+def test_derived_index_preserves_full_formula_fields_without_promoting_them(bundle):
+    source = exchange.load_exchange_bundle(bundle)
+    row = source["census_rows"][0]
+    fields = {
+        "autoencoder_formula_status": "decoded",
+        "autoencoder_formula_text": "O(retain(agency, records))",
+        "autoencoder_formal_outputs_json": '{"test":"full output is preserved verbatim"}',
+        "autoencoder_canonical_ir_json": '{"rules":[{"exceptions":["emergency"]}]}',
+        "autoencoder_formula_observation_json": '{"raw_evidence":"tokens, checkpoint and source"}',
+        "autoencoder_formula_provenance_json": '{"checkpoint_sha256":"retained"}',
+    }
+    # Exercise the pure index projection, not the already separately tested
+    # exchange validator or an inference claim from this authored fixture.
+    row.update(fields)
+    derived = list(indexer.derive_rows(source, revision="a" * 40))[0]
+    assert {key: derived[key] for key in fields} == fields
+    assert derived["inference_executed"] is derived["admitted"] is derived["formalized"] is False
+
+
+def test_historical_index_does_not_invent_missing_learned_receipts(bundle):
+    source = exchange.load_exchange_bundle(bundle)
+    row = source["census_rows"][0]
+    for key in set(exchange.CENSUS_COLUMNS) - set(exchange.CENSUS_COLUMNS_V3):
+        row.pop(key)
+    row["schema_version"] = exchange.CENSUS_SCHEMA_V3
+    derived = list(indexer.derive_rows(source, revision="a" * 40))[0]
+    assert derived["autoencoder_formula_status"] == "not_recorded_in_source"
+    assert derived["autoencoder_formal_outputs_json"] == "[]"
+    assert derived["autoencoder_formula_observation_json"] == "null"
 
 
 def test_historical_compiler_status_and_top_level_target_fallback(bundle):
@@ -163,7 +198,7 @@ def test_upload_verifies_sources_and_uses_parent_cas_then_verifies_outputs(bundl
     assert published["commit_sha"] == "c" * 40
     assert api.created[0]["parent_commit"] == "b" * 40
     assert len(api.created[0]["operations"]) == 2
-    assert all(op.path_in_repo.startswith("autoformal/uscode/outputs/") for op in api.created[0]["operations"])
+    assert all(op.path_in_repo.startswith("autoformal/uscode/outputs-v2/") for op in api.created[0]["operations"])
     indexer.publish_index(result, api=api)
     assert len(api.created) == 1
 

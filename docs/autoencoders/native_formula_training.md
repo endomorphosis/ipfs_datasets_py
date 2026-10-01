@@ -35,9 +35,11 @@ projections remain explicit in the checkpoint and report.
 The current implementation is bounded to 256 rows per corpus, 2,048 features,
 64 latent units, 32 samples per batch, and a 64 MiB checkpoint. Set
 `torch.set_num_threads(1)` explicitly. Use separate processes for independent
-candidates; this local diagnostic lineage has no distributed gradient merge,
-Arrow codec, Quack worker adapter or Hugging Face exchange adapter yet. Do not
-feed its checkpoint into the legal JSON/Arrow sparse-update codec.
+candidates. The [formula fleet profile](formula_fleet.md) now supplies a single
+DuckDB owner, scoped Quack workers, exact resume and separate formula checkpoint
+exchange. It does not supply distributed gradient averaging or an Arrow codec.
+Do not feed these checkpoints into the older legal JSON/Arrow sparse-update
+codec; the version-specific exchange preserves optimizer and selection state.
 
 ## Train, infer and resume with the public interface
 

@@ -439,7 +439,7 @@ def publish_pending(db, upload, runtime=None):
     for batch_id, path in db.execute("SELECT id,manifest FROM batches WHERE status='staged' LIMIT 2").fetchall():
         try:
             manifest_kind = json.loads(Path(path).read_bytes()).get("schema")
-            if manifest_kind == "uscode-paired-span-bundle/v1":
+            if manifest_kind in {"uscode-paired-span-bundle/v1", "uscode-paired-span-bundle/v2"}:
                 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.paired_span_publication import publish_paired_manifest
                 receipt = publish_paired_manifest(path, upload=True, api=api)
             else:
