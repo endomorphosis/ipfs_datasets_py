@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 12 items
+
+<Package ir-release-datasets-20261001>
+  <Package tests>
+    <Package integration>
+      <Dir logic>
+        <Dir software_contracts>
+          <Module test_codebase_federation_qualification.py>
+            <Function test_real_native_queue_source_training_binary_reduction_and_reset>
+            <Function test_completed_exact_retry_and_historical_load_do_not_fit>
+            <Function test_independent_decoder_rejects_self_consistent_favorable_saved_diagnostics>
+            <Function test_owner_retention_replays_actual_weights_and_cas_is_parent_bound>
+            <Function test_caller_favorable_metrics_cannot_replace_independent_policy>
+            <Function test_actual_lost_queue_completion_reply_recovers_without_second_local_fit>
+            <Function test_missing_transfer_artifact_cannot_start_local_optimizer>
+            <Function test_actual_source_change_after_local_fit_refuses_queue_and_native_completion>
+            <Function test_gradient_mode_refuses_before_owner_or_queue_access>
+            <Function test_actual_two_native_subprocesses_overlap_and_reduce_identically>
+            <Function test_parallel_indexed_restart_replay_never_scans_or_fits>
+            <Function test_parallel_cancellation_reaps_actual_workers_before_parent_release>
+
+========================= 12 tests collected in 0.23s ==========================

@@ -1,0 +1,285 @@
+{
+  "current_controls": [
+    {
+      "failed": 0,
+      "group": "generic_federation_binary_codec_sync_registry_and_closed_worker_protocol",
+      "log": "codebase8d-protocol-final.log",
+      "passed": 237,
+      "seconds": 2.8,
+      "skipped": 0
+    },
+    {
+      "failed": 0,
+      "group": "production_gradient_mode_refusal_before_owner_access",
+      "log": "codebase8d-gradient-gate.log",
+      "passed": 1,
+      "seconds": 0.24,
+      "skipped": 0
+    },
+    {
+      "failed": 0,
+      "group": "native_local_queue_dispatch_protocol",
+      "log": "codebase8d-dispatch-unit01.log",
+      "passed": 19,
+      "seconds": 2.04,
+      "skipped": 0
+    },
+    {
+      "failed": 0,
+      "group": "native_local_queue_exact_request_index",
+      "log": "codebase8d-history-unit01.log",
+      "passed": 40,
+      "seconds": 3.06,
+      "skipped": 0
+    }
+  ],
+  "implementation": {
+    "aggregate_optimizer": "fresh_zero_Adam_moments_and_progress",
+    "fixed_parameter_union": [
+      "encoder.weight",
+      "encoder.bias",
+      "decoder.weight",
+      "decoder.bias"
+    ],
+    "parallel": "existing_bounded_two_client_thread_dispatch_with_isolated_numerical_subprocesses",
+    "reduction": "sample_weighted_deterministic_binary_updates",
+    "retention": "independent_exact_weight_source_feature_replay_before_existing_native_expected_parent_CAS",
+    "reused_original_source_and_federation_modules": true,
+    "shared_384_runtime_modified": false,
+    "transport": "existing_local_TaskQueue_artifact_requests_with_source_model_attempt_fence_SHA_CID"
+  },
+  "limits": [
+    "No final-profile actual supervised fit, aggregate, retention promotion, overlap or throughput claim until native acceptance passes.",
+    "Local-only source-bound8D structural feature profile, separate from384D semantic decoder and existing legal/security/intent/ui checkpoints.",
+    "Five-row development feature cohort is not an unseen benchmark, arbitrary-code decoder, semantic theorem or property predictor.",
+    "No collective gradient backend is installed or silently substituted; federation executor rejects gradient mode.",
+    "Fixed complete four-parameter union; no measured coordinate-sparsity savings or Hugging Face/remote-fleet upload claim.",
+    "Source/model/queue owners remain separate; promotion uses existing independent native owner policy and CAS.",
+    "All actual host memory/disk refusal policies remained unchanged; no repeated95percent runs or fabricated admitted capacity."
+  ],
+  "native_acceptance": {
+    "cases": [
+      "actual captured-source root fit and two unequal sample-count queue artifact jobs",
+      "exact retry/history without fitting",
+      "independent actual-decoder rejection of favorable saved diagnostics",
+      "parent/origin per-sample canary retention and expected-parent native CAS",
+      "caller metric forgery refusal",
+      "lost committed queue completion reply without another local fit",
+      "unavailable parent artifact no-fit refusal",
+      "source change after actual fitting refuses queue and native completion",
+      "production gradient mode fail-closed",
+      "two actual subprocesses overlap and reduce identically to sequential execution",
+      "cold exact request-index replay",
+      "actual parallel cancellation reaps both workers before parent release"
+    ],
+    "executed_under_final_profile": false,
+    "log": "codebase8d-collect.log",
+    "parallel_budget": {
+      "cpu_slots": 3,
+      "memory_mb": 3072,
+      "process_slots": 3
+    },
+    "sequential_budget": {
+      "cpu_slots": 1,
+      "memory_mb": 1024,
+      "process_slots": 1
+    },
+    "tests_collected": 12
+  },
+  "native_attempts": [
+    {
+      "attempt": "01",
+      "numerical_work_started": false,
+      "passed": 0,
+      "reason": "missing pytest basetemp parent; fixed fixture runner directory before subsequent attempts",
+      "seconds": 0.33,
+      "setup_errors": 3
+    },
+    {
+      "attempt": "02",
+      "numerical_work_started": false,
+      "passed": 0,
+      "reason": "actual shared host memory headroom refused oversized4096MiB request; deadline retained",
+      "seconds": 180.74,
+      "setup_errors": 3
+    },
+    {
+      "attempt": "03",
+      "numerical_work_started": false,
+      "passed": 0,
+      "reason": "actual supervisor host_disk_high_watermark refused even right-sized1024MiB envelope",
+      "seconds": 0.8,
+      "setup_errors": 5
+    }
+  ],
+  "prior_revision_controls": {
+    "group": "controlled_source_feature_adapter_numerical_regressions",
+    "log": "codebase8d-unit03.log",
+    "passed": 28,
+    "scope": "Prior port revision before source-only runtime cleanup; controlled scheduler fixture, not production bridge qualification.",
+    "seconds": 4.91
+  },
+  "profile": "codebase_ir/source_bound_feature_v1",
+  "repeated_queue_run": {
+    "failed": 0,
+    "log": "codebase8d-queue-final.log",
+    "passed": 0,
+    "reason": "existing pytest AST seal reused earlier successful test records; not fresh passes",
+    "seconds": 0.22,
+    "skipped": 59
+  },
+  "schema": "codebase-federation-qualification@1",
+  "source_pins": [
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_ir_targets.py",
+      "repository": "datasets",
+      "sha256": "93d853232ea630cf1748b397aef8224b0bdbddc06521562279de9133652e054d"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+      "repository": "datasets",
+      "sha256": "88cc4da95cd10ee9164a7ee2dd0d19900e2537b7599734050b1b5bb7b1d5a400"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py",
+      "repository": "datasets",
+      "sha256": "938418a7adb8af47649a8bfa8027e976071d3ef8c6271b62def7ca8bc3426f27"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_artifacts.py",
+      "repository": "datasets",
+      "sha256": "0b87e887f5234467a4654bf54ac33e6974ae8f3cb4b3a069d7dd4ae16d006f9a"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated.py",
+      "repository": "datasets",
+      "sha256": "c9334d7ae5a2c90acaf6f25fb888417783a7d3a5ed1115681d4ace9c82cf9619"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated_update_codec.py",
+      "repository": "datasets",
+      "sha256": "0a8d97306ca72f2ed8c9ee08c4422d5f0e5210d1318a3e99013b4c98108c12ee"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_sync.py",
+      "repository": "datasets",
+      "sha256": "ebd4bc42117875367ec9b687c49cdf6132f445e9075cd02cecda1cf9a2928514"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated_codebase.py",
+      "repository": "datasets",
+      "sha256": "1f745e92cedc9895d14b44b85ad2a16b8fa59c63785485296ba2c83929740b3e"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_federated_sync.py",
+      "repository": "datasets",
+      "sha256": "12a94aa83e77b35b49920d020b11cfe2568196887aa9eb60bdbf0d6b75c37fd1"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_feature_worker.py",
+      "repository": "datasets",
+      "sha256": "f9a29dd7fc7812fd4cb67e78a421938ef1e8817e3b74c9d38626a91e6b02d81a"
+    },
+    {
+      "path": "ipfs_datasets_py/duckdb_control/autoencoder_federated.py",
+      "repository": "datasets",
+      "sha256": "baaa1fe4a3660b3e4ac3c7dcbec405bad111fdfce953e59732e3cd6fe2fb31d5"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_runtime_8d.py",
+      "repository": "datasets",
+      "sha256": "32dc798bfe81a587412c3d86431c368a5a83e27660870ca6de6f107a1e855146"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py",
+      "repository": "datasets",
+      "sha256": "2e26acf682d87ff26c48494ca528085652babf10bab89a28c92f1adfdfb8b3e5"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_admission.py",
+      "repository": "datasets",
+      "sha256": "94f8a013fdaa06867b8490e63e6b339b83e112ea4194d72a57423c1b139350b3"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_parallel_resources.py",
+      "repository": "datasets",
+      "sha256": "634a6a2e46b1e4301f20c4d8e4bdbab357449ab00905a16e9f87f199cac4e185"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_parallel_dispatched_federation.py",
+      "repository": "datasets",
+      "sha256": "57077c74d8d70299e258b5e7fc03e3b8008d233e9065c1f9520d9a203ea11164"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_indexed_dispatch_recovery.py",
+      "repository": "datasets",
+      "sha256": "db622f6b246ffd306d963c52f68bb8790a57eed263a4922a835616fd93a838a5"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated.py",
+      "repository": "datasets",
+      "sha256": "a2b6eb05032e0681cd0b8a09a43670e1edcbcf863c367fc82147076c70a3ee87"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_update_codec.py",
+      "repository": "datasets",
+      "sha256": "7a251b82f512a51cdbc7787c09bda00ce8697796d44498700d175707434d2f11"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_sync.py",
+      "repository": "datasets",
+      "sha256": "860d5e4fa65a2354f61e28fd9a00d808f32d90585edee973c1c1136f22992c4e"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py",
+      "repository": "datasets",
+      "sha256": "7752842d989def1e0ce333c027b06cb4872c9fdcf698891b57862fa7fd0c0a3d"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_codebase_federated_sync.py",
+      "repository": "datasets",
+      "sha256": "753d6a35cc4f50f55ba391aeef13c385ba57b612815989d09f2c26d24e3db1ba"
+    },
+    {
+      "path": "tests/unit/duckdb_control/test_autoencoder_federated.py",
+      "repository": "datasets",
+      "sha256": "f416abb0f476ea241c1071469553bbed07625d46e052b9f65867ac399d085dd5"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_codebase_federation_qualification.py",
+      "repository": "datasets",
+      "sha256": "33e9e4864e901f12e306bdba8a2e7183b67a81ea3a0668996f1f6d1fd7c3239a"
+    },
+    {
+      "path": "docs/autoencoders/CODEBASE_SOURCE_FEDERATION.md",
+      "repository": "datasets",
+      "sha256": "d4946204b17b988badf6e89cde7b1986b90e7c9ddd2b9709f52fc74b4ca414ab"
+    },
+    {
+      "path": "ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py",
+      "repository": "accelerate",
+      "sha256": "3d7adb7e812d3d9aed6cda45ea6dfce9a6fcdae9489fa5c2f53dd45d19cf2a19"
+    },
+    {
+      "path": "ipfs_accelerate_py/p2p_tasks/codebase_federated_history.py",
+      "repository": "accelerate",
+      "sha256": "7c61b1fc115837bbce351dd8a4669fe45e0465216e5f524f411608d412c8dbe1"
+    },
+    {
+      "path": "test/unit/test_codebase_federated_dispatch.py",
+      "repository": "accelerate",
+      "sha256": "3c0460cc32bd37451c169693967967350d16b81cd8d3bba6a4df2090cf4a641e"
+    },
+    {
+      "path": "test/unit/test_codebase_federated_history.py",
+      "repository": "accelerate",
+      "sha256": "80fb49b6336b739329f95c0709fe6d1196ccca3fe928bdb3d831ff386594fa12"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_codebase_source_feature_worker_protocol.py",
+      "repository": "datasets",
+      "sha256": "dffc75e2feb09052c7b580d9390defb28e7be0911cfb7fba67b6b0734c0ad806"
+    }
+  ],
+  "status": "implemented_pending_native_qualification"
+}

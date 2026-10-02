@@ -1,0 +1,193 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 259 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated.py . [  0%]
+....................................................................     [ 26%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_update_codec.py . [ 27%]
+.......................                                                  [ 35%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_sync.py . [ 36%]
+........................................................................ [ 64%]
+.....                                                                    [ 66%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py E [ 66%]
+EEEEEEEEEEEEEEEEEEEEEEEEEEE                                              [ 76%]
+tests/unit/optimizers/logic_theorem_optimizer/test_codebase_federated_sync.py . [ 77%]
+...............................................                          [ 95%]
+tests/unit/duckdb_control/test_autoencoder_federated.py ............     [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_actual_native_clients_weighted_binary_update_and_reset_materialization _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_exact_profile_has_only_four_float64_parameters_and_no_gte _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+___ ERROR at setup of test_detached_owned_base_update_and_materialized_state ___
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_foreign_base_semantics_layout_and_384d_round_rejected[dimension] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_foreign_base_semantics_layout_and_384d_round_rejected[base_sha256] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_foreign_base_semantics_layout_and_384d_round_rejected[base_parameters_sha256] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_foreign_base_semantics_layout_and_384d_round_rejected[embedding_producer_sha256] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_foreign_base_semantics_layout_and_384d_round_rejected[architecture] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_foreign_base_semantics_layout_and_384d_round_rejected[runtime_profile] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_foreign_base_semantics_layout_and_384d_round_rejected[model_id] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_foreign_base_semantics_layout_and_384d_round_rejected[parameters] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_state_cannot_change_fixed_semantics_or_policy[tuning] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_state_cannot_change_fixed_semantics_or_policy[optimizer] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_state_cannot_change_fixed_semantics_or_policy[progress] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_state_cannot_change_fixed_semantics_or_policy[latent] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_state_cannot_change_fixed_semantics_or_policy[authority] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_state_cannot_change_fixed_semantics_or_policy[nan] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_state_cannot_change_fixed_semantics_or_policy[shape] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_work_bound_is_positive_builtin_and_owner_bounded[0] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_work_bound_is_positive_builtin_and_owner_bounded[True] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_work_bound_is_positive_builtin_and_owner_bounded[-1] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_local_work_bound_is_positive_builtin_and_owner_bounded[3] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_actual_attempted_work_can_select_unchanged_parent_without_inventing_progress _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_unknown_client_and_candidate_from_different_complete_round_rejected _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_unsafe_frozen_objects_revalidate_before_reduction_materialization _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_base_references_are_strict_owned_hashes[base_sha256] __
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_base_references_are_strict_owned_hashes[base_version_id] _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+_ ERROR at setup of test_noncanonical_or_384d_snapshot_and_nonexact_runtime_rejected _
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py:50: in native
+    targets = [runtimes.prepare_targets("codebase_ir", runtimes.CODEBASE_SOURCE_FEATURE_VERSION,
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d' has no attribute 'prepare_targets'
+=========================== short test summary info ============================
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_actual_native_clients_weighted_binary_update_and_reset_materialization
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_exact_profile_has_only_four_float64_parameters_and_no_gte
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_detached_owned_base_update_and_materialized_state
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_foreign_base_semantics_layout_and_384d_round_rejected[dimension]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_foreign_base_semantics_layout_and_384d_round_rejected[base_sha256]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_foreign_base_semantics_layout_and_384d_round_rejected[base_parameters_sha256]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_foreign_base_semantics_layout_and_384d_round_rejected[embedding_producer_sha256]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_foreign_base_semantics_layout_and_384d_round_rejected[architecture]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_foreign_base_semantics_layout_and_384d_round_rejected[runtime_profile]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_foreign_base_semantics_layout_and_384d_round_rejected[model_id]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_foreign_base_semantics_layout_and_384d_round_rejected[parameters]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_state_cannot_change_fixed_semantics_or_policy[tuning]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_state_cannot_change_fixed_semantics_or_policy[optimizer]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_state_cannot_change_fixed_semantics_or_policy[progress]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_state_cannot_change_fixed_semantics_or_policy[latent]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_state_cannot_change_fixed_semantics_or_policy[authority]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_state_cannot_change_fixed_semantics_or_policy[nan]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_state_cannot_change_fixed_semantics_or_policy[shape]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_work_bound_is_positive_builtin_and_owner_bounded[0]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_work_bound_is_positive_builtin_and_owner_bounded[True]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_work_bound_is_positive_builtin_and_owner_bounded[-1]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_local_work_bound_is_positive_builtin_and_owner_bounded[3]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_actual_attempted_work_can_select_unchanged_parent_without_inventing_progress
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_unknown_client_and_candidate_from_different_complete_round_rejected
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_unsafe_frozen_objects_revalidate_before_reduction_materialization
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_base_references_are_strict_owned_hashes[base_sha256]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_base_references_are_strict_owned_hashes[base_version_id]
+ERROR tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py::test_noncanonical_or_384d_snapshot_and_nonexact_runtime_rejected
+======================== 231 passed, 28 errors in 3.81s ========================

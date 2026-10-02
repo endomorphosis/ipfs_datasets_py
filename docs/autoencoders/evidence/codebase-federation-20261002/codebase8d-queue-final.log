@@ -1,0 +1,73 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-accelerate-20261001/test
+configfile: pytest.ini
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, asyncio-1.3.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0, anyio-4.14.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 59 items
+
+test/unit/test_codebase_federated_dispatch.py::test_complete_replay_is_exact_and_survives_queue_restart [33mSKIPPED[0m[32m [  1%][0m
+test/unit/test_codebase_federated_dispatch.py::test_hash_commits_type_model_and_complete_payload [33mSKIPPED[0m[32m [  3%][0m
+test/unit/test_codebase_federated_dispatch.py::test_non_native_or_nonfinite_json_is_rejected_before_submit[bad0] [33mSKIPPED[0m[32m [  5%][0m
+test/unit/test_codebase_federated_dispatch.py::test_non_native_or_nonfinite_json_is_rejected_before_submit[bad1] [33mSKIPPED[0m[32m [  6%][0m
+test/unit/test_codebase_federated_dispatch.py::test_non_native_or_nonfinite_json_is_rejected_before_submit[bad2] [33mSKIPPED[0m[32m [  8%][0m
+test/unit/test_codebase_federated_dispatch.py::test_only_one_concurrent_claim_invokes_handler [33mSKIPPED[0m[32m [ 10%][0m
+test/unit/test_codebase_federated_dispatch.py::test_expired_handler_result_cannot_complete_or_resurrect [33mSKIPPED[0m[32m [ 11%][0m
+test/unit/test_codebase_federated_dispatch.py::test_replaced_attempt_rejects_late_success_and_failure [33mSKIPPED[0m[32m [ 13%][0m
+test/unit/test_codebase_federated_dispatch.py::test_handler_cannot_extend_trusted_fractional_deadline_by_mutating_task [33mSKIPPED[0m[32m [ 15%][0m
+test/unit/test_codebase_federated_dispatch.py::test_guard_rejection_before_handler_fails_only_owned_claim [33mSKIPPED[0m[32m [ 16%][0m
+test/unit/test_codebase_federated_dispatch.py::test_scoped_guard_checks_after_handler_and_restores_context [33mSKIPPED[0m[32m [ 18%][0m
+test/unit/test_codebase_federated_dispatch.py::test_scoped_guards_do_not_leak_between_threads [33mSKIPPED[0m[32m [ 20%][0m
+test/unit/test_codebase_federated_dispatch.py::test_handler_failure_uses_native_retry_backoff_and_unique_attempt [33mSKIPPED[0m[32m [ 22%][0m
+test/unit/test_codebase_federated_dispatch.py::test_exhausted_native_attempts_do_not_refit [33mSKIPPED[0m[32m [ 23%][0m
+test/unit/test_codebase_federated_dispatch.py::test_lost_completion_response_replays_native_result_without_handler [33mSKIPPED[0m[32m [ 25%][0m
+test/unit/test_codebase_federated_dispatch.py::test_completion_false_does_not_report_success [33mSKIPPED[0m[32m [ 27%][0m
+test/unit/test_codebase_federated_dispatch.py::test_explicit_heartbeat_renews_native_owned_claim [33mSKIPPED[0m[32m [ 28%][0m
+test/unit/test_codebase_federated_dispatch.py::test_explicit_hook_registration_has_no_global_activation [33mSKIPPED[0m[32m [ 30%][0m
+test/unit/test_codebase_federated_dispatch.py::test_import_and_instantiation_do_not_open_network_or_worker [33mSKIPPED[0m[32m [ 32%][0m
+test/unit/test_codebase_federated_history.py::test_exact_index_recovers_after_native_inventory_bound[1001] [33mSKIPPED[0m[32m [ 33%][0m
+test/unit/test_codebase_federated_history.py::test_exact_index_recovers_after_native_inventory_bound[10000] [33mSKIPPED[0m[32m [ 35%][0m
+test/unit/test_codebase_federated_history.py::test_absent_request_does_not_submit_or_change_queue [33mSKIPPED[0m[32m [ 37%][0m
+test/unit/test_codebase_federated_history.py::test_detached_completed_row_survives_native_queue_restart [33mSKIPPED[0m[32m [ 38%][0m
+test/unit/test_codebase_federated_history.py::test_lookup_preserves_native_state_and_attempt_without_claiming[queued] [33mSKIPPED[0m[32m [ 40%][0m
+test/unit/test_codebase_federated_history.py::test_lookup_preserves_native_state_and_attempt_without_claiming[running] [33mSKIPPED[0m[32m [ 42%][0m
+test/unit/test_codebase_federated_history.py::test_lookup_preserves_native_state_and_attempt_without_claiming[completed] [33mSKIPPED[0m[32m [ 44%][0m
+test/unit/test_codebase_federated_history.py::test_lookup_preserves_native_state_and_attempt_without_claiming[failed] [33mSKIPPED[0m[32m [ 45%][0m
+test/unit/test_codebase_federated_history.py::test_lookup_preserves_native_state_and_attempt_without_claiming[cancelled] [33mSKIPPED[0m[32m [ 47%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_request_identity_rejected_before_native_read[None] [33mSKIPPED[0m[32m [ 49%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_request_identity_rejected_before_native_read[3] [33mSKIPPED[0m[32m [ 50%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_request_identity_rejected_before_native_read[True] [33mSKIPPED[0m[32m [ 52%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_request_identity_rejected_before_native_read[] [33mSKIPPED[0m[32m [ 54%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_request_identity_rejected_before_native_read[AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA] [33mSKIPPED[0m[32m [ 55%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_request_identity_rejected_before_native_read[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa] [33mSKIPPED[0m[32m [ 57%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_request_identity_rejected_before_native_read[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa] [33mSKIPPED[0m[32m [ 59%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_request_identity_rejected_before_native_read[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n] [33mSKIPPED[0m[32m [ 61%][0m
+test/unit/test_codebase_federated_history.py::test_non_native_or_oversized_payload_rejected_before_native_read[bad0] [33mSKIPPED[0m[32m [ 62%][0m
+test/unit/test_codebase_federated_history.py::test_non_native_or_oversized_payload_rejected_before_native_read[bad1] [33mSKIPPED[0m[32m [ 64%][0m
+test/unit/test_codebase_federated_history.py::test_non_native_or_oversized_payload_rejected_before_native_read[bad2] [33mSKIPPED[0m[32m [ 66%][0m
+test/unit/test_codebase_federated_history.py::test_non_native_or_oversized_payload_rejected_before_native_read[bad3] [33mSKIPPED[0m[32m [ 67%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_model_rejected_before_native_read[None] [33mSKIPPED[0m[32m [ 69%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_model_rejected_before_native_read[12] [33mSKIPPED[0m[32m [ 71%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_model_rejected_before_native_read[] [33mSKIPPED[0m[32m [ 72%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_model_rejected_before_native_read[ leading] [33mSKIPPED[0m[32m [ 74%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_model_rejected_before_native_read[model\n] [33mSKIPPED[0m[32m [ 76%][0m
+test/unit/test_codebase_federated_history.py::test_invalid_model_rejected_before_native_read[mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm] [33mSKIPPED[0m[32m [ 77%][0m
+test/unit/test_codebase_federated_history.py::test_wrong_full_request_commitment_rejected_before_read [33mSKIPPED[0m[32m [ 79%][0m
+test/unit/test_codebase_federated_history.py::test_nonnative_or_remote_queue_rejected_without_connection [33mSKIPPED[0m[32m [ 81%][0m
+test/unit/test_codebase_federated_history.py::test_indexed_row_with_different_scope_is_rejected[task_type-other-task] [33mSKIPPED[0m[32m [ 83%][0m
+test/unit/test_codebase_federated_history.py::test_indexed_row_with_different_scope_is_rejected[model_name-other-model] [33mSKIPPED[0m[32m [ 84%][0m
+test/unit/test_codebase_federated_history.py::test_indexed_row_with_different_scope_is_rejected[payload_json-{"schema":"different"}] [33mSKIPPED[0m[32m [ 86%][0m
+test/unit/test_codebase_federated_history.py::test_malformed_native_payload_is_rejected [33mSKIPPED[0m[32m [ 88%][0m
+test/unit/test_codebase_federated_history.py::test_read_between_index_and_native_get_cannot_alias_changed_row[missing] [33mSKIPPED[0m[32m [ 89%][0m
+test/unit/test_codebase_federated_history.py::test_read_between_index_and_native_get_cannot_alias_changed_row[key] [33mSKIPPED[0m[32m [ 91%][0m
+test/unit/test_codebase_federated_history.py::test_read_between_index_and_native_get_cannot_alias_changed_row[task_id] [33mSKIPPED[0m[32m [ 93%][0m
+test/unit/test_codebase_federated_history.py::test_read_between_index_and_native_get_cannot_alias_changed_row[extra] [33mSKIPPED[0m[32m [ 94%][0m
+test/unit/test_codebase_federated_history.py::test_duplicate_corrupt_native_identity_is_rejected [33mSKIPPED[0m[32m [ 96%][0m
+test/unit/test_codebase_federated_history.py::test_fresh_lookup_connection_closes_on_query_failure [33mSKIPPED[0m[32m [ 98%][0m
+test/unit/test_codebase_federated_history.py::test_native_nonfinite_result_is_rejected_as_inert_json [33mSKIPPED[0m[33m [100%][0m
+
+============================= slowest 10 durations =============================
+
+(10 durations < 0.005s hidden.  Use -vv to show these durations.)
+[33m============================= [33m[1m59 skipped[0m[33m in 0.22s[0m[33m ==============================[0m

@@ -1,0 +1,75 @@
+{
+  "files": [
+    {
+      "bytes": 2102,
+      "path": "codebase8d-collect.log",
+      "sha256": "a0ee9e24c5a1587d2e807b7c698ba1a76414680e33172ce004aeabf2a2e14f81"
+    },
+    {
+      "bytes": 4688,
+      "path": "codebase8d-dispatch-unit01.log",
+      "sha256": "2b0a3b2bcdc08e3d50dbc1ff4121a1a269c331d8a5d9ce1dd516a5775d51cbf7"
+    },
+    {
+      "bytes": 959,
+      "path": "codebase8d-gradient-gate.log",
+      "sha256": "d3f1b1320a7e89e920bd03d61b297d0fbfb248d7a0428bd8c7d87ab366b7794f"
+    },
+    {
+      "bytes": 9101,
+      "path": "codebase8d-history-unit01.log",
+      "sha256": "82ea921dfb239f9a7459178c1e7d502ba09ad0d81ec3d5ae62424e424e609ca3"
+    },
+    {
+      "bytes": 4820,
+      "path": "codebase8d-native01.log",
+      "sha256": "bb88bd9e9d463b80307e10433f70eefecd924d94baf61ddd24df586b2e971393"
+    },
+    {
+      "bytes": 5093,
+      "path": "codebase8d-native02.log",
+      "sha256": "4ecb030adc156c5f7429602113b1618094bcdd427964e3f3a744b48550d15b44"
+    },
+    {
+      "bytes": 8173,
+      "path": "codebase8d-native03.log",
+      "sha256": "03de9709b0e955fcf44553566076a9725e38721711c312bc52e14bc86f77acc7"
+    },
+    {
+      "bytes": 1859,
+      "path": "codebase8d-protocol-final.log",
+      "sha256": "48b118a16fd7a44fc6af2b73ec41c12adb3db04a9a46b4ea3e40c387ca868013"
+    },
+    {
+      "bytes": 10074,
+      "path": "codebase8d-queue-final.log",
+      "sha256": "1780056c94fffde23b2faa68dd9f0099c5dd77dd43de84d5e1b546771532ab8f"
+    },
+    {
+      "bytes": 1850,
+      "path": "codebase8d-unit01.log",
+      "sha256": "e8bacff550d043ddf243755a290a768624f80b6e74bd3a2c6aa1f7b9366ff918"
+    },
+    {
+      "bytes": 19465,
+      "path": "codebase8d-unit02.log",
+      "sha256": "c8195c15c8b6a23648f0e491028646539812a4384a3f0050078b812feb75f70e"
+    },
+    {
+      "bytes": 1010,
+      "path": "codebase8d-unit03.log",
+      "sha256": "70955e6d7b1452f45ff2f286cd4d02ea36394d2fd72d6c4d2cb544c3736c16d2"
+    },
+    {
+      "bytes": 1018,
+      "path": "codebase8d-worker-protocol01.log",
+      "sha256": "4efe922b25933744410dd4a4e399742e52357e01d4abb714112cebade58be7d8"
+    },
+    {
+      "bytes": 11724,
+      "path": "qualification.json",
+      "sha256": "a6aa0878a593da3e03d9142d70fefebb50b428480ab7425552025d40446651cc"
+    }
+  ],
+  "schema": "codebase-federation-evidence@1"
+}
