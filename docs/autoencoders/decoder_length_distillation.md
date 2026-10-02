@@ -1234,3 +1234,158 @@ unavailable. This diagnostic performs no training, native family validation, or
 `lake build <Lib>`. It grants no admission, checkpoint promotion, source-semantic
 qualification, or Constitution formalization. The archive is a development
 evidence bundle with original-path mappings, not a standalone installed runtime.
+
+## Frozen-source slot probes (2026-10-02)
+
+The next diagnostic tests source information without any reference prefix. The
+runner is `scripts/ops/autoencoder/benchmark_decoder_source_slot_probe.py`; its
+small numerical owner is `decoder_source_slot_probe.py`. Evidence lives in
+`docs/implementation/reports/evidence/decoder-source-slot-probe-20261002/`.
+It fits separate diagnostic readouts while preserving all encoder, projection,
+autoregressive decoder, and count-head weights. The existing decoder training
+policy, lineage loading, output limits, and qualification gates are unchanged.
+
+### What is fitted and how to use it
+
+The numerical owner exposes three functions rather than requiring callers to
+navigate the production autoencoder class:
+
+- `fit_probe(feature_rows, references, feature_specification=..., ...)` accepts
+  training features and complete reference documents only. It returns a `probe`
+  and a fit `report`, including coefficients, training matrices, and normalization.
+- `predict_probe(probe, feature_rows, ...)` accepts no references, source text,
+  prefix tokens, or rule-count labels. It returns raw scores and all predicted
+  slots plus an independent predicted count. Scores are not probabilities.
+- `evaluate_probe(probe, feature_rows, references, source_features=..., control=...,
+  ...)` scores those unmasked predictions and validates source assignments. It
+  reports present-value, absent-slot, count, class-recall, and complete scalar-slot
+  metrics separately. It does not construct or validate generated formulas.
+
+A feature row has exactly `id`, `source_sha256`, and `features`. A feature
+specification identifies the kind, dimension, and provenance. The CLI has the
+same five path arguments as the previous diagnostic: `--dependency-root`,
+`--extension-root`, `--manifest`, `--plan`, and `--output`. Its authenticated
+source-only extractor receives source vectors and identities, with no target or
+text fields. It extracts the actual projected 384-vector, initial hidden state
+of width 32, and persistent source-to-token residual of width 16. It never calls
+`next_logits`. Original weights, gradients, modes, trainability, inputs, and RNG
+are checked for mutation. The inherited input transform remains unchanged.
+
+There are seven probes: one shared projected-384 readout, five conditioning-48
+readouts for the previously saved states, and an intercept-only baseline. All
+five projected-feature arrays must match, including their serialized hashes,
+before the shared probe is fitted once. The projection's width-eight residual
+branch is not an eight-dimensional bottleneck: its output remains 384-dimensional.
+This experiment does not involve the separate historical 8D linguistic teacher.
+
+The predeclared protocol uses float64 ridge regression with fixed `lambda=0.001`:
+sum of squared one-hot errors across output heads, divided by the 48 training
+rows, plus lambda times the squared coefficient norm. The intercept is
+unpenalized. Feature means and one scalar RMS centered-row norm are computed from
+training rows alone, making mean training row squared norm one for nonconstant
+features. Constant/intercept features use scale one. The dual solve adds
+`48 * 0.001` to the Gram diagonal. No validation-based regularization tuning or
+checkpoint selection occurs. Normal-equation residuals certify this fixed convex
+readout objective only; they do not establish an autoencoder's global optimum.
+
+Each probe predicts eight ordered slots for actor, action, modality, and object,
+including a structural `ABSENT` class, plus an independent count in 1–8. Value
+inventories come from training references only; unseen validation values would
+be recorded as out-of-inventory errors. Counts never truncate or mask the slot
+predictions. Complete scalar-slot/count exactness therefore requires all 32 scalar
+decisions, including absence beyond the actual rules, and the independent count
+to match. Present-value accuracy uses the reference-present positions only and
+is explicitly a conditional metric. Conditions, exceptions, and temporal
+semantics remain unscored; these probes are not formula decoders.
+
+Four controls run on both the existing 48 training and 48 exposed validation
+rows, giving 56 panels. Within-length shuffling tests value associations while
+preserving count labels. Cross-length shuffling sorts by count and identity,
+then rotates by 12 rows; every assigned vector comes from a different count
+class. It tests count association as well. The zero-feature control sets
+normalized features to zero, equivalent to supplying the training feature mean.
+It is an intercept-prior control, distinct from the historical zero-source
+autoregressive decoder wrapper. No control changes the labels or original source
+identities. All controls are evaluated after the fits, without refitting.
+
+### Results: source information is accessible, but longer spans still fail
+
+Each split has 720 present scalar values, 816 absent scalar slots, and 48 counts.
+The same fixed recipe is used for every representation; none is selected for
+deployment from these results.
+
+| Probe features | Training values /720 | Validation values /720 | Validation count /48 | Validation scalar slots + count exact /48 |
+| --- | ---: | ---: | ---: | ---: |
+| Shared projected 384 | 608 | 281 | 38 | 6 |
+| Selected epoch-zero conditioning 48 | 229 | 127 | 17 | 0 |
+| Unchanged 1729 conditioning 48 | 241 | 130 | 20 | 0 |
+| Ramp20 1729 conditioning 48 | 262 | 143 | 23 | 0 |
+| Unchanged 2718 conditioning 48 | 264 | 141 | 21 | 0 |
+| Ramp20 2718 conditioning 48 | 246 | 139 | 20 | 0 |
+| Intercept only | 111 | 98 | 12 | 0 |
+
+The projected-source probe reaches 39.0% present-value accuracy and 79.2% count
+accuracy on exposed validation, compared with 17.6–19.9% values and 35.4–47.9%
+counts from conditioning features. It recovers 28/59 prohibitions, 19/56
+obligations, and 30/65 permissions, rather than predicting prohibition everywhere.
+Nevertheless, its 608/720 training values versus 281/720 validation values show
+a substantial development gap. Its six exact scalar/count matches are all
+single-rule spans. The breakdown is 44/48 correct values for single rules,
+48/96 for two rules, 70/192 for four rules, and 119/384 for eight rules. There are
+zero exact multi-rule validation paragraphs and zero full Legal-IR qualifications.
+
+For the projected-source probe, within-length shuffling reduces validation value
+correctness from 281 to 210 while count correctness remains 38. Cross-length
+shuffling reduces values to 119 and counts to 3; normalized-zero features give
+the baseline 98 values and 12 counts. All zero-feature panels reproduce the
+intercept-only predictions. No validation target falls outside the fitted value
+inventories. These controls support a real association between projected features
+and source labels, not faithful recovery of every ordered clause.
+
+The lower conditioning-feature result is evidence about this linear readout,
+with different feature dimensions and coefficient counts. It does not prove
+that conditioning has irreversibly discarded all useful information: nonlinear
+readouts, different regularization, and the autoregressive dynamics were not
+tested here. The preceding prefix diagnostic also supplied gold prefix tokens
+and had no `ABSENT` prediction heads, so its 30% value accuracy is not a directly
+comparable reconstruction benchmark. No inference improvement is claimed for
+the unchanged autoregressive decoder.
+
+The supported next training experiment is a source-value supervision path that
+retains access to the projected 384-vector, compared against the existing
+conditioning path. It should train only on training rows, preserve all existing
+source-fidelity and boundary gates, and measure both source-only class recall and
+target-free formula reconstruction by span length. The probe's outputs are
+diagnostic candidates, not automatically accepted teacher labels or replacement
+formalization targets. Longer-span and qualifier coverage remain open gaps.
+
+### Validation, provenance, and cost
+
+All original input/state artifacts are bound to the previously published prefix
+archive's member hashes. The freeze authenticates that public manifest/results
+against Git, pins 16 inputs and 22 extension files, and preserves the canonical
+frozen compiler/parser/decompiler tree. Ten feature-extraction records, seven
+full fit records, and all 56 raw-score panels are retained. The 878-test suite
+passes, including tests for source-only extraction, immutable model state,
+training-only normalization, absent slots, unknown classes, control assignments,
+and deadline failures. The independent audit passes 6,389 checks with zero
+findings, recomputing scores and metrics and verifying the ridge normal equations
+without another fit or neural forward. No pretrained weights were downloaded.
+
+The seven fit calls take 0.346 seconds total; the ten source-only extractions take
+0.186 seconds. The 56 evaluation calls take 4.616 seconds, including validation,
+scoring, hashes, and report construction, or 1.04–4.91 ms per span per panel.
+Panel time including serialization is 5.102 seconds; the full comparison takes
+6.121 seconds. These are small diagnostic readout costs, not production decoder
+training or autoregressive inference throughput. The guardian takes 45.637
+seconds including admission, monitoring, and accounting, and retains 41,821,340
+bytes within its released 100 MB reservation. The shared 140 GB cap is unchanged;
+no peak RSS observation was retained for this short run.
+
+Device is CPU, workers 1, bridge names `[]`, prover evaluation false, and metric
+disk cache disabled. Paragraph embeddings are warm cached; encoder execution and
+sample-memory scoring are unused. No bridge-on evaluation was performed. The 8D
+teacher remains unchanged and verified local 768D inputs remain unavailable.
+No decoder weights were trained or promoted, no new formula generation or native
+family/Lake validation ran, and no span received admission or `roundtrip_ok`.
+The Constitution remains unformalized.
