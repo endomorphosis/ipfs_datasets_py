@@ -1,0 +1,413 @@
+{
+  "backend": "rocq",
+  "backend_result": {
+    "assumptions": [
+      "assumption:17470c57f9c8ea50b8e5ec93b3c70488c7c6fbb56a62f07c001a78f6591414ab",
+      "assumption:ecd37d092349250908baf5f4e822afa10988f236ea4f3f574943e30ea8238599",
+      "assumption:241a4be58aae7a6c5b91fead178d3f18212432841916cb168d9447894a4109d8"
+    ],
+    "authority": "theorem",
+    "backend_id": "rocq",
+    "backend_version": "selected-sha256:2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b",
+    "bounds": {
+      "max_memory_bytes": 536870912,
+      "max_output_bytes": 262144,
+      "max_steps": 2,
+      "timeout_ms": 59874
+    },
+    "diagnostics": [],
+    "metadata": {
+      "adapter_interface": "RocqKernelBackend@1",
+      "capability": {
+        "browser": {
+          "availability": "unavailable",
+          "available": false,
+          "executable": "",
+          "kernel_id": "rocq",
+          "metadata": {
+            "explicit_absence": true,
+            "requested_module_id": "coq-wasm"
+          },
+          "module_id": "coq-wasm",
+          "plane": "browser",
+          "reason": "WASM module 'coq-wasm' is explicitly absent: no bundled or injected module was resolvable for this runtime",
+          "schema_version": "kernel-capability-state/v1",
+          "version": ""
+        },
+        "interface_version": "dual-plane-kernel-capability/v1",
+        "kernel_id": "rocq",
+        "native": {
+          "availability": "available",
+          "available": true,
+          "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/coqtop",
+          "kernel_id": "rocq",
+          "metadata": {},
+          "module_id": "",
+          "plane": "native",
+          "reason": "",
+          "schema_version": "kernel-capability-state/v1",
+          "version": "selected-sha256:2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b"
+        },
+        "native_available": true,
+        "wasm": {
+          "availability": "unavailable",
+          "available": false,
+          "executable": "",
+          "kernel_id": "rocq",
+          "metadata": {
+            "explicit_absence": true,
+            "requested_module_id": "coq-wasm"
+          },
+          "module_id": "coq-wasm",
+          "plane": "wasm",
+          "reason": "WASM module 'coq-wasm' is explicitly absent: no bundled or injected module was resolvable for this runtime",
+          "schema_version": "kernel-capability-state/v1",
+          "version": ""
+        },
+        "wasm_available": false
+      },
+      "kernel_receipt": {
+        "accepted": true,
+        "assumption_report": {
+          "closed_under_global_context": true,
+          "declaration": "codebase_claim",
+          "report_text": "Closed under the global context\nClosed under the global context",
+          "schema_version": "rocq-assumption-report/v1"
+        },
+        "authority_disposition": "reject",
+        "diagnostics": [],
+        "generated_proof": "Theorem codebase_claim : forall n : Z, n + (1) = n + (1).\nProof. intros n; reflexivity. Qed.\nPrint Assumptions codebase_claim.",
+        "generated_proof_digest": "098fe060b7b652c1a9c4f19bbce8e6573d3d1921aad0b0243257241b6805c133",
+        "imports": [
+          "From Stdlib Require Import ZArith."
+        ],
+        "plane": "native",
+        "receipt_id": "rocq-kernel-receipt:a05e8190709fed7ba2fcada5ddfba945218c492ba2ec9e0cb9ca099fc3824dfd",
+        "request_digest": "41e053c96f25ab8890b10216336601d6de073aac84024a0b437ded240dd57a8c",
+        "schema_version": "rocq-kernel-receipt/v1",
+        "source_binding": {
+          "request_digest": "41e053c96f25ab8890b10216336601d6de073aac84024a0b437ded240dd57a8c",
+          "schema_version": "rocq-source-binding/v1",
+          "source_digest": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7",
+          "source_format": "rocq"
+        },
+        "source_tree": {
+          "files": {
+            "Main.v": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7"
+          },
+          "primary_path": "Main.v",
+          "root_digest": "85f99136cd136fdabcf9b8c7e0ccb60f2e0b90883044870359c780d319077173",
+          "tree_id": "source-tree:85f99136cd136fdabcf9b8c7"
+        },
+        "theorem_digest": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7",
+        "theorem_name": "codebase_claim",
+        "toolchain": {
+          "command_template": "{coqtop} -batch -load-vernac-source {source_file}",
+          "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/coqtop",
+          "kernel_id": "rocq",
+          "metadata": {},
+          "module_id": "",
+          "plane": "native",
+          "toolchain_id": "toolchain:rocq:native:selected-sha256:2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b",
+          "version": "selected-sha256:2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b"
+        },
+        "translation": {
+          "fidelity": "closed_profile",
+          "metadata": {},
+          "source_family": "closed_integer_offset",
+          "target_family": "rocq",
+          "translation_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+          "translation_id": "codebase-family:rocq"
+        }
+      },
+      "source_binding": {
+        "request_digest": "41e053c96f25ab8890b10216336601d6de073aac84024a0b437ded240dd57a8c",
+        "schema_version": "rocq-source-binding/v1",
+        "source_digest": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7",
+        "source_format": "rocq"
+      }
+    },
+    "reason": "",
+    "result_id": "result:rocq:41e053c96f25ab8890b10216",
+    "result_type": "theorem",
+    "schema_version": "typed-backend-result/v1",
+    "status": "proved",
+    "translation_ceiling": "independently_checkable",
+    "usage": {
+      "elapsed_ms": 378,
+      "output_bytes": 64,
+      "peak_memory_bytes": 0,
+      "steps": 0
+    },
+    "witness": {
+      "assumption_report": {
+        "closed_under_global_context": true,
+        "declaration": "codebase_claim",
+        "report_text": "Closed under the global context\nClosed under the global context",
+        "schema_version": "rocq-assumption-report/v1"
+      },
+      "generated_proof_digest": "098fe060b7b652c1a9c4f19bbce8e6573d3d1921aad0b0243257241b6805c133",
+      "receipt_id": "rocq-kernel-receipt:a05e8190709fed7ba2fcada5ddfba945218c492ba2ec9e0cb9ca099fc3824dfd",
+      "source_tree": {
+        "files": {
+          "Main.v": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7"
+        },
+        "primary_path": "Main.v",
+        "root_digest": "85f99136cd136fdabcf9b8c7e0ccb60f2e0b90883044870359c780d319077173",
+        "tree_id": "source-tree:85f99136cd136fdabcf9b8c7"
+      },
+      "theorem_digest": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7",
+      "theorem_name": "codebase_claim",
+      "toolchain": {
+        "command_template": "{coqtop} -batch -load-vernac-source {source_file}",
+        "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/coqtop",
+        "kernel_id": "rocq",
+        "metadata": {},
+        "module_id": "",
+        "plane": "native",
+        "toolchain_id": "toolchain:rocq:native:selected-sha256:2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b",
+        "version": "selected-sha256:2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b"
+      },
+      "translation": {
+        "fidelity": "closed_profile",
+        "metadata": {},
+        "source_family": "closed_integer_offset",
+        "target_family": "rocq",
+        "translation_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+        "translation_id": "codebase-family:rocq"
+      }
+    }
+  },
+  "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+  "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+  "family": "rocq",
+  "mathematical_model_only": true,
+  "native_observations": [
+    {
+      "cancelled": false,
+      "command": [
+        "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/coqtop",
+        "-batch",
+        "-load-vernac-source",
+        "{workspace}/Main.v"
+      ],
+      "elapsed_seconds": 0.37774460506625473,
+      "error": "",
+      "limits": {
+        "cpu_seconds": 60,
+        "enforce_file_size_limit": true,
+        "max_argument_bytes": 65536,
+        "max_arguments": 256,
+        "max_environment_bytes": 131072,
+        "max_input_bytes": 262144,
+        "max_output_bytes": 262144,
+        "max_output_files": 8,
+        "max_path_bytes": 512,
+        "max_workspace_bytes": 16777216,
+        "memory_bytes": 8589934592,
+        "resident_memory_bytes": 536870912,
+        "termination_grace_seconds": 0.25,
+        "timeout_seconds": 59.863317999988794
+      },
+      "output_truncated": false,
+      "process_tree_terminated": false,
+      "resource_exhausted": false,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "Closed under the global context\nClosed under the global context\n",
+      "timed_out": false,
+      "unavailable": false,
+      "workspace_cleaned": true,
+      "workspace_limit_exceeded": false
+    }
+  ],
+  "operation": "prove_offset",
+  "receipt": {
+    "accepted": true,
+    "assumption_report": {
+      "closed_under_global_context": true,
+      "declaration": "codebase_claim",
+      "report_text": "Closed under the global context\nClosed under the global context",
+      "schema_version": "rocq-assumption-report/v1"
+    },
+    "authority_disposition": "reject",
+    "diagnostics": [],
+    "generated_proof": "Theorem codebase_claim : forall n : Z, n + (1) = n + (1).\nProof. intros n; reflexivity. Qed.\nPrint Assumptions codebase_claim.",
+    "generated_proof_digest": "098fe060b7b652c1a9c4f19bbce8e6573d3d1921aad0b0243257241b6805c133",
+    "imports": [
+      "From Stdlib Require Import ZArith."
+    ],
+    "plane": "native",
+    "receipt_id": "rocq-kernel-receipt:a05e8190709fed7ba2fcada5ddfba945218c492ba2ec9e0cb9ca099fc3824dfd",
+    "request_digest": "41e053c96f25ab8890b10216336601d6de073aac84024a0b437ded240dd57a8c",
+    "schema_version": "rocq-kernel-receipt/v1",
+    "source_binding": {
+      "request_digest": "41e053c96f25ab8890b10216336601d6de073aac84024a0b437ded240dd57a8c",
+      "schema_version": "rocq-source-binding/v1",
+      "source_digest": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7",
+      "source_format": "rocq"
+    },
+    "source_tree": {
+      "files": {
+        "Main.v": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7"
+      },
+      "primary_path": "Main.v",
+      "root_digest": "85f99136cd136fdabcf9b8c7e0ccb60f2e0b90883044870359c780d319077173",
+      "tree_id": "source-tree:85f99136cd136fdabcf9b8c7"
+    },
+    "theorem_digest": "59f0dc1983913f15710f6b18b6b6a87ef536f5f2735af6c7f50a5a4933f312a7",
+    "theorem_name": "codebase_claim",
+    "toolchain": {
+      "command_template": "{coqtop} -batch -load-vernac-source {source_file}",
+      "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/coqtop",
+      "kernel_id": "rocq",
+      "metadata": {},
+      "module_id": "",
+      "plane": "native",
+      "toolchain_id": "toolchain:rocq:native:selected-sha256:2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b",
+      "version": "selected-sha256:2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b"
+    },
+    "translation": {
+      "fidelity": "closed_profile",
+      "metadata": {},
+      "source_family": "closed_integer_offset",
+      "target_family": "rocq",
+      "translation_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+      "translation_id": "codebase-family:rocq"
+    }
+  },
+  "request": {
+    "assumption_ids": [
+      "assumption:17470c57f9c8ea50b8e5ec93b3c70488c7c6fbb56a62f07c001a78f6591414ab",
+      "assumption:ecd37d092349250908baf5f4e822afa10988f236ea4f3f574943e30ea8238599",
+      "assumption:241a4be58aae7a6c5b91fead178d3f18212432841916cb168d9447894a4109d8"
+    ],
+    "bounds": {
+      "max_memory_bytes": 536870912,
+      "max_output_bytes": 262144,
+      "max_steps": 2,
+      "timeout_ms": 59874
+    },
+    "claim_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+    "claim_id": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+    "declaration_id": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+    "logic_family": "rocq",
+    "obligation_digest": "a3bc3d23621bab4814790259cf7cfe31b872f68a2f8e2d13251d7fdbb03fb5c5",
+    "obligation_id": "obligation:a3bc3d23621bab4814790259cf7cfe31b872f68a2f8e2d13251d7fdbb03fb5c5",
+    "payload": {
+      "encoding": "rocq",
+      "source": "From Stdlib Require Import ZArith.\nOpen Scope Z_scope.\nTheorem codebase_claim : forall n : Z, n + (1) = n + (1).\nProof. intros n; reflexivity. Qed.\nPrint Assumptions codebase_claim.\n",
+      "translation": {
+        "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+        "fidelity": "closed_profile",
+        "operation": "prove_offset",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+        "source_family": "closed_integer_offset",
+        "target_family": "rocq",
+        "translation_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+        "translation_id": "codebase-family:rocq"
+      }
+    },
+    "query_kind": "theorem_proof",
+    "request_id": "family:a3bc3d23621bab4814790259cf7cfe31b872f68a2f8e2d13251d7fdbb03fb5c5",
+    "requested_backend_id": "rocq",
+    "schema_version": "proof-backend-request/v1"
+  },
+  "schema": "codebase-family-native-attempt@1",
+  "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+  "source_runtime_semantics_verified": false,
+  "status": "proved",
+  "tools": {
+    "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+    "policy_cid": "baguqeera2enr7lvavokkxrscrufdhiuypxn5uhso3k5d2ytdm2tr5pcj2vza",
+    "schema": "codebase-family-tools@1",
+    "tools": {
+      "cvc5": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 249,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+          "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+        }
+      },
+      "isabelle": {
+        "artifacts": [
+          {
+            "bytes": 1058,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+            "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+          }
+        ],
+        "executable": {
+          "bytes": 294,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/isabelle",
+          "sha256": "3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a"
+        }
+      },
+      "java": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 70864,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+          "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+        }
+      },
+      "lean": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 13824,
+          "path": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+          "sha256": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+        }
+      },
+      "rocq": {
+        "artifacts": [
+          {
+            "bytes": 7336472,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+            "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+          }
+        ],
+        "executable": {
+          "bytes": 399,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/coqtop",
+          "sha256": "2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b"
+        }
+      },
+      "tlc": {
+        "artifacts": [
+          {
+            "bytes": 4486015,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+            "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+          },
+          {
+            "bytes": 70864,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+            "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+          }
+        ],
+        "executable": {
+          "bytes": 457,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+          "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+        }
+      },
+      "z3": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 19659744,
+          "path": "/home/barberb/.local/bin/z3",
+          "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+        }
+      }
+    }
+  },
+  "resource_binding": {
+    "parent_lease_id": "1bcd0a68138f48e38c0388c4dc68045e",
+    "child_lease_id": "fba43f517a0a4396bceb489ec6889a55",
+    "cpu_slots": 1,
+    "memory_mb": 512,
+    "process_slots": 1
+  }
+}

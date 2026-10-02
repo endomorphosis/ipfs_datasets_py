@@ -1,0 +1,99 @@
+{
+  "schema": "repository-shared-host-envelope@1",
+  "profile": "cpu-shared-native-sampled@1",
+  "repository_id": "codebase-family-native-smoke",
+  "supervisor_lease_id": "resource-lease:ec0a4cd6375b41c99f5a8e3c71b1891a",
+  "supervisor_role": "local_lane_policy_bookkeeping_not_another_host_authority",
+  "host_authority": {
+    "owner": "datasets.GlobalResourceScheduler",
+    "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "policy_sha256": "03793b8f3246f9c5d2af6cd64c4aaee6ef09dd1041f6d0ff0d07ef87a955147a",
+    "root_lease_id": "6492face82964bada70f1dfeb8011b7a"
+  },
+  "owned_active_root_count": 1,
+  "shared_active_root_count": 1,
+  "native_parent": {
+    "lease_id": "6492face82964bada70f1dfeb8011b7a",
+    "lane": "orchestration",
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "gpu_memory_mb": 0,
+    "unified_memory_mb": 0,
+    "child_process_slots": 1,
+    "requires_gpu": false,
+    "parent_lease_id": null,
+    "owner_pid": 3514885,
+    "acquired_at": 1790928909.7763164,
+    "wait_seconds": 7.359776645898819e-07,
+    "released": false,
+    "cancelled": false
+  },
+  "budget": {
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "process_slots": 1,
+    "threads_per_process": 1,
+    "disk_bytes": 67108864,
+    "wall_time_ms": 240000,
+    "maximum_queued_phases": 8,
+    "maximum_queued_metadata_bytes": 65536,
+    "maximum_phases": 128,
+    "device": "cpu",
+    "enforcement": "sampled"
+  },
+  "active_phase_count": 0,
+  "queued_phase_count": 0,
+  "queued_metadata_bytes": 0,
+  "events": [
+    {
+      "child_lease_id": "1bcd0a68138f48e38c0388c4dc68045e",
+      "demand": {
+        "cpu_slots": 1,
+        "disk_bytes": 16777216,
+        "memory_mb": 512,
+        "phase": "proof",
+        "process_slots": 1,
+        "threads_per_process": 1
+      },
+      "execution_time_ms": 607,
+      "parent_lease_id": "6492face82964bada70f1dfeb8011b7a",
+      "queue_time_ms": 7,
+      "request_id": "00476a4ca76f46abacf16deb222cc8e3",
+      "status": "completed"
+    },
+    {
+      "child_lease_id": "2d9797fa7a0f478dab6ef4c517beb5c3",
+      "demand": {
+        "cpu_slots": 1,
+        "disk_bytes": 16777216,
+        "memory_mb": 1536,
+        "phase": "proof",
+        "process_slots": 1,
+        "threads_per_process": 1
+      },
+      "execution_time_ms": 924,
+      "parent_lease_id": "6492face82964bada70f1dfeb8011b7a",
+      "queue_time_ms": 8,
+      "request_id": "8035b4c97ad242b28714d3d3864192ce",
+      "status": "completed"
+    }
+  ],
+  "closed": false,
+  "validation_reserve": {
+    "cpu_slots": 2,
+    "memory_mb": 0
+  },
+  "validation_reservation_scope": "global_only_siblings_share_parent_envelope",
+  "limitations": [
+    "disk_is_local_declared_reservation_plus_free_space_sampling_not_shared_host_disk_authority",
+    "queue_bytes_measure_bridge_request_metadata_not_retained_training_or_inference_payloads",
+    "thread_limits_are_explicit_consumer_requirements_not_global_in_process_thread_enforcement",
+    "cpu_ram_process_leases_are_admission_accounting_not_kernel_cgroups",
+    "gpu_per_device_provider_admission_and_hard_enforcement_are_unsupported",
+    "native_pressure_backoff_preserved_gradual_recovery_not_newly_qualified",
+    "validation_reserve_is_global_only_training_can_occupy_its_entire_parent_envelope"
+  ],
+  "hard_enforcement": false,
+  "task_execution_authority": false,
+  "completion_authority": false
+}

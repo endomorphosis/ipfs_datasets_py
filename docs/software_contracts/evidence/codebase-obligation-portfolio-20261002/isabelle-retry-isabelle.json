@@ -1,0 +1,521 @@
+{
+  "backend": "isabelle",
+  "backend_result": {
+    "assumptions": [
+      "assumption:17470c57f9c8ea50b8e5ec93b3c70488c7c6fbb56a62f07c001a78f6591414ab",
+      "assumption:ecd37d092349250908baf5f4e822afa10988f236ea4f3f574943e30ea8238599",
+      "assumption:241a4be58aae7a6c5b91fead178d3f18212432841916cb168d9447894a4109d8"
+    ],
+    "authority": "theorem",
+    "backend_id": "isabelle",
+    "backend_version": "selected-sha256:3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a",
+    "bounds": {
+      "max_memory_bytes": 1610612736,
+      "max_output_bytes": 262144,
+      "max_steps": 2,
+      "timeout_ms": 59914
+    },
+    "diagnostics": [
+      "isabelle path metadata corrected: caller_path=<empty> -> CodebaseOffset.thy"
+    ],
+    "metadata": {
+      "adapter_interface": "IsabelleKernelBackend@1",
+      "capability": {
+        "browser": {
+          "availability": "unsupported",
+          "available": false,
+          "executable": "",
+          "kernel_id": "isabelle",
+          "metadata": {
+            "requested_module_id": "isabelle-wasm"
+          },
+          "module_id": "",
+          "plane": "browser",
+          "reason": "WASM module 'isabelle-wasm' is not in the reviewed support set (lean4-wasm, rocq-wasm, coq-wasm)",
+          "schema_version": "kernel-capability-state/v1",
+          "version": ""
+        },
+        "interface_version": "dual-plane-kernel-capability/v1",
+        "kernel_id": "isabelle",
+        "native": {
+          "availability": "available",
+          "available": true,
+          "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/isabelle",
+          "kernel_id": "isabelle",
+          "metadata": {},
+          "module_id": "",
+          "plane": "native",
+          "reason": "",
+          "schema_version": "kernel-capability-state/v1",
+          "version": "selected-sha256:3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a"
+        },
+        "native_available": true,
+        "wasm": {
+          "availability": "unsupported",
+          "available": false,
+          "executable": "",
+          "kernel_id": "isabelle",
+          "metadata": {
+            "requested_module_id": "isabelle-wasm"
+          },
+          "module_id": "",
+          "plane": "wasm",
+          "reason": "WASM module 'isabelle-wasm' is not in the reviewed support set (lean4-wasm, rocq-wasm, coq-wasm)",
+          "schema_version": "kernel-capability-state/v1",
+          "version": ""
+        },
+        "wasm_available": false
+      },
+      "kernel_receipt": {
+        "accepted": true,
+        "authority_disposition": "reject",
+        "axiom_report": {
+          "contains_sorry": false,
+          "contains_unreviewed_axiomatization": false,
+          "declaration": "codebase_claim",
+          "report_text": "Running Draft ...\n\nOutput (line 4 of \"/tmp/logic-tool-70x8rjas/CodebaseOffset.thy\"):\ntheorem codebase_claim: \\<forall>n. n + 1 = n + 1\nFinished Draft (0:00:01 elapsed time)",
+          "residual_axioms": [],
+          "schema_version": "isabelle-axiom-report/v1"
+        },
+        "diagnostics": [
+          "isabelle path metadata corrected: caller_path=<empty> -> CodebaseOffset.thy"
+        ],
+        "generated_proof": "theorem codebase_claim: \"ALL n::int. n + (1) = n + (1)\" by simp\nend",
+        "generated_proof_digest": "85a86eecb685df1d9b39c57ccb1ac868b6c1b6963918f9ca8512b4e57242ee4c",
+        "imports": [
+          "Main"
+        ],
+        "path_metadata": {
+          "caller_path": "",
+          "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+          "corrected": true,
+          "schema_version": "isabelle-path-metadata/v1",
+          "session_dir": ".",
+          "theory_name": "CodebaseOffset",
+          "theory_path": "CodebaseOffset.thy"
+        },
+        "plane": "native",
+        "receipt_id": "isabelle-kernel-receipt:bf5dfa3743b4a3c4ca06a6eef7ce63187fa98761a2031313052cf175a8966352",
+        "request_digest": "ac04c8dff3ddb2f5e3beb551eddbfd03c8454577c3cb52024e5555848fe6bd92",
+        "schema_version": "isabelle-kernel-receipt/v1",
+        "source_binding": {
+          "path_metadata": {
+            "caller_path": "",
+            "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+            "corrected": true,
+            "schema_version": "isabelle-path-metadata/v1",
+            "session_dir": ".",
+            "theory_name": "CodebaseOffset",
+            "theory_path": "CodebaseOffset.thy"
+          },
+          "request_digest": "ac04c8dff3ddb2f5e3beb551eddbfd03c8454577c3cb52024e5555848fe6bd92",
+          "schema_version": "isabelle-source-binding/v1",
+          "source_digest": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06",
+          "source_format": "isabelle"
+        },
+        "source_tree": {
+          "files": {
+            "CodebaseOffset.thy": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06"
+          },
+          "primary_path": "CodebaseOffset.thy",
+          "root_digest": "40b6f65f93492750db56a225b353a6bf6cb12f117f308f003d707732801476de",
+          "tree_id": "source-tree:40b6f65f93492750db56a225"
+        },
+        "theorem_digest": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06",
+        "theorem_name": "codebase_claim",
+        "toolchain": {
+          "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+          "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/isabelle",
+          "kernel_id": "isabelle",
+          "metadata": {
+            "path_metadata_corrected": true,
+            "session_dir": ".",
+            "theory_name": "CodebaseOffset",
+            "theory_path": "CodebaseOffset.thy"
+          },
+          "module_id": "",
+          "plane": "native",
+          "toolchain_id": "toolchain:isabelle:native:selected-sha256:3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a",
+          "version": "selected-sha256:3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a"
+        },
+        "translation": {
+          "fidelity": "closed_profile",
+          "metadata": {
+            "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+            "operation": "prove_offset",
+            "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+          },
+          "source_family": "closed_integer_offset",
+          "target_family": "isabelle_hol",
+          "translation_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+          "translation_id": "codebase-family:isabelle_hol"
+        }
+      },
+      "path_metadata": {
+        "caller_path": "",
+        "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+        "corrected": true,
+        "schema_version": "isabelle-path-metadata/v1",
+        "session_dir": ".",
+        "theory_name": "CodebaseOffset",
+        "theory_path": "CodebaseOffset.thy"
+      },
+      "source_binding": {
+        "path_metadata": {
+          "caller_path": "",
+          "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+          "corrected": true,
+          "schema_version": "isabelle-path-metadata/v1",
+          "session_dir": ".",
+          "theory_name": "CodebaseOffset",
+          "theory_path": "CodebaseOffset.thy"
+        },
+        "request_digest": "ac04c8dff3ddb2f5e3beb551eddbfd03c8454577c3cb52024e5555848fe6bd92",
+        "schema_version": "isabelle-source-binding/v1",
+        "source_digest": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06",
+        "source_format": "isabelle"
+      }
+    },
+    "reason": "",
+    "result_id": "result:isabelle:ac04c8dff3ddb2f5e3beb551",
+    "result_type": "theorem",
+    "schema_version": "typed-backend-result/v1",
+    "status": "proved",
+    "translation_ceiling": "independently_checkable",
+    "usage": {
+      "elapsed_ms": 6983,
+      "output_bytes": 173,
+      "peak_memory_bytes": 0,
+      "steps": 0
+    },
+    "witness": {
+      "axiom_report": {
+        "contains_sorry": false,
+        "contains_unreviewed_axiomatization": false,
+        "declaration": "codebase_claim",
+        "report_text": "Running Draft ...\n\nOutput (line 4 of \"/tmp/logic-tool-70x8rjas/CodebaseOffset.thy\"):\ntheorem codebase_claim: \\<forall>n. n + 1 = n + 1\nFinished Draft (0:00:01 elapsed time)",
+        "residual_axioms": [],
+        "schema_version": "isabelle-axiom-report/v1"
+      },
+      "generated_proof_digest": "85a86eecb685df1d9b39c57ccb1ac868b6c1b6963918f9ca8512b4e57242ee4c",
+      "path_metadata": {
+        "caller_path": "",
+        "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+        "corrected": true,
+        "schema_version": "isabelle-path-metadata/v1",
+        "session_dir": ".",
+        "theory_name": "CodebaseOffset",
+        "theory_path": "CodebaseOffset.thy"
+      },
+      "receipt_id": "isabelle-kernel-receipt:bf5dfa3743b4a3c4ca06a6eef7ce63187fa98761a2031313052cf175a8966352",
+      "source_tree": {
+        "files": {
+          "CodebaseOffset.thy": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06"
+        },
+        "primary_path": "CodebaseOffset.thy",
+        "root_digest": "40b6f65f93492750db56a225b353a6bf6cb12f117f308f003d707732801476de",
+        "tree_id": "source-tree:40b6f65f93492750db56a225"
+      },
+      "theorem_digest": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06",
+      "theorem_name": "codebase_claim",
+      "toolchain": {
+        "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+        "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/isabelle",
+        "kernel_id": "isabelle",
+        "metadata": {
+          "path_metadata_corrected": true,
+          "session_dir": ".",
+          "theory_name": "CodebaseOffset",
+          "theory_path": "CodebaseOffset.thy"
+        },
+        "module_id": "",
+        "plane": "native",
+        "toolchain_id": "toolchain:isabelle:native:selected-sha256:3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a",
+        "version": "selected-sha256:3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a"
+      },
+      "translation": {
+        "fidelity": "closed_profile",
+        "metadata": {
+          "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+          "operation": "prove_offset",
+          "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+        },
+        "source_family": "closed_integer_offset",
+        "target_family": "isabelle_hol",
+        "translation_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+        "translation_id": "codebase-family:isabelle_hol"
+      }
+    }
+  },
+  "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+  "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+  "family": "isabelle_hol",
+  "mathematical_model_only": true,
+  "native_observations": [
+    {
+      "cancelled": false,
+      "command": [
+        "/bin/sh",
+        "{workspace}/launch-isabelle.sh",
+        "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/isabelle",
+        "process_theories",
+        "-D",
+        "{workspace}",
+        "-l",
+        "HOL",
+        "-O",
+        "-o",
+        "threads=1",
+        "CodebaseOffset"
+      ],
+      "elapsed_seconds": 6.983321070903912,
+      "error": "",
+      "limits": {
+        "cpu_seconds": 60,
+        "enforce_file_size_limit": true,
+        "max_argument_bytes": 65536,
+        "max_arguments": 256,
+        "max_environment_bytes": 131072,
+        "max_input_bytes": 262144,
+        "max_output_bytes": 262144,
+        "max_output_files": 8,
+        "max_path_bytes": 512,
+        "max_workspace_bytes": 16777216,
+        "memory_bytes": 68719476736,
+        "resident_memory_bytes": 1610612736,
+        "termination_grace_seconds": 0.25,
+        "timeout_seconds": 59.90212211292237
+      },
+      "output_truncated": false,
+      "process_tree_terminated": false,
+      "resource_exhausted": false,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "Running Draft ...\n\nOutput (line 4 of \"/tmp/logic-tool-70x8rjas/CodebaseOffset.thy\"):\ntheorem codebase_claim: \\<forall>n. n + 1 = n + 1\nFinished Draft (0:00:01 elapsed time)\n",
+      "timed_out": false,
+      "unavailable": false,
+      "workspace_cleaned": true,
+      "workspace_limit_exceeded": false
+    }
+  ],
+  "operation": "prove_offset",
+  "receipt": {
+    "accepted": true,
+    "authority_disposition": "reject",
+    "axiom_report": {
+      "contains_sorry": false,
+      "contains_unreviewed_axiomatization": false,
+      "declaration": "codebase_claim",
+      "report_text": "Running Draft ...\n\nOutput (line 4 of \"/tmp/logic-tool-70x8rjas/CodebaseOffset.thy\"):\ntheorem codebase_claim: \\<forall>n. n + 1 = n + 1\nFinished Draft (0:00:01 elapsed time)",
+      "residual_axioms": [],
+      "schema_version": "isabelle-axiom-report/v1"
+    },
+    "diagnostics": [
+      "isabelle path metadata corrected: caller_path=<empty> -> CodebaseOffset.thy"
+    ],
+    "generated_proof": "theorem codebase_claim: \"ALL n::int. n + (1) = n + (1)\" by simp\nend",
+    "generated_proof_digest": "85a86eecb685df1d9b39c57ccb1ac868b6c1b6963918f9ca8512b4e57242ee4c",
+    "imports": [
+      "Main"
+    ],
+    "path_metadata": {
+      "caller_path": "",
+      "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+      "corrected": true,
+      "schema_version": "isabelle-path-metadata/v1",
+      "session_dir": ".",
+      "theory_name": "CodebaseOffset",
+      "theory_path": "CodebaseOffset.thy"
+    },
+    "plane": "native",
+    "receipt_id": "isabelle-kernel-receipt:bf5dfa3743b4a3c4ca06a6eef7ce63187fa98761a2031313052cf175a8966352",
+    "request_digest": "ac04c8dff3ddb2f5e3beb551eddbfd03c8454577c3cb52024e5555848fe6bd92",
+    "schema_version": "isabelle-kernel-receipt/v1",
+    "source_binding": {
+      "path_metadata": {
+        "caller_path": "",
+        "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+        "corrected": true,
+        "schema_version": "isabelle-path-metadata/v1",
+        "session_dir": ".",
+        "theory_name": "CodebaseOffset",
+        "theory_path": "CodebaseOffset.thy"
+      },
+      "request_digest": "ac04c8dff3ddb2f5e3beb551eddbfd03c8454577c3cb52024e5555848fe6bd92",
+      "schema_version": "isabelle-source-binding/v1",
+      "source_digest": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06",
+      "source_format": "isabelle"
+    },
+    "source_tree": {
+      "files": {
+        "CodebaseOffset.thy": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06"
+      },
+      "primary_path": "CodebaseOffset.thy",
+      "root_digest": "40b6f65f93492750db56a225b353a6bf6cb12f117f308f003d707732801476de",
+      "tree_id": "source-tree:40b6f65f93492750db56a225"
+    },
+    "theorem_digest": "fa3da82fee7ba643d4ed2a7d1d69894de64112c6f47def68058c6aec1a848f06",
+    "theorem_name": "codebase_claim",
+    "toolchain": {
+      "command_template": "{isabelle} process -T {theory_name} -d {session_dir}",
+      "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/isabelle",
+      "kernel_id": "isabelle",
+      "metadata": {
+        "path_metadata_corrected": true,
+        "session_dir": ".",
+        "theory_name": "CodebaseOffset",
+        "theory_path": "CodebaseOffset.thy"
+      },
+      "module_id": "",
+      "plane": "native",
+      "toolchain_id": "toolchain:isabelle:native:selected-sha256:3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a",
+      "version": "selected-sha256:3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a"
+    },
+    "translation": {
+      "fidelity": "closed_profile",
+      "metadata": {
+        "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+        "operation": "prove_offset",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+      },
+      "source_family": "closed_integer_offset",
+      "target_family": "isabelle_hol",
+      "translation_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+      "translation_id": "codebase-family:isabelle_hol"
+    }
+  },
+  "request": {
+    "assumption_ids": [
+      "assumption:17470c57f9c8ea50b8e5ec93b3c70488c7c6fbb56a62f07c001a78f6591414ab",
+      "assumption:ecd37d092349250908baf5f4e822afa10988f236ea4f3f574943e30ea8238599",
+      "assumption:241a4be58aae7a6c5b91fead178d3f18212432841916cb168d9447894a4109d8"
+    ],
+    "bounds": {
+      "max_memory_bytes": 1610612736,
+      "max_output_bytes": 262144,
+      "max_steps": 2,
+      "timeout_ms": 59914
+    },
+    "claim_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+    "claim_id": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+    "declaration_id": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+    "logic_family": "isabelle_hol",
+    "obligation_digest": "ff4d9ad0cb6768d931e1da8e304336774ad0b8ebb8d1d9818971b2539698d23f",
+    "obligation_id": "obligation:ff4d9ad0cb6768d931e1da8e304336774ad0b8ebb8d1d9818971b2539698d23f",
+    "payload": {
+      "encoding": "isabelle",
+      "source": "theory CodebaseOffset\nimports Main\nbegin\ntheorem codebase_claim: \"ALL n::int. n + (1) = n + (1)\" by simp\nend\n",
+      "translation": {
+        "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+        "fidelity": "closed_profile",
+        "operation": "prove_offset",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+        "source_family": "closed_integer_offset",
+        "target_family": "isabelle_hol",
+        "translation_digest": "b15150cd4161877f4ade64718ae2db5949f8126ab546895477512d4b22dfb7ae",
+        "translation_id": "codebase-family:isabelle_hol"
+      }
+    },
+    "query_kind": "theorem_proof",
+    "request_id": "family:ff4d9ad0cb6768d931e1da8e304336774ad0b8ebb8d1d9818971b2539698d23f",
+    "requested_backend_id": "isabelle",
+    "schema_version": "proof-backend-request/v1"
+  },
+  "schema": "codebase-family-native-attempt@1",
+  "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+  "source_runtime_semantics_verified": false,
+  "status": "proved",
+  "tools": {
+    "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+    "policy_cid": "baguqeera2enr7lvavokkxrscrufdhiuypxn5uhso3k5d2ytdm2tr5pcj2vza",
+    "schema": "codebase-family-tools@1",
+    "tools": {
+      "cvc5": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 249,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+          "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+        }
+      },
+      "isabelle": {
+        "artifacts": [
+          {
+            "bytes": 1058,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+            "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+          }
+        ],
+        "executable": {
+          "bytes": 294,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/isabelle",
+          "sha256": "3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a"
+        }
+      },
+      "java": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 70864,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+          "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+        }
+      },
+      "lean": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 13824,
+          "path": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+          "sha256": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+        }
+      },
+      "rocq": {
+        "artifacts": [
+          {
+            "bytes": 7336472,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+            "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+          }
+        ],
+        "executable": {
+          "bytes": 399,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/coqtop",
+          "sha256": "2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b"
+        }
+      },
+      "tlc": {
+        "artifacts": [
+          {
+            "bytes": 4486015,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+            "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+          },
+          {
+            "bytes": 70864,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+            "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+          }
+        ],
+        "executable": {
+          "bytes": 457,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+          "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+        }
+      },
+      "z3": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 19659744,
+          "path": "/home/barberb/.local/bin/z3",
+          "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+        }
+      }
+    }
+  },
+  "resource_binding": {
+    "parent_lease_id": "c2a65cf3594a4bb58e813fd6633594c9",
+    "child_lease_id": "15d4746e5768465d9ffb90236ac0643e",
+    "cpu_slots": 1,
+    "memory_mb": 1536,
+    "process_slots": 1
+  }
+}

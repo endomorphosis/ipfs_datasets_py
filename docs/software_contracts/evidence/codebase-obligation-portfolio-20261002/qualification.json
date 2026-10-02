@@ -1,0 +1,289 @@
+{
+  "artifacts": [
+    {
+      "bytes": 2729,
+      "path": "isabelle-retry-bundle.json",
+      "sha256": "19dbb7576774691eaecf0feffa35d11a728597bb327ebfda7e7e2e80bc400e20"
+    },
+    {
+      "bytes": 22260,
+      "path": "isabelle-retry-isabelle.json",
+      "sha256": "a8d6f734dbef60bc9377842c41f0670507b578daff999cab7eeb71136c5b4282"
+    },
+    {
+      "bytes": 2900,
+      "path": "isabelle-retry-resources.json",
+      "sha256": "605e85ec68f44be290157b387cfb0eb10aa58c5c4c826f9b0bdd6417bef4518f"
+    },
+    {
+      "bytes": 3374,
+      "path": "isabelle-retry-tools.json",
+      "sha256": "94c6ca2f11d131e5b55966b666bbab7c01662cc1d8d13097f6de0dd191d541cb"
+    },
+    {
+      "bytes": 16,
+      "path": "isabelle-retry.log",
+      "sha256": "2fef8afc6cca17bc284de82b8b22a4c2459f79205ca624ad918e6d71799e994b"
+    },
+    {
+      "bytes": 2671,
+      "path": "isabelle-retry.py",
+      "sha256": "485254f6157c50688b3d9c8b116c5a0164eda2d38554384d97e9b7890bea5275"
+    },
+    {
+      "bytes": 2301,
+      "path": "joined-fifth.log",
+      "sha256": "784c99757a6f565ee164fad665c4627477b3fa54f9b5bc9e8e550d4f815557ce"
+    },
+    {
+      "bytes": 2650,
+      "path": "joined-fourth.log",
+      "sha256": "b2b725a57c81262eebe46ad760693895f0923d3633d7742eb1707080c8885e8e"
+    },
+    {
+      "bytes": 2300,
+      "path": "joined-initial.log",
+      "sha256": "896a1a034a07bdf8c60567926c9c24d3d62805dfd9e4c0cf92c8a626936dad2b"
+    },
+    {
+      "bytes": 1677,
+      "path": "joined-second.log",
+      "sha256": "72c69eca23467fde78f30f3454b88bef073848bf82c7dec9d4ae30584dd081f9"
+    },
+    {
+      "bytes": 2300,
+      "path": "joined-third.log",
+      "sha256": "0b90a0ba1a2396eeda4a817e148a0830daa890dc9f869da6ee5db246d22035df"
+    },
+    {
+      "bytes": 2729,
+      "path": "kernel-retry-bundle.json",
+      "sha256": "19dbb7576774691eaecf0feffa35d11a728597bb327ebfda7e7e2e80bc400e20"
+    },
+    {
+      "bytes": 21826,
+      "path": "kernel-retry-isabelle.json",
+      "sha256": "f09792d20a8996ca41591caba0958882f1cd4f13ef60db54d75521f79158bef2"
+    },
+    {
+      "bytes": 3371,
+      "path": "kernel-retry-resources.json",
+      "sha256": "a0f26bd2684b6574bbd0a2f4bd510fde908251cb79cdd067a2e9a656c8153699"
+    },
+    {
+      "bytes": 17626,
+      "path": "kernel-retry-rocq.json",
+      "sha256": "fce98361a657a43e9d90ff83ae6449ca6836409d7d03a8409194762ec1bf8d5a"
+    },
+    {
+      "bytes": 3374,
+      "path": "kernel-retry-tools.json",
+      "sha256": "94c6ca2f11d131e5b55966b666bbab7c01662cc1d8d13097f6de0dd191d541cb"
+    },
+    {
+      "bytes": 27,
+      "path": "kernel-retry.log",
+      "sha256": "050c43b3dd67efbf43f8c4c399dd4d431e85edc0dd8d24e931f7a7faadd688e6"
+    },
+    {
+      "bytes": 2676,
+      "path": "kernel-retry.py",
+      "sha256": "c7e9882286988764a06ab946fca721b98a0ef89b59256132419d681708443229"
+    },
+    {
+      "bytes": 2729,
+      "path": "native-smoke-bundle.json",
+      "sha256": "19dbb7576774691eaecf0feffa35d11a728597bb327ebfda7e7e2e80bc400e20"
+    },
+    {
+      "bytes": 7280,
+      "path": "native-smoke-cvc5.json",
+      "sha256": "5324c1ae4d97dba18bd7c59f7375624c84ad5eea04c28d428bdbe2b346caf1a6"
+    },
+    {
+      "bytes": 22332,
+      "path": "native-smoke-isabelle.json",
+      "sha256": "53bfeb88b746de9dfa227266883aa280c179012612cb19751b49fa1f63021a58"
+    },
+    {
+      "bytes": 18733,
+      "path": "native-smoke-lean.json",
+      "sha256": "aca71cad7699bfb1e08609e563a13c43cd87488e48ceb2e4694a127a4e44b2cc"
+    },
+    {
+      "bytes": 5262,
+      "path": "native-smoke-resources.json",
+      "sha256": "bc12259bdd48e97ce0d145219fb103db731b05a1ffebab28c4108207646345a8"
+    },
+    {
+      "bytes": 17216,
+      "path": "native-smoke-rocq.json",
+      "sha256": "fd6c12bee91c3c6b178acdc7024e67da5857b85394a2a17128b70c9d4e1562e4"
+    },
+    {
+      "bytes": 37367,
+      "path": "native-smoke-tlc.json",
+      "sha256": "6a356bc6a5f55a375125d52b32d85f733e6f3c95679db17c3972452b8d0b76e5"
+    },
+    {
+      "bytes": 3374,
+      "path": "native-smoke-tools.json",
+      "sha256": "94c6ca2f11d131e5b55966b666bbab7c01662cc1d8d13097f6de0dd191d541cb"
+    },
+    {
+      "bytes": 7245,
+      "path": "native-smoke-z3.json",
+      "sha256": "a17361229040ae7915cc08ed2cc72428557cefa61b7d4ef7bd3bf02ef30e6b88"
+    },
+    {
+      "bytes": 71,
+      "path": "native-smoke.log",
+      "sha256": "e3ef1457ab19451aab61d4f9aa8225261f1736f4edecace704cce2850c30149f"
+    },
+    {
+      "bytes": 2701,
+      "path": "native-smoke.py",
+      "sha256": "3ea6ed9718fc5118013a0f7f4e1956429da1b1959a63ddd93ffaf79de60577e2"
+    },
+    {
+      "bytes": 1116,
+      "path": "pure-controls.log",
+      "sha256": "d59aa35e8487af7d7f5955e44d009a741181413529da1e1321c7d71555d78628"
+    },
+    {
+      "bytes": 2589,
+      "path": "pure-controls.xml",
+      "sha256": "c7fe42b65cba7a0ec8364fba125aac94a393f2b174bb040c2f807d335cafc3bd"
+    }
+  ],
+  "closed_controls": {
+    "junit": "pure-controls.xml",
+    "log": "pure-controls.log",
+    "passed": 12,
+    "seconds": 0.74
+  },
+  "created_at": "2026-10-02T10:13:06.103506+00:00",
+  "final_source_files": [
+    {
+      "bytes": 10493,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_family_lowering.py",
+      "repository": "datasets",
+      "sha256": "60fc38bb4f1ee4f34a7f009143a02c32622e9de852340b7836817d4ff80b6c10"
+    },
+    {
+      "bytes": 19574,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_family_execution.py",
+      "repository": "datasets",
+      "sha256": "e245bd97d5e6b816cbeaf438a9c4c24d9e0ed73c423046a8f6cf72aaaea02475"
+    },
+    {
+      "bytes": 5897,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_obligation_graph.py",
+      "repository": "datasets",
+      "sha256": "1df76e5ce0f8e68f007aab7cfc67577551129fdab9658d97f6b6d8ca20fdb5f7"
+    },
+    {
+      "bytes": 13992,
+      "path": "tests/integration/logic/software_contracts/test_codebase_obligation_portfolio.py",
+      "repository": "datasets",
+      "sha256": "2f28b80330d7ebf26f44272cd3b99540ccaa42faebcb622dd24c71892badcbc8"
+    },
+    {
+      "bytes": 7242,
+      "path": "docs/software_contracts/CODEBASE_OBLIGATION_PORTFOLIO.md",
+      "repository": "datasets",
+      "sha256": "070369cb2d0801913d16d0457be746282b8805071701a263dca7eeae3c275ebe"
+    },
+    {
+      "bytes": 15739,
+      "path": "ipfs_accelerate_py/agent_supervisor/proof/codebase_obligation_portfolio.py",
+      "repository": "accelerate",
+      "sha256": "09ad457f438a7c2dc8058c97d958762380276dc0847a8b3a8a2f4ec87961ec9f"
+    }
+  ],
+  "historical_native_smokes": {
+    "cvc5": {
+      "artifact": "native-smoke-cvc5.json",
+      "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+      "family": "smt_lia",
+      "final_producer_join_qualified": false,
+      "new_wrapper_source_sha256": null,
+      "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+      "status": "proved"
+    },
+    "isabelle": {
+      "artifact": "isabelle-retry-isabelle.json",
+      "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+      "family": "isabelle_hol",
+      "final_producer_join_qualified": false,
+      "new_wrapper_source_sha256": null,
+      "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+      "status": "proved"
+    },
+    "lean": {
+      "artifact": "native-smoke-lean.json",
+      "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+      "family": "lean4",
+      "final_producer_join_qualified": false,
+      "new_wrapper_source_sha256": null,
+      "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+      "status": "proved"
+    },
+    "rocq": {
+      "artifact": "kernel-retry-rocq.json",
+      "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+      "family": "rocq",
+      "final_producer_join_qualified": false,
+      "new_wrapper_source_sha256": null,
+      "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+      "status": "proved"
+    },
+    "tlc": {
+      "artifact": "native-smoke-tlc.json",
+      "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+      "family": "tla_plus",
+      "final_producer_join_qualified": false,
+      "new_wrapper_source_sha256": null,
+      "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+      "status": "proved"
+    },
+    "z3": {
+      "artifact": "native-smoke-z3.json",
+      "bundle_cid": "baguqeerawfivbtkbmgdx6sw6mryyvyw3lfe7qetkwvdisvdxkewuwiw7w6xa",
+      "family": "smt_lia",
+      "final_producer_join_qualified": false,
+      "new_wrapper_source_sha256": null,
+      "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+      "status": "proved"
+    }
+  },
+  "historical_provenance_limit": "Exact generated source/bundle/native executable/process/kernel identities retained. Early scripts did not retain new family-wrapper source-file hashes; no hash is inferred or invented. These are historical individual component observations, not final-producer joined qualification.",
+  "joined_attempts": {
+    "logs": [
+      "joined-initial.log",
+      "joined-second.log",
+      "joined-third.log",
+      "joined-fourth.log",
+      "joined-fifth.log"
+    ],
+    "outcomes": [
+      "actual CPU-high refusal",
+      "test fixture omitted exact expected head; fixed",
+      "actual CPU-high refusal",
+      "actual nested proof memory-headroom admission timeout",
+      "actual host disk-high refusal"
+    ],
+    "policies_weakened": false,
+    "qualified": false
+  },
+  "own_criterion_qualified": false,
+  "production_acceptance": "open",
+  "remaining": [
+    "Actual final joined two-unit six-family run under one admitted supervisor reservation.",
+    "Native unavailable, optional cancellation, counterexample, disagreement, source-drift, unsupported and wrong-repository parent controls.",
+    "Host pressure must admit the unchanged policy; historical component results cannot substitute for that qualification."
+  ],
+  "schema": "codebase-obligation-portfolio-qualification@1",
+  "semantic_scope": "Closed integer-offset mathematical kernel obligations; separately bounded TLC stuttering invariant; explicit one-way finite restriction bridge. No arbitrary Python-runtime equivalence or task completion.",
+  "status": "implemented_pending_native_qualification"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "codebase-integer-family-lowering@1",
+  "profile": "closed-integer-offset-mathematical-and-finite-state@1",
+  "compiled_cid": "baguqeerav33azkmeusmdakgv7whnr7mx2tjjo2oz2dzbppu2wu4opixbhooa",
+  "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+  "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+  "revision": "native-smoke",
+  "operation": "prove_offset",
+  "assumptions": [
+    "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+    "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+    "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+  ],
+  "mathematical_domain": "unbounded_integer",
+  "finite_inputs": [
+    -1,
+    0,
+    1
+  ],
+  "finite_domain_cid": "baguqeerandgxeatpj7dgr4iuetin6ef7bpc4lnxmbinn22crx3przdsr63rq",
+  "source_lowering": "existing_native_closed_integer_offset_ProgramIR_contract_VC",
+  "families": [
+    "smt_lia",
+    "lean4",
+    "rocq",
+    "isabelle_hol",
+    "tla_plus"
+  ],
+  "source_correspondence_cid": "baguqeerauktbli3ujvobktjruzhgooh45mm544vnf3sgm34ojv76ruienoma",
+  "smt_query_cid": "bafkreiaknfdbgl54yopakvimqktisx7sgh442upr2ta4vzbmmyk3weal3a",
+  "kernel_source_cids": {
+    "lean4": "bafkreih22kfdog2mt6epz3s7mgb2her7u2gbubbi3syztj3yyh4pkirmcy",
+    "rocq": "bafkreigtl2d5pcqduy4oq4bfq6nq2suc3uor3u4xoqz43mleoar7ntexdu",
+    "isabelle_hol": "bafkreidyltonlai2ujfdakuhqkoqag6tfl3glh6v5w4vcp73vq3mqwcixm"
+  },
+  "finite_state_ir_cid": "baguqeera2zhrvimff2xrkg4vrroo37du5kcd67unu5o5iqu2ycfqgr62uiea",
+  "tla_artifact_digest": "faf6bf608ba2759b076c4d1c00242195e31cfbe385a3b89255abe506b81f7e14",
+  "tla_model_cid": "bafkreidz53wqpnpeqeem55ltrx2enfb2ump2x6dxq72yikln5fj64rimmy",
+  "tla_configuration_cid": "bafkreif6xrbjaob7lr5tqmvdxuupzwj53cnnmnwhvzd2bjmayzqoyy375i",
+  "bridge": {
+    "operation": "restrict_mathematical_equality_to_declared_finite_inputs",
+    "source_family": "mathematical_integer",
+    "target_family": "tla_plus",
+    "source_cid": "bafkreigd5yrnp26sm7zdezjg3umrq35d56pyxb3mr4vdgkhectnovnkaie",
+    "scope": "Mathematical integer equality restricted to the exact finite initial inputs of a stuttering state model; no liveness, arbitrary TLA equivalence or Python-runtime theorem.",
+    "assumptions_preserved": true,
+    "reverse_implication_claimed": false,
+    "arbitrary_cross_family_equivalence_claimed": false
+  },
+  "source_runtime_semantics_verified": false,
+  "proof_claimed": false
+}

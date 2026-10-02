@@ -1,0 +1,86 @@
+{
+  "schema": "codebase-family-tools@1",
+  "tools": {
+    "cvc5": {
+      "executable": {
+        "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+        "bytes": 249,
+        "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+      },
+      "artifacts": []
+    },
+    "isabelle": {
+      "executable": {
+        "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/isabelle",
+        "bytes": 294,
+        "sha256": "3468bdce61f8fd120964b8a2575f15680fe968eeff14d94ed1cb78fb2ce6211a"
+      },
+      "artifacts": [
+        {
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+          "bytes": 1058,
+          "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+        }
+      ]
+    },
+    "java": {
+      "executable": {
+        "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+        "bytes": 70864,
+        "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+      },
+      "artifacts": []
+    },
+    "lean": {
+      "executable": {
+        "path": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+        "bytes": 13824,
+        "sha256": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+      },
+      "artifacts": []
+    },
+    "rocq": {
+      "executable": {
+        "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/coqtop",
+        "bytes": 399,
+        "sha256": "2e9fc23db3eaafbd04e53f4a83eb22cc5a1fff8a7babf5a14aef8b373b69260b"
+      },
+      "artifacts": [
+        {
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+          "bytes": 7336472,
+          "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+        }
+      ]
+    },
+    "tlc": {
+      "executable": {
+        "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+        "bytes": 457,
+        "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+      },
+      "artifacts": [
+        {
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+          "bytes": 4486015,
+          "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+        },
+        {
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+          "bytes": 70864,
+          "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+        }
+      ]
+    },
+    "z3": {
+      "executable": {
+        "path": "/home/barberb/.local/bin/z3",
+        "bytes": 19659744,
+        "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+      },
+      "artifacts": []
+    }
+  },
+  "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+  "policy_cid": "baguqeera2enr7lvavokkxrscrufdhiuypxn5uhso3k5d2ytdm2tr5pcj2vza"
+}
