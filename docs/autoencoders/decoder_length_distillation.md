@@ -955,3 +955,154 @@ curriculum expansion. The ramp would scale the existing scheduler rate from 0.1 
 update/token budgets. It must record actual parameter-update norms and per-length
 semantic/count/EOS results as well as gradient tails. This proposal has not run;
 smaller spikes alone would not establish better reconstruction or justify promotion.
+
+## First-expansion learning-rate ramp (2026-10-02)
+
+The [paired transition experiment](../implementation/reports/evidence/decoder-transition-ramp-20261002/results.json)
+tests that proposal. It reduces the peak gradients, but does **not** improve exact
+source reconstruction or produce an eligible checkpoint. The ramp remains an
+explicit experimental option; it is not enabled in production or in the prior owners.
+
+`long_span_transition_training.py` adds `transition_schedule="unchanged"` or
+`"first_expansion_ramp20"`. The candidate detects the first strict expansion of the
+training-ID set and applies `0.1 + 0.9*j/19` for committed updates `j=0..19`.
+Here the window is zero-based steps 40–59. The plateau scheduler's base rate is
+already 0.0005 at step 40, so the first effective rate is 0.00005. Base and effective
+rates are recorded separately; the base is restored after every update and before
+the scheduler runs. Adam moments persist throughout. The ramp does not restart at
+later stages, truncate targets, detach recurrent state, or change clipping.
+
+The paired benchmark `benchmark_decoder_transition_ramp.py` uses only balanced
+count exposure, seeds 1729 and 2718, and the same 48 training/48 exposed validation
+paragraphs. Every arm completes 340 updates, 2,440 decoder/count row presentations,
+and 225,840 valid target tokens. Encoder context and decoder output limit remain
+512, temperature 0, count weight 0.25, and generation count guidance off. The
+projection remains frozen. Both unchanged controls reproduce their published
+predecessors' scalar gradient streams, epoch records, stage Adam summaries, final
+weights, predictions, and postfit controls. Candidate/control results match before
+the intervention starts. Later candidate states and Adam moments naturally differ
+as their trajectories diverge.
+
+### Quality and optimizer effects
+
+These are **unselected final-attempt** results, not promoted checkpoints:
+
+| Schedule / seed | Reference token CE | Count CE | Count correct | EOS | Syntax-valid | Peak preclip norm | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| unchanged-1729 | 0.268161 | 1.427320 | 13/48 | 48/48 | 48/48 | 7,599.256 | 9.426 |
+| ramp20-1729 | 0.202653 | 1.424621 | 15/48 | 20/48 | 20/48 | 242.007 | 10.178 |
+| unchanged-2718 | 0.203500 | 1.424489 | 15/48 | 24/48 | 24/48 | 729.729 | 10.506 |
+| ramp20-2718 | 0.273304 | 1.429722 | 15/48 | 48/48 | 46/48 | 80.905 | 8.991 |
+
+All four arms have **0/48 exact validation paragraphs**, all 180 reference rules
+missing, and selected epoch 0. Training-panel exact paragraph recovery is also
+zero. At seed 1729 the ramp lowers teacher-forced CE while reducing successful
+sequence termination; seed 2718 changes those measures in the opposite directions.
+Two seed-2718 candidate outputs terminate but are still not syntax-valid. Reducing
+the gradient tail therefore does not establish better generated semantics.
+
+The source-fidelity gate rejects every evaluated checkpoint in both candidate
+runs for `baseline/length=8/modality regressed`, with other field and syntax
+regressions at some epochs. This is a substantive per-length semantic check;
+aggregate loss or global field totals cannot override it. No gate was relaxed.
+
+The new diagnostic records actual parameter differences around every committed
+optimizer step. Detached float32 snapshots are subtracted and accumulated in
+float64, reporting per-module/global/trainable-only update norms, pre-update
+parameter norms, and update-to-parameter ratios (`null` for a zero denominator).
+These are measured changes in weights, not gradient norms multiplied by a nominal
+learning rate. At the first ramp update, the trainable update norm falls from
+approximately 0.04242 to 0.00424 for seed 1729 and 0.04228 to 0.00423 for seed 2718.
+Across all 20 ramp updates, the sum of update norms falls from 0.79477 to 0.51265
+and from 0.80446 to 0.51049 respectively. Those sums measure update path length,
+not net parameter displacement. The overall reduction is not 90% because the
+factor rises and subsequent gradients/moments change.
+
+The original 7,599 gradient at step 50 produces an actual trainable Adam update
+norm of about 0.04264, comparable to other transition updates under the existing
+clipping. It does not produce a comparably exceptional weight jump. All 20 ramp
+steps still exceed the clipping threshold. Over steps 60–339, summed update path
+length increases from 6.047 to 6.107 and from 5.770 to 6.169; seed 2718's full-run
+clipping-threshold exceedances also increase from 90 to 139. Smaller peak gradients
+are therefore neither uniformly smaller subsequent updates nor evidence of more
+efficient semantic learning.
+
+Peak gradients fall by about 96.8% and 88.9%. For seed 2718, the candidate's
+remaining maximum occurs at step 62, after the ramp ends. All eight retained
+exceptional steps replay exactly, including their effective learning rates and
+Adam state; separate loss-branch gradients reconcile. Capture happens before
+restoring the scheduler base rate. The independent audit checks delta arithmetic,
+frozen-zero movement, and captured pre-state norms. It does not reconstruct every
+parameter delta independently from a post-state hash: the full measurement path
+is also covered by source review, known-delta tests, and unchanged-control parity.
+
+### Source grounding remains the gap
+
+The sampled permission “The registrar is allowed to preserve the archive.” has
+target actor `registrar`, action `preserve`, modality `P`, and object `archive`.
+The unchanged seed-1729 model instead emits `deliver`, modality `F`, and `notice`.
+The ramped seed-2718 model emits `publish`, modality `F`, and `notice`. The ramped
+seed-1729 output repeats clauses and reaches the fixed output limit. These examples
+are preserved with the complete expected and generated structured documents in
+the archive; none counts as formalization.
+
+Same-length source shuffling raises validation token CE by only about 0.0042–0.0048
+in these final states, while zeroing source conditioning raises it much more.
+That is evidence that conditioning affects the decoder, but it does not establish
+correct binding of actor/action/modality/object or clause order. Same-length
+shuffles preserve count class and cannot establish count generalization. The next
+diagnostic should examine loss and source dependence at the meaningful field and
+clause positions, separating correct-prefix prediction from free-running generation,
+before another optimizer setting is promoted. Lower punctuation/structural loss
+must not stand in for source-grounded rule recovery.
+
+Concretely, that diagnostic should keep the existing weights fixed and measure
+semantic-value token accuracy/log probability and stop-versus-continue errors by
+rule position, under correct, within-length shuffled, and zeroed sources. It should
+also locate the first divergence in the already generated outputs. Reference
+prefixes belong only to the diagnostic; they must not enter normal generation or
+qualification. This would separate failure to identify source values with a correct
+prefix from errors that emerge during free generation. It has not yet run.
+
+### Cost, scope, and reproduction
+
+Fits take 8.991–10.506 seconds including the unchanged validation/selection work,
+or 232–271 row presentations/second and 21.5k–25.1k valid target tokens/second.
+Whole arms including persistence, exact replay, and ten postfit controls take
+11.14–14.94 seconds. Update observation takes 0.094–0.105 seconds per fit and
+gradient observation 0.067–0.145 seconds. Packet persistence/reload/replay adds
+0.337–0.357 seconds per arm outside training. These component measurements do not
+isolate causal overhead from machine-load differences.
+
+In table order, numerical final-attempt evaluation takes 1.879, 14.344, 14.367,
+and 2.026 ms/span on 48-span panels. Total postfit panels including that numerical
+readout and fidelity/count diagnostics take 145.6–742.3 ms. Timing differences
+partly reflect whether generation terminates or runs to the fixed output limit;
+faster incorrect termination is not a qualified inference speed improvement.
+Device is CPU, workers 1, bridge names `[]`, prover evaluation false, metric disk
+cache disabled, sample-memory scoring unused, and full paragraph embeddings warm
+cached. No encoder or bridge-on evaluation runs; these are not legal-IR bridge
+timing results.
+
+The guardian takes 86.654 seconds including admission, monitoring, and accounting.
+It retains 92,424,376 bytes within a 200 MB reservation and releases the reservation;
+interval-observed peak child RSS is 708,808,704 bytes. The 140 GB shared cap is
+unchanged. Monitoring time is not presented as isolated child execution time.
+Historical resource-owner compatibility and the unexercised newer nested-lease
+path remain explicitly distinguished.
+
+The full focused suite passes **794 tests**; the independent audit passes
+**91,977 checks with zero findings**. The archive retains all scalar/update streams,
+eight event packets and exact replays, selected/rejected states, original inputs,
+source snapshots, tests, resource receipts, and raw predecessor dependencies.
+The CLI uses the same five path arguments and frozen canonical-tree authentication
+as the preceding experiment. Its archived guardian invokes it under the existing
+reservation layer with a fresh attempt name; original workspace paths and the
+shared dependency export are required, or must be restored using the archive's
+original-path mapping. The evidence bundle is not a standalone installed runtime.
+
+Only 384D numerical development training ran. The 8D linguistic teacher is
+unchanged; verified local 768D inputs remain unavailable. These authored panels
+are already exposed, the fresh test is unopened, and qualifier lists are empty.
+No native family or `lake build <Lib>` qualification, checkpoint promotion,
+distillation-teacher qualification, or Constitution formalization is claimed.
