@@ -702,3 +702,139 @@ count discrimination. Actual boundary deltas were not recorded in this run, so
 that is a mechanism to test, not an established cause. Ordered source-token features
 or clause-addressed decoding remain a separate grounding experiment; lower CE,
 larger output budgets, or count supervision alone have not solved source fidelity.
+
+
+## Balanced auxiliary exposure comparison (2026-10-02)
+
+The [balanced-exposure evidence](../implementation/reports/evidence/decoder-count-exposure-20261002/results.json)
+tests the curriculum imbalance identified above. The new versioned owner is
+[`long_span_count_exposure_training.py`](../../ipfs_datasets_py/logic/formalization/autoencoder/long_span_count_exposure_training.py),
+with a frozen-input CLI in
+[`benchmark_decoder_count_exposure.py`](../../scripts/ops/autoencoder/benchmark_decoder_count_exposure.py).
+Existing owners and the original 8D linguistic teacher remain unchanged. Actual
+training remains 384D; missing verified local 768D inputs are not fabricated or padded.
+
+This is a paired, predeclared comparison of `current_stage` and `balanced_all`
+auxiliary count supervision at seeds 1729 and 2718. The count coefficient is 0.25,
+every-step source conditioning and field-weighted token loss are retained, and
+stopping guidance is disabled in every arm. The inherited projection stays frozen;
+vector reconstruction MSE is monitored but supplies no gradient to the trainable
+decoder and count parameters in this comparison. All four fits use the same 48 training
+and 48 previously exposed validation paragraphs, original full targets, decoder
+curriculum, initialization, 340 AdamW updates, 2,440 decoder/count row presentations,
+and 225,840 target-token presentations. Learning-rate policy and selection gates
+are unchanged. Context and output ceilings remain 512, temperature remains 0,
+and no encoder or weight download runs.
+
+The control reuses the exact decoder minibatch and projected source for count loss.
+The balanced arm draws a count minibatch of the same actual size from all training
+lengths, with a private Python RNG and a class cursor that continues across partial
+batches, epochs, and stages. It does not change the decoder's Torch shuffle stream
+or feed the auxiliary rows' formula prefixes into the decoder. Each class receives
+610 labels and exactly 85.0 total `sum(1/count_batch_size)` loss weight. The control
+receives 960/720/520/240 labels for 1/2/4/8 clauses; actual loss mass differs slightly
+by seed because shuffled 26-row stages end with two-row minibatches. Both label
+counts and loss mass are audited, rather than assuming equal counts suffice.
+
+Balanced count supervision reaches the shared source conditioner as well as the
+count head. It exposes longer training sources and their count labels earlier;
+only the decoder-token curriculum stays the same. Its separate count-source
+projection costs additional computation. Matched update and label budgets do not
+mean identical wall compute or an isolated head-only ablation.
+
+The completed, **unselected final-attempt** results are:
+
+| Arm / seed | Decoder reference CE | Count CE | Count correct | Eight-clause count recall | EOS | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| current_stage-1729 | 0.205258 | 1.528737 | 12/48 | 0/12 | 48/48 | 9.335 |
+| balanced_all-1729 | 0.268161 | 1.427320 | 13/48 | 1/12 | 48/48 | 9.485 |
+| current_stage-2718 | 0.199039 | 1.510180 | 8/48 | 0/12 | 29/48 | 10.789 |
+| balanced_all-2718 | 0.203500 | 1.424489 | 15/48 | 2/12 | 24/48 | 10.360 |
+
+Every arm still has **0/48 exact validation paragraphs**, and all selected checkpoints
+remain at epoch 0. Both current-stage controls reproduce their published predecessor's
+full tensors, Adam state summaries, numerical trajectories, predictions, and existing
+controls exactly. Thus the comparison isolates auxiliary exposure rather than another
+numerical control drift.
+
+Balancing improved count accuracy by one and seven rows, and recovered one and two
+of the twelve eight-clause counts. That improvement is limited: training count
+accuracy is only 16/48 and 15/48, versus 15/48 and 14/48 in the controls. Decoder
+reference CE worsened at both seeds; seed 2718 also lost five EOS completions.
+The result supports a modest count-exposure effect, not faithful longer-span decoding,
+convergence, or a qualified teacher. No checkpoint was promoted and no native family
+or `lake build <Lib>` validation ran. Empty qualifier targets still do not test
+nonempty conditions, exceptions, or temporal semantics. Constitution status is unchanged.
+
+### Diagnostics, optimizer evidence, and next work
+
+Both selected and last-complete states now receive five postfit readouts: conditioned
+training/validation, zero-condition validation, and within-length source shuffles on
+training/validation. Per-row count logits, probabilities, entropy, and confusion matrices
+are retained in the archive; history keeps aggregates. Same-length shuffling preserves
+count class, so it cannot test independent count generalization. Fixed hypothetical
+count-derived stopping corrections at k=1/2/4/8 are recorded but never applied to
+generation or presented as observed decisions at generated rule boundaries.
+
+The existing clipping operation supplies total preclip gradient-norm diagnostics,
+without a second gradient calculation or a changed clipping reduction. The report's
+`norm_exceeded_limit_steps` counts norms above the configured limit; it does not claim
+to count every epsilon-adjusted scaling performed inside Torch. For seed 1729,
+current-stage/balanced maximum norms are 100.36/7,599.26, with 127/130 of 340 norms
+above the limit of 1.0. For seed 2718 they are 552.48/729.73, with 132/90 exceedances.
+The 7,599 peak contributes about 89.8% of that run's sum of norms; removing that one
+maximum leaves a mean around 2.55 instead of 24.89. This is evidence of a rare large
+excursion, not uniformly larger gradients under balancing.
+
+Pinned source inspection rules out a zero-initialization/L2-normalization singularity
+in this path: preprocessing has mean zero and fixed scale one; the inherited projection
+is a residual linear/tanh network, initial state is `tanh(condition(source))`, and the
+added source residual is a direct linear term. There is no normalization of that
+zero-initialized residual. Recurrent gradient amplification and interaction between
+token/count objectives remain hypotheses. Aggregate statistics cannot identify the
+spiking step, source rows, loss branch, or parameter group.
+
+Before changing optimizer policy, the next diagnostic should capture step/stage/row
+IDs, loss components, learning rate, and module-level gradient evidence for large
+excursions while retaining a byte-identical control. Any stabilization experiment
+must preserve complete sequence targets, source/facet gates, and the original teacher.
+Count improvements must continue to be judged separately from ordered clause recovery;
+source grounding remains the principal unresolved output requirement.
+
+### Performance, reproducibility, and publication
+
+The four fits took 9.335–10.789 seconds each, including all validation and selection
+work; whole arms with persistence/reload and ten postfit readouts took 10.983–14.770
+seconds. Final-attempt numerical evaluation of 48 paragraphs took 2.017–15.177 ms/span,
+including reference CE, greedy decoding, and integrity/copy checks. Including fidelity,
+count-posterior, and hypothetical-boundary scoring, total postfit time was
+152.2–783.3 ms per 48-span panel.
+The slower panels contain generations that continue to the fixed output limit.
+These are observed decoder timings, not a measured bridge-on IR speed improvement:
+bridge names are `[]`, prover evaluation is false, metric disk cache is disabled,
+workers are 1, device is CPU, and sample-memory scoring is unused. Full paragraph
+embeddings are warm cached inputs; no encoder runs.
+
+The guardian took 138.360 seconds including admission, monitoring, and final accounting.
+It retained 50,611,816 bytes under its 100 MB reservation; interval-observed peak child
+RSS was 705,556,480 bytes. The reservation was released and the storage cap unchanged.
+Launcher receipts distinguish cumulative guardian time from launch-return-through-reap
+time, which still includes monitoring/accounting latency; isolated child execution
+wall time is not inferred. The historical resource owner and current compatible root
+admission path are recorded separately; no claim of testing nested leases is made.
+
+A late diagnostic-field rename was caught by the freeze hash before any model started.
+The prematurely queued first launcher was interrupted during pre-reservation accounting;
+no attempt directory, child, or reservation remained. The corrected launcher validates
+all frozen input, source, and plan hashes before admission. This operational receipt is
+preserved alongside the successful run.
+
+The frozen-source regression suite passes **646 tests**, and the independent arithmetic,
+provenance, sampler, fidelity, replay, and resource audit passes **19,834 checks** with
+zero final findings. Prior audit-harness binding/tolerance mistakes are preserved and
+corrected without changing model results. The archive contains exact commands,
+source snapshots, plans, original inputs, prior control artifacts, all selected/rejected
+weights and outputs, sampler snapshots and digests, diagnostic readouts, tests, and audit.
+The script uses the same five CLI path arguments as the preceding experiment, under
+the existing resource reservation layer; its private exports are not resumable
+production checkpoints and confer no qualification or formalization authority.
