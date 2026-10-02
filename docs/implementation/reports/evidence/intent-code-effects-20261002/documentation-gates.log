@@ -1,0 +1,23 @@
+Git base: 9e0bd0aab56823081d8a2d804395db5deaa42285
+Working-tree verification; final commit will bind these files.
+Python: 3.12.3
+SHA256: 0a46fa5b8905600cb9f74adaaec8b8aeb5f89878612a43fb7a847e586bde3763 .github/workflows/documentation-gates.yml
+SHA256: e182601e91db9e1d4466b75472f5fa05ca1f0861b49df55a9a6e8bad2acd4548 ipfs_accelerate_py/agent_supervisor/runtime/supervised_task_context.py
+SHA256: 49cd238f79c9d00d3889a12ffca8e84bc9994f9b7a19e25a5612e069eae2fd97 ipfs_accelerate_py/agent_supervisor/runtime/intent_code_effect_advisor.py
+SHA256: 8ce34ef1862af059dd6083fedfbe2d1658a8bd223f4c36fb71d1cb5c34e7488c docs/agent_supervisor/intent_code_effects.md
+SHA256: ed43cfe9c92879d25fbe9629099b6453c61deeab2b704c88733b187d7e493207 test/api/semantic_state/test_intent_code_effect_advisor.py
+SHA256: 509c4255fdf0499465603eeda50d2d3efa3874f2d1c6f27a52e2d762bf23bbe6 test/api/semantic_state/test_supervised_intent_code_effect_context.py
+Running: Supervisor primary-doc vocabulary
+OK: primary agent-supervisor docs are free of board-prefix ticket IDs
+Exit: 0
+Running: Maintained-surface relative links
+OK: 46 allowlisted documentation files have resolvable relative links (anchors checked)
+Exit: 0
+Running: Packaging version pin alignment
+OK: packaging pins aligned at 0.0.45
+Exit: 0
+Running: Closeout navigation markers
+OK: closeout navigation markers present
+Exit: 0
+Results: [('Supervisor primary-doc vocabulary', 0), ('Maintained-surface relative links', 0), ('Packaging version pin alignment', 0), ('Closeout navigation markers', 0)]
+Working tree unchanged by verification: True

@@ -1,0 +1,85 @@
+{
+  "files": [
+    {
+      "bytes": 26573,
+      "path": "authored-contract-inputs.json",
+      "sha256": "b32bd96abba3561380052d3ce1b87b2ae17f4ec002da40fdddccf1e322989f63"
+    },
+    {
+      "bytes": 573826,
+      "path": "authored-native/IntentCodeEffects.lean",
+      "sha256": "07ea5464dae55056ede624993e46311d95ef63f223da55981865c820a38a53e9"
+    },
+    {
+      "bytes": 1097972,
+      "path": "authored-native/receipt.json",
+      "sha256": "f21be9182ecdfa62eec005ce0d764a9c87934b397b6579ed78bee8a3dc2fbfa6"
+    },
+    {
+      "bytes": 131,
+      "path": "execution-environment.json",
+      "sha256": "dc35342480b6cd4a0ccd1b0f73a672fe8350dd6a9b5e4a4a7324ecdd8da763b9"
+    },
+    {
+      "bytes": 122664,
+      "path": "intent-advice.json",
+      "sha256": "5e5ab326c530c0efbfb3f07797b19b30fac8dd4d8610a185e1f2441530c41643"
+    },
+    {
+      "bytes": 219,
+      "path": "intent-checkpoint-descriptor.json",
+      "sha256": "14837bfe47becd2363fb57254bc29670f6da80c2bff4b298c75c0c6074652137"
+    },
+    {
+      "bytes": 861,
+      "path": "intent-checkpoint-manifest.json",
+      "sha256": "e3a534ee7f2f0967bbba0ddf760d95ec347dff78358d750ed44cc0be020fa2f8"
+    },
+    {
+      "bytes": 792,
+      "path": "intent-checkpoint-reference.json",
+      "sha256": "285885d885896bcf791bb09e5eba3ceed5fcb2c8f7b34614ea596260ce6d571b"
+    },
+    {
+      "bytes": 294,
+      "path": "intent-input.json",
+      "sha256": "d917441320c774354a679da65ffc941ae7f6eef2bc4993e9a318033d15faafc8"
+    },
+    {
+      "bytes": 21182,
+      "path": "learned-contract-advice.json",
+      "sha256": "db29268e9207eb86f6a2ccfe0d4a069a3c5d9bac12f7f0118be841e07e18a70a"
+    },
+    {
+      "bytes": 6333,
+      "path": "learned-contract-config.json",
+      "sha256": "08eb1a8aa4b76e20c813ac9447c247a091036ee546c62366cdabc3bef8d01412"
+    },
+    {
+      "bytes": 60319,
+      "path": "producer-sources.json",
+      "sha256": "c7d597ceeb8d791ea0a98e4ec5b579a5f263084696925c8a32e11d6cc855ac3e"
+    },
+    {
+      "bytes": 259190,
+      "path": "security-advice.json",
+      "sha256": "a523863fd8cc29ffd24bb21d5af917c5678b98b88616cd8ee0aa13e67143b80c"
+    },
+    {
+      "bytes": 526,
+      "path": "security-config.json",
+      "sha256": "a4294dbd791c53bb786e8ba7884ef568f630ac782ae307b77ebe55f93f85d4a6"
+    },
+    {
+      "bytes": 215,
+      "path": "source-inputs.json",
+      "sha256": "cd60840da661f061ee026d0e591fcc3f51aa8fdf75488e0ab0c790d2f0cca231"
+    },
+    {
+      "bytes": 1502,
+      "path": "summary.json",
+      "sha256": "85d034b03e222f6f911f078376faf1fc85b4c068fec62a7c2625ecd1f954c36d"
+    }
+  ],
+  "schema": "intent-code-effects-artifact-inventory/v1"
+}

@@ -1,0 +1,160 @@
+{
+  "files": [
+    {
+      "bytes": 12484,
+      "path": "README.md",
+      "sha256": "72a02d37fe8c1360434cbedd874d8521d3a29c0e9a4e567689f1a5ce3da02b5e"
+    },
+    {
+      "bytes": 2280,
+      "path": "consumer-corrected-native-tests.log",
+      "sha256": "8a3048bc9bac16db6c7e6bdf074ac3316c8b4b3ebe8f69b9c79ab06de8478151"
+    },
+    {
+      "bytes": 98695,
+      "path": "consumer-initial-tests.log",
+      "sha256": "79569887c033085d6c4dd2d2549418467f7526e9e1bb3e6b0b3b809a533a7e2b"
+    },
+    {
+      "bytes": 1662,
+      "path": "datasets-tests.log",
+      "sha256": "207ab4c9c18dd6b25c5e5fd80c7b91ed4a082d757f6c9a560e08a766b61fe4e3"
+    },
+    {
+      "bytes": 1574,
+      "path": "documentation-gates.log",
+      "sha256": "c7cde89be8964b844bc46c9689936e2abf2b23bf7758506ffb7a8f1d01810c8e"
+    },
+    {
+      "bytes": 131,
+      "path": "execution-environment.json",
+      "sha256": "dc35342480b6cd4a0ccd1b0f73a672fe8350dd6a9b5e4a4a7324ecdd8da763b9"
+    },
+    {
+      "bytes": 219,
+      "path": "intent-checkpoint-descriptor.json",
+      "sha256": "14837bfe47becd2363fb57254bc29670f6da80c2bff4b298c75c0c6074652137"
+    },
+    {
+      "bytes": 861,
+      "path": "intent-checkpoint-manifest.json",
+      "sha256": "e3a534ee7f2f0967bbba0ddf760d95ec347dff78358d750ed44cc0be020fa2f8"
+    },
+    {
+      "bytes": 792,
+      "path": "intent-checkpoint-reference.json",
+      "sha256": "285885d885896bcf791bb09e5eba3ceed5fcb2c8f7b34614ea596260ce6d571b"
+    },
+    {
+      "bytes": 294,
+      "path": "intent-input.json",
+      "sha256": "d917441320c774354a679da65ffc941ae7f6eef2bc4993e9a318033d15faafc8"
+    },
+    {
+      "bytes": 712,
+      "path": "intent-local-package-reference.json",
+      "sha256": "3ccbd9985a837c0eaa8ae14ad31606df2169f6e6994a462489b448c13d7dd343"
+    },
+    {
+      "bytes": 21182,
+      "path": "learned-contract-advice.json",
+      "sha256": "db29268e9207eb86f6a2ccfe0d4a069a3c5d9bac12f7f0118be841e07e18a70a"
+    },
+    {
+      "bytes": 6333,
+      "path": "learned-contract-config.json",
+      "sha256": "08eb1a8aa4b76e20c813ac9447c247a091036ee546c62366cdabc3bef8d01412"
+    },
+    {
+      "bytes": 60319,
+      "path": "producer-sources.json",
+      "sha256": "c7d597ceeb8d791ea0a98e4ec5b579a5f263084696925c8a32e11d6cc855ac3e"
+    },
+    {
+      "bytes": 287434,
+      "path": "publication/evidence.tar.gz",
+      "sha256": "dc19360caf291c4def2fee82038f073774a91aeac9c1a086fe4456cbd799a6b4"
+    },
+    {
+      "bytes": 39202,
+      "path": "publication/manifest.json",
+      "sha256": "31e86fa58b432d99a80a60396d0d7b6a3976b822c379fba68dbf16e135876caf"
+    },
+    {
+      "bytes": 945,
+      "path": "publication/receipt.json",
+      "sha256": "1522e50f4dfc70542814566c5d3371dc8cf9e5940f5381f120ef22e50dca0be6"
+    },
+    {
+      "bytes": 2923,
+      "path": "publication.log",
+      "sha256": "3cbf2583e097be731424c489f92a41d798942cf0a481004a480c30222e94aa7a"
+    },
+    {
+      "bytes": 886,
+      "path": "published-checkpoint-reference.json",
+      "sha256": "0240471ea6acaf812e22244f53399d61b6d4ebd0920bb68dc5b16196530cbda5"
+    },
+    {
+      "bytes": 13242,
+      "path": "publisher-validation.log",
+      "sha256": "e3a7101721d92584df6427faa8e36689e664083309883314ca7a85c7c28868d1"
+    },
+    {
+      "bytes": 10101,
+      "path": "reproduce.py",
+      "sha256": "3d1824a8c4a4a06f88b67ab74baf85d7eea7de3eadd2c7de5baa1438926684f4"
+    },
+    {
+      "bytes": 3980,
+      "path": "run-01-failure.log",
+      "sha256": "41cdd4ed02c115b4884c69e43c57b59f35c25b920dfcc1f44fcd69e7b0c1893e"
+    },
+    {
+      "bytes": 15904,
+      "path": "run-01-security-advice.json",
+      "sha256": "4437e430641e840a29c50fb6c7cb3956eb413425b4e76d9f145850464c39546c"
+    },
+    {
+      "bytes": 21999,
+      "path": "run-02-blocked-receipt.json",
+      "sha256": "5e6c2694aeef3da2a00976f91a8c32a594b94b25efa32b4b1ee7704d3563964a"
+    },
+    {
+      "bytes": 5601,
+      "path": "run-02-failure.log",
+      "sha256": "1d2939c27afdaa97ae45b4e80c23d9b8624b3a9a2dafff8c1fcabfb1882af76e"
+    },
+    {
+      "bytes": 2641,
+      "path": "run-03-artifacts.json",
+      "sha256": "75a2c3540c913f279eae880f65b8de7d0ca094b215f458d10783bad7c5206d8e"
+    },
+    {
+      "bytes": 6819,
+      "path": "run-03.log",
+      "sha256": "10ac9ae195875b5614dbd9af2e47f2043ac588be7917badc9a26efcccc130b3e"
+    },
+    {
+      "bytes": 526,
+      "path": "security-config.json",
+      "sha256": "a4294dbd791c53bb786e8ba7884ef568f630ac782ae307b77ebe55f93f85d4a6"
+    },
+    {
+      "bytes": 215,
+      "path": "source-inputs.json",
+      "sha256": "cd60840da661f061ee026d0e591fcc3f51aa8fdf75488e0ab0c790d2f0cca231"
+    },
+    {
+      "bytes": 3195,
+      "path": "source-provenance.json",
+      "sha256": "4020dba64293ca496621ba27541d4d79e19fc5dcd7353742cce1e14e826c5631"
+    },
+    {
+      "bytes": 1502,
+      "path": "summary.json",
+      "sha256": "85d034b03e222f6f911f078376faf1fc85b4c068fec62a7c2625ecd1f954c36d"
+    }
+  ],
+  "schema": "intent-code-effects-documentation-artifacts/v1"
+}

@@ -29,6 +29,9 @@ and returned flag. Preconditions refer to the initial state. Postconditions can
 use the final state and `old(...)` expressions over the initial state. Integer
 arithmetic, comparisons, Boolean operations and conditionals therefore express
 input-dependent effects such as `result = old(left) + old(right)`.
+`old(result)` denotes the observation model's initial output sentinel (zero or
+false). Unused source-program store fields remain universally quantified in the
+inherited operational proof.
 
 The carrier retains the exact code SourceRefs. IntentIR uses a different
 SourceRef type, so the original Intent references remain separately preserved
