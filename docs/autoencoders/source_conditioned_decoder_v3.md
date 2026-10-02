@@ -396,3 +396,10 @@ correlation does not prove that it causes them, or that freezing will solve
 the field errors. A separately sealed, grouped fresh panel is still required
 after any recipe is frozen. No default changes, gate relaxation, fresh-holdout
 claim, global-minimum guarantee or production promotion follows from this run.
+
+## Projection-policy follow-up
+
+The separate [v4 projection-freeze study](projection_freeze_development.md)
+implements the proposed joint-versus-frozen comparison with the same gates.
+Its results and qualification limits are recorded there; this v3 experiment
+and its original artifacts remain unchanged.
