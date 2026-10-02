@@ -227,7 +227,7 @@ forward inputs, checks the local asset manifest, and retains the fixed
 512-token encoder context. It downloads no model weights.
 
 The registered preparation uses 1, 2, 4, and 8 clauses. The preliminary source
-length range is 9–74 tokens; actual pinned-tokenizer counts from the run are
+length range is 9–72 tokens; actual pinned-tokenizer counts from the run are
 authoritative. Complete targets contain respectively 40, 73, 139, and 271 tokens.
 These are authored conjunctions of independent rules from exposed material,
 not natural long statutes or a fresh holdout. A 16-clause validation composition
@@ -303,7 +303,7 @@ hashes. The final focused suite passed **204 tests**.
 
 This is an authored composition diagnostic: 48 training and 48 previously exposed
 validation paragraphs, twelve per 1/2/4/8-clause group. Whole-source GTE inputs have
-9–74 tokens; complete JSON targets have 40/73/139/271 tokens including BOS/EOS.
+9–72 tokens; complete JSON targets have 40/73/139/271 tokens including BOS/EOS.
 The existing 512-token encoder window and 512-token decoder ceiling stay fixed.
 All 96 paragraphs were freshly embedded from their complete source, without
 averaging old vectors, padding representations, downloading weights, or truncation.
@@ -344,7 +344,7 @@ end-to-end cost beyond the small neural fit. These are CPU decoder timings,
 not bridge-on Legal IR timings: no metric bridges or external provers ran, no
 metric-cache shortcut was used, and no sample memory was consulted.
 
-The current checkpoint selection protects aggregate exact/EOS/failure counts and
+The first experiment’s checkpoint selection protects aggregate exact/EOS/failure counts and
 initial reconstruction MSE. It does not yet protect each length group or each
 semantic field during selection. Before promoting a length curriculum, add those
 per-group guards and compare shuffled all-length training at matched valid-token
@@ -365,3 +365,168 @@ composition; successful subspans alone never certify the document.
 No model was promoted and no native logic-family or Lake admission was granted.
 The independent-rule JSON experiment does not add missing definitions, references,
 qualifiers, or other logic-family projections to published production decoders.
+
+
+## Source-fidelity development owner
+
+The separate [persistent-source adapter](../../ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py)
+and [Legal source-fidelity trainer](../../ipfs_datasets_py/logic/formalization/autoencoder/long_span_decoder_training.py)
+address two weaknesses exposed by the first paragraph experiment: initial source
+conditioning can be forgotten during generation, and aggregate token loss can
+improve while whole clauses disappear. These are private experimental owners;
+the original linguistic 8D model and production checkpoint loaders are unchanged.
+
+`bind_persistent_model(raw_donor_body, dimension=384, conditioning="every_step")`
+copies the inherited single-layer GRU and adds a zero-initialized 384×16 source
+projection to its token embeddings. The `first_step` control has exactly the same
+parameters and initialization but injects that residual only at the first BOS
+position. It is an augmented control, not the unmodified historical model.
+Both retain the original initial-hidden conditioning. Explicit per-sequence state
+carries recurrent hidden values, projected source, and a consumed-prefix counter;
+there is no mutable module-level source cache. Batched, interleaved, full-prefix,
+and incremental decoding are tested for consistency. Generation uses temperature 0
+and never reads reference targets.
+
+The trainer accepts complete ordered multi-rule references alongside the numerical
+rows and authenticates their exact lexical tokens before fitting. A supplied,
+hash-identified single-rule validator checks each individual rule. This validates
+rule syntax only; it does not prove source meaning or composition. The new
+[fidelity scorer](../../ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py)
+reports actor, action, object, modality, conditions, exceptions, and temporal fields
+for every original reference position, grouped by clause count. It also counts
+ordered exact paragraphs, missing/extra/duplicate whole rules, syntax failures,
+and EOS. Failed or missing generations retain their reference denominators.
+
+Checkpoint selection requires per-length and per-field nonregression against both
+the initial model and the current selected model, plus the unchanged initial
+reconstruction-MSE bound. A candidate then needs an actual fidelity gain against
+the incumbent or lower unweighted reference CE. Weighted training loss cannot
+replace either criterion. The final complete attempted state and its predictions
+remain available even when rejected; they are explicitly distinguished from the
+selected state. No optimizer resume state is exported.
+
+Two reference-supervised loss profiles are available in this owner. `reference_ce`
+weights every nonpadding output token equally. `semantic_fields` weights every
+scalar field value, including modality labels, by 4;
+structural keys and punctuation by 0.25; empty-list absence markers and EOS by 1.
+This is a complete loss-profile comparison, not an isolated scalar-weight change.
+Padding and BOS carry no output loss. One AdamW, plateau scheduler, and shuffle
+RNG continue across all cumulative source stages. The unqualified single-rule
+donor supplies initialization only; its distributions do not supervise longer
+multi-rule targets.
+
+After selection is frozen, zero-conditioning and within-clause-count shuffled
+input controls measure reliance on the source vectors. Zero-conditioning removes
+both decoder source paths while retaining the original feature projection;
+shuffling is explicitly an intentional source/vector provenance mismatch. Neither
+control trains or selects a checkpoint. Different outputs under a control establish
+source sensitivity, not source correctness.
+
+The [frozen comparison driver](../../scripts/ops/autoencoder/benchmark_decoder_source_fidelity.py)
+requires a pinned donor, original complete paragraphs, actual cached embedding
+receipts, curriculum inputs, and curriculum plan. It reconstructs the original
+component offsets, source hashes, full target tokens, tokenizer counts, and split
+checks before fitting. It rejects a manifest pointer that is absent from the input
+hash inventory. Frozen dependency and extension trees are inventoried before and
+after execution. It writes training reports and postfit `evaluation-*.json` files
+to distinct immutable paths, then reloads selected tensors and checks their exact
+generations. A source hash or import-tree mismatch aborts the comparison.
+
+This version owns Legal rule facets only. Intent, UI, and Security require their
+own target validators and fidelity inventories; their different logic families
+are not reduced to these seven Legal fields. Native family and `lake build <Lib>`
+gates remain separate and unchanged. Supporting dimensions 8/384/768 in synthetic
+adapter protocol tests does not establish available real inputs or decoder quality
+for those lanes.
+
+## Recorded source-fidelity comparison (2026-10-02)
+The [results and full evidence archive](../implementation/reports/evidence/decoder-source-fidelity-20261002/results.json)
+contain eight complete fits: two matched-capacity conditioning modes, two loss
+profiles, and seeds 1729/2718. Each performed **340 updates**, 2,440 training-row
+presentations, and 225,840 valid target-token presentations. Each arm trained
+24,832 parameters, including the same 6,144 new source-adapter parameters. The
+original feature projection remained byte-identical. All arms completed their
+predeclared 45-second fit budget without deadline termination.
+
+The cohort remains 48 authored training and 48 previously exposed validation
+paragraphs: twelve each at 1/2/4/8 clauses. Cached complete-source GTE-small384
+vectors and captured untruncated input IDs were replayed and hash-checked; this
+run did not execute the encoder. Actual source counts are 9–72 tokens; the earlier
+prose maximum of 74 was corrected after checking all captured receipts. Encoder
+context and output ceiling remain 512. No fresh test was opened.
+
+| Conditioning | Loss | Seed | Final attempted reference CE | Final EOS / 48 | Fit seconds |
+| --- | --- | --- | --- | --- | --- |
+| first_step | reference_ce | 1729 | 0.227592 | 0 | 9.124 |
+| first_step | semantic_fields | 1729 | 0.304418 | 48 | 7.928 |
+| every_step | reference_ce | 1729 | 0.179563 | 0 | 10.248 |
+| every_step | semantic_fields | 1729 | 0.218327 | 48 | 7.583 |
+| first_step | reference_ce | 2718 | 0.234769 | 0 | 8.717 |
+| first_step | semantic_fields | 2718 | 0.275647 | 48 | 8.284 |
+| every_step | reference_ce | 2718 | 0.203798 | 1 | 9.900 |
+| every_step | semantic_fields | 2718 | 0.212227 | 48 | 7.694 |
+
+These are **rejected final-attempt metrics**, not selected-checkpoint gains. All
+160 complete epoch evaluations failed at least one per-length fidelity guard;
+all eight selected states remained at epoch 0, with reference CE 4.291244 and
+**0/48 exact validation paragraphs**. Initial selected training exactness was
+1/48 and did not improve. Every selected state reloaded to identical tensors and
+reproduced its original generations. Original donor bytes were unchanged.
+
+The final reference-CE candidates produced unterminated sequences in 47–48 of 48
+rows despite lower teacher-forced loss. The field-weighted candidates reached EOS
+and passed individual-rule syntax in all 48 rows, but emitted only one rule per
+paragraph. Three arms had 180 missing reference rules and 48 extra wrong rules;
+the every-step/field-weighted arm at seed 1729 matched one complete rule, leaving
+179 missing and 47 extra. Each clause-count bin still had zero
+exact paragraphs. Field weighting improved termination in this small comparison;
+neither conditioning mode established source-faithful longer outputs. Increasing
+the output ceiling would not fix the wrong single-rule outputs or prove that the
+unterminated sequences contain the required meaning.
+
+The postfit zero/shuffle controls are preserved for the selected states. Because
+all selected states are initialization, these controls characterize the donor
+with a zero-valued added adapter. They must not be cited as evidence about the
+trained persistent pathway. The separate final-attempt tensors and complete raw
+predictions remain available for further diagnosis without model promotion.
+All references in this panel have empty conditions, exceptions, and temporal
+lists; agreement on those empty fields establishes no nonempty-qualifier coverage.
+
+Each fit took 7.58–10.25 seconds, including baseline and 20 full validation passes,
+state snapshots, and report creation. That corresponds to about 22,000–29,800
+repeated target-token presentations/second, not unique legal spans/second.
+Selected-state evaluation took 80.44–86.18 ms for 48 paragraphs, or 1.676–1.795
+ms/span, including teacher-forced CE and free-running decoding plus copy/integrity
+checks. The successful guardian child cycle took 113.636 seconds including
+admission, startup, and monitoring; with final accounting the guardian took
+129.864 seconds. Observed peak child RSS was 678,436,864 bytes; interval sampling is not a continuous
+peak measurement. The attempt retained 44,216,864 bytes under a 100 MB reservation,
+one CPU slot, one process slot, and 4 GB memory; its reservation was released.
+
+These are CPU decoder diagnostics, **not bridge-on Legal IR timings**. No metric
+bridges ran (names `[]`), prover evaluation was false, workers were 1, and no Legal
+IR metric cache or sample-memory scoring was used. Paragraph embeddings were warm
+cached inputs. No new native logic-family or Lake build ran, and no qualification,
+formalization, Constitution round trip, or teacher-distillation authority resulted.
+
+Two operational failures are preserved. The first admission requested five process
+slots inherited from an earlier launcher and timed out without starting a model;
+the actual cached-vector workload needs one. Its exact unused reservation was
+closed by an explicit audited administrative reconciliation with no process or
+scheduler authority remaining, unchanged storage cap, and unchanged foreign
+claims. The second attempt completed its first fit but collided with `training.json`
+when writing the postfit training evaluation; disjoint `evaluation-*.json` paths
+and regression tests fixed that. Its stopped owned claim was reconciled through
+the existing recovery API. The successful retry changed only report naming, used
+the same sealed recipe, and preserved all failed outputs. The final focused suite
+passed **293 tests**.
+
+The next quality experiment needs explicit ordered-clause coverage and stronger
+source grounding, with diagnostic controls on frozen attempted candidates as well
+as selected ones. Possible separate, predeclared arms include a source-supervised
+clause-count/stop objective and access to ordered encoder token features. Neither
+may read validation targets during generation or relax the existing gates. More
+steps, lower teacher-forced CE, a larger output cap, or a larger latent dimension
+alone are not established solutions. The 8D linguistic teacher remains unchanged;
+real 768D training still requires its missing verified local encoder inputs. No
+trained state from this comparison was installed into a production lane.
