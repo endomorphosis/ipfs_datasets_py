@@ -119,6 +119,16 @@ def _parser():
     world.add_argument("--additional-inputs", type=Path, help="other formula or native context inputs to retain")
     _result(world)
 
+    source_state = commands.add_parser("source-state", help="derive and check finite operational states from exact Security predictions")
+    source_state.add_argument("--rows", type=Path, required=True,
+        help="JSON rows with id, original source_text, candidate_ir and explicit input_domains")
+    source_state.add_argument("--lake-executable", type=Path)
+    source_state.add_argument("--java-executable", type=Path)
+    source_state.add_argument("--tla2tools-jar", type=Path)
+    source_state.add_argument("--timeout-seconds", type=_positive, default=60)
+    source_state.add_argument("--output-dir", type=Path, help="fresh native-check evidence directory")
+    _result(source_state)
+
     export = commands.add_parser("export-pairs", help="audit reviewed native pairs and bound embeddings for training")
     export.add_argument("--domain", choices=DOMAINS, required=True)
     export.add_argument("--pairs", type=Path, required=True)
@@ -163,6 +173,18 @@ def _dispatch(args):
             return world_model_requirements(candidate, source)
         return bind_intent_world_model(candidate, source, read_json(args.world_model),
             additional_inputs=read_json(args.additional_inputs) if args.additional_inputs is not None else None)
+    if args.command == "source-state":
+        from ipfs_datasets_py.logic.formalization.autoencoder.source_state_lake import (
+            prepare_source_state_lean, build_source_state_lake, verify_source_state_lake)
+        rows = read_json(args.rows)
+        if args.lake_executable is None:
+            if any((args.java_executable, args.tla2tools_jar, args.output_dir)):
+                raise ValueError("source-state native tools/output require an explicit Lake executable")
+            return prepare_source_state_lean(rows)
+        execution = build_source_state_lake(rows, lake_executable=args.lake_executable,
+            java_executable=args.java_executable, tla2tools_jar=args.tla2tools_jar,
+            timeout_seconds=args.timeout_seconds, output_directory=args.output_dir)
+        return verify_source_state_lake(execution, rows)
     if args.command == "export-pairs":
         from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.paired_export import export_reviewed_pairs
         return export_reviewed_pairs(args.domain, args.pairs, args.embeddings, args.output_dir,
