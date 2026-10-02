@@ -129,6 +129,14 @@ def _parser():
     source_state.add_argument("--output-dir", type=Path, help="fresh native-check evidence directory")
     _result(source_state)
 
+    code_effects = commands.add_parser("intent-code-effects", help="check explicit Intent effects against bounded code outcomes")
+    code_effects.add_argument("--rows", type=Path, required=True,
+        help="closed rows with original Intent/code sources, unchanged candidates, domains and explicit association")
+    code_effects.add_argument("--lake-executable", type=Path)
+    code_effects.add_argument("--timeout-seconds", type=_positive, default=60)
+    code_effects.add_argument("--output-dir", type=Path, help="fresh native-check evidence directory")
+    _result(code_effects)
+
     export = commands.add_parser("export-pairs", help="audit reviewed native pairs and bound embeddings for training")
     export.add_argument("--domain", choices=DOMAINS, required=True)
     export.add_argument("--pairs", type=Path, required=True)
@@ -185,6 +193,17 @@ def _dispatch(args):
             java_executable=args.java_executable, tla2tools_jar=args.tla2tools_jar,
             timeout_seconds=args.timeout_seconds, output_directory=args.output_dir)
         return verify_source_state_lake(execution, rows)
+    if args.command == "intent-code-effects":
+        from ipfs_datasets_py.logic.formalization.autoencoder.intent_code_effects_lake import (
+            prepare_intent_code_effects_lean, build_intent_code_effects_lake, verify_intent_code_effects_lake)
+        rows = read_json(args.rows)
+        if args.lake_executable is None:
+            if args.output_dir is not None:
+                raise ValueError("Intent/code native output requires an explicit Lake executable")
+            return prepare_intent_code_effects_lean(rows)
+        execution = build_intent_code_effects_lake(rows, lake_executable=args.lake_executable,
+            timeout_seconds=args.timeout_seconds, output_directory=args.output_dir)
+        return verify_intent_code_effects_lake(execution, rows)
     if args.command == "export-pairs":
         from ipfs_datasets_py.logic.formalization.autoencoder.distributed_384.paired_export import export_reviewed_pairs
         return export_reviewed_pairs(args.domain, args.pairs, args.embeddings, args.output_dir,
