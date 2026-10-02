@@ -1,0 +1,15 @@
+REJECTED unexpected_json
+REJECTED unexpected_lean
+REJECTED symlink
+REJECTED missing_source
+REJECTED replaced_source
+REJECTED summary_positive_satisfaction_count
+REJECTED summary_counterexample_case_count
+REJECTED summary_enabled_case_count
+REJECTED summary_effect_dispositions
+REJECTED summary_rows
+REJECTED summary_proof_authority
+REJECTED case_enabled_count
+REJECTED consumer_authority
+DETERMINISTIC_ARCHIVE_VERIFIED
+NEGATIVE_CONTROLS 13

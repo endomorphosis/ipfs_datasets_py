@@ -1,0 +1,156 @@
+{
+  "files": [
+    {
+      "bytes": 14116,
+      "path": "README.md",
+      "sha256": "d374f7214b11feed1a5ed993f42013b5c079075a70dc81a61b0a5050d1d80ae7"
+    },
+    {
+      "bytes": 964,
+      "path": "checkpoint-references.json",
+      "sha256": "0458d53da7969966e48b1893f7eaa16e944b03d32666dc9328b7c0870cb09a5d"
+    },
+    {
+      "bytes": 1819,
+      "path": "datasets-initial-tests.log",
+      "sha256": "419a2de6d66f7c07b4b9dd616352b2fd574b6a193658ba58dca2a5e5fb6417ff"
+    },
+    {
+      "bytes": 1001,
+      "path": "datasets-native-gate-tests.log",
+      "sha256": "38489e9b014d81ae13f7dfd52e23d5f2c3f3a74d869645aa43397e74dd6b6eed"
+    },
+    {
+      "bytes": 1015,
+      "path": "datasets-smoke-script-tests.log",
+      "sha256": "004d3cdda72ef799b1eea4ff94e7c092f9c060a8808d18396ce864540bc88376"
+    },
+    {
+      "bytes": 2644,
+      "path": "documentation-gates.log",
+      "sha256": "562a42fbcee2f3ace88a7ddcac9d7701266d1a91314664eb659c843d9461a0d3"
+    },
+    {
+      "bytes": 132,
+      "path": "execution-environment.json",
+      "sha256": "a67d9cd8298650f9eccb0b6d797be66f1fbec5f23edcd4b513f993f245e5008e"
+    },
+    {
+      "bytes": 280,
+      "path": "fit-seal.json",
+      "sha256": "fa73ced6d65cb066cf2ab8a79476170535fd64f133086dcb52fe41329c518aca"
+    },
+    {
+      "bytes": 33940,
+      "path": "hub-consumer-advice.json",
+      "sha256": "ca4bd18c7f22228bc52dce5ec15a0300f9f78663806b8cf5c299adac43251296"
+    },
+    {
+      "bytes": 696,
+      "path": "hub-consumer-verification.json",
+      "sha256": "c0ca2c124f8f9e02348debd84a3fa4c0afef9caa03180f5d91cfbec8141503c0"
+    },
+    {
+      "bytes": 1951,
+      "path": "hub-consumer-verification.log",
+      "sha256": "ab8e59890cd1d6bdf25498822d99b095e44e8a895ec76d08aeb16b897f5cc342"
+    },
+    {
+      "bytes": 374,
+      "path": "hub-reference.json",
+      "sha256": "afffb634f201fd30250c70c6c98ff95c28fcc00163310f0f3ee287bcc565d9e5"
+    },
+    {
+      "bytes": 997,
+      "path": "hub-resolver-tests.log",
+      "sha256": "61e6b07afa293630d17c44201194cd5b5a3b591fecf51104f31282d283af1518"
+    },
+    {
+      "bytes": 1609,
+      "path": "input-references.json",
+      "sha256": "746e954ddb3d75b481ce4584b1b6fa581b4022a76c7b08c3e9b0824efb7d69a7"
+    },
+    {
+      "bytes": 286,
+      "path": "intent-config.json",
+      "sha256": "5b724b049483b90a737fb78d654c5fb33c6d1739b0c9168c2b54fdf788f7ecfe"
+    },
+    {
+      "bytes": 27589,
+      "path": "native-summary.json",
+      "sha256": "a9c970a3b3aff40119edcd2700077c248fc06d4a69a3ee5c117bcec059d214f9"
+    },
+    {
+      "bytes": 47900,
+      "path": "producer-sources.json",
+      "sha256": "fde6204940886f2fd5206dde1edf8c8b8afd6bc79adf71c2ba1e3b1a6645222a"
+    },
+    {
+      "bytes": 56881,
+      "path": "publication/manifest.json",
+      "sha256": "5dd54fae01f9a5faa543195e5455b28a5c8cbdcf543cf024ae535aacabea3032"
+    },
+    {
+      "bytes": 618,
+      "path": "publication/receipt.json",
+      "sha256": "9ca4fc74ea6ffc543c057fc279737c70e5dc2f88d9156f6a552f6ccf3463c69d"
+    },
+    {
+      "bytes": 9270,
+      "path": "publication.log",
+      "sha256": "f544ee98b30e4d50f3019b697290b53b105f14b707fc33419ee8044ac954a9ed"
+    },
+    {
+      "bytes": 440,
+      "path": "publisher-hardening-tests.log",
+      "sha256": "c0e50927522568fa0a3be78156a0df9e8ada3a408f54ecb49a8230376f1c1772"
+    },
+    {
+      "bytes": 10974,
+      "path": "publisher-validation.log",
+      "sha256": "8e36d18f67d925ba1a5df2078c94040b130c60139d3436db43040f9ae2d0cdc0"
+    },
+    {
+      "bytes": 32562,
+      "path": "run-artifacts.json",
+      "sha256": "64ae9159e630107d4fe2a88b69f5d3b6da74793fad3adb1b60d594f78711b1c3"
+    },
+    {
+      "bytes": 526,
+      "path": "security-config.json",
+      "sha256": "a4294dbd791c53bb786e8ba7884ef568f630ac782ae307b77ebe55f93f85d4a6"
+    },
+    {
+      "bytes": 215,
+      "path": "source-inputs.json",
+      "sha256": "cd60840da661f061ee026d0e591fcc3f51aa8fdf75488e0ab0c790d2f0cca231"
+    },
+    {
+      "bytes": 6070,
+      "path": "source-only-instructions.json",
+      "sha256": "a7f437ec31fe50cea22106c001405d2a234c6f9988cb28d8fa63307af1e0512f"
+    },
+    {
+      "bytes": 95491,
+      "path": "supervisor-tests.log",
+      "sha256": "8be2ca133b9b72580a434afce746b9c9e537ad3ea464855e30f2c6c439169a28"
+    },
+    {
+      "bytes": 2435,
+      "path": "training-plan.json",
+      "sha256": "276c0a47662c65982b17401d0a09f2d31b22a23cba2b9be1ce0fba3f437ace59"
+    },
+    {
+      "bytes": 1075,
+      "path": "training-summary.json",
+      "sha256": "f96b93abb400370b60f64ef4083c46ada0300fa3549a5e335d462c65fff266e9"
+    },
+    {
+      "bytes": 2463,
+      "path": "verify_hub.py",
+      "sha256": "123d5c34e147aa2e30656b2d5f2a6599cd436e642863ef6630382a21c3bf6c0d"
+    }
+  ],
+  "schema": "intent-action-contract-documentation-artifacts/v1",
+  "weights_included": false
+}

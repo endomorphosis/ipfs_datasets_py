@@ -1,0 +1,23 @@
+{
+  "intent": {
+    "bytes": 384106,
+    "dimension": 384,
+    "domain_id": "intent_ir",
+    "path": "/home/barberb/lift_coding/artifacts/intent-action-contracts-20261002/training-01/checkpoint.json",
+    "schema": "structured-source-384-autoencoder/v1",
+    "sha256": "4f3fd17ea2d908fe36c57a444517f3cc0a983cab26f0f67f2e32371e25def3cd",
+    "weights_included_in_git": false
+  },
+  "parent": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/holdout-throughput-release-20261001/current-holdout-r1/1729-original32-head.json",
+    "sha256": "969461ab82a2806e54ad33ba242a1eb62d032fa1b3cfc808b77c66dcc965aa62",
+    "unchanged": true
+  },
+  "schema": "intent-action-checkpoint-references/v1",
+  "security": {
+    "repository_id": "Publicus/security-ir-autoencoder",
+    "revision": "84ea9a8877989d9bde21e0cee5868c936fc184a9",
+    "sha256": "2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5",
+    "unchanged": true
+  }
+}
