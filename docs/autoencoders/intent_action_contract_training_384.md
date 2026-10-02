@@ -7,6 +7,17 @@ Legal projection. A separately fitted classifier head predicts the native
 contract's semantic fields. Original instruction provenance is attached only
 after a complete source-agreement check; the raw prediction remains available.
 
+Inference also supports a relocated source package without Git metadata. Its
+`portable_source_pins` owner anchors each direct producer to the exact module
+path inside the installed datasets package, compares loaded function code with
+compiled source bytes on first use, and rejects subsequent file or function
+drift. The checker itself is included in the pin population. This replaces the
+Intent action runtime's dependency on importing the historical schema-Lake
+checker, whose import requires a Git checkout. It does not change that historical
+checker, the structured decoder, or any checkpoint bytes. These pins cover the
+direct producer functions and source files, not the entire Python environment,
+mutable globals, numerical model memory, or program semantics.
+
 The earlier instruction `the agent may delete the report.` states a permission,
 not a return-state contract. Its missing effects were not evidence of a decoding
 error. The new codec rejects permission-only instructions instead of adding an

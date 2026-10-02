@@ -36,9 +36,9 @@ def _sha(value):
 
 
 def _pins():
-    from ....optimizers.logic_theorem_optimizer import autoencoder_schema_lake as owner
-    modules = (importlib.import_module(__name__), codec, embeddings, producer, structured, owner)
-    return {module.__name__: owner._pin_imported_module(module) for module in modules}
+    from . import portable_source_pins as pins
+    modules = (importlib.import_module(__name__), codec, embeddings, producer, structured, pins)
+    return {module.__name__: pins.pin_imported_module(module) for module in modules}
 
 
 def _options(instruction, checkpoint_path, expected_sha256, snapshot_path):
