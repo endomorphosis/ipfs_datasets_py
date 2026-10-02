@@ -127,6 +127,22 @@ def test_untyped_parent_refuses_before_any_durable_reservation(tmp_path):
     assert not (tmp_path / "disk.json").exists()
 
 
+def test_consumer_acquires_beneath_public_live_daemon_lease(tmp_path, parent):
+    _, lease = parent
+    request = reservation(tmp_path, lease)
+    with pytest.raises(DaemonResourceError, match="no longer active"):
+        request.native_lease
+    with request:
+        native = request.native_lease
+        assert native.parent_lease_id == lease.lease_id
+        with native.acquire_child(memory_mb=64, child_process_slots=1, timeout=5) as consumer:
+            assert consumer.parent_lease_id == native.lease_id
+        request.release(artifacts_durable=True)
+        with pytest.raises(DaemonResourceError, match="no longer active"):
+            request.native_lease
+        assert not lease.released
+
+
 def test_dead_parent_is_recovered_before_usage_or_new_charges(tmp_path):
     private = tmp_path / "parent-capability.json"
     script = '''

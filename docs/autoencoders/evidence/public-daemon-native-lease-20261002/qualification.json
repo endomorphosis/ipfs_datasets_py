@@ -1,0 +1,22 @@
+{
+  "schema": "public-daemon-native-lease-qualification@1",
+  "passed": 10,
+  "seconds": 1.05,
+  "skipped": 0,
+  "scope": "Actual shared native parent and durable disk owner, including public live consumer child accessor and all prior cancel/death controls.",
+  "prior_default_route_regressions": {
+    "passed": 145,
+    "evidence": "../nested-daemon-resources-20261002/manifest.json",
+    "new_default_route_changes": false
+  },
+  "source_inventory": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "188dd2feb92253b4239f50d1b1133ffefcbe1513219f75a684f23904ea0d625b"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_nested_daemon_resources.py",
+      "sha256": "01c321ed623f4f3bf49fbb1ef48dcf317a68eb5fe7016747ddca8589d5678bd3"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "closed-local-evidence-manifest@1",
+  "files": [
+    {
+      "path": "qualification.json",
+      "size_bytes": 845,
+      "sha256": "1c4a53b34b6a502fd6bbcad53b9e4ab042d3b88fcb64cd499104ad781b3a2555"
+    },
+    {
+      "path": "tests.log",
+      "size_bytes": 1119,
+      "sha256": "6cf7625710b826a44dd8cc3b2fd7db497efa1958e64a25aa564b83791fcc9b33"
+    },
+    {
+      "path": "tests.xml",
+      "size_bytes": 2087,
+      "sha256": "01ddecfba218c006374a7a53ca1d0697dbd4e38f118a5dd5fb7a454d811e4d24"
+    }
+  ]
+}

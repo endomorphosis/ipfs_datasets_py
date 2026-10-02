@@ -698,6 +698,21 @@ class DaemonResourceReservation:
 
     close = release
 
+    @property
+    def native_lease(self):
+        """Live native parent for consumers nested under this disk/RSS owner.
+
+        This in-process capability must not be serialized into receipts. A
+        consumer must finish/reap its children before this owner is released.
+        """
+        self._require_active_parent()
+        if self._lease is None or self._lease.released or self._admission_scheduler is None:
+            raise DaemonResourceError("resource admission is no longer active")
+        rows = self._admission_scheduler.active_leases()
+        if not any(row["lease_id"] == self._lease.lease_id and not row["cancelled"] for row in rows):
+            raise DaemonResourceError("resource admission is no longer active")
+        return self._lease
+
     def to_dict(self):
         return {"schema": SCHEMA, "reservation_id": self.reservation_id,
                 "scheduler_lane": SCHEDULER_LANE.value, "workload": SCHEDULER_WORKLOAD,

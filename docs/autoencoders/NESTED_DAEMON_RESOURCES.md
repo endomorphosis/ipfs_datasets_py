@@ -30,3 +30,10 @@ This is cooperative admission and polling. It adds neither a filesystem quota
 nor a kernel memory limit. A full supervisor composition must still qualify its
 shared storage roots, queue payload bounds, protected validation capacity and
 device policy separately.
+
+Consumers can use the live `native_lease` property as their own parent. It
+rechecks admission and raises before enter, after release or after revocation.
+This keeps the consumer beneath the disk/RSS owner instead of creating a sibling
+that competes for the same phase capacity. The follow-up
+[ten-control qualification](evidence/public-daemon-native-lease-20261002/manifest.json)
+includes a real consumer child acquired through that property.
