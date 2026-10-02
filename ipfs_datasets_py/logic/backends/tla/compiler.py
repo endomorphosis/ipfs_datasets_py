@@ -702,8 +702,8 @@ class TLACompiler:
             )
         lines.append("")
         lines.append("Safety ==")
-        for index, name in enumerate(safety_names):
-            lines.append(f"    /\\ {name}")
+        for safety_name in safety_names:
+            lines.append(f"    /\\ {safety_name}")
         lines.append("")
 
         # Fairness / liveness
