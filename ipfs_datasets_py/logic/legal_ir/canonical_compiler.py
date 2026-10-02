@@ -183,10 +183,20 @@ def _tokens(value: object) -> tuple[str, ...]:
     return tuple(normalized)
 
 
+_SLOT_TEXT_KEYS: Final = ("value", "normalized_text", "text", "raw_text")
+
+
 def _flatten_strings(value: object) -> list[str]:
     if isinstance(value, str):
         return [value]
     if isinstance(value, Mapping):
+        preferred: list[str] = []
+        for key in _SLOT_TEXT_KEYS:
+            item = value.get(key)
+            if isinstance(item, str) and item.strip():
+                preferred.append(item)
+        if preferred:
+            return preferred
         result: list[str] = []
         for key, item in value.items():
             result.append(str(key))
@@ -263,6 +273,46 @@ def _has_semantic_value(value: object) -> bool:
         return False
     if isinstance(value, (Mapping, Sequence)) and not isinstance(value, (str, bytes, bytearray)):
         return bool(value)
+    return True
+
+
+def _facet_already_in_projected_surface(data: Mapping[str, object], field_name: str) -> bool:
+    """True when a citation facet is already kept on a projected v1 atom."""
+
+    if field_name not in {"cross_references", "resolved_cross_references"}:
+        return False
+    haystack = " ".join(
+        text
+        for key in (
+            "actor",
+            "action",
+            "action_object",
+            "action_verb",
+            "conditions",
+            "exceptions",
+            "temporal_constraints",
+        )
+        for text in _flatten_strings(data.get(key))
+    ).casefold()
+    if not haystack.strip():
+        return False
+    items = _many_values(data.get(field_name))
+    if not items:
+        return False
+    for item in items:
+        surfaces = [
+            " ".join(text.split()).casefold()
+            for text in _flatten_strings(item)
+            if len(" ".join(text.split())) >= 3
+        ]
+        if not surfaces:
+            surfaces = [
+                " ".join(text.split()).casefold()
+                for text in _flatten_strings(item)
+                if text.strip()
+            ]
+        if not surfaces or not any(surface in haystack for surface in surfaces):
+            return False
     return True
 
 
@@ -344,6 +394,8 @@ def _project_legal_norms(
         data = _norm_data(norm)
         for field_name in _UNREPRESENTED_SEMANTIC_FIELDS:
             if not _has_semantic_value(data.get(field_name)):
+                continue
+            if _facet_already_in_projected_surface(data, field_name):
                 continue
             unsupported.append(
                 _UnsupportedProjection(

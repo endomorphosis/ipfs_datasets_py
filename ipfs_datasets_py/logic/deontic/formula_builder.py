@@ -2370,6 +2370,26 @@ def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) 
         return text
 
     tail_match = re.search(r"\s+for\s+(.+)$", text, re.IGNORECASE)
+    calendar_date_tail = re.search(
+        r"\s+on\s+((?:january|february|march|april|may|june|july|august|"
+        r"september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?"
+        r"(?:,?\s+\d{4})?)$",
+        text,
+        re.IGNORECASE,
+    )
+    if not tail_match and not calendar_date_tail:
+        return text
+
+    duration_values = _temporal_duration_slot_values(norm.temporal_constraints)
+    if calendar_date_tail:
+        date_tail = calendar_date_tail.group(1).strip()
+        if any(
+            _same_formula_slot_text(date_tail, duration)
+            or _same_formula_slot_text(f"on {date_tail}", duration)
+            for duration in duration_values
+        ):
+            head = text[: calendar_date_tail.start()].strip()
+            return head or text
     if not tail_match:
         return text
 
@@ -2377,7 +2397,6 @@ def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) 
     if not tail:
         return text
 
-    duration_values = _temporal_duration_slot_values(norm.temporal_constraints)
     if not any(_same_formula_slot_text(tail, duration) for duration in duration_values):
         return text
 
