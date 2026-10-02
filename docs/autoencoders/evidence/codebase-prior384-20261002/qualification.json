@@ -1,0 +1,63 @@
+{
+  "attempts": {
+    "01": "One numerical retention test passed; both actual rounds retained3/3 and promoted in the separate native variant. Replay reused a changed wall-time budget payload and stale-source test expected a CAS exception too early; four failures retained.",
+    "02": "Six controls passed44.89s with replay budget fix and exact microbatch artifacts/projection rebuild.",
+    "03": "Eight controls passed47.57s after environment bindings and actual live cancellation.",
+    "04": "Nine collected controls passed158.85s including host pressure and forced feature collision refusal; cold replay test was appended after collection and was first qualified in final matrix.",
+    "05": "One runtime-registration test passed; completed numerical work then failed a newly added exact norm equality on2.08e-17 array-layout summation drift. No promotion.23 fixture errors retained; exact artifact/head hashes remained unchanged and final replay uses an explicit tight scalar tolerance.",
+    "06": "All25 controls passed108.27s with closed lineage, independent cached-feature quality reevaluation, cold restart and actual lifecycle/inference controls.",
+    "07": "One registration control passed;29 setup errors in1.61s because the actual supervisor host_cpu_high_watermark refused the fixture before scan or fitting. No admission policy or sampler was weakened.",
+    "08": "All30 controls passed72.72s including five additional closed immutable feature-row and declared embedding-asset replay guards."
+  },
+  "criterion_mapping": {
+    "actual_initialization": "Full parent head weights initialize a prior-centered solve; bias/input transform/projection/vocabulary remain exact. Nonzero updates are observed, optimizer_steps=0 and exact_optimizer_resume=False. Interpreter/numerical metadata and deterministic no-randomness policy are bound.",
+    "actual_ordered_continuation": "Two genuine numerical child runs use one native parent each. Training source changes between rounds, complete ancestral roles and fixed canaries remain. Independent owner quality policy permits exact native CAS generations1\u21922\u21923 in a new variant; no failed old child is promoted.",
+    "closed_lineage": "Closed request/parent/source/corpus/producer/grid/topology/environment/native-policy/run identities, ancestral canary floors and reconstructed numerical input/output hashes are joined. Nineteen altered native-completed copies refuse the declared boundary; the explicit valid completed-copy control is not another numerical fit.",
+    "collision_and_semantics": "Four literal/guard variants receive the same explicit embedding vector and real checkpoint, producing one learned candidate; independent source alignment marks all four unsupported. Actual cancelled child is reaped/fenced and cannot advance the native head. Model candidates never rewrite checked source/proof semantics.",
+    "microbatches_progress": "Round2 embeds3 changed source rows and reuses6 immutable content-addressed GTE feature artifacts exactly. Nine final microbatches and3 model generations replay after native owner restart without any model execution. Native completion/operation history owns progress.",
+    "model_dependent_projection": "Actual old/new checkpoint inference under the same current source head creates different exact projection artifacts. Loading old projection with new model dependencies refuses; exact retry replays without inference. Source/semantic manifests are separate.",
+    "retention_and_forgetting": "The prior profile retains3/3 fixed deployment canaries in each round; old unanchored0/3 child remains unpromoted. Owner promotion independently reevaluates exact parent/child/root checkpoint scores against immutable feature rows and native source targets; a resealed favorable-metrics completion cannot waive it.",
+    "runtime_registration": "Separate source/target/decoder/state/optimizer profile registered through existing ModalityContract and ModalityAdapterRegistry. Features, structured targets and checked properties stay distinct; only structured head weights are fitted."
+  },
+  "fixed_canary_scores": {
+    "prior_round_one": {
+      "child": 3,
+      "count": 3,
+      "parent": 3
+    },
+    "prior_round_two": {
+      "child": 3,
+      "count": 3,
+      "parent": 3
+    },
+    "unanchored_previous": {
+      "child": 0,
+      "count": 3,
+      "parent": 3,
+      "promoted": false
+    }
+  },
+  "independent_review": "C found cold-load lineage and saved-metrics weaknesses; both were corrected with resealed native-completion controls and independent cached-feature reevaluation. Final independent rereview confirmed the closed lineage, independent cached-feature retention and exact finite384D microbatch population/hash/asset guards; no further concrete blocker found for this bounded separate profile.",
+  "limits": [
+    "Development holdout is fixed deployment-retention/model-selection data, not an untouched final test. Complete parent pretraining exposure remains unknown.",
+    "Nine-row scalar cohort and fixed inherited vocabulary; no arbitrary grammar, trained-property head, natural GTE-collision finding, distributed federation, optimizer-resume, checkpoint upload, or proof authority claim.",
+    "Quality callback reevaluates cached verified embedding rows and exact checkpoint weights; it does not rerun GTE during promotion.",
+    "Native source/model owners remain separate stores. CPU/RSS admission is sampled and can overshoot. Actual global host pressure was retained rather than weakened.",
+    "Same-source/changed-model projection checks use the immutable native model operation/artifact cache; they do not overwrite deterministic source semantics."
+  ],
+  "model_provider_calls": 0,
+  "profile": "codebase_ir/parent_centered_head_refit_v1",
+  "schema": "codebase-prior384-qualification@1",
+  "source_pins": {
+    "docs/autoencoders/CODEBASE_PRIOR_384_RUNTIME.md": "a75a3f63971bcea4501eb1d83e3aa1a87fe9df182f15637809e4af7d213f5943",
+    "ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py": "fb4c9d2afb5438ab6e5706a58cb735388a9a3a49fa00858c6be7d731a9a6e462",
+    "ipfs_datasets_py/logic/software_contracts/codebase_prior_384_worker.py": "5e8c78dbc91113e49dc99f4fed27d204abcf2204009c34b6d7812cf55d90b95e",
+    "tests/integration/logic/software_contracts/test_codebase_prior_384.py": "1b27a8443d74cfe8f3ce78fd956ccc08dadcfa9a79464a242f2e4ab35cff83ad"
+  },
+  "tests": {
+    "failed": 0,
+    "passed": 30,
+    "seconds": 72.72,
+    "skipped": 0
+  }
+}

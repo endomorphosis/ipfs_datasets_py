@@ -1,0 +1,568 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 24 items
+
+tests/integration/logic/software_contracts/test_codebase_prior_384.py EE [  8%]
+EEEEEEEEEEEEEEEEEE.EEE                                                   [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_actual_prior_head_refit_changes_weights_and_retains_fixed_holdout _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+---------------------------- Captured stdout setup -----------------------------
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+_ ERROR at setup of test_exact_durable_native_fit_replay_performs_no_numerical_work _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[None] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[request_parent] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[corpus] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[source] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[producer] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[profile] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[ridges] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[head] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[run_id] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[floor] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[input_receipt] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[output_receipt] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[delta] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_resealed_completed_copy_cannot_detach_exact_native_lineage[topology] _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_real_canary_policy_and_atomic_promotion_allow_ordered_changed_source_continuation _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_complete_ancestral_roles_fixed_canaries_and_no_implicit_merge _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_caller_metrics_cannot_waive_native_fixed_canary_policy _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_actual_model_dependent_projection_rebuilds_and_exact_retry_reuses_without_inference _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_actual_running_prior_child_cancellation_cannot_complete_or_promote _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_actual_prior_decoder_forced_literal_guard_feature_collisions_do_not_acquire_semantics _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+_ ERROR at setup of test_cold_native_owner_replays_ordered_microbatches_without_training _
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:51: in first
+    value=fit(current,'prior-round-one',current.parent,current.model_head)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_prior_384.py:24: in fit
+    result=prior.train(current.index,current.repo,expected_head=current.head,
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:294: in train
+    load(index,registry,completed['version_id'])
+ipfs_datasets_py/logic/software_contracts/codebase_prior_384.py:167: in load
+    require(delta>1e-12 and delta==child['fit']['weight_delta_l2']
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:36: in _require
+    raise ValueError(message)
+E   ValueError: actual parent-relative numerical weight update differs
+=========================== short test summary info ============================
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_actual_prior_head_refit_changes_weights_and_retains_fixed_holdout
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_exact_durable_native_fit_replay_performs_no_numerical_work
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[None]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[request_parent]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[corpus]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[source]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[producer]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[profile]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[ridges]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[head]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[run_id]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[floor]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[input_receipt]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[output_receipt]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[delta]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_resealed_completed_copy_cannot_detach_exact_native_lineage[topology]
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_real_canary_policy_and_atomic_promotion_allow_ordered_changed_source_continuation
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_complete_ancestral_roles_fixed_canaries_and_no_implicit_merge
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_caller_metrics_cannot_waive_native_fixed_canary_policy
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_actual_model_dependent_projection_rebuilds_and_exact_retry_reuses_without_inference
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_actual_running_prior_child_cancellation_cannot_complete_or_promote
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_actual_prior_decoder_forced_literal_guard_feature_collisions_do_not_acquire_semantics
+ERROR tests/integration/logic/software_contracts/test_codebase_prior_384.py::test_cold_native_owner_replays_ordered_microbatches_without_training
+======================== 1 passed, 23 errors in 11.39s =========================

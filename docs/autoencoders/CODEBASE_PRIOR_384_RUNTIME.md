@@ -1,0 +1,26 @@
+# CodebaseIR source runtime and ordered parent-centered adaptation
+
+The repository runtime has two explicit 384-dimensional numerical profiles. The original `codebase_ir/source_conditioned_384_v1` preserves the reviewed complete ridge-head refit. The additive `codebase_ir/parent_centered_head_refit_v1` initializes from the complete parent head and fits a regularized correction. Both consume the unchanged shared SecurityIR structured decoder and inherited LegalIR projection. Neither modifies the shared checkpoint, formal semantics, or proof rules.
+
+`codebase_runtime_384.infer_shared_parent` supports an explicit training fallback. It reads exact captured `id/source_text` inputs and runs the registered shared parent weights through the bounded native worker. It independently rechecks source alignment, records unsupported predictions, and observes current repository state before and after inference. The result says `pinned_shared_parent_inference`; it does not claim that a repository-specific child was trained. `register_runtime` uses the existing immutable `ModalityContract` and `ModalityAdapterRegistry`, preserving separate feature, structured-target, and independent-property objectives.
+
+The original refit reconstructed zero of three operator-disjoint development canaries, against three of three for its parent. That result remains visible and unpromoted. The separate parent-centered recipe fixes the parent's bias, input normalization, projection, and codebook, then solves
+
+```
+Delta = (X.T X + lambda I)^(-1) X.T (Y - X W_parent - b_parent)
+W_child = W_parent + Delta
+```
+
+Only native source-derived training targets enter this solve. The declared grid is `(10, 30, 100)`. Validation exact-target and semantic-leaf scores select the first best candidate. Holdout rows do not enter the solve or hyperparameter selection. They are fixed deployment canaries used by the separate retention/promotion policy; they are not an untouched final test set. The new profile explicitly records full selected-corpus head refitting, zero optimizer steps, and no optimizer resume. Feature and property records remain separate objectives; this does not claim a newly trained property head.
+
+`codebase_prior_384.register_parent` creates a separate native model variant bound to the exact original shared parent. `train` requires a live issued strict corpus and the selected native parent head. Native run policy bounds wall time, input/checkpoint size, samples, one head fit and one attempt. Genuine completed candidates retain interpreter/numerical environment, no-randomness policy, exact parent/source/corpus/producer identities and numerical receipts. Cancellation revokes the native lease and advances its fence.
+
+Every continuation preserves the complete ancestral path/role cohort and exact validation/holdout source and target canaries. Only training source may change. Each source embedding is an immutable artifact bound to source hash and exact GTE assets; an unchanged row is reused byte-for-byte. Checkpoints retain the full resulting population and native progress, so replay after owner restart does not train. There is one ordered numerical parent and a native expected-head compare-and-swap. Implicit lane merges are unsupported.
+
+Construct `RetentionPolicy(index)` as the native registry's `promotion_validator`, then bind it to that registry. `promote` checks the current source and uses that independently configured policy. The policy independently recomputes parent, child, and root canary and validation scores from exact checkpoint weights, verified immutable feature rows, and native source-derived targets. This is cached-feature numerical reevaluation; it does not rerun GTE. A caller-supplied metric cannot waive exact completed-run, native source, validation, parent-canary, and ancestral-canary joins. Successful model promotion does not grant program correctness or proof authority.
+
+`infer_and_index` stores learned projections under exact source head, input population, checkpoint bytes, native model version, GTE assets and producer identities. A new model creates a new projection artifact even when its decoded candidates are unchanged. Loading an old artifact under new model dependencies refuses. The deterministic source and semantic manifests stay independent. Historical `load` and `load_projection` perform no training; current-source inference additionally performs fresh observation.
+
+The qualification uses two operands in the reviewed annotated scalar Python grammar. Literal/guard feature collision controls intentionally supply equal vectors to the real checkpoint and verify that independent source validation withholds semantics for unsupported inputs. This is not a claim that native GTE naturally produced those collisions. Finite checker results, learned candidates, and model retention are distinct. Complete parent pretraining exposure remains unknown.
+
+CPU/RAM/process work uses the existing shared host scheduler through the supervisor parent envelope. Memory limits are sampled process-tree RSS and may overshoot; they are not kernel cgroups. Source and model owners are separate stores rather than a distributed transaction. This profile does not implement 8D federation, implicit distributed merging, transport publication, or automatic checkpoint upload.
