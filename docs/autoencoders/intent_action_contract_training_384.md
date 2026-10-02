@@ -167,6 +167,26 @@ The report checks direct module files and loaded functions through the existing
 owner guard. This excludes transitive dependencies, numerical model memory,
 Python and complete toolchain libraries; it is not a full environment capsule.
 
+For a published experimental version, pass its exact reference to
+[intent_action_hub_384.py](../../ipfs_datasets_py/logic/formalization/autoencoder/intent_action_hub_384.py):
+
+```python
+from ipfs_datasets_py.logic.formalization.autoencoder.intent_action_hub_384 import (
+    resolve_intent_action_checkpoint,
+)
+
+# reference is the published intent-action-384-hub-reference/v1 JSON, containing
+# the repository, full commit revision, versioned path and checkpoint SHA-256.
+options = resolve_intent_action_checkpoint(reference, local_files_only=False)
+report = prepare_intent_action_inference(instruction, **options)
+```
+
+The resolver defaults to `local_files_only=True`; the example explicitly permits
+downloading the selected version. It checks both the containing manifest and
+checkpoint bytes at the same immutable revision, then returns local numerical
+loader options. It changes no default checkpoint or model registry. The same
+path and hash can be supplied to the supervisor configuration below.
+
 The [association builder](../../ipfs_datasets_py/logic/formalization/autoencoder/intent_action_association.py)
 then requires a caller-supplied mapping between the two Intent roles and the
 code's actual parameter names:
