@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 37 items
+
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py ...............DISCOVERY_MEASUREMENT={"linear_reconstructions": 4, "linear_seconds": 0.46836962015368044, "profile": "four_explicit_contracts_one_current_source", "scope": "small fixture; no general speedup claim", "selector_including_live_fences_seconds": 0.85869972105138, "selector_reconstructions": 1}
+.....logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+........F........
+
+=================================== FAILURES ===================================
+_ test_native_source_head_write_fence_conflicts_with_other_file_backed_writer __
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:315: in test_native_source_head_write_fence_conflicts_with_other_file_backed_writer
+    result=case[6](owner)
+           ^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:34: in publish
+    return owner.publish(root,expected_head=head,manifest_cid=manifest,operation_id=operation,scheduler=scheduler,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:408: in publish
+    counts = self._counts()
+             ^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:302: in concurrent
+    with pytest.raises(duckdb.TransactionException):
+E   Failed: DID NOT RAISE TransactionException
+------- generated xml file: /tmp/intent-codebase-catalog-final-tests.xml -------
+=========================== short test summary info ============================
+FAILED tests/integration/logic/software_contracts/test_intent_codebase_catalog.py::test_native_source_head_write_fence_conflicts_with_other_file_backed_writer
+=================== 1 failed, 36 passed in 99.66s (0:01:39) ====================

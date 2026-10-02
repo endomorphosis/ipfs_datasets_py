@@ -1,0 +1,178 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 23 items
+
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py F [  4%]
+F.......FF...........F                                                   [100%]
+
+=================================== FAILURES ===================================
+_____ test_native_projection_replays_full_inventory_without_new_authority ______
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:52: in test_native_projection_replays_full_inventory_without_new_authority
+    assert publish(owner)==result
+           ^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:34: in publish
+    return owner.publish(root,expected_head=head,manifest_cid=manifest,operation_id=operation,scheduler=scheduler,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:324: in publish
+    self._stored(cid)
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:270: in _stored
+    rebuilt = self._derive(value["semantic_manifest_cid"], model_id, corpus_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:243: in _derive
+    manifest = load_codebase_semantic_manifest(self.index, manifest_cid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:236: in load_codebase_semantic_manifest
+    expected = _derive(index, policy_receipt_cid=value["policy_receipt_cid"],
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:125: in _derive
+    policy = load_policy_receipt(index, policy_receipt_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:414: in load_policy_receipt
+    expected = _derive(index, publication=CodebasePublicationReceipt.from_dict(value["publication"]),
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:270: in _derive
+    _require(index.catalog.resolve_operation(publication.operation_id, publication.request_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:352: in resolve_operation
+    with self.store._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+_ test_explicit_file_backed_migration_preserves_records_and_adds_bounded_queries _
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:66: in test_explicit_file_backed_migration_preserves_records_and_adds_bounded_queries
+    report=owner.migrate()
+           ^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:378: in migrate
+    selectors.extend(self._selectors(cid, self._stored(cid)))
+                                          ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:270: in _stored
+    rebuilt = self._derive(value["semantic_manifest_cid"], model_id, corpus_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:243: in _derive
+    manifest = load_codebase_semantic_manifest(self.index, manifest_cid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:236: in load_codebase_semantic_manifest
+    expected = _derive(index, policy_receipt_cid=value["policy_receipt_cid"],
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:125: in _derive
+    policy = load_policy_receipt(index, policy_receipt_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:414: in load_policy_receipt
+    expected = _derive(index, publication=CodebasePublicationReceipt.from_dict(value["publication"]),
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:270: in _derive
+    _require(index.catalog.resolve_operation(publication.operation_id, publication.request_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:352: in resolve_operation
+    with self.store._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+_________ test_migration_failure_rolls_back_schema_and_keeps_v1_record _________
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:95: in test_migration_failure_rolls_back_schema_and_keeps_v1_record
+    assert owner.migrate()['storage_version']==2
+           ^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:378: in migrate
+    selectors.extend(self._selectors(cid, self._stored(cid)))
+                                          ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:270: in _stored
+    rebuilt = self._derive(value["semantic_manifest_cid"], model_id, corpus_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:243: in _derive
+    manifest = load_codebase_semantic_manifest(self.index, manifest_cid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:236: in load_codebase_semantic_manifest
+    expected = _derive(index, policy_receipt_cid=value["policy_receipt_cid"],
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:125: in _derive
+    policy = load_policy_receipt(index, policy_receipt_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:414: in load_policy_receipt
+    expected = _derive(index, publication=CodebasePublicationReceipt.from_dict(value["publication"]),
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:270: in _derive
+    _require(index.catalog.resolve_operation(publication.operation_id, publication.request_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:352: in resolve_operation
+    with self.store._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+_______________ test_operation_rebinding_and_capacity_roll_back ________________
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:106: in test_operation_rebinding_and_capacity_roll_back
+    publish(owner,'overflow')
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:34: in publish
+    return owner.publish(root,expected_head=head,manifest_cid=manifest,operation_id=operation,scheduler=scheduler,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:324: in publish
+    self._stored(cid)
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:270: in _stored
+    rebuilt = self._derive(value["semantic_manifest_cid"], model_id, corpus_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:243: in _derive
+    manifest = load_codebase_semantic_manifest(self.index, manifest_cid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:236: in load_codebase_semantic_manifest
+    expected = _derive(index, policy_receipt_cid=value["policy_receipt_cid"],
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:125: in _derive
+    policy = load_policy_receipt(index, policy_receipt_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:414: in load_policy_receipt
+    expected = _derive(index, publication=CodebasePublicationReceipt.from_dict(value["publication"]),
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:270: in _derive
+    _require(index.catalog.resolve_operation(publication.operation_id, publication.request_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:352: in resolve_operation
+    with self.store._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+_ test_actual_fresh_process_reopens_three_native_owners_and_migrated_projection _
+tests/integration/logic/software_contracts/test_intent_codebase_catalog.py:218: in test_actual_fresh_process_reopens_three_native_owners_and_migrated_projection
+    expected=owner.get(result['record_cid']);owner.migrate()
+                                             ^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:378: in migrate
+    selectors.extend(self._selectors(cid, self._stored(cid)))
+                                          ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:270: in _stored
+    rebuilt = self._derive(value["semantic_manifest_cid"], model_id, corpus_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py:243: in _derive
+    manifest = load_codebase_semantic_manifest(self.index, manifest_cid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:236: in load_codebase_semantic_manifest
+    expected = _derive(index, policy_receipt_cid=value["policy_receipt_cid"],
+ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py:125: in _derive
+    policy = load_policy_receipt(index, policy_receipt_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:414: in load_policy_receipt
+    expected = _derive(index, publication=CodebasePublicationReceipt.from_dict(value["publication"]),
+ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py:270: in _derive
+    _require(index.catalog.resolve_operation(publication.operation_id, publication.request_cid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:352: in resolve_operation
+    with self.store._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+=========================== short test summary info ============================
+FAILED tests/integration/logic/software_contracts/test_intent_codebase_catalog.py::test_native_projection_replays_full_inventory_without_new_authority
+FAILED tests/integration/logic/software_contracts/test_intent_codebase_catalog.py::test_explicit_file_backed_migration_preserves_records_and_adds_bounded_queries
+FAILED tests/integration/logic/software_contracts/test_intent_codebase_catalog.py::test_migration_failure_rolls_back_schema_and_keeps_v1_record
+FAILED tests/integration/logic/software_contracts/test_intent_codebase_catalog.py::test_operation_rebinding_and_capacity_roll_back
+FAILED tests/integration/logic/software_contracts/test_intent_codebase_catalog.py::test_actual_fresh_process_reopens_three_native_owners_and_migrated_projection
+======================== 5 failed, 18 passed in 48.50s =========================

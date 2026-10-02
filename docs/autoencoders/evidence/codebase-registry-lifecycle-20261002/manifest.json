@@ -1,0 +1,15 @@
+{
+  "files": [
+    {
+      "bytes": 2832,
+      "path": "qualification.json",
+      "sha256": "d0087e85768d69244f2201d586a0361d1e7f9e99d671e35a2b860a96ba8345d0"
+    },
+    {
+      "bytes": 1156,
+      "path": "tests.log",
+      "sha256": "2d7f42553ced0a8e39daf25614b1a6026d0018623445481130a4f446b5985162"
+    }
+  ],
+  "schema": "native-registry-lifecycle-evidence@1"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "codebase-discovery-qualification@1",
+  "criterion": "RPI-003",
+  "completed_utc": "2026-10-02T07:12:02.923993+00:00",
+  "profile": "intent-codebase-catalog@1 over codebase-single-root-python-structural@1 and codebase-ir/python-integer-offset-artifacts@1",
+  "tests": {
+    "passed": 42,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "wall_seconds": 111.58,
+    "command": "PYTHONPATH=/tmp/ir-release-datasets-20261001:/tmp/ir-release-accelerate-20261001 IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 /home/barberb/.local/bin/python -m pytest -q -s tests/integration/logic/software_contracts/test_intent_codebase_catalog.py --junitxml=/tmp/intent-codebase-catalog-qualified-tests.xml"
+  },
+  "implementation_sha256": {
+    "ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py": "12a95d9d73b6156497ff5860bfb720bb89ae6e499b6c38f8250a3ec266edca39",
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "a781f5534cf637455b975b31475ced608112c90e1578eca3f79ba916b85d2838",
+    "ipfs_datasets_py/duckdb_control/source_corpus_catalog.py": "014ccabff3d5adc6e87b2ddd947ade8f85fa7902a44a704445f3cebe5a965322",
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": "e7c85582d965a1e72eb97795e711b77856daf3767cde02f4152127a1fa876140",
+    "ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py": "79a8e1b92365264bfafb511f1689a321d7d742046101199aca253da97726aec2",
+    "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py": "7037fca4046b357ef941cd511b20da55979a8055056ebc755bcb65c0026cb55b",
+    "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py": "8c43bc1b97a94c5100815447130a549266b9ccdc266574e2b8b224a3ea82aef5"
+  },
+  "independent_review": "concurrency_lean read-only review found no concrete authority/schema blocker; root reviewed normative schema/bounds and real-write guard requirements",
+  "measurement": {
+    "linear_including_live_fences_seconds": 1.23767423001118,
+    "linear_reconstruction_only_seconds": 0.4221567460335791,
+    "linear_reconstructions": 4,
+    "profile": "four_explicit_contracts_one_current_source",
+    "scope": "small fixture; no general speedup claim",
+    "selector_including_live_fences_seconds": 0.8807909339666367,
+    "selector_reconstructions": 1
+  },
+  "acceptance_evidence": [
+    "Actual file-backed native source, model and corpus owners; immutable CAS references and independently rederived native version IDs/artifact roots.",
+    "Complete semantic-manifest inventory with explicit association-only model/corpus links; no new source/model/proof head or numerical producer changes.",
+    "Nonempty physical v1 to v2 migration with bounded native reconstruction; actual post-DDL failure rolls back schema and preserves records.",
+    "Two fresh processes reopen native owners: current lookup with exact source/policy fences, then historical replay after source deletion.",
+    "Physical SQL uniqueness, normative schema/DDL byte checks, operation rebinding, capacities, result-count limits and missing-selector refusal.",
+    "Adjacent real-write/exact-restoration head fence reuses original evidence-owner protocol; native tests prove writer conflicts between writes and after restoration, rollback after BaseException, and competing real CodebaseCatalog.publish refusal.",
+    "Current source, ABA generation, external ignore population, CAS/checkpoint/corpus corruption, root replacement and inherited owner refusal."
+  ],
+  "limitations": [
+    "Declared bounded local discovery profile only; maximum128 metadata records,16 results and256 native corpus rows.",
+    "Associations do not establish training lineage, inference consumption, proof eligibility or behavioral satisfaction.",
+    "Native model bytes are synthetic storage fixtures; corpus package is a real small Parquet source export.",
+    "Physical v1 is an explicit newly introduced record-only format; no previously deployed production migration is claimed.",
+    "Metadata membership audit is bounded but scans the local derived records; RPI-032 authenticated scalable queries remain separate.",
+    "Independent owners do not form a distributed atomic snapshot; DuckLake delivery, hard total deadlines and global artifact GC remain separate criteria."
+  ],
+  "git_head_at_qualification": "b86bf9ebeea81b1976696f0f031949a936431a3b",
+  "frozen_owner_schemas_modified": false
+}

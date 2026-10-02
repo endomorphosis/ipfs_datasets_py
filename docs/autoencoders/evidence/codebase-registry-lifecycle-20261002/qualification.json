@@ -1,0 +1,34 @@
+{
+  "existing_tests": 69,
+  "limits_and_pending": [
+    "Completed runs are retained immutable history, not retrospectively cancelled; previously completed regressed models stay subject to independent retention/promotion policy.",
+    "Direct native registry boundary tests use authored JSON artifacts and a test promotion callback. They do not claim model quality or real numerical learning.",
+    "Queued external publication revocation after a successful completed run is not part of this in-flight terminal profile.",
+    "RPI-010 stays open until actual lifecycle facade budgets/cancellation/concurrency/source-change/parent-envelope tests complete."
+  ],
+  "mapping": {
+    "atomic_fences": "Cancellation/supersession atomically clears the native lease and advances fence. Reclaim, renewal, stale completion and failure fail. Exact terminal lost replies replay after native owner restart.",
+    "compatibility": "69 existing owner tests remain passing, including existing completed-history and failed-retry semantics; new terminal tests require explicit opt-in and refuse termination of completed runs.",
+    "completion_parent_CAS": "Expected parent head is rechecked in the same native completion transaction before inserting a candidate.",
+    "limits": "Immutable pre-claim policy checks attempt, wall-time lease and checkpoint completion budgets; supported zero-gradient/one-head-refit CPU profile bounds input bytes/samples/RAM in its declaration. Actual facade consumption remains separate.",
+    "publication_and_promotion": "New publication/promotion commits reject terminal producer runs. A control terminates during the owner promotion evaluator to demonstrate the transaction recheck.",
+    "versioned_opt_in": "autoencoder-run-lifecycle@1 policies and autoencoder-run-terminal@1 results use existing command/event tables; SCHEMA/DDL/content-addressed model version identities are unchanged."
+  },
+  "new_tests": 24,
+  "producer_pin_audit": "Source384/structured numerical checkpoint pins do not hash this registry file; native loaders retain REGISTRY_SCHEMA/version identity. Historical benchmark file hashes are preserved; new intent_codebase_catalog records must use the new registry file hash.",
+  "schema": "native-autoencoder-registry-lifecycle-qualification@1",
+  "scope": "Native durable registry control semantics only; actual job facade/parallel numerical qualification remains pending.",
+  "seconds": 7.62,
+  "skips": 0,
+  "sources": [
+    {
+      "path": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "sha256": "a781f5534cf637455b975b31475ced608112c90e1578eca3f79ba916b85d2838"
+    },
+    {
+      "path": "tests/unit/duckdb_control/test_autoencoder_registry_lifecycle.py",
+      "sha256": "d7d5a8c7f375b2804ed12f6c97a0a28dd0f0ba77c1c8ad43336ae0a254b513cd"
+    }
+  ],
+  "tests": 93
+}

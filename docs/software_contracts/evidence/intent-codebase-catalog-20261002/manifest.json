@@ -1,0 +1,50 @@
+{
+  "schema": "qualification-file-inventory@1",
+  "files": [
+    {
+      "path": "ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py",
+      "sha256": "12a95d9d73b6156497ff5860bfb720bb89ae6e499b6c38f8250a3ec266edca39",
+      "bytes": 35314
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_intent_codebase_catalog.py",
+      "sha256": "1c39ad034ef08011c17407f8a1ad4b8669feb8c941cf65dcae8b037795a6a374",
+      "bytes": 28231
+    },
+    {
+      "path": "docs/software_contracts/INTENT_CODEBASE_CATALOG.md",
+      "sha256": "7c148ce6a83ec37b9a810d7426658598231a8a9f4890a4518694e44ebc276c15",
+      "bytes": 8871
+    },
+    {
+      "path": "docs/software_contracts/evidence/intent-codebase-catalog-20261002/corrected-native-fence-tests.log",
+      "sha256": "0f49bd485f7b56416eabed1e8bc1c6e48c50938ad0913cf15c36acdb08e873f4",
+      "bytes": 1029
+    },
+    {
+      "path": "docs/software_contracts/evidence/intent-codebase-catalog-20261002/initial-native-transaction-diagnostic.log",
+      "sha256": "4908a12162ac73c826cf9e47bc48e7941f5c45662eb72e52db180c8025a46bc8",
+      "bytes": 13758
+    },
+    {
+      "path": "docs/software_contracts/evidence/intent-codebase-catalog-20261002/native-noop-fence-diagnostic.log",
+      "sha256": "c219323aa5645ea9b7f0a6f7f78b352551d0085fb5b5abc180c41c6ae60cf6ad",
+      "bytes": 2906
+    },
+    {
+      "path": "docs/software_contracts/evidence/intent-codebase-catalog-20261002/qualification.json",
+      "sha256": "1b17298171902d8c6ee76827105050869ad7312c1c0d9935dcc0cfa9796ea9e7",
+      "bytes": 4367
+    },
+    {
+      "path": "docs/software_contracts/evidence/intent-codebase-catalog-20261002/tests.log",
+      "sha256": "35be564c9486ce5767f0cdf99b0772a668d050e479d6082fcd791e5f17d70182",
+      "bytes": 1714
+    },
+    {
+      "path": "docs/software_contracts/evidence/intent-codebase-catalog-20261002/tests.xml",
+      "sha256": "079bd3c9548c90dc005d5b8748bf88d94a7def6fcb289602c8ab9d559407caf4",
+      "bytes": 7868
+    }
+  ]
+}
