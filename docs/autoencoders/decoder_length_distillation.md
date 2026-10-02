@@ -1106,3 +1106,131 @@ unchanged; verified local 768D inputs remain unavailable. These authored panels
 are already exposed, the fresh test is unopened, and qualifier lists are empty.
 No native family or `lake build <Lib>` qualification, checkpoint promotion,
 distillation-teacher qualification, or Constitution formalization is claimed.
+
+## Fixed-state source-value and boundary diagnostic (2026-10-02)
+
+The follow-up to the transition-ramp experiment now runs in
+`scripts/ops/autoencoder/benchmark_decoder_prefix_diagnostics.py`, using the
+separate `decoder_prefix_diagnostics.py` numerical owner. It diagnoses the
+existing 384D states without training, new generation, or weight selection.
+The published evidence is in
+`docs/implementation/reports/evidence/decoder-prefix-diagnostics-20261002/`.
+
+Five numeric states are evaluated: the common selected epoch-zero baseline once,
+then the four final rejected states. Before deduplication, all four selected
+exports must have identical numeric states and match the predecessor's selected
+tensor hashes. Each state receives the existing 48 training and 48 validation
+rows under conditioned, within-length source-shuffle, and zero-condition controls:
+30 forward-only panels. These are previously exposed authored development rows;
+the fresh test remains unopened. Real local paragraph embeddings are reused, with
+9–72 source tokens, fixed 512-token encoder context and decoder output limit.
+The paragraph targets contain one, two, four, or eight complete rules.
+
+The owner traverses each canonical reference document and annotates its tokens
+by structural position. Actor, action, modality, and object values are distinct
+from field keys, punctuation, empty qualifier lists, outer rule boundaries, and
+EOS. The codec represents each quoted scalar value as one token. Every panel
+contains 6,228 predicted positions, including 720 scalar values, 180 outer rule
+boundaries, and 48 EOS positions. Conditions, exceptions, and temporal lists are
+empty in this corpus, so their semantic coverage remains untested. Separate unit
+tests exercise nonempty qualifier atoms, escaping, and key/value collisions.
+
+The diagnostic supplies correct reference prefixes only for conditional
+prediction. Full 32-way float32 logits, target log probabilities, strict-greater
+ranks, first-tie argmax, and stop-versus-continue probabilities are retained for
+every position. Ordinary free generation does not receive these prefixes.
+Existing greedy outputs are read from 25 authenticated predecessor panels;
+training/zero-condition generation was never recorded and is explicitly absent
+for all five states. First-divergence analysis uses only actually emitted tokens
+and explicit EOS receipts. It never invents EOS for output-limit failures.
+
+### The semantic values still fail under correct prefixes
+
+Validation results below use the ordinary source inputs. Each field has 180
+reference values. “Continue” has 132 required decisions and “stop” has 48.
+Boundary correctness means full-vocabulary argmax, not merely a binary choice.
+
+| Final rejected state | Actor correct | Action correct | Modality correct | Object correct | All values | Continue | Stop |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| unchanged, seed 1729 | 32 | 39 | 59 | 87 | 217/720 | 0/132 | 48/48 |
+| ramp20, seed 1729 | 33 | 36 | 59 | 89 | 217/720 | 80/132 | 20/48 |
+| unchanged, seed 2718 | 35 | 39 | 59 | 87 | 220/720 | 67/132 | 23/48 |
+| ramp20, seed 2718 | 34 | 37 | 59 | 87 | 217/720 | 0/132 | 48/48 |
+
+All four final states predict all 2,892 ordinary punctuation tokens and all 1,080
+empty-qualifier tokens correctly under reference prefixes. Their overall token
+accuracy is about 89.5–90.6%, but scalar-value accuracy is only 30.1–30.6%.
+Training value accuracy is also poor: 272–285/720, or 37.8–39.6%. The common
+epoch-zero baseline has 59/720 correct validation values and 72/720 training
+values. Training clearly changes conditional predictions, but those changes do
+not establish faithful source reconstruction or convergence.
+
+The modality predictions reveal a specific collapse: every final state predicts
+`F` at all 180 modality sites in both splits, despite training references containing
+59 permissions, 66 prohibitions, and 55 obligations. Validation contains 65
+permissions, 59 prohibitions, and 56 obligations. The reported modality accuracy
+therefore comes entirely from predicting prohibition everywhere. This is a
+failure to discriminate the source modality even under correct target prefixes.
+
+In the four archived ordinary validation panels, 47–48 of 48 first divergences
+occur at the action or actor value; the remaining cases are modality errors.
+The first mismatch arrives after an average of 8.25–8.54 matching tokens. All
+four still have zero exact validation paragraphs. Thus most observed failures
+begin before a rule boundary, and poor value predictions persist even when the
+preceding target tokens are supplied correctly. Count or EOS repairs alone cannot
+explain away these failures.
+
+Source conditioning does affect the model. Within-length source shuffling reduces
+validation value correctness from 217–220 to 206–211/720 and raises semantic-value
+negative log probability by 0.0370–0.0416. The corresponding training penalty is
+larger, 0.1190–0.1364. Zero conditioning raises validation value loss from about
+1.298–1.315 to 1.897–2.704 and reduces correct values to 12–187/720. These controls
+show source sensitivity without proving correct association of each source clause
+with its values. Same-length shuffles preserve the count labels and cannot test
+source/count generalization. Reference-prefix conditioning can also expose useful
+information from preceding target values; this remains a conditional diagnostic.
+
+The next optimizer experiment should explicitly test source-to-value binding,
+while retaining the existing semantic and boundary gates. It should keep the
+current failed states as controls, measure value and clause-position losses
+separately, and report the same source-shuffle comparison and target-free exact
+reconstruction. Simply increasing the output budget or choosing the lower global
+token CE is unsupported by this evidence. The production training policy and all
+qualification thresholds remain unchanged.
+
+### Reproduction and cost
+
+The CLI takes `--dependency-root`, `--extension-root`, `--manifest`, `--plan`, and
+`--output`. The archived freeze script authenticates the predecessor public
+manifest/results against the pinned Git commit, binds 41 input artifacts and 20
+extension sources, and verifies the focused test receipts. It retains the
+canonical compiler/parser/decompiler tree check against the existing frozen
+workspace export. The benchmark verifies each saved state role, tensor inventory,
+numeric hash, original source assignment, and predecessor archive member before
+executing a panel. All 25 available historical native token-CE values reproduce
+exactly. The five unavailable generation panels receive new prefix diagnostics
+only, with no generated prediction fabricated.
+
+The 30 diagnostic calls take 7.214 seconds total, or 4.13–6.15 ms per span per
+panel. Including compact raw-logit serialization, the panel total is 10.006
+seconds; the comparison including state construction takes 10.176 seconds.
+These are forward-only diagnostic timings, not target-free inference or training
+throughput. The resource guardian takes 45.572 seconds including admission,
+monitoring, and accounting. It retains 218,267,544 bytes within its 300 MB
+reservation and releases the reservation. The shared 140 GB cap is unchanged;
+a peak RSS measurement was not retained for this short run.
+
+Device is CPU, workers 1, bridge names `[]`, prover evaluation false, and metric
+disk cache disabled. Full paragraph embeddings are warm cached; sample-memory
+scoring and encoder execution are unused. No bridge-on evaluation was performed,
+so no bridge-on timing improvement is claimed. The focused suite passes 837 tests;
+the independent arithmetic/provenance audit passes 392,488 checks with zero findings.
+The evidence retains all 186,840 prediction positions and 5,978,880 logit values,
+original references and inputs, saved states, prior outputs, source snapshots,
+test receipts, and reservation accounting for arithmetic and provenance review.
+
+The 8D linguistic teacher is untouched; verified local 768D inputs remain
+unavailable. This diagnostic performs no training, native family validation, or
+`lake build <Lib>`. It grants no admission, checkpoint promotion, source-semantic
+qualification, or Constitution formalization. The archive is a development
+evidence bundle with original-path mappings, not a standalone installed runtime.
