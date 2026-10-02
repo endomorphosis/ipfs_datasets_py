@@ -224,6 +224,12 @@ The existing [Intent/code effect gate](intent_code_effects.md) preserves all
 finite cases and distinguishes satisfaction, checked refutation, and no enabled
 cases. A successfully compiled counterexample is not contract satisfaction.
 
+A live refutation can feed the separate
+[bounded scalar operator proposal API](source_scalar_operator_repair.md).
+It preserves the decoded contract and proposes only exact operator-token
+edits; fresh candidate inference, proof checks and native owner admission
+remain separate requirements.
+
 ## Supervisor selection and remaining scope
 
 The additive supervisor `intent_384_advisor.prepare_intent_384_advice` accepts an
