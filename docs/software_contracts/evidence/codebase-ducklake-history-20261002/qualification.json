@@ -1,0 +1,274 @@
+{
+  "authority": {
+    "distributed_atomicity": false,
+    "production_activated": false,
+    "proof_authority": false,
+    "source_observed_live": false,
+    "training_authority": false
+  },
+  "command": "PYTHONPATH=/tmp/ir-release-datasets-20261001:/tmp/ir-release-accelerate-20261001 IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 /home/barberb/.local/bin/python -m pytest tests/integration/logic/software_contracts/test_codebase_ducklake_history.py tests/integration/logic/software_contracts/test_codebase_history_retention.py -q --tb=short --junitxml=/tmp/codebase-history-final-tests.xml",
+  "criterion": "RPI-017",
+  "diagnostics": [
+    {
+      "file": "history-initial-diagnostic.log",
+      "reason": "test expected journal.json instead of existing delivery.json after successful native crash recovery; test corrected",
+      "result": "14passed1failed"
+    },
+    {
+      "file": "retention-initial-diagnostic.log",
+      "reason": "new wrapper omitted parent delivery-journal directory; wrapper now prepares bounded canonical root",
+      "result": "11passed2failed"
+    },
+    {
+      "file": "retention-statement-budget-diagnostic.log",
+      "reason": "per-event SQL receipt reads exceeded native32statement budget; replaced by bounded batched native operation audit",
+      "result": "12passed1failed"
+    }
+  ],
+  "duckdb_version": "1.5.5",
+  "errors": 0,
+  "failed": 0,
+  "git_base": "3e2d0c8262fe0af89a68ba49582466f5f099bfdb",
+  "interpreter": "/home/barberb/.local/bin/python",
+  "limitations": [
+    "No generic shared/source/proof/model CAS sweep or graph-reachability collector.",
+    "Only explicit registered managed candidate envelopes are eligible for artifact deletion; no arbitrary namespace enumeration.",
+    "Native DuckLake snapshot pins are persisted and re-read, but this profile never expires snapshots or deletes native lake files.",
+    "Cooperating exclusive managed namespace required; no hostile same-user filesystem writer guarantee.",
+    "One managed profile per native registry; bounded capacities and no event-log compaction.",
+    "Model/corpus links remain association metadata, not training/inference provenance.",
+    "No global deadline/admission, distributed atomicity, benchmark speedup, training or proof success is claimed by this history qualification."
+  ],
+  "passed": 37,
+  "pytest_seconds": 119.29,
+  "qualified_at_utc": "2026-10-02T07:52:52.919205+00:00",
+  "qualified_behaviors": [
+    "native CodebaseIR discovery/semantic source metadata reconstruction before new event registration",
+    "existing registry exact operation/command/payload mutation and response-loss recovery",
+    "existing outbox/journal frozen-batch delivery to actual pinned native DuckLake",
+    "actual process exit91 after native lake append, two fresh-process recovery/replay runs, no duplicate native event",
+    "stale native owner-generation lease refusal and acknowledgement-lag observation",
+    "actual native retained AT(VERSION) event readback after later snapshots",
+    "cold event/operation-complete retention replay and exact registry/profile bindings",
+    "durable producer/reader leases, explicit old-owner reconciliation and actual concurrent reader/gate exclusion",
+    "durable candidate/event/native-snapshot pins independently revalidated after restart",
+    "actual deletion of owned obsolete source-history envelopes with pinned/unowned/source-CAS/native-lake roots preserved",
+    "actual process exit92 after unlink followed by exact prepared-intent recovery in a fresh native process",
+    "lost collection-completion response replay without repeated physical deletion",
+    "malformed/oversized metadata, missing event, operation drift, aliases, inode replacement and missing-without-intent refuse",
+    "event and native-operation capacity admission reserves lease/collection completion and gate-release slots",
+    "second managed profile, foreign registry adoption and existing namespace initialization refuse"
+  ],
+  "schema": "codebase-ducklake-history-qualification@1",
+  "scope": "explicit local native DuckLake history and one managed source-history-candidate CAS per native registry",
+  "skipped": 0,
+  "source_inventory": [
+    {
+      "path": "ipfs_datasets_py/duckdb_control/codebase_ducklake_history.py",
+      "sha256": "a25668e4e49f7bfe46b4adf523ef34c04920345f54d229c0d7311242e0bff5b3"
+    },
+    {
+      "path": "ipfs_datasets_py/duckdb_control/codebase_history_retention.py",
+      "sha256": "a162e38051c72d8bbe3271a45dbecb54032b4a761822b66259f2a10345739762"
+    },
+    {
+      "path": "ipfs_datasets_py/duckdb_control/intent_codebase_catalog.py",
+      "sha256": "12a95d9d73b6156497ff5860bfb720bb89ae6e499b6c38f8250a3ec266edca39"
+    },
+    {
+      "path": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "sha256": "a781f5534cf637455b975b31475ced608112c90e1578eca3f79ba916b85d2838"
+    },
+    {
+      "path": "ipfs_datasets_py/duckdb_control/autoencoder_ducklake.py",
+      "sha256": "0da701042c3efe8e5de383c04f90af7df125803d870b08872f7766c0b46aa949"
+    },
+    {
+      "path": "ipfs_datasets_py/duckdb_control/contracts.py",
+      "sha256": "7ef4df9216ecaef4a415afffbb353b9b091120a4faaf702d3c243d43ceb6c199"
+    },
+    {
+      "path": "ipfs_datasets_py/ducklake/autoencoder_history.py",
+      "sha256": "846a8bd8640694cb5a47ec9fa91eb71e4345262f22b8c16e36e217f715e05079"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/cache.py",
+      "sha256": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/content.py",
+      "sha256": "c69cb85f0901a9a678bcbdf7738ab00095bbe45c5b40d875f2099474bd2a059c"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_codebase_ducklake_history.py",
+      "sha256": "47360fb8c5420d5946f259da5dc2662a28cc35e59f4f3ff878804b4c04769ca3"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_codebase_history_retention.py",
+      "sha256": "66ab2b50ff42cf164900233789c20de695324fc402eb019fd55e4d205d070186"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_intent_codebase_catalog.py",
+      "sha256": "1c39ad034ef08011c17407f8a1ad4b8669feb8c941cf65dcae8b037795a6a374"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_codebase_scan_policy.py",
+      "sha256": "548e94435eeb92ed154c72bee8aa9fd3d7f0e79c1b6362703d089903c72ac752"
+    },
+    {
+      "path": "docs/software_contracts/CODEBASE_DUCKLAKE_HISTORY.md",
+      "sha256": "3b5c6aa7d5b0411915c95df1b12f75b9c4e9e697f008c26bca6d6006aa29ca2b"
+    }
+  ],
+  "test_cases": [
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_actual_source_metadata_delivery_uses_existing_registry_and_native_snapshot"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_forged_source_or_authority_requests_refuse_before_outbox_mutation[head]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_forged_source_or_authority_requests_refuse_before_outbox_mutation[origin]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_forged_source_or_authority_requests_refuse_before_outbox_mutation[manifest]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_forged_source_or_authority_requests_refuse_before_outbox_mutation[model]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_forged_source_or_authority_requests_refuse_before_outbox_mutation[authority]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_forged_source_or_authority_requests_refuse_before_outbox_mutation[extra]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_exact_operation_command_payload_survives_committed_response_loss"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_historical_registration_replay_does_not_require_live_captured_artifacts"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_earlier_native_snapshot_remains_queryable_after_later_batch"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_source_changes_do_not_relabel_historical_event_as_current"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_native_ack_snapshot_tamper_and_oversized_event_refuse"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_bounded_explicit_history_registration_selection"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_actual_crash_after_native_lake_commit_recovers_same_frozen_batch_in_fresh_process"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_ducklake_history",
+      "name": "test_stale_registry_owner_generation_cannot_acknowledge_old_delivery_lease"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_real_producer_reader_history_delivery_pin_and_owned_artifact_deletion"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_exact_retention_operation_and_lost_response_replay"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_actual_thread_reader_excludes_quiescence_and_close_until_consumption_finishes"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_unsafe_candidate_bytes_or_aliases_never_deleted[symlink]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_unsafe_candidate_bytes_or_aliases_never_deleted[hardlink]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_unsafe_candidate_bytes_or_aliases_never_deleted[bytes]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_unsafe_candidate_bytes_or_aliases_never_deleted[oversize]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_unsafe_candidate_bytes_or_aliases_never_deleted[directory]"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_missing_candidate_without_prior_intent_cannot_be_claimed_as_collected"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_prepared_plan_fences_replacement_and_pending_gate_release"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_native_profile_control_log_tamper_and_size_preflight_refuse"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_actual_process_crash_after_unlink_recovers_intent_and_preserves_retained_pin"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_native_reopen_stale_owner_lease_requires_explicit_reconciliation"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_deleted_latest_event_cannot_roll_back_live_pin_or_lease_state"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_operation_payload_or_receipt_drift_refuses_gc_before_deletion"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_durable_collection_completion_response_loss_does_not_repeat_physical_delete"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_managed_namespace_replacement_and_reopen_refuse"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_native_operation_and_event_capacity_bounds_fail_closed"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_failed_producer_io_releases_durable_lease_and_never_registers_dummy_blob"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_pin_tampered_acknowledgement_does_not_claim_retained_snapshot"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_reserve_native_control_capacity_before_unlink_then_complete_at_exact_bound"
+    },
+    {
+      "classname": "tests.integration.logic.software_contracts.test_codebase_history_retention",
+      "name": "test_second_profile_foreign_registry_and_namespace_adoption_refuse"
+    }
+  ],
+  "tests": 37
+}

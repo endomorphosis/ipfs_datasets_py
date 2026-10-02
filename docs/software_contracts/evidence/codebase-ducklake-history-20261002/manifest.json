@@ -1,0 +1,55 @@
+{
+  "files": [
+    {
+      "bytes": 951,
+      "path": "history-crash-corrected.log",
+      "sha256": "e3553267515da484db8d797a1563100d03270b1cbe0c783bda6f9607f615d785"
+    },
+    {
+      "bytes": 2263,
+      "path": "history-initial-diagnostic.log",
+      "sha256": "ad53f04e7bb7609ccc3428daec7ff932a4afa50057737e126988bf1a24e00b34"
+    },
+    {
+      "bytes": 945,
+      "path": "native-owner-reuse-probe.log",
+      "sha256": "06e234655f9778b4040e3407249221de277d9a11250b3c251710bba809818b93"
+    },
+    {
+      "bytes": 1250,
+      "path": "pre-capacity-qualification-tests.log",
+      "sha256": "c481a198f6c11ba362892976ccd856a4d9af9c126abdfc2361db532ecb95ba41"
+    },
+    {
+      "bytes": 13910,
+      "path": "qualification.json",
+      "sha256": "67b23c1a08f03300dcbff8c36a9baf2938032c84e63d8df9d1ba8fdd2ef6d335"
+    },
+    {
+      "bytes": 1003,
+      "path": "retention-corrected-tests.log",
+      "sha256": "3b78a6ed3229c39dc9a836e3d5e6d99ffb48ea1fbce82472929dfc7edec8d8a1"
+    },
+    {
+      "bytes": 4339,
+      "path": "retention-initial-diagnostic.log",
+      "sha256": "50e730b4bdee5046e76f4bfb6dd4b3556d6dd8a375128705b7ca4484f09a4e5c"
+    },
+    {
+      "bytes": 2992,
+      "path": "retention-statement-budget-diagnostic.log",
+      "sha256": "9dc8e6c3f0cba801dd7419306660f3e16b6b6d696a8d74b12f700cbf675ec68b"
+    },
+    {
+      "bytes": 1250,
+      "path": "tests.log",
+      "sha256": "e60c751d8695306e98a1ad57213300265b0dbbfba64a0527acd6dd031409a2fb"
+    },
+    {
+      "bytes": 7242,
+      "path": "tests.xml",
+      "sha256": "29e00da460418c2ac077751e56853dbc4ade92e9d016ec706251b8f4bb8e0261"
+    }
+  ],
+  "schema": "repository-evidence-files@1"
+}

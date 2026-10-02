@@ -1,0 +1,52 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 13 items
+
+tests/integration/logic/software_contracts/test_codebase_history_retention.py F [  7%]
+..........F.                                                             [100%]
+
+=================================== FAILURES ===================================
+__ test_real_producer_reader_history_delivery_pin_and_owned_artifact_deletion __
+tests/integration/logic/software_contracts/test_codebase_history_retention.py:35: in test_real_producer_reader_history_delivery_pin_and_owned_artifact_deletion
+    result=owner.deliver_and_pin(delivery[1],retained,operation='published-source',source_id='managed-fixture',output_directory=delivery[5]/'managed-journal')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_history_retention.py:383: in deliver_and_pin
+    deliver_codebase_history(self.registry, self.sink, source_id=source_id,
+ipfs_datasets_py/duckdb_control/codebase_ducklake_history.py:145: in deliver_codebase_history
+    return deliver_ducklake_history(registry, sink, source_id=source_id,
+ipfs_datasets_py/duckdb_control/autoencoder_ducklake.py:241: in deliver_ducklake_history
+    with _locked_journal(output_directory, binding) as journal:
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/autoencoder_ducklake.py:147: in _locked_journal
+    directory.mkdir(mode=0o700, parents=False, exist_ok=True)
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-barberb/pytest-4684/test_real_producer_reader_hist0/managed-journal/0'
+_ test_actual_process_crash_after_unlink_recovers_intent_and_preserves_retained_pin _
+tests/integration/logic/software_contracts/test_codebase_history_retention.py:138: in test_actual_process_crash_after_unlink_recovers_intent_and_preserves_retained_pin
+    owner.deliver_and_pin(delivery[1],retained,operation='retained-pin',source_id='managed-fixture',output_directory=delivery[5]/'pin-journal')
+ipfs_datasets_py/duckdb_control/codebase_history_retention.py:383: in deliver_and_pin
+    deliver_codebase_history(self.registry, self.sink, source_id=source_id,
+ipfs_datasets_py/duckdb_control/codebase_ducklake_history.py:145: in deliver_codebase_history
+    return deliver_ducklake_history(registry, sink, source_id=source_id,
+ipfs_datasets_py/duckdb_control/autoencoder_ducklake.py:241: in deliver_ducklake_history
+    with _locked_journal(output_directory, binding) as journal:
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/autoencoder_ducklake.py:147: in _locked_journal
+    directory.mkdir(mode=0o700, parents=False, exist_ok=True)
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-barberb/pytest-4684/test_actual_process_crash_afte0/pin-journal/0'
+=========================== short test summary info ============================
+FAILED tests/integration/logic/software_contracts/test_codebase_history_retention.py::test_real_producer_reader_history_delivery_pin_and_owned_artifact_deletion
+FAILED tests/integration/logic/software_contracts/test_codebase_history_retention.py::test_actual_process_crash_after_unlink_recovers_intent_and_preserves_retained_pin
+======================== 2 failed, 11 passed in 38.15s =========================

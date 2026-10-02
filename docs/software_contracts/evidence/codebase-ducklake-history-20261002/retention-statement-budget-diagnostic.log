@@ -1,0 +1,38 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 13 items
+
+tests/integration/logic/software_contracts/test_codebase_history_retention.py F [  7%]
+............                                                             [100%]
+
+=================================== FAILURES ===================================
+__ test_real_producer_reader_history_delivery_pin_and_owned_artifact_deletion __
+tests/integration/logic/software_contracts/test_codebase_history_retention.py:43: in test_real_producer_reader_history_delivery_pin_and_owned_artifact_deletion
+    deleted=owner.collect(operation='collect-obsolete',gate_id=gate,candidate_cids=[obsolete])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_history_retention.py:461: in collect
+    self._command(_derived(operation, "prepare"), "prepare_collection", plan)
+ipfs_datasets_py/duckdb_control/codebase_history_retention.py:299: in _command
+    return self.registry._mutate(operation, COMMAND, request, apply)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/autoencoder_registry.py:251: in _mutate
+    "admitted": False, **apply(cx)}
+                         ^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_history_retention.py:297: in apply
+    event_id = self.registry._event(cx, operation, KIND, event)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/autoencoder_registry.py:324: in _event
+    cx.execute("INSERT INTO autoencoder_control.outbox VALUES (?, ?, 'pending', 0, NULL, NULL)", [event_id, consumer])
+ipfs_datasets_py/duckdb_control/connections.py:1028: in execute
+    self._meter.record_statement(normalized)
+ipfs_datasets_py/duckdb_control/connections.py:865: in record_statement
+    raise StatementBudgetExceeded(
+E   ipfs_datasets_py.duckdb_control.connections.StatementBudgetExceeded: statement budget exceeded (33 > 32)
+=========================== short test summary info ============================
+FAILED tests/integration/logic/software_contracts/test_codebase_history_retention.py::test_real_producer_reader_history_delivery_pin_and_owned_artifact_deletion
+======================== 1 failed, 12 passed in 44.23s =========================
