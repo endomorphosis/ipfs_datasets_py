@@ -530,3 +530,175 @@ steps, lower teacher-forced CE, a larger output cap, or a larger latent dimensio
 alone are not established solutions. The 8D linguistic teacher remains unchanged;
 real 768D training still requires its missing verified local encoder inputs. No
 trained state from this comparison was installed into a production lane.
+
+
+## Rejected-state controls and source-count comparison (2026-10-02)
+
+The [source-count evidence](../implementation/reports/evidence/decoder-cardinality-20261002/results.json)
+continues the full-source experiment above. It adds diagnostics on the **trained,
+rejected states**, a separate versioned source-count head, and a matched six-arm
+training comparison. These are private Legal development owners, not production
+checkpoint formats or new qualification routes. The historical 8D linguistic
+teacher is untouched. Actual training here is 384D; verified local 768D encoder
+inputs are still unavailable. There is no weight download or encoder context change.
+
+The previous eight rejected candidates replayed their original validation predictions,
+numerical metrics, and full fidelity summaries exactly. Postfit controls evaluate
+conditioned training and validation, zero-condition validation, and source shuffles
+within clause-count bins on both splits. A separate teacher-forced diagnostic holds
+each complete reference prefix fixed and partitions NLL into actor, action, object,
+modality, qualifiers, structural tokens, between-rule continuation, stopping, and EOS.
+References are used for scoring and teacher-forced diagnostics, never supplied to
+free-running generation. No diagnostic control participates in checkpoint selection.
+
+Same-length source shuffling changes 36–41 of 48 generated validation sequences.
+Matched-source reference CE is lower by 0.003918–0.005063 on validation and
+0.012260–0.015389 on training. Most of that difference is in actor/action tokens;
+object, modality, and boundary differences are very small. Zero conditioning changes
+all 48 generated sequences. This establishes source sensitivity in the trained
+candidates; **all eight still have zero exact validation paragraphs**. Sensitivity
+is not fidelity. These previously exposed authored inputs are not a fresh holdout.
+
+### Source-count head and unchanged selection
+
+`decoder_cardinality_experiment.py` wraps the existing every-step source adapter
+with a zero-initialized 32-class count head from its source-conditioned initial
+hidden state. All arms add the same 1,056 count parameters to the existing 24,832
+trainable decoder parameters; the inherited projection remains frozen. Count labels
+are checked against complete training references by ID. They are training and
+scoring supervision only; the generation API receives no reference count.
+
+The three recipes are `no_count` (weight 0), `aux_count` (weight 0.25), and
+`guided_count` (weight 0.25 plus causal stopping guidance), at seeds 1729 and 2718.
+The guided variant recognizes complete rule boundaries in its own generated prefix
+and adjusts the rules-list closing-bracket logit by centered source-predicted
+stop-versus-continue odds. Invalid prefixes and counts outside the supported
+boundary range receive no guidance. It does not force a valid document or closure.
+This experimental mechanism has not earned production use.
+
+`long_span_cardinality_training.py` preserves the original full-reference losses,
+continuous AdamW state, scheduler, and per-length/facet selection guards. Count
+accuracy cannot select a model. Missing clauses, extra clauses, modality/actor/
+action/object fidelity, EOS, order, and reconstruction checks retain their previous
+meaning. The script derives 340 updates and 225,840 nonpadding target-token
+presentations from the actual curriculum before any arm runs. Each arm receives
+2,440 row presentations across 80 epochs and the same 48 training / 48 validation
+paragraphs, with 1/2/4/8 clauses. Complete source inputs use 9–72 tokens; complete
+target lengths are 40/73/139/271 including BOS/EOS. Encoder context and decoder
+output ceiling remain 512; generation is greedy, temperature 0.
+
+Final **rejected-attempt** results from the corrected run:
+
+| Arm / seed | Reference CE | Count correct | EOS | Parsed documents | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| no_count-1729 | 0.218327 | 12/48 | 48/48 | 48/48 | 9.042 |
+| aux_count-1729 | 0.205258 | 12/48 | 48/48 | 48/48 | 8.313 |
+| guided_count-1729 | 0.201351 | 10/48 | 48/48 | 48/48 | 8.914 |
+| no_count-2718 | 0.212227 | 12/48 | 48/48 | 48/48 | 8.467 |
+| aux_count-2718 | 0.199039 | 8/48 | 29/48 | 29/48 | 10.296 |
+| guided_count-2718 | 0.282658 | 10/48 | 46/48 | 38/48 | 9.604 |
+
+All six selected states remain at epoch 0, with **0/48 exact validation paragraphs**.
+Every final attempted state also has 0/48 exact validation paragraphs. None was
+promoted. EOS alone can precede malformed JSON, so it is reported separately from
+parsed-document count. The count loss decreases substantially without useful count
+discrimination: the trained count heads score 8–12/48, versus 12/48 for the uniform
+head's class-1 argmax. None predicts eight clauses, even on the training panel;
+training count accuracy is only 14–15/48 for the supervised variants. All count
+controls and predictions are archived for both selected and last-complete states.
+
+Within-length source shuffle **preserves the count class**. It is a clause-fidelity
+control, not independent evidence of count generalization. Zero conditioning removes
+both decoder and count source features, retaining learned count bias. Count CE or
+better termination cannot substitute for correct ordered clause reconstruction.
+All references here have empty condition, exception, and temporal lists; their
+agreement does not establish nonempty-qualifier coverage or native logic-family support.
+
+### Disabled-loss numerical drift and replay
+
+The first six-arm run is retained as `training-r1`, but it failed comparison with
+the previous trainer: adding `0 * count_loss` created zero-valued count-head gradients.
+Their presence changed floating-point reduction order in global gradient clipping.
+A synthetic 128-update reproduction first diverged at clipping step 9. The revised
+owner still computes count CE for diagnostics, but adds its autograd branch only
+when its coefficient is nonzero. Tests verify absent count-head gradients and Adam
+state with guidance off, and exact inherited updates across 128 clipped steps under
+both loss strategies. The corrected `training-r2` repeats the unchanged sealed
+recipe; its two no-count arms reproduce the prior full 340-update inherited tensors,
+predictions, and metrics exactly. The enabled arms are unchanged by the fix.
+All frozen sources and failed-comparison evidence are retained. The focused suite
+passes **553 tests**. Original donor checkpoint bytes remain unchanged.
+
+### Running and inspecting the private experiments
+
+The source entry points are
+[`evaluate_rejected_decoder_controls.py`](../../scripts/ops/autoencoder/evaluate_rejected_decoder_controls.py)
+and [`benchmark_decoder_cardinality.py`](../../scripts/ops/autoencoder/benchmark_decoder_cardinality.py).
+Their shared [`decoder_fidelity_replay.py`](../../scripts/ops/autoencoder/decoder_fidelity_replay.py)
+authenticates complete paragraph, embedding, tokenizer, source/component, split,
+codec, and curriculum bindings before returning numerical models. Both CLIs require
+`--dependency-root`, `--extension-root`, `--manifest`, `--plan`, and a fresh `--output`.
+The manifest pins every loaded extension and input; the plan fixes the experiment.
+Use the existing resource reservation layer before launching. The evidence archive
+includes the exact guardians, command receipts, frozen extension trees, plans,
+inputs, selected and rejected weights, full predictions, controls, and independent audit.
+These private exports contain no optimizer-resume state and cannot replace a lineage
+checkpoint in a production training worker.
+
+Each arm writes `training.json`, `selected-state.json`, `last-attempt-state.json`,
+and separately named `evaluation-*.json` under each state role. Saved tensors must
+match the role's recorded digest before and after reload, and validation generation
+must reproduce that role's original predictions. History retains aggregate count
+metrics rather than copying all count predictions every epoch. Full row-level
+predictions remain in baseline/selected/last reports and postfit artifacts.
+Reports distinguish numerical evaluation time, total postfit time (including count
+and fidelity scoring, serialization/reload), training-call time, and whole-arm time.
+The final archive records guardian elapsed time through child exit and through final accounting;
+isolated child wall time is not available from these receipts.
+
+The corrected six fits total 54.638 seconds, or 8.313–10.296 seconds per arm,
+including all validation/selection work. Numerical selected-state evaluation takes
+93.2–101.3 ms per 48-span panel (1.941–2.110 ms/span). Rejected-state panels take
+90.9–637.8 ms (1.894–13.288 ms/span); repeated decoding to the cap costs more.
+Including postfit fidelity/count scoring, these validation panels take 147.0–694.2
+ms. Whole arms, including state persistence and all eight postfit evaluations,
+take 9.691–13.517 seconds. These are observed wall times, not a demonstrated speed
+improvement over a different workload. The corrected guardian totals 112.254 seconds
+including admission, monitoring, and final accounting, retaining 49,876,329 bytes;
+its interval-observed peak child RSS is 727,945,216 bytes. The short rejected-state
+control job did not persist an interval RSS sample, so no peak is claimed for it.
+
+These are CPU decoder diagnostics, **not bridge-on Legal IR speed measurements**:
+bridge names are `[]`, prover evaluation is false, workers are 1, metric disk cache
+is disabled, and sample-memory scoring is unused. Paragraph embedding inputs are
+warm cached; the encoder is not executed. A resource-owner compatibility audit
+records the historical owner actually used and the newer owner's optional nested
+lease additions separately; this campaign does not validate nested leases. The
+storage cap is unchanged, all three owned reservations were released, and foreign
+claims were preserved. No native family projection or `lake build <Lib>` ran here.
+No Lean admission, Constitution round trip, formalization, or distillation-teacher
+authority is granted by these results.
+
+### Next controlled quality experiment
+
+The recorded curriculum presents one-, two-, four-, and eight-clause rows 960, 720,
+520, and 240 times respectively. Eight-clause rows enter only the last 120 of 340
+updates. Full-panel validation CE worsens during the short-only first stage, causing
+LR to halve from 0.001 to 0.0005 at epoch 20; it stays there through epoch 80. The
+runs complete their budgets, so deadline starvation is not the explanation.
+
+A narrow next experiment should preserve the decoder curriculum and all gates while
+comparing current-stage count supervision with balanced, training-only all-length
+count supervision from the beginning. Hold update budgets, initial weights, learning
+rate policy, and loss coefficients fixed; record confusion matrices, entropy,
+actual boundary corrections, and gradient norms. This tests exposure imbalance
+without simultaneously changing the optimizer or the stopping formula.
+
+Guidance also needs calibration evidence before rollout. A hypothetical head that
+merely learns uniform support on observed counts `{1,2,4,8}` gives a first-rule
+stop correction of `log(31/3)`, approximately +2.335, under the current uniform-32
+centering. It can therefore strengthen premature closure without learning source
+count discrimination. Actual boundary deltas were not recorded in this run, so
+that is a mechanism to test, not an established cause. Ordered source-token features
+or clause-addressed decoding remain a separate grounding experiment; lower CE,
+larger output budgets, or count supervision alone have not solved source fidelity.
