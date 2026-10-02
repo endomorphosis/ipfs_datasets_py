@@ -239,3 +239,11 @@ above**, not a claim that every live file or transitive dependency is frozen:
 Any implementation run needs a new immutable source export, its own manifest,
 explicit canonical-tree import checks and before/after checks of assets,
 checkpoints and producer files. Preserve all prior evidence directories.
+
+## First implementation and development result
+
+The separate [v3 source-conditioned decoder](source_conditioned_decoder_v3.md)
+implements both modes and records the eight-fit exposed-data comparison.
+Persistent conditioning did not consistently improve exact reconstruction and
+was not promoted. That comparison is development evidence only; this document's
+fresh grouped-holdout protocol remains outstanding.
