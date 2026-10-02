@@ -142,7 +142,8 @@ def test_sql_failure_rolls_back_head_ast_and_operation(fixture, monkeypatch):
     assert connection.execute("SELECT count(*) FROM invalidations").fetchone()[0] == 0
 
 
-def test_cancellation_after_head_write_rolls_back_entire_commit(fixture):
+@pytest.mark.parametrize("with_publication_checkpoint", [False, True])
+def test_cancellation_after_head_write_rolls_back_entire_commit(fixture, with_publication_checkpoint):
     catalog, connection, candidate, _, _ = fixture
     one, two = candidate(1), candidate(2)
     first = publish(catalog, one, "first")
@@ -156,11 +157,70 @@ def test_cancellation_after_head_write_rolls_back_entire_commit(fixture):
 
     with pytest.raises(InterruptedError):
         catalog.publish(operation_id="cancelled", manifest=two[0], expected_head=first.head,
-                        projections=two[1], checkpoint=checkpoint)
+                        projections=two[1], checkpoint=checkpoint,
+                        publication_checkpoint=(lambda: None) if with_publication_checkpoint else None)
     assert catalog.current("fixture") == first.head
     assert catalog.store.get_by_ast_cid(one[1][0].ast_cid) == one[1][0]
     assert catalog.store.get_by_ast_cid(two[1][0].ast_cid) is None
     assert catalog.resolve_operation("cancelled", catalog.request_identity(two[0], first.head)) is None
+
+
+def test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay(fixture):
+    catalog, connection, candidate, _, _ = fixture
+    item = candidate()
+    observed = []
+    cancellations = []
+
+    def observe():
+        # Inspect real tentative SQL state, independently of callback position.
+        observed.append((catalog.store.get_by_ast_cid(item[1][0].ast_cid) is not None,
+            connection.execute("SELECT count(*) FROM codebase_control.heads").fetchone()[0],
+            connection.execute("SELECT count(*) FROM codebase_control.operations").fetchone()[0]))
+
+    receipt = catalog.publish(operation_id="fenced", manifest=item[0], expected_head=None,
+        projections=item[1], checkpoint=lambda: cancellations.append(True),
+        publication_checkpoint=observe)
+    assert observed == [(False, 0, 0), (True, 0, 0), (True, 1, 1)]
+    assert len(cancellations) > len(observed)
+    before = list(observed), list(cancellations)
+    assert catalog.publish(operation_id="fenced", manifest=item[0], expected_head=None,
+        projections=item[1], checkpoint=lambda: cancellations.append(True),
+        publication_checkpoint=observe) == receipt
+    assert (observed, cancellations) == before
+
+
+@pytest.mark.parametrize("boundary", ["before_ast", "before_head", "after_head"])
+def test_publication_checkpoint_failure_rolls_back_all_native_rows(fixture, boundary):
+    catalog, connection, candidate, _, _ = fixture
+    one, two = candidate(1), candidate(2)
+    first = publish(catalog, one, "first")
+
+    def refuse():
+        applied = catalog.store.get_by_ast_cid(two[1][0].ast_cid) is not None
+        written = connection.execute(
+            "SELECT operation_id FROM codebase_control.operations WHERE operation_id='refused'").fetchone()
+        current = "after_head" if written is not None else "before_head" if applied else "before_ast"
+        if current == boundary:
+            raise InterruptedError("publication fence refused " + boundary)
+
+    with pytest.raises(InterruptedError, match="publication fence refused " + boundary):
+        catalog.publish(operation_id="refused", manifest=two[0], expected_head=first.head,
+            projections=two[1], publication_checkpoint=refuse)
+    assert catalog.current("fixture") == first.head
+    assert catalog.store.get_by_ast_cid(one[1][0].ast_cid) == one[1][0]
+    assert catalog.store.get_by_ast_cid(two[1][0].ast_cid) is None
+    assert catalog.resolve_operation("refused", catalog.request_identity(two[0], first.head)) is None
+    assert connection.execute("SELECT count(*) FROM invalidations").fetchone()[0] == 0
+
+
+def test_publication_checkpoint_must_be_callable_before_mutation(fixture):
+    catalog, connection, candidate, _, _ = fixture
+    item = candidate()
+    with pytest.raises(CodebaseCatalogError, match="publication_checkpoint must be callable"):
+        catalog.publish(operation_id="invalid-hook", manifest=item[0], expected_head=None,
+            projections=item[1], publication_checkpoint=3)
+    assert connection.execute("SELECT count(*) FROM codebase_control.heads").fetchone()[0] == 0
+    assert catalog.store.get_by_ast_cid(item[1][0].ast_cid) is None
 
 
 def test_simultaneous_candidates_cannot_both_win_same_expected_head(fixture):
