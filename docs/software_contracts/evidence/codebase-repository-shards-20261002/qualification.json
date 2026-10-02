@@ -1,0 +1,380 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1669,
+      "path": "diagnostic-git-initial.log",
+      "sha256": "59b2b0c50681098176c04330117273fa07fc2637cef7a71fdd6af14f09067aa5"
+    },
+    {
+      "bytes": 38846,
+      "path": "diagnostic-resident-initial.log",
+      "sha256": "e2e7796a94ec2728008f062bcaff24811cd90da541f9f862f18cd2b7660535fb"
+    },
+    {
+      "bytes": 2605,
+      "path": "diagnostic-source-shards-initial.log",
+      "sha256": "39c90b8ae8055df1e5e6b6906030630a546ddad2170bf7636094d2a630579eff"
+    },
+    {
+      "bytes": 25956,
+      "path": "git-batch-comparison.json",
+      "sha256": "dbe098179a0674cd1d7e9df18a72bdcc89da0292052cdd7a0302e2c453398827"
+    },
+    {
+      "bytes": 1077,
+      "path": "git-batch-tests.log",
+      "sha256": "6953764b2b971eb38ceb32efe83b9370a07e50d1bb444d9094f718062b43d63a"
+    },
+    {
+      "bytes": 2182,
+      "path": "git-batch-tests.xml",
+      "sha256": "45796428765bf8b61da66b90bc18660719b09500861890fbf4bd5d0bd94be6d5"
+    },
+    {
+      "bytes": 387437,
+      "path": "model-batching-comparison.json",
+      "sha256": "e2626b958ff81c13fce88005e42933d3016e148492b51d80dfb9ae8c37c737a1"
+    },
+    {
+      "bytes": 1032,
+      "path": "resident-batching-tests.log",
+      "sha256": "c0862aed2e89dd77a61cef5054ed8dee72ed805a81e46383d786543ad9d5955c"
+    },
+    {
+      "bytes": 434,
+      "path": "resident-batching-tests.xml",
+      "sha256": "4f91a253b92008843949bfceedfc08af0963c129ac5ea080d2f0b37cfdf2e986"
+    },
+    {
+      "bytes": 389293,
+      "path": "resident-comparison.json",
+      "sha256": "2ad4d79e5593a7615d4ba3e5a2837a75e25e3d0120aa3dd8d4f6e52e5788a448"
+    },
+    {
+      "bytes": 440385,
+      "path": "resident-executed-prefix.json",
+      "sha256": "2b87684a5d769c50aef739ca5eae0bc22eb178f57a9b979ea7616eb8cb49958b"
+    },
+    {
+      "bytes": 25886,
+      "path": "resident-limits-tests.log",
+      "sha256": "1b58266c1f945b6a83d42a4b2d9b7003a128176bf395ad0b03567154d73adc32"
+    },
+    {
+      "bytes": 2241,
+      "path": "resident-limits-tests.xml",
+      "sha256": "3c2364d9cd8f173b65d9e72cd9cc90826e3ace91cc318aaef033cf3c32776d82"
+    },
+    {
+      "bytes": 1032,
+      "path": "resident-parent-capacity-tests.log",
+      "sha256": "c34f321117209a8df8aa56f6ab7e6717c011e7b54a784f8f69da3106fa88e28f"
+    },
+    {
+      "bytes": 444,
+      "path": "resident-parent-capacity-tests.xml",
+      "sha256": "132e48b2c78023af6d0941d43963516b37399eeac8dd4f58b6b46be5dc41a0e7"
+    },
+    {
+      "bytes": 1084,
+      "path": "resident-tests.log",
+      "sha256": "0c73c8fe5f95886a94b363bd98d44866dff49bf533c4009b4376808263457bd5"
+    },
+    {
+      "bytes": 1422,
+      "path": "resident-tests.xml",
+      "sha256": "833b2ee0bbdf8029127b18d95ba051e317c9a7aa963b58e0ece66f03b3aa7731"
+    },
+    {
+      "bytes": 1084,
+      "path": "source-shards-tests.log",
+      "sha256": "bb3cf8d96cbb6f7230742559980bb3e34b16c8789e4e0123130de4c64f0deaf5"
+    },
+    {
+      "bytes": 2739,
+      "path": "source-shards-tests.xml",
+      "sha256": "858c836d87f83b8e95c5a11f3a78544ba7aac168bb7f8961ef1f935714b592a8"
+    },
+    {
+      "bytes": 1001,
+      "path": "watcher-tests.log",
+      "sha256": "a16e8c7db4c975cf0e8174d57dfce3be099d044f1e2f5088e96ff90ef99766be"
+    }
+  ],
+  "authority": {
+    "model_head_published": false,
+    "proof_authority": false,
+    "source_head_published": false,
+    "task_completion": false
+  },
+  "created_at": "2026-10-02T09:51:13.756785+00:00",
+  "measurements": {
+    "git_object_reads": {
+      "batch_elapsed_ms": 20,
+      "batch_processes": 1,
+      "per_blob_elapsed_ms": 84,
+      "per_blob_processes": 4
+    },
+    "model_batching": {
+      "batch1_seconds": 2.561996406177059,
+      "batch4_seconds": 2.291688723023981,
+      "decoded_sources": 4,
+      "same_closed_decoded_choices": true
+    },
+    "residency": {
+      "cold_loads": 4,
+      "cold_peak_rss_bytes": 1040326656,
+      "cold_per_page_seconds": 3.1897102259099483,
+      "identical_decoded_rows": true,
+      "resident_loads": 1,
+      "resident_peak_rss_bytes": 1014509568,
+      "resident_seconds": 2.239832171006128
+    },
+    "scope": "single local observations; uncontrolled concurrent load; no throughput distribution or Terminal-Bench score"
+  },
+  "profile": "local complete native dirty source<=256 + immutable source/AST pages + bounded CPU resident inference + optional Git page reader + notification-only watcher",
+  "remaining": [
+    "Initial dirty source/AST capture is bounded whole-generation <=256, not resumable extraction.",
+    "Clean committed resumable extraction remains the separately qualified existing CodebasePagedStager profile.",
+    "Git batching is an opt-in derived page reader; frozen initial native scanner remains unchanged.",
+    "Whole bounded source history replay remains on reads; no large-scale incremental I/O distribution.",
+    "Model residency lasts one bounded child invocation only; no cross-invocation persistent model process.",
+    "Compatible CUDA inference, large dirty pipeline integration, repeated timing and pressure distributions remain unqualified."
+  ],
+  "resource_scope": {
+    "cuda_qualified": false,
+    "full_new_supervisor_envelope_qualified": false,
+    "host_policy_weakened": false,
+    "model_inference_and_parent_refusal": "actual default shared datasets resource owner; real local GTE/shared384 weights; CPU only",
+    "source_git_watcher": "actual native components under explicitly injected foundation host sampler"
+  },
+  "schema": "codebase-repository-shards-qualification@1",
+  "source_files": [
+    {
+      "bytes": 11785,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_repository_shards.py",
+      "sha256": "652f6e6693d2c10594ee1d16d66317607205ccdcd933821ca786c33aac2f49ee"
+    },
+    {
+      "bytes": 5116,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_repository_watch.py",
+      "sha256": "2b598d602cacf7f1b932ae52965d2dcf742651efd5bbfa9ac25cd17087151699"
+    },
+    {
+      "bytes": 18337,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_resident_inference.py",
+      "sha256": "426fd1ae8e1c0a8a194ef36c898dc2c51ce860cac5e860412c7c668a5361d7db"
+    },
+    {
+      "bytes": 7945,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_resident_inference_worker.py",
+      "sha256": "5a00061893ba0f5ca4c971c963546302b68226cfcf2660d08db95dc323d1c60d"
+    },
+    {
+      "bytes": 9974,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_git_batch.py",
+      "sha256": "36d03e43f997d53bb5260a7ab9aa02850146cc81045bf61108904f1dcc1b6888"
+    },
+    {
+      "bytes": 10223,
+      "path": "tests/integration/logic/software_contracts/test_codebase_repository_shards.py",
+      "sha256": "f327d9964a058fa92d37973bc6d3089a1eb5c0fe7b955f0ca6379509be11eff4"
+    },
+    {
+      "bytes": 3036,
+      "path": "tests/integration/logic/software_contracts/test_codebase_repository_watch.py",
+      "sha256": "2a9f40c93b8111def8ae110770fea420d59de2a3a61d6aebb1feb2b686970138"
+    },
+    {
+      "bytes": 12542,
+      "path": "tests/integration/logic/software_contracts/test_codebase_resident_inference.py",
+      "sha256": "1ce2943554c0d3dae9158308556befa3cf5bb40016891fe66dc41684620b2aab"
+    },
+    {
+      "bytes": 5247,
+      "path": "tests/integration/logic/software_contracts/test_codebase_git_batch.py",
+      "sha256": "e3dc0ea4f2a0d013894d0646f5cef2ea4221215f795a85bca90e78c686ad375a"
+    },
+    {
+      "bytes": 8743,
+      "path": "docs/software_contracts/CODEBASE_REPOSITORY_SHARDS.md",
+      "sha256": "1dbe109e2ffc3b3d1387154c71269692964dd020d9eeaf15fcf221e311df9df9"
+    }
+  ],
+  "tests": {
+    "diagnostics": "resident-limits-tests initially expected the wrong exception class for an actual correct parent-capacity refusal; the later parent-capacity test corrects that test-only expectation. Earlier diagnostics are retained and superseded only within their stated scope.",
+    "git_batch": 11,
+    "resident": 9,
+    "source_shards": 13,
+    "unique_passed": 40,
+    "watcher": 7,
+    "watcher_log": "watcher-tests.log",
+    "xml_latest_per_test": {
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_actual_drift_after_object_acquisition_refuses_whole_page": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.676
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_invalid_native_protocol_cannot_become_captured_source[extra]": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.271
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_invalid_native_protocol_cannot_become_captured_source[missing]": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.309
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_invalid_native_protocol_cannot_become_captured_source[wrong_body]": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.225
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_invalid_native_protocol_cannot_become_captured_source[wrong_oid]": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.181
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_invalid_native_protocol_cannot_become_captured_source[wrong_size]": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.184
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_invalid_native_protocol_cannot_become_captured_source[wrong_type]": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.257
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_modified_tracked_source_is_never_replaced_with_head_object": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.947
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_native_batch_per_blob_and_cas_are_byte_identical_for_complete_dirty_page": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 5.641
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_source_head_and_sql_tables_do_not_change": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 3.209
+      },
+      "tests.integration.logic.software_contracts.test_codebase_git_batch.test_terminal_or_foreign_cursor_is_not_a_page": {
+        "log_xml": "git-batch-tests.xml",
+        "passed": true,
+        "seconds": 2.31
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_actual_file_backed_fresh_process_reconstructs_and_resumes_cursor": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 3.075
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_actual_incremental_and_cold_native_capture_have_equal_source_ast_and_global_pages": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 7.178
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_complete_dirty_inventory_and_global_cross_shard_edges_are_native": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 3.601
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_deleted_page_is_not_reused_from_a_warm_dictionary": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 2.706
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_entry_cap_rejects_whole_generation_without_truncation": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 3.066
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_resealed_omitted_or_rebound_metadata_is_not_an_authority[coverage]": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 2.663
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_resealed_omitted_or_rebound_metadata_is_not_an_authority[global_dependencies_cid]": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 2.773
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_resealed_omitted_or_rebound_metadata_is_not_an_authority[pages]": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 2.725
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_resealed_omitted_or_rebound_metadata_is_not_an_authority[producer]": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 2.644
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_resealed_omitted_or_rebound_metadata_is_not_an_authority[source_head]": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 2.801
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_resealed_omitted_or_rebound_metadata_is_not_an_authority[source_policy]": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 2.738
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_resume_root_remains_historical_and_cannot_be_substituted_for_new_snapshot": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 5.503
+      },
+      "tests.integration.logic.software_contracts.test_codebase_repository_shards.test_source_head_and_existing_sql_schema_are_not_modified_by_projection": {
+        "log_xml": "source-shards-tests.xml",
+        "passed": true,
+        "seconds": 3.795
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_actual_cold_and_resident_models_preserve_predictions_and_measure_load_reuse": {
+        "log_xml": "resident-tests.xml",
+        "passed": true,
+        "seconds": 140.3
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_actual_executed_prefix_cannot_skip_repeat_reorder_or_claim_another_model": {
+        "log_xml": "resident-tests.xml",
+        "passed": true,
+        "seconds": 11.279
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_actual_global_parent_memory_budget_refuses_before_source_or_model_access": {
+        "log_xml": "resident-parent-capacity-tests.xml",
+        "passed": true,
+        "seconds": 3.341
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_actual_gte_and_character_limits_defer_complete_sources_without_truncation": {
+        "log_xml": "resident-limits-tests.xml",
+        "passed": true,
+        "seconds": 15.143
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_actual_model_batch_sizes_measure_same_closed_decoded_choices": {
+        "log_xml": "resident-batching-tests.xml",
+        "passed": true,
+        "seconds": 20.911
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_actual_model_cursor_replays_after_fresh_file_backed_native_owner_restart": {
+        "log_xml": "resident-tests.xml",
+        "passed": true,
+        "seconds": 10.287
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_actual_resident_pages_keep_complete_inventory_and_replay_without_model_calls": {
+        "log_xml": "resident-tests.xml",
+        "passed": true,
+        "seconds": 19.387
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_actual_source_change_refuses_continuation_before_worker": {
+        "log_xml": "resident-tests.xml",
+        "passed": true,
+        "seconds": 9.902
+      },
+      "tests.integration.logic.software_contracts.test_codebase_resident_inference.test_explicit_cuda_refusal_occurs_before_source_model_or_host_access": {
+        "log_xml": "resident-tests.xml",
+        "passed": true,
+        "seconds": 0.001
+      }
+    }
+  }
+}

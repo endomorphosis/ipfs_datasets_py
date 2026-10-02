@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="18.983" timestamp="2026-10-02T09:45:31.002621+00:00" hostname="spark-b271"><testcase classname="tests.integration.logic.software_contracts.test_codebase_resident_inference" name="test_actual_global_parent_memory_budget_refuses_before_source_or_model_access" time="3.178"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceUnavailableError: child request exceeds parent lease capacity">tests/integration/logic/software_contracts/test_codebase_resident_inference.py:120: in test_actual_global_parent_memory_budget_refuses_before_source_or_model_access
+    run(ready,parent_lease=parent,memory_mb=4096)
+tests/integration/logic/software_contracts/test_codebase_resident_inference.py:42: in run
+    return module.run_resident_inference_pages(current[1],current[0],**{**request,**options})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_resident_inference.py:201: in run_resident_inference_pages
+    with acquire_codebase_resources(scheduler=scheduler,parent_lease=parent_lease,cancel_event=cancel_event,
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_resources.py:75: in acquire_codebase_resources
+    lease = parent_lease.acquire_child(**request)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:720: in acquire_child
+    return self._scheduler.acquire(
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1390: in acquire
+    raise ResourceUnavailableError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceUnavailableError: child request exceeds parent lease capacity</failure></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_resident_inference" name="test_actual_gte_and_character_limits_defer_complete_sources_without_truncation" time="15.143" /></testsuite></testsuites>
