@@ -1,0 +1,143 @@
+{
+  "attempts": {
+    "attempt-01": "12 corpus/property tests passed and numerical work completed, then new facade return-value duplicate admitted keyword caused 15 setup errors. Retained.",
+    "attempt-02": "27 passed under intermediate producer bytes; retained.",
+    "attempt-03": "31 passed with final reviewed corpus/generation bytes, including four additional boundary controls."
+  },
+  "criterion_mapping": {
+    "RPI-008": {
+      "connected_pre_fit_split": "Before fitting, exact source, alpha-renamed scalar clones, declared split groups and conservative explicit rename/revision edges are unioned transitively. Components may occupy only one split. One representative per within-split alpha clone is fitted; all enumerated samples and deduplication denominators remain visible.",
+      "exact_source_and_labels": "Nine exact captured source files retain independently parsed AST syntax, independently source-qualified typed ProgramIR and a distinct finite checked-property objective. One live native source_state_lake handle verifies two rows and 18 complete ProgramIR state cases with actual Lean. Seven absent property labels remain missing; a separate unavailable-tool control remains unknown, never positive.",
+      "exposure_and_transduction": "Transductive source-context use is explicit. Complete pretraining exposure is unknown, not inferred absent. The child envelope additionally records one known exact parent-manifest training overlap and states that missing overlap cannot establish no pretraining exposure.",
+      "no_intent_or_prediction_labels": "Only source selections and independently issued live checker handles enter the corpus API; desired intent, predicted target and teacher target fields refuse. Provenance explicitly identifies deterministic source/checker owners and false learned-teacher/unchecked-prediction flags."
+    },
+    "RPI-009": {
+      "actual_numerics_and_ownership": "The unchanged native source384 owner performs genuine GTE/384D ridge fitting under its existing immutable candidate/run-lease protocol. Expected model parent/head is checked before and after fitting and before attachment; source is re-observed before attachment. No competing mutable head is introduced.",
+      "cold_and_tamper": "Exact retry performs no fitting; a fresh process reopens source/model owners and replays the generation without training. Nine resealed weight/codebook/layout/seed/environment/parent/source/corpus/expected-head alterations fail. Deadline consumption, post-fit cancellation and dirty source attachment controls also refuse.",
+      "expected_head_CAS": "Existing native AutoencoderRegistry compare-and-swap is exercised on explicitly marked byte-identical copies of the independently evaluated good parent. A stale competing copy refuses. An injected timing event after a retained genuine numerical result changes the head and prevents new attachment; this control does not claim another fit.",
+      "quality_separate": "New disjoint holdout parent3/3, child0/3, zero-head1/3. Child retention gate refuses promotion and the actual trained child never advances a head. Fixed source semantics and checker definitions remain outside learned latent state; syntax/property labels are retained auxiliary objectives, not claimed as newly trained heads.",
+      "versioned_generation": "codebase-model-generation@1 binds exact parent and numerical child native versions/artifacts, source head, immutable strict corpus, actual checkpoint/head/projection/codebook bytes, scalar tensor layout, implementation producer hashes, no-randomness seed policy and observed interpreter/numerical metadata/frozen CPU worker launch."
+    }
+  },
+  "evaluation": {
+    "child_holdout": {
+      "count": 3,
+      "exact_targets": 0,
+      "outside_training_coverage": 0,
+      "semantic_leaf_correct": 6,
+      "semantic_leaf_count": 12,
+      "valid_candidates": 3,
+      "within_training_coverage": 3
+    },
+    "holdout_used_for_selection": false,
+    "parent_holdout": {
+      "count": 3,
+      "exact_targets": 3,
+      "outside_training_coverage": 0,
+      "semantic_leaf_correct": 12,
+      "semantic_leaf_count": 12,
+      "valid_candidates": 3,
+      "within_training_coverage": 3
+    },
+    "scope": "fixed_schema_source_target_reconstruction",
+    "zero_head_holdout": {
+      "count": 3,
+      "exact_targets": 1,
+      "outside_training_coverage": 0,
+      "semantic_leaf_correct": 10,
+      "semantic_leaf_count": 12,
+      "valid_candidates": 3,
+      "within_training_coverage": 3
+    }
+  },
+  "final_review": "Independent C review found no false property/source authority or connected-lineage leakage; closed property-domain typing and remaining-deadline propagation findings were fixed and requalified in attempt03.",
+  "generation_sha256": "e4d29ee0f94d7dc16c56a8e6370c80da058684fd3da5970e96421177a0c0362d",
+  "ledger_modified": false,
+  "legacy_evaluation": {
+    "child_holdout": {
+      "count": 9,
+      "exact_targets": 0,
+      "outside_training_coverage": 0,
+      "semantic_leaf_correct": 10,
+      "semantic_leaf_count": 36,
+      "valid_candidates": 9,
+      "within_training_coverage": 9
+    },
+    "holdout_used_for_selection": false,
+    "parent_holdout": {
+      "count": 9,
+      "exact_targets": 9,
+      "outside_training_coverage": 0,
+      "semantic_leaf_correct": 36,
+      "semantic_leaf_count": 36,
+      "valid_candidates": 9,
+      "within_training_coverage": 9
+    },
+    "scope": "fixed_schema_source_target_reconstruction",
+    "zero_head_holdout": {
+      "count": 9,
+      "exact_targets": 0,
+      "outside_training_coverage": 0,
+      "semantic_leaf_correct": 7,
+      "semantic_leaf_count": 36,
+      "valid_candidates": 9,
+      "within_training_coverage": 9
+    }
+  },
+  "legacy_scope": "The previous 27-row parameter-renamed train/validation/holdout corpus is alpha-overlapping under the new strict policy. Its parent9/9\u2192child0/9 remains visible and unchanged; it is not recast as strict holdout evidence.",
+  "limits": [
+    "Selected two-operand pure annotated scalar Python profile only; no arbitrary Python semantic clone equivalence. Explicit conservative lineage can add exclusions but cannot label correctness.",
+    "Finite Lean model correspondence is distinct from Python source equivalence, security correctness and task/proof authority.",
+    "Observed numerical environment binds interpreter, numpy linalg binary, distribution metadata and fixed worker launch, not every OS or wheel file.",
+    "Candidates and source owners remain separate databases. Before/after fences withhold stale results; only native model head publication is an atomic CAS, not a distributed source/model transaction.",
+    "Actual host pressure sampler is used with isolated test scheduler state. Complete supervisor parent-to-child resource ownership is a separate RPI-022 qualification."
+  ],
+  "new_numerical_worker": {
+    "device": "cpu",
+    "elapsed_ms": 4487,
+    "input_sha256": "507dcea4d379caad3e7603a336b81fb6ec9dd53a8c70550e4667ee459061352e",
+    "memory_enforcement": "sampled_process_tree_RSS_may_overshoot",
+    "memory_mb": 4096,
+    "output_sha256": "7d3ebf7a84c7cc03fe0ec13fa4ca04a941641363c487961f82eb7bfc99c87c50",
+    "provider_calls": 0,
+    "returncode": 0,
+    "workspace_cleaned": true
+  },
+  "original_frozen_source_modules_modified": false,
+  "privacy": "Only public fixture source, typed corpus, native theorem source/receipts, generation metadata, logs and hashes retained. No mutable databases, CAS directories, checkpoint tensors, scheduler state or private credentials.",
+  "production_acceptance": "open",
+  "profile": "source384-scalar-connected-lineage@1",
+  "proposed_criterion_acceptance": {
+    "RPI-008": {
+      "blocking_dependencies": [
+        "RPI-001",
+        "RPI-002"
+      ],
+      "status": "qualified_for_declared_profile"
+    },
+    "RPI-009": {
+      "blocking_dependencies": [
+        "RPI-008"
+      ],
+      "status": "qualified_for_declared_profile"
+    }
+  },
+  "schema": "codebase-training-generation-qualification@1",
+  "seconds": 34.42,
+  "skips": 0,
+  "sources": [
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_training_corpus.py",
+      "sha256": "f040f6a5e958daaaebe0a7833621ac93396d075f217e2656771d75ca28b61d20"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py",
+      "sha256": "51a8d38ecc01f48f693f1526bf33617ad99bdf871bd1ee04d2c62ba7bc94c089"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_codebase_training_generation.py",
+      "sha256": "d558934cc1d4bb2350bbed6ee6bcf09b7233e32ebaa2b2e77cbfefe50798a94e"
+    }
+  ],
+  "tests": 31
+}

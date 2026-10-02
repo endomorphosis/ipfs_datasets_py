@@ -1,0 +1,184 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 27 items
+
+tests/integration/logic/software_contracts/test_codebase_training_generation.py . [  3%]
+...........EEEEEEEEEEEEEEE                                               [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_actual_strict_child_has_versioned_byte_layout_environment_and_run_binding _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+---------------------------- Captured stdout setup -----------------------------
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+____ ERROR at setup of test_exact_adaptation_replay_performs_no_second_fit _____
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[weights] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[codebook] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[layout] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[seed] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[environment] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[parent] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[source] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[corpus] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_resealed_generation_tampering_cannot_detach_native_numerical_work[expected_head] _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+______ ERROR at setup of test_stale_expected_parent_is_refused_before_fit ______
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_______ ERROR at setup of test_retention_failure_does_not_promote_child ________
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_native_head_cas_uses_qualified_identical_parent_copies_and_refuses_stale_result _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+_ ERROR at setup of test_cold_generation_replay_uses_durable_owners_without_fitting _
+tests/integration/logic/software_contracts/test_codebase_training_generation.py:234: in numerical
+    result = generation.adapt_current_source384(current.index, current.repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py:166: in adapt_current_source384
+    return dict(**receipt, numerical_child_version_id=result["version_id"],
+E   TypeError: dict() got multiple values for keyword argument 'admitted'
+- generated xml file: /home/barberb/lift_coding/artifacts/codebase-training-generation-20261002/attempt-01/tests.xml -
+=========================== short test summary info ============================
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_actual_strict_child_has_versioned_byte_layout_environment_and_run_binding
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_exact_adaptation_replay_performs_no_second_fit
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[weights]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[codebook]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[layout]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[seed]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[environment]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[parent]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[source]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[corpus]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_resealed_generation_tampering_cannot_detach_native_numerical_work[expected_head]
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_stale_expected_parent_is_refused_before_fit
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_retention_failure_does_not_promote_child
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_native_head_cas_uses_qualified_identical_parent_copies_and_refuses_stale_result
+ERROR tests/integration/logic/software_contracts/test_codebase_training_generation.py::test_cold_generation_replay_uses_durable_owners_without_fitting
+======================== 12 passed, 15 errors in 19.89s ========================
