@@ -1,0 +1,1 @@
+[{"id": "checkpoint-source.py", "source_sha256": "0b09b6c6dc7c6f7e324dd5ff17e5e48eac1690a84e899c06d1d8cc7b8b2459d9", "source_text": "def derive(capacity: int, threshold: int) -> int:\n    return capacity + threshold\n"}]

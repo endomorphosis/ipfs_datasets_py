@@ -1,0 +1,213 @@
+/tmp/ir-release-datasets-20261001/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py:163: FutureWarning: The `get_sentence_embedding_dimension` method has been renamed to `get_embedding_dimension`.
+  if model.get_sentence_embedding_dimension() != 384:
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+{"checkpoint": {"checkpoint_sha256": "2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5", "existing_tuning_row_id": "v3:security_ir:0:3:0:0", "elapsed_seconds": 9.944998966064304, "supervisor_used": true, "checkpoint_loaded": true, "embeddings_recomputed": true, "source_executed": false, "status": "passed", "candidates": 1, "supported_candidates": 1, "cases": 9, "all_candidates_checked": true, "finite_correspondence_kernel_checked": true, "lake_passed": 1, "sany_passed": 1, "source_semantics_verified": false, "proof_authority": false, "model_checker_executed": false}}
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+{"name": "direct", "learned_candidates": false, "status": "passed", "candidates": 9, "supported_candidates": 9, "cases": 81, "all_candidates_checked": true, "finite_correspondence_kernel_checked": true, "lake_passed": 9, "sany_passed": 9, "source_semantics_verified": false, "proof_authority": false, "model_checker_executed": false}
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+{"name": "temporary", "learned_candidates": false, "status": "passed", "candidates": 9, "supported_candidates": 9, "cases": 81, "all_candidates_checked": true, "finite_correspondence_kernel_checked": true, "lake_passed": 9, "sany_passed": 9, "source_semantics_verified": false, "proof_authority": false, "model_checker_executed": false}

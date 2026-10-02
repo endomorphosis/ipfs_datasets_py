@@ -1,0 +1,116 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-accelerate-20261001/test
+configfile: pytest.ini
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, asyncio-1.3.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0, anyio-4.14.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 76 items
+
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_disabled_is_inert_and_no_default_model_is_selected [32mPASSED[0m[32m [  1%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_explicit_config_uses_shared_runtime_and_actual_native_source_qualification [32mPASSED[0m[32m [  2%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_wrong_or_unsupported_candidates_remain_unchanged_and_fail_open[def assess(capacity: int, threshold: int) -> bool:\n    return capacity < threshold\n-<=-mismatch] [32mPASSED[0m[32m [  3%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_wrong_or_unsupported_candidates_remain_unchanged_and_fail_open[def assess(capacity, threshold) -> bool:\n    return capacity < threshold\n-<-unsupported] [32mPASSED[0m[32m [  5%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_target_leak_or_input_identity_mismatch_never_reaches_decoder[extra_target] [32mPASSED[0m[32m [  6%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_target_leak_or_input_identity_mismatch_never_reaches_decoder[sha] [32mPASSED[0m[32m [  7%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_target_leak_or_input_identity_mismatch_never_reaches_decoder[duplicate] [32mPASSED[0m[32m [  9%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_target_leak_or_input_identity_mismatch_never_reaches_decoder[too_many] [32mPASSED[0m[32m [ 10%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_bad_optional_configuration_fails_open[selected0] [32mPASSED[0m[32m [ 11%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_bad_optional_configuration_fails_open[selected1] [32mPASSED[0m[32m [ 13%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_bad_optional_configuration_fails_open[selected2] [32mPASSED[0m[32m [ 14%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_bad_optional_configuration_fails_open[selected3] [32mPASSED[0m[32m [ 15%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_bad_optional_configuration_fails_open[selected4] [32mPASSED[0m[32m [ 17%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_bad_optional_configuration_fails_open[selected5] [32mPASSED[0m[32m [ 18%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_bad_optional_configuration_fails_open[selected6] [32mPASSED[0m[32m [ 19%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_bad_optional_configuration_fails_open[selected7] [32mPASSED[0m[32m [ 21%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_unavailable_checkpoint_is_reported_without_blocking_planning [32mPASSED[0m[32m [ 22%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_changed_inference_source_hash_is_discarded [32mPASSED[0m[32m [ 23%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_explicit_lake_selection_is_bounded_and_receives_unchanged_source [32mPASSED[0m[32m [ 25%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_optional_lake_failure_keeps_the_original_candidate [32mPASSED[0m[32m [ 26%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_repository_scope_is_persisted_and_rechecked 
+[1m-------------------------------- live log call ---------------------------------[0m
+2026-10-02 00:39:52 [[32m    INFO[0m] Registered service: ipfs (service_manager.py:93)
+2026-10-02 00:39:52 [[32m    INFO[0m] Registered test suite: core_infrastructure (test_framework.py:82)
+2026-10-02 00:39:52 [[32m    INFO[0m] Registered test suite: performance (test_framework.py:82)
+2026-10-02 00:39:52 [[32m    INFO[0m] Registered test suite: integration (test_framework.py:82)
+2026-10-02 00:39:52 [[32m    INFO[0m] Successfully imported ipfs_kit_py modules from /home/barberb/HACC/complaint-generator/ipfs_datasets_py/ipfs_kit_py/ipfs_kit_py/__init__.py (ipfs_kit_integration.py:327)
+2026-10-02 00:39:52 [[32m    INFO[0m] IPFS Kit integration enabled successfully (ipfs_kit_integration.py:344)
+2026-10-02 00:39:52 [[32m    INFO[0m] Storage initialized with distributed backend (storage_wrapper.py:92)
+[32mPASSED[0m[32m                                                                   [ 27%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_repository_source_drift_discards_stale_advice [32mPASSED[0m[32m [ 28%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_repository_escape_or_symlink_is_not_read[../foreign.py] [32mPASSED[0m[32m [ 30%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_repository_escape_or_symlink_is_not_read[/foreign.py] [32mPASSED[0m[32m [ 31%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_repository_escape_or_symlink_is_not_read[alias.py] [32mPASSED[0m[32m [ 32%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_config_file_selection_is_explicit_and_local [32mPASSED[0m[32m [ 34%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_raw_input_never_dispatches_normalized_runtime[False] [32mPASSED[0m[32m [ 35%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_raw_input_never_dispatches_normalized_runtime[True] [32mPASSED[0m[32m [ 36%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_explicit_normalized_dispatch_retains_provenance_and_original_lake_source [32mPASSED[0m[32m [ 38%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_normalized_inference_must_report_selected_profile[changed0] [32mPASSED[0m[32m [ 39%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_normalized_inference_must_report_selected_profile[changed1] [32mPASSED[0m[32m [ 40%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_normalized_inference_must_report_selected_profile[changed2] [32mPASSED[0m[32m [ 42%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_normalized_inference_must_report_selected_profile[changed3] [32mPASSED[0m[32m [ 43%][0m
+test/api/semantic_state/test_security_source_program_advisor_384.py::test_normalized_unsupported_source_keeps_original_candidate_and_abstention [32mPASSED[0m[32m [ 44%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v1_does_not_import_optional_state_owner [32mPASSED[0m[32m [ 46%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_state_configuration_requires_the_explicit_version[selection0] [32mPASSED[0m[32m [ 47%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_state_configuration_requires_the_explicit_version[selection1] [32mPASSED[0m[32m [ 48%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_state_configuration_requires_the_explicit_version[selection2] [32mPASSED[0m[32m [ 50%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_joins_exact_source_candidate_and_explicit_parameter_domains [32mPASSED[0m[32m [ 51%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_optional_build_is_live_verified_before_serialization [32mPASSED[0m[32m [ 52%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_invalid_explicit_domains_fail_open_without_discarding_inference[missing] [32mPASSED[0m[32m [ 53%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_invalid_explicit_domains_fail_open_without_discarding_inference[foreign] [32mPASSED[0m[32m [ 55%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_invalid_explicit_domains_fail_open_without_discarding_inference[boolean] [32mPASSED[0m[32m [ 56%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_invalid_explicit_domains_fail_open_without_discarding_inference[too_many] [32mPASSED[0m[32m [ 57%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_invalid_explicit_domains_fail_open_without_discarding_inference[reversed] [32mPASSED[0m[32m [ 59%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_invalid_explicit_domains_fail_open_without_discarding_inference[extra] [32mPASSED[0m[32m [ 60%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_invalid_explicit_domains_fail_open_without_discarding_inference[wrong_name] [32mPASSED[0m[32m [ 61%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_identity_or_scope_drift_is_not_forwarded[candidate_hash] [32mPASSED[0m[32m [ 63%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_identity_or_scope_drift_is_not_forwarded[domain_hash] [32mPASSED[0m[32m [ 64%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_identity_or_scope_drift_is_not_forwarded[source_hash] [32mPASSED[0m[32m [ 65%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_identity_or_scope_drift_is_not_forwarded[population] [32mPASSED[0m[32m [ 67%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_identity_or_scope_drift_is_not_forwarded[authority] [32mPASSED[0m[32m [ 68%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_identity_or_scope_drift_is_not_forwarded[inferred_bounds] [32mPASSED[0m[32m [ 69%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_identity_or_scope_drift_is_not_forwarded[repaired] [32mPASSED[0m[32m [ 71%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_identity_or_scope_drift_is_not_forwarded[replay] [32mPASSED[0m[32m [ 72%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_prompt_or_foreign_source_never_substitutes_code_evidence[prompt_source] [32mPASSED[0m[32m [ 73%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_prompt_or_foreign_source_never_substitutes_code_evidence[target] [32mPASSED[0m[32m [ 75%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_prompt_or_foreign_source_never_substitutes_code_evidence[duplicate_prediction] [32mPASSED[0m[32m [ 76%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_prompt_or_foreign_source_never_substitutes_code_evidence[forged_binding] [32mPASSED[0m[32m [ 77%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_abstention_retained_without_replacing_candidate [32mPASSED[0m[32m [ 78%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_unavailable_owner_and_oversized_state_evidence_preserve_parent_inference [32mPASSED[0m[32m [ 80%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_failed_live_verification_drops_only_optional_state_evidence [32mPASSED[0m[32m [ 81%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_combined_optional_receipts_cannot_evict_original_inference [32mPASSED[0m[32m [ 82%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_normalized_embedding_view_still_sends_original_code_to_state_owner [32mPASSED[0m[32m [ 84%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_compatibility_requires_independent_artifact_replay[missing-describe] [32mPASSED[0m[32m [ 85%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_compatibility_requires_independent_artifact_replay[missing-inference] [32mPASSED[0m[32m [ 86%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_compatibility_requires_independent_artifact_replay[artifact-describe] [32mPASSED[0m[32m [ 88%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_compatibility_requires_independent_artifact_replay[artifact-inference] [32mPASSED[0m[32m [ 89%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_compatibility_requires_independent_artifact_replay[extra_authority-describe] [32mPASSED[0m[32m [ 90%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_compatibility_requires_independent_artifact_replay[extra_authority-inference] [32mPASSED[0m[32m [ 92%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_compatibility_requires_independent_artifact_replay[other_pin-describe] [32mPASSED[0m[32m [ 93%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_compatibility_requires_independent_artifact_replay[other_pin-inference] [32mPASSED[0m[32m [ 94%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_v2_sequence_decoder_retains_strict_existing_loader [32mPASSED[0m[32m [ 96%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_real_published_checkpoint_uses_narrow_v2_compatibility_with_actual_embeddings 
+[1m-------------------------------- live log call ---------------------------------[0m
+2026-10-02 00:39:55 [[32m    INFO[0m] Loading SentenceTransformer model from /home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd. (model.py:973)
+[32mPASSED[0m[32m                                                                   [ 97%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_native_derivation_preserves_wrong_prediction_as_unsupported [32mPASSED[0m[33m [ 98%][0m
+test/api/semantic_state/test_security_source_state_advisor_384.py::test_real_lake_checks_source_state_cases_without_source_or_intent_authority [32mPASSED[0m[33m [100%][0m
+
+[33m=============================== warnings summary ===============================[0m
+api/semantic_state/test_security_source_state_advisor_384.py::test_real_published_checkpoint_uses_narrow_v2_compatibility_with_actual_embeddings
+  /tmp/ir-release-datasets-20261001/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py:163: FutureWarning: The `get_sentence_embedding_dimension` method has been renamed to `get_embedding_dimension`.
+    if model.get_sentence_embedding_dimension() != 384:
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+3.27s call     api/semantic_state/test_security_source_state_advisor_384.py::test_real_published_checkpoint_uses_narrow_v2_compatibility_with_actual_embeddings
+1.67s call     api/semantic_state/test_security_source_state_advisor_384.py::test_real_lake_checks_source_state_cases_without_source_or_intent_authority
+0.24s call     api/semantic_state/test_security_source_program_advisor_384.py::test_repository_scope_is_persisted_and_rechecked
+0.18s call     api/semantic_state/test_security_source_state_advisor_384.py::test_v1_does_not_import_optional_state_owner
+0.15s call     api/semantic_state/test_security_source_state_advisor_384.py::test_native_derivation_preserves_wrong_prediction_as_unsupported
+0.09s call     api/semantic_state/test_security_source_program_advisor_384.py::test_explicit_config_uses_shared_runtime_and_actual_native_source_qualification
+0.02s call     api/semantic_state/test_security_source_state_advisor_384.py::test_unavailable_owner_and_oversized_state_evidence_preserve_parent_inference
+0.02s call     api/semantic_state/test_security_source_state_advisor_384.py::test_combined_optional_receipts_cannot_evict_original_inference
+0.01s call     api/semantic_state/test_security_source_state_advisor_384.py::test_v2_joins_exact_source_candidate_and_explicit_parameter_domains
+0.01s call     api/semantic_state/test_security_source_state_advisor_384.py::test_normalized_embedding_view_still_sends_original_code_to_state_owner
+[33m======================== [32m76 passed[0m, [33m[1m1 warning[0m[33m in 7.24s[0m[33m =========================[0m

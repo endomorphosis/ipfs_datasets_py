@@ -1,0 +1,21 @@
+Commit: 037b71444ca2434bcc4b95323c2e9f56bee536e6
+Python: 3.12.3
+Running: Supervisor primary-doc vocabulary
+OK: primary agent-supervisor docs are free of board-prefix ticket IDs
+Exit: 0
+Running: Maintained-surface relative links
+OK: 46 allowlisted documentation files have resolvable relative links (anchors checked)
+Exit: 0
+Running: Packaging version pin alignment
+OK: packaging pins aligned at 0.0.45
+Exit: 0
+Running: Closeout navigation markers
+OK: closeout navigation markers present
+Exit: 0
+Results: [('Supervisor primary-doc vocabulary', 0), ('Maintained-surface relative links', 0), ('Packaging version pin alignment', 0), ('Closeout navigation markers', 0)]
+Working tree clean: True
+
+Remote GitHub documentation-gates status: failure before job execution; steps=[]
+Run: https://github.com/endomorphosis/ipfs_accelerate_py/actions/runs/36947751715/job/110653589745
+GitHub check annotation: The job was not started because your account is locked due to a billing issue.
+Assessment: CI account/billing infrastructure blocker, not an observed documentation/code failure.

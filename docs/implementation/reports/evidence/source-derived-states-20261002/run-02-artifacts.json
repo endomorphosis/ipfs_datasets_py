@@ -1,0 +1,183 @@
+{
+  "complete_file_count": 35,
+  "files": [
+    {
+      "bytes": 95389,
+      "path": "checkpoint-native/SecuritySourceStates.lean",
+      "sha256": "9a4e181cb0c2190154b16f7ab8129be11a904b3b4652d694c265bfed712a4238"
+    },
+    {
+      "bytes": 206882,
+      "path": "checkpoint-native/receipt.json",
+      "sha256": "550da1f156fb53f4d3392ba39a6e46a5a785c8d91d0f758f4b43335e01e4715f"
+    },
+    {
+      "bytes": 3027,
+      "path": "checkpoint-native/state-0.tla",
+      "sha256": "c89669f387b775a062dc4459e408f4f4eb83d5fcf7f922046ba580f4bade9681"
+    },
+    {
+      "bytes": 221,
+      "path": "checkpoint-source-inputs.json",
+      "sha256": "d85e80a2b65001ad96772237939668e5ab560f4a68d44a1513b308abeedbec15"
+    },
+    {
+      "bytes": 564,
+      "path": "checkpoint-state-rows.json",
+      "sha256": "6cf55469d81a7a163039b4e3229cc1ec93375d6478ce2cf8c8a11996db3b2f3a"
+    },
+    {
+      "bytes": 4744,
+      "path": "controls/direct/inputs.json",
+      "sha256": "952d15d3fa24664aedc8b8a4ee703b3cf1bb4b8276e06b95c2bdf2260d133d76"
+    },
+    {
+      "bytes": 851981,
+      "path": "controls/direct/native/SecuritySourceStates.lean",
+      "sha256": "b1188251d1068e56896a91e445a0316c1d068323c40a6e6bc4ec151bafbc69c9"
+    },
+    {
+      "bytes": 1770879,
+      "path": "controls/direct/native/receipt.json",
+      "sha256": "0e1b2909a88f85ba897e9d8d5f76daf37c2382437e7c31820de031fae79f886f"
+    },
+    {
+      "bytes": 3027,
+      "path": "controls/direct/native/state-0.tla",
+      "sha256": "c89669f387b775a062dc4459e408f4f4eb83d5fcf7f922046ba580f4bade9681"
+    },
+    {
+      "bytes": 3027,
+      "path": "controls/direct/native/state-1.tla",
+      "sha256": "5c78681ab19860b93f0f84dbc09532078d05d859da3093daabd4bf369a967719"
+    },
+    {
+      "bytes": 3024,
+      "path": "controls/direct/native/state-2.tla",
+      "sha256": "b8b4b0c5f54672ce04777cc4b34eb682febe82cd886bef0bdec16bf2ffdb011a"
+    },
+    {
+      "bytes": 3091,
+      "path": "controls/direct/native/state-3.tla",
+      "sha256": "8bb127163efc006447038acc01c3736acc2cf391f736f6a22cc69fd1c980ca83"
+    },
+    {
+      "bytes": 3088,
+      "path": "controls/direct/native/state-4.tla",
+      "sha256": "9fd589a698bfd1ed5d66b52f5361162669edd571803c65469a3e7dd2a499db55"
+    },
+    {
+      "bytes": 3091,
+      "path": "controls/direct/native/state-5.tla",
+      "sha256": "1bd3a72f333a07ed054af86abd126a59fcbad0f2684329a91cf773a335c7fdef"
+    },
+    {
+      "bytes": 3088,
+      "path": "controls/direct/native/state-6.tla",
+      "sha256": "5dfdb7bbcb3a72b795842d820af7e6b10cfa099c79965b5199887bc82f3cb9f1"
+    },
+    {
+      "bytes": 3091,
+      "path": "controls/direct/native/state-7.tla",
+      "sha256": "9cd603a8622995345f7c3450f1c1ee723faa81304d8ec9d361f535c4b1e8f97d"
+    },
+    {
+      "bytes": 3088,
+      "path": "controls/direct/native/state-8.tla",
+      "sha256": "bd112d9df06fa14982226e2c966232fbeb539e809b254b837a4334d5af7bd4e5"
+    },
+    {
+      "bytes": 4960,
+      "path": "controls/temporary/inputs.json",
+      "sha256": "3741869f286b7adca051c839089d0a12a36394725396ca555a706174fb3f1798"
+    },
+    {
+      "bytes": 935952,
+      "path": "controls/temporary/native/SecuritySourceStates.lean",
+      "sha256": "b02a625c7aef43a52791f5284b046b76cd488da15269d58719042ccebf4e1d21"
+    },
+    {
+      "bytes": 1936212,
+      "path": "controls/temporary/native/receipt.json",
+      "sha256": "09e79795ad5de5fccb4518ec1044b6f23796ce2f02c13cb4d945d792e432d000"
+    },
+    {
+      "bytes": 3027,
+      "path": "controls/temporary/native/state-0.tla",
+      "sha256": "c89669f387b775a062dc4459e408f4f4eb83d5fcf7f922046ba580f4bade9681"
+    },
+    {
+      "bytes": 3027,
+      "path": "controls/temporary/native/state-1.tla",
+      "sha256": "5c78681ab19860b93f0f84dbc09532078d05d859da3093daabd4bf369a967719"
+    },
+    {
+      "bytes": 3024,
+      "path": "controls/temporary/native/state-2.tla",
+      "sha256": "b8b4b0c5f54672ce04777cc4b34eb682febe82cd886bef0bdec16bf2ffdb011a"
+    },
+    {
+      "bytes": 3091,
+      "path": "controls/temporary/native/state-3.tla",
+      "sha256": "8bb127163efc006447038acc01c3736acc2cf391f736f6a22cc69fd1c980ca83"
+    },
+    {
+      "bytes": 3088,
+      "path": "controls/temporary/native/state-4.tla",
+      "sha256": "9fd589a698bfd1ed5d66b52f5361162669edd571803c65469a3e7dd2a499db55"
+    },
+    {
+      "bytes": 3091,
+      "path": "controls/temporary/native/state-5.tla",
+      "sha256": "1bd3a72f333a07ed054af86abd126a59fcbad0f2684329a91cf773a335c7fdef"
+    },
+    {
+      "bytes": 3088,
+      "path": "controls/temporary/native/state-6.tla",
+      "sha256": "5dfdb7bbcb3a72b795842d820af7e6b10cfa099c79965b5199887bc82f3cb9f1"
+    },
+    {
+      "bytes": 3091,
+      "path": "controls/temporary/native/state-7.tla",
+      "sha256": "9cd603a8622995345f7c3450f1c1ee723faa81304d8ec9d361f535c4b1e8f97d"
+    },
+    {
+      "bytes": 3088,
+      "path": "controls/temporary/native/state-8.tla",
+      "sha256": "bd112d9df06fa14982226e2c966232fbeb539e809b254b837a4334d5af7bd4e5"
+    },
+    {
+      "bytes": 13569,
+      "path": "producer-sources.json",
+      "sha256": "3119f94dee11ae1c8f2685f60b086a1c7141ba07712bd2e82823280e8a31077c"
+    },
+    {
+      "bytes": 886,
+      "path": "published-checkpoint-reference.json",
+      "sha256": "0240471ea6acaf812e22244f53399d61b6d4ebd0920bb68dc5b16196530cbda5"
+    },
+    {
+      "bytes": 3195,
+      "path": "source-provenance.json",
+      "sha256": "4020dba64293ca496621ba27541d4d79e19fc5dcd7353742cce1e14e826c5631"
+    },
+    {
+      "bytes": 1725,
+      "path": "summary.json",
+      "sha256": "6e5c84eb6c617251e14ead40aa91264c5bbeba62d2111890e3d6531f36aeab5f"
+    },
+    {
+      "bytes": 309169,
+      "path": "supervisor-advice.json",
+      "sha256": "894ca58babc91a2c721f1645b452b6a3d673dc9ec6498e363a78d2bc741203d5"
+    },
+    {
+      "bytes": 654,
+      "path": "supervisor-config.json",
+      "sha256": "4aff501a4c14904bdc7ee7b6f2451cb3189f05bd726301a8c39bab328cdc9979"
+    }
+  ],
+  "schema": "source-derived-state-artifact-inventory/v1",
+  "snapshot_complete": true,
+  "source_run": "run-02"
+}
