@@ -1,0 +1,44 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 151 items
+
+tests/integration/logic/software_contracts/test_nested_daemon_resources.py . [  0%]
+FF...                                                                    [  3%]
+tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py . [  4%]
+........................................................................ [ 52%]
+..........                                                               [ 58%]
+tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_concurrency.py . [ 59%]
+..................................                                       [ 82%]
+tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_lexical.py . [ 82%]
+.......                                                                  [ 87%]
+tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_lock_contention.py . [ 88%]
+..................                                                       [100%]
+
+=================================== FAILURES ===================================
+_ test_durable_disk_children_share_parent_without_duplicate_host_allocation[True] _
+tests/integration/logic/software_contracts/test_nested_daemon_resources.py:39: in test_durable_disk_children_share_parent_without_duplicate_host_allocation
+    assert scheduler.snapshot()["allocated"] == capacity
+E   AssertionError: assert {'cpu_slots':...mory_mb': 512} == {'cpu_slots':...ory_mb': 1536}
+E     
+E     Differing items:
+E     {'memory_mb': 512} != {'memory_mb': 1536}
+E     {'cpu_slots': 2} != {'cpu_slots': 3}
+E     Use -v to get more diff
+____________ test_over_parent_demand_refuses_and_retains_disk_claim ____________
+tests/integration/logic/software_contracts/test_nested_daemon_resources.py:59: in test_over_parent_demand_refuses_and_retains_disk_claim
+    with request:
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py:432: in __enter__
+    self._lease = get_global_resource_scheduler().acquire(
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1390: in acquire
+    raise ResourceUnavailableError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceUnavailableError: child request exceeds parent lease capacity
+- generated xml file: /home/barberb/lift_coding/artifacts/repository-nested-disk-resources-20261002/run-01/tests.xml -
+=========================== short test summary info ============================
+FAILED tests/integration/logic/software_contracts/test_nested_daemon_resources.py::test_durable_disk_children_share_parent_without_duplicate_host_allocation[True]
+FAILED tests/integration/logic/software_contracts/test_nested_daemon_resources.py::test_over_parent_demand_refuses_and_retains_disk_claim
+======================== 2 failed, 149 passed in 6.70s =========================

@@ -30,7 +30,7 @@ import tempfile
 import time
 import uuid
 
-from .resource_scheduler import ResourceLane, get_global_resource_scheduler
+from .resource_scheduler import ResourceLane, ResourceLease, ResourceLeaseToken, get_global_resource_scheduler
 
 # Campaign cap increased to 140 GB with operator authorization on 2026-10-02. Existing
 # ledgers require an explicit, lock-held limit migration; _read never upgrades
@@ -246,13 +246,18 @@ class DaemonResourceReservation:
     """One explicit owner reservation; enter once, release only after durability.
 
     No scheduler/model/runtime injection is exposed in this production API.
+    An optional native parent lease joins the disk/RSS owner to an existing host
+    reservation. It never creates another root reservation or releases its parent.
     ``check_usage`` must attach the child PID immediately after Popen with
     ``start_new_session=True``; the child must be a direct child of this owner.
     The owner is responsible for stopping it on a limit error.
     """
 
     def __init__(self, ledger_path, *, roots, storage_bytes, memory_mb, cpu_slots=1, child_process_slots=1,
-                 timeout_seconds=0, ledger_lock_timeout_seconds=None):
+                 timeout_seconds=0, ledger_lock_timeout_seconds=None, parent_lease=None):
+        if parent_lease is not None and type(parent_lease) not in (ResourceLease, ResourceLeaseToken):
+            raise DaemonResourceError("exact native parent resource lease required")
+        self._parent_lease = parent_lease
         self.storage_bytes = _integer(storage_bytes, "storage_bytes", maximum=MAX_STORAGE_BYTES)
         self.memory_mb = _integer(memory_mb, "memory_mb")
         self.cpu_slots = _integer(cpu_slots, "cpu_slots")
@@ -285,6 +290,7 @@ class DaemonResourceReservation:
         self.reservation_id = uuid.uuid4().hex
         self._owner_pid = os.getpid()
         self._lease = None
+        self._admission_scheduler = None
         self._record = None
         self._attempt = None
         self._child = None
@@ -416,15 +422,20 @@ class DaemonResourceReservation:
                       "created_at": time.time(), "attempt_directory": None, "child": None,
                       "prior_children": [], "external_charges": {},
                       "last_usage": observation, "artifacts_durable_asserted": False}
+            if self._parent_lease is not None:
+                # Persist only public identity, never the parent capability key.
+                record["parent_lease_id"] = self._parent_lease.lease_id
             ledger["reservations"][self.reservation_id] = record
             self._write(ledger)
             self._record = copy.deepcopy(record)
             self._entered = True
         try:
-            self._lease = get_global_resource_scheduler().acquire(
+            self._admission_scheduler = get_global_resource_scheduler()
+            self._lease = self._admission_scheduler.acquire(
                 SCHEDULER_LANE, cpu_slots=self.cpu_slots, memory_mb=self.memory_mb,
                 child_process_slots=self.child_process_slots, requires_gpu=False, timeout=self.timeout_seconds,
-                request_id="daemon:" + self.reservation_id)
+                request_id="daemon:" + self.reservation_id,
+                **({"parent_lease": self._parent_lease} if self._parent_lease is not None else {}))
             self._update(status="active")
         except BaseException:
             try:
@@ -450,6 +461,20 @@ class DaemonResourceReservation:
         if self._record is not None and self._record["status"] != "released":
             self._update(status="retained", retention_reason=reason)
 
+    def _require_active_parent(self):
+        if self._parent_lease is None:
+            return
+        # This canonical read also recovers expired/dead ancestors and their
+        # descendants. A child's local cancellation property alone does not.
+        active = {} if self._admission_scheduler is None else {
+            row["lease_id"]: row for row in self._admission_scheduler.active_leases()}
+        parent = active.get(self._parent_lease.lease_id)
+        child = None if self._lease is None else active.get(self._lease.lease_id)
+        if (parent is None or child is None or parent["cancelled"] or child["cancelled"]
+                or child["parent_lease_id"] != self._parent_lease.lease_id
+                or self._lease.released):
+            raise DaemonResourceError("parent resource admission is no longer active")
+
     def account_external_bytes(self, key: str, byte_count: int):
         """Durably charge CAS/journal bytes before the owner writes them.
 
@@ -460,6 +485,7 @@ class DaemonResourceReservation:
         """
         if not self._entered or self._record["status"] == "released":
             raise DaemonResourceError("reservation is not outstanding")
+        self._require_active_parent()
         if type(key) is not str or not _CHARGE_KEY.fullmatch(key):
             raise DaemonResourceError("invalid external charge key")
         _integer(byte_count, "external charge bytes", minimum=0, maximum=MAX_STORAGE_BYTES)
@@ -489,6 +515,7 @@ class DaemonResourceReservation:
                          total_attempt_charged_bytes=attempt_bytes + external_bytes,
                          attempt_limit_bytes=self.storage_bytes, checked_at=time.time())
             row.update(external_charges=charges, last_charge_usage=usage)
+            self._require_active_parent()
             self._write(ledger)
             self._record = copy.deepcopy(row)
         return {"key": key, "bytes": byte_count, "already_charged": already_charged,
@@ -520,6 +547,9 @@ class DaemonResourceReservation:
                 self._child = {key: child[key] for key in ("pid", "birth")}
         self._update(attempt_directory=self._attempt, child=self._child,
                      prior_children=copy.deepcopy(self._child_history))
+        # Retain a just-attached child for explicit reap/recovery even when its
+        # parent was revoked during launch. No further work is admitted.
+        self._require_active_parent()
         group = _group_usage(self._child)
         attempt_bytes = _inventory([attempt], strict=True)["apparent_bytes"]
         with self._locked():
@@ -541,6 +571,7 @@ class DaemonResourceReservation:
             raise DaemonResourceError("attempt storage byte limit exceeded")
         if group["rss_bytes"] > self.memory_mb * 1024 * 1024:
             raise DaemonResourceError("child group RSS limit exceeded")
+        self._require_active_parent()
         return copy.deepcopy(usage)
 
     def finalize(self, attempt_directory: Path, *, artifacts_durable=False):

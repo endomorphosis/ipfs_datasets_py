@@ -1,0 +1,40 @@
+{
+  "schema": "closed-local-evidence-manifest@1",
+  "files": [
+    {
+      "path": "qualification.json",
+      "size_bytes": 2732,
+      "sha256": "a2cc3ba41026c1f38205bffee225324e43db397df242fa4639adc43c75a8ad87"
+    },
+    {
+      "path": "run-01/tests.log",
+      "size_bytes": 3577,
+      "sha256": "f0e7813fbd353a9f1908cc4f39b4e56a228b6255a406af10f4f802094685ac3d"
+    },
+    {
+      "path": "run-01/tests.xml",
+      "size_bytes": 31347,
+      "sha256": "fb5292a01f66f4b5604d2371d1b2855c15dbf369518578ed35e80eeb07976880"
+    },
+    {
+      "path": "run-02/tests.log",
+      "size_bytes": 1905,
+      "sha256": "5b26b21b40088773267a1bd839f28609fbef9fcc03dcaa3c1a228bba005d8c0a"
+    },
+    {
+      "path": "run-02/tests.xml",
+      "size_bytes": 30244,
+      "sha256": "53919203b7a363a212a82e3c1af2641ed05de473b54332060ac21dd012859baf"
+    },
+    {
+      "path": "run-03/tests.log",
+      "size_bytes": 1905,
+      "sha256": "f6e535cf115c72fb548fd99a1246d81ad53cedb20dd6b208cefb4f98ef9f2903"
+    },
+    {
+      "path": "run-03/tests.xml",
+      "size_bytes": 30416,
+      "sha256": "f7b3c88ea609169f1f64d9ffb67f00c22513fa549a4cdcd013d2c044a2e1b0ac"
+    }
+  ]
+}

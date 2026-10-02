@@ -1,0 +1,55 @@
+{
+  "schema": "nested-daemon-resource-qualification@1",
+  "passed": 154,
+  "skipped": 0,
+  "seconds": 7.89,
+  "actual_shared_host_tests": 9,
+  "existing_isolated_scheduler_and_filesystem_controls": 145,
+  "scope": "Optional existing native parent joins durable disk/RSS owner without another host root. Default no-parent route preserved.",
+  "controls": [
+    "actual native lease and token child admission",
+    "unchanged per-owner root allocations under two disk reservations",
+    "native over-parent and foreign scheduler refusal",
+    "parent cancellation/release refuses fresh work and new byte charges",
+    "real child attached during revocation remains tracked and blocks release until reaped",
+    "durable claims retained on context failure and explicit recovery release",
+    "no parent secret in ledger or public receipts",
+    "actual subprocess parent killed; canonical stale-ancestor recovery refuses surviving child work and new charges"
+  ],
+  "initial_attempt_diagnostics": [
+    "One test improperly compared host-wide allocations while an unrelated job released its lease; corrected to compare own root charges and native child links.",
+    "Expected over-parent exception corrected to native ResourceUnavailableError."
+  ],
+  "limitations": [
+    "Named-root disk census is not a global filesystem quota",
+    "CPU/RAM and group RSS are admitted and sampled, not kernel hard limits",
+    "Full supervisor resource composition remains a separate qualification"
+  ],
+  "source_inventory": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "a9021dfbec06c3ed28e35cda7dd48ab107f892bf6775df8671083748cddbb2f8"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_nested_daemon_resources.py",
+      "sha256": "05e8ee63253e8a71c22607cf8ad8d9bd717b14acf2fb367ad4439a8e4bb69f9a"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "sha256": "6beda84236c405f8c75601d39d64e5a0a1b86c4e4afca6f340d1ca92f45f6d64"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_concurrency.py",
+      "sha256": "033422e3ad6f88de873ed5dc29a7c52758e86ed96db685b1f9d0e51971c513c4"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_inventory_lexical.py",
+      "sha256": "2613d8fa6f94cb4ca9b8de764c10139b231bfc09e68b6b9b31caf45c3ba1b1db"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_resource_lock_contention.py",
+      "sha256": "0c0c39faf7d19aaa7de35fd0ade38d818f18cde009586fe4ee6f744b020b7c1a"
+    }
+  ],
+  "final_attempt": "run-03"
+}
