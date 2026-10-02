@@ -1,0 +1,41 @@
+{
+  "schema": "codebase-semantic-manifest-qualification@1",
+  "profile": "codebase-ir/python-integer-offset-artifacts@1",
+  "criterion": "Frozen RPI-002 whole admitted inventory over existing typed native ProgramIR/contracts/source/effects/dependency-frontier/evidence artifacts",
+  "tests": 28,
+  "seconds": 49.02,
+  "initial_failure": "Test supplied floating-point latent values that were refused at CAS serialization before semantic validation; changed only test to integer vector to exercise semantic-loader rejection. Production module unchanged.",
+  "source_files": [
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py",
+      "sha256": "79a8e1b92365264bfafb511f1689a321d7d742046101199aca253da97726aec2"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_codebase_semantic_manifest.py",
+      "sha256": "0aec4d42e92a483febfe4cfe0da6503bd08f7c52fe13add59e4e66ca0f7c0d77"
+    },
+    {
+      "path": "docs/software_contracts/CODEBASE_SEMANTIC_MANIFEST.md",
+      "sha256": "5bbc904cb5a64d76c24d7078c29eaae7819810f738fa6c1849d4fb8a533694f2"
+    }
+  ],
+  "reuse": [
+    "existing qualified codebase_integer_profile compile API",
+    "native ProgramIR and ProgramContract",
+    "native source correspondence, effects/CFG, VC and SMT records",
+    "complete structural source owner and frozen scan-policy receipt"
+  ],
+  "actual_checker_evidence_test": "Native Z3 and cvc5 conditional model check generated the optional execution-record reference; exact type/source/contract/compilation/query joins replay; record remains untrusted for execution/cache/behavioral authority",
+  "target_execution": false,
+  "training_executed": false,
+  "proof_authority": false,
+  "fresh_process_replay": true,
+  "native_source_removed_during_historical_replay": true,
+  "new_representation_language": false,
+  "remaining_extensions": [
+    "No whole-program semantics or global dependency closure",
+    "No proof-cache admission from caller record JSON",
+    "No learned decoder requirement or integration claimed",
+    "No default supervisor activation or benchmark score"
+  ]
+}

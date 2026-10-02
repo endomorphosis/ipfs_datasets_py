@@ -1,0 +1,61 @@
+{
+  "archive_integrity": {
+    "archived_source_and_model_bytes_unchanged": true,
+    "files_checked": 60,
+    "owned_active_leases": 0
+  },
+  "attempts": {
+    "attempt-01": "Fixture attempted to relocate the immutable CAS root. Native catalog refused the changed binding; retained 14 setup errors. No positive inference claim.",
+    "attempt-02": "Fixture preserved the exact original immutable CAS binding, opened only a copied mutable source database, imported model artifacts into a fresh registry and passed all 14 controls."
+  },
+  "blocking_dependencies": [
+    "RPI-006",
+    "RPI-009",
+    "RPI-010",
+    "RPI-027"
+  ],
+  "checkpoint": {
+    "artifact": {
+      "bytes": 304490,
+      "sha256": "069458d8266e0ffce07415e49b8b2ae87dcca4374e5a9aec43844b6c69e85930"
+    },
+    "checkpoint_sha256": "b0862ba29268c7cb8462ee4c04d0d44375876c6d2a352ac7d10c86d7c140c616",
+    "child_id": "sha256:0f658aed6f73a0dd3273880e739d2ead3bca65a0f78103d219b538ddcebbbf3b",
+    "parent_id": "sha256:b8b5b6d7289bd571b8ddf9ee723b7e718b5064954647591f277d74fab17a1421"
+  },
+  "criterion": "RPI-011",
+  "frozen_production_modules_changed": false,
+  "mapping": {
+    "actual_pinned_decoder": "Fresh isolated CPU workers load the retained registered numerical child and exact local GTE snapshot. Three source-only rows produce qualified candidates with target_access=false and teacher_forcing=false; real Lake compiles all three.",
+    "current_source_join": "Prior eight-test fit/inference qualification supplies exact current-head/source fences, immutable corpus, native registry lineage and fresh-process replay. This matrix imports that exact parent/child into a new registry and replays its historical source corpus from a copied source database and original read-only immutable CAS.",
+    "exact_dependencies": "Public replay identity retains the exact parent/child/version/checkpoint, source head, embedding asset and producer closure hashes. Both worker receipts retain actual execution and zero provider calls.",
+    "model_off": "A separately named deterministic source-label baseline derives AST/native ProgramIR targets from captured source while worker, training, embedding and decoder tripwires are installed. Its three selected targets pass real Lake without a learned-prediction claim. The inference API explicitly rejects an unsupported model_off option.",
+    "teacher_substitution": "Six controls inject target, teacher_forcing or source_contract fields at the worker source-only boundary and at the decoder embedding boundary. Every closed schema refuses the extra field. These are boundary negative controls, not teacher-generated predictions.",
+    "unsupported_candidates": "Removing required integer input annotations from the source retains the actual decoded candidate and candidate digest, reports unsupported and blocks Lake without dropping the row.",
+    "wrong_codebook": "A structurally valid altered operator vocabulary with unchanged tensor dimensions passes Runtime structural validation, then fails the registered child-parent vocabulary invariant. The original parent and child remain unchanged and no promotion occurs.",
+    "wrong_source": "An actual decoded report cannot compile against changed source under the old digest. Rehashing the changed source and forging an attached successful source contract also fails independent source replay; the exact original candidate is retained and no Lake process runs.",
+    "zero_head": "The exact learned worker is rerun with zero_head: all three actual outputs mismatch their source and remain unchanged through the Lake refusal gate; no source label or teacher target substitutes for the wrong prediction."
+  },
+  "prior_evidence": "docs/autoencoders/evidence/codebase-source384-20261002/manifest.json",
+  "prior_evidence_sha256": "5aec1f6700af3c0ffd298a219b2d6ca133bca3ec67e9e6b61964296376acab69",
+  "privacy": "Retains only public source/proof/inference receipts, hashes, test logs and Lean source. No mutable source/model databases, CAS stores, scheduler state, private owner credentials or checkpoint weight payloads.",
+  "production_acceptance": "open",
+  "profile": "codebase_ir/source_conditioned_384_v1",
+  "promotion_performed": false,
+  "proposed_criterion_acceptance": "qualified_for_declared_profile",
+  "resource_admission": "Actual proof-host sampler and shared scheduler for isolated numerical workers; no fake capacity or disabled safety. Parent vocabulary and inference boundary negative controls execute locally.",
+  "schema": "codebase-source384-acceptance@1",
+  "scope_limits": [
+    "Three two-operand annotated arithmetic examples exercise a fixed typed scalar vocabulary inherited from the shared SecurityIR 384D decoder; this is not arbitrary Python coverage or held-out reconstruction improvement.",
+    "Lake checks emitted definitions and types; it does not establish Python equivalence, security correctness or proof/admission authority.",
+    "The model-off route is an explicit deterministic comparison baseline, not a new deployed infer_current_source384 option.",
+    "The new wrong-source controls exercise independent qualification of actual learned outputs; they do not claim to authenticate arbitrary caller-provided inference reports.",
+    "Current repository inference is covered by the prior eight-test evidence; this additive run deliberately replays the archived historical source generation without restoring or mutating its dirty repository."
+  ],
+  "seconds": 41.4,
+  "skips": 0,
+  "test_file": "tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py",
+  "test_sha256": "ba5c6be21a5f099803eb5fd1cd1b17ddc4828d8d6da73d153313c3d86d3f663d",
+  "tests": 14,
+  "training_executed": false
+}

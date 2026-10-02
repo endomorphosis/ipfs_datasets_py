@@ -1,0 +1,20 @@
+{
+  "schema": "codebase-scan-policy-evidence@1",
+  "files": [
+    {
+      "path": "qualification.json",
+      "sha256": "806b2f554d222af6c30222e6aecff483158304d568591b0a02ff6b1cccde648a",
+      "bytes": 1382
+    },
+    {
+      "path": "tests.log",
+      "sha256": "cf852572f1a1f9998f19835d17a4a2bcd0d49472371f3e90f43ff9f59ac84936",
+      "bytes": 1078
+    },
+    {
+      "path": "tests.xml",
+      "sha256": "3111911365108b83ea3302a7485dc5c9730573017253577e4bcf5bfb578818ae",
+      "bytes": 8348
+    }
+  ]
+}

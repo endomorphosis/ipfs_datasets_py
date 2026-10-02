@@ -1,0 +1,36 @@
+{
+  "schema": "codebase-scan-policy-qualification@1",
+  "profile": "codebase-single-root-python-structural@1",
+  "scope": "Frozen RPI-001 bounded single committed Git root with captured overlays and explicit opaque nested boundaries; opt-in only",
+  "tests": 44,
+  "seconds": 51.45,
+  "source_files": [
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py",
+      "sha256": "7037fca4046b357ef941cd511b20da55979a8055056ebc755bcb65c0026cb55b"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_codebase_scan_policy.py",
+      "sha256": "548e94435eeb92ed154c72bee8aa9fd3d7f0e79c1b6362703d089903c72ac752"
+    },
+    {
+      "path": "docs/software_contracts/CODEBASE_SCAN_POLICY.md",
+      "sha256": "9be3b811b5a696e53ccc55e29df430dd28da3c96ab332e3287bc152e9ba6e491"
+    }
+  ],
+  "native_git_submodules": [
+    "clean",
+    "dirty_worktree",
+    "staged_successor_gitlink"
+  ],
+  "native_restart": "independent process opens original DuckDB/CAS and reconstructs historical receipt while target source is removed",
+  "target_execution": false,
+  "training": false,
+  "proof_authority": false,
+  "remaining_profile_extensions": [
+    "No submodule content coverage",
+    "No active global/info ignore patterns admitted",
+    "No default benchmark activation",
+    "No overall wrapper deadline or hard whole-owner RAM claim"
+  ]
+}

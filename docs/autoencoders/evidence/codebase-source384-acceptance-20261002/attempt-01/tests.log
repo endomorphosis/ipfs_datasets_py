@@ -1,0 +1,156 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 14 items
+
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py E [  7%]
+EEEEEEEEEEEEE                                                            [100%]
+
+==================================== ERRORS ====================================
+___ ERROR at setup of test_actual_child_replay_still_passes_independent_lake ___
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_wrong_source_cannot_reuse_a_learned_candidate[False] __
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+__ ERROR at setup of test_wrong_source_cannot_reuse_a_learned_candidate[True] __
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_valid_but_changed_scalar_codebook_cannot_enter_parent_lineage _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_closed_inference_boundaries_refuse_teacher_substitution[worker-target] _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_closed_inference_boundaries_refuse_teacher_substitution[worker-teacher_forcing] _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_closed_inference_boundaries_refuse_teacher_substitution[worker-source_contract] _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_closed_inference_boundaries_refuse_teacher_substitution[runtime-target] _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_closed_inference_boundaries_refuse_teacher_substitution[runtime-teacher_forcing] _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_closed_inference_boundaries_refuse_teacher_substitution[runtime-source_contract] _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_actual_zero_head_remains_wrong_without_teacher_repair _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_unsupported_source_retains_candidate_and_blocks_lake __
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+__ ERROR at setup of test_model_off_is_explicit_deterministic_source_baseline __
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+_ ERROR at setup of test_model_off_is_not_silently_accepted_as_an_inference_mode _
+tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py:77: in replay
+    catalog=CodebaseCatalog(store, artifacts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:236: in __init__
+    self._check_schema()
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:290: in _check_schema
+    raise CodebaseCatalogError("codebase catalog schema or artifact root binding changed")
+E   ipfs_datasets_py.duckdb_control.codebase_catalog.CodebaseCatalogError: codebase catalog schema or artifact root binding changed
+- generated xml file: /home/barberb/lift_coding/artifacts/codebase-source384-acceptance-20261002/attempt-01/tests.xml -
+=========================== short test summary info ============================
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_actual_child_replay_still_passes_independent_lake
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_wrong_source_cannot_reuse_a_learned_candidate[False]
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_wrong_source_cannot_reuse_a_learned_candidate[True]
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_valid_but_changed_scalar_codebook_cannot_enter_parent_lineage
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_closed_inference_boundaries_refuse_teacher_substitution[worker-target]
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_closed_inference_boundaries_refuse_teacher_substitution[worker-teacher_forcing]
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_closed_inference_boundaries_refuse_teacher_substitution[worker-source_contract]
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_closed_inference_boundaries_refuse_teacher_substitution[runtime-target]
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_closed_inference_boundaries_refuse_teacher_substitution[runtime-teacher_forcing]
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_closed_inference_boundaries_refuse_teacher_substitution[runtime-source_contract]
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_actual_zero_head_remains_wrong_without_teacher_repair
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_unsupported_source_retains_candidate_and_blocks_lake
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_model_off_is_explicit_deterministic_source_baseline
+ERROR tests/integration/logic/software_contracts/test_codebase_source_384_acceptance.py::test_model_off_is_not_silently_accepted_as_an_inference_mode
+============================== 14 errors in 0.81s ==============================

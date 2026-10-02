@@ -1,0 +1,25 @@
+{
+  "schema": "codebase-semantic-manifest-evidence@1",
+  "files": [
+    {
+      "path": "initial-test-diagnostic.log",
+      "sha256": "04134e11f0a011f52b72a4782021de8aafee48753f8ea6705f6a49a5fcd796d1",
+      "bytes": 3096
+    },
+    {
+      "path": "qualification.json",
+      "sha256": "c502cd6456ce79cea587a7c38832d71d1b21a3d7924a9b84a456b0fc9ab4c987",
+      "bytes": 2130
+    },
+    {
+      "path": "tests.log",
+      "sha256": "24a9d7e323afa6341791adff7a60be2cf42d9634c9330664f72d34ac0e121d72",
+      "bytes": 1084
+    },
+    {
+      "path": "tests.xml",
+      "sha256": "608de573d7f736e00f42abc7eef9ae5fc35e15d5c1c1957c40ac99cadff19187",
+      "bytes": 5692
+    }
+  ]
+}
