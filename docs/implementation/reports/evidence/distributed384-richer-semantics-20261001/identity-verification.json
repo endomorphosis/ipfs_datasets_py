@@ -1,0 +1,49 @@
+{
+  "authored": {
+    "context_sha256_equal": false,
+    "native_report_hash_equal": true,
+    "native_report_sha256": "5ab298db446f6f29e129fa491a935c5bcdf6b93b842d27c9d807b6fe596d8844",
+    "original_supplemental_models_equal": true,
+    "source_candidate_byte_identical": true,
+    "source_candidate_file": {
+      "bytes": 624,
+      "sha256": "064432d9f4772db465002f131a20e7a3ccae2a109820cf15b0da0915e24d92e9"
+    }
+  },
+  "checkpoint_predictions": [
+    {
+      "byte_identical": true,
+      "bytes": 8705,
+      "domain_id": "intent_ir",
+      "new_path": "run-01/checkpoints/intent_ir/checks/inference.json",
+      "prior_artifact_path": "checkpoints-run-01/intent_ir/checks/inference.json",
+      "sha256": "a6333ff02f144b7acd3e9d69b6364a4c6a4886d0b3a80e442402e99f75f8472c"
+    },
+    {
+      "byte_identical": true,
+      "bytes": 8868,
+      "domain_id": "security_ir",
+      "new_path": "run-01/checkpoints/security_ir/checks/inference.json",
+      "prior_artifact_path": "checkpoints-run-01/security_ir/checks/inference.json",
+      "sha256": "a10ebc8fe6b288d48d6de3d2d037d3342484b72d37cb8f207c72e866b8a865b2"
+    },
+    {
+      "byte_identical": true,
+      "bytes": 8698,
+      "domain_id": "ui_ux_ir",
+      "new_path": "run-01/checkpoints/ui_ux_ir/checks/inference.json",
+      "prior_artifact_path": "checkpoints-run-01/ui_ux_ir/checks/inference.json",
+      "sha256": "72f2e3524411f2427303da2b34d044b9bf0cfeeac53acc90bbb5941659df1264"
+    },
+    {
+      "byte_identical": true,
+      "bytes": 8711,
+      "domain_id": "legal_ir",
+      "new_path": "run-01/checkpoints/legal_ir/checks/inference.json",
+      "prior_artifact_path": "checkpoints-run-01/legal_ir/checks/inference.json",
+      "sha256": "1f92568a4f10f499e7fce9b53548750f6df6e4d3717f0eff21b354892c6f8ed7"
+    }
+  ],
+  "schema": "distributed384-richer-semantics-identity-check/v1",
+  "scope": "Byte identity and bound report digest comparison only; no source-semantic claim."
+}

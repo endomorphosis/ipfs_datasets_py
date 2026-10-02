@@ -1,0 +1,473 @@
+{
+  "admitted": false,
+  "archive": {
+    "bytes": 1070475,
+    "path": "evidence.tar.gz",
+    "sha256": "88318499031660a7ccb2a69cb3a999ea0cdd6b82df69a71487f05730f863fd5a"
+  },
+  "archive_member_count": 67,
+  "archive_members": {
+    "prior-evidence/authored/run-01/unchanged-original-context/context.json": {
+      "bytes": 31173,
+      "sha256": "665c03a6956573246d6bd993a7b39f57328146011d2f3794cff2e8a310148184"
+    },
+    "prior-evidence/authored/run-01/unchanged-original-context/report.json": {
+      "bytes": 592849,
+      "sha256": "76da6e55c5767eba4f36f36d56d0262c81b9193252920b42bb004140f7aa341e"
+    },
+    "prior-evidence/authored/run-01/unchanged-original-context/source-candidate.json": {
+      "bytes": 624,
+      "sha256": "064432d9f4772db465002f131a20e7a3ccae2a109820cf15b0da0915e24d92e9"
+    },
+    "prior-evidence/checkpoints-run-01/intent_ir/checks/job.json": {
+      "bytes": 1031,
+      "sha256": "552a84662d9e1778b4b82c24e943f38c56d9c8c5ad93cde015c149ef9d74eb20"
+    },
+    "prior-evidence/checkpoints-run-01/intent_ir/declared-context.json": {
+      "bytes": 3649,
+      "sha256": "b8900b0293ffaf028e2b2a8bd0c7068550f40a1cf9817cb998b838b6a315e2d3"
+    },
+    "prior-evidence/checkpoints-run-01/legal_ir/checks/job.json": {
+      "bytes": 1029,
+      "sha256": "d5354f4efeb85bae4ef8c232f6866433c51bba8e0c36d779bd1ccac47a016980"
+    },
+    "prior-evidence/checkpoints-run-01/legal_ir/declared-context.json": {
+      "bytes": 3642,
+      "sha256": "1641935c89f47dc6e8725a0ff26e2ba4e5dc825b5a06cb336bd4f51e1536c4f6"
+    },
+    "prior-evidence/checkpoints-run-01/security_ir/checks/job.json": {
+      "bytes": 1153,
+      "sha256": "e9622602ad60335b4cf8eb4795b541f9208ccfe3fc6d95c93ce586d8af0b3ab5"
+    },
+    "prior-evidence/checkpoints-run-01/security_ir/declared-context.json": {
+      "bytes": 26277,
+      "sha256": "a7a20702de61876bebf3a6c7bef30169c1657f642d06c5f34f2fc242deb0a65f"
+    },
+    "prior-evidence/checkpoints-run-01/ui_ux_ir/checks/job.json": {
+      "bytes": 1029,
+      "sha256": "8d189dd7cf3843a19ec9563d77375b3d3d688f390e8aa3e00b469778be8dbd49"
+    },
+    "prior-evidence/checkpoints-run-01/ui_ux_ir/declared-context.json": {
+      "bytes": 3642,
+      "sha256": "4934d132c5a1f355773f1e7652d0c66a2bff284f88136d9cb8ddd7a138f91c35"
+    },
+    "reproduce.py": {
+      "bytes": 9625,
+      "sha256": "7074fb9fe9361ddadab7cad00e1db302862ec1ac9df2095b7b6ed04c4421b7c8"
+    },
+    "run-01.log": {
+      "bytes": 44302,
+      "sha256": "7f27370b41f1ea9b9d6ba34d40834cdcae08fab36d6eedefaac2b67d63fe9e9e"
+    },
+    "run-01/authored/with-explicit-interpretations/context.json": {
+      "bytes": 56844,
+      "sha256": "91ee55c72a322527fc76730dc35375dfdd3bc5c04d9ec5abe0d53bfd3d86c8a5"
+    },
+    "run-01/authored/with-explicit-interpretations/native/SecurityIR.lean": {
+      "bytes": 121326,
+      "sha256": "e964a371d2cea6f861c37e745051765de509d145c989a2e221c9a9aa13c677a5"
+    },
+    "run-01/authored/with-explicit-interpretations/native/receipt.json": {
+      "bytes": 274689,
+      "sha256": "afadb2753f2a1b07a47c3818df24691a5e67d846556b3c60805b4bcf8b10696c"
+    },
+    "run-01/authored/with-explicit-interpretations/report.json": {
+      "bytes": 739139,
+      "sha256": "03ed8296c4b520479aa6896e89298dfcf10a687949c87e61842e84f5cd9a1fef"
+    },
+    "run-01/authored/with-explicit-interpretations/source-candidate.json": {
+      "bytes": 624,
+      "sha256": "064432d9f4772db465002f131a20e7a3ccae2a109820cf15b0da0915e24d92e9"
+    },
+    "run-01/authored/with-explicit-interpretations/summary.json": {
+      "bytes": 1403,
+      "sha256": "628b55d4b3da2cf08354f4b4afad0c385247441e2c8b968fec832303e7bd94a5"
+    },
+    "run-01/authored/without-interpretations/context.json": {
+      "bytes": 31173,
+      "sha256": "665c03a6956573246d6bd993a7b39f57328146011d2f3794cff2e8a310148184"
+    },
+    "run-01/authored/without-interpretations/native/SecurityIR.lean": {
+      "bytes": 37986,
+      "sha256": "71104c6c81c13dfca0c1013647569344da260d350a4f97492027ebe8761e9d5a"
+    },
+    "run-01/authored/without-interpretations/native/receipt.json": {
+      "bytes": 129959,
+      "sha256": "fd1b2fabc648c707cffee9ec3e0aee9860a791a5b2296e67f4188ced5c33e593"
+    },
+    "run-01/authored/without-interpretations/report.json": {
+      "bytes": 598016,
+      "sha256": "f0e9bc8fdd372762d8119d45d1b3762a4f931a9cb523022ed0b8de5745659dfb"
+    },
+    "run-01/authored/without-interpretations/source-candidate.json": {
+      "bytes": 624,
+      "sha256": "064432d9f4772db465002f131a20e7a3ccae2a109820cf15b0da0915e24d92e9"
+    },
+    "run-01/authored/without-interpretations/summary.json": {
+      "bytes": 1145,
+      "sha256": "9a1e2e8f14c182bf9075bdd4815d804fae1897de87e73342332606b01ab44c6f"
+    },
+    "run-01/checkpoints/intent_ir/authored-world-model.json": {
+      "bytes": 510,
+      "sha256": "58310410831a24249dd0aa2be5301a01e80cabcabf354d9ab2c4410de2fc7a19"
+    },
+    "run-01/checkpoints/intent_ir/checks/contexts.json": {
+      "bytes": 4341,
+      "sha256": "ff4b1ff31591e8a2fd7720f7402a4946ac9829cf39a678b4bf66c64646e01a2b"
+    },
+    "run-01/checkpoints/intent_ir/checks/inference-inputs.json": {
+      "bytes": 8185,
+      "sha256": "281a111d7c5d1e7b6f1d9b43fb7084ee5620d6aabe490c6c81cab36482d74945"
+    },
+    "run-01/checkpoints/intent_ir/checks/inference.json": {
+      "bytes": 8705,
+      "sha256": "a6333ff02f144b7acd3e9d69b6364a4c6a4886d0b3a80e442402e99f75f8472c"
+    },
+    "run-01/checkpoints/intent_ir/checks/job.json": {
+      "bytes": 1031,
+      "sha256": "aea448ebea0b4b943080b2c7f464aafa773deeffe0c4c216d18c77557aa041c5"
+    },
+    "run-01/checkpoints/intent_ir/checks/native-0/IntentIR.lean": {
+      "bytes": 48089,
+      "sha256": "cd0098bd85213e93b46a64984f06d966cb588986c6f6a17eeb3ab095a9154c70"
+    },
+    "run-01/checkpoints/intent_ir/checks/native-0/receipt.json": {
+      "bytes": 147575,
+      "sha256": "88fe3bf57ec88ad70e62061274a7ae5ce425079b82138072e4ceed702dfea657"
+    },
+    "run-01/checkpoints/intent_ir/checks/reports/f891106c9cfb98bcc27d413318fdfaf6518a6b578636f3f53dea4613a383b77a.json": {
+      "bytes": 722348,
+      "sha256": "0da56c7ef7fbed3bed5068160f9df35d733dc3362b4ad3db24acb5c2377b4d46"
+    },
+    "run-01/checkpoints/intent_ir/checks/summary.json": {
+      "bytes": 2456,
+      "sha256": "fc73429b57be53c412a5d82a1b10d6f3d8fa0b47b0b57e08a2fee69ef2ac8528"
+    },
+    "run-01/checkpoints/intent_ir/declared-context.json": {
+      "bytes": 4341,
+      "sha256": "ff4b1ff31591e8a2fd7720f7402a4946ac9829cf39a678b4bf66c64646e01a2b"
+    },
+    "run-01/checkpoints/intent_ir/published-checkpoint-reference.json": {
+      "bytes": 857,
+      "sha256": "318520eb1203f5435277a38eb608169ca4936093b9534d1cad55c8b537357823"
+    },
+    "run-01/checkpoints/legal_ir/checks/contexts.json": {
+      "bytes": 3642,
+      "sha256": "1641935c89f47dc6e8725a0ff26e2ba4e5dc825b5a06cb336bd4f51e1536c4f6"
+    },
+    "run-01/checkpoints/legal_ir/checks/inference-inputs.json": {
+      "bytes": 8160,
+      "sha256": "bb01d2ff18442e9228df29992fe08702e64ea26bdbabb92aaee692c6f45fb749"
+    },
+    "run-01/checkpoints/legal_ir/checks/inference.json": {
+      "bytes": 8711,
+      "sha256": "1f92568a4f10f499e7fce9b53548750f6df6e4d3717f0eff21b354892c6f8ed7"
+    },
+    "run-01/checkpoints/legal_ir/checks/job.json": {
+      "bytes": 1029,
+      "sha256": "d5354f4efeb85bae4ef8c232f6866433c51bba8e0c36d779bd1ccac47a016980"
+    },
+    "run-01/checkpoints/legal_ir/checks/native-0/LegalIR.lean": {
+      "bytes": 10951,
+      "sha256": "9a7a8e513ea83d2f55e28833ddf0fd651cbb45716d03e89c415627a456da01c6"
+    },
+    "run-01/checkpoints/legal_ir/checks/native-0/receipt.json": {
+      "bytes": 95383,
+      "sha256": "c38a98d2f54d7997f9ae0aeadf6431717af52f04c89ea64109e06527767cc0cd"
+    },
+    "run-01/checkpoints/legal_ir/checks/reports/e925215cdd665a1a85899397b7a1bd754c2461b37c2526d37c01e22451a26be7.json": {
+      "bytes": 300240,
+      "sha256": "2bf72f1705b58b49f0ac2868a60cbdd84f73087fa40f5aaf2eab15a5dba197b9"
+    },
+    "run-01/checkpoints/legal_ir/checks/summary.json": {
+      "bytes": 2453,
+      "sha256": "2c2d1cc6a90f15bc2013c0cb9df744250f3810fd6092f71990cc471b491bb5ad"
+    },
+    "run-01/checkpoints/legal_ir/declared-context.json": {
+      "bytes": 3642,
+      "sha256": "1641935c89f47dc6e8725a0ff26e2ba4e5dc825b5a06cb336bd4f51e1536c4f6"
+    },
+    "run-01/checkpoints/legal_ir/published-checkpoint-reference.json": {
+      "bytes": 855,
+      "sha256": "e475aed8b4fd3661b22ffdc58211b8fa53d6fda72fe825bb376c10599120382e"
+    },
+    "run-01/checkpoints/security_ir/checks/contexts.json": {
+      "bytes": 57232,
+      "sha256": "d7b5207ac6744859d57375711cd1bef2ed519805e8094324fee898f82357122c"
+    },
+    "run-01/checkpoints/security_ir/checks/inference-inputs.json": {
+      "bytes": 8269,
+      "sha256": "1b78a97a9914f10b355abb891ce909ec30a31bb5d462bdbafd1c7b34c96ba805"
+    },
+    "run-01/checkpoints/security_ir/checks/inference.json": {
+      "bytes": 8868,
+      "sha256": "a10ebc8fe6b288d48d6de3d2d037d3342484b72d37cb8f207c72e866b8a865b2"
+    },
+    "run-01/checkpoints/security_ir/checks/job.json": {
+      "bytes": 1153,
+      "sha256": "6b5f98f51cf4e5fa5cf2edd87b2367751e2c2e899061252381f4a4d1bc59f544"
+    },
+    "run-01/checkpoints/security_ir/checks/native-0/SecurityIR.lean": {
+      "bytes": 121316,
+      "sha256": "967eb0048c0195faa470821aabe16691c8f55c29271100c144b0b5d50fc72640"
+    },
+    "run-01/checkpoints/security_ir/checks/native-0/receipt.json": {
+      "bytes": 276582,
+      "sha256": "c99180ef316b5b7e3dc98701892638c5eed67cb83eeb70da371ccd08a9c846a8"
+    },
+    "run-01/checkpoints/security_ir/checks/reports/7ad774c1a535b6ef3b4619b416e78a9c30cc1174d59d9b919909c8438d648e95.json": {
+      "bytes": 742947,
+      "sha256": "9d9ef9f8bdcf325909026bcdc710e919b9487cdcfd323c76960768ee47aa7d00"
+    },
+    "run-01/checkpoints/security_ir/checks/summary.json": {
+      "bytes": 3084,
+      "sha256": "053ab98b43f095c718a7dc6088dd7890088562e16e871b8f0767fdd411f8e53b"
+    },
+    "run-01/checkpoints/security_ir/declared-context.json": {
+      "bytes": 57232,
+      "sha256": "d7b5207ac6744859d57375711cd1bef2ed519805e8094324fee898f82357122c"
+    },
+    "run-01/checkpoints/security_ir/published-checkpoint-reference.json": {
+      "bytes": 861,
+      "sha256": "7aac69ead9de862fa306ac9dd10a0507fb725bbea4a1ee8011247c2061f008b4"
+    },
+    "run-01/checkpoints/ui_ux_ir/checks/contexts.json": {
+      "bytes": 3642,
+      "sha256": "4934d132c5a1f355773f1e7652d0c66a2bff284f88136d9cb8ddd7a138f91c35"
+    },
+    "run-01/checkpoints/ui_ux_ir/checks/inference-inputs.json": {
+      "bytes": 8218,
+      "sha256": "1397997691c09f148f712019a43b787f065f202a483a8bb79dbc73a799eee0f6"
+    },
+    "run-01/checkpoints/ui_ux_ir/checks/inference.json": {
+      "bytes": 8698,
+      "sha256": "72f2e3524411f2427303da2b34d044b9bf0cfeeac53acc90bbb5941659df1264"
+    },
+    "run-01/checkpoints/ui_ux_ir/checks/job.json": {
+      "bytes": 1029,
+      "sha256": "8d189dd7cf3843a19ec9563d77375b3d3d688f390e8aa3e00b469778be8dbd49"
+    },
+    "run-01/checkpoints/ui_ux_ir/checks/native-0/UIUXIR.lean": {
+      "bytes": 10899,
+      "sha256": "82711c47ad75840fbd965e38e331db6d7771a4feb2eac6105099daf623666492"
+    },
+    "run-01/checkpoints/ui_ux_ir/checks/native-0/receipt.json": {
+      "bytes": 77233,
+      "sha256": "c55afba7cc501fbcb7b712f3197d66e4596bd1a90f6221b4d86e3b3250b2066f"
+    },
+    "run-01/checkpoints/ui_ux_ir/checks/reports/93dd4dd5b2f7baac335ad77861d50f7e59de045332ae1d46e0945896034d2b8a.json": {
+      "bytes": 290006,
+      "sha256": "8a0030d6b3143983dda82f8312e08bfa0e90a8efe48b9e71b4e23122923c565a"
+    },
+    "run-01/checkpoints/ui_ux_ir/checks/summary.json": {
+      "bytes": 2452,
+      "sha256": "b5546ff25356c6aa94967354999038c78a823cda63e3ac2a706fda23e12dbd4f"
+    },
+    "run-01/checkpoints/ui_ux_ir/declared-context.json": {
+      "bytes": 3642,
+      "sha256": "4934d132c5a1f355773f1e7652d0c66a2bff284f88136d9cb8ddd7a138f91c35"
+    },
+    "run-01/checkpoints/ui_ux_ir/published-checkpoint-reference.json": {
+      "bytes": 855,
+      "sha256": "d9ce67e922e018ec1cddeeb418ab7c4eb88d7fcf6ba8a180296d99b6f3d43fbc"
+    },
+    "run-01/summary.json": {
+      "bytes": 7235,
+      "sha256": "b5b8473efecce4060643a215932f668565aab6a7a3e0df64dc9d8249e826f461"
+    }
+  },
+  "completed_tests": {
+    "broad": {
+      "log": "regressions.log",
+      "passed": 774,
+      "seconds": 390.85,
+      "skipped": 3
+    },
+    "direction_audit": {
+      "log": "refinement-direction-audit.log",
+      "passed": 6,
+      "seconds": 2.44
+    },
+    "distinct_count_formula": "774 + (117 - 35) + 6",
+    "distinct_passed": 862,
+    "distinct_skipped": 3,
+    "focused": {
+      "log": "focused-tests.log",
+      "passed": 117,
+      "seconds": 52.61
+    },
+    "focused_broad_overlap": 35
+  },
+  "context_inferred_by_model": false,
+  "copied_files": {
+    "focused-tests.log": {
+      "bytes": 2052,
+      "sha256": "f621fb319dbe0c4833c1100a619e70678ef952136bd297f49a1ff93b81dd91b1"
+    },
+    "identity-verification.json": {
+      "bytes": 1956,
+      "sha256": "73a001f5e6639e1a98778f88d685190ed903ae2ff099d48d5146c9a3a182f363"
+    },
+    "postmerge-tests.log": {
+      "bytes": 2900,
+      "sha256": "e30866c1ee9e32c1ce4e7079148abc2c98d0c8a12079a54dc7b32768a8c006ce"
+    },
+    "producer-commit-verification.json": {
+      "bytes": 94886,
+      "sha256": "0d75b8560de8db751a91e5fd8b0ad266e9067b18d8dc61e076f39fcd485de391"
+    },
+    "publication/intent_ir/manifest.json": {
+      "bytes": 6208,
+      "sha256": "fe0565ce508a6b637343bb0f34629aca164bfb47e05ee06d5b3583f303ae89e2"
+    },
+    "publication/intent_ir/receipt.json": {
+      "bytes": 925,
+      "sha256": "0334791ebcefb3e1705a71222c602dd0cda889b0d1bf835d511dc11011824026"
+    },
+    "publication/legal_ir/manifest.json": {
+      "bytes": 6055,
+      "sha256": "ff8f5624ac8a11923dd418c39e976368fb6ca6e0584047316fe253aadf84c104"
+    },
+    "publication/legal_ir/receipt.json": {
+      "bytes": 923,
+      "sha256": "74ff748cbf563be751e55607f29f3de9cdfb55f39ab91e7cfedffe1126ec6a42"
+    },
+    "publication/receipts.json": {
+      "bytes": 3705,
+      "sha256": "4e41dda339dea8685a330814e7ebe2843b19f1b3e10196617b0dfacf14b8f0ab"
+    },
+    "publication/security_ir/manifest.json": {
+      "bytes": 11112,
+      "sha256": "432ed85d74e0985b34ad0d9c73188eab42532862be0b08a511875bd0ab97e66d"
+    },
+    "publication/security_ir/receipt.json": {
+      "bytes": 929,
+      "sha256": "24e00dd3d4ee5d776d8f7ffa7333d3e61fa80352ec54d54f7bed81efcbd8a006"
+    },
+    "publication/ui_ux_ir/manifest.json": {
+      "bytes": 6054,
+      "sha256": "618dbcccbb2d5b6279d78e40e7d511b361a79dab65f03c1804ce59dcdb66c142"
+    },
+    "publication/ui_ux_ir/receipt.json": {
+      "bytes": 923,
+      "sha256": "1725557add17c0f90d1fa2b3da86535c09369da716114e305abbbdb573033309"
+    },
+    "publish_evidence.py": {
+      "bytes": 27987,
+      "sha256": "4afe62c436fd60574509a3cd9bad34552c430e7ff8a6d0846aa1157653205fcb"
+    },
+    "refinement-direction-audit.log": {
+      "bytes": 1018,
+      "sha256": "c6d50da1220b9dbca05c2b79b59642acdeffcaf501789514f59662b899c68e93"
+    },
+    "regressions.log": {
+      "bytes": 5883,
+      "sha256": "c6f17456009a333e5f255c0f53fcc01bd23bfffbc9e31280b54b9e683afffabb"
+    },
+    "reproduce.py": {
+      "bytes": 9625,
+      "sha256": "7074fb9fe9361ddadab7cad00e1db302862ec1ac9df2095b7b6ed04c4421b7c8"
+    },
+    "summary.json": {
+      "bytes": 7235,
+      "sha256": "b5b8473efecce4060643a215932f668565aab6a7a3e0df64dc9d8249e826f461"
+    }
+  },
+  "deterministic_format": {
+    "gid": 0,
+    "gzip_filename": "",
+    "gzip_mtime": 0,
+    "member_order": "lexicographic",
+    "mode": "0644",
+    "mtime": 0,
+    "owner_names": "",
+    "regular_files_only": true,
+    "tar_format": "USTAR",
+    "uid": 0
+  },
+  "generated_files": {
+    "README.md": {
+      "bytes": 12735,
+      "sha256": "6c63ab856df1ed953400e512e0c3a16fe9e25b2a40f79f8e3f0ac9234cd374e7"
+    }
+  },
+  "merged_upstream_commit": "df732e8aaf5b4eec7373f1581e7193d7c0a91134",
+  "new_holdout_evaluation": false,
+  "postmerge_source_commit": "337e659e3b309ee8ca0bf6ea88fe9d33053371ef",
+  "postmerge_validation": {
+    "added_to_distinct_total": false,
+    "commit": "337e659e3b309ee8ca0bf6ea88fe9d33053371ef",
+    "log": "postmerge-tests.log",
+    "overlaps_tested_implementation_suites": true,
+    "passed": 269,
+    "seconds": 241.26
+  },
+  "producer_verification": {
+    "all_matched": true,
+    "producer_hashes": 414,
+    "receipts": 6,
+    "record": "producer-commit-verification.json"
+  },
+  "proof_authority": false,
+  "publication": {
+    "all_download_verified": true,
+    "checkpoint_weights_changed": false,
+    "immutable_checkpoint_references_download_verified": true,
+    "receipts": "publication/receipts.json",
+    "repositories": [
+      {
+        "archive_members_download_verified": 17,
+        "archive_sha256": "06709fbe39bfb092b7e980c7bab6a73626a4f379f9f1ccfbaef08491d4f043f3",
+        "manifest_sha256": "fe0565ce508a6b637343bb0f34629aca164bfb47e05ee06d5b3583f303ae89e2",
+        "repo_type": "model",
+        "repository_id": "Publicus/intent-ir-autoencoder",
+        "revision": "672a84cf34f30748e7fde7ef2d6a9378728c9e20",
+        "url": "https://huggingface.co/Publicus/intent-ir-autoencoder/blob/672a84cf34f30748e7fde7ef2d6a9378728c9e20/training/structured384/fd9d9b655650583be0d76972ac3b9c67905628294ba2df38ef59fb6d1c8b1fc5/projection-checks/fe0565ce508a6b637343bb0f34629aca164bfb47e05ee06d5b3583f303ae89e2/manifest.json"
+      },
+      {
+        "archive_members_download_verified": 28,
+        "archive_sha256": "bfb27565014c1419422026bdac4265c947a9ea066c1ca4607e49b0ef61018bf6",
+        "manifest_sha256": "432ed85d74e0985b34ad0d9c73188eab42532862be0b08a511875bd0ab97e66d",
+        "repo_type": "model",
+        "repository_id": "Publicus/security-ir-autoencoder",
+        "revision": "22ce0b82bab60d1c330b590051a5c6b4de8d2f9b",
+        "url": "https://huggingface.co/Publicus/security-ir-autoencoder/blob/22ce0b82bab60d1c330b590051a5c6b4de8d2f9b/training/structured384/fcab87ade962350c30a3e80d2f7bd3385d60bcfc666e0ba74955ca8e4008074c/projection-checks/432ed85d74e0985b34ad0d9c73188eab42532862be0b08a511875bd0ab97e66d/manifest.json"
+      },
+      {
+        "archive_members_download_verified": 16,
+        "archive_sha256": "dd053a39fadf28ad72619bbd0cf2ffec96ac4f32d247c54f02c79726bb4f3d97",
+        "manifest_sha256": "618dbcccbb2d5b6279d78e40e7d511b361a79dab65f03c1804ce59dcdb66c142",
+        "repo_type": "model",
+        "repository_id": "Publicus/ui-ux-ir-autoencoder",
+        "revision": "5f2b0841ddec180767293c763326493e13416e8d",
+        "url": "https://huggingface.co/Publicus/ui-ux-ir-autoencoder/blob/5f2b0841ddec180767293c763326493e13416e8d/training/structured384/20c621da5b717eb7fb8174df991efb593bcd846e0d68a3edd62f3151ae041157/projection-checks/618dbcccbb2d5b6279d78e40e7d511b361a79dab65f03c1804ce59dcdb66c142/manifest.json"
+      },
+      {
+        "archive_members_download_verified": 16,
+        "archive_sha256": "4fd2ae969f03f2ce4331e9fbced3f04ec15c8facb7c9ae029b09d85f33166f6a",
+        "manifest_sha256": "ff8f5624ac8a11923dd418c39e976368fb6ca6e0584047316fe253aadf84c104",
+        "repo_type": "model",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "51c21af74109d375560d715363019c4c853dc831",
+        "url": "https://huggingface.co/Publicus/legal-ir-autoencoder/blob/51c21af74109d375560d715363019c4c853dc831/training/structured384/0a70e2ca59bb14791ae52ba8cd5253dc66bf7b2ae20fa23908a3bd1f9410d1e5/projection-checks/ff8f5624ac8a11923dd418c39e976368fb6ca6e0584047316fe253aadf84c104/manifest.json"
+      }
+    ],
+    "uploaded": true
+  },
+  "qualified": false,
+  "reproduction_inputs": {
+    "installed_tools_required": [
+      "Lean 4.34.1",
+      "Java 17",
+      "tla2tools 1.8.0"
+    ],
+    "matching_checkout_required": true,
+    "prior_evidence": "All 11 exact prior files read by reproduce.py are archived under prior-evidence/.",
+    "training_round": "Previously published coordinator inputs and merged checkpoints remain external; their immutable references are in each checkpoint tree."
+  },
+  "schema": "distributed384-richer-semantics-evidence-archive/v1",
+  "source_semantics_verified": false,
+  "tested_implementation_commit": "39df567b00569b90a064e2a40f0c015c71172a10",
+  "training_executed": false,
+  "weights_changed": false
+}
