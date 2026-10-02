@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "bytes": 19872,
+      "path": "attempt-01.log",
+      "sha256": "a9453ae13598636a970932fac274afe0a3826e0f4fffb2d08409dfbbe6ddf2d8"
+    },
+    {
+      "bytes": 16844,
+      "path": "attempt-02.log",
+      "sha256": "19a09221761475928735ca7064f1408c66a48b1322c0f75edea769f45881c5bb"
+    },
+    {
+      "bytes": 1004,
+      "path": "attempt-03.log",
+      "sha256": "d250a3e650db6974fe09e5a31c4dc2bedda785882897437e9ce5ffdc3a22d675"
+    },
+    {
+      "bytes": 45792,
+      "path": "native-results.json",
+      "sha256": "bb5e1e5f4194ea507c4eb2269d9e5126323b961548688762841641226104881b"
+    },
+    {
+      "bytes": 3869,
+      "path": "qualification.json",
+      "sha256": "0b88866b9b3b7edf13d1c131b9ecac23813a1abceef34a5ac74c31ca2696485a"
+    }
+  ],
+  "schema": "codebase-training-lifecycle-evidence@1"
+}

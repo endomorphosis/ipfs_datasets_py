@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "bytes": 1716,
+      "path": "attempt-01.log",
+      "sha256": "931f4f7c6a74de1a8a8a7ff25de60094a1773fb5b8afc662035b53268671a0d1"
+    },
+    {
+      "bytes": 7144,
+      "path": "attempt-02.log",
+      "sha256": "7585589fab5f9e3cea6a89cf3829aac5e45684c03d4893bd4763202b3a4a0801"
+    },
+    {
+      "bytes": 997,
+      "path": "attempt-03.log",
+      "sha256": "bacfe3f4f2921438cc3c8978e5eef1315c6043b5ec0c8c4c6dfda9ab0274b3d3"
+    },
+    {
+      "bytes": 319409,
+      "path": "native-results.json",
+      "sha256": "49e558e893a4140d4ef2b5585a5e6950e8427c2986e58632c8ef6686e258cb80"
+    },
+    {
+      "bytes": 2834,
+      "path": "qualification.json",
+      "sha256": "8ee1ecf39e7a713f3180a1049083c50a1d8235b602434bd88b6460f2e4fb8951"
+    }
+  ],
+  "schema": "codebase-runtime384-evidence@1"
+}

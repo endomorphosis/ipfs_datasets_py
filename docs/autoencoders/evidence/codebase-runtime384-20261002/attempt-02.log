@@ -1,0 +1,90 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 10 items
+
+tests/integration/logic/software_contracts/test_codebase_runtime_384.py . [ 10%]
+EEEEEEEEE                                                                [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_actual_parent_weights_and_target_free_captured_source_produce_three_aligned_candidates _
+/home/barberb/.local/lib/python3.12/site-packages/pytest_asyncio/plugin.py:924: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+_ ERROR at setup of test_actual_zero_head_parent_control_retains_rejected_predictions _
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+_ ERROR at setup of test_actual_post_inference_source_change_cannot_return_current_inference _
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+_ ERROR at setup of test_parent_inference_requires_exact_selected_capture_paths[paths0] _
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+_ ERROR at setup of test_parent_inference_requires_exact_selected_capture_paths[paths1] _
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+_ ERROR at setup of test_parent_inference_requires_exact_selected_capture_paths[paths2] _
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+_ ERROR at setup of test_parent_inference_requires_exact_selected_capture_paths[paths3] _
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+____ ERROR at setup of test_parent_inference_rejects_caller_training_labels ____
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+_ ERROR at setup of test_literal_and_guard_collision_candidates_remain_unsupported_in_actual_model_output _
+tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py:54: in current
+    root = tmp_path_factory.mktemp("lifecycle384")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1313: in mkdir
+    os.mkdir(self, mode)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/barberb/lift_coding/artifacts/codebase-runtime384-20261002/attempt-02'
+=========================== short test summary info ============================
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_actual_parent_weights_and_target_free_captured_source_produce_three_aligned_candidates
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_actual_zero_head_parent_control_retains_rejected_predictions
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_actual_post_inference_source_change_cannot_return_current_inference
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_parent_inference_requires_exact_selected_capture_paths[paths0]
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_parent_inference_requires_exact_selected_capture_paths[paths1]
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_parent_inference_requires_exact_selected_capture_paths[paths2]
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_parent_inference_requires_exact_selected_capture_paths[paths3]
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_parent_inference_rejects_caller_training_labels
+ERROR tests/integration/logic/software_contracts/test_codebase_runtime_384.py::test_literal_and_guard_collision_candidates_remain_unsupported_in_actual_model_output
+========================= 1 passed, 9 errors in 0.69s ==========================

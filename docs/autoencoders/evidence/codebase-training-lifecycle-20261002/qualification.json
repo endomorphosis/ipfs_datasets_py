@@ -1,0 +1,40 @@
+{
+  "attempts": {
+    "01": "7 passed, 2 failed in149.07s. Real host PSI rejected post-fit source observation; no candidate attached. Separate test regex mismatch fixed. Two concurrent actual workers and actual cancellation qualified.",
+    "02": "All13 test bodies passed in44.03s; fixture teardown used the deliberately closed pre-restart registry. Corrected fixture to use reopened owner.",
+    "03": "13 passed in47.11s under final source bytes. Real shared default host scheduler; no mocked positive admission or worker."
+  },
+  "criterion_mapping": {
+    "actual_execution": "Live numerical child cancellation is observed after actual subprocess launch and reaped within20s. Changed current source is superseded after mandatory fresh native observation, without candidate completion. Two actual simultaneous CPU numerical children share one real host parent reservation and the native registry; both complete distinct candidate versions.",
+    "explicit_budgets": "Native opt-in policy freezes wall-time, sampled process-tree RSS, input bytes, samples, optimizer_steps=0, one complete head refit, checkpoint bytes and attempts. Actual wall-time, checkpoint and reclaim tests refuse; zero optimizer steps explicitly means ridge refitting, not optimizer resume.",
+    "lost_reply_restart_reads": "An injected reply loss occurs only after genuine numerical work and a committed finish receipt. Retrying in process and after reopening the native registry replays exact generation/numerical child bindings without fitting, flags historical_replay=true and current_source_verified=false. Reads do not claim current admission.",
+    "parent_retention": "All completed child holdouts remain0/3 against parent3/3. No head is advanced, no checkpoint uploaded, and production/shared parent bytes remain unchanged.",
+    "terminal_states": "Versioned native command-log opt-in and cancelled/superseded receipts atomically clear the run lease and advance its fence. Registry24 new controls exercise stale complete/renew/fail/reclaim/publish/promote and a cancel-during-promotion race; old69 controls preserve legacy behavior."
+  },
+  "independent_review": "C reviewed the facade and found no concrete blocker; separate-owner transaction limitation and immutable completed history are explicit.",
+  "limits": [
+    "CPU sampled memory admission is not kernel hard enforcement; process-tree RSS may overshoot.",
+    "Termination applies to queued/running/failed opt-in work; already completed numerical history remains immutable. Cancelled follow-up attachment is withheld and does not confer admission.",
+    "Repository source and model registry are separate owners, not one distributed transaction. Exact before/after checks and native expected-head CAS fence stale attachment.",
+    "The supported scalar profile has separate syntax/structured/property records; only the fixed-vocabulary structured head is fitted. No trained-property head or arbitrary-code coverage claim."
+  ],
+  "model_provider_calls": 0,
+  "registry_controls": {
+    "evidence": "../codebase-registry-lifecycle-20261002/manifest.json",
+    "passed": 93,
+    "seconds": 7.62
+  },
+  "schema": "codebase-training-lifecycle-qualification@1",
+  "source_pins": {
+    "accelerate:repository_resource_bridge.py": "37bd578cf49735a7310c23b1d1cd204d623c0e9c3f2d808dd978390475403f8b",
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "a781f5534cf637455b975b31475ced608112c90e1578eca3f79ba916b85d2838",
+    "ipfs_datasets_py/logic/software_contracts/codebase_training_lifecycle.py": "eac1c133605c859f41464aa10086996ec767942f14b4066c89b35653c7b7de39",
+    "tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py": "f222a4bcac5a6b22cf41cd1972db6b5d2270e50317d2c0ad07562c5a346f4067"
+  },
+  "tests": {
+    "failed": 0,
+    "passed": 13,
+    "seconds": 47.11,
+    "skipped": 0
+  }
+}

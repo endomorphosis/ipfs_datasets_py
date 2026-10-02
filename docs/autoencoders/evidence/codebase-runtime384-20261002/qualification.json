@@ -1,0 +1,33 @@
+{
+  "all_rpi027_criteria_qualified": false,
+  "attempts": {
+    "01": "Collection failed because a test helper was imported through a missing top-level package; corrected to load its explicit local path. No inference.",
+    "02": "One registration test passed; fixture basetemp parent directory was missing. Created explicit run directory. No inference.",
+    "03": "All10 controls pass using actual shared scheduler; initial live host pressure delayed admission without weakening policy."
+  },
+  "model_provider_calls": 0,
+  "outcome": {
+    "controls": "Actual zero-head predictions include independently rejected mismatches. Actual post-worker source change refuses. Caller targets/uncaptured/traversal/duplicate paths refuse. Literal and guard source inputs retain their unchanged predicted candidates with unsupported source-contract status.",
+    "integration": "infer_shared_parent accepts phase.native_options, observes exact source before and after native worker, rehashes actual GTE assets, joins exact registered parent bytes/compatibility view/producer/source inventory; it never calls training or advances a model head.",
+    "parent_inference": "Actual pinned shared parent emits3/3 source-aligned heldout candidates from target-free id/source_text rows.",
+    "registration": "Uses native immutable ModalityContract and ModalityAdapterRegistry. Separate source-feature, structured-target and independently checked-property objectives; partial projection/vocabulary inheritance and complete head refit declared explicitly. No optimizer resume, property-head training or proof authority is claimed."
+  },
+  "remaining": [
+    "Actual new-profile ordered continuation/microbatch reuse and numerical forgetting mitigation remain separate work; this module qualifies registration and pinned-parent fallback only.",
+    "Current typed decoder covers the reviewed scalar profile. Unsupported syntax is not repaired by target substitution; learned outputs never confer proof authority.",
+    "Parent inference is not repository-specific trained-child quality. Original corpus exposure remains unknown and separate model/source owners are not one distributed transaction."
+  ],
+  "schema": "codebase-shared-parent-runtime-qualification@1",
+  "source_pins": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_runtime_384.py": "30ceb8d9604a1bc5c30eb9b9608fc21bb3fbd490ccceca6e9e4aa715a899f636",
+    "tests/integration/logic/software_contracts/test_codebase_runtime_384.py": "c33733dc0790e085658247e225e22072a777bc8a9bfa5678bc9cf0d08fd88192",
+    "tests/integration/logic/software_contracts/test_codebase_training_lifecycle.py": "f222a4bcac5a6b22cf41cd1972db6b5d2270e50317d2c0ad07562c5a346f4067"
+  },
+  "tests": {
+    "failed": 0,
+    "passed": 10,
+    "seconds": 111.5,
+    "skipped": 0
+  },
+  "training_executed": false
+}
