@@ -2357,12 +2357,14 @@ def _action_without_structured_notice_recipient(norm: LegalNormIR, action_text: 
 
 
 def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) -> str:
-    """Remove a duration tail already represented in temporal IR slots.
+    """Remove a duration or calendar-date tail already stored in temporal slots.
 
     Record-retention clauses often parse as actions such as ``retain records for
-    three years`` while also carrying a structured temporal duration. The unary
-    consequent should remain the operative act, and the duration should appear
-    as a temporal antecedent rather than being baked into the action predicate.
+    three years`` while also carrying a structured temporal duration. Sunset
+    clauses do the same with ``terminate on March 15, 2031``. The unary
+    consequent should remain the operative act, and the date or duration should
+    appear as a temporal antecedent rather than being baked into the action
+    predicate.
     """
 
     text = str(action_text or "").strip()
@@ -2370,6 +2372,26 @@ def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) 
         return text
 
     tail_match = re.search(r"\s+for\s+(.+)$", text, re.IGNORECASE)
+    calendar_date_tail = re.search(
+        r"\s+on\s+((?:january|february|march|april|may|june|july|august|"
+        r"september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?"
+        r"(?:,?\s+\d{4})?)$",
+        text,
+        re.IGNORECASE,
+    )
+    if not tail_match and not calendar_date_tail:
+        return text
+
+    duration_values = _temporal_duration_slot_values(norm.temporal_constraints)
+    if calendar_date_tail:
+        date_tail = calendar_date_tail.group(1).strip()
+        if any(
+            _same_formula_slot_text(date_tail, duration)
+            or _same_formula_slot_text(f"on {date_tail}", duration)
+            for duration in duration_values
+        ):
+            head = text[: calendar_date_tail.start()].strip()
+            return head or text
     if not tail_match:
         return text
 
@@ -2377,7 +2399,6 @@ def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) 
     if not tail:
         return text
 
-    duration_values = _temporal_duration_slot_values(norm.temporal_constraints)
     if not any(_same_formula_slot_text(tail, duration) for duration in duration_values):
         return text
 

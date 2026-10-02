@@ -126,16 +126,20 @@ def _phrase_in_text(text: str, phrase: str) -> bool:
 
 
 def _temporal_not_already_in_object(rule: CanonicalRule) -> tuple[str, ...]:
-    """Drop a temporal atom whose surface is already in the object.
+    """Drop a temporal atom whose surface is already in the action or object.
 
-    This does not add a numeral. An atom that is not already in the object
-    is still rendered.
+    This does not add a numeral. An atom that is not already in the action
+    or object is still rendered.
     """
 
-    rendered_object = _readable_atom(rule.object)
+    rendered_prior = " ".join(
+        part
+        for part in (_readable_atom(rule.action), _readable_atom(rule.object))
+        if part
+    )
     pending: list[str] = []
     for atom in rule.temporal:
-        if _phrase_in_text(rendered_object, _readable_atom(atom)):
+        if _phrase_in_text(rendered_prior, _readable_atom(atom)):
             continue
         pending.append(atom)
     return tuple(pending)

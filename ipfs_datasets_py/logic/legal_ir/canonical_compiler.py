@@ -183,10 +183,20 @@ def _tokens(value: object) -> tuple[str, ...]:
     return tuple(normalized)
 
 
+_SLOT_TEXT_KEYS: Final = ("value", "normalized_text", "text", "raw_text")
+
+
 def _flatten_strings(value: object) -> list[str]:
     if isinstance(value, str):
         return [value]
     if isinstance(value, Mapping):
+        preferred: list[str] = []
+        for key in _SLOT_TEXT_KEYS:
+            item = value.get(key)
+            if isinstance(item, str) and item.strip():
+                preferred.append(item)
+        if preferred:
+            return preferred
         result: list[str] = []
         for key, item in value.items():
             result.append(str(key))
@@ -263,6 +273,76 @@ def _has_semantic_value(value: object) -> bool:
         return False
     if isinstance(value, (Mapping, Sequence)) and not isinstance(value, (str, bytes, bytearray)):
         return bool(value)
+    return True
+
+
+def _token_span_in_text(phrase: str, text: str) -> bool:
+    """True when ``phrase`` is already a whole-token span of ``text``."""
+
+    if not phrase or not text:
+        return False
+    return bool(re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", text))
+
+
+def _citation_item_surfaces(item: object) -> list[str]:
+    """Build citation phrases that can already live on a projected v1 atom."""
+
+    if isinstance(item, Mapping):
+        kind = " ".join(str(item.get("type") or "").split()).casefold()
+        values: list[str] = []
+        for key in _SLOT_TEXT_KEYS:
+            raw = item.get(key)
+            if isinstance(raw, str) and raw.strip():
+                values.append(" ".join(raw.split()).casefold())
+        surfaces: list[str] = []
+        seen: set[str] = set()
+
+        def add(surface: str) -> None:
+            if surface and surface not in seen:
+                seen.add(surface)
+                surfaces.append(surface)
+
+        for value in values:
+            if kind and not value.startswith(f"{kind} ") and not value.startswith(f"{kind}("):
+                add(f"{kind} ({value})")
+                add(f"{kind} {value}")
+            if len(value) >= 3:
+                add(value)
+        return surfaces
+    return [
+        " ".join(text.split()).casefold()
+        for text in _flatten_strings(item)
+        if len(" ".join(text.split())) >= 3
+    ]
+
+
+def _facet_already_in_projected_surface(data: Mapping[str, object], field_name: str) -> bool:
+    """True when a citation facet is already kept on a projected v1 atom."""
+
+    if field_name not in {"cross_references", "resolved_cross_references"}:
+        return False
+    haystack = " ".join(
+        text
+        for key in (
+            "actor",
+            "action",
+            "action_object",
+            "action_verb",
+            "conditions",
+            "exceptions",
+            "temporal_constraints",
+        )
+        for text in _flatten_strings(data.get(key))
+    ).casefold()
+    if not haystack.strip():
+        return False
+    items = _many_values(data.get(field_name))
+    if not items:
+        return False
+    for item in items:
+        surfaces = _citation_item_surfaces(item)
+        if not surfaces or not any(_token_span_in_text(surface, haystack) for surface in surfaces):
+            return False
     return True
 
 
@@ -344,6 +424,8 @@ def _project_legal_norms(
         data = _norm_data(norm)
         for field_name in _UNREPRESENTED_SEMANTIC_FIELDS:
             if not _has_semantic_value(data.get(field_name)):
+                continue
+            if _facet_already_in_projected_surface(data, field_name):
                 continue
             unsupported.append(
                 _UnsupportedProjection(
