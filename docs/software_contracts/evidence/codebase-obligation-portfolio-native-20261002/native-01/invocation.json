@@ -1,0 +1,23 @@
+{
+  "commits": {
+    "accelerate": "8a37a3a81b99be4cc1f8df1143f308a3b7d1875e",
+    "datasets": "8de37ba8d216cd21a5d7134292de01d9e12c9a56"
+  },
+  "concurrent_load": "Managed supervisor and federation native qualifications may run concurrently through the shared default host scheduler; elapsed time is not a throughput comparison.",
+  "cwd": "/tmp/ir-release-datasets-20261001",
+  "native_default_host": true,
+  "pytest_args": [
+    "-x",
+    "-q",
+    "-o",
+    "log_cli=false",
+    "--basetemp=/home/barberb/lift_coding/artifacts/codebase-obligation-portfolio-native-20261002/native-01/native-temp",
+    "--junitxml=/home/barberb/lift_coding/artifacts/codebase-obligation-portfolio-native-20261002/native-01/tests.xml",
+    "tests/integration/logic/software_contracts/test_codebase_obligation_portfolio.py"
+  ],
+  "python": "/home/barberb/.local/bin/python",
+  "runner_sha256": "8ce5dbb6544ee370ee89bb0f8d0e555e44d66f7f688e9bfb4007a45b1303c3ea",
+  "schema": "codebase-obligation-native-invocation/v1",
+  "started_at": "2026-10-02T16:21:07.726621+00:00",
+  "telemetry_injected": false
+}

@@ -1,0 +1,331 @@
+{
+  "case_artifacts": [
+    {
+      "case": "test_actual_contract_counterex0",
+      "files": 32,
+      "scope": "Authored fixture input files, complete immutable source/structured CAS, and explicit result JSON only. Git internals, DuckDB files, locks and private capabilities excluded."
+    },
+    {
+      "case": "test_actual_optional_cancellat0",
+      "files": 26,
+      "scope": "Authored fixture input files, complete immutable source/structured CAS, and explicit result JSON only. Git internals, DuckDB files, locks and private capabilities excluded."
+    },
+    {
+      "case": "test_actual_parent_for_another0",
+      "files": 25,
+      "scope": "Authored fixture input files, complete immutable source/structured CAS, and explicit result JSON only. Git internals, DuckDB files, locks and private capabilities excluded."
+    },
+    {
+      "case": "test_actual_source_change_inva0",
+      "files": 26,
+      "scope": "Authored fixture input files, complete immutable source/structured CAS, and explicit result JSON only. Git internals, DuckDB files, locks and private capabilities excluded."
+    },
+    {
+      "case": "test_actual_two_independent_un0",
+      "files": 26,
+      "scope": "Authored fixture input files, complete immutable source/structured CAS, and explicit result JSON only. Git internals, DuckDB files, locks and private capabilities excluded."
+    },
+    {
+      "case": "test_actual_unavailable_kernel0",
+      "files": 26,
+      "scope": "Authored fixture input files, complete immutable source/structured CAS, and explicit result JSON only. Git internals, DuckDB files, locks and private capabilities excluded."
+    },
+    {
+      "case": "test_injected_solver_disagreem0",
+      "files": 26,
+      "scope": "Authored fixture input files, complete immutable source/structured CAS, and explicit result JSON only. Git internals, DuckDB files, locks and private capabilities excluded."
+    },
+    {
+      "case": "test_unmodeled_selected_invent0",
+      "files": 25,
+      "scope": "Authored fixture input files, complete immutable source/structured CAS, and explicit result JSON only. Git internals, DuckDB files, locks and private capabilities excluded."
+    }
+  ],
+  "criterion": "RPI-024 selected captured integer-offset profile; root owns backlog/dependency closure",
+  "fault_injection": "Exactly one control alters an actual completed CVC5 verdict to exercise disagreement quarantine. Its other native family attempts remain real. Cancellation and unavailable-kernel controls are explicitly requested conditions, not host telemetry injection.",
+  "historical_evidence": "../codebase-obligation-portfolio-20261002/qualification.json",
+  "limitations": [
+    "Exact builtin integer/scalar/source-capture assumptions remain explicit in retained bundles.",
+    "TLC is finite and does not establish liveness; the bridge preserves only its stated restriction.",
+    "Direct selected executable/runtime-artifact bytes are pinned; ambient shared libraries and transitive theorem imports remain trusted.",
+    "Resource enforcement is sampled rather than a cgroup hard limit. Native receipt is captured before its enclosing pytest fixture exits, and is not a post-exit parent-release receipt.",
+    "No holdout/training/model/official Terminal-Bench score or performance comparison is produced."
+  ],
+  "native_host": {
+    "concurrent_other_qualifications": true,
+    "default_shared_authority": true,
+    "maximum_parallel": 2,
+    "policies_weakened": false,
+    "telemetry_injected": false,
+    "throughput_comparison": false
+  },
+  "qualified": true,
+  "result_records": [
+    {
+      "case": "test_actual_contract_counterex0",
+      "final_source_validation": true,
+      "path": "native-01/cases/test_actual_contract_counterex0/last-result.json",
+      "selected_paths": [
+        "main.py"
+      ],
+      "status": "refuted",
+      "units": [
+        {
+          "bridge": "blocked",
+          "finite": "refuted",
+          "mathematical_status": "refuted",
+          "native_attempts": {
+            "cvc5": "refuted",
+            "isabelle": "refuted",
+            "lean": "refuted",
+            "rocq": "refuted",
+            "z3": "refuted"
+          },
+          "path": "main.py"
+        }
+      ]
+    },
+    {
+      "case": "test_actual_optional_cancellat0",
+      "final_source_validation": true,
+      "path": "native-01/cases/test_actual_optional_cancellat0/last-result.json",
+      "selected_paths": [
+        "main.py"
+      ],
+      "status": "proved",
+      "units": [
+        {
+          "bridge": "proved",
+          "finite": "proved",
+          "mathematical_status": "proved",
+          "native_attempts": {
+            "cvc5": "proved",
+            "isabelle": "cancelled",
+            "lean": "proved",
+            "rocq": "cancelled",
+            "z3": "proved"
+          },
+          "path": "main.py"
+        }
+      ]
+    },
+    {
+      "case": "test_actual_source_change_inva0",
+      "final_source_validation": false,
+      "path": "native-01/cases/test_actual_source_change_inva0/last-result.json",
+      "selected_paths": [
+        "main.py"
+      ],
+      "status": "invalidated",
+      "units": [
+        {
+          "bridge": "proved",
+          "finite": "proved",
+          "mathematical_status": "proved",
+          "native_attempts": {
+            "cvc5": "proved",
+            "isabelle": "cancelled",
+            "lean": "proved",
+            "rocq": "cancelled",
+            "z3": "proved"
+          },
+          "path": "main.py"
+        }
+      ]
+    },
+    {
+      "case": "test_actual_two_independent_un0",
+      "final_source_validation": true,
+      "path": "native-01/cases/test_actual_two_independent_un0/native-two-unit-result.json",
+      "selected_paths": [
+        "main.py",
+        "second.py"
+      ],
+      "status": "proved",
+      "units": [
+        {
+          "bridge": "proved",
+          "finite": "proved",
+          "mathematical_status": "proved",
+          "native_attempts": {
+            "cvc5": "proved",
+            "isabelle": "proved",
+            "lean": "proved",
+            "rocq": "proved",
+            "z3": "proved"
+          },
+          "path": "main.py"
+        },
+        {
+          "bridge": "proved",
+          "finite": "proved",
+          "mathematical_status": "proved",
+          "native_attempts": {
+            "cvc5": "proved",
+            "isabelle": "proved",
+            "lean": "proved",
+            "rocq": "proved",
+            "z3": "proved"
+          },
+          "path": "second.py"
+        }
+      ]
+    },
+    {
+      "case": "test_actual_unavailable_kernel0",
+      "final_source_validation": true,
+      "path": "native-01/cases/test_actual_unavailable_kernel0/last-result.json",
+      "selected_paths": [
+        "main.py"
+      ],
+      "status": "unknown",
+      "units": [
+        {
+          "bridge": "blocked",
+          "finite": "proved",
+          "mathematical_status": "unknown",
+          "native_attempts": {
+            "cvc5": "proved",
+            "isabelle": "unavailable",
+            "lean": "unavailable",
+            "rocq": "unavailable",
+            "z3": "proved"
+          },
+          "path": "main.py"
+        }
+      ]
+    },
+    {
+      "case": "test_injected_solver_disagreem0",
+      "final_source_validation": true,
+      "path": "native-01/cases/test_injected_solver_disagreem0/last-result.json",
+      "selected_paths": [
+        "main.py"
+      ],
+      "status": "quarantined",
+      "units": [
+        {
+          "bridge": "blocked",
+          "finite": "proved",
+          "mathematical_status": "quarantined",
+          "native_attempts": {
+            "cvc5": "refuted",
+            "isabelle": "proved",
+            "lean": "proved",
+            "rocq": "proved",
+            "z3": "proved"
+          },
+          "path": "main.py"
+        }
+      ]
+    }
+  ],
+  "schema": "codebase-obligation-portfolio-native-qualification/v1",
+  "semantic_scope": "Captured standalone integer-offset mathematical models; Lean/Rocq/Isabelle kernel checks, Z3/CVC5 candidates, finite TLC stuttering invariant, explicit one-way Lean finite restriction bridge. No arbitrary Python-runtime equivalence, unrestricted logic-family equivalence, task completion, or durable proof-cache promotion.",
+  "source_commits": {
+    "accelerate": "8a37a3a81b99be4cc1f8df1143f308a3b7d1875e",
+    "datasets": "8de37ba8d216cd21a5d7134292de01d9e12c9a56"
+  },
+  "source_pins": {
+    "all_match_tested_commits": true,
+    "before_after_unchanged": true,
+    "imported_source_records": 116,
+    "portfolio_producers_unchanged": true,
+    "tool_pins_unchanged": true,
+    "unique_loaded_files": 115
+  },
+  "status": "qualified_selected_profile",
+  "tests": {
+    "errors": 0,
+    "failed": 0,
+    "native_controls": 8,
+    "passed": 20,
+    "pure_controls": 12,
+    "pytest_seconds": 71.02,
+    "skipped": 0,
+    "test_cases": [
+      {
+        "name": "test_pure_typed_and_or_graph_keeps_proposals_and_explicit_bridge_dependencies",
+        "seconds": 0.184
+      },
+      {
+        "name": "test_closed_finite_domain_refuses_unsupported_values[values0]",
+        "seconds": 0.012
+      },
+      {
+        "name": "test_closed_finite_domain_refuses_unsupported_values[values1]",
+        "seconds": 0.011
+      },
+      {
+        "name": "test_closed_finite_domain_refuses_unsupported_values[values2]",
+        "seconds": 0.011
+      },
+      {
+        "name": "test_closed_finite_domain_refuses_unsupported_values[values3]",
+        "seconds": 0.011
+      },
+      {
+        "name": "test_closed_finite_domain_refuses_unsupported_values[values4]",
+        "seconds": 0.011
+      },
+      {
+        "name": "test_closed_finite_domain_refuses_unsupported_values[values5]",
+        "seconds": 0.011
+      },
+      {
+        "name": "test_tlc_exact_machine_integer_range_is_explicit_not_an_unbounded_equivalence[2147483648-inputs0]",
+        "seconds": 0.017
+      },
+      {
+        "name": "test_tlc_exact_machine_integer_range_is_explicit_not_an_unbounded_equivalence[1-inputs1]",
+        "seconds": 0.017
+      },
+      {
+        "name": "test_tlc_exact_machine_integer_range_is_explicit_not_an_unbounded_equivalence[-1-inputs2]",
+        "seconds": 0.018
+      },
+      {
+        "name": "test_pure_single_flight_deduplicates_exact_obligations_but_not_changed_contracts",
+        "seconds": 0.088
+      },
+      {
+        "name": "test_pure_selected_tool_identity_is_detached_and_changed_bytes_refuse",
+        "seconds": 0.002
+      },
+      {
+        "name": "test_actual_two_independent_units_six_native_families_and_required_bridges",
+        "seconds": 19.662
+      },
+      {
+        "name": "test_actual_unavailable_kernels_do_not_promote_smt_and_tlc",
+        "seconds": 4.661
+      },
+      {
+        "name": "test_actual_optional_cancellation_preserves_required_lean_bridge_and_final_validation",
+        "seconds": 4.901
+      },
+      {
+        "name": "test_actual_contract_counterexample_is_kernel_checked_and_bridge_blocks",
+        "seconds": 11.533
+      },
+      {
+        "name": "test_injected_solver_disagreement_quarantines_with_real_other_family_receipts",
+        "seconds": 22.291
+      },
+      {
+        "name": "test_actual_source_change_invalidates_all_dependent_receipts",
+        "seconds": 4.764
+      },
+      {
+        "name": "test_unmodeled_selected_inventory_is_explicit_unsupported",
+        "seconds": 1.634
+      },
+      {
+        "name": "test_actual_parent_for_another_repository_refuses_before_phase_or_owner_reads",
+        "seconds": 1.106
+      }
+    ],
+    "total": 20,
+    "wall_seconds": 71.4553067360539
+  }
+}

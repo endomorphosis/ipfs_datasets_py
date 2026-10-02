@@ -1,0 +1,48 @@
+{
+  "ipfs_accelerate_py.agent_supervisor.proof.codebase_obligation_portfolio": "bafkreiajvvcx6q4kpqw4qbmms7mvq5rdqatw3qeepkftvcrpj3ehsypmt4",
+  "ipfs_accelerate_py.agent_supervisor.runtime.repository_resource_bridge": "bafkreibxxvlyz5exgwttcdbdwhi42icnmi6a5hb7fwai3wlyhechkqb7rm",
+  "ipfs_datasets_py.logic.backends.codebase_process": "bafkreic4k2ntjl6xlymuf4i7zopm6igvo6m5e5rje7mtpgatz2kkzjbx4e",
+  "ipfs_datasets_py.logic.backends.kernel.isabelle": "bafkreidljl3ly5xeeyru3rbzhmoswo3pfq4ph64yrcvhzfyrztitlewnmi",
+  "ipfs_datasets_py.logic.backends.kernel.lean": "bafkreicycyiruf3lh4lpte7n2rwr7exng54trheropswld7gan233nspie",
+  "ipfs_datasets_py.logic.backends.kernel.rocq": "bafkreibx7azys3vegt2tn2ab3eicbxujnsycgigmx2prrkc35jq6oq4w6y",
+  "ipfs_datasets_py.logic.backends.portfolio": "bafkreifugk77en5ub4txfqwpkgm42shbdgu226u63plfms3tdgkrwvk6qe",
+  "ipfs_datasets_py.logic.backends.process": "bafkreiduftpoevcvynouhfc3arr6xpdanws4datosvurw2npwb7j2p6zn4",
+  "ipfs_datasets_py.logic.backends.smt.differential": "bafkreifb34377wbmgxu3xcpckqjdrpe6jaoekfkrevy45z73uqi6g3n7fy",
+  "ipfs_datasets_py.logic.backends.tla.compiler": "bafkreihqnrrejtlidensse45mr3kljgfulbkcz55ybvusulglibpxjnvom",
+  "ipfs_datasets_py.logic.backends.tla.runners": "bafkreibqr5xosbhrz4qerwtnp4tb372tq6shm2sex3myh3hznmhmcpkpp4",
+  "ipfs_datasets_py.logic.software_contracts.codebase_family_execution": "bafkreihciw6zpvpgxalmx2xuhcu4jqsntyhnopccgbdkr5wpokvk5ibeou",
+  "ipfs_datasets_py.logic.software_contracts.codebase_family_lowering": "bafkreida7q4lwty64tzuu7yasfb2albsmixj32csgqfxqnubpvh7qc3mca",
+  "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "bafkreibwdktyqsznmjlqtmrefhxznrlcvn7tejsmsn7opjnvpuermwzb5y",
+  "ipfs_datasets_py.logic.software_contracts.codebase_obligation_graph": "bafkreia565xfzyhy42hqa6vlpt6gov3vkejj7wvzmwgzp5vw3dfcb7nv64",
+  "native_integer_owner": {
+    "dependency_scope": "selected Python implementation files and native executables; ambient shared libraries are not attested",
+    "environment": {
+      "HOME": "private-workspace",
+      "LANG": "C",
+      "LC_ALL": "C",
+      "PATH": "/usr/bin:/bin",
+      "TEMP": "private-workspace",
+      "TMP": "private-workspace",
+      "TMPDIR": "private-workspace"
+    },
+    "implementation": "cpython",
+    "machine": "aarch64",
+    "parser": "cpython-312",
+    "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+    "release": "6.17.0-1014-nvidia",
+    "resource_helper": {
+      "kind": "linux-prlimit",
+      "sha256": "2a479939c95a886fb8b52244381639816f8cf1f68eee713a9227d0c5d257c805"
+    },
+    "source_sha256": {
+      "ipfs_datasets_py.logic.backends.codebase_process": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+      "ipfs_datasets_py.logic.backends.smt.compiler": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+      "ipfs_datasets_py.logic.backends.smt.differential": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+      "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee",
+      "ipfs_datasets_py.logic.software_verification.codebase_pipeline": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030",
+      "ipfs_datasets_py.logic.software_verification.codebase_source_adapters": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+      "ipfs_datasets_py.logic.software_verification.vc": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+    },
+    "system": "Linux"
+  }
+}

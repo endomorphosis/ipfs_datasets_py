@@ -1,0 +1,33 @@
+"""Await explicit root go before executing; genuine default-owner qualification."""
+from pathlib import Path
+from dataclasses import asdict
+import hashlib,importlib,json,os,subprocess,sys,time
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety import collect_proof_host_resources
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import get_global_resource_scheduler
+from ipfs_accelerate_py.agent_supervisor.runtime.resource_scheduler import sample_host_resources
+from ipfs_datasets_py.logic.software_contracts import codebase_parallel_dispatched_federation as parallel
+base=Path(__file__).resolve().parent
+roots={'datasets':Path('/tmp/ir-release-datasets-20261001'),'accelerate':Path('/tmp/ir-release-accelerate-20261001')}
+old=json.loads((roots['datasets']/'docs/autoencoders/evidence/codebase-federation-20261002/qualification.json').read_text())
+rows=[]
+for item in old['source_pins']:
+ row=dict(item);row['sha256']=hashlib.sha256((roots[row['repository']]/row['path']).read_bytes()).hexdigest();rows.append(row)
+for name in ['ipfs_datasets_py.duckdb_control.codebase_catalog','ipfs_datasets_py.duckdb_control.autoencoder_registry','ipfs_datasets_py.logic.software_contracts.codebase_ir','ipfs_datasets_py.logic.software_contracts.duckdb_ast_store','ipfs_datasets_py.logic.software_contracts.duckdb_ingest','ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot','ipfs_datasets_py.logic.software_contracts.semantic_index.scanner','ipfs_datasets_py.logic.software_contracts.python_frontend','ipfs_datasets_py.logic.backends.codebase_process','ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler','ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety','ipfs_accelerate_py.agent_supervisor.runtime.repository_resource_bridge','ipfs_accelerate_py.agent_supervisor.runtime.resource_scheduler','ipfs_accelerate_py.p2p_tasks.task_queue']:
+ module=importlib.import_module(name);path=Path(module.__file__);repository='datasets' if name.startswith('ipfs_datasets_py.') else 'accelerate';rows.append({'repository':repository,'path':str(path.relative_to(roots[repository])),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+command=[sys.executable,'-m','pytest','tests/integration/logic/software_contracts/test_codebase_federation_qualification.py','-q','-s','--basetemp='+str(base/'pytest'),'--junitxml='+str(base/'tests.xml'),'-o','cache_dir='+str(base/'pytest-cache')]
+metadata={'schema':'federation-native-attempt@1','command':command,'cwd':str(roots['datasets']),'environment':{key:os.environ[key] for key in ['IPFS_DATASETS_PY_MINIMAL_IMPORTS','PYTHONPATH','GIT_CEILING_DIRECTORIES']},'heads':{key:subprocess.check_output(['git','-C',str(path),'rev-parse','HEAD'],text=True).strip() for key,path in roots.items()},'source_pins':rows,'runtime_declared_pins':parallel._pins(),'admission':'actual default, no monkeypatched/injected host telemetry or policy','claim_scope':'local five-row8D structural-feature development profile; not384D, remote fleet or unseen benchmark'}
+(base/'run.json').write_text(json.dumps(metadata,indent=2)+'\n')
+owner=get_global_resource_scheduler();started=time.monotonic()
+with (base/'telemetry.jsonl').open('w') as telemetry,(base/'tests.log').open('w') as log:
+ def sample(phase):
+  telemetry.write(json.dumps({'phase':phase,'utc_epoch':time.time(),'datasets_host':asdict(collect_proof_host_resources()),'supervisor_host':sample_host_resources(base).to_dict(),'shared_owner':owner.snapshot()})+'\n');telemetry.flush()
+ sample('before')
+ run=subprocess.Popen(command,cwd=roots['datasets'],stdout=log,stderr=subprocess.STDOUT)
+ while run.poll() is None:
+  sample('running');time.sleep(5)
+ sample('after')
+ drift=[]
+ for row in rows:
+  if hashlib.sha256((roots[row['repository']]/row['path']).read_bytes()).hexdigest()!=row['sha256']:drift.append(row)
+ (base/'exit.json').write_text(json.dumps({'returncode':run.returncode,'pytest_pid':run.pid,'seconds':time.monotonic()-started,'source_drift':drift},indent=2)+'\n')
+ sys.exit(run.returncode or (1 if drift else 0))

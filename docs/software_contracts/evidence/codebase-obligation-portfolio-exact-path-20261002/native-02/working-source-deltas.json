@@ -1,0 +1,42 @@
+[
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py",
+    "repository": "datasets",
+    "sha256": "91417315a76a06d42d386f84b3b6430375893905906623a0b7813ae1fcf0adbb"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+    "repository": "datasets",
+    "sha256": "e459766bed0c990660334eaf264b6c46fc29e229d49ae8c416bdfc7ca142c317"
+  },
+  {
+    "path": "tests/integration/logic/software_contracts/test_codebase_federation_qualification.py",
+    "repository": "datasets",
+    "sha256": "286db30d0bc3fe451ae00d6b9608da95d9bf5d5b5f24d6758a591e375e4b58a6"
+  },
+  {
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py",
+    "repository": "datasets",
+    "sha256": "61f91dfe282ffab24cac643a231372d478f288e489b433e68dd7b8c764907408"
+  },
+  {
+    "path": "benchmarks/agent_supervisor/container_coding/native_repository_finite_supervision.py",
+    "repository": "accelerate",
+    "sha256": "61c600d57b37437b721c3320eed2d5dc500f766f87fafb224db4b9d9eec02d7f"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_cache.py",
+    "repository": "accelerate",
+    "sha256": "3b42f38d1c7b5c9841d4f0b845098f11a55858779e9b814d8ecd455904bfb321"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/repository_behavioral_admission.py",
+    "repository": "accelerate",
+    "sha256": "2283708f5ec125676bfc8a08c518a28dd0d3fb13295e4e43f1d346eb31eaec5e"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/repository_successor_context.py",
+    "repository": "accelerate",
+    "sha256": "a534d801c7724edd17cf7a3999e73c924eb87182f16a1629265caba3e2d194c1"
+  }
+]

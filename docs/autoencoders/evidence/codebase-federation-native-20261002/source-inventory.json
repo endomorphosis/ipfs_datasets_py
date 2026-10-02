@@ -1,0 +1,27 @@
+[
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+    "bytes": 49880,
+    "sha256": "e459766bed0c990660334eaf264b6c46fc29e229d49ae8c416bdfc7ca142c317"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py",
+    "bytes": 36337,
+    "sha256": "91417315a76a06d42d386f84b3b6430375893905906623a0b7813ae1fcf0adbb"
+  },
+  {
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py",
+    "bytes": 17570,
+    "sha256": "61f91dfe282ffab24cac643a231372d478f288e489b433e68dd7b8c764907408"
+  },
+  {
+    "path": "tests/integration/logic/software_contracts/test_codebase_federation_qualification.py",
+    "bytes": 19895,
+    "sha256": "286db30d0bc3fe451ae00d6b9608da95d9bf5d5b5f24d6758a591e375e4b58a6"
+  },
+  {
+    "path": "docs/autoencoders/CODEBASE_SOURCE_FEDERATION_QUALIFICATION.md",
+    "bytes": 2995,
+    "sha256": "e429f8b748dda66bb2f6c2b3660a94446de32bde8b4e92c58c26d7b588757a5d"
+  }
+]

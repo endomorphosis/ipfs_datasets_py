@@ -1,0 +1,16 @@
+{
+  "all_loaded_sources_match_exact_snapshots": true,
+  "all_loaded_sources_match_tested_commits": true,
+  "authority_scope": "Closed mathematical integer-offset and finite stuttering restriction only; no Python runtime equivalence, task completion or proof cache promotion.",
+  "commits": {
+    "accelerate": "8a37a3a81b99be4cc1f8df1143f308a3b7d1875e",
+    "datasets": "8de37ba8d216cd21a5d7134292de01d9e12c9a56"
+  },
+  "elapsed_seconds": 64.27229483402334,
+  "finished_at": "2026-10-02T16:31:21.098185+00:00",
+  "portfolio_producers_unchanged": true,
+  "pytest_exit_code": 0,
+  "schema": "codebase-obligation-native-run/v1",
+  "source_pins_unchanged": true,
+  "tools_unchanged": true
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+    "sha256": "88cc4da95cd10ee9164a7ee2dd0d19900e2537b7599734050b1b5bb7b1d5a400"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py",
+    "sha256": "938418a7adb8af47649a8bfa8027e976071d3ef8c6271b62def7ca8bc3426f27"
+  },
+  {
+    "path": "tests/integration/logic/software_contracts/test_codebase_federation_qualification.py",
+    "sha256": "33e9e4864e901f12e306bdba8a2e7183b67a81ea3a0668996f1f6d1fd7c3239a"
+  },
+  {
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py",
+    "sha256": "7752842d989def1e0ce333c027b06cb4872c9fdcf698891b57862fa7fd0c0a3d"
+  }
+]

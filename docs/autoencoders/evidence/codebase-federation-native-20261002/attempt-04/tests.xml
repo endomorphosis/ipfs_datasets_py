@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="11" failures="0" skipped="0" tests="12" time="25.135" timestamp="2026-10-02T16:19:17.431069+00:00" hostname="spark-b271"><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_real_native_queue_source_training_binary_reduction_and_reset" time="24.526"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_completed_exact_retry_and_historical_load_do_not_fit" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_independent_decoder_rejects_self_consistent_favorable_saved_diagnostics" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_owner_retention_replays_actual_weights_and_cas_is_parent_bound" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_caller_favorable_metrics_cannot_replace_independent_policy" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_actual_lost_queue_completion_reply_recovers_without_second_local_fit" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_missing_transfer_artifact_cannot_start_local_optimizer" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_actual_source_change_after_local_fit_refuses_queue_and_native_completion" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_gradient_mode_refuses_before_owner_or_queue_access" time="0.000" /><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_actual_two_native_subprocesses_overlap_and_reduce_identically" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_parallel_indexed_restart_replay_never_scans_or_fits" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase><testcase classname="tests.integration.logic.software_contracts.test_codebase_federation_qualification" name="test_parallel_cancellation_reaps_actual_workers_before_parent_release" time="0.000"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs&quot;">tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:68: in current
+    value.round=train(value,parent)
+                ^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_federation_qualification.py:82: in train
+    return dispatched.train_current_dispatched_codebase_round(value.index,value.repo,**options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py:353: in train_current_dispatched_codebase_round
+    federation._evaluation(comparison, base, state, limits)
+ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py:309: in _evaluation
+    source._diagnostic(value[name][role], base[role], numerical,
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:276: in _diagnostic
+    _require(replayed == inference, "independently replayed numerical feature diagnostic differs")
+ipfs_datasets_py/logic/software_contracts/codebase_source_training.py:53: in _require
+    raise CodebaseFeatureTrainingError(message)
+E   ipfs_datasets_py.logic.software_contracts.codebase_source_training.CodebaseFeatureTrainingError: independently replayed numerical feature diagnostic differs</error></testcase></testsuite></testsuites>

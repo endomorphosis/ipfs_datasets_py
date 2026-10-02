@@ -1,0 +1,617 @@
+[
+  {
+    "path": "benchmarks/agent_supervisor/container_coding/native_repository_finite_supervision.py",
+    "repository": "accelerate",
+    "sha256": "61c600d57b37437b721c3320eed2d5dc500f766f87fafb224db4b9d9eec02d7f"
+  },
+  {
+    "path": "ipfs_accelerate_py/__init__.py",
+    "repository": "accelerate",
+    "sha256": "5083369f823be18cd467346f6f3b955925ec65bedafe9eb28a61ca8897997c03"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/__init__.py",
+    "repository": "accelerate",
+    "sha256": "3c16dfa0ab9f73de44418dcdb44996fbf0f293daaf7ce9979d2e42a7bb1a2436"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/analysis/__init__.py",
+    "repository": "accelerate",
+    "sha256": "c4bffa53bdb01274beba98a8917d1aa74592174a02daa7cd04a9bcdac66255d5"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/analysis/analysis_ast_index.py",
+    "repository": "accelerate",
+    "sha256": "af56be37b50ba8528cbef058d127ec88497cff9e9a396395055ed2ec2d8777b2"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/analysis/program_ast_adapters.py",
+    "repository": "accelerate",
+    "sha256": "fa5049a262f807d5ee8eaae9c2bc6e32683dac913e7290aefebc1d9c5a556e5f"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/analysis/repository_corpus_index.py",
+    "repository": "accelerate",
+    "sha256": "fca27c9c2de55722789d097e50bd29a8df76222376080ca5a4f078f435c1828a"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/analysis/repository_forest.py",
+    "repository": "accelerate",
+    "sha256": "bf66e5c5b65fcfb70391031db20c4050fe30c7af5740239d65878d45ad946429"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/control/__init__.py",
+    "repository": "accelerate",
+    "sha256": "3149e832facdcebf525dbbe990f81a8f9fa79cb4b4295280cfe97124bc8a2e27"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/control/control_contracts.py",
+    "repository": "accelerate",
+    "sha256": "b1a402d74f28584c26133e1b800f3010f69a0e643375037e693856a95ae8e1ca"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/control/control_plane.py",
+    "repository": "accelerate",
+    "sha256": "7c1bf2a95a11fb34aaecbcd04da82964c1702a5e7e95206c40e4b9f5afa9d34b"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/core/__init__.py",
+    "repository": "accelerate",
+    "sha256": "8f63664c0f36cffc31902ee60919f14280ef47c81d8c5a67fd18c13476a32f7a"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/core/conflict_graph.py",
+    "repository": "accelerate",
+    "sha256": "a768ee1814dad942259202994f68d0b628dcf74e04bdb3829d788c677daac075"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/core/multiformats_identity.py",
+    "repository": "accelerate",
+    "sha256": "e7cf2aa7b6f7fb39df630d6c804e13ffb5d58cf9588178fcc57416eb2fc68550"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/merge/__init__.py",
+    "repository": "accelerate",
+    "sha256": "e69b0078b66d97d7b489f97523477871c94853569eefdcad0256380d19051a5b"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/merge/checkout_lock.py",
+    "repository": "accelerate",
+    "sha256": "8e0820ac71147059c76a81e1c0281e932e2c800838169f8392a89522c40ed87f"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/objectives/__init__.py",
+    "repository": "accelerate",
+    "sha256": "61b58d42ede1324024a280e35c0772263496c42d917deeb82991455964db0c15"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/objectives/goal_completion.py",
+    "repository": "accelerate",
+    "sha256": "24ec899c60404447a3ded282bae3ccfa958229ee0578b15f9639c82183a290b4"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/proof/__init__.py",
+    "repository": "accelerate",
+    "sha256": "ae0ac8ba4b29666a7d527d7153b77869fd9a96b9e66b7a76e44273d663353b22"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/proof/codebase_obligation_portfolio.py",
+    "repository": "accelerate",
+    "sha256": "09ad457f438a7c2dc8058c97d958762380276dc0847a8b3a8a2f4ec87961ec9f"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_cache.py",
+    "repository": "accelerate",
+    "sha256": "3b42f38d1c7b5c9841d4f0b845098f11a55858779e9b814d8ecd455904bfb321"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_contracts.py",
+    "repository": "accelerate",
+    "sha256": "06d897f1679e615f18b6cf6fbc6a666515e0826ca87ea0daf89b82d8d2418450"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/__init__.py",
+    "repository": "accelerate",
+    "sha256": "9e528fb4611c1c0d25646b85f751046c7de73ba5547e6a996572abe37ded0a64"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/repository_behavioral_admission.py",
+    "repository": "accelerate",
+    "sha256": "2283708f5ec125676bfc8a08c518a28dd0d3fb13295e4e43f1d346eb31eaec5e"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/repository_resource_bridge.py",
+    "repository": "accelerate",
+    "sha256": "37bd578cf49735a7310c23b1d1cd204d623c0e9c3f2d808dd978390475403f8b"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/repository_successor_context.py",
+    "repository": "accelerate",
+    "sha256": "a534d801c7724edd17cf7a3999e73c924eb87182f16a1629265caba3e2d194c1"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/resource_scheduler.py",
+    "repository": "accelerate",
+    "sha256": "67d4e84d542ebbc167da4488df53ab72a1b258c6722b1f1ff9c77fdb85af841c"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/supervisor_meta_index.py",
+    "repository": "accelerate",
+    "sha256": "a35c5c5fddc906499845cdcfda61bb5e0e0277d1bce07a52a2e794ebdf0009e9"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/self_improvement/__init__.py",
+    "repository": "accelerate",
+    "sha256": "7096b272db0aee285a2e3c08197a00e4fd61827171e8f0ee57569f655529668e"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/self_improvement/self_improvement_completion.py",
+    "repository": "accelerate",
+    "sha256": "4dcd01c5d444baa22a7e9589e2395b5970bbf7fd030ef6b94af101f3bb923947"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/task_sources/__init__.py",
+    "repository": "accelerate",
+    "sha256": "247e63849d1bf589825fcf965b6c6d20cc95de4e147f6121cd6fe6fd7cf06deb"
+  },
+  {
+    "path": "ipfs_accelerate_py/agent_supervisor/task_sources/task_identity.py",
+    "repository": "accelerate",
+    "sha256": "4168c617ba079ca8fbeb2346931d4c7fcfb6516a09e5ddc7079434fb3541654e"
+  },
+  {
+    "path": "ipfs_accelerate_py/utils/__init__.py",
+    "repository": "accelerate",
+    "sha256": "07c143316f3fb9d40d5ee1d0f6c584948ba49438b059bcdb6d868e0f81e3d3e3"
+  },
+  {
+    "path": "ipfs_accelerate_py/utils/cid_utils.py",
+    "repository": "accelerate",
+    "sha256": "e7f6e94532c19ae22781fef967715f28c6825ffe4721bf52a52b647dce55e139"
+  },
+  {
+    "path": "ipfs_accelerate_py/utils/mistral_vibe.py",
+    "repository": "accelerate",
+    "sha256": "4c3bb7ef67053f2c14d592c4d0f1f706f6a815fa0605f527187d5d3a2e7498c7"
+  },
+  {
+    "path": "sitecustomize.py",
+    "repository": "accelerate",
+    "sha256": "23864b9e858107f1dd6c93ed02d4649c385e28cc65092c0363b56e0aa0f9370e"
+  },
+  {
+    "path": "__init__.py",
+    "repository": "datasets",
+    "sha256": "bd518ec0f37a0a5c4c0b35e7cf36504716a1fe4dbe4f0a803629a965a9fdeeb1"
+  },
+  {
+    "path": "conftest.py",
+    "repository": "datasets",
+    "sha256": "2eab130f3effda3737f25a1770ccd5f9d4955ba42c3d692d659801ffdc1035cf"
+  },
+  {
+    "path": "ipfs_datasets_py/__init__.py",
+    "repository": "datasets",
+    "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+  },
+  {
+    "path": "ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+    "repository": "datasets",
+    "sha256": "fdcf6d4ce676fbb1e5b8b42bab18c76368509abaedc936b1efd9aa4d53bb37d1"
+  },
+  {
+    "path": "ipfs_datasets_py/duckdb_control/contracts.py",
+    "repository": "datasets",
+    "sha256": "7ef4df9216ecaef4a415afffbb353b9b091120a4faaf702d3c243d43ceb6c199"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/__init__.py",
+    "repository": "datasets",
+    "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/codebase_process.py",
+    "repository": "datasets",
+    "sha256": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/kernel/isabelle.py",
+    "repository": "datasets",
+    "sha256": "6b4af6bc76e426234dc4393b1d2b3b6f2c38f3fb9888aa7c9711ccd13592cd62"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/kernel/lean.py",
+    "repository": "datasets",
+    "sha256": "5816111a176b3f16f993edd46d1f92ed3779389c9173e5658fe60375bdb64f41"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/kernel/rocq.py",
+    "repository": "datasets",
+    "sha256": "37f833896ea434f536e801d91020de896cb02320ccbe9f18a85bea61e74396f6"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/kernel/wasm.py",
+    "repository": "datasets",
+    "sha256": "49cfdbc0108b43d45ab9f567b4153f384985563b075f369b32e37f855252d6cc"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/portfolio.py",
+    "repository": "datasets",
+    "sha256": "b432bff237b40f2772c2cf5199cd48e119a9ad7a9edbd6564b7319951b555e81"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/process.py",
+    "repository": "datasets",
+    "sha256": "742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/results.py",
+    "repository": "datasets",
+    "sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/smt/compiler.py",
+    "repository": "datasets",
+    "sha256": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/smt/differential.py",
+    "repository": "datasets",
+    "sha256": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/tla/compiler.py",
+    "repository": "datasets",
+    "sha256": "f06c6244cd68191b29139d6476a5a4c5a2c2a167bdc06b4951665a02fba5b573"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/backends/tla/runners.py",
+    "repository": "datasets",
+    "sha256": "308f6ee904f1cf2048da6d7f261dff5387a4766a44bed983ecf96b0ec13d4f7f"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/families/models.py",
+    "repository": "datasets",
+    "sha256": "1a92305ef498812e3757147179907d4ddf4a4518371034fc2363922d5d5fed3f"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/__init__.py",
+    "repository": "datasets",
+    "sha256": "4c0070482e009dd7cb9875e91124d48683da37d53f691cccb306ec50f23c946c"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/artifacts.py",
+    "repository": "datasets",
+    "sha256": "63896fb1fb4ef22be50d76996ce404119a5d209d01f046a6a842b7b96848ebc6"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/canonical.py",
+    "repository": "datasets",
+    "sha256": "339b5778581c19525a7685edf432aaf124cd12e02d37cd0eca88cb25ab86c0d0"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/claims.py",
+    "repository": "datasets",
+    "sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/diagnostics.py",
+    "repository": "datasets",
+    "sha256": "508fd3c2dce94a1eb1e2dff19f8f578ccec2d1e94eb1db2742f75783e23ff198"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/evidence.py",
+    "repository": "datasets",
+    "sha256": "826743829d2964b97e13720b5ea52907de77f6b18e8886e5a3c0fb6a977fdeff"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/identity.py",
+    "repository": "datasets",
+    "sha256": "606bffc1f938c59f44651eeb65cb9c0738e16e465aabba0ad82ef05e3b5b3b0e"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/protocols.py",
+    "repository": "datasets",
+    "sha256": "b452a7095a2524f0ea3f4e4f3a395643d3257cd6f42e3c77f8e1817df62f6fed"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/ir_core/provenance.py",
+    "repository": "datasets",
+    "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/__init__.py",
+    "repository": "datasets",
+    "sha256": "b4182826af58a52d90da4cea3c57ee684be90d4b41e39f209a697a0bbd8e3e45"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/ast_ir.py",
+    "repository": "datasets",
+    "sha256": "1461edb7c39f2adc89a70e54decfa291ccceafc50ed23011fbdeea5acb4c8b91"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/cache.py",
+    "repository": "datasets",
+    "sha256": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_family_execution.py",
+    "repository": "datasets",
+    "sha256": "e245bd97d5e6b816cbeaf438a9c4c24d9e0ed73c423046a8f6cf72aaaea02475"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_family_lowering.py",
+    "repository": "datasets",
+    "sha256": "60fc38bb4f1ee4f34a7f009143a02c32622e9de852340b7836817d4ff80b6c10"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py",
+    "repository": "datasets",
+    "sha256": "91417315a76a06d42d386f84b3b6430375893905906623a0b7813ae1fcf0adbb"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_integer_profile.py",
+    "repository": "datasets",
+    "sha256": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+    "repository": "datasets",
+    "sha256": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_obligation_graph.py",
+    "repository": "datasets",
+    "sha256": "1df76e5ce0f8e68f007aab7cfc67577551129fdab9658d97f6b6d8ca20fdb5f7"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_resources.py",
+    "repository": "datasets",
+    "sha256": "207f5b168f0cacf2ed6356c622a87e2bc8531c9a252c79de2c19ce5bca710700"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py",
+    "repository": "datasets",
+    "sha256": "7037fca4046b357ef941cd511b20da55979a8055056ebc755bcb65c0026cb55b"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py",
+    "repository": "datasets",
+    "sha256": "8c43bc1b97a94c5100815447130a549266b9ccdc266574e2b8b224a3ea82aef5"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py",
+    "repository": "datasets",
+    "sha256": "79a8e1b92365264bfafb511f1689a321d7d742046101199aca253da97726aec2"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+    "repository": "datasets",
+    "sha256": "e459766bed0c990660334eaf264b6c46fc29e229d49ae8c416bdfc7ca142c317"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/content.py",
+    "repository": "datasets",
+    "sha256": "c69cb85f0901a9a678bcbdf7738ab00095bbe45c5b40d875f2099474bd2a059c"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py",
+    "repository": "datasets",
+    "sha256": "34f728f42076b66c564eef64edfa1f9ee7039ae29148ab68f75679dcddcc42c3"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py",
+    "repository": "datasets",
+    "sha256": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/python_frontend.py",
+    "repository": "datasets",
+    "sha256": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/repository.py",
+    "repository": "datasets",
+    "sha256": "742b7ac132e6327d8ce52973890239bc789cebe2e816ca0c57c1041d01600db9"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/schema_versions.py",
+    "repository": "datasets",
+    "sha256": "fd7270cada2126606c00870dcb7291d27d7f8182e0e861d4f83905031668bbc6"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/__init__.py",
+    "repository": "datasets",
+    "sha256": "5c41f8f1e165dd365eaaaa2a5f7a9a8bb97d311604a79b42b5999ca2c06f8997"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/delta.py",
+    "repository": "datasets",
+    "sha256": "8344f50bfbf9af6418ab35e173522649006696f98e56eaeb0a09739c1a4da427"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/explain.py",
+    "repository": "datasets",
+    "sha256": "e9b6867f638b0e00b79a603be05c05186900302f578c0a0fadf431374800c1b9"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py",
+    "repository": "datasets",
+    "sha256": "373f6f4e99923b58487256b956ebdfd66248485713a91483eca4e6783b59e102"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/index.py",
+    "repository": "datasets",
+    "sha256": "c88632d2ad97ebbe87df89494d641413a6a263781e91df6269aca2b5daac235c"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/invalidation.py",
+    "repository": "datasets",
+    "sha256": "45c36b78be53bf6ec2dd65452eb282ba0e7e9b94d5385a0d8f66ebbad4f3f375"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py",
+    "repository": "datasets",
+    "sha256": "4b061c97838929a4cdc055998ce71aa854234c7e75d3fbee12595fa1bafa8a75"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/pytest_analysis.py",
+    "repository": "datasets",
+    "sha256": "45a0ab3fae08e91db2971540e5d933c8e82c47e7f65b3e5ec88912dbedc67ab4"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py",
+    "repository": "datasets",
+    "sha256": "99af34e5427faadbb9f7caa0aa025b18c8b43dbf1eb689ef7f140ea8ded7d25f"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py",
+    "repository": "datasets",
+    "sha256": "002957f910a0bc1ff29de1ed72aca9c2464218ac5f65478be34a7c8f04e166a1"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py",
+    "repository": "datasets",
+    "sha256": "5135e623a0a3f970252da63dce049be167e8bb73db5355f6c3116316b70aafa6"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/symbol_graph.py",
+    "repository": "datasets",
+    "sha256": "4e269d1e2f39ea27582e98f240996696d61b0fe0b1358e363ff2376baa7972e3"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/codebase_pipeline.py",
+    "repository": "datasets",
+    "sha256": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/codebase_source_adapters.py",
+    "repository": "datasets",
+    "sha256": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/concurrency.py",
+    "repository": "datasets",
+    "sha256": "4d47e1ffd235282b841ae00644832ec9105fc90ee9dbf05ced901f937e0e346a"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/contracts.py",
+    "repository": "datasets",
+    "sha256": "0238a345e5c35aec78801891562e896d719bca0424eab8ad790d5da2c239c5aa"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/ir.py",
+    "repository": "datasets",
+    "sha256": "40f59ac33b5e8c282b06d7d8dec34940ffa8013f50fc65fc71e19a1ea41ef282"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/program.py",
+    "repository": "datasets",
+    "sha256": "f051f42d64c5f993451972924953cc7eaa6d17df097235ddabfd5d791d406f91"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/properties.py",
+    "repository": "datasets",
+    "sha256": "0b438555895505df283d7f151887a14d826df27259f4f5eee0ac584b74dbe10a"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/receipts.py",
+    "repository": "datasets",
+    "sha256": "4065833e8fa766e587035c456b381fead715f39c1e4e4619ea0d0bb969a609ea"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/refinement.py",
+    "repository": "datasets",
+    "sha256": "975b8493035f414e82a611499c119aab9843b0b8546bd1cb82d04344f170874d"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/state.py",
+    "repository": "datasets",
+    "sha256": "085841a600ed8f8fde202e720d1f70e5a0432e4bf80d20ff11fe60c90107c54c"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/tactician/contracts.py",
+    "repository": "datasets",
+    "sha256": "ba509edfbdc941bef71d4d7462cd9e03fbf32ff133648afb7eedc165d4c07452"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/tactician/proof_plan.py",
+    "repository": "datasets",
+    "sha256": "c2a9b78691f17c2c6698f033ec7bfc749ede7eba70f96aaca713b397ae47983c"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/transitions.py",
+    "repository": "datasets",
+    "sha256": "982d7e3a243fb70f5f797b7b6efdb45faebb3895945b06c04a9421fbe4ba7d86"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/translations.py",
+    "repository": "datasets",
+    "sha256": "c418cf45efd69dd01ced3eb2e05f9bc411ab12855fa408401d1ba74839df6dda"
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_verification/vc.py",
+    "repository": "datasets",
+    "sha256": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+  },
+  {
+    "path": "ipfs_datasets_py/optimizers/__init__.py",
+    "repository": "datasets",
+    "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+  },
+  {
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+    "repository": "datasets",
+    "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+  },
+  {
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+    "repository": "datasets",
+    "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+  },
+  {
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+    "repository": "datasets",
+    "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+  },
+  {
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+    "repository": "datasets",
+    "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+  },
+  {
+    "path": "ipfs_datasets_py/router_deps.py",
+    "repository": "datasets",
+    "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+  },
+  {
+    "path": "tests/__init__.py",
+    "repository": "datasets",
+    "sha256": "89588b0c2be9d872060e78aa68ccf95f94ca27ea6bcb79a43509d66c296c73ce"
+  },
+  {
+    "path": "tests/conftest.py",
+    "repository": "datasets",
+    "sha256": "0a255dc653799cb980d7edbb1d7b2e3c8f0d81b091d4986aa712e1e8e12b7f10"
+  },
+  {
+    "path": "tests/integration/__init__.py",
+    "repository": "datasets",
+    "sha256": "f81488e329268d54e4267e9728e98a864c6a626c8cce0aa055512e1de3d156c9"
+  },
+  {
+    "path": "tests/integration/logic/software_contracts/test_codebase_federation_qualification.py",
+    "repository": "datasets",
+    "sha256": "286db30d0bc3fe451ae00d6b9608da95d9bf5d5b5f24d6758a591e375e4b58a6"
+  },
+  {
+    "path": "tests/integration/logic/software_contracts/test_codebase_obligation_portfolio.py",
+    "repository": "datasets",
+    "sha256": "2f28b80330d7ebf26f44272cd3b99540ccaa42faebcb622dd24c71892badcbc8"
+  },
+  {
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py",
+    "repository": "datasets",
+    "sha256": "61f91dfe282ffab24cac643a231372d478f288e489b433e68dd7b8c764907408"
+  }
+]

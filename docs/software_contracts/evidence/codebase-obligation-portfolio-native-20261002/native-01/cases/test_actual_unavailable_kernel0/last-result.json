@@ -1,0 +1,3261 @@
+{
+  "attempt_timeout_seconds": 90,
+  "bridge_scope": "Mathematical integer equality restricted to the exact finite initial inputs of a stuttering state model; no liveness, arbitrary TLA equivalence or Python-runtime theorem.",
+  "final_source_validation": true,
+  "finite_inputs": [
+    -1,
+    0,
+    1
+  ],
+  "inventory_coverage": {
+    "ast_failed": 0,
+    "ast_ok": 2,
+    "ast_partial": 0,
+    "captured_entries": 3,
+    "checked_evidence_records": 0,
+    "checked_properties": 0,
+    "declared_contracts": 2,
+    "declared_execution_records": 0,
+    "formalized_properties": 2,
+    "inventory_entries": 3,
+    "modeled_contracts": 2,
+    "opaque_entries": 0,
+    "semantic_symbols": 4,
+    "source_bound_models": 2,
+    "unindexed_entries": 1,
+    "unmodeled_contracts": 0,
+    "unmodeled_inventory_units": 1
+  },
+  "manifest_cid": "baguqeerawuvowbrijtvfmfazto5mgn3tra2mfaqxbbemz4h6zgdkliroon7a",
+  "maximum_parallel": 2,
+  "plans": {
+    "alternatives": [
+      {
+        "alternative_ids": [
+          "0:lean"
+        ],
+        "bounds": {
+          "contract_version": 1,
+          "extra": {},
+          "max_candidates": 32,
+          "max_depth": 16,
+          "max_nodes": 128,
+          "max_steps": 64,
+          "memory_bytes": 268435456,
+          "model_token_limit": 0,
+          "network_allowed": false,
+          "schema": "ipfs_datasets_py/logic/software_verification/resource-bounds@1",
+          "wall_time_ms": 30000
+        },
+        "completion_claimed": false,
+        "covered_obligation_ids": [
+          "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:lean:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+        ],
+        "formal_goal_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "graph_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "hard_failures": [],
+        "metadata": {
+          "runtime_proof": false,
+          "scope": "closed_source_model_and_finite_restriction"
+        },
+        "plan_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq:0",
+        "producer_kinds": [
+          "codebase_family_native_portfolio:0:lean"
+        ],
+        "proof_claimed": false,
+        "required_obligation_ids": [
+          "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:lean:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+        ],
+        "root_goal_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "schema": "ipfs_datasets_py/logic/software_verification/missing-proof-plan-alternative@1",
+        "steps": [
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [
+              "unit0:lean",
+              "unit0:finite",
+              "unit0:bridge"
+            ],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:current-source"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "final source/policy fence",
+            "step_id": "current-source",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [
+              "unit0:lean"
+            ],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:bridge"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "finite_restriction_bridge",
+            "step_id": "unit0:bridge",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:finite"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "finite_invariant",
+            "step_id": "unit0:finite",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:lean"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:lean:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "prove_offset",
+            "step_id": "unit0:lean",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          }
+        ],
+        "tree_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+      },
+      {
+        "alternative_ids": [
+          "0:rocq"
+        ],
+        "bounds": {
+          "contract_version": 1,
+          "extra": {},
+          "max_candidates": 32,
+          "max_depth": 16,
+          "max_nodes": 128,
+          "max_steps": 64,
+          "memory_bytes": 268435456,
+          "model_token_limit": 0,
+          "network_allowed": false,
+          "schema": "ipfs_datasets_py/logic/software_verification/resource-bounds@1",
+          "wall_time_ms": 30000
+        },
+        "completion_claimed": false,
+        "covered_obligation_ids": [
+          "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:rocq:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+        ],
+        "formal_goal_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "graph_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "hard_failures": [],
+        "metadata": {
+          "runtime_proof": false,
+          "scope": "closed_source_model_and_finite_restriction"
+        },
+        "plan_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq:1",
+        "producer_kinds": [
+          "codebase_family_native_portfolio:0:rocq"
+        ],
+        "proof_claimed": false,
+        "required_obligation_ids": [
+          "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:rocq:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+        ],
+        "root_goal_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "schema": "ipfs_datasets_py/logic/software_verification/missing-proof-plan-alternative@1",
+        "steps": [
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [
+              "unit0:rocq",
+              "unit0:finite",
+              "unit0:bridge"
+            ],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:current-source"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "final source/policy fence",
+            "step_id": "current-source",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [
+              "unit0:rocq"
+            ],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:bridge"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "finite_restriction_bridge",
+            "step_id": "unit0:bridge",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:finite"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "finite_invariant",
+            "step_id": "unit0:finite",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:rocq"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:rocq:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "prove_offset",
+            "step_id": "unit0:rocq",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          }
+        ],
+        "tree_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+      },
+      {
+        "alternative_ids": [
+          "0:isabelle"
+        ],
+        "bounds": {
+          "contract_version": 1,
+          "extra": {},
+          "max_candidates": 32,
+          "max_depth": 16,
+          "max_nodes": 128,
+          "max_steps": 64,
+          "memory_bytes": 268435456,
+          "model_token_limit": 0,
+          "network_allowed": false,
+          "schema": "ipfs_datasets_py/logic/software_verification/resource-bounds@1",
+          "wall_time_ms": 30000
+        },
+        "completion_claimed": false,
+        "covered_obligation_ids": [
+          "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:isabelle:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+        ],
+        "formal_goal_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "graph_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "hard_failures": [],
+        "metadata": {
+          "runtime_proof": false,
+          "scope": "closed_source_model_and_finite_restriction"
+        },
+        "plan_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq:2",
+        "producer_kinds": [
+          "codebase_family_native_portfolio:0:isabelle"
+        ],
+        "proof_claimed": false,
+        "required_obligation_ids": [
+          "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:isabelle:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+        ],
+        "root_goal_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+        "schema": "ipfs_datasets_py/logic/software_verification/missing-proof-plan-alternative@1",
+        "steps": [
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [
+              "unit0:isabelle",
+              "unit0:finite",
+              "unit0:bridge"
+            ],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:current-source"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "final source/policy fence",
+            "step_id": "current-source",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [
+              "unit0:isabelle"
+            ],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:bridge"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:bridge:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "finite_restriction_bridge",
+            "step_id": "unit0:bridge",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:finite"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:finite:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "finite_invariant",
+            "step_id": "unit0:finite",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          },
+          {
+            "authority": "bounded",
+            "cache_value": 0.0,
+            "completion_claimed": false,
+            "completion_conditions": [
+              "all_required_validations_complete_without_disagreement_or_source_drift"
+            ],
+            "critical_path_contribution": 1.0,
+            "dependencies": [],
+            "downstream_unlock": 0.0,
+            "expected_receipts": [
+              "exact_source_bound_native_receipt:unit0:isabelle"
+            ],
+            "fallback": [
+              "preserve_unavailable_unknown_timeout_or_refuted_frontier"
+            ],
+            "kind": "solve",
+            "metadata": {},
+            "new_assumption_ids": [],
+            "obligation_id": "unit0:isabelle:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+            "proof_claimed": false,
+            "proof_cost": 1.0,
+            "provider_ids": [],
+            "resources": [
+              "shared_repository_parent_and_native_child_lease"
+            ],
+            "risk": 0.2,
+            "schema": "ipfs_datasets_py/logic/software_verification/proof-plan-step-spec@1",
+            "statement": "prove_offset",
+            "step_id": "unit0:isabelle",
+            "validation": [
+              "native_replay_and_exact_family_domain_assumption_binding"
+            ]
+          }
+        ],
+        "tree_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq"
+      }
+    ],
+    "bundle_ids": [
+      "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q"
+    ],
+    "completion_claimed": false,
+    "graph": {
+      "authority": "none",
+      "bounds": {
+        "contract_version": 1,
+        "extra": {},
+        "max_candidates": 0,
+        "max_depth": 0,
+        "max_nodes": 0,
+        "max_steps": 0,
+        "memory_bytes": 0,
+        "model_token_limit": 0,
+        "network_allowed": false,
+        "schema": "ipfs_datasets_py/logic/software_verification/resource-bounds@1",
+        "wall_time_ms": 0
+      },
+      "completion_claimed": false,
+      "contract_version": 1,
+      "edges": [
+        {
+          "contract_version": 1,
+          "edge_id": "edge:0",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "depends_on",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "root",
+          "target_node_id": "all"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:1",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "depends_on",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "all",
+          "target_node_id": "current-source"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:2",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "depends_on",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "all",
+          "target_node_id": "unit0:all"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:3",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "depends_on",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "unit0:all",
+          "target_node_id": "unit0:kernel"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:4",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "alternative",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "unit0:kernel",
+          "target_node_id": "unit0:lean"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:5",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "alternative",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "unit0:kernel",
+          "target_node_id": "unit0:rocq"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:6",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "alternative",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "unit0:kernel",
+          "target_node_id": "unit0:isabelle"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:7",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "depends_on",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "unit0:all",
+          "target_node_id": "unit0:finite"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:8",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "depends_on",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "unit0:all",
+          "target_node_id": "unit0:bridge"
+        },
+        {
+          "contract_version": 1,
+          "edge_id": "edge:9",
+          "inference_rule": "closed_profile_required_obligation",
+          "kind": "depends_on",
+          "metadata": {},
+          "reconstruction_method": "",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-edge@1",
+          "source_node_id": "unit0:bridge",
+          "target_node_id": "unit0:kernel"
+        }
+      ],
+      "formal_goal_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+      "graph_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+      "hole_ids": [],
+      "interface": "ProofObligationGraph@1",
+      "nodes": [
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "and",
+          "label": "",
+          "metadata": {},
+          "node_id": "all",
+          "obligation_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "leaf",
+          "label": "",
+          "metadata": {
+            "operation": "final_live_source_and_policy_revalidation",
+            "required": true
+          },
+          "node_id": "current-source",
+          "obligation_id": "current-source:baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "root",
+          "label": "",
+          "metadata": {},
+          "node_id": "root",
+          "obligation_id": "baguqeerassh4gbc4wgahrbcnkh2ttt4ahwgzibaeymsmdsny54hbc75h75hq",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "and",
+          "label": "",
+          "metadata": {},
+          "node_id": "unit0:all",
+          "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "leaf",
+          "label": "",
+          "metadata": {
+            "assumptions": [
+              "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+              "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+              "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+            ],
+            "assurance": "native_kernel_bridge_required",
+            "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+            "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+            "depends_on": [
+              "unit0:kernel"
+            ],
+            "domain": [
+              -1,
+              0,
+              1
+            ],
+            "families": [
+              "mathematical_integer",
+              "lean4",
+              "tla_plus"
+            ],
+            "kind": "bridge",
+            "operation": "finite_restriction_bridge",
+            "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+          },
+          "node_id": "unit0:bridge",
+          "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q:bridge",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "leaf",
+          "label": "",
+          "metadata": {
+            "assumptions": [
+              "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+              "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+              "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+            ],
+            "assurance": "bounded_model_check",
+            "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+            "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+            "depends_on": [],
+            "domain": [
+              -1,
+              0,
+              1
+            ],
+            "families": [
+              "tla_plus"
+            ],
+            "kind": "finite",
+            "operation": "finite_invariant",
+            "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+          },
+          "node_id": "unit0:finite",
+          "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q:finite",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "leaf",
+          "label": "",
+          "metadata": {
+            "assumptions": [
+              "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+              "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+              "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+            ],
+            "assurance": "native_kernel_reconstruction_required",
+            "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+            "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+            "domain": "unbounded_integer",
+            "families": [
+              "smt_lia",
+              "isabelle_hol"
+            ],
+            "kernel": "isabelle",
+            "kind": "mathematical_portfolio",
+            "operation": "prove_offset",
+            "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+          },
+          "node_id": "unit0:isabelle",
+          "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "or",
+          "label": "",
+          "metadata": {},
+          "node_id": "unit0:kernel",
+          "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "leaf",
+          "label": "",
+          "metadata": {
+            "assumptions": [
+              "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+              "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+              "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+            ],
+            "assurance": "native_kernel_reconstruction_required",
+            "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+            "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+            "domain": "unbounded_integer",
+            "families": [
+              "smt_lia",
+              "lean4"
+            ],
+            "kernel": "lean",
+            "kind": "mathematical_portfolio",
+            "operation": "prove_offset",
+            "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+          },
+          "node_id": "unit0:lean",
+          "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        },
+        {
+          "authority": "none",
+          "contract_version": 1,
+          "hole_id": "",
+          "kind": "leaf",
+          "label": "",
+          "metadata": {
+            "assumptions": [
+              "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+              "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+              "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+            ],
+            "assurance": "native_kernel_reconstruction_required",
+            "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+            "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+            "domain": "unbounded_integer",
+            "families": [
+              "smt_lia",
+              "rocq"
+            ],
+            "kernel": "rocq",
+            "kind": "mathematical_portfolio",
+            "operation": "prove_offset",
+            "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+          },
+          "node_id": "unit0:rocq",
+          "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "schema": "ipfs_datasets_py/logic/software_verification/proof-graph-node@1",
+          "status": "open"
+        }
+      ],
+      "proof_claimed": false,
+      "root_node_id": "root",
+      "schema": "ipfs_datasets_py/logic/software_verification/proof-obligation-graph@1",
+      "status": "open",
+      "tree_id": ""
+    },
+    "leaves": {
+      "unit0:bridge": {
+        "assumptions": [
+          "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+          "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+          "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+        ],
+        "assurance": "native_kernel_bridge_required",
+        "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+        "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+        "depends_on": [
+          "unit0:kernel"
+        ],
+        "domain": [
+          -1,
+          0,
+          1
+        ],
+        "families": [
+          "mathematical_integer",
+          "lean4",
+          "tla_plus"
+        ],
+        "kind": "bridge",
+        "operation": "finite_restriction_bridge",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+      },
+      "unit0:finite": {
+        "assumptions": [
+          "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+          "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+          "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+        ],
+        "assurance": "bounded_model_check",
+        "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+        "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+        "depends_on": [],
+        "domain": [
+          -1,
+          0,
+          1
+        ],
+        "families": [
+          "tla_plus"
+        ],
+        "kind": "finite",
+        "operation": "finite_invariant",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+      },
+      "unit0:isabelle": {
+        "assumptions": [
+          "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+          "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+          "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+        ],
+        "assurance": "native_kernel_reconstruction_required",
+        "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+        "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+        "domain": "unbounded_integer",
+        "families": [
+          "smt_lia",
+          "isabelle_hol"
+        ],
+        "kernel": "isabelle",
+        "kind": "mathematical_portfolio",
+        "operation": "prove_offset",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+      },
+      "unit0:lean": {
+        "assumptions": [
+          "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+          "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+          "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+        ],
+        "assurance": "native_kernel_reconstruction_required",
+        "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+        "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+        "domain": "unbounded_integer",
+        "families": [
+          "smt_lia",
+          "lean4"
+        ],
+        "kernel": "lean",
+        "kind": "mathematical_portfolio",
+        "operation": "prove_offset",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+      },
+      "unit0:rocq": {
+        "assumptions": [
+          "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+          "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+          "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+        ],
+        "assurance": "native_kernel_reconstruction_required",
+        "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+        "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+        "domain": "unbounded_integer",
+        "families": [
+          "smt_lia",
+          "rocq"
+        ],
+        "kernel": "rocq",
+        "kind": "mathematical_portfolio",
+        "operation": "prove_offset",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq"
+      }
+    },
+    "proof_claimed": false,
+    "schema": "codebase-family-obligation-plans@1"
+  },
+  "policy_receipt_cid": "baguqeeraoyvf7ujkacux5kc5elrv33vhj2i5ikcabllizn4bldpafkmqpvfq",
+  "producer": {
+    "ipfs_accelerate_py.agent_supervisor.proof.codebase_obligation_portfolio": "bafkreiajvvcx6q4kpqw4qbmms7mvq5rdqatw3qeepkftvcrpj3ehsypmt4",
+    "ipfs_accelerate_py.agent_supervisor.runtime.repository_resource_bridge": "bafkreibxxvlyz5exgwttcdbdwhi42icnmi6a5hb7fwai3wlyhechkqb7rm",
+    "ipfs_datasets_py.logic.backends.codebase_process": "bafkreic4k2ntjl6xlymuf4i7zopm6igvo6m5e5rje7mtpgatz2kkzjbx4e",
+    "ipfs_datasets_py.logic.backends.kernel.isabelle": "bafkreidljl3ly5xeeyru3rbzhmoswo3pfq4ph64yrcvhzfyrztitlewnmi",
+    "ipfs_datasets_py.logic.backends.kernel.lean": "bafkreicycyiruf3lh4lpte7n2rwr7exng54trheropswld7gan233nspie",
+    "ipfs_datasets_py.logic.backends.kernel.rocq": "bafkreibx7azys3vegt2tn2ab3eicbxujnsycgigmx2prrkc35jq6oq4w6y",
+    "ipfs_datasets_py.logic.backends.portfolio": "bafkreifugk77en5ub4txfqwpkgm42shbdgu226u63plfms3tdgkrwvk6qe",
+    "ipfs_datasets_py.logic.backends.process": "bafkreiduftpoevcvynouhfc3arr6xpdanws4datosvurw2npwb7j2p6zn4",
+    "ipfs_datasets_py.logic.backends.smt.differential": "bafkreifb34377wbmgxu3xcpckqjdrpe6jaoekfkrevy45z73uqi6g3n7fy",
+    "ipfs_datasets_py.logic.backends.tla.compiler": "bafkreihqnrrejtlidensse45mr3kljgfulbkcz55ybvusulglibpxjnvom",
+    "ipfs_datasets_py.logic.backends.tla.runners": "bafkreibqr5xosbhrz4qerwtnp4tb372tq6shm2sex3myh3hznmhmcpkpp4",
+    "ipfs_datasets_py.logic.software_contracts.codebase_family_execution": "bafkreihciw6zpvpgxalmx2xuhcu4jqsntyhnopccgbdkr5wpokvk5ibeou",
+    "ipfs_datasets_py.logic.software_contracts.codebase_family_lowering": "bafkreida7q4lwty64tzuu7yasfb2albsmixj32csgqfxqnubpvh7qc3mca",
+    "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "bafkreibwdktyqsznmjlqtmrefhxznrlcvn7tejsmsn7opjnvpuermwzb5y",
+    "ipfs_datasets_py.logic.software_contracts.codebase_obligation_graph": "bafkreia565xfzyhy42hqa6vlpt6gov3vkejj7wvzmwgzp5vw3dfcb7nv64",
+    "native_integer_owner": {
+      "dependency_scope": "selected Python implementation files and native executables; ambient shared libraries are not attested",
+      "environment": {
+        "HOME": "private-workspace",
+        "LANG": "C",
+        "LC_ALL": "C",
+        "PATH": "/usr/bin:/bin",
+        "TEMP": "private-workspace",
+        "TMP": "private-workspace",
+        "TMPDIR": "private-workspace"
+      },
+      "implementation": "cpython",
+      "machine": "aarch64",
+      "parser": "cpython-312",
+      "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+      "release": "6.17.0-1014-nvidia",
+      "resource_helper": {
+        "kind": "linux-prlimit",
+        "sha256": "2a479939c95a886fb8b52244381639816f8cf1f68eee713a9227d0c5d257c805"
+      },
+      "source_sha256": {
+        "ipfs_datasets_py.logic.backends.codebase_process": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+        "ipfs_datasets_py.logic.backends.smt.compiler": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+        "ipfs_datasets_py.logic.backends.smt.differential": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+        "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee",
+        "ipfs_datasets_py.logic.software_verification.codebase_pipeline": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030",
+        "ipfs_datasets_py.logic.software_verification.codebase_source_adapters": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+        "ipfs_datasets_py.logic.software_verification.vc": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+      },
+      "system": "Linux"
+    }
+  },
+  "profile": "captured-integer-offset-and-finite-bridge@1",
+  "resource_receipt": {
+    "active_phase_count": 0,
+    "budget": {
+      "cpu_slots": 2,
+      "device": "cpu",
+      "disk_bytes": 67108864,
+      "enforcement": "sampled",
+      "maximum_phases": 128,
+      "maximum_queued_metadata_bytes": 65536,
+      "maximum_queued_phases": 8,
+      "memory_mb": 2048,
+      "process_slots": 2,
+      "threads_per_process": 1,
+      "wall_time_ms": 300000
+    },
+    "closed": false,
+    "completion_authority": false,
+    "events": [
+      {
+        "child_lease_id": "99f2f1c27ab847cf9d36c653ce15d9bb",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 512,
+          "phase": "scan",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 767,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 7,
+        "request_id": "9f020738063b45088cd2ba5f2abfaf2b",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "6d587a6c3dc34782945e6df396b87b5c",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 512,
+          "phase": "semantic_index",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 178,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 7,
+        "request_id": "e735b8b3b50a43f3a6e368333f643092",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "0857759780bc4eca92441e8506a7059e",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 512,
+          "phase": "validation",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 514,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 8,
+        "request_id": "634749dd1cf24e79ab3f34e8e7109337",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "62b03364c47e407a9d02bc35921f4144",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 512,
+          "phase": "semantic_index",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 13,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 7,
+        "request_id": "6838ba5801f24de19b584e3101500bd7",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "5c7a7c0439cf47a6b9b1e6c872ad4c13",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 256,
+          "phase": "proof",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 733,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 8,
+        "request_id": "07c34266ce0b43cc85ff10077a26f807",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "3770c17976154b8581c2d82130e20cb7",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 256,
+          "phase": "proof",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 865,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 40,
+        "request_id": "1f0bc1c57e584ecca8805e27c38fc50b",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "1571821ff8f64f788774f6a78657fa73",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 512,
+          "phase": "proof",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 431,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 8,
+        "request_id": "328b6593d4e442869e7847ddf3d1cbb3",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "7ec620702fb4417a9c056f509024e305",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 512,
+          "phase": "proof",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 401,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 7,
+        "request_id": "c215aba93e7949de96c9bb8d4adac748",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "aa1f9689b9494bfaa2dea879a156deaf",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 1536,
+          "phase": "proof",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 197,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 7,
+        "request_id": "ab456f7903c14e8299a7f36776256d08",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "f17cd92b106f4d91925bbfe5980458ce",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 768,
+          "phase": "proof",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 817,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 274,
+        "request_id": "5643f889d26d4ce1b7d44472ffa86401",
+        "status": "completed"
+      },
+      {
+        "child_lease_id": "bbbd476bd7d348c4b04e0884494db644",
+        "demand": {
+          "cpu_slots": 1,
+          "disk_bytes": 16777216,
+          "memory_mb": 512,
+          "phase": "validation",
+          "process_slots": 1,
+          "threads_per_process": 1
+        },
+        "execution_time_ms": 419,
+        "parent_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+        "queue_time_ms": 7,
+        "request_id": "cfedcf3d66864fb5bb1e925f6a11eb16",
+        "status": "completed"
+      }
+    ],
+    "hard_enforcement": false,
+    "host_authority": {
+      "owner": "datasets.GlobalResourceScheduler",
+      "policy_sha256": "03793b8f3246f9c5d2af6cd64c4aaee6ef09dd1041f6d0ff0d07ef87a955147a",
+      "root_lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+      "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json"
+    },
+    "limitations": [
+      "disk_is_local_declared_reservation_plus_free_space_sampling_not_shared_host_disk_authority",
+      "queue_bytes_measure_bridge_request_metadata_not_retained_training_or_inference_payloads",
+      "thread_limits_are_explicit_consumer_requirements_not_global_in_process_thread_enforcement",
+      "cpu_ram_process_leases_are_admission_accounting_not_kernel_cgroups",
+      "gpu_per_device_provider_admission_and_hard_enforcement_are_unsupported",
+      "native_pressure_backoff_preserved_gradual_recovery_not_newly_qualified",
+      "validation_reserve_is_global_only_training_can_occupy_its_entire_parent_envelope"
+    ],
+    "native_parent": {
+      "acquired_at": 1790958088.3227882,
+      "cancelled": false,
+      "child_process_slots": 2,
+      "cpu_slots": 2,
+      "gpu_memory_mb": 0,
+      "lane": "orchestration",
+      "lease_id": "b341e7a4575e45a196eda3dca6d84c17",
+      "memory_mb": 2048,
+      "owner_pid": 3230879,
+      "parent_lease_id": null,
+      "released": false,
+      "requires_gpu": false,
+      "unified_memory_mb": 0,
+      "wait_seconds": 2.561137080192566e-07
+    },
+    "owned_active_root_count": 1,
+    "profile": "cpu-shared-native-sampled@1",
+    "queued_metadata_bytes": 0,
+    "queued_phase_count": 0,
+    "repository_id": "portfolio:fixture",
+    "schema": "repository-shared-host-envelope@1",
+    "shared_active_root_count": 1,
+    "supervisor_lease_id": "resource-lease:163a40538aaf4ca987c62b457b0a550d",
+    "supervisor_role": "local_lane_policy_bookkeeping_not_another_host_authority",
+    "task_execution_authority": false,
+    "validation_reservation_scope": "global_only_siblings_share_parent_envelope",
+    "validation_reserve": {
+      "cpu_slots": 2,
+      "memory_mb": 0
+    }
+  },
+  "schema": "codebase-obligation-portfolio@1",
+  "selected_paths": [
+    "main.py"
+  ],
+  "single_flight": {
+    "deduplicated": 4,
+    "maximum_parallel": 2,
+    "native_attempts": 6,
+    "requests": 10,
+    "scope": "this invocation only"
+  },
+  "source_head": {
+    "ast_revision_id": "rev:portfolio:fixture:snapshot:baguqeerahycagqxbwp7jgxv32v4daljscfsdj3ajg5zxahkvcyarkjamxe2q",
+    "generation": 1,
+    "manifest_cid": "baguqeera5gpgl7z7s3ocmarbwly2yecxljvggzesyqpmmxtgzqwunpbtlqja",
+    "receipt_cid": "baguqeeraobbi4dnogt46n5z7d22cxe2kn3jnma3gihgln37axfgfpibn2uda",
+    "repository_id": "portfolio:fixture",
+    "schema": "codebase-head@1",
+    "snapshot_cid": "baguqeerahycagqxbwp7jgxv32v4daljscfsdj3ajg5zxahkvcyarkjamxe2q"
+  },
+  "source_runtime_semantics_verified": false,
+  "status": "unknown",
+  "task_completion_authority": false,
+  "tools": {
+    "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+    "policy_cid": "baguqeeratbf6rjtv3lbs2g6ej35zx6bwp727wndwl2xk4pn4asjoo6ensusq",
+    "schema": "codebase-family-tools@1",
+    "tools": {
+      "cvc5": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 249,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+          "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+        }
+      },
+      "isabelle": {
+        "artifacts": [
+          {
+            "bytes": 1058,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+            "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+          }
+        ],
+        "executable": null
+      },
+      "java": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 70864,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+          "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+        }
+      },
+      "lean": {
+        "artifacts": [],
+        "executable": null
+      },
+      "rocq": {
+        "artifacts": [
+          {
+            "bytes": 7336472,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+            "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+          }
+        ],
+        "executable": null
+      },
+      "tlc": {
+        "artifacts": [
+          {
+            "bytes": 4486015,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+            "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+          },
+          {
+            "bytes": 70864,
+            "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+            "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+          }
+        ],
+        "executable": {
+          "bytes": 457,
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+          "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+        }
+      },
+      "z3": {
+        "artifacts": [],
+        "executable": {
+          "bytes": 19659744,
+          "path": "/home/barberb/.local/bin/z3",
+          "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+        }
+      }
+    }
+  },
+  "units": [
+    {
+      "bridge_attempt": {
+        "reason": "mathematical premise not established",
+        "status": "blocked"
+      },
+      "bundle": {
+        "assumptions": [
+          "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this.",
+          "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution.",
+          "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+        ],
+        "bridge": {
+          "arbitrary_cross_family_equivalence_claimed": false,
+          "assumptions_preserved": true,
+          "operation": "restrict_mathematical_equality_to_declared_finite_inputs",
+          "reverse_implication_claimed": false,
+          "scope": "Mathematical integer equality restricted to the exact finite initial inputs of a stuttering state model; no liveness, arbitrary TLA equivalence or Python-runtime theorem.",
+          "source_cid": "bafkreigd5yrnp26sm7zdezjg3umrq35d56pyxb3mr4vdgkhectnovnkaie",
+          "source_family": "mathematical_integer",
+          "target_family": "tla_plus"
+        },
+        "compiled_cid": "baguqeerag7dxsj4ga5fne2lcsdeuvqlzh3bzvelfavbzakgl2tcq2q7yruha",
+        "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+        "families": [
+          "smt_lia",
+          "lean4",
+          "rocq",
+          "isabelle_hol",
+          "tla_plus"
+        ],
+        "finite_domain_cid": "baguqeerandgxeatpj7dgr4iuetin6ef7bpc4lnxmbinn22crx3przdsr63rq",
+        "finite_inputs": [
+          -1,
+          0,
+          1
+        ],
+        "finite_state_ir_cid": "baguqeeraprji3gspvmai2qgmyt5u5ydplhw5xmg5ihpex7ph3jzgbbx4qbcq",
+        "kernel_source_cids": {
+          "isabelle_hol": "bafkreidyltonlai2ujfdakuhqkoqag6tfl3glh6v5w4vcp73vq3mqwcixm",
+          "lean4": "bafkreih22kfdog2mt6epz3s7mgb2her7u2gbubbi3syztj3yyh4pkirmcy",
+          "rocq": "bafkreigtl2d5pcqduy4oq4bfq6nq2suc3uor3u4xoqz43mleoar7ntexdu"
+        },
+        "mathematical_domain": "unbounded_integer",
+        "operation": "prove_offset",
+        "profile": "closed-integer-offset-mathematical-and-finite-state@1",
+        "proof_claimed": false,
+        "revision": "snapshot:baguqeerahycagqxbwp7jgxv32v4daljscfsdj3ajg5zxahkvcyarkjamxe2q",
+        "schema": "codebase-integer-family-lowering@1",
+        "smt_query_cid": "bafkreiaknfdbgl54yopakvimqktisx7sgh442upr2ta4vzbmmyk3weal3a",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+        "source_correspondence_cid": "baguqeerauq5fr66ojoc3egwtouuw7lrdyydxxdbwqalmxf3qpsbld6efjx6q",
+        "source_lowering": "existing_native_closed_integer_offset_ProgramIR_contract_VC",
+        "source_runtime_semantics_verified": false,
+        "tla_artifact_digest": "04e03b0d689299e968c424cd5e7a1b5047b3a18a22e18ee360d65809196a4452",
+        "tla_configuration_cid": "bafkreif6xrbjaob7lr5tqmvdxuupzwj53cnnmnwhvzd2bjmayzqoyy375i",
+        "tla_model_cid": "bafkreifzavleihauqxo6r5ljuyr4gvlac7wcygxvqittysoh7hxz62gife"
+      },
+      "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+      "finite_attempt": {
+        "backend": "tlc",
+        "backend_result": {
+          "assumptions": [
+            "assumption:17470c57f9c8ea50b8e5ec93b3c70488c7c6fbb56a62f07c001a78f6591414ab",
+            "assumption:ecd37d092349250908baf5f4e822afa10988f236ea4f3f574943e30ea8238599",
+            "assumption:241a4be58aae7a6c5b91fead178d3f18212432841916cb168d9447894a4109d8"
+          ],
+          "authority": "model_check",
+          "backend_id": "tlc",
+          "backend_version": "TLCBackend@1",
+          "bounds": {
+            "max_memory_bytes": 805306368,
+            "max_output_bytes": 262144,
+            "max_steps": 2,
+            "timeout_ms": 89879
+          },
+          "diagnostics": [
+            "bounded model check passed within the explicitly recorded explored bounds"
+          ],
+          "metadata": {
+            "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+            "jvm_available": true,
+            "tool_version": "\u001b[1mNAME\u001b[0m\n\n\tTLC - provides model checking and simulation of TLA+ specifications - Version 2026.07.31.184830\n\n\n\u001b[1mSYNOPSIS\u001b[0m\n\n\t\u001b[1mTLC\u001b[0m [\u001b[1m-h\u001b[0m] [\u001b[1m-cleanup\u001b[0m] [\u001b[1m-continue\u001b[0m] [\u001b[1m-deadlock\u001b[0m] [\u001b[1m-debug\u001b[0m] [\u001b[1m-difftrace\u001b[0m] [\u001b[1m-gzip\u001b[0m] [\u001b[1m-noGenerateSpecTE\u001b[0m] [\u001b[1m-nowarning\u001b[0m] [\u001b[1m-terse\u001b[0m] [\u001b[1m-tool\u001b[0m] [\u001b[1m-view\u001b[0m] [\u001b[1m-checkpoint\u001b[0m \u001b[3mminutes\u001b[0m] [\u001b[1m-config\u001b[0m \u001b[3mfile\u001b[0m] [\u001b[1m-coverage\u001b[0m \u001b[3mminutes\u001b[0m] [\u001b[1m-dfid\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-dump\u001b"
+          },
+          "reason": "bounded model check passed within the explicitly recorded explored bounds",
+          "result_id": "result:tlc:883995f7ef0f9d5ac85356dd",
+          "result_type": "model_check",
+          "schema_version": "typed-backend-result/v1",
+          "status": "satisfied",
+          "translation_ceiling": "bounded",
+          "usage": {
+            "elapsed_ms": 383,
+            "output_bytes": 2964,
+            "peak_memory_bytes": 0,
+            "steps": 0
+          },
+          "witness": {
+            "artifact_digest": "04e03b0d689299e968c424cd5e7a1b5047b3a18a22e18ee360d65809196a4452",
+            "bounded": true,
+            "capability": {
+              "backend_version": "TLCBackend@1",
+              "checks_fairness": true,
+              "checks_liveness": true,
+              "checks_safety": true,
+              "executable_candidates": [
+                "tlc",
+                "tlc2",
+                "tla2tools"
+              ],
+              "finite_trace_only": false,
+              "limitations": [
+                "TLC explores a finite state graph under the declared MaxSteps and domain bounds.",
+                "Liveness/PROPERTY checks are available but remain bounded by fairness assumptions and the finite state space; they are not unbounded proofs.",
+                "A successful TLC run never grants theorem authority."
+              ],
+              "max_declared_steps": 10000,
+              "requires_jvm": true,
+              "schema_version": "tla-model-checker-capability/v1",
+              "tool": "tlc"
+            },
+            "checked_liveness_properties": [],
+            "checked_safety_properties": [
+              "TypeOK",
+              "Inv_offset"
+            ],
+            "configuration_digest": "bebc4290383f5c7b3832a3bd28fcd93dd89ad636c7ae47a0a580c660ec637fea",
+            "fairness_limitations": [
+              "No fairness constraints were present; Spec uses only safety stuttering.",
+              "BoundedProgress only asserts that the finite step budget is reachable; it is not an unbounded liveness proof.",
+              "Closed codebase profile selects safety only; compiler BoundedProgress is not requested or claimed.",
+              "TLC explores a finite state graph under the declared MaxSteps and domain bounds.",
+              "Liveness/PROPERTY checks are available but remain bounded by fairness assumptions and the finite state space; they are not unbounded proofs.",
+              "A successful TLC run never grants theorem authority."
+            ],
+            "model_digest": "b90556441c1485dde8f569a623c3556017ec2c1af582273c49c7f9ef9f68c829",
+            "receipt_id": "tla-model-check-receipt:cdd7a0d6709e2c676069722826a1226e94216a0b566c3519b2d867e1d2ba1ff7",
+            "tool": "tlc",
+            "unbounded_proof": false
+          }
+        },
+        "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+        "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+        "family": "tla_plus",
+        "mathematical_model_only": true,
+        "native_observations": [
+          {
+            "cancelled": false,
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+              "-version"
+            ],
+            "elapsed_seconds": 0.05314711690880358,
+            "environment": {
+              "LEAN_NUM_THREADS": "1",
+              "MKL_NUM_THREADS": "1",
+              "OMP_NUM_THREADS": "1",
+              "OPENBLAS_NUM_THREADS": "1"
+            },
+            "error": "",
+            "input_file_cids": {},
+            "limits": {
+              "cpu_seconds": 5,
+              "enforce_file_size_limit": true,
+              "max_argument_bytes": 65536,
+              "max_arguments": 256,
+              "max_environment_bytes": 131072,
+              "max_input_bytes": 262144,
+              "max_output_bytes": 65536,
+              "max_output_files": 8,
+              "max_path_bytes": 512,
+              "max_workspace_bytes": 16777216,
+              "memory_bytes": 8589934592,
+              "resident_memory_bytes": 805306368,
+              "termination_grace_seconds": 0.25,
+              "timeout_seconds": 5
+            },
+            "output_truncated": false,
+            "process_tree_terminated": false,
+            "resource_exhausted": false,
+            "returncode": 0,
+            "stderr": "openjdk version \"21.0.9\" 2025-10-21 LTS\nOpenJDK Runtime Environment Zulu21.46+19-CA (build 21.0.9+10-LTS)\nOpenJDK 64-Bit Server VM Zulu21.46+19-CA (build 21.0.9+10-LTS, mixed mode, sharing)\n",
+            "stdin_cid": null,
+            "stdout": "",
+            "timed_out": false,
+            "unavailable": false,
+            "workspace_cleaned": true,
+            "workspace_limit_exceeded": false
+          },
+          {
+            "cancelled": false,
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+              "-workers",
+              "1",
+              "-fpmem",
+              "0.05",
+              "-config",
+              "CodebaseOffset.cfg",
+              "CodebaseOffset.tla"
+            ],
+            "elapsed_seconds": 0.38286343100480735,
+            "environment": {
+              "LEAN_NUM_THREADS": "1",
+              "MKL_NUM_THREADS": "1",
+              "OMP_NUM_THREADS": "1",
+              "OPENBLAS_NUM_THREADS": "1"
+            },
+            "error": "",
+            "input_file_cids": {
+              "CodebaseOffset.cfg": "bafkreif6xrbjaob7lr5tqmvdxuupzwj53cnnmnwhvzd2bjmayzqoyy375i",
+              "CodebaseOffset.tla": "bafkreifzavleihauqxo6r5ljuyr4gvlac7wcygxvqittysoh7hxz62gife"
+            },
+            "limits": {
+              "cpu_seconds": 90,
+              "enforce_file_size_limit": true,
+              "max_argument_bytes": 65536,
+              "max_arguments": 256,
+              "max_environment_bytes": 131072,
+              "max_input_bytes": 4096,
+              "max_output_bytes": 262144,
+              "max_output_files": 8,
+              "max_path_bytes": 512,
+              "max_workspace_bytes": 16777216,
+              "memory_bytes": 8589934592,
+              "resident_memory_bytes": 805306368,
+              "termination_grace_seconds": 0.25,
+              "timeout_seconds": 89.81239000684582
+            },
+            "output_truncated": false,
+            "process_tree_terminated": false,
+            "resource_exhausted": false,
+            "returncode": 0,
+            "stderr": "",
+            "stdin_cid": null,
+            "stdout": "TLC2 Version 2026.07.31.184830 (rev: 30cc360)\nWarning: Please run the Java VM, which executes TLC with a throughput optimized garbage collector, by passing the \"-XX:+UseParallelGC\" property.\n(Use the -nowarning option to disable this warning.)\nRunning breadth-first search Model-Checking with fp 5 and seed 7468337732257876332 with 1 worker on 20 cores with 4096MB heap and 64MB offheap memory [pid: 3236835] (Linux 6.17.0-1014-nvidia aarch64, Azul Systems, Inc. 21.0.9 64bit, MSBDiskFPSet, DiskStateQueue).\nParsing file /tmp/logic-tool-hr3561pf/CodebaseOffset.tla\nParsing file /tmp/tlc-16012134928037315971/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-16012134928037315971/FiniteSets.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)\nParsing file /tmp/tlc-16012134928037315971/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-16012134928037315971/TLC.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)\nParsing file /tmp/tlc-16012134928037315971/_TLCTrace.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)\nParsing file /tmp/tlc-16012134928037315971/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nParsing file /tmp/tlc-16012134928037315971/TLCExt.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module FiniteSets\nSemantic processing of module TLC\nSemantic processing of module TLCExt\nSemantic processing of module _TLCTrace\nSemantic processing of module CodebaseOffset\nLinting of module TLCExt\nLinting of module _TLCTrace\nLinting of module CodebaseOffset\nStarting... (2026-10-02 16:21:31)\nComputing initial states...\nComputed 2 initial states...\nFinished computing initial states: 3 distinct states generated at 2026-10-02 16:21:32.\nModel checking completed. No error has been found.\n  Estimates of the probability that TLC did not check all reachable states\n  because two distinct states had the same fingerprint:\n  calculated (optimistic):  val = 0.0\n9 states generated, 9 distinct states found, 0 states left on queue.\nThe depth of the complete state graph search is 3.\nThe average outdegree of the complete state graph is 1 (minimum is 0, the maximum 1 and the 95th percentile is 1).\nFinished in 00s at (2026-10-02 16:21:32)\n",
+            "timed_out": false,
+            "unavailable": false,
+            "workspace_cleaned": true,
+            "workspace_limit_exceeded": false
+          },
+          {
+            "cancelled": false,
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+              "-help"
+            ],
+            "elapsed_seconds": 0.13948525814339519,
+            "environment": {
+              "LEAN_NUM_THREADS": "1",
+              "MKL_NUM_THREADS": "1",
+              "OMP_NUM_THREADS": "1",
+              "OPENBLAS_NUM_THREADS": "1"
+            },
+            "error": "",
+            "input_file_cids": {},
+            "limits": {
+              "cpu_seconds": 3,
+              "enforce_file_size_limit": true,
+              "max_argument_bytes": 65536,
+              "max_arguments": 256,
+              "max_environment_bytes": 131072,
+              "max_input_bytes": 262144,
+              "max_output_bytes": 65536,
+              "max_output_files": 8,
+              "max_path_bytes": 512,
+              "max_workspace_bytes": 16777216,
+              "memory_bytes": 8589934592,
+              "resident_memory_bytes": 805306368,
+              "termination_grace_seconds": 0.25,
+              "timeout_seconds": 3.0
+            },
+            "output_truncated": false,
+            "process_tree_terminated": false,
+            "resource_exhausted": false,
+            "returncode": 1,
+            "stderr": "",
+            "stdin_cid": null,
+            "stdout": "\n\u001b[1mNAME\u001b[0m\n\n\tTLC - provides model checking and simulation of TLA+ specifications - Version 2026.07.31.184830\n\n\n\u001b[1mSYNOPSIS\u001b[0m\n\n\t\u001b[1mTLC\u001b[0m [\u001b[1m-h\u001b[0m] [\u001b[1m-cleanup\u001b[0m] [\u001b[1m-continue\u001b[0m] [\u001b[1m-deadlock\u001b[0m] [\u001b[1m-debug\u001b[0m] [\u001b[1m-difftrace\u001b[0m] [\u001b[1m-gzip\u001b[0m] [\u001b[1m-noGenerateSpecTE\u001b[0m] [\u001b[1m-nowarning\u001b[0m] [\u001b[1m-terse\u001b[0m] [\u001b[1m-tool\u001b[0m] [\u001b[1m-view\u001b[0m] [\u001b[1m-checkpoint\u001b[0m \u001b[3mminutes\u001b[0m] [\u001b[1m-config\u001b[0m \u001b[3mfile\u001b[0m] [\u001b[1m-coverage\u001b[0m \u001b[3mminutes\u001b[0m] [\u001b[1m-dfid\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-dump\u001b[0m \u001b[3mformat file\u001b[0m] [\u001b[1m-dumpTrace\u001b[0m \u001b[3mformat file\u001b[0m] [\u001b[1m-fp\u001b[0m \u001b[3mN\u001b[0m] [\u001b[1m-fpbits\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-fpmem\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-inv\u001b[0m \u001b[3mexpr\u001b[0m] [\u001b[1m-invlevel\u001b[0m \u001b[3mn\u001b[0m] [\u001b[1m-loadTrace\u001b[0m \u001b[3mformat file\u001b[0m] [\u001b[1m-maxSetSize\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-messagesAsErrors\u001b[0m \u001b[3mcodes\u001b[0m] [\u001b[1m-metadir\u001b[0m \u001b[3mpath\u001b[0m] [\u001b[1m-postCondition\u001b[0m \u001b[3mmod!oper\u001b[0m] [\u001b[1m-recover\u001b[0m \u001b[3mid\u001b[0m] [\u001b[1m-suppressMessages\u001b[0m \u001b[3mcodes\u001b[0m] [\u001b[1m-teSpecOutDir\u001b[0m \u001b[3msome-dir-name\u001b[0m] [\u001b[1m-userFile\u001b[0m \u001b[3mfile\u001b[0m] [\u001b[1m-workers\u001b[0m \u001b[3mnum\u001b[0m] \u001b[1m-debugger\u001b[0m \u001b[3mnosuspend\u001b[0m SPEC\n\t\u001b[1mTLC\u001b[0m [\u001b[1m-h\u001b[0m] [\u001b[1m-cleanup\u001b[0m] [\u001b[1m-continue\u001b[0m] [\u001b[1m-deadlock\u001b[0m] [\u001b[1m-debug\u001b[0m] [\u001b[1m-difftrace\u001b[0m] [\u001b[1m-gzip\u001b[0m] [\u001b[1m-noGenerateSpecTE\u001b[0m] [\u001b[1m-nowarning\u001b[0m] [\u001b[1m-terse\u001b[0m] [\u001b[1m-tool\u001b[0m] [\u001b[1m-aril\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-checkpoint\u001b[0m \u001b[3mminutes\u001b[0m] [\u001b[1m-config\u001b[0m \u001b[3mfile\u001b[0m] [\u001b[1m-coverage\u001b[0m \u001b[3mminutes\u001b[0m] [\u001b[1m-depth\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-dump\u001b[0m \u001b[3mformat file\u001b[0m] [\u001b[1m-dumpTrace\u001b[0m \u001b[3mformat file\u001b[0m] [\u001b[1m-fp\u001b[0m \u001b[3mN\u001b[0m] [\u001b[1m-fpbits\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-fpmem\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-inv\u001b[0m \u001b[3mexpr\u001b[0m] [\u001b[1m-invlevel\u001b[0m \u001b[3mn\u001b[0m] [\u001b[1m-loadTrace\u001b[0m \u001b[3mformat file\u001b[0m] [\u001b[1m-maxSetSize\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-messagesAsErrors\u001b[0m \u001b[3mcodes\u001b[0m] [\u001b[1m-metadir\u001b[0m \u001b[3mpath\u001b[0m] [\u001b[1m-postCondition\u001b[0m \u001b[3mmod!oper\u001b[0m] [\u001b[1m-recover\u001b[0m \u001b[3mid\u001b[0m] [\u001b[1m-seed\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-suppressMessages\u001b[0m \u001b[3mcodes\u001b[0m] [\u001b[1m-teSpecOutDir\u001b[0m \u001b[3msome-dir-name\u001b[0m] [\u001b[1m-userFile\u001b[0m \u001b[3mfile\u001b[0m] [\u001b[1m-workers\u001b[0m \u001b[3mnum\u001b[0m] \u001b[1m-debugger\u001b[0m \u001b[3mnosuspend\u001b[0m -simulate [file=X,num=Y] SPEC\n\n\u001b[1mDESCRIPTION\u001b[0m\n\n\tThe model checker (\u001b[1mTLC\u001b[0m) provides the functionalities of model checking\n\tor simulation of TLA+ specifications. It may be invoked from the command\n\tline, or via the model checking functionality of the Toolbox.\n\t\n\tBy default, \u001b[1mTLC\u001b[0m starts in the model checking mode using breadth-first\n\tapproach for the state space exploration.\n\t\n\tA pretty-printed and in-depth description of \u001b[1mTLC\u001b[0m can be found at:\n\t\n\t\t    https://lamport.azurewebsites.net/tla/current-tools.pdf\n\n\u001b[1mOPTIONS\u001b[0m\n\n\t\u001b[1m-aril\u001b[0m \u001b[3mnum\u001b[0m\n\t\tadjust the seed for random simulation; defaults to 0\n\t\u001b[1m-checkpoint\u001b[0m \u001b[3mminutes\u001b[0m\n\t\tinterval between check point; defaults to 30\n\t\u001b[1m-cleanup\u001b[0m\n\t\tclean up the states directory\n\t\u001b[1m-config\u001b[0m \u001b[3mfile\u001b[0m\n\t\tprovide the configuration file; defaults to SPEC.cfg\n\t\u001b[1m-continue\u001b[0m\n\t\tcontinue running even when an invariant is violated; default\n\t\tbehavior is to halt on first violation\n\t\u001b[1m-coverage\u001b[0m \u001b[3mminutes\u001b[0m\n\t\tinterval between the collection of coverage information;\n\t\tif not specified, no coverage will be collected\n\t\u001b[1m-deadlock\u001b[0m\n\t\tif specified DO NOT CHECK FOR DEADLOCK. Setting the flag is\n\t\tthe same as setting CHECK_DEADLOCK to FALSE in config\n\t\tfile. When -deadlock is specified, config entry is\n\t\tignored; default behavior is to check for deadlocks\n\t\u001b[1m-debug\u001b[0m\n\t\tprint various debugging information - not for production use\n\t\t\n\t\u001b[1m-debugger\u001b[0m \u001b[3mnosuspend\u001b[0m\n\t\trun simulation or model-checking in debug mode such that TLC's\n\t\tstate-space exploration can be temporarily halted and variables\n\t\tbe inspected. The only debug front-end so far is the TLA+\n\t\tVSCode extension, which has to be downloaded and configured\n\t\tseparately, though other front-ends could be implemeted via the\n\t\tdebug-adapter-protocol.\n\t\tSpecifying the optional parameter 'nosuspend' causes\n\t\tTLC to start state-space exploration without waiting for a\n\t\tdebugger front-end to connect. Without 'nosuspend', TLC\n\t\tsuspends state-space exploration before the first ASSUME is\n\t\tevaluated (but after constants are processed). With 'nohalt',\n\t\tTLC does not halt state-space exploration when an evaluation\n\t\tor runtime error is caught. Without 'nohalt', evaluation or\n\t\truntime errors can be inspected in the debugger before TLC\n\t\tterminates. The optional parameter 'port=1274' makes the\n\t\tdebugger listen on port 1274 instead of on the standard\n\t\tport 4712, and 'port=0' lets the debugger choose a port.\n\t\tMultiple optional parameters must be comma-separated.\n\t\tSpecifying '-debugger' implies '-workers 1'.\n\t\u001b[1m-depth\u001b[0m \u001b[3mnum\u001b[0m\n\t\tspecifies the depth of random simulation; defaults to 100\n\t\u001b[1m-dfid\u001b[0m \u001b[3mnum\u001b[0m\n\t\trun the model check in depth-first iterative deepening\n\t\tstarting with an initial depth of 'num'\n\t\u001b[1m-difftrace\u001b[0m\n\t\tshow only the differences between successive states when\n\t\tprinting trace information; defaults to printing\n\t\tfull state descriptions\n\t\u001b[1m-dump\u001b[0m \u001b[3mformat file\u001b[0m\n\t\tdump all states into the specified file.\n\t\tThe format parameter can be omitted, or it can be a comma-separated\n\t\tlist beginning with 'dot' that may also contain a subset of\n\t\tthe items 'colorize', 'actionlabels', and 'constrained'. If format is\n\t\tomitted, TLC writes a list of all reachable states, described by TLA+\n\t\tformulas, on file. Otherwise, TLC writes the state graph in dot format,\n\t\tthe input format of the GraphViz program for displaying graphs. \n\t\tThe parameter 'colorize' indicates that state transitions should be \n\t\tcolored according to the action generating the transition,  \n\t\tand 'actionlabels' indicates that they should be labeled with \n\t\tthe name of the action. The parameter 'constrained' causes TLC to include\n\t\tstates in the dot file that are excluded from the model via a state or\n\t\taction constraint.\n\t\u001b[1m-dumpTrace\u001b[0m \u001b[3mformat file\u001b[0m\n\t\tin case of a property violation, formats the TLA+ error trace\n\t\tas the given format and dumps the output to the specified\n\t\tfile.  The file is relative to the same directory as the\n\t\tmain spec. At the time of writing, TLC supports the \"tla\"\n\t\tand the \"json\" formats.  To dump to multiple formats, the\n\t\t-dumpTrace parameter may appear multiple times.\n\t\tThe git commits 1eb815620 and 386eaa19f show that adding new\n\t\tformats is easy.\n\t\t\n\t\u001b[1m-fp\u001b[0m \u001b[3mN\u001b[0m\n\t\tuse the Nth irreducible polynomial from the list stored\n\t\tin the class FP64\n\t\u001b[1m-fpbits\u001b[0m \u001b[3mnum\u001b[0m\n\t\tthe number of MSB used by MultiFPSet to create nested\n\t\tFPSets; defaults to 1\n\t\u001b[1m-fpmem\u001b[0m \u001b[3mnum\u001b[0m\n\t\ta value in (0.0,1.0) representing the ratio of total\n\t\tphysical memory to devote to storing the fingerprints\n\t\tof found states; defaults to 0.25\n\t\u001b[1m-gzip\u001b[0m\n\t\tcontrol if gzip is applied to value input/output streams;\n\t\tdefaults to 'off'\n\t\u001b[1m-h\u001b[0m\n\t\tdisplay these help instructions\n\t\u001b[1m-inv\u001b[0m \u001b[3mexpr\u001b[0m\n\t\tevaluate the given (state-level) TLA+ formula expr as an invariant\n\t\u001b[1m-invlevel\u001b[0m \u001b[3mn\u001b[0m\n\t\twith n \\in Nat, evaluate the invariant TLCGet(\"level\") < n,\n\t\twhere TLCGet(\"level\") represents the distance of the current\n\t\tstate to some initial state. In other words, TLC will print the\n\t\tfirst trace it encounters with length n. After that, TLC will\n\t\tstop, unless the '-continue' parameter is specified.\n\t\u001b[1m-loadTrace\u001b[0m \u001b[3mformat file\u001b[0m\n\t\tload a trace from the specified file in the given format\n\t\tto use as a constraint. The file is relative to the same\n\t\tdirectory as the main spec. At the time of writing, TLC\n\t\tsupports the \"tlc\" and the \"json\" formats.\n\t\tNote: -loadTrace is not supported in simulation mode.\n\t\t\n\t\u001b[1m-maxSetSize\u001b[0m \u001b[3mnum\u001b[0m\n\t\tthe size of the largest set which TLC will enumerate; defaults\n\t\tto 1000000 (10^6)\n\t\u001b[1m-messagesAsErrors\u001b[0m \u001b[3mcodes\u001b[0m\n\t\ttreat specific messages as errors; comma-separated list of\n\t\tmessage codes\n\t\tSANY message codes can be found in https://github.com/tlaplus/tlaplus/blob/master/tlatools/org.lamport.tlatools/src/tla2sany/semantic/ErrorCode.java#L38\n\t\tTLC message codes can be found in https://github.com/tlaplus/tlaplus/blob/master/tlatools/org.lamport.tlatools/src/tlc2/output/EC.java#L19\n\t\u001b[1m-metadir\u001b[0m \u001b[3mpath\u001b[0m\n\t\tspecify the directory in which to store metadata; defaults to\n\t\tSPEC-directory/states if not specified\n\t\u001b[1m-noGenerateSpecTE\u001b[0m\n\t\tWhether to skip generating a trace exploration (TE) spec in\n\t\tthe event of TLC finding a state or behavior that does\n\t\tnot satisfy the invariants; TLC's default behavior is to\n\t\tgenerate this spec.\n\t\u001b[1m-nowarning\u001b[0m\n\t\tdisable all warnings; defaults to reporting warnings\n\t\u001b[1m-postCondition\u001b[0m \u001b[3mmod!oper\u001b[0m\n\t\tevaluate the given (constant-level) operator oper in the TLA+\n\t\tmodule mod at the end of model-checking.\n\t\u001b[1m-recover\u001b[0m \u001b[3mid\u001b[0m\n\t\trecover from the checkpoint with the specified id\n\t\u001b[1m-seed\u001b[0m \u001b[3mnum\u001b[0m\n\t\tprovide the seed for random simulation; defaults to a\n\t\trandom long pulled from a pseudo-RNG\n\t\u001b[1m-simulate\u001b[0m\n\t\trun in simulation mode; optional parameters may be specified\n\t\tcomma delimited: 'num=X' where X is the maximum number of\n\t\ttotal traces to generate and/or 'file=Y' where Y is the\n\t\tabsolute-pathed prefix for trace file modules to be written\n\t\tby the simulation workers; for example Y='/a/b/c/tr' would\n\t\tproduce, e.g, '/a/b/c/tr_1_15'\n\t\u001b[1m-suppressMessages\u001b[0m \u001b[3mcodes\u001b[0m\n\t\tsuppress specific messages; comma-separated list of\n\t\tmessage codes; cannot be combined with -nowarning\n\t\tSANY message codes can be found in https://github.com/tlaplus/tlaplus/blob/master/tlatools/org.lamport.tlatools/src/tla2sany/semantic/ErrorCode.java#L38\n\t\tTLC message codes can be found in https://github.com/tlaplus/tlaplus/blob/master/tlatools/org.lamport.tlatools/src/tlc2/output/EC.java#L19\n\t\u001b[1m-teSpecOutDir\u001b[0m \u001b[3msome-dir-name\u001b[0m\n\t\tDirectory to which to output the TE spec if TLC generates\n\t\tan error trace. Can be a relative (to root spec dir)\n\t\tor absolute path. By default the TE spec is output\n\t\tto the same directory as the main spec.\n\t\u001b[1m-terse\u001b[0m\n\t\tdo not expand values in Print statements; defaults to\n\t\texpanding values\n\t\u001b[1m-tool\u001b[0m\n\t\trun in 'tool' mode, surrounding output with message codes;\n\t\tif '-generateSpecTE' is specified, this is enabled\n\t\tautomatically\n\t\u001b[1m-userFile\u001b[0m \u001b[3mfile\u001b[0m\n\t\tan absolute path to a file in which to log user output (for\n\t\texample, that which is produced by Print)\n\t\u001b[1m-view\u001b[0m\n\t\tapply VIEW (if provided) when printing out states\n\t\u001b[1m-workers\u001b[0m \u001b[3mnum\u001b[0m\n\t\tthe number of TLC worker threads; defaults to 1. Use 'auto'\n\t\tto automatically select the number of threads based on the\n\t\tnumber of available cores.\n\n\u001b[1mTIPS\u001b[0m\n\n\tWhen using the  '-generateSpecTE' you can version the generated specification by doing:\n\t\t./tla2tools.jar -generateSpecTE MySpec.tla && NAME=\"SpecTE-$(date +%s)\" && sed -e \"s/MODULE SpecTE/MODULE $NAME/g\" SpecTE.tla > $NAME.tla\n\n\tIf, while checking a SpecTE created via '-generateSpecTE', you get an error message concerning\n\tCONSTANT declaration and you've previous used 'integers' as model values, rename your\n\tmodel values to start with a non-numeral and rerun the model check to generate a new SpecTE.\n\n\tIf, while checking a SpecTE created via '-generateSpecTE', you get a warning concerning\n\tduplicate operator definitions, this is likely due to the 'monolith' specification\n\tcreation. Try re-running TLC adding the 'nomonolith' option to the '-generateSpecTE'\n\tparameter.\n\n\tWhen using more than one worker, the reported depth might differ across runs. For small models, use a single worker. For large models, the diameter will almost always appear deterministic.\n\n",
+            "timed_out": false,
+            "unavailable": false,
+            "workspace_cleaned": true,
+            "workspace_limit_exceeded": false
+          }
+        ],
+        "operation": "prove_offset",
+        "producer": {
+          "ipfs_datasets_py.logic.backends.codebase_process": "bafkreic4k2ntjl6xlymuf4i7zopm6igvo6m5e5rje7mtpgatz2kkzjbx4e",
+          "ipfs_datasets_py.logic.backends.kernel.isabelle": "bafkreidljl3ly5xeeyru3rbzhmoswo3pfq4ph64yrcvhzfyrztitlewnmi",
+          "ipfs_datasets_py.logic.backends.kernel.lean": "bafkreicycyiruf3lh4lpte7n2rwr7exng54trheropswld7gan233nspie",
+          "ipfs_datasets_py.logic.backends.kernel.rocq": "bafkreibx7azys3vegt2tn2ab3eicbxujnsycgigmx2prrkc35jq6oq4w6y",
+          "ipfs_datasets_py.logic.backends.portfolio": "bafkreifugk77en5ub4txfqwpkgm42shbdgu226u63plfms3tdgkrwvk6qe",
+          "ipfs_datasets_py.logic.backends.process": "bafkreiduftpoevcvynouhfc3arr6xpdanws4datosvurw2npwb7j2p6zn4",
+          "ipfs_datasets_py.logic.backends.smt.differential": "bafkreifb34377wbmgxu3xcpckqjdrpe6jaoekfkrevy45z73uqi6g3n7fy",
+          "ipfs_datasets_py.logic.backends.tla.compiler": "bafkreihqnrrejtlidensse45mr3kljgfulbkcz55ybvusulglibpxjnvom",
+          "ipfs_datasets_py.logic.backends.tla.runners": "bafkreibqr5xosbhrz4qerwtnp4tb372tq6shm2sex3myh3hznmhmcpkpp4",
+          "ipfs_datasets_py.logic.software_contracts.codebase_family_execution": "bafkreihciw6zpvpgxalmx2xuhcu4jqsntyhnopccgbdkr5wpokvk5ibeou",
+          "ipfs_datasets_py.logic.software_contracts.codebase_family_lowering": "bafkreida7q4lwty64tzuu7yasfb2albsmixj32csgqfxqnubpvh7qc3mca",
+          "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "bafkreibwdktyqsznmjlqtmrefhxznrlcvn7tejsmsn7opjnvpuermwzb5y",
+          "ipfs_datasets_py.logic.software_contracts.codebase_obligation_graph": "bafkreia565xfzyhy42hqa6vlpt6gov3vkejj7wvzmwgzp5vw3dfcb7nv64",
+          "native_integer_owner": {
+            "dependency_scope": "selected Python implementation files and native executables; ambient shared libraries are not attested",
+            "environment": {
+              "HOME": "private-workspace",
+              "LANG": "C",
+              "LC_ALL": "C",
+              "PATH": "/usr/bin:/bin",
+              "TEMP": "private-workspace",
+              "TMP": "private-workspace",
+              "TMPDIR": "private-workspace"
+            },
+            "implementation": "cpython",
+            "machine": "aarch64",
+            "parser": "cpython-312",
+            "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+            "release": "6.17.0-1014-nvidia",
+            "resource_helper": {
+              "kind": "linux-prlimit",
+              "sha256": "2a479939c95a886fb8b52244381639816f8cf1f68eee713a9227d0c5d257c805"
+            },
+            "source_sha256": {
+              "ipfs_datasets_py.logic.backends.codebase_process": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+              "ipfs_datasets_py.logic.backends.smt.compiler": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+              "ipfs_datasets_py.logic.backends.smt.differential": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+              "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee",
+              "ipfs_datasets_py.logic.software_verification.codebase_pipeline": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030",
+              "ipfs_datasets_py.logic.software_verification.codebase_source_adapters": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+              "ipfs_datasets_py.logic.software_verification.vc": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+            },
+            "system": "Linux"
+          }
+        },
+        "receipt": {
+          "artifact_digest": "04e03b0d689299e968c424cd5e7a1b5047b3a18a22e18ee360d65809196a4452",
+          "bounded": true,
+          "capability": {
+            "backend_version": "TLCBackend@1",
+            "checks_fairness": true,
+            "checks_liveness": true,
+            "checks_safety": true,
+            "executable_candidates": [
+              "tlc",
+              "tlc2",
+              "tla2tools"
+            ],
+            "finite_trace_only": false,
+            "limitations": [
+              "TLC explores a finite state graph under the declared MaxSteps and domain bounds.",
+              "Liveness/PROPERTY checks are available but remain bounded by fairness assumptions and the finite state space; they are not unbounded proofs.",
+              "A successful TLC run never grants theorem authority."
+            ],
+            "max_declared_steps": 10000,
+            "requires_jvm": true,
+            "schema_version": "tla-model-checker-capability/v1",
+            "tool": "tlc"
+          },
+          "checked_liveness_properties": [],
+          "checked_safety_properties": [
+            "TypeOK",
+            "Inv_offset"
+          ],
+          "command": [
+            "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+            "-config",
+            "CodebaseOffset.cfg",
+            "CodebaseOffset.tla"
+          ],
+          "configuration_digest": "bebc4290383f5c7b3832a3bd28fcd93dd89ad636c7ae47a0a580c660ec637fea",
+          "configuration_text": "SPECIFICATION Spec\nINVARIANT TypeOK\nINVARIANT Inv_offset\nCHECK_DEADLOCK FALSE\n",
+          "counterexample": null,
+          "elapsed_ms": 383,
+          "executable": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+          "fairness_limitations": [
+            "No fairness constraints were present; Spec uses only safety stuttering.",
+            "BoundedProgress only asserts that the finite step budget is reachable; it is not an unbounded liveness proof.",
+            "Closed codebase profile selects safety only; compiler BoundedProgress is not requested or claimed.",
+            "TLC explores a finite state graph under the declared MaxSteps and domain bounds.",
+            "Liveness/PROPERTY checks are available but remain bounded by fairness assumptions and the finite state space; they are not unbounded proofs.",
+            "A successful TLC run never grants theorem authority."
+          ],
+          "jvm_available": true,
+          "model_digest": "b90556441c1485dde8f569a623c3556017ec2c1af582273c49c7f9ef9f68c829",
+          "output_truncated": false,
+          "reason": "bounded model check passed within the explicitly recorded explored bounds",
+          "receipt_id": "tla-model-check-receipt:cdd7a0d6709e2c676069722826a1226e94216a0b566c3519b2d867e1d2ba1ff7",
+          "returncode": 0,
+          "schema_version": "tla-model-check-receipt/v1",
+          "status": "passed",
+          "stderr": "",
+          "stdout": "TLC2 Version 2026.07.31.184830 (rev: 30cc360)\nWarning: Please run the Java VM, which executes TLC with a throughput optimized garbage collector, by passing the \"-XX:+UseParallelGC\" property.\n(Use the -nowarning option to disable this warning.)\nRunning breadth-first search Model-Checking with fp 5 and seed 7468337732257876332 with 1 worker on 20 cores with 4096MB heap and 64MB offheap memory [pid: 3236835] (Linux 6.17.0-1014-nvidia aarch64, Azul Systems, Inc. 21.0.9 64bit, MSBDiskFPSet, DiskStateQueue).\nParsing file /tmp/logic-tool-hr3561pf/CodebaseOffset.tla\nParsing file /tmp/tlc-16012134928037315971/Integers.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)\nParsing file /tmp/tlc-16012134928037315971/FiniteSets.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)\nParsing file /tmp/tlc-16012134928037315971/Sequences.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)\nParsing file /tmp/tlc-16012134928037315971/TLC.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)\nParsing file /tmp/tlc-16012134928037315971/_TLCTrace.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)\nParsing file /tmp/tlc-16012134928037315971/Naturals.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)\nParsing file /tmp/tlc-16012134928037315971/TLCExt.tla (jar:file:/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)\nSemantic processing of module Naturals\nSemantic processing of module Integers\nSemantic processing of module Sequences\nSemantic processing of module FiniteSets\nSemantic processing of module TLC\nSemantic processing of module TLCExt\nSemantic processing of module _TLCTrace\nSemantic processing of module CodebaseOffset\nLinting of module TLCExt\nLinting of module _TLCTrace\nLinting of module CodebaseOffset\nStarting... (2026-10-02 16:21:31)\nComputing initial states...\nComputed 2 initial states...\nFinished computing initial states: 3 distinct states generated at 2026-10-02 16:21:32.\nModel checking completed. No error has been found.\n  Estimates of the probability that TLC did not check all reachable states\n  because two distinct states had the same fingerprint:\n  calculated (optimistic):  val = 0.0\n9 states generated, 9 distinct states found, 0 states left on queue.\nThe depth of the complete state graph search is 3.\nThe average outdegree of the complete state graph is 1 (minimum is 0, the maximum 1 and the 95th percentile is 1).\nFinished in 00s at (2026-10-02 16:21:32)\n",
+          "timeout_seconds": 89.879,
+          "tool": "tlc",
+          "tool_version": "\u001b[1mNAME\u001b[0m\n\n\tTLC - provides model checking and simulation of TLA+ specifications - Version 2026.07.31.184830\n\n\n\u001b[1mSYNOPSIS\u001b[0m\n\n\t\u001b[1mTLC\u001b[0m [\u001b[1m-h\u001b[0m] [\u001b[1m-cleanup\u001b[0m] [\u001b[1m-continue\u001b[0m] [\u001b[1m-deadlock\u001b[0m] [\u001b[1m-debug\u001b[0m] [\u001b[1m-difftrace\u001b[0m] [\u001b[1m-gzip\u001b[0m] [\u001b[1m-noGenerateSpecTE\u001b[0m] [\u001b[1m-nowarning\u001b[0m] [\u001b[1m-terse\u001b[0m] [\u001b[1m-tool\u001b[0m] [\u001b[1m-view\u001b[0m] [\u001b[1m-checkpoint\u001b[0m \u001b[3mminutes\u001b[0m] [\u001b[1m-config\u001b[0m \u001b[3mfile\u001b[0m] [\u001b[1m-coverage\u001b[0m \u001b[3mminutes\u001b[0m] [\u001b[1m-dfid\u001b[0m \u001b[3mnum\u001b[0m] [\u001b[1m-dump\u001b",
+          "unbounded_proof": false
+        },
+        "request": {
+          "assumption_ids": [
+            "assumption:17470c57f9c8ea50b8e5ec93b3c70488c7c6fbb56a62f07c001a78f6591414ab",
+            "assumption:ecd37d092349250908baf5f4e822afa10988f236ea4f3f574943e30ea8238599",
+            "assumption:241a4be58aae7a6c5b91fead178d3f18212432841916cb168d9447894a4109d8"
+          ],
+          "bounds": {
+            "max_memory_bytes": 805306368,
+            "max_output_bytes": 262144,
+            "max_steps": 2,
+            "timeout_ms": 89879
+          },
+          "claim_digest": "c3902d1193ece0e4b5429ba2ec5f8789f5a8ea60a00181144502b5e00908c439",
+          "claim_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "declaration_id": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+          "logic_family": "tla_plus",
+          "obligation_digest": "f1cfd88a1d9ee83bae718a0e956c631e1388c82189a446b7645dd7c129bd2f22",
+          "obligation_id": "obligation:f1cfd88a1d9ee83bae718a0e956c631e1388c82189a446b7645dd7c129bd2f22",
+          "payload": {
+            "encoding": "tla_plus",
+            "source": "",
+            "translation": {
+              "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+              "fidelity": "closed_profile",
+              "operation": "prove_offset",
+              "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+              "source_family": "closed_integer_offset",
+              "target_family": "tla_plus",
+              "translation_digest": "c3902d1193ece0e4b5429ba2ec5f8789f5a8ea60a00181144502b5e00908c439",
+              "translation_id": "codebase-family:tla_plus"
+            }
+          },
+          "query_kind": "satisfiability",
+          "request_id": "family:f1cfd88a1d9ee83bae718a0e956c631e1388c82189a446b7645dd7c129bd2f22",
+          "requested_backend_id": "tlc",
+          "schema_version": "proof-backend-request/v1"
+        },
+        "resource_binding": {
+          "child_lease_id": "63fa775856fc4e74adea57343ebad0ac",
+          "cpu_slots": 1,
+          "memory_mb": 768,
+          "parent_lease_id": "f17cd92b106f4d91925bbfe5980458ce",
+          "process_slots": 1
+        },
+        "schema": "codebase-family-native-attempt@1",
+        "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+        "source_runtime_semantics_verified": false,
+        "status": "proved",
+        "tools": {
+          "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+          "policy_cid": "baguqeeratbf6rjtv3lbs2g6ej35zx6bwp727wndwl2xk4pn4asjoo6ensusq",
+          "schema": "codebase-family-tools@1",
+          "tools": {
+            "cvc5": {
+              "artifacts": [],
+              "executable": {
+                "bytes": 249,
+                "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+              }
+            },
+            "isabelle": {
+              "artifacts": [
+                {
+                  "bytes": 1058,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+                  "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+                }
+              ],
+              "executable": null
+            },
+            "java": {
+              "artifacts": [],
+              "executable": {
+                "bytes": 70864,
+                "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+              }
+            },
+            "lean": {
+              "artifacts": [],
+              "executable": null
+            },
+            "rocq": {
+              "artifacts": [
+                {
+                  "bytes": 7336472,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+                  "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+                }
+              ],
+              "executable": null
+            },
+            "tlc": {
+              "artifacts": [
+                {
+                  "bytes": 4486015,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                  "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                },
+                {
+                  "bytes": 70864,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                  "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                }
+              ],
+              "executable": {
+                "bytes": 457,
+                "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+                "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+              }
+            },
+            "z3": {
+              "artifacts": [],
+              "executable": {
+                "bytes": 19659744,
+                "path": "/home/barberb/.local/bin/z3",
+                "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+              }
+            }
+          }
+        }
+      },
+      "mathematical_selections": {
+        "isabelle": {
+          "attempt_record_cids": [
+            "bafkreial7op7ffv5byts3vm5gzgveif3w4hczviuo4xic5rdeo36kj7ipe",
+            "bafkreigw7rk5umfmhr4zgbalmoux4csc6ukhhcewsd62j3472ipsbq7luy",
+            "bafkreigijr546qig3haiqrfpczgklsl6ttfboxwauvgojchl4eybkgodha"
+          ],
+          "disagreement": false,
+          "plan": {
+            "attempts": [
+              {
+                "attempt_id": "cvc5",
+                "authority_capability": "",
+                "backend_id": "cvc5",
+                "family": "solver",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "satisfiability",
+                "role": "candidate",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              },
+              {
+                "attempt_id": "isabelle",
+                "authority_capability": "exact_native_kernel",
+                "backend_id": "isabelle",
+                "family": "kernel",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "reconstruction",
+                "role": "reconstruction",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              },
+              {
+                "attempt_id": "z3",
+                "authority_capability": "",
+                "backend_id": "z3",
+                "family": "solver",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "satisfiability",
+                "role": "candidate",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              }
+            ],
+            "capability_gaps": [],
+            "interface": "VerificationPortfolio@1",
+            "metadata": {
+              "fail_on_disagreement": true,
+              "planner": "VerificationPortfolio@1",
+              "require_reconstruction_for_candidates": true,
+              "schema_version": "verification-portfolio/v1"
+            },
+            "obligation": {
+              "assumption_ids": [
+                "assumption:c0ee98322f458a903a6ee32efa2e7b4b02579dd6e8ff3df5de5b426c69471b36",
+                "assumption:e86c4f24495bc7c883164b52fbd1c818d2c646da6f810647993e515c299520e6",
+                "assumption:b5d8f9070f14406c27ce9ef55dd87224d4229710b90bdeb8774de833f2f562dc"
+              ],
+              "metadata": {
+                "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+                "domain": "mathematical_integer",
+                "runtime_proof": false
+              },
+              "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+              "property_kind": "contract",
+              "required_assurance": "independently_checkable",
+              "required_authority": "reconstruction",
+              "schema_version": "verification-portfolio-obligation/v1",
+              "statement": "prove_offset"
+            },
+            "policy_id": "captured-integer-offset-and-finite-bridge@1:isabelle",
+            "required_assurance": "independently_checkable",
+            "required_authority": "reconstruction",
+            "resource_policy": {
+              "bounds": {
+                "max_memory_bytes": 1610612736,
+                "max_output_bytes": 262144,
+                "max_steps": 2,
+                "timeout_ms": 90000
+              },
+              "cancel_on_counterexample": false,
+              "max_attempts": 3,
+              "max_parallel": 2,
+              "schema_version": "verification-portfolio-resource-policy/v1"
+            },
+            "schema_version": "verification-portfolio-plan/v1",
+            "stages": [
+              0
+            ]
+          },
+          "selection": {
+            "achieved_assurance": "advisory",
+            "authority_attempt_ids": [],
+            "candidate_attempt_ids": [
+              "cvc5",
+              "z3"
+            ],
+            "counterexample_attempt_id": "",
+            "disagreement": false,
+            "dispositions": [
+              {
+                "attempt_id": "cvc5",
+                "disposition": "candidate"
+              },
+              {
+                "attempt_id": "isabelle",
+                "disposition": "non_conclusive"
+              },
+              {
+                "attempt_id": "z3",
+                "disposition": "candidate"
+              }
+            ],
+            "plan_id": "5db429072d9ff748b54f9a795636de9f5455c8ef6bdca5efbc89b7b124eabf8f",
+            "quarantined_attempt_ids": [],
+            "reason": "candidates require reconstruction before authority; no reconstruction succeeded",
+            "reconstruction_attempt_ids": [],
+            "schema_version": "verification-portfolio-selection/v1",
+            "verdict": "inconclusive"
+          },
+          "status": "inconclusive"
+        },
+        "lean": {
+          "attempt_record_cids": [
+            "bafkreial7op7ffv5byts3vm5gzgveif3w4hczviuo4xic5rdeo36kj7ipe",
+            "bafkreigw7rk5umfmhr4zgbalmoux4csc6ukhhcewsd62j3472ipsbq7luy",
+            "bafkreiecvamxdba3ilapu6c7ivxmirxtostyx6xdorhxajzsndzn7f7uge"
+          ],
+          "disagreement": false,
+          "plan": {
+            "attempts": [
+              {
+                "attempt_id": "cvc5",
+                "authority_capability": "",
+                "backend_id": "cvc5",
+                "family": "solver",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "satisfiability",
+                "role": "candidate",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              },
+              {
+                "attempt_id": "lean",
+                "authority_capability": "exact_native_kernel",
+                "backend_id": "lean",
+                "family": "kernel",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "reconstruction",
+                "role": "reconstruction",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              },
+              {
+                "attempt_id": "z3",
+                "authority_capability": "",
+                "backend_id": "z3",
+                "family": "solver",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "satisfiability",
+                "role": "candidate",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              }
+            ],
+            "capability_gaps": [],
+            "interface": "VerificationPortfolio@1",
+            "metadata": {
+              "fail_on_disagreement": true,
+              "planner": "VerificationPortfolio@1",
+              "require_reconstruction_for_candidates": true,
+              "schema_version": "verification-portfolio/v1"
+            },
+            "obligation": {
+              "assumption_ids": [
+                "assumption:c0ee98322f458a903a6ee32efa2e7b4b02579dd6e8ff3df5de5b426c69471b36",
+                "assumption:e86c4f24495bc7c883164b52fbd1c818d2c646da6f810647993e515c299520e6",
+                "assumption:b5d8f9070f14406c27ce9ef55dd87224d4229710b90bdeb8774de833f2f562dc"
+              ],
+              "metadata": {
+                "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+                "domain": "mathematical_integer",
+                "runtime_proof": false
+              },
+              "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+              "property_kind": "contract",
+              "required_assurance": "independently_checkable",
+              "required_authority": "reconstruction",
+              "schema_version": "verification-portfolio-obligation/v1",
+              "statement": "prove_offset"
+            },
+            "policy_id": "captured-integer-offset-and-finite-bridge@1:lean",
+            "required_assurance": "independently_checkable",
+            "required_authority": "reconstruction",
+            "resource_policy": {
+              "bounds": {
+                "max_memory_bytes": 1610612736,
+                "max_output_bytes": 262144,
+                "max_steps": 2,
+                "timeout_ms": 90000
+              },
+              "cancel_on_counterexample": false,
+              "max_attempts": 3,
+              "max_parallel": 2,
+              "schema_version": "verification-portfolio-resource-policy/v1"
+            },
+            "schema_version": "verification-portfolio-plan/v1",
+            "stages": [
+              0
+            ]
+          },
+          "selection": {
+            "achieved_assurance": "advisory",
+            "authority_attempt_ids": [],
+            "candidate_attempt_ids": [
+              "cvc5",
+              "z3"
+            ],
+            "counterexample_attempt_id": "",
+            "disagreement": false,
+            "dispositions": [
+              {
+                "attempt_id": "cvc5",
+                "disposition": "candidate"
+              },
+              {
+                "attempt_id": "lean",
+                "disposition": "non_conclusive"
+              },
+              {
+                "attempt_id": "z3",
+                "disposition": "candidate"
+              }
+            ],
+            "plan_id": "6a78c2c7e0476dd382f608fc655584d38bfd990d899407bf6e350a05b66ebdbe",
+            "quarantined_attempt_ids": [],
+            "reason": "candidates require reconstruction before authority; no reconstruction succeeded",
+            "reconstruction_attempt_ids": [],
+            "schema_version": "verification-portfolio-selection/v1",
+            "verdict": "inconclusive"
+          },
+          "status": "inconclusive"
+        },
+        "rocq": {
+          "attempt_record_cids": [
+            "bafkreial7op7ffv5byts3vm5gzgveif3w4hczviuo4xic5rdeo36kj7ipe",
+            "bafkreigw7rk5umfmhr4zgbalmoux4csc6ukhhcewsd62j3472ipsbq7luy",
+            "bafkreigd4gsvbv3kf45fdamj2yc6gtgq2i7xe4kr34bf6t6thtawiqzu7y"
+          ],
+          "disagreement": false,
+          "plan": {
+            "attempts": [
+              {
+                "attempt_id": "cvc5",
+                "authority_capability": "",
+                "backend_id": "cvc5",
+                "family": "solver",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "satisfiability",
+                "role": "candidate",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              },
+              {
+                "attempt_id": "rocq",
+                "authority_capability": "exact_native_kernel",
+                "backend_id": "rocq",
+                "family": "kernel",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "reconstruction",
+                "role": "reconstruction",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              },
+              {
+                "attempt_id": "z3",
+                "authority_capability": "",
+                "backend_id": "z3",
+                "family": "solver",
+                "gap_reason": "",
+                "requires_candidate": false,
+                "result_authority": "satisfiability",
+                "role": "candidate",
+                "runnable": true,
+                "schema_version": "verification-portfolio-attempt-spec/v1",
+                "stage": 0
+              }
+            ],
+            "capability_gaps": [],
+            "interface": "VerificationPortfolio@1",
+            "metadata": {
+              "fail_on_disagreement": true,
+              "planner": "VerificationPortfolio@1",
+              "require_reconstruction_for_candidates": true,
+              "schema_version": "verification-portfolio/v1"
+            },
+            "obligation": {
+              "assumption_ids": [
+                "assumption:c0ee98322f458a903a6ee32efa2e7b4b02579dd6e8ff3df5de5b426c69471b36",
+                "assumption:e86c4f24495bc7c883164b52fbd1c818d2c646da6f810647993e515c299520e6",
+                "assumption:b5d8f9070f14406c27ce9ef55dd87224d4229710b90bdeb8774de833f2f562dc"
+              ],
+              "metadata": {
+                "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+                "domain": "mathematical_integer",
+                "runtime_proof": false
+              },
+              "obligation_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+              "property_kind": "contract",
+              "required_assurance": "independently_checkable",
+              "required_authority": "reconstruction",
+              "schema_version": "verification-portfolio-obligation/v1",
+              "statement": "prove_offset"
+            },
+            "policy_id": "captured-integer-offset-and-finite-bridge@1:rocq",
+            "required_assurance": "independently_checkable",
+            "required_authority": "reconstruction",
+            "resource_policy": {
+              "bounds": {
+                "max_memory_bytes": 1610612736,
+                "max_output_bytes": 262144,
+                "max_steps": 2,
+                "timeout_ms": 90000
+              },
+              "cancel_on_counterexample": false,
+              "max_attempts": 3,
+              "max_parallel": 2,
+              "schema_version": "verification-portfolio-resource-policy/v1"
+            },
+            "schema_version": "verification-portfolio-plan/v1",
+            "stages": [
+              0
+            ]
+          },
+          "selection": {
+            "achieved_assurance": "advisory",
+            "authority_attempt_ids": [],
+            "candidate_attempt_ids": [
+              "cvc5",
+              "z3"
+            ],
+            "counterexample_attempt_id": "",
+            "disagreement": false,
+            "dispositions": [
+              {
+                "attempt_id": "cvc5",
+                "disposition": "candidate"
+              },
+              {
+                "attempt_id": "rocq",
+                "disposition": "non_conclusive"
+              },
+              {
+                "attempt_id": "z3",
+                "disposition": "candidate"
+              }
+            ],
+            "plan_id": "137ed75f0f70aa81ca53a0b0105776c43cdf993db379616e497fd1afce66e801",
+            "quarantined_attempt_ids": [],
+            "reason": "candidates require reconstruction before authority; no reconstruction succeeded",
+            "reconstruction_attempt_ids": [],
+            "schema_version": "verification-portfolio-selection/v1",
+            "verdict": "inconclusive"
+          },
+          "status": "inconclusive"
+        }
+      },
+      "mathematical_status": "unknown",
+      "native_attempts": {
+        "cvc5": {
+          "backend": "cvc5",
+          "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+          "family": "smt_lia",
+          "mathematical_model_only": true,
+          "native_observations": [
+            {
+              "cancelled": false,
+              "command": [
+                "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                "--lang=smt2"
+              ],
+              "elapsed_seconds": 0.04275184194557369,
+              "environment": {
+                "LEAN_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "OMP_NUM_THREADS": "1",
+                "OPENBLAS_NUM_THREADS": "1"
+              },
+              "error": "",
+              "input_file_cids": {},
+              "limits": {
+                "cpu_seconds": 90,
+                "enforce_file_size_limit": true,
+                "max_argument_bytes": 65536,
+                "max_arguments": 256,
+                "max_environment_bytes": 131072,
+                "max_input_bytes": 262144,
+                "max_output_bytes": 262144,
+                "max_output_files": 8,
+                "max_path_bytes": 512,
+                "max_workspace_bytes": 16777216,
+                "memory_bytes": 268435456,
+                "resident_memory_bytes": 268435456,
+                "termination_grace_seconds": 0.25,
+                "timeout_seconds": 89.612114577787
+              },
+              "output_truncated": false,
+              "process_tree_terminated": false,
+              "resource_exhausted": false,
+              "returncode": 0,
+              "stderr": "",
+              "stdin_cid": "bafkreiaknfdbgl54yopakvimqktisx7sgh442upr2ta4vzbmmyk3weal3a",
+              "stdout": "unsat\n",
+              "timed_out": false,
+              "unavailable": false,
+              "workspace_cleaned": true,
+              "workspace_limit_exceeded": false
+            }
+          ],
+          "operation": "prove_offset",
+          "producer": {
+            "ipfs_datasets_py.logic.backends.codebase_process": "bafkreic4k2ntjl6xlymuf4i7zopm6igvo6m5e5rje7mtpgatz2kkzjbx4e",
+            "ipfs_datasets_py.logic.backends.kernel.isabelle": "bafkreidljl3ly5xeeyru3rbzhmoswo3pfq4ph64yrcvhzfyrztitlewnmi",
+            "ipfs_datasets_py.logic.backends.kernel.lean": "bafkreicycyiruf3lh4lpte7n2rwr7exng54trheropswld7gan233nspie",
+            "ipfs_datasets_py.logic.backends.kernel.rocq": "bafkreibx7azys3vegt2tn2ab3eicbxujnsycgigmx2prrkc35jq6oq4w6y",
+            "ipfs_datasets_py.logic.backends.portfolio": "bafkreifugk77en5ub4txfqwpkgm42shbdgu226u63plfms3tdgkrwvk6qe",
+            "ipfs_datasets_py.logic.backends.process": "bafkreiduftpoevcvynouhfc3arr6xpdanws4datosvurw2npwb7j2p6zn4",
+            "ipfs_datasets_py.logic.backends.smt.differential": "bafkreifb34377wbmgxu3xcpckqjdrpe6jaoekfkrevy45z73uqi6g3n7fy",
+            "ipfs_datasets_py.logic.backends.tla.compiler": "bafkreihqnrrejtlidensse45mr3kljgfulbkcz55ybvusulglibpxjnvom",
+            "ipfs_datasets_py.logic.backends.tla.runners": "bafkreibqr5xosbhrz4qerwtnp4tb372tq6shm2sex3myh3hznmhmcpkpp4",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_execution": "bafkreihciw6zpvpgxalmx2xuhcu4jqsntyhnopccgbdkr5wpokvk5ibeou",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_lowering": "bafkreida7q4lwty64tzuu7yasfb2albsmixj32csgqfxqnubpvh7qc3mca",
+            "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "bafkreibwdktyqsznmjlqtmrefhxznrlcvn7tejsmsn7opjnvpuermwzb5y",
+            "ipfs_datasets_py.logic.software_contracts.codebase_obligation_graph": "bafkreia565xfzyhy42hqa6vlpt6gov3vkejj7wvzmwgzp5vw3dfcb7nv64",
+            "native_integer_owner": {
+              "dependency_scope": "selected Python implementation files and native executables; ambient shared libraries are not attested",
+              "environment": {
+                "HOME": "private-workspace",
+                "LANG": "C",
+                "LC_ALL": "C",
+                "PATH": "/usr/bin:/bin",
+                "TEMP": "private-workspace",
+                "TMP": "private-workspace",
+                "TMPDIR": "private-workspace"
+              },
+              "implementation": "cpython",
+              "machine": "aarch64",
+              "parser": "cpython-312",
+              "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+              "release": "6.17.0-1014-nvidia",
+              "resource_helper": {
+                "kind": "linux-prlimit",
+                "sha256": "2a479939c95a886fb8b52244381639816f8cf1f68eee713a9227d0c5d257c805"
+              },
+              "source_sha256": {
+                "ipfs_datasets_py.logic.backends.codebase_process": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+                "ipfs_datasets_py.logic.backends.smt.compiler": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+                "ipfs_datasets_py.logic.backends.smt.differential": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+                "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee",
+                "ipfs_datasets_py.logic.software_verification.codebase_pipeline": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030",
+                "ipfs_datasets_py.logic.software_verification.codebase_source_adapters": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+                "ipfs_datasets_py.logic.software_verification.vc": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+              },
+              "system": "Linux"
+            }
+          },
+          "receipt": {
+            "kernel_checked": false,
+            "kind": "conditional_native_smt_response",
+            "query_cid": "bafkreiaknfdbgl54yopakvimqktisx7sgh442upr2ta4vzbmmyk3weal3a",
+            "verdict": "unsat"
+          },
+          "request": {
+            "assumption_ids": [
+              "assumption:17470c57f9c8ea50b8e5ec93b3c70488c7c6fbb56a62f07c001a78f6591414ab",
+              "assumption:ecd37d092349250908baf5f4e822afa10988f236ea4f3f574943e30ea8238599",
+              "assumption:241a4be58aae7a6c5b91fead178d3f18212432841916cb168d9447894a4109d8"
+            ],
+            "bounds": {
+              "max_memory_bytes": 268435456,
+              "max_output_bytes": 262144,
+              "max_steps": 2,
+              "timeout_ms": 89625
+            },
+            "claim_digest": "c3902d1193ece0e4b5429ba2ec5f8789f5a8ea60a00181144502b5e00908c439",
+            "claim_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+            "declaration_id": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+            "logic_family": "smt_lia",
+            "obligation_digest": "6aba6fba6f922b046e501cdc9cc0f07dd3f4479b1fbf9c018a501ca3253d8bb5",
+            "obligation_id": "obligation:6aba6fba6f922b046e501cdc9cc0f07dd3f4479b1fbf9c018a501ca3253d8bb5",
+            "payload": {
+              "encoding": "smt_lia",
+              "source": "",
+              "translation": {
+                "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+                "fidelity": "closed_profile",
+                "operation": "prove_offset",
+                "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+                "source_family": "closed_integer_offset",
+                "target_family": "smt_lia",
+                "translation_digest": "c3902d1193ece0e4b5429ba2ec5f8789f5a8ea60a00181144502b5e00908c439",
+                "translation_id": "codebase-family:smt_lia"
+              }
+            },
+            "query_kind": "satisfiability",
+            "request_id": "family:6aba6fba6f922b046e501cdc9cc0f07dd3f4479b1fbf9c018a501ca3253d8bb5",
+            "requested_backend_id": "cvc5",
+            "schema_version": "proof-backend-request/v1"
+          },
+          "resource_binding": {
+            "child_lease_id": "c4f4dfcd53464c9bb51d211ad19d5a8f",
+            "cpu_slots": 1,
+            "memory_mb": 256,
+            "parent_lease_id": "5c7a7c0439cf47a6b9b1e6c872ad4c13",
+            "process_slots": 1
+          },
+          "schema": "codebase-family-native-attempt@1",
+          "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+          "source_runtime_semantics_verified": false,
+          "status": "proved",
+          "tools": {
+            "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+            "policy_cid": "baguqeeratbf6rjtv3lbs2g6ej35zx6bwp727wndwl2xk4pn4asjoo6ensusq",
+            "schema": "codebase-family-tools@1",
+            "tools": {
+              "cvc5": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 249,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                  "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+                }
+              },
+              "isabelle": {
+                "artifacts": [
+                  {
+                    "bytes": 1058,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+                    "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+                  }
+                ],
+                "executable": null
+              },
+              "java": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 70864,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                  "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                }
+              },
+              "lean": {
+                "artifacts": [],
+                "executable": null
+              },
+              "rocq": {
+                "artifacts": [
+                  {
+                    "bytes": 7336472,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+                    "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+                  }
+                ],
+                "executable": null
+              },
+              "tlc": {
+                "artifacts": [
+                  {
+                    "bytes": 4486015,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                    "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                  },
+                  {
+                    "bytes": 70864,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                    "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                  }
+                ],
+                "executable": {
+                  "bytes": 457,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+                  "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+                }
+              },
+              "z3": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 19659744,
+                  "path": "/home/barberb/.local/bin/z3",
+                  "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+                }
+              }
+            }
+          }
+        },
+        "isabelle": {
+          "backend": "isabelle",
+          "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+          "family": "isabelle_hol",
+          "mathematical_model_only": true,
+          "native_observations": [],
+          "operation": "prove_offset",
+          "producer": {
+            "ipfs_datasets_py.logic.backends.codebase_process": "bafkreic4k2ntjl6xlymuf4i7zopm6igvo6m5e5rje7mtpgatz2kkzjbx4e",
+            "ipfs_datasets_py.logic.backends.kernel.isabelle": "bafkreidljl3ly5xeeyru3rbzhmoswo3pfq4ph64yrcvhzfyrztitlewnmi",
+            "ipfs_datasets_py.logic.backends.kernel.lean": "bafkreicycyiruf3lh4lpte7n2rwr7exng54trheropswld7gan233nspie",
+            "ipfs_datasets_py.logic.backends.kernel.rocq": "bafkreibx7azys3vegt2tn2ab3eicbxujnsycgigmx2prrkc35jq6oq4w6y",
+            "ipfs_datasets_py.logic.backends.portfolio": "bafkreifugk77en5ub4txfqwpkgm42shbdgu226u63plfms3tdgkrwvk6qe",
+            "ipfs_datasets_py.logic.backends.process": "bafkreiduftpoevcvynouhfc3arr6xpdanws4datosvurw2npwb7j2p6zn4",
+            "ipfs_datasets_py.logic.backends.smt.differential": "bafkreifb34377wbmgxu3xcpckqjdrpe6jaoekfkrevy45z73uqi6g3n7fy",
+            "ipfs_datasets_py.logic.backends.tla.compiler": "bafkreihqnrrejtlidensse45mr3kljgfulbkcz55ybvusulglibpxjnvom",
+            "ipfs_datasets_py.logic.backends.tla.runners": "bafkreibqr5xosbhrz4qerwtnp4tb372tq6shm2sex3myh3hznmhmcpkpp4",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_execution": "bafkreihciw6zpvpgxalmx2xuhcu4jqsntyhnopccgbdkr5wpokvk5ibeou",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_lowering": "bafkreida7q4lwty64tzuu7yasfb2albsmixj32csgqfxqnubpvh7qc3mca",
+            "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "bafkreibwdktyqsznmjlqtmrefhxznrlcvn7tejsmsn7opjnvpuermwzb5y",
+            "ipfs_datasets_py.logic.software_contracts.codebase_obligation_graph": "bafkreia565xfzyhy42hqa6vlpt6gov3vkejj7wvzmwgzp5vw3dfcb7nv64",
+            "native_integer_owner": {
+              "dependency_scope": "selected Python implementation files and native executables; ambient shared libraries are not attested",
+              "environment": {
+                "HOME": "private-workspace",
+                "LANG": "C",
+                "LC_ALL": "C",
+                "PATH": "/usr/bin:/bin",
+                "TEMP": "private-workspace",
+                "TMP": "private-workspace",
+                "TMPDIR": "private-workspace"
+              },
+              "implementation": "cpython",
+              "machine": "aarch64",
+              "parser": "cpython-312",
+              "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+              "release": "6.17.0-1014-nvidia",
+              "resource_helper": {
+                "kind": "linux-prlimit",
+                "sha256": "2a479939c95a886fb8b52244381639816f8cf1f68eee713a9227d0c5d257c805"
+              },
+              "source_sha256": {
+                "ipfs_datasets_py.logic.backends.codebase_process": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+                "ipfs_datasets_py.logic.backends.smt.compiler": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+                "ipfs_datasets_py.logic.backends.smt.differential": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+                "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee",
+                "ipfs_datasets_py.logic.software_verification.codebase_pipeline": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030",
+                "ipfs_datasets_py.logic.software_verification.codebase_source_adapters": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+                "ipfs_datasets_py.logic.software_verification.vc": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+              },
+              "system": "Linux"
+            }
+          },
+          "receipt": null,
+          "request": null,
+          "resource_binding": {
+            "child_lease_id": "0a275509052f4b5fae4109d73b9016e8",
+            "cpu_slots": 1,
+            "memory_mb": 1536,
+            "parent_lease_id": "aa1f9689b9494bfaa2dea879a156deaf",
+            "process_slots": 1
+          },
+          "schema": "codebase-family-native-attempt@1",
+          "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+          "source_runtime_semantics_verified": false,
+          "status": "unavailable",
+          "tools": {
+            "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+            "policy_cid": "baguqeeratbf6rjtv3lbs2g6ej35zx6bwp727wndwl2xk4pn4asjoo6ensusq",
+            "schema": "codebase-family-tools@1",
+            "tools": {
+              "cvc5": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 249,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                  "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+                }
+              },
+              "isabelle": {
+                "artifacts": [
+                  {
+                    "bytes": 1058,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+                    "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+                  }
+                ],
+                "executable": null
+              },
+              "java": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 70864,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                  "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                }
+              },
+              "lean": {
+                "artifacts": [],
+                "executable": null
+              },
+              "rocq": {
+                "artifacts": [
+                  {
+                    "bytes": 7336472,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+                    "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+                  }
+                ],
+                "executable": null
+              },
+              "tlc": {
+                "artifacts": [
+                  {
+                    "bytes": 4486015,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                    "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                  },
+                  {
+                    "bytes": 70864,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                    "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                  }
+                ],
+                "executable": {
+                  "bytes": 457,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+                  "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+                }
+              },
+              "z3": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 19659744,
+                  "path": "/home/barberb/.local/bin/z3",
+                  "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+                }
+              }
+            }
+          }
+        },
+        "lean": {
+          "backend": "lean",
+          "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+          "family": "lean4",
+          "mathematical_model_only": true,
+          "native_observations": [],
+          "operation": "prove_offset",
+          "producer": {
+            "ipfs_datasets_py.logic.backends.codebase_process": "bafkreic4k2ntjl6xlymuf4i7zopm6igvo6m5e5rje7mtpgatz2kkzjbx4e",
+            "ipfs_datasets_py.logic.backends.kernel.isabelle": "bafkreidljl3ly5xeeyru3rbzhmoswo3pfq4ph64yrcvhzfyrztitlewnmi",
+            "ipfs_datasets_py.logic.backends.kernel.lean": "bafkreicycyiruf3lh4lpte7n2rwr7exng54trheropswld7gan233nspie",
+            "ipfs_datasets_py.logic.backends.kernel.rocq": "bafkreibx7azys3vegt2tn2ab3eicbxujnsycgigmx2prrkc35jq6oq4w6y",
+            "ipfs_datasets_py.logic.backends.portfolio": "bafkreifugk77en5ub4txfqwpkgm42shbdgu226u63plfms3tdgkrwvk6qe",
+            "ipfs_datasets_py.logic.backends.process": "bafkreiduftpoevcvynouhfc3arr6xpdanws4datosvurw2npwb7j2p6zn4",
+            "ipfs_datasets_py.logic.backends.smt.differential": "bafkreifb34377wbmgxu3xcpckqjdrpe6jaoekfkrevy45z73uqi6g3n7fy",
+            "ipfs_datasets_py.logic.backends.tla.compiler": "bafkreihqnrrejtlidensse45mr3kljgfulbkcz55ybvusulglibpxjnvom",
+            "ipfs_datasets_py.logic.backends.tla.runners": "bafkreibqr5xosbhrz4qerwtnp4tb372tq6shm2sex3myh3hznmhmcpkpp4",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_execution": "bafkreihciw6zpvpgxalmx2xuhcu4jqsntyhnopccgbdkr5wpokvk5ibeou",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_lowering": "bafkreida7q4lwty64tzuu7yasfb2albsmixj32csgqfxqnubpvh7qc3mca",
+            "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "bafkreibwdktyqsznmjlqtmrefhxznrlcvn7tejsmsn7opjnvpuermwzb5y",
+            "ipfs_datasets_py.logic.software_contracts.codebase_obligation_graph": "bafkreia565xfzyhy42hqa6vlpt6gov3vkejj7wvzmwgzp5vw3dfcb7nv64",
+            "native_integer_owner": {
+              "dependency_scope": "selected Python implementation files and native executables; ambient shared libraries are not attested",
+              "environment": {
+                "HOME": "private-workspace",
+                "LANG": "C",
+                "LC_ALL": "C",
+                "PATH": "/usr/bin:/bin",
+                "TEMP": "private-workspace",
+                "TMP": "private-workspace",
+                "TMPDIR": "private-workspace"
+              },
+              "implementation": "cpython",
+              "machine": "aarch64",
+              "parser": "cpython-312",
+              "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+              "release": "6.17.0-1014-nvidia",
+              "resource_helper": {
+                "kind": "linux-prlimit",
+                "sha256": "2a479939c95a886fb8b52244381639816f8cf1f68eee713a9227d0c5d257c805"
+              },
+              "source_sha256": {
+                "ipfs_datasets_py.logic.backends.codebase_process": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+                "ipfs_datasets_py.logic.backends.smt.compiler": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+                "ipfs_datasets_py.logic.backends.smt.differential": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+                "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee",
+                "ipfs_datasets_py.logic.software_verification.codebase_pipeline": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030",
+                "ipfs_datasets_py.logic.software_verification.codebase_source_adapters": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+                "ipfs_datasets_py.logic.software_verification.vc": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+              },
+              "system": "Linux"
+            }
+          },
+          "receipt": null,
+          "request": null,
+          "resource_binding": {
+            "child_lease_id": "8a8331d09475463c8a676859927eca7e",
+            "cpu_slots": 1,
+            "memory_mb": 512,
+            "parent_lease_id": "1571821ff8f64f788774f6a78657fa73",
+            "process_slots": 1
+          },
+          "schema": "codebase-family-native-attempt@1",
+          "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+          "source_runtime_semantics_verified": false,
+          "status": "unavailable",
+          "tools": {
+            "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+            "policy_cid": "baguqeeratbf6rjtv3lbs2g6ej35zx6bwp727wndwl2xk4pn4asjoo6ensusq",
+            "schema": "codebase-family-tools@1",
+            "tools": {
+              "cvc5": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 249,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                  "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+                }
+              },
+              "isabelle": {
+                "artifacts": [
+                  {
+                    "bytes": 1058,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+                    "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+                  }
+                ],
+                "executable": null
+              },
+              "java": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 70864,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                  "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                }
+              },
+              "lean": {
+                "artifacts": [],
+                "executable": null
+              },
+              "rocq": {
+                "artifacts": [
+                  {
+                    "bytes": 7336472,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+                    "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+                  }
+                ],
+                "executable": null
+              },
+              "tlc": {
+                "artifacts": [
+                  {
+                    "bytes": 4486015,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                    "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                  },
+                  {
+                    "bytes": 70864,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                    "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                  }
+                ],
+                "executable": {
+                  "bytes": 457,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+                  "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+                }
+              },
+              "z3": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 19659744,
+                  "path": "/home/barberb/.local/bin/z3",
+                  "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+                }
+              }
+            }
+          }
+        },
+        "rocq": {
+          "backend": "rocq",
+          "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+          "family": "rocq",
+          "mathematical_model_only": true,
+          "native_observations": [],
+          "operation": "prove_offset",
+          "producer": {
+            "ipfs_datasets_py.logic.backends.codebase_process": "bafkreic4k2ntjl6xlymuf4i7zopm6igvo6m5e5rje7mtpgatz2kkzjbx4e",
+            "ipfs_datasets_py.logic.backends.kernel.isabelle": "bafkreidljl3ly5xeeyru3rbzhmoswo3pfq4ph64yrcvhzfyrztitlewnmi",
+            "ipfs_datasets_py.logic.backends.kernel.lean": "bafkreicycyiruf3lh4lpte7n2rwr7exng54trheropswld7gan233nspie",
+            "ipfs_datasets_py.logic.backends.kernel.rocq": "bafkreibx7azys3vegt2tn2ab3eicbxujnsycgigmx2prrkc35jq6oq4w6y",
+            "ipfs_datasets_py.logic.backends.portfolio": "bafkreifugk77en5ub4txfqwpkgm42shbdgu226u63plfms3tdgkrwvk6qe",
+            "ipfs_datasets_py.logic.backends.process": "bafkreiduftpoevcvynouhfc3arr6xpdanws4datosvurw2npwb7j2p6zn4",
+            "ipfs_datasets_py.logic.backends.smt.differential": "bafkreifb34377wbmgxu3xcpckqjdrpe6jaoekfkrevy45z73uqi6g3n7fy",
+            "ipfs_datasets_py.logic.backends.tla.compiler": "bafkreihqnrrejtlidensse45mr3kljgfulbkcz55ybvusulglibpxjnvom",
+            "ipfs_datasets_py.logic.backends.tla.runners": "bafkreibqr5xosbhrz4qerwtnp4tb372tq6shm2sex3myh3hznmhmcpkpp4",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_execution": "bafkreihciw6zpvpgxalmx2xuhcu4jqsntyhnopccgbdkr5wpokvk5ibeou",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_lowering": "bafkreida7q4lwty64tzuu7yasfb2albsmixj32csgqfxqnubpvh7qc3mca",
+            "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "bafkreibwdktyqsznmjlqtmrefhxznrlcvn7tejsmsn7opjnvpuermwzb5y",
+            "ipfs_datasets_py.logic.software_contracts.codebase_obligation_graph": "bafkreia565xfzyhy42hqa6vlpt6gov3vkejj7wvzmwgzp5vw3dfcb7nv64",
+            "native_integer_owner": {
+              "dependency_scope": "selected Python implementation files and native executables; ambient shared libraries are not attested",
+              "environment": {
+                "HOME": "private-workspace",
+                "LANG": "C",
+                "LC_ALL": "C",
+                "PATH": "/usr/bin:/bin",
+                "TEMP": "private-workspace",
+                "TMP": "private-workspace",
+                "TMPDIR": "private-workspace"
+              },
+              "implementation": "cpython",
+              "machine": "aarch64",
+              "parser": "cpython-312",
+              "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+              "release": "6.17.0-1014-nvidia",
+              "resource_helper": {
+                "kind": "linux-prlimit",
+                "sha256": "2a479939c95a886fb8b52244381639816f8cf1f68eee713a9227d0c5d257c805"
+              },
+              "source_sha256": {
+                "ipfs_datasets_py.logic.backends.codebase_process": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+                "ipfs_datasets_py.logic.backends.smt.compiler": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+                "ipfs_datasets_py.logic.backends.smt.differential": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+                "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee",
+                "ipfs_datasets_py.logic.software_verification.codebase_pipeline": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030",
+                "ipfs_datasets_py.logic.software_verification.codebase_source_adapters": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+                "ipfs_datasets_py.logic.software_verification.vc": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+              },
+              "system": "Linux"
+            }
+          },
+          "receipt": null,
+          "request": null,
+          "resource_binding": {
+            "child_lease_id": "9628e6c6ff8b43349c0e09c0f4bd118e",
+            "cpu_slots": 1,
+            "memory_mb": 512,
+            "parent_lease_id": "7ec620702fb4417a9c056f509024e305",
+            "process_slots": 1
+          },
+          "schema": "codebase-family-native-attempt@1",
+          "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+          "source_runtime_semantics_verified": false,
+          "status": "unavailable",
+          "tools": {
+            "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+            "policy_cid": "baguqeeratbf6rjtv3lbs2g6ej35zx6bwp727wndwl2xk4pn4asjoo6ensusq",
+            "schema": "codebase-family-tools@1",
+            "tools": {
+              "cvc5": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 249,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                  "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+                }
+              },
+              "isabelle": {
+                "artifacts": [
+                  {
+                    "bytes": 1058,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+                    "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+                  }
+                ],
+                "executable": null
+              },
+              "java": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 70864,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                  "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                }
+              },
+              "lean": {
+                "artifacts": [],
+                "executable": null
+              },
+              "rocq": {
+                "artifacts": [
+                  {
+                    "bytes": 7336472,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+                    "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+                  }
+                ],
+                "executable": null
+              },
+              "tlc": {
+                "artifacts": [
+                  {
+                    "bytes": 4486015,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                    "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                  },
+                  {
+                    "bytes": 70864,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                    "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                  }
+                ],
+                "executable": {
+                  "bytes": 457,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+                  "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+                }
+              },
+              "z3": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 19659744,
+                  "path": "/home/barberb/.local/bin/z3",
+                  "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+                }
+              }
+            }
+          }
+        },
+        "z3": {
+          "backend": "z3",
+          "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+          "contract_cid": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+          "family": "smt_lia",
+          "mathematical_model_only": true,
+          "native_observations": [
+            {
+              "cancelled": false,
+              "command": [
+                "/home/barberb/.local/bin/z3",
+                "-in",
+                "-smt2"
+              ],
+              "elapsed_seconds": 0.0656491438858211,
+              "environment": {
+                "LEAN_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "OMP_NUM_THREADS": "1",
+                "OPENBLAS_NUM_THREADS": "1"
+              },
+              "error": "",
+              "input_file_cids": {},
+              "limits": {
+                "cpu_seconds": 90,
+                "enforce_file_size_limit": true,
+                "max_argument_bytes": 65536,
+                "max_arguments": 256,
+                "max_environment_bytes": 131072,
+                "max_input_bytes": 262144,
+                "max_output_bytes": 262144,
+                "max_output_files": 8,
+                "max_path_bytes": 512,
+                "max_workspace_bytes": 16777216,
+                "memory_bytes": 268435456,
+                "resident_memory_bytes": 268435456,
+                "termination_grace_seconds": 0.25,
+                "timeout_seconds": 89.56951630511321
+              },
+              "output_truncated": false,
+              "process_tree_terminated": false,
+              "resource_exhausted": false,
+              "returncode": 0,
+              "stderr": "",
+              "stdin_cid": "bafkreiaknfdbgl54yopakvimqktisx7sgh442upr2ta4vzbmmyk3weal3a",
+              "stdout": "unsat\n",
+              "timed_out": false,
+              "unavailable": false,
+              "workspace_cleaned": true,
+              "workspace_limit_exceeded": false
+            }
+          ],
+          "operation": "prove_offset",
+          "producer": {
+            "ipfs_datasets_py.logic.backends.codebase_process": "bafkreic4k2ntjl6xlymuf4i7zopm6igvo6m5e5rje7mtpgatz2kkzjbx4e",
+            "ipfs_datasets_py.logic.backends.kernel.isabelle": "bafkreidljl3ly5xeeyru3rbzhmoswo3pfq4ph64yrcvhzfyrztitlewnmi",
+            "ipfs_datasets_py.logic.backends.kernel.lean": "bafkreicycyiruf3lh4lpte7n2rwr7exng54trheropswld7gan233nspie",
+            "ipfs_datasets_py.logic.backends.kernel.rocq": "bafkreibx7azys3vegt2tn2ab3eicbxujnsycgigmx2prrkc35jq6oq4w6y",
+            "ipfs_datasets_py.logic.backends.portfolio": "bafkreifugk77en5ub4txfqwpkgm42shbdgu226u63plfms3tdgkrwvk6qe",
+            "ipfs_datasets_py.logic.backends.process": "bafkreiduftpoevcvynouhfc3arr6xpdanws4datosvurw2npwb7j2p6zn4",
+            "ipfs_datasets_py.logic.backends.smt.differential": "bafkreifb34377wbmgxu3xcpckqjdrpe6jaoekfkrevy45z73uqi6g3n7fy",
+            "ipfs_datasets_py.logic.backends.tla.compiler": "bafkreihqnrrejtlidensse45mr3kljgfulbkcz55ybvusulglibpxjnvom",
+            "ipfs_datasets_py.logic.backends.tla.runners": "bafkreibqr5xosbhrz4qerwtnp4tb372tq6shm2sex3myh3hznmhmcpkpp4",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_execution": "bafkreihciw6zpvpgxalmx2xuhcu4jqsntyhnopccgbdkr5wpokvk5ibeou",
+            "ipfs_datasets_py.logic.software_contracts.codebase_family_lowering": "bafkreida7q4lwty64tzuu7yasfb2albsmixj32csgqfxqnubpvh7qc3mca",
+            "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "bafkreibwdktyqsznmjlqtmrefhxznrlcvn7tejsmsn7opjnvpuermwzb5y",
+            "ipfs_datasets_py.logic.software_contracts.codebase_obligation_graph": "bafkreia565xfzyhy42hqa6vlpt6gov3vkejj7wvzmwgzp5vw3dfcb7nv64",
+            "native_integer_owner": {
+              "dependency_scope": "selected Python implementation files and native executables; ambient shared libraries are not attested",
+              "environment": {
+                "HOME": "private-workspace",
+                "LANG": "C",
+                "LC_ALL": "C",
+                "PATH": "/usr/bin:/bin",
+                "TEMP": "private-workspace",
+                "TMP": "private-workspace",
+                "TMPDIR": "private-workspace"
+              },
+              "implementation": "cpython",
+              "machine": "aarch64",
+              "parser": "cpython-312",
+              "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+              "release": "6.17.0-1014-nvidia",
+              "resource_helper": {
+                "kind": "linux-prlimit",
+                "sha256": "2a479939c95a886fb8b52244381639816f8cf1f68eee713a9227d0c5d257c805"
+              },
+              "source_sha256": {
+                "ipfs_datasets_py.logic.backends.codebase_process": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+                "ipfs_datasets_py.logic.backends.smt.compiler": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+                "ipfs_datasets_py.logic.backends.smt.differential": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+                "ipfs_datasets_py.logic.software_contracts.codebase_integer_profile": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee",
+                "ipfs_datasets_py.logic.software_verification.codebase_pipeline": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030",
+                "ipfs_datasets_py.logic.software_verification.codebase_source_adapters": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+                "ipfs_datasets_py.logic.software_verification.vc": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+              },
+              "system": "Linux"
+            }
+          },
+          "receipt": {
+            "kernel_checked": false,
+            "kind": "conditional_native_smt_response",
+            "query_cid": "bafkreiaknfdbgl54yopakvimqktisx7sgh442upr2ta4vzbmmyk3weal3a",
+            "verdict": "unsat"
+          },
+          "request": {
+            "assumption_ids": [
+              "assumption:17470c57f9c8ea50b8e5ec93b3c70488c7c6fbb56a62f07c001a78f6591414ab",
+              "assumption:ecd37d092349250908baf5f4e822afa10988f236ea4f3f574943e30ea8238599",
+              "assumption:241a4be58aae7a6c5b91fead178d3f18212432841916cb168d9447894a4109d8"
+            ],
+            "bounds": {
+              "max_memory_bytes": 268435456,
+              "max_output_bytes": 262144,
+              "max_steps": 2,
+              "timeout_ms": 89582
+            },
+            "claim_digest": "c3902d1193ece0e4b5429ba2ec5f8789f5a8ea60a00181144502b5e00908c439",
+            "claim_id": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+            "declaration_id": "baguqeerayqutvhthn3mxlg5f7jity4ziw4ipt5yh2hgw53trgcr3cfiaww3q",
+            "logic_family": "smt_lia",
+            "obligation_digest": "de0f4161d16d11f4a8c13c76b75aa931953f05bd3cb8f80b5da3182c5d147903",
+            "obligation_id": "obligation:de0f4161d16d11f4a8c13c76b75aa931953f05bd3cb8f80b5da3182c5d147903",
+            "payload": {
+              "encoding": "smt_lia",
+              "source": "",
+              "translation": {
+                "bundle_cid": "baguqeerayoic2emt5tqojnkctoroyx4hrh22r2tauaaycfcfak26aciiyq4q",
+                "fidelity": "closed_profile",
+                "operation": "prove_offset",
+                "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+                "source_family": "closed_integer_offset",
+                "target_family": "smt_lia",
+                "translation_digest": "c3902d1193ece0e4b5429ba2ec5f8789f5a8ea60a00181144502b5e00908c439",
+                "translation_id": "codebase-family:smt_lia"
+              }
+            },
+            "query_kind": "satisfiability",
+            "request_id": "family:de0f4161d16d11f4a8c13c76b75aa931953f05bd3cb8f80b5da3182c5d147903",
+            "requested_backend_id": "z3",
+            "schema_version": "proof-backend-request/v1"
+          },
+          "resource_binding": {
+            "child_lease_id": "19e568b6b9324bd7bb6ed130701c4729",
+            "cpu_slots": 1,
+            "memory_mb": 256,
+            "parent_lease_id": "3770c17976154b8581c2d82130e20cb7",
+            "process_slots": 1
+          },
+          "schema": "codebase-family-native-attempt@1",
+          "source_cid": "bafkreig2whzodbawj5uf6jnxwuklau7dypg4y7o76drwhcihfoxilmvtvq",
+          "source_runtime_semantics_verified": false,
+          "status": "proved",
+          "tools": {
+            "dependency_scope": "Exact owner-selected executable/launcher and explicitly listed runtime artifacts; authenticity, ambient shared libraries and transitive compiled theorem imports are trusted, not transitively attested.",
+            "policy_cid": "baguqeeratbf6rjtv3lbs2g6ej35zx6bwp727wndwl2xk4pn4asjoo6ensusq",
+            "schema": "codebase-family-tools@1",
+            "tools": {
+              "cvc5": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 249,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                  "sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419"
+                }
+              },
+              "isabelle": {
+                "artifacts": [
+                  {
+                    "bytes": 1058,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/bin/isabelle",
+                    "sha256": "9fee030dddf4a6cb14e4e701d4885e6d12f67381e486ff6ce5d16af171ddedbc"
+                  }
+                ],
+                "executable": null
+              },
+              "java": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 70864,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                  "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                }
+              },
+              "lean": {
+                "artifacts": [],
+                "executable": null
+              },
+              "rocq": {
+                "artifacts": [
+                  {
+                    "bytes": 7336472,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/opam/ipfs-datasets-coq/bin/rocq",
+                    "sha256": "1528f5b9402743109ffe798ac53fbdb080037d339bd4682cf5663d06052d391f"
+                  }
+                ],
+                "executable": null
+              },
+              "tlc": {
+                "artifacts": [
+                  {
+                    "bytes": 4486015,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/tlc/1.8.0/tla2tools.jar",
+                    "sha256": "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                  },
+                  {
+                    "bytes": 70864,
+                    "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/Isabelle2025-2-linux-aarch64/Isabelle2025-2/contrib/jdk-21.0.9/arm64-linux/bin/java",
+                    "sha256": "29cd006b1db6557741e1c5c0a5d43370a25358a3b72780a2c9b1515833af89dc"
+                  }
+                ],
+                "executable": {
+                  "bytes": 457,
+                  "path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/tlc",
+                  "sha256": "e162af5b1a4f161d6d672c78bc0e2b4aa6160151b9f558cd543cac3aa43434ac"
+                }
+              },
+              "z3": {
+                "artifacts": [],
+                "executable": {
+                  "bytes": 19659744,
+                  "path": "/home/barberb/.local/bin/z3",
+                  "sha256": "bbea82f99718e57d939db27db7a6e3afb2dfdee4bd11dd0858e5cfefbdf80fa1"
+                }
+              }
+            }
+          }
+        }
+      },
+      "path": "main.py",
+      "status": "unknown"
+    }
+  ],
+  "unsupported": []
+}

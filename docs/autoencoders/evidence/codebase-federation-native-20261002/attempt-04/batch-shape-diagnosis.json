@@ -1,0 +1,69 @@
+{
+  "root_checkpoint_sha256": "7f2e73e3586bf3db7c217ef7d4470903a7448b1dafeef3859298b933f022b761",
+  "joined_rows": 4,
+  "canary_rows": 1,
+  "differing_values": 38,
+  "max_abs_difference": 4.163336342344337e-17,
+  "examples": [
+    {
+      "path": "/0/latent/0",
+      "joined": 0.045512041103792006,
+      "separate": 0.045512041103791964,
+      "absolute_difference": 4.163336342344337e-17
+    },
+    {
+      "path": "/0/latent/1",
+      "joined": -0.07577340429450653,
+      "separate": -0.07577340429450656,
+      "absolute_difference": 2.7755575615628914e-17
+    },
+    {
+      "path": "/0/latent/2",
+      "joined": -0.026330532658771482,
+      "separate": -0.026330532658771475,
+      "absolute_difference": 6.938893903907228e-18
+    },
+    {
+      "path": "/0/latent/3",
+      "joined": 0.2055110881708065,
+      "separate": 0.20551108817080646,
+      "absolute_difference": 2.7755575615628914e-17
+    },
+    {
+      "path": "/0/latent/4",
+      "joined": 0.21643436290535065,
+      "separate": 0.21643436290535062,
+      "absolute_difference": 2.7755575615628914e-17
+    },
+    {
+      "path": "/0/reconstructed_projection_features/codebase_ir.contracts@1/0",
+      "joined": 0.025707602060446935,
+      "separate": 0.025707602060446928,
+      "absolute_difference": 6.938893903907228e-18
+    },
+    {
+      "path": "/0/reconstructed_projection_features/codebase_ir.program@1/0",
+      "joined": -0.022482677585514154,
+      "separate": -0.022482677585514147,
+      "absolute_difference": 6.938893903907228e-18
+    },
+    {
+      "path": "/0/reconstructed_projection_features/codebase_ir.program@1/2",
+      "joined": -0.007023746819010508,
+      "separate": -0.007023746819010501,
+      "absolute_difference": 6.938893903907228e-18
+    },
+    {
+      "path": "/0/reconstructed_projection_features/codebase_ir.program@1/3",
+      "joined": -0.03788908648906328,
+      "separate": -0.03788908648906327,
+      "absolute_difference": 6.938893903907228e-18
+    },
+    {
+      "path": "/0/reconstructed_projection_features/codebase_ir.program@1/4",
+      "joined": 0.004275418275058672,
+      "separate": 0.004275418275058668,
+      "absolute_difference": 3.469446951953614e-18
+    }
+  ]
+}

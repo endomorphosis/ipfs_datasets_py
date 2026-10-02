@@ -1,0 +1,754 @@
+[
+  {
+    "bytes": 40208,
+    "git_blob": "fc20f12860e9845251dadfeef798d0400e08bf2f",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/__init__.py",
+    "repository": "accelerate",
+    "sha256": "5083369f823be18cd467346f6f3b955925ec65bedafe9eb28a61ca8897997c03"
+  },
+  {
+    "bytes": 188967,
+    "git_blob": "57635f3d94c53100d6faed02dbb5d640a0951131",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/__init__.py",
+    "repository": "accelerate",
+    "sha256": "3c16dfa0ab9f73de44418dcdb44996fbf0f293daaf7ce9979d2e42a7bb1a2436"
+  },
+  {
+    "bytes": 2730,
+    "git_blob": "2c3b81f6c1361d715c514643350635f84bcfffa8",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/control/__init__.py",
+    "repository": "accelerate",
+    "sha256": "3149e832facdcebf525dbbe990f81a8f9fa79cb4b4295280cfe97124bc8a2e27"
+  },
+  {
+    "bytes": 328110,
+    "git_blob": "29866e03d5c5fc92a73b9f573d7976df337a3384",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/control/control_contracts.py",
+    "repository": "accelerate",
+    "sha256": "b1a402d74f28584c26133e1b800f3010f69a0e643375037e693856a95ae8e1ca"
+  },
+  {
+    "bytes": 342723,
+    "git_blob": "ae242724c1c6f358f30ad3008a8f4ba257fd352c",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/control/control_plane.py",
+    "repository": "accelerate",
+    "sha256": "7c1bf2a95a11fb34aaecbcd04da82964c1702a5e7e95206c40e4b9f5afa9d34b"
+  },
+  {
+    "bytes": 2872,
+    "git_blob": "007453fd4342bb3bd041d1b948eed5f1e4ca1650",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/objectives/__init__.py",
+    "repository": "accelerate",
+    "sha256": "61b58d42ede1324024a280e35c0772263496c42d917deeb82991455964db0c15"
+  },
+  {
+    "bytes": 211038,
+    "git_blob": "da56455531158e1fd2bf2f8b98e646394c7cedab",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/objectives/goal_completion.py",
+    "repository": "accelerate",
+    "sha256": "24ec899c60404447a3ded282bae3ccfa958229ee0578b15f9639c82183a290b4"
+  },
+  {
+    "bytes": 99,
+    "git_blob": "b55eb761e462137d2caa0d032733098ee820da88",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/proof/__init__.py",
+    "repository": "accelerate",
+    "sha256": "ae0ac8ba4b29666a7d527d7153b77869fd9a96b9e66b7a76e44273d663353b22"
+  },
+  {
+    "bytes": 15739,
+    "git_blob": "49cf7660ef28246b0d0b45d45697b9e6b159a497",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/proof/codebase_obligation_portfolio.py",
+    "repository": "accelerate",
+    "sha256": "09ad457f438a7c2dc8058c97d958762380276dc0847a8b3a8a2f4ec87961ec9f"
+  },
+  {
+    "bytes": 74508,
+    "git_blob": "d35182e7e58b52e968fd89364e187ed3621f5ef4",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_contracts.py",
+    "repository": "accelerate",
+    "sha256": "06d897f1679e615f18b6cf6fbc6a666515e0826ca87ea0daf89b82d8d2418450"
+  },
+  {
+    "bytes": 2437,
+    "git_blob": "0014cbcbd808d898e0c13e8d71dd9d9a03632618",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/__init__.py",
+    "repository": "accelerate",
+    "sha256": "9e528fb4611c1c0d25646b85f751046c7de73ba5547e6a996572abe37ded0a64"
+  },
+  {
+    "bytes": 16608,
+    "git_blob": "f09b527ea392bfcdc26dd52ea3b5cc3a74404ae0",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/repository_resource_bridge.py",
+    "repository": "accelerate",
+    "sha256": "37bd578cf49735a7310c23b1d1cd204d623c0e9c3f2d808dd978390475403f8b"
+  },
+  {
+    "bytes": 258517,
+    "git_blob": "dbd3f671ca9e6cb3519932279c4ca033746d16e0",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/runtime/resource_scheduler.py",
+    "repository": "accelerate",
+    "sha256": "67d4e84d542ebbc167da4488df53ab72a1b258c6722b1f1ff9c77fdb85af841c"
+  },
+  {
+    "bytes": 1558,
+    "git_blob": "f4b736a75540472e946ca79768ede35765db65a4",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/self_improvement/__init__.py",
+    "repository": "accelerate",
+    "sha256": "7096b272db0aee285a2e3c08197a00e4fd61827171e8f0ee57569f655529668e"
+  },
+  {
+    "bytes": 15846,
+    "git_blob": "ce0e32c0b161c35aeed18c022553885f7eac84b6",
+    "matches_tested_commit": true,
+    "path": "ipfs_accelerate_py/agent_supervisor/self_improvement/self_improvement_completion.py",
+    "repository": "accelerate",
+    "sha256": "4dcd01c5d444baa22a7e9589e2395b5970bbf7fd030ef6b94af101f3bb923947"
+  },
+  {
+    "bytes": 265,
+    "git_blob": "7daedde4affdd2b38d1539095a3d9515ab3e12cb",
+    "matches_tested_commit": true,
+    "path": "sitecustomize.py",
+    "repository": "accelerate",
+    "sha256": "23864b9e858107f1dd6c93ed02d4649c385e28cc65092c0363b56e0aa0f9370e"
+  },
+  {
+    "bytes": 56829,
+    "git_blob": "7d8b29b674206355ec12a84f69920a819338e43c",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/__init__.py",
+    "repository": "datasets",
+    "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+  },
+  {
+    "bytes": 30494,
+    "git_blob": "ba81b33359b55cafafe1172762ab060cdb695b62",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+    "repository": "datasets",
+    "sha256": "fdcf6d4ce676fbb1e5b8b42bab18c76368509abaedc936b1efd9aa4d53bb37d1"
+  },
+  {
+    "bytes": 19957,
+    "git_blob": "aa8b7b9636bbae9cd239b94288481ab508afca63",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/duckdb_control/contracts.py",
+    "repository": "datasets",
+    "sha256": "7ef4df9216ecaef4a415afffbb353b9b091120a4faaf702d3c243d43ceb6c199"
+  },
+  {
+    "bytes": 4434,
+    "git_blob": "950f95b6c859021bbd76326adcf602bdd4d19482",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/__init__.py",
+    "repository": "datasets",
+    "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+  },
+  {
+    "bytes": 54671,
+    "git_blob": "e8ac623bc1ea20fd75387f58e8ee0dfbc35de3c2",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/codebase_process.py",
+    "repository": "datasets",
+    "sha256": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1"
+  },
+  {
+    "bytes": 50683,
+    "git_blob": "e07e7127c52b9a15f4f2f00b632d341488af579a",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/kernel/isabelle.py",
+    "repository": "datasets",
+    "sha256": "6b4af6bc76e426234dc4393b1d2b3b6f2c38f3fb9888aa7c9711ccd13592cd62"
+  },
+  {
+    "bytes": 44036,
+    "git_blob": "e77dd6a6f98c17fb56b136e9ffb9c64581b0b44c",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/kernel/lean.py",
+    "repository": "datasets",
+    "sha256": "5816111a176b3f16f993edd46d1f92ed3779389c9173e5658fe60375bdb64f41"
+  },
+  {
+    "bytes": 41514,
+    "git_blob": "65dafe6962ade9bcbecac4357f6975495e1fbf58",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/kernel/rocq.py",
+    "repository": "datasets",
+    "sha256": "37f833896ea434f536e801d91020de896cb02320ccbe9f18a85bea61e74396f6"
+  },
+  {
+    "bytes": 24933,
+    "git_blob": "452f7d2fa0d285ae213abdc4a7b9ea83875b8c1b",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/kernel/wasm.py",
+    "repository": "datasets",
+    "sha256": "49cfdbc0108b43d45ab9f567b4153f384985563b075f369b32e37f855252d6cc"
+  },
+  {
+    "bytes": 94351,
+    "git_blob": "b57812e6e6e72e3864243ab0db0543f6d182dfd6",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/portfolio.py",
+    "repository": "datasets",
+    "sha256": "b432bff237b40f2772c2cf5199cd48e119a9ad7a9edbd6564b7319951b555e81"
+  },
+  {
+    "bytes": 50468,
+    "git_blob": "b5601f084798c69cd3c7b8bf03e1e109fe414f3e",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/process.py",
+    "repository": "datasets",
+    "sha256": "742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f"
+  },
+  {
+    "bytes": 27160,
+    "git_blob": "7ffdc5b4019faa80749df5fb0bb7d1f06379573f",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/results.py",
+    "repository": "datasets",
+    "sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458"
+  },
+  {
+    "bytes": 86862,
+    "git_blob": "e0bb0d8e74e83cd6bc24513e48f6759bce8c575a",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/smt/compiler.py",
+    "repository": "datasets",
+    "sha256": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5"
+  },
+  {
+    "bytes": 51943,
+    "git_blob": "645437ce20106c583c978451d4fcc833499794c9",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/smt/differential.py",
+    "repository": "datasets",
+    "sha256": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e"
+  },
+  {
+    "bytes": 75294,
+    "git_blob": "09486744d57598e5f506a9db35cf99342a09f620",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/tla/compiler.py",
+    "repository": "datasets",
+    "sha256": "f06c6244cd68191b29139d6476a5a4c5a2c2a167bdc06b4951665a02fba5b573"
+  },
+  {
+    "bytes": 49297,
+    "git_blob": "97b6301d6be890a78ebf712bd8925d122b9bbed6",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/backends/tla/runners.py",
+    "repository": "datasets",
+    "sha256": "308f6ee904f1cf2048da6d7f261dff5387a4766a44bed983ecf96b0ec13d4f7f"
+  },
+  {
+    "bytes": 36277,
+    "git_blob": "053af9eaf293ba268c2dc8155844f2e3dc5355ce",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/families/models.py",
+    "repository": "datasets",
+    "sha256": "1a92305ef498812e3757147179907d4ddf4a4518371034fc2363922d5d5fed3f"
+  },
+  {
+    "bytes": 6942,
+    "git_blob": "71c13cae5d6ffc38d9b1ec4bee8ee90b255b3d0a",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/__init__.py",
+    "repository": "datasets",
+    "sha256": "4c0070482e009dd7cb9875e91124d48683da37d53f691cccb306ec50f23c946c"
+  },
+  {
+    "bytes": 44109,
+    "git_blob": "b52ee55d436de1a05c470ad602bcdd9470c81ab7",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/artifacts.py",
+    "repository": "datasets",
+    "sha256": "63896fb1fb4ef22be50d76996ce404119a5d209d01f046a6a842b7b96848ebc6"
+  },
+  {
+    "bytes": 14098,
+    "git_blob": "fa63fd302dad6340556a937b73883a25376f5f6b",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/canonical.py",
+    "repository": "datasets",
+    "sha256": "339b5778581c19525a7685edf432aaf124cd12e02d37cd0eca88cb25ab86c0d0"
+  },
+  {
+    "bytes": 16176,
+    "git_blob": "63af5a987404010aa0ec69fb827722afc9b53b81",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/claims.py",
+    "repository": "datasets",
+    "sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b"
+  },
+  {
+    "bytes": 20110,
+    "git_blob": "4d3ab85d061a8d0d44e945af44dcf8ed23c9fcc9",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/diagnostics.py",
+    "repository": "datasets",
+    "sha256": "508fd3c2dce94a1eb1e2dff19f8f578ccec2d1e94eb1db2742f75783e23ff198"
+  },
+  {
+    "bytes": 12653,
+    "git_blob": "fa2e4dadbd6e96e8502165f9c418fcc42c0ec484",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/evidence.py",
+    "repository": "datasets",
+    "sha256": "826743829d2964b97e13720b5ea52907de77f6b18e8886e5a3c0fb6a977fdeff"
+  },
+  {
+    "bytes": 8911,
+    "git_blob": "69d77e91f4ec671c6355b0f035017b1fed2b38d0",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/identity.py",
+    "repository": "datasets",
+    "sha256": "606bffc1f938c59f44651eeb65cb9c0738e16e465aabba0ad82ef05e3b5b3b0e"
+  },
+  {
+    "bytes": 57414,
+    "git_blob": "e0c645ccac9c3e89cc72e6a6c773a49528257946",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/protocols.py",
+    "repository": "datasets",
+    "sha256": "b452a7095a2524f0ea3f4e4f3a395643d3257cd6f42e3c77f8e1817df62f6fed"
+  },
+  {
+    "bytes": 31891,
+    "git_blob": "9f2e8425894c8287ae0046153ac081734cb77d8d",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/ir_core/provenance.py",
+    "repository": "datasets",
+    "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe"
+  },
+  {
+    "bytes": 2424,
+    "git_blob": "f10475d9a74e83ac4d4640bd49869e845a8096db",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/__init__.py",
+    "repository": "datasets",
+    "sha256": "b4182826af58a52d90da4cea3c57ee684be90d4b41e39f209a697a0bbd8e3e45"
+  },
+  {
+    "bytes": 53425,
+    "git_blob": "80a3ad611faec496b04559f8b54eb768841ecd90",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/ast_ir.py",
+    "repository": "datasets",
+    "sha256": "1461edb7c39f2adc89a70e54decfa291ccceafc50ed23011fbdeea5acb4c8b91"
+  },
+  {
+    "bytes": 57876,
+    "git_blob": "346f8e3fc2dea42192062e141d4d414019d9e287",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/cache.py",
+    "repository": "datasets",
+    "sha256": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f"
+  },
+  {
+    "bytes": 19574,
+    "git_blob": "2cf55881064aa7b70c55c43ee3e189749f7f3cdc",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_family_execution.py",
+    "repository": "datasets",
+    "sha256": "e245bd97d5e6b816cbeaf438a9c4c24d9e0ed73c423046a8f6cf72aaaea02475"
+  },
+  {
+    "bytes": 10493,
+    "git_blob": "67017f069db0382e0e656ee8c6ae3fa0c0508561",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_family_lowering.py",
+    "repository": "datasets",
+    "sha256": "60fc38bb4f1ee4f34a7f009143a02c32622e9de852340b7836817d4ff80b6c10"
+  },
+  {
+    "bytes": 25921,
+    "git_blob": "753e3d2afafed98dd47bf433af500fc11e5bc854",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_integer_profile.py",
+    "repository": "datasets",
+    "sha256": "361aa7884b2d625709b22429ef96c562ab7f32264c937ee7a5b57d09165b21ee"
+  },
+  {
+    "bytes": 28715,
+    "git_blob": "7dcf4bde02bcb12bc5cd4d0c51930434f84c7867",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+    "repository": "datasets",
+    "sha256": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4"
+  },
+  {
+    "bytes": 5897,
+    "git_blob": "ac537b2118a2da4e0f31c51c06a586f208c3bd44",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_obligation_graph.py",
+    "repository": "datasets",
+    "sha256": "1df76e5ce0f8e68f007aab7cfc67577551129fdab9658d97f6b6d8ca20fdb5f7"
+  },
+  {
+    "bytes": 3454,
+    "git_blob": "8e71be4cae4e17eb10a3aa3609b977c3b2b0616b",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_resources.py",
+    "repository": "datasets",
+    "sha256": "207f5b168f0cacf2ed6356c622a87e2bc8531c9a252c79de2c19ce5bca710700"
+  },
+  {
+    "bytes": 23161,
+    "git_blob": "dadf86f2aacefb1fb07f894a2098c66676371a1d",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py",
+    "repository": "datasets",
+    "sha256": "7037fca4046b357ef941cd511b20da55979a8055056ebc755bcb65c0026cb55b"
+  },
+  {
+    "bytes": 3085,
+    "git_blob": "216098cb56b6a5af071e1a48621a63165813d44e",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py",
+    "repository": "datasets",
+    "sha256": "8c43bc1b97a94c5100815447130a549266b9ccdc266574e2b8b224a3ea82aef5"
+  },
+  {
+    "bytes": 14621,
+    "git_blob": "a95e9c0d05317be705038dd284ece2da9c0ec924",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_semantic_manifest.py",
+    "repository": "datasets",
+    "sha256": "79a8e1b92365264bfafb511f1689a321d7d742046101199aca253da97726aec2"
+  },
+  {
+    "bytes": 20207,
+    "git_blob": "b0f62379855c548cb09eabd0c55ac9a9cb9b0fda",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/content.py",
+    "repository": "datasets",
+    "sha256": "c69cb85f0901a9a678bcbdf7738ab00095bbe45c5b40d875f2099474bd2a059c"
+  },
+  {
+    "bytes": 94154,
+    "git_blob": "53466c186535fbee9795bc2d8fdc8e05476f1d11",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py",
+    "repository": "datasets",
+    "sha256": "34f728f42076b66c564eef64edfa1f9ee7039ae29148ab68f75679dcddcc42c3"
+  },
+  {
+    "bytes": 59397,
+    "git_blob": "180892990338d6508f5ffb2ad9f7e0b95a2b7a54",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py",
+    "repository": "datasets",
+    "sha256": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e"
+  },
+  {
+    "bytes": 53460,
+    "git_blob": "7f1c1c1d629ed34e2e67251ec6a9820fb7b87817",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/python_frontend.py",
+    "repository": "datasets",
+    "sha256": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df"
+  },
+  {
+    "bytes": 167869,
+    "git_blob": "62525ed49262c0304699167cbac64fe0af7066ed",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/repository.py",
+    "repository": "datasets",
+    "sha256": "742b7ac132e6327d8ce52973890239bc789cebe2e816ca0c57c1041d01600db9"
+  },
+  {
+    "bytes": 8081,
+    "git_blob": "016f1d4678dea65ef17ce08ef16edca1ae22cad7",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/schema_versions.py",
+    "repository": "datasets",
+    "sha256": "fd7270cada2126606c00870dcb7291d27d7f8182e0e861d4f83905031668bbc6"
+  },
+  {
+    "bytes": 663,
+    "git_blob": "6fcce2893b20e5b418df9e73995d75d010635866",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/__init__.py",
+    "repository": "datasets",
+    "sha256": "5c41f8f1e165dd365eaaaa2a5f7a9a8bb97d311604a79b42b5999ca2c06f8997"
+  },
+  {
+    "bytes": 16441,
+    "git_blob": "4f10273e4018222d355dc1da9bc0deed88c1c927",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/delta.py",
+    "repository": "datasets",
+    "sha256": "8344f50bfbf9af6418ab35e173522649006696f98e56eaeb0a09739c1a4da427"
+  },
+  {
+    "bytes": 9400,
+    "git_blob": "1d7634bb6410470ee17db45538482005d10fa224",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/explain.py",
+    "repository": "datasets",
+    "sha256": "e9b6867f638b0e00b79a603be05c05186900302f578c0a0fadf431374800c1b9"
+  },
+  {
+    "bytes": 8128,
+    "git_blob": "99660842f38aff730abf7c8ef58250e39b97de62",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py",
+    "repository": "datasets",
+    "sha256": "373f6f4e99923b58487256b956ebdfd66248485713a91483eca4e6783b59e102"
+  },
+  {
+    "bytes": 8069,
+    "git_blob": "a2ca2dee8aaed0f0f69dcb327e34fa5110ee377b",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/index.py",
+    "repository": "datasets",
+    "sha256": "c88632d2ad97ebbe87df89494d641413a6a263781e91df6269aca2b5daac235c"
+  },
+  {
+    "bytes": 33307,
+    "git_blob": "23386eed158736852ee6c208163e55d24763a982",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/invalidation.py",
+    "repository": "datasets",
+    "sha256": "45c36b78be53bf6ec2dd65452eb282ba0e7e9b94d5385a0d8f66ebbad4f3f375"
+  },
+  {
+    "bytes": 34958,
+    "git_blob": "87074b234b82bfdde77572b5caf0a9603257b49d",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/models.py",
+    "repository": "datasets",
+    "sha256": "4b061c97838929a4cdc055998ce71aa854234c7e75d3fbee12595fa1bafa8a75"
+  },
+  {
+    "bytes": 30681,
+    "git_blob": "eb338af638187bb5fcce4967e970d584e35e91f3",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/pytest_analysis.py",
+    "repository": "datasets",
+    "sha256": "45a0ab3fae08e91db2971540e5d933c8e82c47e7f65b3e5ec88912dbedc67ab4"
+  },
+  {
+    "bytes": 54427,
+    "git_blob": "e3bea1c9d85e4cf5e0d0ac70f74b2fcf580abfb5",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py",
+    "repository": "datasets",
+    "sha256": "99af34e5427faadbb9f7caa0aa025b18c8b43dbf1eb689ef7f140ea8ded7d25f"
+  },
+  {
+    "bytes": 32144,
+    "git_blob": "920781061c7f34ab9cc710bbbbe306590b64f73d",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py",
+    "repository": "datasets",
+    "sha256": "002957f910a0bc1ff29de1ed72aca9c2464218ac5f65478be34a7c8f04e166a1"
+  },
+  {
+    "bytes": 48191,
+    "git_blob": "3f222cfb5917abf32c01108ccbd835d24f793662",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py",
+    "repository": "datasets",
+    "sha256": "5135e623a0a3f970252da63dce049be167e8bb73db5355f6c3116316b70aafa6"
+  },
+  {
+    "bytes": 18520,
+    "git_blob": "add09f7e03aef556b67b2ec1cef26324dede34d0",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/symbol_graph.py",
+    "repository": "datasets",
+    "sha256": "4e269d1e2f39ea27582e98f240996696d61b0fe0b1358e363ff2376baa7972e3"
+  },
+  {
+    "bytes": 63933,
+    "git_blob": "a3a24f3feab19dafbb93eee8c69e7c3dc8118df5",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/codebase_pipeline.py",
+    "repository": "datasets",
+    "sha256": "9e9b4c6f611e0a4d1a282959a4ef32d976b4a79fcbfbf16bb8d74a8d3fe54030"
+  },
+  {
+    "bytes": 71146,
+    "git_blob": "6060972c700bae7d863df05a73a598205ddd91ab",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/codebase_source_adapters.py",
+    "repository": "datasets",
+    "sha256": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2"
+  },
+  {
+    "bytes": 71898,
+    "git_blob": "5f79138a168ad4031f530a05d2d89fa30a0afbd8",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/concurrency.py",
+    "repository": "datasets",
+    "sha256": "4d47e1ffd235282b841ae00644832ec9105fc90ee9dbf05ced901f937e0e346a"
+  },
+  {
+    "bytes": 36669,
+    "git_blob": "14c30d221d97ac048cb8b9908636435e0e8387fb",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/contracts.py",
+    "repository": "datasets",
+    "sha256": "0238a345e5c35aec78801891562e896d719bca0424eab8ad790d5da2c239c5aa"
+  },
+  {
+    "bytes": 33328,
+    "git_blob": "e03c18e09c06460d99b10695e5e28e16d6785705",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/ir.py",
+    "repository": "datasets",
+    "sha256": "40f59ac33b5e8c282b06d7d8dec34940ffa8013f50fc65fc71e19a1ea41ef282"
+  },
+  {
+    "bytes": 58065,
+    "git_blob": "9da72916ff034adef5342fc41bc74c0ab422ccb9",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/program.py",
+    "repository": "datasets",
+    "sha256": "f051f42d64c5f993451972924953cc7eaa6d17df097235ddabfd5d791d406f91"
+  },
+  {
+    "bytes": 15384,
+    "git_blob": "c909761296d54c96e552c9a7c3f1147452354703",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/properties.py",
+    "repository": "datasets",
+    "sha256": "0b438555895505df283d7f151887a14d826df27259f4f5eee0ac584b74dbe10a"
+  },
+  {
+    "bytes": 31836,
+    "git_blob": "d31f366484eb06d238d725b994e8b1d756c9ce68",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/receipts.py",
+    "repository": "datasets",
+    "sha256": "4065833e8fa766e587035c456b381fead715f39c1e4e4619ea0d0bb969a609ea"
+  },
+  {
+    "bytes": 56593,
+    "git_blob": "afd4ea73d81c9b6027e7c71b4205d015a911f6ae",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/refinement.py",
+    "repository": "datasets",
+    "sha256": "975b8493035f414e82a611499c119aab9843b0b8546bd1cb82d04344f170874d"
+  },
+  {
+    "bytes": 35431,
+    "git_blob": "f0cce6dba5277b7fb612d7edbb90219a755c2377",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/state.py",
+    "repository": "datasets",
+    "sha256": "085841a600ed8f8fde202e720d1f70e5a0432e4bf80d20ff11fe60c90107c54c"
+  },
+  {
+    "bytes": 120145,
+    "git_blob": "edeee974d5abdc547fce5e7f4dcdf709dd1efbcf",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/tactician/contracts.py",
+    "repository": "datasets",
+    "sha256": "ba509edfbdc941bef71d4d7462cd9e03fbf32ff133648afb7eedc165d4c07452"
+  },
+  {
+    "bytes": 82265,
+    "git_blob": "a4a6adef35695c7aa7557e4b8718ffa301913362",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/tactician/proof_plan.py",
+    "repository": "datasets",
+    "sha256": "c2a9b78691f17c2c6698f033ec7bfc749ede7eba70f96aaca713b397ae47983c"
+  },
+  {
+    "bytes": 47121,
+    "git_blob": "f6e9857ec64926097b26fe8f099f8fe8f8a7d9ce",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/transitions.py",
+    "repository": "datasets",
+    "sha256": "982d7e3a243fb70f5f797b7b6efdb45faebb3895945b06c04a9421fbe4ba7d86"
+  },
+  {
+    "bytes": 28440,
+    "git_blob": "a9ee3f39a6fc3514afdcea919f352610d61a3100",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/translations.py",
+    "repository": "datasets",
+    "sha256": "c418cf45efd69dd01ced3eb2e05f9bc411ab12855fa408401d1ba74839df6dda"
+  },
+  {
+    "bytes": 81752,
+    "git_blob": "fdefe8542381401033e44a6d1cbf0d229fef40e8",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/logic/software_verification/vc.py",
+    "repository": "datasets",
+    "sha256": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9"
+  },
+  {
+    "bytes": 957,
+    "git_blob": "7ba70fc5215c797c6b3be4f27ca0c74c6d705491",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/optimizers/__init__.py",
+    "repository": "datasets",
+    "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+  },
+  {
+    "bytes": 69336,
+    "git_blob": "ba048421b90e32e87300c10b13e199da350b6207",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+    "repository": "datasets",
+    "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+  },
+  {
+    "bytes": 4534,
+    "git_blob": "e35c00a17dbd13ed2dfb32a6924caf18c393b34c",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+    "repository": "datasets",
+    "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+  },
+  {
+    "bytes": 82754,
+    "git_blob": "ea7ff175da33008a008c417c508d273d5e5adf81",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+    "repository": "datasets",
+    "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+  },
+  {
+    "bytes": 53075,
+    "git_blob": "f9f476b8af6dafab5606c349cfb30546c0ba7a29",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+    "repository": "datasets",
+    "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+  },
+  {
+    "bytes": 5845,
+    "git_blob": "906a415bac365db7ba03b2be71f1086edb0fd926",
+    "matches_tested_commit": true,
+    "path": "ipfs_datasets_py/router_deps.py",
+    "repository": "datasets",
+    "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+  },
+  {
+    "bytes": 13992,
+    "git_blob": "820ab504c0675bd031b1f37eef0a256f5c66f69f",
+    "matches_tested_commit": true,
+    "path": "tests/integration/logic/software_contracts/test_codebase_obligation_portfolio.py",
+    "repository": "datasets",
+    "sha256": "2f28b80330d7ebf26f44272cd3b99540ccaa42faebcb622dd24c71892badcbc8"
+  }
+]

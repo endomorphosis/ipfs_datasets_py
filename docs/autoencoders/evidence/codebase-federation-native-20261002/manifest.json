@@ -1,0 +1,120 @@
+{
+  "schema": "codebase-federation-native-evidence@1",
+  "files": [
+    {
+      "path": "attempt-04/batch-shape-diagnosis.json",
+      "bytes": 2193,
+      "sha256": "7f72e9e49b13a5098a9d0262807727ef02fcc1da00231be6dc70935fc4f27236"
+    },
+    {
+      "path": "attempt-04/exit.json",
+      "bytes": 102,
+      "sha256": "707e1ee226b3e31befe764c7357fae62aaa04b78a39ec21be59eba945504e090"
+    },
+    {
+      "path": "attempt-04/producer-bodies/inventory.json",
+      "bytes": 736,
+      "sha256": "6153bc9c8b4845b8abe1e5f2a8988a86bdfd9718e8af238b6a8f87ef0cbc4bb2"
+    },
+    {
+      "path": "attempt-04/producer-bodies/ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py.txt",
+      "bytes": 36157,
+      "sha256": "938418a7adb8af47649a8bfa8027e976071d3ef8c6271b62def7ca8bc3426f27"
+    },
+    {
+      "path": "attempt-04/producer-bodies/ipfs_datasets_py/logic/software_contracts/codebase_source_training.py.txt",
+      "bytes": 48779,
+      "sha256": "88cc4da95cd10ee9164a7ee2dd0d19900e2537b7599734050b1b5bb7b1d5a400"
+    },
+    {
+      "path": "attempt-04/producer-bodies/tests/integration/logic/software_contracts/test_codebase_federation_qualification.py.txt",
+      "bytes": 19638,
+      "sha256": "33e9e4864e901f12e306bdba8a2e7183b67a81ea3a0668996f1f6d1fd7c3239a"
+    },
+    {
+      "path": "attempt-04/producer-bodies/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py.txt",
+      "bytes": 14050,
+      "sha256": "7752842d989def1e0ce333c027b06cb4872c9fdcf698891b57862fa7fd0c0a3d"
+    },
+    {
+      "path": "attempt-04/run.json",
+      "bytes": 13752,
+      "sha256": "31b4a73376036dc78f95e477941519fb7a20f70171293f07cc2ceb6f99c5ef5d"
+    },
+    {
+      "path": "attempt-04/run.py.txt",
+      "bytes": 4102,
+      "sha256": "1932635d4e44d71aec2ae1e0666b2982715ed7d47e3dcb45758f212b745ded36"
+    },
+    {
+      "path": "attempt-04/telemetry.jsonl",
+      "bytes": 35399,
+      "sha256": "ec34225a9cb624b09db09787456ab0f3a0ee20341bacba35dcd71d6ca166e273"
+    },
+    {
+      "path": "attempt-04/tests.log",
+      "bytes": 18208,
+      "sha256": "4492b721dde8cd631cad7d3e09167d6ed60e22de575ff96075a58daa42364a8a"
+    },
+    {
+      "path": "attempt-04/tests.xml",
+      "bytes": 19178,
+      "sha256": "30aa592b4a2e92632104956b63e93fb63595c22c2a864063cbf088f20895b56b"
+    },
+    {
+      "path": "attempt-05/exit.json",
+      "bytes": 101,
+      "sha256": "54bbc587fa18d7bd93309b4650535ba272ddead9b70655ce7e3190ee01906755"
+    },
+    {
+      "path": "attempt-05/native-receipt.json",
+      "bytes": 635864,
+      "sha256": "a2429f050f7c734b45844702d73015de80cf811c53c8884b688e54777fb5e3c6"
+    },
+    {
+      "path": "attempt-05/run.json",
+      "bytes": 13752,
+      "sha256": "5347d050e280100bfe35c89182c80e6ee11c6641752429bc44504077b3abbe97"
+    },
+    {
+      "path": "attempt-05/run.py.txt",
+      "bytes": 4102,
+      "sha256": "1932635d4e44d71aec2ae1e0666b2982715ed7d47e3dcb45758f212b745ded36"
+    },
+    {
+      "path": "attempt-05/telemetry.jsonl",
+      "bytes": 135627,
+      "sha256": "3470909e8fc34c7a294ee4b1241ef894dc321c81a295444d6dfaf0304727df66"
+    },
+    {
+      "path": "attempt-05/tests.log",
+      "bytes": 1143,
+      "sha256": "8533705ccf58c1dae868dbc6b39878622b49854be160b182d6410a67ddf9945f"
+    },
+    {
+      "path": "attempt-05/tests.xml",
+      "bytes": 2562,
+      "sha256": "97cea40cc8d015d9b13636da78ef2669597d94054a7c2f42069c352b1f9e9d6f"
+    },
+    {
+      "path": "batch-replay-controls.log",
+      "bytes": 1308,
+      "sha256": "480125079ce938ba5ab2f13876406a37d116761c1debe167a74be223b1b02bf5"
+    },
+    {
+      "path": "batch-replay-controls.xml",
+      "bytes": 7982,
+      "sha256": "b98a60f53ac093ea3aa0d3d14ddd0b70a9a1ca656d5704643060491e1d3cccfe"
+    },
+    {
+      "path": "qualification.json",
+      "bytes": 16487,
+      "sha256": "2a732fce8f28fa1d3b28626aa7350bc55a400c48cd1450d7325b65806362fd25"
+    },
+    {
+      "path": "source-inventory.json",
+      "bytes": 1002,
+      "sha256": "282328bce87136476dbe589c291363612de778372ae37ccabc19e91e13ab956a"
+    }
+  ]
+}

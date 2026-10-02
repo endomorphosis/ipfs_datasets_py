@@ -1,0 +1,286 @@
+{
+  "schema": "federation-native-attempt@1",
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/logic/software_contracts/test_codebase_federation_qualification.py",
+    "-q",
+    "-s",
+    "--basetemp=/home/barberb/lift_coding/artifacts/codebase-federation-20261002/attempt-05/pytest",
+    "--junitxml=/home/barberb/lift_coding/artifacts/codebase-federation-20261002/attempt-05/tests.xml",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/artifacts/codebase-federation-20261002/attempt-05/pytest-cache"
+  ],
+  "cwd": "/tmp/ir-release-datasets-20261001",
+  "environment": {
+    "IPFS_DATASETS_PY_MINIMAL_IMPORTS": "1",
+    "PYTHONPATH": "/tmp/ir-release-datasets-20261001:/tmp/ir-release-accelerate-20261001",
+    "GIT_CEILING_DIRECTORIES": "/home/barberb/lift_coding/artifacts/codebase-federation-20261002"
+  },
+  "heads": {
+    "datasets": "8de37ba8d216cd21a5d7134292de01d9e12c9a56",
+    "accelerate": "8a37a3a81b99be4cc1f8df1143f308a3b7d1875e"
+  },
+  "source_pins": [
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_ir_targets.py",
+      "repository": "datasets",
+      "sha256": "93d853232ea630cf1748b397aef8224b0bdbddc06521562279de9133652e054d"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+      "repository": "datasets",
+      "sha256": "e459766bed0c990660334eaf264b6c46fc29e229d49ae8c416bdfc7ca142c317"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py",
+      "repository": "datasets",
+      "sha256": "91417315a76a06d42d386f84b3b6430375893905906623a0b7813ae1fcf0adbb"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_artifacts.py",
+      "repository": "datasets",
+      "sha256": "0b87e887f5234467a4654bf54ac33e6974ae8f3cb4b3a069d7dd4ae16d006f9a"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated.py",
+      "repository": "datasets",
+      "sha256": "c9334d7ae5a2c90acaf6f25fb888417783a7d3a5ed1115681d4ace9c82cf9619"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated_update_codec.py",
+      "repository": "datasets",
+      "sha256": "0a8d97306ca72f2ed8c9ee08c4422d5f0e5210d1318a3e99013b4c98108c12ee"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_sync.py",
+      "repository": "datasets",
+      "sha256": "ebd4bc42117875367ec9b687c49cdf6132f445e9075cd02cecda1cf9a2928514"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated_codebase.py",
+      "repository": "datasets",
+      "sha256": "1f745e92cedc9895d14b44b85ad2a16b8fa59c63785485296ba2c83929740b3e"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_federated_sync.py",
+      "repository": "datasets",
+      "sha256": "12a94aa83e77b35b49920d020b11cfe2568196887aa9eb60bdbf0d6b75c37fd1"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_feature_worker.py",
+      "repository": "datasets",
+      "sha256": "f9a29dd7fc7812fd4cb67e78a421938ef1e8817e3b74c9d38626a91e6b02d81a"
+    },
+    {
+      "path": "ipfs_datasets_py/duckdb_control/autoencoder_federated.py",
+      "repository": "datasets",
+      "sha256": "baaa1fe4a3660b3e4ac3c7dcbec405bad111fdfce953e59732e3cd6fe2fb31d5"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_runtime_8d.py",
+      "repository": "datasets",
+      "sha256": "32dc798bfe81a587412c3d86431c368a5a83e27660870ca6de6f107a1e855146"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py",
+      "repository": "datasets",
+      "sha256": "2e26acf682d87ff26c48494ca528085652babf10bab89a28c92f1adfdfb8b3e5"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_admission.py",
+      "repository": "datasets",
+      "sha256": "94f8a013fdaa06867b8490e63e6b339b83e112ea4194d72a57423c1b139350b3"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_parallel_resources.py",
+      "repository": "datasets",
+      "sha256": "634a6a2e46b1e4301f20c4d8e4bdbab357449ab00905a16e9f87f199cac4e185"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_parallel_dispatched_federation.py",
+      "repository": "datasets",
+      "sha256": "57077c74d8d70299e258b5e7fc03e3b8008d233e9065c1f9520d9a203ea11164"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_indexed_dispatch_recovery.py",
+      "repository": "datasets",
+      "sha256": "db622f6b246ffd306d963c52f68bb8790a57eed263a4922a835616fd93a838a5"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated.py",
+      "repository": "datasets",
+      "sha256": "a2b6eb05032e0681cd0b8a09a43670e1edcbcf863c367fc82147076c70a3ee87"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_update_codec.py",
+      "repository": "datasets",
+      "sha256": "7a251b82f512a51cdbc7787c09bda00ce8697796d44498700d175707434d2f11"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_sync.py",
+      "repository": "datasets",
+      "sha256": "860d5e4fa65a2354f61e28fd9a00d808f32d90585edee973c1c1136f22992c4e"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_federated_codebase.py",
+      "repository": "datasets",
+      "sha256": "61f91dfe282ffab24cac643a231372d478f288e489b433e68dd7b8c764907408"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_codebase_federated_sync.py",
+      "repository": "datasets",
+      "sha256": "753d6a35cc4f50f55ba391aeef13c385ba57b612815989d09f2c26d24e3db1ba"
+    },
+    {
+      "path": "tests/unit/duckdb_control/test_autoencoder_federated.py",
+      "repository": "datasets",
+      "sha256": "f416abb0f476ea241c1071469553bbed07625d46e052b9f65867ac399d085dd5"
+    },
+    {
+      "path": "tests/integration/logic/software_contracts/test_codebase_federation_qualification.py",
+      "repository": "datasets",
+      "sha256": "286db30d0bc3fe451ae00d6b9608da95d9bf5d5b5f24d6758a591e375e4b58a6"
+    },
+    {
+      "path": "docs/autoencoders/CODEBASE_SOURCE_FEDERATION.md",
+      "repository": "datasets",
+      "sha256": "d4946204b17b988badf6e89cde7b1986b90e7c9ddd2b9709f52fc74b4ca414ab"
+    },
+    {
+      "path": "ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py",
+      "repository": "accelerate",
+      "sha256": "3d7adb7e812d3d9aed6cda45ea6dfce9a6fcdae9489fa5c2f53dd45d19cf2a19"
+    },
+    {
+      "path": "ipfs_accelerate_py/p2p_tasks/codebase_federated_history.py",
+      "repository": "accelerate",
+      "sha256": "7c61b1fc115837bbce351dd8a4669fe45e0465216e5f524f411608d412c8dbe1"
+    },
+    {
+      "path": "test/unit/test_codebase_federated_dispatch.py",
+      "repository": "accelerate",
+      "sha256": "3c0460cc32bd37451c169693967967350d16b81cd8d3bba6a4df2090cf4a641e"
+    },
+    {
+      "path": "test/unit/test_codebase_federated_history.py",
+      "repository": "accelerate",
+      "sha256": "80fb49b6336b739329f95c0709fe6d1196ccca3fe928bdb3d831ff386594fa12"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_codebase_source_feature_worker_protocol.py",
+      "repository": "datasets",
+      "sha256": "dffc75e2feb09052c7b580d9390defb28e7be0911cfb7fba67b6b0734c0ad806"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+      "sha256": "fdcf6d4ce676fbb1e5b8b42bab18c76368509abaedc936b1efd9aa4d53bb37d1"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "sha256": "a781f5534cf637455b975b31475ced608112c90e1578eca3f79ba916b85d2838"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+      "sha256": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py",
+      "sha256": "34f728f42076b66c564eef64edfa1f9ee7039ae29148ab68f75679dcddcc42c3"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py",
+      "sha256": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py",
+      "sha256": "5135e623a0a3f970252da63dce049be167e8bb73db5355f6c3116316b70aafa6"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py",
+      "sha256": "002957f910a0bc1ff29de1ed72aca9c2464218ac5f65478be34a7c8f04e166a1"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/logic/software_contracts/python_frontend.py",
+      "sha256": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/logic/backends/codebase_process.py",
+      "sha256": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    {
+      "repository": "datasets",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+    },
+    {
+      "repository": "accelerate",
+      "path": "ipfs_accelerate_py/agent_supervisor/runtime/repository_resource_bridge.py",
+      "sha256": "37bd578cf49735a7310c23b1d1cd204d623c0e9c3f2d808dd978390475403f8b"
+    },
+    {
+      "repository": "accelerate",
+      "path": "ipfs_accelerate_py/agent_supervisor/runtime/resource_scheduler.py",
+      "sha256": "67d4e84d542ebbc167da4488df53ab72a1b258c6722b1f1ff9c77fdb85af841c"
+    },
+    {
+      "repository": "accelerate",
+      "path": "ipfs_accelerate_py/p2p_tasks/task_queue.py",
+      "sha256": "c5c6675a339cc54c9771b8eb62caf26cb7d54f2e1da3530e75b4d60fa382d9d1"
+    }
+  ],
+  "runtime_declared_pins": {
+    "files": {
+      "ipfs_datasets_py.logic.software_contracts.codebase_parallel_dispatched_federation": "57077c74d8d70299e258b5e7fc03e3b8008d233e9065c1f9520d9a203ea11164",
+      "ipfs_datasets_py.logic.software_contracts.codebase_parallel_resources": "634a6a2e46b1e4301f20c4d8e4bdbab357449ab00905a16e9f87f199cac4e185",
+      "ipfs_datasets_py.logic.software_contracts.codebase_indexed_dispatch_recovery": "db622f6b246ffd306d963c52f68bb8790a57eed263a4922a835616fd93a838a5",
+      "ipfs_accelerate_py.p2p_tasks.codebase_federated_history": "7c61b1fc115837bbce351dd8a4669fe45e0465216e5f524f411608d412c8dbe1"
+    },
+    "compatible_transport_producer": {
+      "files": {
+        "ipfs_datasets_py.logic.software_contracts.codebase_dispatched_federation": "2e26acf682d87ff26c48494ca528085652babf10bab89a28c92f1adfdfb8b3e5",
+        "ipfs_datasets_py.logic.software_contracts.codebase_federated_artifacts": "0b87e887f5234467a4654bf54ac33e6974ae8f3cb4b3a069d7dd4ae16d006f9a",
+        "ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch": "3d7adb7e812d3d9aed6cda45ea6dfce9a6fcdae9489fa5c2f53dd45d19cf2a19"
+      },
+      "compatible_model_producer": {
+        "source": {
+          "files": {
+            "ipfs_datasets_py.logic.software_contracts.codebase_source_training": "e459766bed0c990660334eaf264b6c46fc29e229d49ae8c416bdfc7ca142c317",
+            "ipfs_datasets_py.logic.software_contracts.codebase_ir_targets": "93d853232ea630cf1748b397aef8224b0bdbddc06521562279de9133652e054d",
+            "ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d": "32dc798bfe81a587412c3d86431c368a5a83e27660870ca6de6f107a1e855146",
+            "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_projection_features": "b91b5ee4a4e8bc6a214d7b7a942212805efe5531b2fb4251e66e9d413639cd14",
+            "ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_feature_worker": "f9a29dd7fc7812fd4cb67e78a421938ef1e8817e3b74c9d38626a91e6b02d81a",
+            "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_cuda": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1"
+          },
+          "sha256": "a9c7bf72c4cbaac990649e3933eace96729eb762cbc27b5599d4fbfda4deb36c",
+          "scope": "listed_local_files_only_not_execution_attestation"
+        },
+        "files": {
+          "ipfs_datasets_py.logic.software_contracts.codebase_federated_training": "91417315a76a06d42d386f84b3b6430375893905906623a0b7813ae1fcf0adbb",
+          "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_federated_codebase": "1f745e92cedc9895d14b44b85ad2a16b8fa59c63785485296ba2c83929740b3e",
+          "ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_federated_sync": "12a94aa83e77b35b49920d020b11cfe2568196887aa9eb60bdbf0d6b75c37fd1"
+        },
+        "scope": "listed_local_files_only_not_execution_attestation"
+      },
+      "scope": "listed_local_files_only_not_execution_attestation"
+    },
+    "scope": "listed_local_files_only_not_execution_attestation"
+  },
+  "admission": "actual default, no monkeypatched/injected host telemetry or policy",
+  "claim_scope": "local five-row8D structural-feature development profile; not384D, remote fleet or unseen benchmark"
+}
