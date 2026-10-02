@@ -838,3 +838,120 @@ weights and outputs, sampler snapshots and digests, diagnostic readouts, tests, 
 The script uses the same five CLI path arguments as the preceding experiment, under
 the existing resource reservation layer; its private exports are not resumable
 production checkpoints and confer no qualification or formalization authority.
+
+## Exact gradient-spike replay (2026-10-02)
+
+The [gradient-trace evidence](../implementation/reports/evidence/decoder-gradient-trace-20261002/results.json)
+localizes the large gradients without changing the prior four training recipes.
+All four fits complete 340 updates, 2,440 decoder/count row presentations, and
+225,840 valid target tokens. They reproduce all 80 archived epoch records, four
+stage Adam summaries, selected/final parameter tensors, sampler digests, predictions,
+and postfit controls from the balanced-exposure comparison. The predecessor did
+not save every intermediate step tensor, so this comparison does not independently
+establish equality of every one of those tensors. Synthetic 64-step tests separately
+verify exact live-update parity with tracing enabled and disabled.
+
+The new versioned owners are `long_span_gradient_trace_training.py` and
+`decoder_gradient_replay.py`; the CLI is `benchmark_decoder_gradient_trace.py`.
+Tracing is opt-in and records bounded scalar/module metadata after the existing
+clip operation. It retains at most two committed events per arm with preclip norm
+strictly above 50, ranked by norm with earliest-step tie breaking. Each event holds
+cloned pre-update weights, complete Adam state/parameter groups, trainable ordering,
+module modes, RNG state, ordered batch IDs and hashes, token-weight/count-target
+bindings, and expected post-update digests. Tensor snapshots use tagged JSON that
+preserves dtype, shape, dictionary key types, and `None` versus zero gradients;
+loading them does not require pickle. An update abandoned at the deadline is saved
+as uncommitted and cannot be replayed as successful.
+
+The benchmark writes and reloads each packet before `replay_event(...)` restores
+a private model and optimizer. It requires exact loss values, the original clip
+norm and clipped-gradient digest, and the post-update weight **and Adam** digests.
+Only then does it run separate token/count backward passes on fresh private
+copies. Branch sums use declared float32 reconciliation tolerances, with float64
+reporting; exact combined-step replay and approximate branch reconciliation are
+different checks. All eight retained events pass both. The private diagnostic
+updates are explicitly counted and never enter live training or model selection.
+RNG restoration and final caller-integrity checks are included in replay timing
+and its cooperative deadline.
+
+### What the captured gradients show
+
+| Arm / seed | Steps with norm >50 | Maximum preclip norm | Token-branch norm at maximum | Weighted count-branch norm | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| current_stage-1729 | 2 | 100.358 | 100.356 | 0.696 | 8.832 |
+| balanced_all-1729 | 3 | 7,599.256 | 7,599.257 | 0.313 | 8.681 |
+| current_stage-2718 | 4 | 552.476 | 552.476 | 0.706 | 10.331 |
+| balanced_all-2718 | 4 | 729.729 | 729.729 | 0.300 | 10.378 |
+
+All 13 steps above 50 occur in `source_le_32`, at epochs 22–29 after the first
+curriculum transition. The eight retained steps are a deliberately selected tail,
+not representative samples. At the largest event (zero-based step 50, epoch 23),
+token-gradient norms are about 6,125.7 in the GRU, 3,619.2 in the source-to-embedding
+residual, and 2,669.3 in target embeddings. The weighted count branch is only 0.313;
+the frozen projection's reconstruction loss contributes no trainable gradient.
+The float64 branch norm differs slightly from the exact float32 clipping norm due
+to arithmetic precision, not a changed clip operation.
+
+This identifies where the instantaneous gradient is large. It does not prove a
+particular recurrent-Jacobian mechanism or show that count training cannot have
+affected the preceding trajectory through the shared conditioner. Near-zero global
+branch cosine also reflects largely disjoint parameter groups; the shared-condition
+group can have appreciable alignment or conflict. A large event also occurs in a
+batch containing only one- and two-clause targets, and later, longer stages have
+much smaller maxima. A monotonic relationship between sequence length and gradient
+instability is not established.
+
+Source reconstruction is unchanged: **0/48 exact validation paragraphs in every
+arm**, selected epoch 0, and no checkpoint promotion. These are previously exposed,
+authored development panels; the fresh test is unopened. Conditions, exceptions,
+and temporal qualifiers in these targets remain empty. The 8D linguistic teacher
+is unchanged, and no actual 768D training ran because verified local inputs are
+unavailable. No native family or `lake build <Lib>` validation ran in this numerical
+diagnostic; nothing here grants Lean admission or Constitution formalization.
+
+### Cost and reproduction
+
+Detached observation takes 0.068–0.085 seconds per fit, as measured inside the
+observer, including snapshot construction and its report. Persisting, reloading,
+and replaying the two retained events takes another 0.327–0.357 seconds per arm
+outside training. These measured components do not establish a causal wall-time
+overhead against earlier runs with different machine load. Full fits, including
+validation, achieve 235–281 row presentations/second and 21.8k–26.0k valid target
+tokens/second; whole arms including artifacts and all ten controls take 10.66–14.87
+seconds. All eight diagnostic replays are additional work, not training progress.
+
+Final-attempt numerical validation takes 1.931, 1.953, 12.310, and 14.666 ms/span
+in the table's order. Each panel contains 48 spans. Complete postfit panels, including
+that numerical readout and fidelity/count diagnostics, take 149.9–759.8 ms. Device
+is CPU, workers 1, bridge names `[]`, prover evaluation false, metric disk cache
+disabled, and sample-memory scoring unused. Paragraph embeddings are warm cached
+inputs; no encoder executes. No bridge-on evaluation was performed, so these are
+not legal-IR bridge timing results.
+
+The guardian completes in 92.267 seconds including admission, monitoring, and
+final accounting. It retains 77,131,578 bytes within a 150 MB reservation; observed
+peak child RSS is 710,619,136 bytes. The reservation is released and the storage cap
+unchanged. Isolated child execution time is not inferred from the monitoring
+receipt. Historical resource-owner compatibility is recorded separately from the
+currently published optional nested-lease path, which this run does not exercise.
+
+The regression suite passes **736 tests**, and a separate standard-library audit
+passes **27,722 checks with zero findings**. The archive includes the sealed recipe,
+five original inputs, frozen producers, tests, complete scalar traces, eight tagged
+events and replay reports, all selected/rejected states and controls, and the exact
+predecessor artifacts required to reproduce the parity checks. Use its
+`validation/run_reserved.py --attempt <fresh-name>` in this workspace to invoke
+the benchmark under the same reservation layer; do not reuse an existing attempt
+directory. The benchmark takes `--dependency-root`, `--extension-root`, `--manifest`,
+`--plan`, and `--output`. It authenticates the frozen canonical compiler/decompiler/
+parser tree and all extension/input hashes before execution. Replay currently
+supports this CPU, frozen-projection, quarter-weight count objective; event packets
+are diagnostics, not general production resume checkpoints.
+
+The next proposed stabilization comparison is two seeds with unchanged balanced
+exposure versus a fixed learning-rate ramp for the first 20 updates after the first
+curriculum expansion. The ramp would scale the existing scheduler rate from 0.1 to
+1, preserving Adam moments, full-sequence backpropagation, clipping, and the matched
+update/token budgets. It must record actual parameter-update norms and per-length
+semantic/count/EOS results as well as gradient tails. This proposal has not run;
+smaller spikes alone would not establish better reconstruction or justify promotion.
