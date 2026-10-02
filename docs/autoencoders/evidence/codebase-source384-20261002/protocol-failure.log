@@ -1,0 +1,45 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 8 items / 7 deselected / 1 selected
+
+tests/integration/logic/software_contracts/test_codebase_source_384.py F [100%]
+
+=================================== FAILURES ===================================
+___________ test_real_fit_registry_replay_inference_and_source_fence ___________
+tests/integration/logic/software_contracts/test_codebase_source_384.py:119: in test_real_fit_registry_replay_inference_and_source_fence
+    result = module.train_current_source384(index, repo, **arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:296: in train_current_source384
+    result, receipt = _worker(payload, lease=lease, signal=signal, timeout=remaining(), memory_mb=memory_mb)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_source_384.py:237: in _worker
+    return json.loads(result.stdout), dict(elapsed_ms=result.elapsed_ms, returncode=result.returncode,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/json/decoder.py:340: in decode
+    raise JSONDecodeError("Extra data", s, end)
+E   json.decoder.JSONDecodeError: Extra data: line 1 column 271199 (char 271198)
+----------------------------- Captured stdout call -----------------------------
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+=========================== short test summary info ============================
+FAILED tests/integration/logic/software_contracts/test_codebase_source_384.py::test_real_fit_registry_replay_inference_and_source_fence
+======================= 1 failed, 7 deselected in 11.76s =======================

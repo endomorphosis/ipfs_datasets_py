@@ -1,0 +1,66 @@
+{
+  "schema": "codebase-source384-qualification-evidence/v1",
+  "fixture": "authored27file scalar repository; local-round holdouts only",
+  "source_files": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py": "7f0c148bdc1ff0cc01a8cc0bfd115417118eaa2f4f2db0f0d2f2ad23198b95e8",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_384_worker.py": "81304aa208c4f849a3a187ce95e4fa2554918cb6c73a94f0982dd99350249428",
+    "ipfs_datasets_py/logic/backends/codebase_process.py": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+    "tests/integration/logic/software_contracts/test_codebase_source_384.py": "ce6c1db35e52cb9f3a34aabc02b8098eb65596def24a194a539633a1e220d38f"
+  },
+  "files": [
+    {
+      "file": "protocol-failure.log",
+      "sha256": "27acf2a7f69eef1e0b12cf418b24a26314158e1dc88174c5ce1b3db7a7b722e9",
+      "uncompressed_sha256": "27acf2a7f69eef1e0b12cf418b24a26314158e1dc88174c5ce1b3db7a7b722e9",
+      "uncompressed_bytes": 6539
+    },
+    {
+      "file": "result-02.json.gz",
+      "sha256": "a0c3ed20eb09e7c0a14da01adccd435bed049e153027d766b863ce1caec1f5ea",
+      "uncompressed_sha256": "643db165a00f446ed61b8e4265b201cbb7a2c021d923b2b28b7232fe713e80d4",
+      "uncompressed_bytes": 467408
+    },
+    {
+      "file": "result.json.gz",
+      "sha256": "ebd661f74151c5f8f9b529db7de9980e27fdc231ee176756a13fe0e97521b637",
+      "uncompressed_sha256": "3873f1621fe1aa9cea71284bfb77d394c716994321d6989cc58bdee8aaaaf79c",
+      "uncompressed_bytes": 467408
+    },
+    {
+      "file": "source-tests.log",
+      "sha256": "1ae42ffabdee8decd3d5c8edad1b3f7089a47b9e4686f020ffbdcdda075be91c",
+      "uncompressed_sha256": "1ae42ffabdee8decd3d5c8edad1b3f7089a47b9e4686f020ffbdcdda075be91c",
+      "uncompressed_bytes": 1076
+    },
+    {
+      "file": "tests-02.log",
+      "sha256": "9130f52e3d5262dc1ac6b40420acd2f5b55e13a6965c49bffd660d93315970b9",
+      "uncompressed_sha256": "9130f52e3d5262dc1ac6b40420acd2f5b55e13a6965c49bffd660d93315970b9",
+      "uncompressed_bytes": 1096
+    },
+    {
+      "file": "tests-02.xml",
+      "sha256": "ee21e5d0d5dfbcca6e9338ea7641e892ffec00e075d1ad7996dbd16bf9b7498e",
+      "uncompressed_sha256": "ee21e5d0d5dfbcca6e9338ea7641e892ffec00e075d1ad7996dbd16bf9b7498e",
+      "uncompressed_bytes": 1478
+    },
+    {
+      "file": "tests.log",
+      "sha256": "8d604d111a8d1a0fe4b5d17881394bacab1dd53a17f59c7e775c1dded7ef077b",
+      "uncompressed_sha256": "8d604d111a8d1a0fe4b5d17881394bacab1dd53a17f59c7e775c1dded7ef077b",
+      "uncompressed_bytes": 1041
+    },
+    {
+      "file": "tests.xml",
+      "sha256": "88cb3a46d52ea050a90dbd8d68b3bc6dca7e9a412471b712e5742611fa25aa1e",
+      "uncompressed_sha256": "88cb3a46d52ea050a90dbd8d68b3bc6dca7e9a412471b712e5742611fa25aa1e",
+      "uncompressed_bytes": 417
+    }
+  ],
+  "raw_artifacts": "/home/barberb/lift_coding/artifacts/codebase-source384-20261002",
+  "promotion_performed": false,
+  "whole_backlog_completed": false,
+  "final_run": "qualified-02",
+  "final_result": "result-02.json.gz",
+  "final_tests": "tests-02.xml"
+}
