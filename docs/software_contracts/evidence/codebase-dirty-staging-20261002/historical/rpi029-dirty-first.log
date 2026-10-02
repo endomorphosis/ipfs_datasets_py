@@ -1,0 +1,46 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 17 items
+
+tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py F [  5%]
+
+
+=================================== FAILURES ===================================
+_ test_seal_without_parsing_then_bounded_pages_and_complete_global_equivalence _
+tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py:102: in test_seal_without_parsing_then_bounded_pages_and_complete_global_equivalence
+    before=len(observed);state=advance(f,state)
+                               ^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py:75: in advance
+    return f['stager'].advance(f['root'],generation_cid=state['generation_cid'],expected_cursor=state['cursor'],
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:255: in advance
+    semantic_cid = self._put(semantics.extract(snapshot, entry, raw))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py:99: in tracked
+    def tracked(snapshot,entry,raw):observed.append(entry.path);return actual(snapshot,entry,raw)
+                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_semantics.py:59: in extract
+    fixtures = [_fact(row) for row in result.fixtures]
+                ^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_semantics.py:35: in _fact
+    return _plain(asdict(value))
+           ^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_semantics.py:31: in _plain
+    return json.loads(canonical_dag_json_bytes(value))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/content.py:191: in canonical_dag_json_bytes
+    validate_structured_value(obj)
+ipfs_datasets_py/logic/software_contracts/content.py:155: in validate_structured_value
+    validate_structured_value(item, path=f"{path}.{key}")
+ipfs_datasets_py/logic/software_contracts/content.py:164: in validate_structured_value
+    raise StructuredIdentityError(
+E   ipfs_datasets_py.logic.software_contracts.content.StructuredIdentityError: $.dependencies rejects tuple; use list or map
+--------------- generated xml file: /tmp/rpi029-dirty-first.xml ----------------
+=========================== short test summary info ============================
+FAILED tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py::test_seal_without_parsing_then_bounded_pages_and_complete_global_equivalence
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+============================== 1 failed in 3.40s ===============================

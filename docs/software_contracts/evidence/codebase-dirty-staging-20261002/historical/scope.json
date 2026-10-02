@@ -1,0 +1,10 @@
+{
+  "schema": "dirty-staging-historical-evidence@1",
+  "missing_files": [],
+  "not_final_qualification": true,
+  "early_interrupts": "Both SIGINT attempts retain measured cursor128/nohead. First producer body reconstructed after stop and independently hash-matched to retained record; second preserved directly.",
+  "lease_expiry": "Shared pytest retention deleted its database. Traceback is before apply_batch; no postrun SQL count is claimed.",
+  "deadline": "Persistent renewing run reached cursor320/20pages, then300sfinalize deadline; recorded native_head_count0.",
+  "test_harness_failures": "First catalog persistent fixture accidentally discovered outer Git root; corrected with explicit GIT_CEILING_DIRECTORIES. Next callback tests accidentally opened nested AST read transactions; corrected only test observation to direct bound SQL.",
+  "candidate_hooks": "28 catalog and20 dirty cases passed catalog3ffd before the final falsey-callable hardening. Exact candidate body is retained; final49 plus actual320 and isolated replay use fdcf6d4c."
+}

@@ -1,0 +1,39 @@
+"""Independent isolated-process replay of the final 320-file generation."""
+import sys,site
+sys.path.insert(0,'/tmp/ir-release-datasets-20261001')
+sys.path.append(site.getusersitepackages())
+from pathlib import Path
+import json,time
+import duckdb
+from ipfs_datasets_py.duckdb_control.codebase_catalog import CodebaseCatalog,CodebaseCatalogLimits
+from ipfs_datasets_py.logic.software_contracts.cache import ImmutableCAS
+from ipfs_datasets_py.logic.software_contracts.codebase_ir import RepositoryCodebaseIndex
+from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import DuckDBASTStore
+from ipfs_datasets_py.logic.software_contracts.duckdb_ingest import DuckDBASTIngestor
+from ipfs_datasets_py.logic.software_contracts import codebase_dirty_paged_staging as staged
+from ipfs_datasets_py.logic.software_contracts import codebase_dirty_semantics as semantics
+base=Path('/home/barberb/lift_coding/artifacts/codebase-dirty-staging-20261002')
+fixture=base/'final-actual-scale/test_320_dirty_entries_resume_0'
+result=json.loads((fixture/'scale-result.json').read_text())
+started=time.monotonic()
+def forbidden(*args,**kwargs):raise AssertionError('source reparsing during historical replay')
+semantics.extract=forbidden
+staged.PythonASTExtractor.extract_from_source=forbidden
+with duckdb.connect(str(fixture/'owner/source.duckdb'),config={'threads':1,'memory_limit':'128MB'}) as cx:
+ store=DuckDBASTStore(connection=cx);cas=ImmutableCAS(fixture/'owner/cas')
+ catalog=CodebaseCatalog(store,cas,limits=CodebaseCatalogLimits(max_entries=512))
+ index=RepositoryCodebaseIndex(ingestor=DuckDBASTIngestor(store=store),artifacts=cas,catalog=catalog)
+ stager=staged.CodebaseDirtyPagedStager(index)
+ before=stager.replay_cache_stats()
+ state=stager.status(result['generation_cid'])
+ assert state['cursor']==state['entry_count']==320 and not state['source_observed_live']
+ live=stager.advance(fixture/'repository',generation_cid=result['generation_cid'],expected_cursor=320)
+ assert live['replayed'] and live['source_observed_live']
+ head=index.current('dirty:scale');assert head.to_dict()==result['head']
+ manifest=index.load(head.manifest_cid);assert len(manifest.units)==320 and manifest.coverage['ast_ok']==320
+ receipt=catalog.resolve_operation('scale',catalog.request_identity(manifest,None));assert receipt.head==head
+ native=cx.execute('SELECT cursor FROM codebase_staging_control.generations WHERE generation_cid=?',[result['generation_cid']]).fetchone()[0]
+ counts={'heads':cx.execute('SELECT count(*) FROM codebase_control.heads').fetchone()[0],'operations':cx.execute('SELECT count(*) FROM codebase_control.operations').fetchone()[0],'shards':cx.execute('SELECT count(*) FROM codebase_staging_control.shards').fetchone()[0]}
+ assert native==320 and counts=={'heads':1,'operations':1,'shards':20}
+ out={'schema':'dirty-scale-independent-replay@1','seconds':time.monotonic()-started,'producer':staged._implementation(),'head':head.to_dict(),'source_live_observed':True,'parser_tripwire_active':True,'initial_cache':before,'final_cache':stager.replay_cache_stats(),'native_counts':counts,'historical_state':state,'sampler':'actual default; no injected sampler','publication_reperformed':False}
+ (base/'actual-scale-replay.json').write_text(json.dumps(out,indent=2)+'\n');print(json.dumps(out))

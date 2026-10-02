@@ -1,0 +1,27 @@
+[
+  {
+    "path": "ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+    "sha256": "e7c85582d965a1e72eb97795e711b77856daf3767cde02f4152127a1fa876140",
+    "bytes": 29575
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py",
+    "sha256": "98e76373d2d62ad76c08b0a50cc02bc6300aa16a20a5a487e956ae96b5ac225e",
+    "bytes": 21266
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_dirty_semantics.py",
+    "sha256": "7a5ad43624cf632d9152ee04db42dcc2f90364ede65de44ad415283a4ec1f977",
+    "bytes": 7723
+  },
+  {
+    "path": "tests/unit/duckdb_control/test_codebase_catalog.py",
+    "sha256": "d3d212f722cfc93ebd97c0c8c10106193e6ff97aae3ce8d5d2a64c0b008107f6",
+    "bytes": 16639
+  },
+  {
+    "path": "tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py",
+    "sha256": "8c237d2c4bd6cbbde9ee4249e9cbf9ce4f583773ea9d46c54e4366ffefb7bcc8",
+    "bytes": 17891
+  }
+]

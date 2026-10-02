@@ -1,0 +1,23 @@
+"""Qualification launcher: real default owner telemetry; no injected sampler."""
+from pathlib import Path
+from dataclasses import asdict
+import json, os, subprocess, sys, time
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety import collect_proof_host_resources
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import get_global_resource_scheduler
+base=Path('/home/barberb/lift_coding/artifacts/codebase-dirty-staging-20261002')
+repo=Path('/tmp/ir-release-datasets-20261001')
+owner=get_global_resource_scheduler()
+command=[sys.executable,'-m','pytest','tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py','-q','-s','-k','320','--basetemp='+str(base/'final-actual-scale'),'--junitxml=/tmp/rpi029-dirty-final-actual-scale.xml']
+env=dict(os.environ,RPI029_ACTUAL_HOST='1')
+(base/'actual-scale-command.json').write_text(json.dumps({'command':command,'cwd':str(repo),'environment':{key:env[key] for key in ['RPI029_ACTUAL_HOST','IPFS_DATASETS_PY_MINIMAL_IMPORTS','PYTHONPATH','GIT_CEILING_DIRECTORIES']},'sampler':'actual default; not overridden','telemetry_scope':'shared owner observations can include concurrent jobs'},indent=2)+'\n')
+with (base/'actual-scale-telemetry.jsonl').open('w') as telemetry,Path('/tmp/rpi029-dirty-final-actual-scale.log').open('w') as log:
+ def sample(phase):
+  telemetry.write(json.dumps({'phase':phase,'utc_epoch':time.time(),'host':asdict(collect_proof_host_resources()),'scheduler':owner.snapshot()})+'\n');telemetry.flush()
+ sample('before')
+ run=subprocess.Popen(command,cwd=repo,env=env,stdout=log,stderr=subprocess.STDOUT)
+ while run.poll() is None:
+  sample('running')
+  time.sleep(5)
+ sample('after')
+ (base/'actual-scale-exit.json').write_text(json.dumps({'returncode':run.returncode,'pytest_pid':run.pid},indent=2)+'\n')
+ sys.exit(run.returncode)

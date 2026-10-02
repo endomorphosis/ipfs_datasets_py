@@ -1,0 +1,32 @@
+[
+  {
+    "path": "ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+    "sha256": "fdcf6d4ce676fbb1e5b8b42bab18c76368509abaedc936b1efd9aa4d53bb37d1",
+    "bytes": 30494
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py",
+    "sha256": "8042bd9f052eb5e97abb8b5bbd475f59d0751cb2e2dc83a3781bd57ee49205eb",
+    "bytes": 21312
+  },
+  {
+    "path": "ipfs_datasets_py/logic/software_contracts/codebase_dirty_semantics.py",
+    "sha256": "7a5ad43624cf632d9152ee04db42dcc2f90364ede65de44ad415283a4ec1f977",
+    "bytes": 7723
+  },
+  {
+    "path": "tests/unit/duckdb_control/test_codebase_catalog.py",
+    "sha256": "dc1cdc7ca109fce015d31247e8b231be737c84eb3a514503e7ac3c4956d93dd1",
+    "bytes": 20862
+  },
+  {
+    "path": "tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py",
+    "sha256": "8c237d2c4bd6cbbde9ee4249e9cbf9ce4f583773ea9d46c54e4366ffefb7bcc8",
+    "bytes": 17891
+  },
+  {
+    "path": "docs/software_contracts/CODEBASE_DIRTY_PAGED_STAGING.md",
+    "sha256": "876e8c6bd644a443af80141fc8c534e3c7c942b3436130f767fb2ce6f696fa6a",
+    "bytes": 7732
+  }
+]

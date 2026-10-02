@@ -1,0 +1,13 @@
+{
+  "schema": "dirty-scale-expiry-scope@1",
+  "outcome": "native_lease_expired_during_catalog_candidate_validation",
+  "resource_profile": "explicit injected sampler with auto_renew_leases=False and default120s lease TTL",
+  "operation_deadline_seconds": 300,
+  "total_pytest_seconds": 258.33,
+  "evidence": "rpi029-dirty-scale-root-optimized.log and JUnit traceback: CodebaseCatalog._validate_candidate -> checkpoint -> LeaseCancelledError",
+  "post_exit_database_state": "unavailable: pytest shared temporary retention removed the fixture before independent reopen",
+  "resumed_from_expired_attempt": false,
+  "publication_scope": "Traceback locates cancellation before native store.apply_batch. No independent post-exit SQL head-count claim is made.",
+  "observed_source_sha256_after_failure": "98e76373d2d62ad76c08b0a50cc02bc6300aa16a20a5a487e956ae96b5ac225e",
+  "source_hash_scope": "Source remained unchanged between this run and this after-failure hash; the removed runtime CAS producer receipt is not retained."
+}

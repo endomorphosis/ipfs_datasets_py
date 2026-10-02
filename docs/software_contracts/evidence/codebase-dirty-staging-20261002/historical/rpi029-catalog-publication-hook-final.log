@@ -1,0 +1,112 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 28 items
+
+tests/unit/duckdb_control/test_codebase_catalog.py ......FFFF........... [ 75%]
+.......                                                                  [100%]
+
+=================================== FAILURES ===================================
+_ test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay _
+tests/unit/duckdb_control/test_codebase_catalog.py:180: in test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay
+    receipt = catalog.publish(operation_id="fenced", manifest=item[0], expected_head=None,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:519: in publish
+    self.store.apply_batch(projections, supersession,
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2037: in apply_batch
+    before_apply(self._connection)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:499: in before_apply
+    publication_check()
+tests/unit/duckdb_control/test_codebase_catalog.py:176: in observe
+    observed.append((catalog.store.get_by_ast_cid(item[1][0].ast_cid) is not None,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2121: in get_by_ast_cid
+    return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2104: in _lookup
+    with self._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+__ test_publication_checkpoint_failure_rolls_back_all_native_rows[before_ast] __
+tests/unit/duckdb_control/test_codebase_catalog.py:207: in test_publication_checkpoint_failure_rolls_back_all_native_rows
+    catalog.publish(operation_id="refused", manifest=two[0], expected_head=first.head,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:519: in publish
+    self.store.apply_batch(projections, supersession,
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2037: in apply_batch
+    before_apply(self._connection)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:499: in before_apply
+    publication_check()
+tests/unit/duckdb_control/test_codebase_catalog.py:199: in refuse
+    applied = catalog.store.get_by_ast_cid(two[1][0].ast_cid) is not None
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2121: in get_by_ast_cid
+    return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2104: in _lookup
+    with self._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+_ test_publication_checkpoint_failure_rolls_back_all_native_rows[before_head] __
+tests/unit/duckdb_control/test_codebase_catalog.py:207: in test_publication_checkpoint_failure_rolls_back_all_native_rows
+    catalog.publish(operation_id="refused", manifest=two[0], expected_head=first.head,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:519: in publish
+    self.store.apply_batch(projections, supersession,
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2037: in apply_batch
+    before_apply(self._connection)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:499: in before_apply
+    publication_check()
+tests/unit/duckdb_control/test_codebase_catalog.py:199: in refuse
+    applied = catalog.store.get_by_ast_cid(two[1][0].ast_cid) is not None
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2121: in get_by_ast_cid
+    return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2104: in _lookup
+    with self._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+__ test_publication_checkpoint_failure_rolls_back_all_native_rows[after_head] __
+tests/unit/duckdb_control/test_codebase_catalog.py:207: in test_publication_checkpoint_failure_rolls_back_all_native_rows
+    catalog.publish(operation_id="refused", manifest=two[0], expected_head=first.head,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:519: in publish
+    self.store.apply_batch(projections, supersession,
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2037: in apply_batch
+    before_apply(self._connection)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:499: in before_apply
+    publication_check()
+tests/unit/duckdb_control/test_codebase_catalog.py:199: in refuse
+    applied = catalog.store.get_by_ast_cid(two[1][0].ast_cid) is not None
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2121: in get_by_ast_cid
+    return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2104: in _lookup
+    with self._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction
+------ generated xml file: /tmp/rpi029-catalog-publication-hook-final.xml ------
+=========================== short test summary info ============================
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_publication_checkpoint_failure_rolls_back_all_native_rows[before_ast]
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_publication_checkpoint_failure_rolls_back_all_native_rows[before_head]
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_publication_checkpoint_failure_rolls_back_all_native_rows[after_head]
+========================= 4 failed, 24 passed in 8.29s =========================

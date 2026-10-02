@@ -1,0 +1,282 @@
+[
+  {
+    "path": "README.md",
+    "sha256": "023f56a8730de768b54068d0763d46bd07b7c63bf75ce148fa26fa7b1a2def35",
+    "bytes": 1642
+  },
+  {
+    "path": "actual-scale-command.json",
+    "sha256": "a7e3ef2dea8030db5957766d2ae795040024c5896dd4819daa1c3c21a5a850e0",
+    "bytes": 840
+  },
+  {
+    "path": "actual-scale-exit.json",
+    "sha256": "3c7f60eb83aa957b98c7c52a2ca58b353cfb22f556f7c02d699f925b4c0dcb70",
+    "bytes": 47
+  },
+  {
+    "path": "actual-scale-replay.json",
+    "sha256": "6038c9fa16b50c9f5f244225d556856730bdd609e6f42d2925a1327a7edbd674",
+    "bytes": 5271
+  },
+  {
+    "path": "actual-scale-telemetry.jsonl",
+    "sha256": "ed954dbc59334f05722fb49d0977c12681d6dcbdfac007492c1331ab27e7462b",
+    "bytes": 89696
+  },
+  {
+    "path": "historical/candidate-hook/codebase_catalog.py.txt",
+    "sha256": "3ffd1bac575de712da84c9b98d2d8233b670b6f6d8d0abec2f2f40d05c25692f",
+    "bytes": 30458
+  },
+  {
+    "path": "historical/candidate-hook/inventory.json",
+    "sha256": "2fcfbebf96205a3957ceabacd6517c10a950b79325f5637af2eb1f56ea63b66a",
+    "bytes": 405
+  },
+  {
+    "path": "historical/candidate-hook/test_codebase_catalog.py.txt",
+    "sha256": "7e42ee8607c506bd18922403bdc6e3cb3bc9591945068ee43c64ad694a0972f2",
+    "bytes": 20110
+  },
+  {
+    "path": "historical/pre-publication-hook/inventory.json",
+    "sha256": "4950441dcc59571fded1de59669351dc17c90cc541c236fab37613703f81af66",
+    "bytes": 954
+  },
+  {
+    "path": "historical/pre-publication-hook/ipfs_datasets_py/duckdb_control/codebase_catalog.py.txt",
+    "sha256": "e7c85582d965a1e72eb97795e711b77856daf3767cde02f4152127a1fa876140",
+    "bytes": 29575
+  },
+  {
+    "path": "historical/pre-publication-hook/ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py.txt",
+    "sha256": "98e76373d2d62ad76c08b0a50cc02bc6300aa16a20a5a487e956ae96b5ac225e",
+    "bytes": 21266
+  },
+  {
+    "path": "historical/pre-publication-hook/ipfs_datasets_py/logic/software_contracts/codebase_dirty_semantics.py.txt",
+    "sha256": "7a5ad43624cf632d9152ee04db42dcc2f90364ede65de44ad415283a4ec1f977",
+    "bytes": 7723
+  },
+  {
+    "path": "historical/pre-publication-hook/tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py.txt",
+    "sha256": "8c237d2c4bd6cbbde9ee4249e9cbf9ce4f583773ea9d46c54e4366ffefb7bcc8",
+    "bytes": 17891
+  },
+  {
+    "path": "historical/pre-publication-hook/tests/unit/duckdb_control/test_codebase_catalog.py.txt",
+    "sha256": "d3d212f722cfc93ebd97c0c8c10106193e6ff97aae3ce8d5d2a64c0b008107f6",
+    "bytes": 16639
+  },
+  {
+    "path": "historical/rpi029-catalog-publication-hook-final.log",
+    "sha256": "0ebbab81b610e9bad3c2fd857cfc233c2640da536467fea1881cb8961e0ab0a8",
+    "bytes": 7766
+  },
+  {
+    "path": "historical/rpi029-catalog-publication-hook-final.xml",
+    "sha256": "2222ab8f25153ffbf4c511499554cd137c0a484ef483fe8fc9063b5da6eda702",
+    "bytes": 10694
+  },
+  {
+    "path": "historical/rpi029-catalog-publication-hook-qualified.log",
+    "sha256": "d5fec24a4e1bbda8804ca1fa29ed6b1bddf988cda953db36b5d9a51b7d694dfb",
+    "bytes": 1077
+  },
+  {
+    "path": "historical/rpi029-catalog-publication-hook-qualified.xml",
+    "sha256": "0b425c73ed73273b6ecf2af21dc9b81b0057460d83c4cb3ad028b7975dafb6fa",
+    "bytes": 4466
+  },
+  {
+    "path": "historical/rpi029-catalog-publication-hook.log",
+    "sha256": "d7e08a58980fcaa157a7fec5d1a93b6303203ce991471626b8ded5fd4255202d",
+    "bytes": 21496
+  },
+  {
+    "path": "historical/rpi029-catalog-publication-hook.xml",
+    "sha256": "a4167fd0a685ad5edb0dd146ac7d09b6474f167f9514a6c1034de8a9a9c9dc73",
+    "bytes": 21219
+  },
+  {
+    "path": "historical/rpi029-dirty-controls-final.log",
+    "sha256": "2241e7b18987bf270411dc8d8ebc096a977f745ba8b8eefdbcbe2ce3acbbc885",
+    "bytes": 1115
+  },
+  {
+    "path": "historical/rpi029-dirty-controls-root-final.log",
+    "sha256": "3728de6ae83985fd52fb7a1f007ca2dcbd4d8b278d24214338a8965ca88ff538",
+    "bytes": 1115
+  },
+  {
+    "path": "historical/rpi029-dirty-controls-root-final.xml",
+    "sha256": "044bd6e263366a54c61f484ebe457d3825b98c5d428b2e7920d9ae4f412398f2",
+    "bytes": 4017
+  },
+  {
+    "path": "historical/rpi029-dirty-first.log",
+    "sha256": "6dddca57523d62e3d65681a1f7f99ad9e48c92258c50140d0f3ea6ea249de0f7",
+    "bytes": 3507
+  },
+  {
+    "path": "historical/rpi029-dirty-hook-controls.log",
+    "sha256": "b461211026266b3d7132696dfc19ef323d434461572cb5319d71b162cda4d355",
+    "bytes": 1115
+  },
+  {
+    "path": "historical/rpi029-dirty-hook-controls.xml",
+    "sha256": "7c822886cd64769806b939bb03c295819187533d8ef3b0b4ab315f225f166657",
+    "bytes": 4015
+  },
+  {
+    "path": "historical/rpi029-dirty-native-directory-setup.log",
+    "sha256": "7194849a3753fcb433962517f71272588d30de8fd9869c726cfd387d113ea1bf",
+    "bytes": 1817
+  },
+  {
+    "path": "historical/rpi029-dirty-native-final.log",
+    "sha256": "6fd60fd10f39868d62d5602fd4422aa44ccef35e0e77116d0b423a7b1fa26730",
+    "bytes": 1035
+  },
+  {
+    "path": "historical/rpi029-dirty-native-final.xml",
+    "sha256": "d92e13e4870932f502e4ebd2a641ac0968e6f71bbdb557934950d45dfeddfe49",
+    "bytes": 446
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-final.log",
+    "sha256": "ca7472a260ac044806b0047b9f10fc2dbfc205e922a2c106afc8b244550c999c",
+    "bytes": 1283
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-final.xml",
+    "sha256": "fbb45566012b0c4f91e2a5dd92c9ab353ffea91f612824a2624a7b26f484961b",
+    "bytes": 273
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-initial-producer.py.txt",
+    "sha256": "35e64afce8ed5822981f9b270e10a8c8e274d1edc605de758aa68f95e174c470",
+    "bytes": 20787
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-interrupted-state.json",
+    "sha256": "973893e1aeb0d31343ab04112e0a834d1ef54408a0bf9b9084d6cffc3dd5d3aa",
+    "bytes": 2316
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-lease-expiry-scope.json",
+    "sha256": "3bdd915c6173be9a4ed9a85020f83fc1da8df8af508537edfb8103c9a01df8d0",
+    "bytes": 1022
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-optimized-interrupted-state.json",
+    "sha256": "a689f9cb6026e513d5edfd37f7ac41f8935e20e3953d4229da6264662e6356bf",
+    "bytes": 2371
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-optimized-producer.py.txt",
+    "sha256": "afb420575c63404b2e5891c9469decdf4362295594b2a37a3c7dc7e72dc65538",
+    "bytes": 21137
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-optimized.log",
+    "sha256": "811e8e1345fda0a62f1466849bb505ae85ab4acd371624c9970be54da07216f5",
+    "bytes": 1285
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-optimized.xml",
+    "sha256": "3798195e16f7bb12e73bfb2f0a1ec68852ce3de0aa39c92b34754f93b3a75d33",
+    "bytes": 273
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-renewing.log",
+    "sha256": "1abadb4305f069275e3ae940705e9cbf22a72c9190dd66a28496eb6c872fef09",
+    "bytes": 2973
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-renewing.xml",
+    "sha256": "07c97d7db566a7655272fc058a78bcdf9ab18b475755a3c3f982ab15592602bc",
+    "bytes": 2153
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-root-optimized.log",
+    "sha256": "f24e47f2fffe52e90d8a49567837d860b48d9b1c53a475ed115526860f091af3",
+    "bytes": 2961
+  },
+  {
+    "path": "historical/rpi029-dirty-scale-root-optimized.xml",
+    "sha256": "533b18afa08f762194d533029f435326cbb768e57108265b529876014e92d6ac",
+    "bytes": 2135
+  },
+  {
+    "path": "historical/rpi029-dirty-second.log",
+    "sha256": "878746adde4c9d4fddb2172fad413c0439a2668d27f25868b7e527c96f874c29",
+    "bytes": 1086
+  },
+  {
+    "path": "historical/rpi029-dirty-small-final.log",
+    "sha256": "4e9cb1339767391768b36eaeec8505b0d57c64b6c3e0bdd41b3e2c755daee6b3",
+    "bytes": 1115
+  },
+  {
+    "path": "historical/scale-deadline-failure.json",
+    "sha256": "cf2e3b49fa97abfb528f75ccbf79379eb4082bcd687a34977c5d9de6957b9b92",
+    "bytes": 3704
+  },
+  {
+    "path": "historical/scope.json",
+    "sha256": "9308a1e9355a9beb5a0fa69a816923f91ac31501cebc066d440c0efa4262f858",
+    "bytes": 1054
+  },
+  {
+    "path": "qualification.json",
+    "sha256": "012ef9a692f7b5241c8ec0355ba5abd8a371d5d250bf01df54500e83dd013ccf",
+    "bytes": 6581
+  },
+  {
+    "path": "replay_actual_scale.py.txt",
+    "sha256": "8e21527ccfc87fc8d28e7a211ca8f59df9670a9c7db8249fe7fc9f51cdf96158",
+    "bytes": 3295
+  },
+  {
+    "path": "rpi029-dirty-catalog-final-controls.log",
+    "sha256": "90755b2d351aa9d06423d0e60a644cc4a5d8efa047fe7c3a2ad02239eed3a67d",
+    "bytes": 1275
+  },
+  {
+    "path": "rpi029-dirty-catalog-final-controls.xml",
+    "sha256": "4f7e03dde1fa835abfd7b8bafca466f17894d6abcc457f0ce2bed155cf21e673",
+    "bytes": 8387
+  },
+  {
+    "path": "rpi029-dirty-final-actual-replay.log",
+    "sha256": "ac3a0e1e93dcba290bd0b650e2075ec313954545045947e7fcaf8ff894ce95db",
+    "bytes": 4929
+  },
+  {
+    "path": "rpi029-dirty-final-actual-scale.log",
+    "sha256": "9e987eb26ec248be64b7fe5aff141eeadb017384c43c3976affa43d91ac34e14",
+    "bytes": 5311
+  },
+  {
+    "path": "rpi029-dirty-final-actual-scale.xml",
+    "sha256": "6758aa84b4f1f7c447375279bf16909c9d0bb00cd62832b2962823891e69af5e",
+    "bytes": 436
+  },
+  {
+    "path": "run_actual_scale.py.txt",
+    "sha256": "f7c6a0cfe201be7c8ab1effeb4c1ae9b9a4a379e87676779f4dde23a8d4184e8",
+    "bytes": 1870
+  },
+  {
+    "path": "scale-result.json",
+    "sha256": "571ee2d030ce40280047d987d72e9c4cd416a4bafe4d08da6f0589c33d79bb44",
+    "bytes": 4519
+  },
+  {
+    "path": "source-inventory.json",
+    "sha256": "0c79fbee392e7cab0035f6a5cbe6af41bb7d444eb09f0ddcf19686e62ae17671",
+    "bytes": 1134
+  }
+]

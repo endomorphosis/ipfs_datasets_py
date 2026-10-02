@@ -223,24 +223,6 @@ def test_publication_checkpoint_must_be_callable_before_mutation(fixture):
     assert catalog.store.get_by_ast_cid(item[1][0].ast_cid) is None
 
 
-def test_falsey_callable_publication_checkpoint_is_not_discarded(fixture):
-    catalog, connection, candidate, _, _ = fixture
-    item = candidate()
-
-    class FalseyFence:
-        def __bool__(self):
-            return False
-
-        def __call__(self):
-            raise InterruptedError("falsey publication fence still executes")
-
-    with pytest.raises(InterruptedError, match="falsey publication fence still executes"):
-        catalog.publish(operation_id="falsey-hook", manifest=item[0], expected_head=None,
-            projections=item[1], publication_checkpoint=FalseyFence())
-    assert connection.execute("SELECT count(*) FROM codebase_control.heads").fetchone()[0] == 0
-    assert catalog.store.get_by_ast_cid(item[1][0].ast_cid) is None
-
-
 def test_simultaneous_candidates_cannot_both_win_same_expected_head(fixture):
     catalog, _, candidate, _, _ = fixture
     one, two, three = candidate(1), candidate(2), candidate(3)

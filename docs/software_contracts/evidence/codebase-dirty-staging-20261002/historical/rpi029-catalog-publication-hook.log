@@ -1,0 +1,270 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 28 items
+
+tests/unit/duckdb_control/test_codebase_catalog.py FFFFFFFF
+
+=================================== FAILURES ===================================
+______________ test_exact_head_receipt_replay_and_aba_generation _______________
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:175: in _git
+    try: return subprocess.run(["git", *args], cwd=str(root), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=GIT_COMMAND_TIMEOUT_SECONDS)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:2116: in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+/usr/lib/python3.12/subprocess.py:1253: in _check_timeout
+    raise TimeoutExpired(
+E   subprocess.TimeoutExpired: Command '['git', 'status', '--porcelain', '-z', '--untracked-files=all']' timed out after 10.0 seconds
+
+The above exception was the direct cause of the following exception:
+tests/unit/duckdb_control/test_codebase_catalog.py:62: in test_exact_head_receipt_replay_and_aba_generation
+    one = candidate(1)
+          ^^^^^^^^^^^^
+tests/unit/duckdb_control/test_codebase_catalog.py:46: in candidate
+    manifest = preparer.prepare(repo, repository_id=repository_id, scheduler=scheduler)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:244: in prepare
+    return self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:180: in _require_git
+    result = _git(root, args)
+             ^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:176: in _git
+    except subprocess.TimeoutExpired as exc: raise GitCommandTimeout("git command timed out") from exc
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitCommandTimeout: git command timed out
+_________ test_native_restart_current_and_prior_revision_invalidation __________
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:175: in _git
+    try: return subprocess.run(["git", *args], cwd=str(root), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=GIT_COMMAND_TIMEOUT_SECONDS)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:2116: in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+/usr/lib/python3.12/subprocess.py:1253: in _check_timeout
+    raise TimeoutExpired(
+E   subprocess.TimeoutExpired: Command '['git', 'status', '--porcelain', '-z', '--untracked-files=all']' timed out after 10.0 seconds
+
+The above exception was the direct cause of the following exception:
+tests/unit/duckdb_control/test_codebase_catalog.py:87: in test_native_restart_current_and_prior_revision_invalidation
+    first_candidate, second_candidate = candidate(1), candidate(2)
+                                        ^^^^^^^^^^^^
+tests/unit/duckdb_control/test_codebase_catalog.py:46: in candidate
+    manifest = preparer.prepare(repo, repository_id=repository_id, scheduler=scheduler)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:244: in prepare
+    return self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:180: in _require_git
+    result = _git(root, args)
+             ^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:176: in _git
+    except subprocess.TimeoutExpired as exc: raise GitCommandTimeout("git command timed out") from exc
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitCommandTimeout: git command timed out
+__________ test_fresh_process_reads_exact_head_and_historical_receipt __________
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:175: in _git
+    try: return subprocess.run(["git", *args], cwd=str(root), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=GIT_COMMAND_TIMEOUT_SECONDS)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:2116: in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+/usr/lib/python3.12/subprocess.py:1253: in _check_timeout
+    raise TimeoutExpired(
+E   subprocess.TimeoutExpired: Command '['git', 'status', '--porcelain', '-z', '--untracked-files=all']' timed out after 10.0 seconds
+
+The above exception was the direct cause of the following exception:
+tests/unit/duckdb_control/test_codebase_catalog.py:106: in test_fresh_process_reads_exact_head_and_historical_receipt
+    one = candidate()
+          ^^^^^^^^^^^
+tests/unit/duckdb_control/test_codebase_catalog.py:46: in candidate
+    manifest = preparer.prepare(repo, repository_id=repository_id, scheduler=scheduler)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:244: in prepare
+    return self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:180: in _require_git
+    result = _git(root, args)
+             ^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:176: in _git
+    except subprocess.TimeoutExpired as exc: raise GitCommandTimeout("git command timed out") from exc
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitCommandTimeout: git command timed out
+______________ test_sql_failure_rolls_back_head_ast_and_operation ______________
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:175: in _git
+    try: return subprocess.run(["git", *args], cwd=str(root), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=GIT_COMMAND_TIMEOUT_SECONDS)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:2116: in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+/usr/lib/python3.12/subprocess.py:1253: in _check_timeout
+    raise TimeoutExpired(
+E   subprocess.TimeoutExpired: Command '['git', 'status', '--porcelain', '-z', '--untracked-files=all']' timed out after 10.0 seconds
+
+The above exception was the direct cause of the following exception:
+tests/unit/duckdb_control/test_codebase_catalog.py:127: in test_sql_failure_rolls_back_head_ast_and_operation
+    one, two = candidate(1), candidate(2)
+               ^^^^^^^^^^^^
+tests/unit/duckdb_control/test_codebase_catalog.py:46: in candidate
+    manifest = preparer.prepare(repo, repository_id=repository_id, scheduler=scheduler)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:244: in prepare
+    return self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:180: in _require_git
+    result = _git(root, args)
+             ^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:176: in _git
+    except subprocess.TimeoutExpired as exc: raise GitCommandTimeout("git command timed out") from exc
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitCommandTimeout: git command timed out
+______ test_cancellation_after_head_write_rolls_back_entire_commit[False] ______
+tests/unit/duckdb_control/test_codebase_catalog.py:148: in test_cancellation_after_head_write_rolls_back_entire_commit
+    one, two = candidate(1), candidate(2)
+               ^^^^^^^^^^^^
+tests/unit/duckdb_control/test_codebase_catalog.py:46: in candidate
+    manifest = preparer.prepare(repo, repository_id=repository_id, scheduler=scheduler)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:244: in prepare
+    return self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:181: in _require_git
+    if result.returncode or result.stderr: raise GitSnapshotError(f"git {what} failed or warned")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitSnapshotError: git status failed or warned
+______ test_cancellation_after_head_write_rolls_back_entire_commit[True] _______
+tests/unit/duckdb_control/test_codebase_catalog.py:148: in test_cancellation_after_head_write_rolls_back_entire_commit
+    one, two = candidate(1), candidate(2)
+               ^^^^^^^^^^^^
+tests/unit/duckdb_control/test_codebase_catalog.py:46: in candidate
+    manifest = preparer.prepare(repo, repository_id=repository_id, scheduler=scheduler)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:244: in prepare
+    return self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:181: in _require_git
+    if result.returncode or result.stderr: raise GitSnapshotError(f"git {what} failed or warned")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitSnapshotError: git status failed or warned
+_ test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay _
+tests/unit/duckdb_control/test_codebase_catalog.py:170: in test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay
+    item = candidate()
+           ^^^^^^^^^^^
+tests/unit/duckdb_control/test_codebase_catalog.py:46: in candidate
+    manifest = preparer.prepare(repo, repository_id=repository_id, scheduler=scheduler)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:244: in prepare
+    return self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:181: in _require_git
+    if result.returncode or result.stderr: raise GitSnapshotError(f"git {what} failed or warned")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitSnapshotError: git status failed or warned
+__ test_publication_checkpoint_failure_rolls_back_all_native_rows[before_ast] __
+tests/unit/duckdb_control/test_codebase_catalog.py:195: in test_publication_checkpoint_failure_rolls_back_all_native_rows
+    one, two = candidate(1), candidate(2)
+               ^^^^^^^^^^^^
+tests/unit/duckdb_control/test_codebase_catalog.py:46: in candidate
+    manifest = preparer.prepare(repo, repository_id=repository_id, scheduler=scheduler)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:244: in prepare
+    return self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:181: in _require_git
+    if result.returncode or result.stderr: raise GitSnapshotError(f"git {what} failed or warned")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitSnapshotError: git status failed or warned
+--------- generated xml file: /tmp/rpi029-catalog-publication-hook.xml ---------
+=========================== short test summary info ============================
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_exact_head_receipt_replay_and_aba_generation
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_native_restart_current_and_prior_revision_invalidation
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_fresh_process_reads_exact_head_and_historical_receipt
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_sql_failure_rolls_back_head_ast_and_operation
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_cancellation_after_head_write_rolls_back_entire_commit[False]
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_cancellation_after_head_write_rolls_back_entire_commit[True]
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay
+FAILED tests/unit/duckdb_control/test_codebase_catalog.py::test_publication_checkpoint_failure_rolls_back_all_native_rows[before_ast]
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/usr/lib/python3.12/selectors.py:415: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+========================= 8 failed in 79.73s (0:01:19) =========================

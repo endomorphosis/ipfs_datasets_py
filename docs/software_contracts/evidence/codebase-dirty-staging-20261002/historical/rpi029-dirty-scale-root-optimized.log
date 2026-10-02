@@ -1,0 +1,39 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 21 items / 20 deselected / 1 selected
+
+tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py F
+
+=================================== FAILURES ===================================
+_______ test_320_dirty_entries_resume_before_complete_native_publication _______
+tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py:294: in test_320_dirty_entries_resume_before_complete_native_publication
+    publication=stager.finalize(root,generation_cid=generation,operation_id='scale',expected_head=None,
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:317: in finalize
+    receipt = self.owner.publish(operation_id=operation_id, expected_head=expected_head,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:461: in publish
+    self._validate_candidate(manifest, projections, check)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:394: in _validate_candidate
+    checkpoint()
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:319: in <lambda>
+    checkpoint=lambda: self._fence(request, snapshot, check))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py:278: in measured
+    try:return _actual(*args,**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:126: in _fence
+    rules(); check()
+    ^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:118: in rules
+    check()
+ipfs_datasets_py/logic/software_contracts/codebase_paged_staging.py:362: in check
+    raise LeaseCancelledError("codebase staging cancelled")
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.LeaseCancelledError: codebase staging cancelled
+-------- generated xml file: /tmp/rpi029-dirty-scale-root-optimized.xml --------
+=========================== short test summary info ============================
+FAILED tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py::test_320_dirty_entries_resume_before_complete_native_publication
+================= 1 failed, 20 deselected in 258.33s (0:04:18) =================

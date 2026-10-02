@@ -1,0 +1,12 @@
+[
+  {
+    "path": "ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+    "sha256": "3ffd1bac575de712da84c9b98d2d8233b670b6f6d8d0abec2f2f40d05c25692f",
+    "archive": "codebase_catalog.py.txt"
+  },
+  {
+    "path": "tests/unit/duckdb_control/test_codebase_catalog.py",
+    "sha256": "7e42ee8607c506bd18922403bdc6e3cb3bc9591945068ee43c64ad694a0972f2",
+    "archive": "test_codebase_catalog.py.txt"
+  }
+]

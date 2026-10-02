@@ -462,7 +462,7 @@ class CodebaseCatalog:
         if publication_checkpoint is not None and not callable(publication_checkpoint):
             raise CodebaseCatalogError("publication_checkpoint must be callable")
         check = checkpoint or (lambda: None)
-        publication_check = (lambda: None) if publication_checkpoint is None else publication_checkpoint
+        publication_check = publication_checkpoint or (lambda: None)
         request_cid = self.request_identity(manifest, expected_head)
         replay = self.resolve_operation(operation_id, request_cid)
         if replay is not None:

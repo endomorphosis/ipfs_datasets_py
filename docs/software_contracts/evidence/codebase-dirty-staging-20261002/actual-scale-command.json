@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py",
+    "-q",
+    "-s",
+    "-k",
+    "320",
+    "--basetemp=/home/barberb/lift_coding/artifacts/codebase-dirty-staging-20261002/final-actual-scale",
+    "--junitxml=/tmp/rpi029-dirty-final-actual-scale.xml"
+  ],
+  "cwd": "/tmp/ir-release-datasets-20261001",
+  "environment": {
+    "RPI029_ACTUAL_HOST": "1",
+    "IPFS_DATASETS_PY_MINIMAL_IMPORTS": "1",
+    "PYTHONPATH": "/tmp/ir-release-datasets-20261001:/tmp/ir-release-accelerate-20261001",
+    "GIT_CEILING_DIRECTORIES": "/home/barberb/lift_coding/artifacts/codebase-dirty-staging-20261002"
+  },
+  "sampler": "actual default; not overridden",
+  "telemetry_scope": "shared owner observations can include concurrent jobs"
+}

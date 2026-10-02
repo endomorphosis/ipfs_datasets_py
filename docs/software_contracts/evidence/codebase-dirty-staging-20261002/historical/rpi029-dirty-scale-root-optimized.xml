@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="258.325" timestamp="2026-10-02T15:22:56.849376+00:00" hostname="spark-b271"><testcase classname="tests.integration.logic.software_contracts.test_codebase_dirty_paged_staging" name="test_320_dirty_entries_resume_before_complete_native_publication" time="258.146"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.LeaseCancelledError: codebase staging cancelled">tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py:294: in test_320_dirty_entries_resume_before_complete_native_publication
+    publication=stager.finalize(root,generation_cid=generation,operation_id='scale',expected_head=None,
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:317: in finalize
+    receipt = self.owner.publish(operation_id=operation_id, expected_head=expected_head,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:461: in publish
+    self._validate_candidate(manifest, projections, check)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:394: in _validate_candidate
+    checkpoint()
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:319: in &lt;lambda&gt;
+    checkpoint=lambda: self._fence(request, snapshot, check))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/logic/software_contracts/test_codebase_dirty_paged_staging.py:278: in measured
+    try:return _actual(*args,**kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:126: in _fence
+    rules(); check()
+    ^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_dirty_paged_staging.py:118: in rules
+    check()
+ipfs_datasets_py/logic/software_contracts/codebase_paged_staging.py:362: in check
+    raise LeaseCancelledError("codebase staging cancelled")
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.LeaseCancelledError: codebase staging cancelled</failure></testcase></testsuite></testsuites>

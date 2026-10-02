@@ -1,0 +1,74 @@
+{
+  "reason": "Graceful SIGINT before removing redundant immutable AST decoding; no producer files edited while active.",
+  "pytest_exit_code": 2,
+  "state": [
+    [
+      "baguqeerabhhvyquydwhw3sxbvlim7rheurr4xafbdrspwom3mrfhw4wqhhgq",
+      128,
+      "baguqeeramqxlxob7pr6isl7nqhpm6tzqtozu7fsfeg4rxlofgm6n4hv5kx6a"
+    ]
+  ],
+  "published_heads": 0,
+  "source_sha256": "35e64afce8ed5822981f9b270e10a8c8e274d1edc605de758aa68f95e174c470",
+  "resource_state": {
+    "config": {
+      "lane_reservations": {},
+      "max_gpu_memory_percent": null,
+      "max_memory_percent": null,
+      "max_swap_percent": null,
+      "max_waiting_requests": 256,
+      "proof_backoff_seconds": 2.0,
+      "proof_cpu_stall_percent": 50.0,
+      "proof_io_stall_percent": 10.0,
+      "proof_memory_headroom_mb": 1639,
+      "proof_memory_stall_percent": 2.0,
+      "proof_safety_enabled": true,
+      "require_known_gpu_for_gpu_work": true,
+      "reserved_gpu_memory_mb": 0,
+      "reserved_memory_mb": 0,
+      "total_child_process_slots": 6,
+      "total_cpu_slots": 6,
+      "total_gpu_memory_mb": null,
+      "total_memory_mb": 6553,
+      "total_unified_memory_mb": null
+    },
+    "leases": {},
+    "metrics": {
+      "acquisitions_total": 10,
+      "cancellations_total": 0,
+      "lanes": {
+        "snapshot_evaluation": {
+          "acquisitions_total": 10,
+          "cancellations_total": 0,
+          "timeouts_total": 0,
+          "wait_count": 10,
+          "wait_seconds_max": 6.079208105802536e-07,
+          "wait_seconds_total": 5.007954314351082e-06
+        }
+      },
+      "recovered_leases_total": 0,
+      "recoveries_total": 0,
+      "releases_total": 10,
+      "saturation_events_total": 0,
+      "timeouts_total": 0,
+      "wait_samples": [
+        5.280598998069763e-07,
+        4.1606836020946503e-07,
+        4.1606836020946503e-07,
+        3.841705620288849e-07,
+        5.918554961681366e-07,
+        5.119945853948593e-07,
+        4.4796615839004517e-07,
+        4.959292709827423e-07,
+        6.079208105802536e-07,
+        6.079208105802536e-07
+      ],
+      "wait_seconds_max": 6.079208105802536e-07,
+      "wait_seconds_total": 5.007954314351082e-06
+    },
+    "next_sequence": 11,
+    "proof_backoff": {},
+    "schema_version": "legal-ir-global-resource-scheduler-v1",
+    "waiters": {}
+  }
+}

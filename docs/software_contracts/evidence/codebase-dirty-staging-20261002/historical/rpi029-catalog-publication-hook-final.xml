@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="28" time="8.285" timestamp="2026-10-02T15:51:44.792840+00:00" hostname="spark-b271"><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_exact_head_receipt_replay_and_aba_generation" time="0.707" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_native_restart_current_and_prior_revision_invalidation" time="0.422" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_fresh_process_reads_exact_head_and_historical_receipt" time="0.573" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_sql_failure_rolls_back_head_ast_and_operation" time="0.379" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_cancellation_after_head_write_rolls_back_entire_commit[False]" time="0.373" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_cancellation_after_head_write_rolls_back_entire_commit[True]" time="0.358" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay" time="0.242"><failure message="_duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction">tests/unit/duckdb_control/test_codebase_catalog.py:180: in test_publication_checkpoint_observes_transaction_boundaries_and_skips_replay
+    receipt = catalog.publish(operation_id="fenced", manifest=item[0], expected_head=None,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:519: in publish
+    self.store.apply_batch(projections, supersession,
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2037: in apply_batch
+    before_apply(self._connection)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:499: in before_apply
+    publication_check()
+tests/unit/duckdb_control/test_codebase_catalog.py:176: in observe
+    observed.append((catalog.store.get_by_ast_cid(item[1][0].ast_cid) is not None,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2121: in get_by_ast_cid
+    return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2104: in _lookup
+    with self._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction</failure></testcase><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_publication_checkpoint_failure_rolls_back_all_native_rows[before_ast]" time="0.317"><failure message="_duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction">tests/unit/duckdb_control/test_codebase_catalog.py:207: in test_publication_checkpoint_failure_rolls_back_all_native_rows
+    catalog.publish(operation_id="refused", manifest=two[0], expected_head=first.head,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:519: in publish
+    self.store.apply_batch(projections, supersession,
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2037: in apply_batch
+    before_apply(self._connection)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:499: in before_apply
+    publication_check()
+tests/unit/duckdb_control/test_codebase_catalog.py:199: in refuse
+    applied = catalog.store.get_by_ast_cid(two[1][0].ast_cid) is not None
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2121: in get_by_ast_cid
+    return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2104: in _lookup
+    with self._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction</failure></testcase><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_publication_checkpoint_failure_rolls_back_all_native_rows[before_head]" time="0.346"><failure message="_duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction">tests/unit/duckdb_control/test_codebase_catalog.py:207: in test_publication_checkpoint_failure_rolls_back_all_native_rows
+    catalog.publish(operation_id="refused", manifest=two[0], expected_head=first.head,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:519: in publish
+    self.store.apply_batch(projections, supersession,
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2037: in apply_batch
+    before_apply(self._connection)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:499: in before_apply
+    publication_check()
+tests/unit/duckdb_control/test_codebase_catalog.py:199: in refuse
+    applied = catalog.store.get_by_ast_cid(two[1][0].ast_cid) is not None
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2121: in get_by_ast_cid
+    return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2104: in _lookup
+    with self._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction</failure></testcase><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_publication_checkpoint_failure_rolls_back_all_native_rows[after_head]" time="0.328"><failure message="_duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction">tests/unit/duckdb_control/test_codebase_catalog.py:207: in test_publication_checkpoint_failure_rolls_back_all_native_rows
+    catalog.publish(operation_id="refused", manifest=two[0], expected_head=first.head,
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:519: in publish
+    self.store.apply_batch(projections, supersession,
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2037: in apply_batch
+    before_apply(self._connection)
+ipfs_datasets_py/duckdb_control/codebase_catalog.py:499: in before_apply
+    publication_check()
+tests/unit/duckdb_control/test_codebase_catalog.py:199: in refuse
+    applied = catalog.store.get_by_ast_cid(two[1][0].ast_cid) is not None
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2121: in get_by_ast_cid
+    return self._lookup("ast_cid", _text(ast_cid, "ast_cid"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:2104: in _lookup
+    with self._transaction():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1718: in _transaction
+    connection.execute("BEGIN TRANSACTION")
+E   _duckdb.TransactionException: TransactionContext Error: cannot start a transaction within a transaction</failure></testcase><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_publication_checkpoint_must_be_callable_before_mutation" time="0.156" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_simultaneous_candidates_cannot_both_win_same_expected_head" time="0.443" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_missing_required_artifacts_reject_before_any_mutation[manifest]" time="0.167" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_missing_required_artifacts_reject_before_any_mutation[source]" time="0.178" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_missing_required_artifacts_reject_before_any_mutation[ast]" time="0.171" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_projection_set_must_match_complete_manifest" time="0.186" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_historical_resolution_does_not_need_still_available_artifacts" time="0.221" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_operation_bound_preserves_history_and_rejects_new_writes" time="0.328" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_tampering_fails_closed[head]" time="0.251" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_tampering_fails_closed[receipt]" time="0.235" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_tampering_fails_closed[schema]" time="0.227" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_native_durable_owner_and_process_identity_required" time="0.114" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_oversized_receipt_rejected_before_hydration" time="0.224" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_two_native_connections_rollback_the_losing_transaction" time="0.444" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_foreign_partial_catalog_schema_is_rejected" time="0.083" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_artifact_root_binding_cannot_change_after_restart" time="0.107" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_head_bound_prevents_oversized_row_hydration" time="0.216" /><testcase classname="tests.unit.duckdb_control.test_codebase_catalog" name="test_forged_schema_metadata_cannot_hide_removed_constraints" time="0.109" /></testsuite></testsuites>
