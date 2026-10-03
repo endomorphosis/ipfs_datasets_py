@@ -845,7 +845,7 @@ class GlobalResourceScheduler:
         self._thread_lock = _path_lock(self.state_path)
         # Validate or initialise eagerly so configuration mistakes fail before
         # a worker enters a long wait.
-        with self._locked_state():
+        with self._locked_state(allow_reconfigure=True):
             pass
 
     def _new_state(self) -> Dict[str, Any]:
@@ -882,7 +882,9 @@ class GlobalResourceScheduler:
         }
 
     @contextmanager
-    def _locked_state(self, *, persist: bool = True) -> Iterator[Dict[str, Any]]:
+    def _locked_state(
+        self, *, persist: bool = True, allow_reconfigure: bool = False,
+    ) -> Iterator[Dict[str, Any]]:
         with self._thread_lock:
             # Lock a stable sibling inode and atomically replace the JSON state
             # after fsync.  Locking the JSON inode itself would be unsafe:
@@ -906,7 +908,7 @@ class GlobalResourceScheduler:
                             ) from exc
                     else:
                         state = self._new_state()
-                    self._validate_state_configuration(state)
+                    self._validate_state_configuration(state, allow_reconfigure=allow_reconfigure)
                     yield state
                     if not persist:
                         return
@@ -943,7 +945,9 @@ class GlobalResourceScheduler:
                             pass
                     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
-    def _validate_state_configuration(self, state: Dict[str, Any]) -> None:
+    def _validate_state_configuration(
+        self, state: Dict[str, Any], *, allow_reconfigure: bool = False,
+    ) -> None:
         if state.get("schema_version") != RESOURCE_SCHEDULER_SCHEMA_VERSION:
             raise SchedulerStateError("unsupported resource scheduler state schema")
         expected = self.config.persisted_dict()
@@ -963,6 +967,14 @@ class GlobalResourceScheduler:
         if stored == expected:
             state["config"] = expected
             return
+        if not allow_reconfigure:
+            # Another client may deliberately change an idle pool's limits.
+            # A facade opened before that change has no authority to silently
+            # restore its cached configuration during an ordinary operation.
+            raise ResourceConfigurationError(
+                f"scheduler configuration changed at {self.state_path}; "
+                "open a new scheduler facade with the intended configuration"
+            )
         # A restart can change detected capacity while the file still holds
         # old owners. Recover only proven-dead owners before testing whether
         # configuration can change. Expired live owners and independently live
