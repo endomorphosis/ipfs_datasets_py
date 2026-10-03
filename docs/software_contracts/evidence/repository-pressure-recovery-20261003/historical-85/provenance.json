@@ -1,0 +1,6 @@
+{
+  "scope": "Historical85 controls at exact retained source bytes; superseded by final87 controls.",
+  "superseded_reason": "Review found tiny positive recovery intervals could round away when added to wall clock; final source enforces minimum1ms and adds two controls.",
+  "original_selected_source_snapshots": "final-sources",
+  "historical_qualification_is_not_final_acceptance": true
+}

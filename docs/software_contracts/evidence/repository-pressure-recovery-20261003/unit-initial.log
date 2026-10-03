@@ -1,0 +1,56 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 36 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py . [  2%]
+...........F...F...................                                      [100%]
+
+=================================== FAILURES ===================================
+____________ test_disabled_legacy_active_state_preserves_admission _____________
+tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py:85: in test_disabled_legacy_active_state_preserves_admission
+    second = mod.GlobalResourceScheduler(cfg)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:811: in __init__
+    with self._locked_state():
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:872: in _locked_state
+    self._validate_state_configuration(state)
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:927: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/pytest-of-barberb/pytest-145/test_disabled_legacy_active_st0/s.json
+
+During handling of the above exception, another exception occurred:
+tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py:79: in test_disabled_legacy_active_state_preserves_admission
+    with first.acquire("hammer", memory_mb=64, timeout=0):
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:768: in __exit__
+    self.release()
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:760: in release
+    released = self._scheduler.release(self.lease_id, self.lease_key)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1670: in release
+    with self._locked_state() as state:
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:872: in _locked_state
+    self._validate_state_configuration(state)
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:927: in _validate_state_configuration
+    raise ResourceConfigurationError(
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError: scheduler capacity differs from active shared state at /tmp/pytest-of-barberb/pytest-145/test_disabled_legacy_active_st0/s.json
+__________ test_child_and_root_share_pacing_without_double_accounting __________
+tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py:135: in test_child_and_root_share_pacing_without_double_accounting
+    assert snap["allocated_cpu_slots"] == 3
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'allocated_cpu_slots'
+- generated xml file: /home/barberb/lift_coding/artifacts/repository-pressure-recovery-20261003/unit-initial.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py::test_disabled_legacy_active_state_preserves_admission
+FAILED tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py::test_child_and_root_share_pacing_without_double_accounting
+========================= 2 failed, 34 passed in 3.00s =========================

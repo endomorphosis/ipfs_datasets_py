@@ -1,0 +1,78 @@
+{
+  "schema": "shared-proof-recovery-selected-source-pins@1",
+  "captured_at": "2026-10-03T04:44:07.667325+00:00",
+  "sources": [
+    {
+      "repository": "datasets",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "9f4cf68dcaf21dbae8fd3b4d2bec8ee37480c6fe9c0bf35ed50f30d6cc2b7174",
+      "size_bytes": 90193,
+      "snapshot": "final-sources/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py"
+    },
+    {
+      "repository": "datasets",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5",
+      "size_bytes": 4534,
+      "snapshot": "final-sources/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py"
+    },
+    {
+      "repository": "datasets",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63",
+      "size_bytes": 53075,
+      "snapshot": "final-sources/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py"
+    },
+    {
+      "repository": "datasets",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py",
+      "sha256": "b3210e2bdcc31204ef8c2844b1efff4da414cf94c5ec298ed5aa0ad1022cc1ef",
+      "size_bytes": 14577,
+      "snapshot": "final-sources/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py"
+    },
+    {
+      "repository": "datasets",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/integration/optimizers/test_shared_proof_recovery.py",
+      "relative_path": "tests/integration/optimizers/test_shared_proof_recovery.py",
+      "sha256": "e56cb14e6841d59c07fe841eeaedd20e74203543adaae36af48a7c53871fcf1e",
+      "size_bytes": 9217,
+      "snapshot": "final-sources/datasets/tests/integration/optimizers/test_shared_proof_recovery.py"
+    },
+    {
+      "repository": "datasets",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_safety.py",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_safety.py",
+      "sha256": "1ce5b627c6bdcf9d8848ef150da2daa8a55d40e869606b302fdf9aca3acb40ad",
+      "size_bytes": 11686,
+      "snapshot": "final-sources/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_safety.py"
+    },
+    {
+      "repository": "datasets",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/unit/optimizers/logic_theorem_optimizer/test_global_resource_scheduler.py",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_global_resource_scheduler.py",
+      "sha256": "f792a512bd757f5a1ce32cdcb7bdd541a2b27d115cf10cff610c0f9b9f224eca",
+      "size_bytes": 12868,
+      "snapshot": "final-sources/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_global_resource_scheduler.py"
+    },
+    {
+      "repository": "datasets",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/docs/autoencoders/SHARED_PROOF_PRESSURE_RECOVERY.md",
+      "relative_path": "docs/autoencoders/SHARED_PROOF_PRESSURE_RECOVERY.md",
+      "sha256": "97b497e414c6867fb18f8dab659f6e7102bd63d7e7ee03dfd0c054bf6ac01d05",
+      "size_bytes": 4637,
+      "snapshot": "final-sources/datasets/docs/autoencoders/SHARED_PROOF_PRESSURE_RECOVERY.md"
+    },
+    {
+      "repository": "accelerate",
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-accelerate-20261002/ipfs_accelerate_py/agent_supervisor/runtime/repository_resource_bridge.py",
+      "relative_path": "ipfs_accelerate_py/agent_supervisor/runtime/repository_resource_bridge.py",
+      "sha256": "37bd578cf49735a7310c23b1d1cd204d623c0e9c3f2d808dd978390475403f8b",
+      "size_bytes": 16608,
+      "snapshot": "final-sources/accelerate/ipfs_accelerate_py/agent_supervisor/runtime/repository_resource_bridge.py"
+    }
+  ]
+}

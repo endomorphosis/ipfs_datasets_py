@@ -1,0 +1,183 @@
+{
+  "pressure": "injected",
+  "clock": "injected",
+  "processes": "actual",
+  "result": {
+    "simultaneous": [
+      {
+        "pid": 1524408,
+        "admitted": false,
+        "lease_id": null,
+        "recovery": {
+          "grants_remaining": 3,
+          "healthy_samples": 2,
+          "next_grant_at": 1004.0,
+          "next_sample_at": 1004.0,
+          "phase": "paced"
+        }
+      },
+      {
+        "pid": 1524409,
+        "admitted": true,
+        "lease_id": "5fcea00ed7f54af6a3d593e7691e7128",
+        "recovery": {
+          "grants_remaining": 3,
+          "healthy_samples": 2,
+          "next_grant_at": 1004.0,
+          "next_sample_at": 1004.0,
+          "phase": "paced"
+        }
+      },
+      {
+        "pid": 1524410,
+        "admitted": false,
+        "lease_id": null,
+        "recovery": {
+          "grants_remaining": 3,
+          "healthy_samples": 2,
+          "next_grant_at": 1004.0,
+          "next_sample_at": 1004.0,
+          "phase": "paced"
+        }
+      }
+    ],
+    "cold": {
+      "pid": 1524495,
+      "admitted": false,
+      "lease_id": null,
+      "recovery": {
+        "grants_remaining": 3,
+        "healthy_samples": 2,
+        "next_grant_at": 1004.0,
+        "next_sample_at": 1004.0,
+        "phase": "paced"
+      }
+    },
+    "later": {
+      "pid": 1524573,
+      "admitted": true,
+      "lease_id": "982ce1f801e84badb9938c9ff5ea8433",
+      "recovery": {
+        "grants_remaining": 2,
+        "healthy_samples": 2,
+        "next_grant_at": 1005.0,
+        "next_sample_at": 1004.0,
+        "phase": "paced"
+      }
+    },
+    "snapshot": {
+      "schema_version": "legal-ir-global-resource-scheduler-v1",
+      "state_path": "/tmp/pytest-of-barberb/pytest-151/test_simultaneous_processes_sh0/shared.json",
+      "capacity": {
+        "cpu_slots": 8,
+        "memory_mb": 8192,
+        "usable_memory_mb": 8192,
+        "reserved_memory_mb": 0,
+        "gpu_memory_mb": null,
+        "usable_gpu_memory_mb": null,
+        "reserved_gpu_memory_mb": 0,
+        "unified_memory_mb": null,
+        "child_process_slots": 8
+      },
+      "allocated": {
+        "cpu_slots": 0,
+        "memory_mb": 0
+      },
+      "allocated_gpu_memory_mb": 0,
+      "allocated_unified_memory_mb": 0,
+      "allocated_child_process_slots": 0,
+      "available": {
+        "cpu_slots": 8,
+        "memory_mb": 8192,
+        "gpu_memory_mb": null,
+        "unified_memory_mb": null,
+        "child_process_slots": 8
+      },
+      "active_lease_count": 0,
+      "active_root_lease_count": 0,
+      "active_child_lease_count": 0,
+      "waiting_request_count": 0,
+      "proof_backoff": {},
+      "proof_recovery": {
+        "grants_remaining": 2,
+        "healthy_samples": 2,
+        "next_grant_at": 1005.0,
+        "next_sample_at": 1004.0,
+        "phase": "paced"
+      },
+      "saturation": {
+        "saturated": false,
+        "cpu_saturated": false,
+        "memory_saturated": false,
+        "gpu_memory_saturated": false,
+        "unified_memory_saturated": false,
+        "child_process_slots_saturated": false,
+        "events_total": 5
+      },
+      "wait_time_seconds": {
+        "count": 8,
+        "total": 4.5769993448629975e-06,
+        "mean": 5.721249181078747e-07,
+        "max": 9.129980753641576e-07,
+        "p50": 4.6399873099289834e-07,
+        "p95": 9.129980753641576e-07,
+        "p99": 9.129980753641576e-07
+      },
+      "counters": {
+        "acquisitions_total": 3,
+        "cancellations_total": 0,
+        "recovered_leases_total": 0,
+        "recoveries_total": 0,
+        "releases_total": 3,
+        "saturation_events_total": 5,
+        "timeouts_total": 5
+      },
+      "lanes": {
+        "hammer": {
+          "reservation": {
+            "cpu_slots": 0,
+            "memory_mb": 0
+          },
+          "allocated": {
+            "cpu_slots": 0,
+            "memory_mb": 0,
+            "gpu_memory_mb": 0,
+            "unified_memory_mb": 0,
+            "child_process_slots": 0
+          },
+          "telemetry": {
+            "acquisitions_total": 2,
+            "cancellations_total": 0,
+            "timeouts_total": 5,
+            "wait_count": 7,
+            "wait_seconds_max": 9.129980753641576e-07,
+            "wait_seconds_total": 4.3049985833931714e-06,
+            "wait_seconds_mean": 6.149997976275959e-07
+          }
+        },
+        "validation": {
+          "reservation": {
+            "cpu_slots": 1,
+            "memory_mb": 0
+          },
+          "allocated": {
+            "cpu_slots": 0,
+            "memory_mb": 0,
+            "gpu_memory_mb": 0,
+            "unified_memory_mb": 0,
+            "child_process_slots": 0
+          },
+          "telemetry": {
+            "acquisitions_total": 1,
+            "cancellations_total": 0,
+            "timeouts_total": 0,
+            "wait_count": 1,
+            "wait_seconds_max": 2.720007614698261e-07,
+            "wait_seconds_total": 2.720007614698261e-07,
+            "wait_seconds_mean": 2.720007614698261e-07
+          }
+        }
+      }
+    }
+  }
+}

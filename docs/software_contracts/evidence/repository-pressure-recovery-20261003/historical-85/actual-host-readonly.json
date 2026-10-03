@@ -1,0 +1,57 @@
+{
+  "schema": "shared-proof-recovery-readonly-host-probe@1",
+  "captured_at": "2026-10-03T04:40:19.187847+00:00",
+  "sampler": "actual_default",
+  "host_state_written": false,
+  "native_admission_attempted": false,
+  "actual_external_pressure_workload": false,
+  "resource_thresholds_changed": false,
+  "supervisor_disk_percent": 94.2,
+  "proof_host_resources": {
+    "cpu_slots": 20,
+    "total_memory_mb": 124610,
+    "available_memory_mb": 47689,
+    "memory_stall_percent": 0.0,
+    "cpu_stall_percent": 37.99,
+    "io_stall_percent": 0.06
+  },
+  "requested_recovery_policy": {
+    "max_waiting_requests": 256,
+    "proof_safety_enabled": true,
+    "proof_memory_headroom_mb": 24922,
+    "proof_memory_stall_percent": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_backoff_seconds": 2.0,
+    "proof_recovery_enabled": true,
+    "proof_recovery_samples": 2,
+    "proof_recovery_interval_seconds": 0.25,
+    "proof_recovery_grants": 4,
+    "total_cpu_slots": 16,
+    "total_memory_mb": 99688,
+    "total_gpu_memory_mb": null,
+    "total_unified_memory_mb": null,
+    "total_child_process_slots": 16,
+    "reserved_memory_mb": 0,
+    "reserved_gpu_memory_mb": 0,
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 2,
+        "memory_mb": 0
+      }
+    },
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_gpu_memory_percent": null,
+    "require_known_gpu_for_gpu_work": true
+  },
+  "canonical_state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+  "canonical_state_sha256": "067a39aaf8b08d1cf1bf2466ec011fdf1fb1d2deb3f028620a0ce0ffd555b1db",
+  "observed_recovery_enabled": false,
+  "observed_proof_safety_enabled": true,
+  "active_leases": 0,
+  "waiting_requests": 0,
+  "recovery_active": false,
+  "status": "unavailable_policy_mismatch",
+  "limitation": "Read-only actual telemetry and canonical policy observation only; no live opt-in admission or external-pressure workload qualification. Supervisor disk admission and all defaults remain unchanged."
+}

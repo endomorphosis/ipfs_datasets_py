@@ -462,8 +462,8 @@ class ResourceSchedulerConfig:
                 raise ResourceConfigurationError(f"{name} must be an integer in [1, 1024]")
         interval = self.proof_recovery_interval_seconds
         if (isinstance(interval, bool) or not isinstance(interval, (int, float))
-                or not math.isfinite(interval) or not 0.001 <= interval <= 3600):
-            raise ResourceConfigurationError("proof_recovery_interval_seconds must be in [0.001, 3600]")
+                or not math.isfinite(interval) or not 0 < interval <= 3600):
+            raise ResourceConfigurationError("proof_recovery_interval_seconds must be in (0, 3600]")
         if (isinstance(self.proof_backoff_seconds, bool)
                 or not math.isfinite(float(self.proof_backoff_seconds))
                 or self.proof_backoff_seconds < 0):

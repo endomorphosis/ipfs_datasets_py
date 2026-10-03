@@ -1,0 +1,98 @@
+{
+  "schema": "repository-pressure-recovery-qualification@1",
+  "qualified": true,
+  "scope": "Opt-in canonical shared scheduler pressure recovery protocol, with actual owners/processes and injected host pressure/time.",
+  "production_acceptance": "partial_local_qualification",
+  "default_recovery_enabled": false,
+  "supervisor_consumption": "Existing RepositoryResourceBridge.get_global_resource_scheduler -> strict IPFS_DATASETS_PROOF_RESOURCE_RECOVERY=1 default configuration; fresh-process environment consumer control passes.",
+  "configuration_selector": "exactly 0 or 1; unset means 0; requires proof safety",
+  "final_tests": {
+    "name": "final-controls",
+    "tests": 85,
+    "passed": 85,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 8.011
+  },
+  "final_population": {
+    "new_unit_controls": 51,
+    "existing_scheduler_and_proof_safety_controls": 30,
+    "actual_subprocess_controls_with_injected_pressure_and_time": 4
+  },
+  "runs": [
+    {
+      "name": "unit-initial",
+      "tests": 36,
+      "passed": 34,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 2.934
+    },
+    {
+      "name": "unit-neighbors-02",
+      "tests": 68,
+      "passed": 68,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 8.475
+    },
+    {
+      "name": "integration-01",
+      "tests": 3,
+      "passed": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.707
+    },
+    {
+      "name": "final-controls",
+      "tests": 85,
+      "passed": 85,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 8.011
+    }
+  ],
+  "initial_failures": {
+    "count": 2,
+    "reason": "Test-fixture mistakes: legacy compatibility fixture stripped nondefault recovery settings, and nested accounting asserted an incorrect snapshot key; corrected before acceptance.",
+    "original_runtime_snapshot_available": false,
+    "acceptance_evidence": false
+  },
+  "runtime_sha256": "6924810e337a00cc32eadad4b3a2902e9cb9be3a17dcde7b2457157413c5f128",
+  "all_selected_current_and_snapshot_pins_match": true,
+  "selected_source_pin_count": 9,
+  "behavior": {
+    "shared_state_lock": true,
+    "spaced_healthy_samples": true,
+    "root_and_child_shared_pacing": true,
+    "credits_consumed_on_actual_grant_only": true,
+    "validation_exemption": "extra pacing only; pressure/cooldown/capacity checks remain",
+    "pressure_and_proof_sampler_failure_reset_recovery": true,
+    "fairness_observation_cannot_bypass_latest_refusal": true,
+    "idle_recovery_cannot_be_reset_by_policy_downgrade": true,
+    "thresholds_unchanged": true,
+    "cancellation_deadline_and_reaping_preserved": true
+  },
+  "actual_host_probe": {
+    "path": "actual-host-readonly.json",
+    "sha256": "193bfd179c9881f690323428f86e438aba71dbf16521dcf93f5f9865cc267604",
+    "status": "unavailable_policy_mismatch",
+    "admission_attempted": false,
+    "host_state_written": false,
+    "external_pressure_workload_qualified": false
+  },
+  "limitations": [
+    "Recovery limits the rate of new lease admissions, not all work inside an admitted envelope or adaptive CPU/RAM sizing.",
+    "No per-device GPU admission or aggregate hard resource enforcement is added.",
+    "Proof-sampler exceptions reset recovery; optional PSI and CPU-only optional telemetry retain existing fallback behavior.",
+    "Actual host observation is read-only; live opt-in pressure/recovery stress qualification remains open.",
+    "No supervisor default, disk watermark, model behavior, benchmark reward or token advantage is changed or claimed.",
+    "Native scheduler timing uses its existing wall clock; external clock adjustment is not a qualified deployment control."
+  ]
+}
