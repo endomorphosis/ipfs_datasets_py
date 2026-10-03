@@ -306,12 +306,32 @@ def validate_header_candidate_function(*, source_bytes: bytes, source_path: str,
 
 
 def check_header_semantics(expected_report: dict, *, source_bytes: bytes, source_path: str,
-                           protocol: WsgiHeaderProtocolContract, z3_executable: str = "z3") -> dict:
+                           protocol: WsgiHeaderProtocolContract, z3_executable: str = "z3",
+                           timeout_seconds: float | None = None, cancel_event=None,
+                           parent_lease=None) -> dict:
     """Execute optional real Z3 against independently rebuilt source-bound goals.
 
     SAT is a counterexample in the stated string model; UNSAT establishes only
     that model obligation. Neither grants source, mutation or completion authority.
     """
+    import math
+    import time
+    if timeout_seconds is not None and (type(timeout_seconds) not in (int, float)
+            or not math.isfinite(timeout_seconds) or not 0 < timeout_seconds <= 300):
+        raise ValueError("bounded header checker deadline required")
+    deadline = None if timeout_seconds is None else time.monotonic() + timeout_seconds
+    def remaining_seconds():
+        if cancel_event is not None and cancel_event.is_set():
+            raise InterruptedError("header checker cancelled")
+        left = 5. if deadline is None else deadline - time.monotonic()
+        if left <= 0:
+            raise TimeoutError("header checker deadline expired")
+        return left
+    def remaining_ms():
+        return min(5000, max(1, int(remaining_seconds() * 1000)))
+    if parent_lease is not None and deadline is None:
+        raise ValueError("leased header checking requires an aggregate deadline")
+    remaining_seconds()
     report = validate_header_semantics(expected_report, source_bytes=source_bytes,
         source_path=source_path, protocol=protocol)
     if type(z3_executable) is not str or not z3_executable.strip():
@@ -327,14 +347,22 @@ def check_header_semantics(expected_report: dict, *, source_bytes: bytes, source
         output["status"] = "solver_unavailable"
     elif report["status"] == "modeled":
         from ..backends.z3.compiler import Z3SoftwareVerificationBackend
-        backend = Z3SoftwareVerificationBackend(executable=executable)
+        if parent_lease is None:
+            backend = Z3SoftwareVerificationBackend(executable=executable)
+        else:
+            from .bounded_header_checker import bounded_header_runner
+            runner = bounded_header_runner(executable, parent_lease=parent_lease,
+                remaining_seconds=remaining_seconds, cancel_event=cancel_event)
+            backend = Z3SoftwareVerificationBackend(executable=executable, runner=runner)
+            output["execution_profile"] = "native-leased-bounded-header-checker@1"
         output["solver_executable_sha256"] = _sha(Path(executable).read_bytes())
         for target in report["smt_targets"]:
             compilation = SoftwareVerificationSMTCompiler().compile(SmtObligation.from_dict(target["obligation"]))
             if compilation.to_dict() != target["compilation"]:
                 raise ValueError("SMT target differs from native recompilation")
-            outcome = backend.run(compilation, bounds=ExecutionBounds(timeout_ms=5000,
+            outcome = backend.run(compilation, bounds=ExecutionBounds(timeout_ms=remaining_ms(),
                 max_steps=100000, max_memory_bytes=128 * 1024 * 1024, max_output_bytes=65536))
+            remaining_ms()
             status = outcome.result.status.value
             answer = {"satisfiable": "sat", "unsatisfiable": "unsat", "proved": "unsat", "disproved": "sat"}.get(status, "unknown")
             output["results"].append({"symbol": target["symbol"], "kind": target["kind"],
@@ -347,5 +375,6 @@ def check_header_semantics(expected_report: dict, *, source_bytes: bytes, source
             output["solver_calls"] += 1
         output["status"] = ("checked_local_model" if all(row["matches_model_expectation"] for row in output["results"])
                             else "model_check_inconclusive_or_mismatch")
+    remaining_ms()
     output["check_cid"] = _cid(output, CHECK_SCHEMA)
     return output
