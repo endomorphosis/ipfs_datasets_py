@@ -1,0 +1,13 @@
+# Source-head learning-rate comparison
+
+This evidence contains a matched 12-fit comparison of 8D, 384D and 768D formula sidecars, plus the training-only 8D object-feature diagnosis and eight head probes that motivated it. The candidate uses ten times the AdamW learning rate for the shared actor/modality/object head; the remaining model initial rates, scheduling policy, objectives, curriculum and selection gates are unchanged.
+
+Start with `results.json` and the [training guide](../../../../autoencoders/source_head_training.md). Final-attempt results are diagnostics, not promoted checkpoints. The development paragraphs have been repeatedly exposed. These runs do not prove fresh-holdout improvement, convergence, source semantics, or Lake admission. The 8D inputs are linguistic feature hashes; the historical linguistic teacher is unchanged.
+
+`manifest.json` lists every archive member and SHA256. Reassemble `evidence.tar.xz.part-*` in manifest order, verify the parts and logical archive before extraction, and resolve predecessor inputs through the exact Git commits and archive members listed under `archive_dependencies` and `referenced_artifacts`. The archive contains frozen source, complete training reports, initial/selected/last-attempt states, nine controls per retained model state, failed verification attempts and their corrections, tests, and resource receipts. It also retains all training-only head-probe checkpoints, initial and final parameters, Adam moments, adapter evidence and independent audits.
+
+Training replay entry points are `validation/run_frozen_tests.py`, `validation/run_guardian.py`, and `source/scripts/ops/autoencoder/benchmark_source_head_learning_rate.py`. Probe entry points are under `training-head-probes/`. Paths must be reconstructed from the archive mapping before replay. Installed runtime libraries and recorded local encoder assets remain external dependencies; no encoder or weight downloads ran in this comparison.
+
+Lake `lake build <Lib>` remains the only Lean admission. No native logic-family or Lake qualification was executed by this numerical comparison. The US Constitution remains unformalized.
+
+The training child completed all twelve fits with exit 0. The guardian exited 1 after a shared-scheduler configuration mismatch during final lease release. A read-only reconciliation authenticated the already released disk record, dead owned processes and absent own lease; it changed no shared state. The failure-time configuration and responsible actor are unknown, and continuous scheduler-lease coverage is not established. Original failure and reconciliation evidence are retained.

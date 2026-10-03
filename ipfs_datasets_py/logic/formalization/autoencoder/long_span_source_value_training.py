@@ -187,22 +187,71 @@ def _evaluate(torch, model, rows, references, transform, options, codec, deadlin
     return result
 
 
+def _non_action_optimizer_groups(model, trainable, specification, options, multiplier):
+    """Partition checked head parameters without changing global clipping order."""
+    core._require(specification is not None and specification.get("schema") in (
+        "action-factorized-clause-source-decoder-development/v1",
+        "ordered-clause-recurrent-source-decoder-development/v1"),
+        "non-action learning rate requires checked factorized or recurrent source head")
+    head_names = ["non_action_head."+name for name in (
+        "source_projection.weight", "source_projection.bias", "field_readout.weight", "field_readout.bias")]
+    named = [(name, parameter) for name, parameter in model.named_parameters() if parameter.requires_grad]
+    by_name = dict(named)
+    core._require({name for name in by_name if name.startswith("non_action_head.")} == set(head_names),
+        "exact four non-action head tensors required")
+    head_ids = {id(by_name[name]) for name in head_names}
+    original_ids = [id(parameter) for parameter in trainable]
+    core._require(len(head_ids) == 4 and len(set(original_ids)) == len(original_ids)
+        and original_ids == [id(parameter) for _, parameter in named],
+        "unique original-order trainable inventory required")
+    members = [("base", [(name, p) for name, p in named if id(p) not in head_ids], 1.),
+               ("non_action_head", [(name, p) for name, p in named if id(p) in head_ids], multiplier)]
+    core._require(all(part for _, part, _ in members), "nonempty base and non-action optimizer groups required")
+    groups, inventory = [], []
+    for group_name, part, factor in members:
+        rate = options["learning_rate"]*factor
+        floor = rate*options["min_learning_rate_ratio"]
+        groups.append(dict(params=[p for _, p in part], lr=rate))
+        inventory.append(dict(name=group_name, parameter_names=[name for name, _ in part],
+            parameter_count=sum(p.numel() for _, p in part), learning_rate_multiplier=factor,
+            initial_learning_rate=rate, minimum_learning_rate=floor, weight_decay=options["weight_decay"]))
+    core._require({id(p) for group in groups for p in group["params"]} == set(original_ids)
+        and sum(len(group["params"]) for group in groups) == len(original_ids),
+        "optimizer groups must be disjoint and exhaustive")
+    return groups, inventory
+
+
+def _group_learning_rates(optimizer, inventory):
+    return {item["name"]: group["lr"] for item, group in zip(inventory, optimizer.param_groups)}
+
+
 def train(student, training_rows, validation_rows, *, training_references, validation_references,
           codec, input_transform, lineage, validate_rule, validator_id,
           curriculum, strategy="reference_ce", config=None, cardinality_weight=0.,
           count_exposure="current_stage", source_value_weight=0.,
           order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable",
           source_contexts=None, action_contrastive_weight=0., generated_boundary_site_policy="first_last",
-          generated_field_weight=0., generated_site_interval=1):
+          generated_field_weight=0., generated_site_interval=1, non_action_learning_rate_multiplier=1.0):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
     Its metrics cannot be substituted for the conservatively selected state.
     Adam/RNG/scheduler state persists across stages but is not exported for resume.
+    A non-action head multiplier above one changes only its AdamW parameter-group
+    rate, including the resulting rate-scaled decoupled weight decay.  The opt-in
+    scheduler uses proportional floors and zero reduction epsilon so its group
+    rates retain their ratio.  The default follows the original single group.
     """
     started = time.monotonic()
     core._require(config is None or type(config) is dict, "configuration must be a mapping")
     options = core._config({"alpha": 0., **(config or {})})
+    core._require(type(non_action_learning_rate_multiplier) in (int, float)
+        and 1 <= non_action_learning_rate_multiplier <= 10 and math.isfinite(non_action_learning_rate_multiplier)
+        and options["learning_rate"]*non_action_learning_rate_multiplier <= .1,
+        "non-action learning rate multiplier must be finite 1..10 with effective rate at most .1")
+    separate_head_rate = non_action_learning_rate_multiplier != 1.
+    core._require(not separate_head_rate or options["learning_rate"]*options["min_learning_rate_ratio"] > 0.,
+        "enabled group learning rates require a positive representable base minimum")
     core._require(options["alpha"] == 0., "unqualified teacher cannot supervise this source-fidelity trial")
     core._require(type(cardinality_weight) in (int,float) and math.isfinite(cardinality_weight)
         and 0 <= cardinality_weight <= 1, "invalid cardinality weight")
@@ -234,6 +283,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         and set(order_augmentation) == {"preparation", "embedding_observations"},
         "closed order-augmentation inputs required")
     head_specification = _head_specification(student, codec, source_value_weight)
+    core._require(not separate_head_rate or head_specification is not None
+        and head_specification.get("schema") in ("action-factorized-clause-source-decoder-development/v1",
+            "ordered-clause-recurrent-source-decoder-development/v1"),
+        "non-action learning rate requires checked factorized or recurrent source head")
     contextual = head_specification is not None and head_specification.get("schema") in (
         "clause-source-decoder-development/v1", "action-factorized-clause-source-decoder-development/v1",
         "ordered-clause-recurrent-source-decoder-development/v1")
@@ -368,10 +421,19 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     core._require(trainable, "no trainable decoder parameters")
     frozen = {name: p.detach().cpu().contiguous().numpy().tobytes()
               for name, p in working.named_parameters() if not p.requires_grad}
-    optimizer = torch.optim.AdamW(trainable, lr=options["learning_rate"], weight_decay=options["weight_decay"], foreach=False)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min",
-        factor=options["plateau_factor"], patience=options["plateau_patience"],
-        min_lr=options["learning_rate"]*options["min_learning_rate_ratio"])
+    group_inventory = None
+    if separate_head_rate:
+        groups, group_inventory = _non_action_optimizer_groups(working, trainable, head_specification,
+            options, non_action_learning_rate_multiplier)
+        optimizer = torch.optim.AdamW(groups, lr=options["learning_rate"], weight_decay=options["weight_decay"], foreach=False)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min",
+            factor=options["plateau_factor"], patience=options["plateau_patience"],
+            min_lr=[item["minimum_learning_rate"] for item in group_inventory], eps=0.)
+    else:
+        optimizer = torch.optim.AdamW(trainable, lr=options["learning_rate"], weight_decay=options["weight_decay"], foreach=False)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min",
+            factor=options["plateau_factor"], patience=options["plateau_patience"],
+            min_lr=options["learning_rate"]*options["min_learning_rate_ratio"])
     generator = torch.Generator().manual_seed(options["seed"])
     evaluate = lambda: _evaluate(torch, working, validation_rows, validation_references, input_transform,
         options, codec, deadline, validate_rule, validator_id, validation_source_labels,
@@ -412,6 +474,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             count_presentations_start=count_presentations, count_by_class_start=dict(count_by_class),
             count_mean_loss_exposure_start=dict(mean_loss_exposure),
             count_selector_start=None if count_selector is None else count_selector.snapshot())
+        if group_inventory is not None:
+            stage_report["optimizer_group_learning_rates_start"] = _group_learning_rates(optimizer, group_inventory)
         for stage_epoch in range(1, stage["epochs"]+1):
             global_epoch += 1
             working.train()
@@ -545,6 +609,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     token_ce=float(plain.detach()), weighted_token_ce=float(weighted.detach()),
                     count_ce=float(count_loss.detach()), source_value_ce=float(source_loss.detach()),
                     raw_reconstruction_mse=float(mse.detach()), objective=float(objective.detach())))
+                if group_inventory is not None:
+                    committed_updates[-1]["optimizer_group_learning_rates"] = _group_learning_rates(optimizer, group_inventory)
                 if order_selector is not None:
                     committed_updates[-1]["decoder_parent_row_ids"] = [row["id"] for row in parents]
                 if boundary_result is not None:
@@ -602,6 +668,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                 source_values=None if observed is None or observed["source_values"] is None else
                     {k:deepcopy(v) for k,v in observed["source_values"].items() if k!="predictions"},
                 accepted=accepted, rejection_reasons=reasons, selected_epoch=selected_epoch))
+            if group_inventory is not None:
+                history[-1]["optimizer_group_learning_rates"] = _group_learning_rates(optimizer, group_inventory)
             stage_report["completed_epochs"] += int(complete)
             if stopped != "epochs_completed":
                 break
@@ -613,6 +681,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                             count_presentations_end=count_presentations, count_by_class_end=dict(count_by_class),
                             count_mean_loss_exposure_end=dict(mean_loss_exposure),
                             count_selector_end=None if count_selector is None else count_selector.snapshot())
+        if group_inventory is not None:
+            stage_report["optimizer_group_learning_rates_end"] = _group_learning_rates(optimizer, group_inventory)
         stage_reports.append(stage_report)
     core._require(core.tensor_digest(student) == before, "caller model changed")
     core._require({name: m.training for name, m in student.named_modules()} == modes, "caller model modes changed")
@@ -670,6 +740,15 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         tensor_work_estimate_bytes=estimate, memory_estimate_excludes_python_import_allocator_rss=True,
         deadline_cooperative=True, **FALSE)
     report["elapsed_seconds"] = time.monotonic()-started
+    if group_inventory is not None:
+        report.update(non_action_learning_rate_multiplier=non_action_learning_rate_multiplier,
+            optimizer_parameter_groups=[dict(item, final_learning_rate=group["lr"])
+                for item, group in zip(group_inventory, optimizer.param_groups)],
+            optimizer_group_learning_rate_policy="fixed_non_action_multiplier; proportional_plateau_minima; epsilon_zero",
+            optimizer_scheduler_epsilon=0., optimizer_global_clip_parameter_order="original_model_trainable_order",
+            optimizer_weight_decay_policy="same_coefficient_in_both_groups; per_step_shrinkage_is_learning_rate_times_weight_decay",
+            optimizer_group_learning_rates_scope="committed_updates_are_pre_scheduler; epoch_history_is_post_scheduler",
+            non_action_learning_rate_used_for_selection=False)
     if context_receipt is not None:
         report.update(source_contexts_sha256=core.digest(source_contexts), source_context_inventory=context_receipt,
             source_context_target_access=False,
