@@ -2380,8 +2380,105 @@ native logic-family/Lake qualification. The
 retains complete outputs and depends explicitly on the pinned predecessor
 archives for historical inputs.
 
-A next investigation is a separately planned clause-order probe using matched
-permutations of training-only components and the verified local encoder. The
-current cached corpus has no matched order permutations, so this experiment
-cannot establish whether pooled 384D features retain the ordering signal that
-the decoder needs. That probe is not implemented here.
+A subsequent, separately planned clause-order diagnostic uses matched
+permutations of training-only components and the verified local encoder. Its
+results and limits follow.
+
+### Source-order and stopping diagnostic
+
+The frozen diagnostic in
+`scripts/ops/autoencoder/benchmark_decoder_order_boundaries.py` restores the four
+unselected last-attempt states from the shared-slot comparison. It performs no
+training or model selection. `order_source_diagnostic.py` constructs and scores
+the permutation panel; `boundary_source_diagnostic.py` observes actual recurrent
+logits and count corrections during the unchanged greedy decoder. Both model
+entry points accept only IDs and numerical source vectors. Reference clauses,
+counts, and desired prefixes are available only to subsequent scoring.
+
+The panel keeps all 48 original training paragraphs first, then reverses and
+rotates their original components. Of 120 requests, 12 two-clause permutations
+are aliases: there are 108 unique sources and 60 changed-order pairs. One
+verified, local `thenlper/gte-small` instance encodes those sources and repeats
+the 48 originals at batch sizes eight and four (204 observations). The original
+exposed validation set is used only for replayed stopping diagnostics; no new
+validation permutations or fresh-holdout access occur. This is the authored
+Legal development corpus, not a US Code or Constitution conversion campaign.
+
+| Clauses | Order pairs | Mean embedding L2 after reordering | Mean L2 to a different paragraph of the same length |
+| --- | ---: | ---: | ---: |
+| 2 | 12 | 0.066757 | 0.428535 |
+| 4 | 24 | 0.081537 | 0.297862 |
+| 8 | 24 | 0.092644 | 0.184724 |
+
+All 48 fresh originals exactly reproduce their cached vectors and their
+batch-eight repeats. Batch-four repeat noise reaches at most `3.90e-7` L2.
+Actual forward token captures span 9–72 tokens; truncation is absent in this
+panel. These embeddings respond to the tested order changes above numerical
+noise. This establishes neither complete recoverable order information nor the
+ability of these decoders to recover it.
+
+The source heads tend to preserve their old slot arrangement: full scalar logits
+are closer to the original fixed positions than to the permuted positions in
+59/60 pairs for each independent model and 60/60 for each shared model. The
+audit separately retains changed-reference-slot scores, joint actor/action
+matches, whole-rule reconstruction, and missing generated-slot coverage. More
+scalar agreement or more emitted rules cannot stand in for ordered binding.
+
+Boundary observations also distinguish malformed generation, inaccurate count
+classification, and stopping policy. The following counts concern 48 original
+exposed validation paragraphs per model. A local decision change compares raw
+and corrected argmax at the actual visited prefix, not a counterfactual rollout.
+
+| Head / seed | Count classifier correct /48 | Rows reaching no boundary | Visited boundaries | Count correction changes local argmax | Duplicate syntactic rules |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Independent /1729 | 23 | 22 | 26 | 0 | 0 |
+| Shared /1729 | 23 | 0 | 279 | 49 | 121 |
+| Independent /2718 | 24 | 0 | 110 | 56 | 3 |
+| Shared /2718 | 24 | 0 | 195 | 67 | 101 |
+
+Independent seed 1729 closes at all 21 visited boundaries before the reference
+count; 22 other rows develop invalid prefixes before reaching any boundary.
+Shared seed 1729 continues at 19/40 boundaries exactly at the reference count
+and 100/115 beyond it; four outputs hit the unchanged output limit. Shared seed
+2718 continues at 10/34 exactly-at-count and 37/47 beyond-count boundaries.
+These failures also occur on some correctly classified counts. Count top-one
+accuracy alone therefore cannot establish appropriate stopping. The correction
+is present and can change decisions, but its interaction with recurrent logits
+still produces early stops and overruns.
+
+All 384 cached training/validation boundary replays exactly reproduce the four
+archived prediction fields. Caller weights, gradients, module modes, and RNG
+are preserved. The 1,465 frozen regression tests pass; a separate stdlib audit
+passes 15,401 checks with zero findings, including saved head arithmetic,
+permutations, token captures, count/prior corrections, actual prefixes, and
+argmax decisions. The audit does not rerun the encoder or recurrent network,
+replay gradients, establish source semantics, or execute native qualification.
+
+The complete numerical diagnostic takes 14.615 wall seconds. Encoder loading
+and all 204 observations take 5.596 seconds. Source-only order generation plus
+head capture takes 0.002218, 0.012876, 0.005857, and 0.007641 seconds per span in
+table order, each on 108 samples. Instrumented cached validation generation
+takes 0.001850, 0.013678, 0.007475, and 0.009358 seconds per span respectively.
+These costs include copying and identity checks, and output lengths differ.
+They are diagnostic timings, not successful-reconstruction throughput or a
+bridge-on comparison: bridge names `[]`, prover evaluation false, metric disk
+cache off, one CPU worker. The order embeddings are freshly computed; the
+boundary vectors are verified cached inputs. The guardian takes 48.875 seconds
+including admission and accounting, retains 20,740,673 bytes, and releases its
+800 MB reservation. Its historical frozen resource owner is recorded explicitly;
+this run does not validate later scheduler changes elsewhere in the checkout.
+
+The [published evidence](../implementation/reports/evidence/decoder-order-boundary-diagnostic-20261003/results.json)
+retains complete logits, predictions, token captures, traces, tests, provenance,
+and audits, with authenticated archive references for predecessor states and
+inputs. Validation exact reconstruction remains the predecessor's 0/48; no new
+checkpoint is trained or promoted. Temperature stays zero and both limits stay
+512. The 8D teacher and pinned production checkpoint are untouched. No Lake
+build or new logic-family qualification is claimed; Lake remains the only Lean
+admission path.
+
+The next training experiment should separately test a training-only order
+contrast objective or structured clause representation, and calibrate stopping
+against actual generated prefixes. It must retain complete-generation selection
+gates and the existing validation split. These observations do not justify
+forcing a reference count, increasing context, or weakening acceptance.
