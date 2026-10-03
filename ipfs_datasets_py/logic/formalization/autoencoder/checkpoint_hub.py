@@ -247,3 +247,16 @@ def open_ir_cell_autoencoder(directory_plan_pin, inventory_pins, request, *, pac
     return _open_ir_cell_autoencoder(directory_plan_pin, inventory_pins, request,
         package_manifest_pin=package_manifest_pin, cache_split=cache_split,
         row_ids=row_ids, max_reference_bytes=max_reference_bytes)
+
+
+def preflight_ir_cell_cached_targets(directory_plan_pin, inventory_pins, request, *, package_manifest_pin,
+                                    cache_split, row_ids, max_reference_bytes=512 * 1024 * 1024):
+    """Evaluate stored canonical target coverage without loading a model.
+
+    Explicit original asset/row bindings are required. Targets stay inside the
+    evaluator; lexical coverage grants no grammar, quality or teacher status.
+    """
+    from .ir_cell_target_compatibility import preflight_ir_cell_cached_targets as preflight
+    return preflight(directory_plan_pin, inventory_pins, request,
+        package_manifest_pin=package_manifest_pin, cache_split=cache_split,
+        row_ids=row_ids, max_reference_bytes=max_reference_bytes)

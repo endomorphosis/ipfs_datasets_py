@@ -1,0 +1,555 @@
+{
+  "schema": "ir-target-compatibility-handoff/v1",
+  "worktree": "/home/barberb/lift_coding/.worktrees/ir-target-compatibility-20261003",
+  "candidate_base_commit": "7732a5808828083afb1cd19d126d987991136375",
+  "branch": "codex/ir-target-compatibility-20261003",
+  "status": "lexical_preflight_implemented_and_bounded_original_census_complete",
+  "public_api": "checkpoint_hub.preflight_ir_cell_cached_targets",
+  "supported_profiles": {
+    "families": [
+      "legal_ir",
+      "security_ir",
+      "intent_ir"
+    ],
+    "dimension": 384,
+    "dimension_role": "input_embedding",
+    "task_id": "source_to_native_ir",
+    "explicit_inventory_count": 12,
+    "max_selected_rows": 64
+  },
+  "source_receipts": [
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/ir-target-compatibility-20261003/ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py",
+      "bytes": 18253,
+      "sha256": "49251451146d94bf0ba784b4d9e439174efcb602d17daa16fc0bf9986fea33ab"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/ir-target-compatibility-20261003/ipfs_datasets_py/logic/formalization/autoencoder/checkpoint_hub.py",
+      "bytes": 14066,
+      "sha256": "2724a28aa51af1d20a0727a36788eccc2256942c91d77d7ee9e11101152b36a8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/ir-target-compatibility-20261003/tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py",
+      "bytes": 31880,
+      "sha256": "7386436c9efe3d8360cd0c90acaae33f9fa1a4e8f02258e3d6f4388e26f3fe33"
+    }
+  ],
+  "cached_census": {
+    "counts": {
+      "batches": 33,
+      "rows": 1980,
+      "covered": 0,
+      "with_oov": 1980,
+      "over_limit": 0
+    },
+    "families": {
+      "legal_ir": {
+        "counts": {
+          "selected": 660,
+          "covered": 0,
+          "incompatible": 660,
+          "unsupported": 0,
+          "with_oov": 660,
+          "over_limit": 0
+        },
+        "split_counts": {
+          "train": {
+            "selected": 360,
+            "covered": 0,
+            "incompatible": 360,
+            "unsupported": 0,
+            "with_oov": 360,
+            "over_limit": 0
+          },
+          "validation": {
+            "selected": 120,
+            "covered": 0,
+            "incompatible": 120,
+            "unsupported": 0,
+            "with_oov": 120,
+            "over_limit": 0
+          },
+          "test": {
+            "selected": 120,
+            "covered": 0,
+            "incompatible": 120,
+            "unsupported": 0,
+            "with_oov": 120,
+            "over_limit": 0
+          },
+          "canary": {
+            "selected": 60,
+            "covered": 0,
+            "incompatible": 60,
+            "unsupported": 0,
+            "with_oov": 60,
+            "over_limit": 0
+          }
+        },
+        "missing_tokens": [
+          "[\"atom\",\"action\",\"certify\"]",
+          "[\"atom\",\"action\",\"inspect\"]",
+          "[\"atom\",\"action\",\"issue\"]",
+          "[\"atom\",\"action\",\"register\"]",
+          "[\"atom\",\"actor\",\"clerk\"]",
+          "[\"atom\",\"actor\",\"commissioner\"]",
+          "[\"atom\",\"actor\",\"custodian\"]",
+          "[\"atom\",\"actor\",\"executor\"]",
+          "[\"atom\",\"actor\",\"officer\"]",
+          "[\"atom\",\"modality\",\"P\"]",
+          "[\"atom\",\"object\",\"certificate\"]",
+          "[\"atom\",\"object\",\"filing\"]"
+        ],
+        "token_counts": [
+          16
+        ],
+        "checkpoint": {
+          "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/legal_ir/checkpoint.json",
+          "bytes": 1715990,
+          "sha256": "26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da"
+        },
+        "vocabulary_size": 37,
+        "codec_profile_id": "legal-latent-typed-atoms/v1",
+        "unique_missing_token_count": 12
+      },
+      "security_ir": {
+        "counts": {
+          "selected": 660,
+          "covered": 0,
+          "incompatible": 660,
+          "unsupported": 0,
+          "with_oov": 660,
+          "over_limit": 0
+        },
+        "split_counts": {
+          "train": {
+            "selected": 360,
+            "covered": 0,
+            "incompatible": 360,
+            "unsupported": 0,
+            "with_oov": 360,
+            "over_limit": 0
+          },
+          "validation": {
+            "selected": 120,
+            "covered": 0,
+            "incompatible": 120,
+            "unsupported": 0,
+            "with_oov": 120,
+            "over_limit": 0
+          },
+          "test": {
+            "selected": 120,
+            "covered": 0,
+            "incompatible": 120,
+            "unsupported": 0,
+            "with_oov": 120,
+            "over_limit": 0
+          },
+          "canary": {
+            "selected": 60,
+            "covered": 0,
+            "incompatible": 60,
+            "unsupported": 0,
+            "with_oov": 60,
+            "over_limit": 0
+          }
+        },
+        "missing_tokens": [
+          "\"expr:capacity\"",
+          "\"expr:length\"",
+          "\"expr:position\"",
+          "\"expr:quantity\"",
+          "\"expr:threshold\"",
+          "\"expr:volume\""
+        ],
+        "token_counts": [
+          64
+        ],
+        "checkpoint": {
+          "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/security_ir/checkpoint.json",
+          "bytes": 597741,
+          "sha256": "855b3d6d85bb59e165930785bd49711df0fcc8fbc8e11329e2f4b65125520441"
+        },
+        "vocabulary_size": 39,
+        "codec_profile_id": "domain-384-canonical-json-lexical/v1",
+        "unique_missing_token_count": 6
+      },
+      "intent_ir": {
+        "counts": {
+          "selected": 660,
+          "covered": 0,
+          "incompatible": 660,
+          "unsupported": 0,
+          "with_oov": 660,
+          "over_limit": 0
+        },
+        "split_counts": {
+          "train": {
+            "selected": 360,
+            "covered": 0,
+            "incompatible": 360,
+            "unsupported": 0,
+            "with_oov": 360,
+            "over_limit": 0
+          },
+          "validation": {
+            "selected": 120,
+            "covered": 0,
+            "incompatible": 120,
+            "unsupported": 0,
+            "with_oov": 120,
+            "over_limit": 0
+          },
+          "test": {
+            "selected": 120,
+            "covered": 0,
+            "incompatible": 120,
+            "unsupported": 0,
+            "with_oov": 120,
+            "over_limit": 0
+          },
+          "canary": {
+            "selected": 60,
+            "covered": 0,
+            "incompatible": 60,
+            "unsupported": 0,
+            "with_oov": 60,
+            "over_limit": 0
+          }
+        },
+        "missing_tokens": [
+          "\"archivist\"",
+          "\"assemble\"",
+          "\"classify\"",
+          "\"coordinator\"",
+          "\"dispatcher\"",
+          "\"inspector\"",
+          "\"manifest\"",
+          "\"reviewer\"",
+          "\"route\"",
+          "\"schedule\"",
+          "\"validate\""
+        ],
+        "token_counts": [
+          31
+        ],
+        "checkpoint": {
+          "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/intent_ir/checkpoint.json",
+          "bytes": 586049,
+          "sha256": "f031dc5a3dfb9b4fd9e7a8bfbe0f188393edd3afdcc3f18c06c84f4749c6db55"
+        },
+        "vocabulary_size": 27,
+        "codec_profile_id": "domain-384-canonical-json-lexical/v1",
+        "unique_missing_token_count": 11
+      }
+    },
+    "split_rows_per_family": {
+      "train": 360,
+      "validation": 120,
+      "test": 120,
+      "canary": 60
+    },
+    "scope": "All original native-v3 retained cached rows in exact original order; canonical lexical coverage only, not numerical accuracy or checkpoint-own-training performance."
+  },
+  "original_training_asset_audit": {
+    "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/training_cache_provenance.json",
+    "bytes": 141881,
+    "sha256": "63dee5df9755f3f861fc1054167bbadc09ee9a41c18bbe4e0566aeedaaf29a80"
+  },
+  "testing": {
+    "passed": 241,
+    "new_compatibility_cases": 131,
+    "reused_runtime_cases": 110,
+    "passed_phases": 723,
+    "failures": 0,
+    "skips": 0,
+    "deselected": 0,
+    "miniature_fixtures_are_models": false,
+    "source_origins_guarded": true,
+    "independent_new_test_source_review": true,
+    "reused_runtime_source_review_independent": false
+  },
+  "original_preservation": {
+    "unique_inherited_files": 2484,
+    "original_assets": 26,
+    "inventory_documents": 13,
+    "sealed_numerical_artifacts": 542,
+    "sealed_numerical_committed_payloads": 2,
+    "all_matched": true,
+    "report": {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/prior-preservation.json",
+      "bytes": 877894,
+      "sha256": "339b59d90b25d1199ffc85bd0e724ffc4a1e344e30e5ac4d628df9cebfe57556"
+    }
+  },
+  "generation_notes": [
+    "V1 fifteen-row preflight predates appended public Hub delegate; its former Hub source is explicitly archived as superseded history.",
+    "V2 original census and V3 controls bind the final helper and public Hub wrapper sources.",
+    "Unused inherited admission descriptive counts/Hub exclusions are corrected in a separately pinned disclosure; executed inputs were not rewritten.",
+    "Source archives preserve all executed admission source bytes without production source restoration.",
+    "Original checkpoint training assets differ from retained native-v3 caches; original Legal panel IDs distinguish32training+8tuning from32additional paraphrases."
+  ],
+  "next_work": [
+    "Implement explicit original-corpus cached replay using unchanged retained inputs and record original split exposure alongside development caches; authenticate Legal raw-latent manifests under the bound source generation.",
+    "Implement derivative codec and explicit semantic token-row inheritance/optimizer mapping with authentic donor receipts and training-only additions.",
+    "Qualify semantic conditioning/source-disjoint holdouts before teacher admission; retain original8D/384D donors and original embeddings.",
+    "Introduce a separate learned predicted surface channel/prose head for source-withheld Legal text reconstruction.",
+    "Align native768D connectors to authentic original384D teacher inputs on the same sources, with independent family/schema/context/span gates.",
+    "Bind native CodebaseIR candidates and verified proof index to exact repository snapshots before IntentIR supervisor planning.",
+    "Reconcile reviewed consumer commits and genuine asset pointers against fresh origin in an isolated checkout; maintain12independent store/repository/release identities."
+  ],
+  "authority": {
+    "model_execution": false,
+    "training_executed": false,
+    "original_weights_changed": false,
+    "new_embeddings_generated": false,
+    "numerical_accuracy_measured": false,
+    "native_grammar_verified": false,
+    "checkpoint_numerically_validated": false,
+    "teacher_qualified": false,
+    "source_free_reconstruction_qualified": false,
+    "source_span_budget_qualified": false,
+    "source_semantics_verified": false,
+    "proof_authority": false,
+    "runtime_release_qualified": false,
+    "physical_cell_store_qualified": false,
+    "native_codebase_decoder_qualified": false,
+    "native_768_decoder_qualified": false,
+    "supervisor_execution": false,
+    "full_dependency_or_native_effect_closure_qualified": false,
+    "huggingface_publication": false,
+    "origin_fetch": false,
+    "origin_merge": false,
+    "origin_push": false
+  },
+  "consistency_scope": "Bounded stable per-file reads and endpoint rechecks; no atomic/continuous repository snapshot or universal native/filesystem containment.",
+  "references": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/census-summary.json",
+      "bytes": 6008,
+      "sha256": "510acefeeca64ec09fc947e145f50571ae51a6896a03d163e10ee486a023bb45"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/replay-census-inputs.json",
+      "bytes": 812902,
+      "sha256": "0ee0a54ef44058302f079d114b54ac81a178a39de7fb8673f6106ee2177c00c7"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/replay-inputs.json",
+      "bytes": 23940,
+      "sha256": "83a88b38af1e10f994f490c6864cd915a424d21f59b5d1f5ddf3298d47d3ea4e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/training_cache_provenance.json",
+      "bytes": 141881,
+      "sha256": "63dee5df9755f3f861fc1054167bbadc09ee9a41c18bbe4e0566aeedaaf29a80"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/prior-preservation.json",
+      "bytes": 877894,
+      "sha256": "339b59d90b25d1199ffc85bd0e724ffc4a1e344e30e5ac4d628df9cebfe57556"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/admission-metadata-correction.json",
+      "bytes": 5697,
+      "sha256": "2aa5290855f7a990555a0515ea1b9fb1818f05e2795074992ed04efa3d19f0c8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/source-archives.json",
+      "bytes": 40396,
+      "sha256": "a8bc59965626a9f962ff580f7275e37940c7f6122d760aabd03e906dbc1350a8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/reviews.json",
+      "bytes": 3243,
+      "sha256": "745904fca0e05ba0836b3fd06cfcb9cbf6d10e40fbd2b3d79c256f7d87012d53"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/local-integration-context.json",
+      "bytes": 740,
+      "sha256": "7d10371b825fd31af2fdde5a1a4b4c7d5b2f27f552cdd89c8da38ef5382b6c65"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/dependency-profile.json",
+      "bytes": 99859,
+      "sha256": "4a479504857bbf3e9a039b9ef7b0dedfd04efd39b2d3a60af239ce004c652fe3"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/pytest.ini",
+      "bytes": 9,
+      "sha256": "8250d20f42b419af40706490ead78aabab9feba93eab09a3f626e3de5256e1f4"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/admission-v1.json",
+      "bytes": 9001,
+      "sha256": "2797843307b7a8bae414357d457aebfa2c47c94e80bc7014bee974ac72849281"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/admission-v2.json",
+      "bytes": 9001,
+      "sha256": "96e35be828944d076ce2f629fee88499b038518f12fd1a84f87898d6df773187"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/admission-v3.json",
+      "bytes": 9590,
+      "sha256": "a8a3989536039bb51b2f9d3c12dfb0b87ae2a743cdf16dff677e8cfe3e01ea2d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/run_guarded.py",
+      "bytes": 14386,
+      "sha256": "2f06ee696d10bf2a976678e51ea67ee1ed015a614d50d7007283cf12f8bc6a2c"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/run_guarded_v2.py",
+      "bytes": 14449,
+      "sha256": "b4e1c5afb29e7de7ed95bc31a82cdd4809f242b40b0546bae27b8d2c6f52ae7f"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/run_guarded_v3.py",
+      "bytes": 14578,
+      "sha256": "0ddec30090ca2c0013aa58abecf785ed1c127bae62443bad0d785958533dd43c"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/run_qualification.py",
+      "bytes": 3197,
+      "sha256": "e03c45c0159b7cdab410faea53fa39777984e7eb423334c6e2690e8a2851b5a1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/run_qualification_v2.py",
+      "bytes": 3203,
+      "sha256": "a41aae7c25f991f61717a5da2a8ad47cb880b5afc364456ecc33351a4e2d4d3d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/run_qualification_v3.py",
+      "bytes": 3203,
+      "sha256": "c998c46b47df120fc2213bf1e2b8a702de07ec7eb241f1fcddd9bdd7f02ae20f"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-v1/result.json",
+      "bytes": 2007,
+      "sha256": "fc126dc8d5d3cf4d6b271178d31ac0d9ad2452d9df1c52848b776522b2327ea6"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-v1/effect-observations.json",
+      "bytes": 342,
+      "sha256": "3eff7702f8ddd80e3fc7c35e7edba6730ae01bf0245c100b36beff452d37194b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-v1/import-origins.json",
+      "bytes": 169331,
+      "sha256": "8262b8a03df6ff7c1c3403497903094bc83eedf45ff06a97e6250807c626d570"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-v1/plugin-registries.json",
+      "bytes": 121,
+      "sha256": "9ffa12e2ea57701e4b1a141634dd692622f3305d836a92d0d3cf851e6f2e853d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-v1/preflights.json",
+      "bytes": 56435,
+      "sha256": "e76b9becbbdac85fffa478edcb1a945b2759f97ece9463fa460d961ac92c2de8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-original-v1.json",
+      "bytes": 2388,
+      "sha256": "a051077c970a5728de458ec6d4ab0caee49aa0abd71b0d0e3a94c00f7b6213f8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-original-v1.log",
+      "bytes": 183,
+      "sha256": "2e3e930b35c8698b71ab6e15afa54f77d6f31a994b390f59fd4a516d693c343b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-result-original-v1.json",
+      "bytes": 402,
+      "sha256": "8be9af0911888a8ab2142e9d31238609ed7b2d2545d77e272ba848bfdb4c3f51"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-census-v2/result.json",
+      "bytes": 2010,
+      "sha256": "cc5b076d6747255c1f04c61a3d75115fbb6365eecb541c9818aa9042268ae579"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-census-v2/effect-observations.json",
+      "bytes": 342,
+      "sha256": "3eff7702f8ddd80e3fc7c35e7edba6730ae01bf0245c100b36beff452d37194b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-census-v2/import-origins.json",
+      "bytes": 169331,
+      "sha256": "4378773c516573fdd0989162dcbd9ae9b2a8feb2c6c9e189835ffa2cbfdffe50"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-census-v2/plugin-registries.json",
+      "bytes": 121,
+      "sha256": "9ffa12e2ea57701e4b1a141634dd692622f3305d836a92d0d3cf851e6f2e853d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/original-census-v2/preflights.json",
+      "bytes": 4176574,
+      "sha256": "5290ea441db06d3c98ce887cb1c19cb6e5efcbbf8c3a89bb20355463292dd7ae"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-original-census-v2.json",
+      "bytes": 2411,
+      "sha256": "9b803e9cfa85bf43e2af02d53ab8f8de052a3c936fe38e908f77b4877b1f51ff"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-original-census-v2.log",
+      "bytes": 183,
+      "sha256": "2e3e930b35c8698b71ab6e15afa54f77d6f31a994b390f59fd4a516d693c343b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-result-original-census-v2.json",
+      "bytes": 416,
+      "sha256": "9bdcf7135d09b06ef884e869023bb4a07b2394ef117938e636f0fe5ca823dbcf"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/controls-v3/result.json",
+      "bytes": 287488,
+      "sha256": "fab07062951fdb6c85c24ebfc4d651ca0486edf2a2cacd2d3edab240b929b4bd"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/controls-v3/effect-observations.json",
+      "bytes": 414,
+      "sha256": "72846c4ba26ee52a2693414b75a43c4706a544c2fd90bc589c663ebcea06f370"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/controls-v3/import-origins.json",
+      "bytes": 230099,
+      "sha256": "896434728d344d0d6291b77f4da722084b271a51f93ede677e82e190a984a332"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/controls-v3/plugin-registries.json",
+      "bytes": 26370,
+      "sha256": "753572e10006d04abb00acc98c1967222a85fec96279c76824d01df7df543323"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/runs/controls-v3/junit.xml",
+      "bytes": 58336,
+      "sha256": "79428cad8a2d4db6446ff3e06b7a5bc54cc8d642bcab13d29a9238c107e14df6"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-controls-v3.json",
+      "bytes": 2387,
+      "sha256": "81750e6ad549f7408056b3e1940ea27653f7a28cb3b3f7b81ac5e8f383a50552"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-controls-v3.log",
+      "bytes": 180,
+      "sha256": "67fc16ff74f0b31cc955e04226ced3b540a6ea9a87410c47fef8a04963449f56"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/launcher-result-controls-v3.json",
+      "bytes": 402,
+      "sha256": "c85594b1e7e37ad0cc6cb195d1aa248bb81083043c46c635ae5b43b93b8bcff7"
+    }
+  ],
+  "generator_receipt": {
+    "path": "/home/barberb/lift_coding/artifacts/ir-target-compatibility-20261003/write_handoff.py",
+    "bytes": 8191,
+    "sha256": "75054445f3d6dea07446bd8ac738ebbe3f0e6805d83d9ed28271fc5944674e5c"
+  },
+  "packaging_review_recorded_separately_in_phase_verification": true
+}
