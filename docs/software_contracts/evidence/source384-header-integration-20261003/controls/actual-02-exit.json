@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "seconds": 35.12026071600121,
+  "source_pins_after": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_header_context.py": "5fe86ad2e79325ddbcbbe7eba1efe841853836367aee126853cd1cfda710c48e",
+    "tests/integration/logic/software_contracts/test_codebase_header_context.py": "5fbf21890e80c0f24ec68223f8e03ecdfbe8532c65a57e660cacc12be3fd08de"
+  }
+}

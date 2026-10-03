@@ -1,0 +1,88 @@
+{
+  "schema": "captured-header-integration-qualification@1",
+  "baseline_git_head": "0d6ed4b7d3dfd1935c60a3db414dafb0ad15ffef",
+  "final_source_pins": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_header_context.py": "5fe86ad2e79325ddbcbbe7eba1efe841853836367aee126853cd1cfda710c48e",
+    "tests/integration/logic/software_contracts/test_codebase_header_context.py": "5fbf21890e80c0f24ec68223f8e03ecdfbe8532c65a57e660cacc12be3fd08de",
+    "docs/software_contracts/CAPTURED_HEADER_CONTEXT.md": "8ea89b8357a390271912eb8b1a4815da7525410a5add073d22c38ff71ee50964"
+  },
+  "primary": {
+    "control_prefix": "controls/actual-02",
+    "passed": 22,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "pytest_seconds": 33.29,
+    "process_seconds": 35.12026071600121,
+    "on_disk_owner": true,
+    "import_override": false
+  },
+  "preceding": {
+    "control_prefix": "controls/controls-01",
+    "passed": 22,
+    "pytest_seconds": 32.6,
+    "new_module_only_bootstrap": true,
+    "same_final_source_bytes": true
+  },
+  "distinct_test_count": 22,
+  "reviewed_protocol_required": true,
+  "public_fixture": {
+    "sha256": "761756ce31753e526c48d28ccbca13a5d2493b16fe37aff3e1e4d2efaf3a2bba",
+    "provenance": "Existing permitted public-bottle.py in A evidence/terminal-source384-context-20261003/canaries",
+    "payload_included": false,
+    "modeled_helpers": 2,
+    "deterministic_formula_count": 12,
+    "smt_obligation_count": 6
+  },
+  "counters": {
+    "model_loads": 0,
+    "learned_formula_count": 0,
+    "provider_calls": 0,
+    "solver_calls": 0,
+    "training_steps": 0
+  },
+  "scope": {
+    "native_duckdb_cas_catalog": true,
+    "complete_modules": true,
+    "native_source_observations": true,
+    "isolated_authored_native_scheduler": true,
+    "injected_host_telemetry": true,
+    "actual_host_pressure_qualification": false,
+    "source384_consumer_wired": false,
+    "supervisor_wired": false,
+    "lake_build_run": false,
+    "checkpoint_changed": false,
+    "source_executed": false,
+    "source_semantics_verified": false,
+    "proof_authority": false,
+    "current_source_verified": false,
+    "new_benchmark_score": false
+  },
+  "limits": {
+    "paths": 128,
+    "selected_python_bytes": 4194304,
+    "per_module_bytes": 2000000,
+    "report_bytes": 8388608,
+    "default_timeout_seconds": 90,
+    "default_memory_mb": 512,
+    "cooperative_deadline": true
+  },
+  "covered": [
+    "complete module source maps",
+    "unsupported module inventory",
+    "cold CAS/catalog reopen",
+    "historical replay versus live source drift",
+    "receipt/protocol/head/producer tampering",
+    "changed captured bodies and report bounds",
+    "native catalog advancement during report publication",
+    "cancellation and deadline refusal with lease cleanup",
+    "native resource refusal as error",
+    "exact public Bottle fixture"
+  ],
+  "limits_of_evidence": [
+    "Deterministic formulas are conditional models, not learned reconstruction or solved obligations.",
+    "Current wrapper records observations at the call; it confers no lasting currentness authority.",
+    "Only authored isolated scheduler telemetry is exercised; no full-supervisor resource or benchmark claim.",
+    "Earlier syntax-only draft and authoring-shell metadata error are retained locally, not counted as tests."
+  ]
+}

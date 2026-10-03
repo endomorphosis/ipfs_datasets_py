@@ -1,0 +1,85 @@
+{
+  "schema": "captured-header-integration-evidence@1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2337,
+      "sha256": "99a793604b7947533b2d37282af440c5120148c3ce8b0ebf73a50a21cc151f15"
+    },
+    {
+      "path": "controls/actual-02-command.json",
+      "bytes": 1679,
+      "sha256": "8f9ad7ba85d326b5c7d0db13c5eb6ba9344a36a72bea48a81b09043e76759001"
+    },
+    {
+      "path": "controls/actual-02-exit.json",
+      "bytes": 376,
+      "sha256": "7d1624dc6215f903acf778f983736731623e4c5d71100de6381a584e4060be7c"
+    },
+    {
+      "path": "controls/actual-02.log",
+      "bytes": 1131,
+      "sha256": "44bdbb02ce88baf070f35fffb30cc8a6f6c2a8490e37b49b2dfb6651bc1fb7d5"
+    },
+    {
+      "path": "controls/actual-02.xml",
+      "bytes": 4016,
+      "sha256": "99ceaa8bab97c107499156def90082c7cdd109af41435cdc16b40770b9488a2c"
+    },
+    {
+      "path": "controls/build_evidence.py",
+      "bytes": 7391,
+      "sha256": "40420ccc93bedeea93c84b4c3dcee0a68c35a0f932c403755dfe2f2c7007c0fa"
+    },
+    {
+      "path": "controls/controls-01-command.json",
+      "bytes": 1259,
+      "sha256": "ac706eabb07d4b7bcb394cfd2bd082f5810c30c43fd77ca317248d9312160f6e"
+    },
+    {
+      "path": "controls/controls-01-exit.json",
+      "bytes": 394,
+      "sha256": "f34797f1289745502322c70d0f0a2525be10a69c18274c8aed02e189e62b7717"
+    },
+    {
+      "path": "controls/controls-01.log",
+      "bytes": 1009,
+      "sha256": "207c04463b7c116d3fa1dec48603576a23ef73dd4fa8d77b42be0db22f1ed445"
+    },
+    {
+      "path": "controls/controls-01.xml",
+      "bytes": 2454,
+      "sha256": "ebc2cf95becbc4e87aae62d047932047d0aaf2da5a3113c8d3b36b015e9b28b9"
+    },
+    {
+      "path": "controls/draft-pins.json",
+      "bytes": 311,
+      "sha256": "cfd1b41ebc823b861a7d138584182cbbf1ffafc3bb95937df2d6faa40853c201"
+    },
+    {
+      "path": "controls/run_actual_tests.py",
+      "bytes": 1838,
+      "sha256": "eb819fd9dc7a85f143d066456e8e2fdfbe608a5825cfa6bff19268f89d581787"
+    },
+    {
+      "path": "controls/run_proposed_tests.py",
+      "bytes": 1701,
+      "sha256": "810eadfa2ea720521828cdb460dbf3582a4badb5ce52ba27ee228affef98806b"
+    },
+    {
+      "path": "final-sources/ipfs_datasets_py/logic/software_contracts/codebase_header_context.py",
+      "bytes": 13225,
+      "sha256": "5fe86ad2e79325ddbcbbe7eba1efe841853836367aee126853cd1cfda710c48e"
+    },
+    {
+      "path": "final-sources/tests/integration/logic/software_contracts/test_codebase_header_context.py",
+      "bytes": 12280,
+      "sha256": "5fbf21890e80c0f24ec68223f8e03ecdfbe8532c65a57e660cacc12be3fd08de"
+    },
+    {
+      "path": "qualification.json",
+      "bytes": 3315,
+      "sha256": "353d172e44cacd5f0e8831155acd1040a1c383660dfe02894c0b486e4ba14da4"
+    }
+  ]
+}

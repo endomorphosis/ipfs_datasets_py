@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/artifacts/source384-header-integration-20261003/run_actual_tests.py"
+  ],
+  "pytest_args": [
+    "-c",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/pytest.ini",
+    "-q",
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/tests/integration/logic/software_contracts/test_codebase_header_context.py",
+    "--junitxml=/home/barberb/lift_coding/artifacts/source384-header-integration-20261003/actual-02.xml"
+  ],
+  "source_pins": {
+    "proposed/ipfs_datasets_py/logic/software_contracts/codebase_header_context.py": "5fe86ad2e79325ddbcbbe7eba1efe841853836367aee126853cd1cfda710c48e",
+    "proposed/tests/integration/logic/software_contracts/test_codebase_header_context.py": "5fbf21890e80c0f24ec68223f8e03ecdfbe8532c65a57e660cacc12be3fd08de"
+  },
+  "actual_loaded_owner": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_header_context.py",
+  "baseline_git_head": "0d6ed4b7d3dfd1935c60a3db414dafb0ad15ffef",
+  "import_hooks_or_overlay": false,
+  "public_fixture": "/home/barberb/lift_coding/.worktrees/ir-release-accelerate-20261002/docs/agent_supervisor/evidence/terminal-source384-context-20261003/canaries/public-bottle.py",
+  "environment": {
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "qualification_scope": "authored isolated scheduler with injected host telemetry; no actual host-pressure claim"
+}
