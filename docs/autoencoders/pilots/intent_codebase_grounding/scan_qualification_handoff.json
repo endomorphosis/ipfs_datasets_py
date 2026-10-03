@@ -1,0 +1,117 @@
+{
+  "schema": "codebase-scan-qualification-handoff/v1",
+  "persistent_worktree": "/home/barberb/lift_coding/.worktrees/codebase-scan-qualification-20261003",
+  "parent_commit": "72ad43c12141aeb817b4e81877602d44277bf480",
+  "selected_tests_passed": 50,
+  "reused_cases": 39,
+  "new_regression_cases": 11,
+  "cases_deselected": 5,
+  "repair_source_paths": [
+    "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py",
+    "tests/integration/logic/software_contracts/test_codebase_scan_policy.py"
+  ],
+  "admitted_project_files": 93,
+  "external_python_sources": 452,
+  "guarded_source_loads": 464,
+  "private_git_launches": 6556,
+  "bounded_metadata_queries": 437,
+  "private_closed_duckdb_connections": 45,
+  "drained_scheduler_states": 45,
+  "prior_authority_files_preserved": 1105,
+  "complete_unique_preserved_files": 1129,
+  "original_assets_preserved": 26,
+  "original_inventory_documents_preserved": 13,
+  "ir_families": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "dimension_sizes": [
+    8,
+    384,
+    768
+  ],
+  "independent_inventory_cells": 12,
+  "receipt_links": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-discovery-qualification-20261003/verification.json",
+      "bytes": 41944,
+      "sha256": "3fa99dcfb67ef4efb03b5dee66a047b64648d623b4fd11fca0b6b39159fda423"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/preservation-start.json",
+      "bytes": 314076,
+      "sha256": "8806e736d2027e914f66ee962dbdea080bad48ab5b9e164d87b86554464008e3"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/preservation-end.json",
+      "bytes": 314076,
+      "sha256": "0c0d85627959914dffcbdbedbaee459a79c28b92ad686543175b77c3c3d6bbeb"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/admission-v2.json",
+      "bytes": 43058,
+      "sha256": "4dc9c6cbc23b80e578336a8d305a7bc08d9903e50380f2cac1e971208bb13ebc"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/dependency-profile.json",
+      "bytes": 99781,
+      "sha256": "4ef8cad97d25cee133c6ce93109a3e37e14c58543dbfbee3915e12520d85fa49"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/runs/scan-v2/result.json",
+      "bytes": 53275,
+      "sha256": "6642e0d2101b1618d1568afbf2c952de46be23e27d99c6682d0f95d73ec38165"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/runs/scan-v2/import-origins.json",
+      "bytes": 270526,
+      "sha256": "eeb136cf78a02179cb5d7cbb135f1a6ab488fd3a9d1d16708dedbfe1927781c1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/runs/scan-v2/effect-observations.json",
+      "bytes": 3338446,
+      "sha256": "f5fc6d7645e6cc45728cafcc740a5ef126efb53b88fdf67444517746c6f46d1a"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/runs/scan-v2/bounded-git-observations.json",
+      "bytes": 700823,
+      "sha256": "8d55a4cd5b028acfed3166bb72e47473ca65adb759a8cceda04005b5b9bc7180"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/artifact-observations.json",
+      "bytes": 146363,
+      "sha256": "5b0c635ec7d2b002e7657fe1a702655d221ee22774f4ef0b5de98016c0cc9866"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-scan-qualification-20261003/gap-status.json",
+      "bytes": 12982,
+      "sha256": "6d820e7524e05a91091ff8dcd04c7723ecba1a85a416e83c64c799353a10b319"
+    }
+  ],
+  "failed_first_run_retained": true,
+  "proof_authority": false,
+  "runtime_release_qualified": false,
+  "model_task_qualified": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "source_observations_atomic_or_continuous": false,
+  "fresh_interpreter_restart_qualified": false,
+  "ordinary_ambient_git_configuration_qualified": false,
+  "whole_scan_resource_admission_qualified": false,
+  "ancestor_symlink_containment_qualified": false,
+  "active_main_modified": false,
+  "merges": 0,
+  "pushes": 0,
+  "new_embeddings_generated": 0,
+  "model_executions": 0,
+  "solver_native_launches": 0,
+  "ducklake_operations": 0,
+  "supervisor_operations": 0,
+  "next_executable_cohort": "Qualify matched Git environment and complete scan-operation admission: sanitize/pin configuration, propagate scheduler lease/cancellation/remaining deadline through source capture and metadata queries, then add ancestor containment and guarded fresh-process/submodule replay. Afterwards qualify positive native code/key/applicability correspondence and independent typed family/model/vector/store routing.",
+  "retained_raw_policy_schema_records": 35,
+  "raw_records_with_expected_authority_flags": 34,
+  "deliberate_rejected_authority_claim_records": 1
+}
