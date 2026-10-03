@@ -2274,3 +2274,114 @@ bundle external Python packages. No fresh holdout, 8D teacher training, 768D
 training, production checkpoint change, native logic-family qualification, or
 `lake build Legal` occurred here. Syntax-valid output is not source fidelity,
 and only an actual Lake build can provide the corresponding Lean admission.
+
+## Shared scalar readouts across clause positions (2026-10-03)
+
+This experiment tests whether sharing supervision across positions improves
+source-value reconstruction. The current independent affine heads have only
+12 training paragraphs for each late clause position. The new head computes
+`h_i = tanh(Wx + b + e_i)` from the same normalized, whole-span 384D projected
+source vector, then applies four field readouts shared across all eight positions.
+Each field retains the complete 32-token vocabulary. Learned position embeddings
+interact nonlinearly with source features; no clause text, component offsets,
+reference count, or target prefix enters generation.
+
+`shared_slot_source_decoder_experiment.bind_shared_slot_source_model()` replaces
+the independent scalar head rather than keeping unused parameters. Width 64
+uses 33,472 scalar parameters versus 394,240 in the independent head. This
+changes both parameter sharing and the function class; it cannot isolate either
+as a sole cause of any result. Inference retains the inherited causal scalar
+recognizer, recurrent decoder, and prior-centered count guidance. It introduces
+no vocabulary mask, forced count, or closure rule. Both arms use raw scalar
+guidance, following the inconclusive mean-centering comparison.
+
+The initializer uses the fit seed in a private CPU generator for source and slot
+parameters. Its zero field readout preserves initial greedy output. JSON restore
+checks the saved scalar seed as an exact Python integer and reconstructs
+`torch.long`; other state uses the original float32 loader. Normalization/prior buffers and
+projection remain protected. Four complete initial states are bound to their
+initial-generation receipts, alongside eight selected/final states and all
+40 postfit panels.
+
+The predeclared comparison uses independent versus shared heads with seeds 1729
+and 2718, the original donor, 48 training and 48 previously exposed validation
+paragraphs, center-RMS normalization, and boundary guidance. Each fit keeps the
+original 340 updates, 2,440 row presentations, 225,840 target tokens, 25,600 scalar
+presentations, optimizer, curriculum, and strict per-length selection gates.
+The plan binds the same 13 input hashes as the manifest. The independent arms
+must exactly replay the archived raw update/tensor/generation evidence, including
+both the four-field initial inventory and full six-field selected predictions.
+
+The selected and final states retain conditioned training/validation, zero-source,
+within-length shuffle, and cross-length shuffle controls. Removing source retains
+learned slot/bias priors, making that control informative about source-independent
+predictions. All runs keep temperature zero and the 512-token encoder/output
+limits. The 8D teacher and production checkpoints remain unchanged. These are
+numerical development experiments; the unchanged full-generation gates still
+determine selection, and only a real Lake build can provide Lean admission.
+
+### Completed shared-slot comparison
+
+All four fits completed the fixed exposure; both independent arms matched raw replays. Partial development
+measures improve, but **validation exact reconstruction remains 0/48 and every
+selected checkpoint remains at epoch zero**. None is promoted. The table reports
+unselected last-complete attempts.
+
+| Head / seed | Sequence CE | Correct generated scalar positions /720 | EOS / syntax /48 | Duplicate generated rules | Fit call seconds |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Independent /1729 | 0.268138 | 34 | 48 / 26 | 0 | 11.114 |
+| Shared /1729 | 0.187817 | 208 | 44 / 44 | 121 | 12.768 |
+| Independent /2718 | 0.197750 | 134 | 48 / 48 | 3 | 10.780 |
+| Shared /2718 | 0.187983 | 217 | 48 / 48 | 101 | 10.960 |
+
+The shared candidates emit 219 and 195 valid rules across those paragraphs,
+compared with 26 and 110 for the independent candidates. Their many repetitions
+and seed-1729 termination regression show why more correct scalar positions
+cannot establish faithful complete documents. Training exact paragraphs change
+from 2 to 3 in seed 1729 and from 6 to 3 in seed 2718; the source-count heads
+remain at 23/48 and 24/48 on validation. The unchanged per-length gates reject
+the candidates despite the lower teacher-forced sequence loss.
+
+Raw auxiliary scalar accuracy, distinct from freely generated output, improves
+from 247 to 263 and from 243 to 265 correct positions out of 720 on validation;
+its training counts fall from 399 to 327 and 325. Each shared candidate recovers
+one of the nine previously unsupported-at-position values. However, all 41
+validation rows with full slot/field support still have zero exact documents.
+This is evidence of partial value recovery on exposed development data, not
+convergence or a fresh-holdout generalization result.
+
+The five controls remain available for every selected/final state. Within-length
+shuffling reduces shared generated scalar counts to 185 and 178; cross-length
+shuffling reduces them to 125 and 126. Zero-source controls score zero generated
+scalar positions. More generated rules also create more opportunities for scalar
+agreement; source association has not established correct actor/action binding
+or complete ordered clauses. None of these
+controls changes targets or relaxes acceptance.
+
+The shared model has 70,624 trainable parameters versus 431,392 for the independent
+model, but neither matched fit is faster. The four fit calls total 45.623 seconds;
+the guardian takes 102.559 seconds including admission, persistence, controls,
+and resource accounting. Its 800 MB reservation is released after retaining
+192,082,453 bytes. Conditioned numerical evaluation takes approximately 0.00225,
+0.01362, 0.00740, and 0.00877 wall seconds per span in table order, 48 samples per
+call. Generated length and failure modes differ, so these are not successful-
+reconstruction throughput gains. Execution uses one CPU worker, bridge names
+`[]`, prover evaluation false, metric disk cache off, and warm verified cached
+embeddings without encoder forward. No bridge-on speed measurement is claimed.
+
+The frozen suite passes **1,377 tests in this run**; the unchanged scheduler
+adapter reuses the separately authenticated 34-test receipt from the preceding experiment. The
+independent audit passes **29,189 checks with zero findings**, covering typed
+initial/selected/final states, shared-head arithmetic, frozen buffers, raw replay,
+all 40 output panels, coverage strata, exposure, and selection. It does not
+replay gradients or recurrent generation, recompute full sequence CE, or execute
+native logic-family/Lake qualification. The
+[published evidence](../implementation/reports/evidence/decoder-shared-slot-source-20261003/results.json)
+retains complete outputs and depends explicitly on the pinned predecessor
+archives for historical inputs.
+
+A next investigation is a separately planned clause-order probe using matched
+permutations of training-only components and the verified local encoder. The
+current cached corpus has no matched order permutations, so this experiment
+cannot establish whether pooled 384D features retain the ordering signal that
+the decoder needs. That probe is not implemented here.

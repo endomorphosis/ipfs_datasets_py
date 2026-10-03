@@ -32,6 +32,9 @@ def _head_specification(model, codec, source_value_weight):
     if not present:
         return None
     description = model.describe()
+    if description.get("schema") == "shared-slot-source-decoder-development/v1":
+        from . import shared_slot_source_decoder_experiment as shared_values
+        return shared_values.checked_specification(model, codec)
     if description.get("schema") == "mean-centered-source-decoder-development/v1":
         from . import mean_centered_source_decoder_experiment as centered_values
         core._require(description.get("scalar_mode") in centered_values.SCALAR_MODES
@@ -204,7 +207,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     tune_ids, tune_sources = core._rows(validation_rows, student.dimension, codec["target_vocabulary"], options["max_target_tokens"])
     core._require(not train_ids & tune_ids and not train_sources & tune_sources, "training/validation overlap")
     if head_specification is not None and head_specification.get("schema") in (
-            "projected-source-decoder-development/v1", "mean-centered-source-decoder-development/v1"):
+            "projected-source-decoder-development/v1", "mean-centered-source-decoder-development/v1",
+            "shared-slot-source-decoder-development/v1"):
         inventory = [dict(id=row["id"], source_sha256=hashlib.sha256(row["source_text"].encode()).hexdigest())
             for row in training_rows]
         for name in ("normalization", "count_prior"):
