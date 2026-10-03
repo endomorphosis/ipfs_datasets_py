@@ -28,7 +28,6 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from ipfs_datasets_py.logic.external_provers.lazy_installer import find_executable
 
 from ..models import ITPKind
 from ..process_lifecycle import supervised_temporary_directory
@@ -43,6 +42,15 @@ from .base import (
     UniverseContext,
     run_bounded_process,
 )
+
+def find_executable(command: str) -> str | None:
+    """Load executable discovery only when frontend availability is requested."""
+    from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+        find_executable as _find_executable,
+    )
+
+    return _find_executable(command)
+
 
 __all__ = ["LeanFrontend"]
 

@@ -197,8 +197,22 @@ def test_cancelling_parent_propagates_to_children_and_future_nested_work(tmp_pat
     assert child.cancellation_signal.is_set()
     with pytest.raises(LeaseCancelledError):
         parent.acquire_child(cpu_slots=1, timeout=0)
-    parent.release()  # Cascades even if a child owner did not release explicitly.
+    parent.release()
+    # Cancellation revokes authority, but live child work remains charged until
+    # its owner acknowledges completion. A parent release cannot free it early.
+    snapshot = scheduler.snapshot()
+    assert child.cancellation_signal.is_set()
+    assert snapshot["active_lease_count"] == 2
+    assert snapshot["active_root_lease_count"] == 1
+    assert snapshot["active_child_lease_count"] == 1
+    assert snapshot["allocated"]["cpu_slots"] == 2
+    assert scheduler.try_acquire("hammer_lean", cpu_slots=3) is None
+    with pytest.raises(LeaseCancelledError):
+        parent.acquire_child(cpu_slots=1, timeout=0)
+    child.release()
     assert scheduler.snapshot()["active_lease_count"] == 0
+    with scheduler.acquire("hammer_lean", cpu_slots=4, timeout=0):
+        assert scheduler.snapshot()["allocated"]["cpu_slots"] == 4
 
 
 def test_expired_lease_is_recovered_after_interrupted_owner(tmp_path):
@@ -213,7 +227,18 @@ def test_expired_lease_is_recovered_after_interrupted_owner(tmp_path):
     abandoned = scheduler.acquire("orchestration", timeout=0)
     time.sleep(0.05)
     recovered = scheduler.recover_stale_leases()
-    assert abandoned.lease_id in recovered
+    # The same process is still alive: TTL expiry revokes its authority without
+    # proving the work stopped. Only explicit release can acknowledge this hold.
+    assert abandoned.lease_id not in recovered
+    assert abandoned.cancelled
+    assert scheduler.snapshot()["active_lease_count"] == 1
+    assert scheduler.snapshot()["allocated"]["cpu_slots"] == 1
+    assert scheduler.try_acquire("orchestration") is None
+    assert abandoned.renew()
+    assert abandoned.cancelled
+    with pytest.raises(LeaseCancelledError):
+        abandoned.acquire_child(timeout=0)
+    abandoned.release()
     assert scheduler.snapshot()["active_lease_count"] == 0
     replacement = scheduler.acquire("orchestration", timeout=0)
     replacement.release()

@@ -141,6 +141,19 @@ def typesafe_permitted(
         return False
     if not remote_disclosure_permitted:
         return False
+    env = environ if environ is not None else os.environ
+    api_key_names = (
+        "TYPESAFE_API_KEY",
+        "ipfs_accelerate_py_TYPESAFE_API_KEY",
+        "IPFS_ACCELERATE_PY_TYPESAFE_API_KEY",
+        "IPFS_DATASETS_PY_TYPESAFE_API_KEY",
+    )
+    # Unconfigured advisory calls do not initialize the optional runtime.
+    if not any(
+        value is not None and str(value).strip()
+        for value in (env.get(name) for name in api_key_names)
+    ):
+        return False
     try:
         from ipfs_accelerate_py.typesafe_inference import typesafe_configured
 
