@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="9.786" timestamp="2026-10-02T17:34:41.776231+00:00" hostname="spark-b271"><testcase classname="tests.integration.logic.software_contracts.test_codebase_peer_federation" name="test_real_two_peer_round_exact_native_reduction" time="9.440"><error message="failed on setup with &quot;ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitSnapshotError: git status failed or warned&quot;">tests/integration/logic/software_contracts/test_codebase_peer_federation.py:44: in current
+    value.head = index.prepare_current(repo, repository_id="repository:peer", operation_id="capture", expected_head=None).head
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:299: in prepare_current
+    self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:181: in _require_git
+    if result.returncode or result.stderr: raise GitSnapshotError(f"git {what} failed or warned")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitSnapshotError: git status failed or warned</error></testcase></testsuite></testsuites>

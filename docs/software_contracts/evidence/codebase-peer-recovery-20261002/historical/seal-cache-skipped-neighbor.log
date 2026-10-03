@@ -1,0 +1,34 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-accelerate-20261002/test
+configfile: pytest.ini
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, asyncio-1.3.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0, anyio-4.14.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 19 items
+
+test/unit/test_codebase_federated_dispatch.py::test_complete_replay_is_exact_and_survives_queue_restart [33mSKIPPED[0m[32m [  5%][0m
+test/unit/test_codebase_federated_dispatch.py::test_hash_commits_type_model_and_complete_payload [33mSKIPPED[0m[32m [ 10%][0m
+test/unit/test_codebase_federated_dispatch.py::test_non_native_or_nonfinite_json_is_rejected_before_submit[bad0] [33mSKIPPED[0m[32m [ 15%][0m
+test/unit/test_codebase_federated_dispatch.py::test_non_native_or_nonfinite_json_is_rejected_before_submit[bad1] [33mSKIPPED[0m[32m [ 21%][0m
+test/unit/test_codebase_federated_dispatch.py::test_non_native_or_nonfinite_json_is_rejected_before_submit[bad2] [33mSKIPPED[0m[32m [ 26%][0m
+test/unit/test_codebase_federated_dispatch.py::test_only_one_concurrent_claim_invokes_handler [33mSKIPPED[0m[32m [ 31%][0m
+test/unit/test_codebase_federated_dispatch.py::test_expired_handler_result_cannot_complete_or_resurrect [33mSKIPPED[0m[32m [ 36%][0m
+test/unit/test_codebase_federated_dispatch.py::test_replaced_attempt_rejects_late_success_and_failure [33mSKIPPED[0m[32m [ 42%][0m
+test/unit/test_codebase_federated_dispatch.py::test_handler_cannot_extend_trusted_fractional_deadline_by_mutating_task [33mSKIPPED[0m[32m [ 47%][0m
+test/unit/test_codebase_federated_dispatch.py::test_guard_rejection_before_handler_fails_only_owned_claim [33mSKIPPED[0m[32m [ 52%][0m
+test/unit/test_codebase_federated_dispatch.py::test_scoped_guard_checks_after_handler_and_restores_context [33mSKIPPED[0m[32m [ 57%][0m
+test/unit/test_codebase_federated_dispatch.py::test_scoped_guards_do_not_leak_between_threads [33mSKIPPED[0m[32m [ 63%][0m
+test/unit/test_codebase_federated_dispatch.py::test_handler_failure_uses_native_retry_backoff_and_unique_attempt [33mSKIPPED[0m[32m [ 68%][0m
+test/unit/test_codebase_federated_dispatch.py::test_exhausted_native_attempts_do_not_refit [33mSKIPPED[0m[32m [ 73%][0m
+test/unit/test_codebase_federated_dispatch.py::test_lost_completion_response_replays_native_result_without_handler [33mSKIPPED[0m[32m [ 78%][0m
+test/unit/test_codebase_federated_dispatch.py::test_completion_false_does_not_report_success [33mSKIPPED[0m[32m [ 84%][0m
+test/unit/test_codebase_federated_dispatch.py::test_explicit_heartbeat_renews_native_owned_claim [33mSKIPPED[0m[32m [ 89%][0m
+test/unit/test_codebase_federated_dispatch.py::test_explicit_hook_registration_has_no_global_activation [33mSKIPPED[0m[32m [ 94%][0m
+test/unit/test_codebase_federated_dispatch.py::test_import_and_instantiation_do_not_open_network_or_worker [33mSKIPPED[0m[33m [100%][0m
+
+- generated xml file: /home/barberb/lift_coding/artifacts/codebase-peer-recovery-20261002/controls-02/neighbor.xml -
+============================= slowest 10 durations =============================
+
+(10 durations < 0.005s hidden.  Use -vv to show these durations.)
+[33m============================= [33m[1m19 skipped[0m[33m in 0.20s[0m[33m ==============================[0m

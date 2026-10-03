@@ -1,0 +1,157 @@
+{
+  "committed_bases": {
+    "accelerate": "fa329a37701e1e532c2b4398ac0804f7a55c3079",
+    "datasets": "bde8a6af7dc1cb249c76ad777c86a8e79854dca8"
+  },
+  "schema": "codebase-peer-native-source-pins/v1",
+  "scope": "Exact working producer bytes, including additive uncommitted files, independently match native policy. Base Git commits alone do not include new files.",
+  "sources": [
+    {
+      "bytes": 3467,
+      "module": "ipfs_accelerate_py.mcp_server.mcplusplus.p2p_framing",
+      "path": "ipfs_accelerate_py/mcp_server/mcplusplus/p2p_framing.py",
+      "repository": "accelerate",
+      "sha256": "77cd889ec9ea6ba7cec480dc7f02b82a1b9868f680e914b4af5a47f7e4e67ef6"
+    },
+    {
+      "bytes": 14749,
+      "module": "ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch",
+      "path": "ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py",
+      "repository": "accelerate",
+      "sha256": "3d7adb7e812d3d9aed6cda45ea6dfce9a6fcdae9489fa5c2f53dd45d19cf2a19"
+    },
+    {
+      "bytes": 13947,
+      "module": "ipfs_accelerate_py.p2p_tasks.codebase_peer_transport",
+      "path": "ipfs_accelerate_py/p2p_tasks/codebase_peer_transport.py",
+      "repository": "accelerate",
+      "sha256": "4eaad07aa69ff83d5cd1c8ae598dd44c86ba64ad064534f0507bc5936b2946f6"
+    },
+    {
+      "bytes": 5656,
+      "module": "ipfs_accelerate_py.p2p_tasks.codebase_peer_worker",
+      "path": "ipfs_accelerate_py/p2p_tasks/codebase_peer_worker.py",
+      "repository": "accelerate",
+      "sha256": "2722f6c0fde98f30d0ba03ee3d1bc0a36223becba0ecf738ef3eb22cb9efaa4a"
+    },
+    {
+      "bytes": 27503,
+      "module": "ipfs_accelerate_py.p2p_tasks.mcp_p2p",
+      "path": "ipfs_accelerate_py/p2p_tasks/mcp_p2p.py",
+      "repository": "accelerate",
+      "sha256": "691076cf779a84c63cf31c5e1e7b5bbc449ed3fab68d2676a01952e4369f454d"
+    },
+    {
+      "bytes": 54671,
+      "module": "ipfs_datasets_py.logic.backends.codebase_process",
+      "path": "ipfs_datasets_py/logic/backends/codebase_process.py",
+      "repository": "datasets",
+      "sha256": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1"
+    },
+    {
+      "bytes": 26127,
+      "module": "ipfs_datasets_py.logic.software_contracts.codebase_dispatched_federation",
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_dispatched_federation.py",
+      "repository": "datasets",
+      "sha256": "2e26acf682d87ff26c48494ca528085652babf10bab89a28c92f1adfdfb8b3e5"
+    },
+    {
+      "bytes": 20388,
+      "module": "ipfs_datasets_py.logic.software_contracts.codebase_federated_artifacts",
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_artifacts.py",
+      "repository": "datasets",
+      "sha256": "0b87e887f5234467a4654bf54ac33e6974ae8f3cb4b3a069d7dd4ae16d006f9a"
+    },
+    {
+      "bytes": 36337,
+      "module": "ipfs_datasets_py.logic.software_contracts.codebase_federated_training",
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py",
+      "repository": "datasets",
+      "sha256": "91417315a76a06d42d386f84b3b6430375893905906623a0b7813ae1fcf0adbb"
+    },
+    {
+      "bytes": 29596,
+      "module": "ipfs_datasets_py.logic.software_contracts.codebase_ir_targets",
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_ir_targets.py",
+      "repository": "datasets",
+      "sha256": "93d853232ea630cf1748b397aef8224b0bdbddc06521562279de9133652e054d"
+    },
+    {
+      "bytes": 19526,
+      "module": "ipfs_datasets_py.logic.software_contracts.codebase_peer_dispatched_federation",
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_peer_dispatched_federation.py",
+      "repository": "datasets",
+      "sha256": "c8d625aac0b56dc56a14ea18663f2d00c7da1adceeddeaa518d2daf07c052a02"
+    },
+    {
+      "bytes": 49880,
+      "module": "ipfs_datasets_py.logic.software_contracts.codebase_source_training",
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+      "repository": "datasets",
+      "sha256": "e459766bed0c990660334eaf264b6c46fc29e229d49ae8c416bdfc7ca142c317"
+    },
+    {
+      "bytes": 13289,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_federated_codebase",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated_codebase.py",
+      "repository": "datasets",
+      "sha256": "1f745e92cedc9895d14b44b85ad2a16b8fa59c63785485296ba2c83929740b3e"
+    },
+    {
+      "bytes": 31713,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_projection_features",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_projection_features.py",
+      "repository": "datasets",
+      "sha256": "b91b5ee4a4e8bc6a214d7b7a942212805efe5531b2fb4251e66e9d413639cd14"
+    },
+    {
+      "bytes": 6104,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_feature_worker",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_feature_worker.py",
+      "repository": "datasets",
+      "sha256": "f9a29dd7fc7812fd4cb67e78a421938ef1e8817e3b74c9d38626a91e6b02d81a"
+    },
+    {
+      "bytes": 15259,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_federated_sync",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_federated_sync.py",
+      "repository": "datasets",
+      "sha256": "12a94aa83e77b35b49920d020b11cfe2568196887aa9eb60bdbf0d6b75c37fd1"
+    },
+    {
+      "bytes": 18634,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.codebase_runtime_8d",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_runtime_8d.py",
+      "repository": "datasets",
+      "sha256": "32dc798bfe81a587412c3d86431c368a5a83e27660870ca6de6f107a1e855146"
+    },
+    {
+      "bytes": 69046,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_cuda",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_cuda.py",
+      "repository": "datasets",
+      "sha256": "954bcdee38c8f55f0d9d57045b9f2648aac7efcdf105b3655f410dea1249f2e1"
+    },
+    {
+      "bytes": 82754,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "repository": "datasets",
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    {
+      "bytes": 14475,
+      "path": "tests/integration/logic/software_contracts/test_codebase_peer_federation.py",
+      "repository": "datasets",
+      "sha256": "be67af5320678a74cdfa00de79640443f333e803335d4186b4412310b29a955b",
+      "test_only": true
+    },
+    {
+      "bytes": 13577,
+      "path": "test/unit/test_codebase_federated_dispatch.py",
+      "repository": "accelerate",
+      "sha256": "3c0460cc32bd37451c169693967967350d16b81cd8d3bba6a4df2090cf4a641e",
+      "test_only": true
+    }
+  ]
+}

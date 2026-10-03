@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="12.544" timestamp="2026-10-02T17:37:49.126508+00:00" hostname="spark-b271"><testcase classname="tests.integration.logic.software_contracts.test_codebase_peer_federation" name="test_real_two_peer_round_exact_native_reduction" time="12.257"><error message="failed on setup with &quot;ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch.CodebaseDispatchError: peer handshake or tool result failed&quot;">tests/integration/logic/software_contracts/test_codebase_peer_federation.py:56: in current
+    value.round = peer.train_current_peer_dispatched_codebase_round(index, repo, expected_head=value.head,
+ipfs_datasets_py/logic/software_contracts/codebase_peer_dispatched_federation.py:221: in train_current_peer_dispatched_codebase_round
+    result = dispatcher.dispatch(task, round_spec.model_id, timeout_seconds=remaining(), lease_seconds=min(600, remaining() + 5))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py:241: in dispatch
+    result = self.handler(_copy(task))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_peer_dispatched_federation.py:62: in __call__
+    return self.peers[work["client_id"]](task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_transport.py:131: in __call__
+    return self._deliver(task)
+           ^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_transport.py:197: in _deliver
+    _require(len(responses) == 2 and responses[0].get("id") == 1
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py:36: in _require
+    raise CodebaseDispatchError(message)
+E   ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch.CodebaseDispatchError: peer handshake or tool result failed</error></testcase></testsuite></testsuites>

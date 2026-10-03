@@ -1,0 +1,254 @@
+{
+  "authority": {
+    "model_admission": false,
+    "numerical_authority": false,
+    "proof_authority": false,
+    "remote_transport_qualified": false
+  },
+  "cas_objects": [
+    {
+      "bytes": 15934,
+      "cid": "bafkreiarlf47deegkpytvd62h7wgjnfsjal46zi5z5asfthu3kpyfr7mra",
+      "sha256": "115979f1908653f13a8fda3fec64b4b24817cf651dcf4122ccf4da9f82c7ec88"
+    },
+    {
+      "bytes": 74571,
+      "cid": "bafkreiavb6c2llfvvzk2wea4h54lonyqiqe5wnatap5ltpnsmgkmguj7ny",
+      "sha256": "150f85a5acb5ae55ab101c3f78b737104409db341303fab9bdb26194c3513f6e"
+    },
+    {
+      "bytes": 74648,
+      "cid": "bafkreibqv55cur4lxc4v3ws5x72cabee6roxfwco6xjgp5dwpal2mggchu",
+      "sha256": "30af7a2a478bb8b95dda5dbff4200484f45d72d84ef5d267f4767817a618c23d"
+    },
+    {
+      "bytes": 1692,
+      "cid": "bafkreicpyq237et4aqukysmmwp5c3ihc3mgjvl2aako7zdklps2npph46i",
+      "sha256": "4fc435bf927c0428ac498cb3fa2da0e2db0c9aaf40029dfc8d4b7cb4d7bcfcf2"
+    },
+    {
+      "bytes": 74571,
+      "cid": "bafkreid4qymn2pmoktuq7ahduuzu2h4yj7mbg6fluvnfaa6llv466wxwru",
+      "sha256": "7c8618dd3d8e54e90f80e3a5334d1f984fd81378aba55a5003cb5d79ef5af68d"
+    },
+    {
+      "bytes": 591778,
+      "cid": "bafkreidhr7wdfnrqcjgbzdxjdqt6jmdwqhmbhnfcefe2qifbpsqxx7hfda",
+      "sha256": "678fec32b630124c1c8ee91c27e4b07681d813b4a22149a820a17ca17bfce518"
+    },
+    {
+      "bytes": 42,
+      "cid": "bafkreie7uwmurhpv2vsbbekys6jdppisojwc743rzh2zmf6vmwz5gaskcm",
+      "sha256": "9fa599489df5d564109158979237bd12726c2ff371c9f59617d565b3d3024a13"
+    },
+    {
+      "bytes": 15934,
+      "cid": "bafkreiemlnr6wekrrexday7xq5j5nlxxdyk5xjutr26ojeafw6de5j7zf4",
+      "sha256": "8c5b63eb1151892e3063f78753d6aef71e15dba6938ebce49005b7864ea7f92f"
+    },
+    {
+      "bytes": 64841,
+      "cid": "bafkreieynlksxo55ctbngh2axm5tgfgucz2rgurgrkkeiml5zcpdqxcf7q",
+      "sha256": "986ad52bbbbd14c2d31f40bb3b3314d416751352268a9444317dc89e385c45fc"
+    },
+    {
+      "bytes": 313709,
+      "cid": "bafkreifd5jc2lmwwgvthvdlfvjd2paarukq5jfaspr3einldvaapy4c5fq",
+      "sha256": "a3ea45a5b2d635667a8d65aa47a78011a2a1d494127c76443563a800fc705d2c"
+    },
+    {
+      "bytes": 42,
+      "cid": "bafkreifgc7yqqct2mslrmczyhciyv6xk2d3z7i2pfpgc6luf6tzlvrpf7m",
+      "sha256": "a617f1080a7a6497160b3838918afaead0f79fa34f2bcc2f2e85f4f2bac5e5fb"
+    },
+    {
+      "bytes": 42,
+      "cid": "bafkreignrgbhbsyetrsodjvtzowvojfxb5qe2miojmwaanziiu6gn3fiqy",
+      "sha256": "cd898270cb049c64e1a6b3cbad5724b70f604d310e4b2c003728453c66eca886"
+    },
+    {
+      "bytes": 42,
+      "cid": "bafkreigulu7opbv2eouzcnoyatit5lpf4pd7f56ablbm3vcy3hztdzol5e",
+      "sha256": "d45d3ee786ba23a99135d804d13eade5e3c7f2f7c00ac2cdd458d9f331e5cbe9"
+    },
+    {
+      "bytes": 127446,
+      "cid": "bafkreihrehyttsqwtb6mxsts23sljlfciyfpqupfeswaaulw32a2cyxdbi",
+      "sha256": "f121f139ca16987ccbca72d6e4b4aca2460af851e524ac005176de81a162e30a"
+    },
+    {
+      "bytes": 42,
+      "cid": "bafkreihsf7enej7cidlmbcmssh225bn76rtxes7exaltpl7incm32bmwq4",
+      "sha256": "f22fc8d227e240d6c0899291f5ae85bff467724be4b81737afe86899bd059687"
+    },
+    {
+      "bytes": 3295,
+      "cid": "baguqeera2e4ti5i56s5ziojwifpvlgjgmssqgascr3y2cfxwll3ibrm35ydq",
+      "sha256": "d13934751df4bb943936415f55992664a50302428ef1a116f65af680c59bee07"
+    },
+    {
+      "bytes": 3377,
+      "cid": "baguqeera2syrb6ypae5jbkypzbcqmjxt2uqynr7q6aordd3ggu5td2o3d3ia",
+      "sha256": "d4b110fb0f013a90ab0fc8450626f3d52186c7f0f01d118f66353b31e9db1ed0"
+    },
+    {
+      "bytes": 3494,
+      "cid": "baguqeera3rvjnu4iwgxgvhthedb337dimm6cvlazmpukl4sqldo53o64rsca",
+      "sha256": "dc6a96d388b1ae6a9e6720c3bdfc68633c2aac1963e8a5f25058ddddbbdc8c84"
+    },
+    {
+      "bytes": 3307,
+      "cid": "baguqeera7j2wcaoafspi2zm7356fwft3mkiimaqjtrh4qhwlwkzkrsmo4efa",
+      "sha256": "fa756101c02c9e8d659fdf7c5b167b62908602099c4fc81ecbb2b2a8c98ee10a"
+    },
+    {
+      "bytes": 10307,
+      "cid": "baguqeerabawkjozibdtgmh4csda3zbc2yu4js5jse7yq3yborh7jn7ibywya",
+      "sha256": "082ca4bb2808e6661f8290c1bc845ac53899753227f10de02e89fe96fd01c5b0"
+    },
+    {
+      "bytes": 5261,
+      "cid": "baguqeeracvqj7hqsnchh4y3wfa36ajnuo3kt4rgvbvc53bryo6kgjm27qxhq",
+      "sha256": "15609f9e12688e7e63762837e025b476d53e44d50d45dd8638779464b35f85cf"
+    },
+    {
+      "bytes": 2751,
+      "cid": "baguqeeradj5iogxcrfcvuve5br5pfodkwngrrqw32gknebeubkuuipxhu5xq",
+      "sha256": "1a7a871ae289455a549d0c7af2b86ab34d18c2dbd194d204940aa9443ee7a76f"
+    },
+    {
+      "bytes": 3295,
+      "cid": "baguqeerador33rpobhbvzzvu5okbxwf4ht3yucpnh4kfuo26jbgnbtevgi6a",
+      "sha256": "1ba3bdc5ee09c35ce6b4eb941bd8bc3cf78a09ed3f145a3b5e484cd0cc95323c"
+    },
+    {
+      "bytes": 583730,
+      "cid": "baguqeeraeluh4oizsoixhrwe52gam2dlhntvczonhx7kkwvzomy6f2eahqzq",
+      "sha256": "22e87e3919939173c6c4ee8c06686b3b675165cd3dfea55ab97331e2e8803c33"
+    },
+    {
+      "bytes": 7000,
+      "cid": "baguqeerag3c2auim3nf2s74wddlisbaxjhn27tfpa42mum4imellthmynr5q",
+      "sha256": "36c5a0510cdb4ba97f9618d689041749dbafccaf0734ca33886116b99d986c7b"
+    },
+    {
+      "bytes": 25905,
+      "cid": "baguqeerahukfwechinvlooqxlhyj7ovqbbg45smllwsvqxe5qyh5wbhtdmvq",
+      "sha256": "3d145b1047436ab73a1759f09fbab0084dcec98b5da5585c9d860fdb04f31b2b"
+    },
+    {
+      "bytes": 3495,
+      "cid": "baguqeerajrczro6fhyx4yyk337klu4dhwgco6p6emeh7ppzxhcdnmra3eerq",
+      "sha256": "4c4598bbc53e2fcc615bdfd4ba7067b184ef3fc4610ff7bf373886d6441b2123"
+    },
+    {
+      "bytes": 10306,
+      "cid": "baguqeerakmqsxbho5cknejv6prk4akctmxrbjqguly5t77qlupqjh2kuznea",
+      "sha256": "53212b84eee894d226be7c55c0285365e214c0d45e3b3ffe0ba3e093e954cb48"
+    },
+    {
+      "bytes": 565,
+      "cid": "baguqeeralqenapgdtsdtyvesyiwwuu3j5vkbc5jmgzwpywtoajpubpjik6na",
+      "sha256": "5c08d03cc39c873c5492c22d6a5369ed5411752c366cfc5a6e025f40bd28579a"
+    },
+    {
+      "bytes": 3295,
+      "cid": "baguqeeraltcetuz66z2hrhzmzln345yyf3tobfqmfwxjihxdd5thcd742doq",
+      "sha256": "5cc449d33ef674789f2ccadbbe77182ee6e0960c2dae941ee31f66710ffcd0dd"
+    },
+    {
+      "bytes": 2751,
+      "cid": "baguqeeran6bextuj4i7kw7peo4bfzpbblt4vhvg2udgbf2fg3u7kobvogqna",
+      "sha256": "6f824bce89e23eab7de477025cbc215cf953d4daa0cc12e8a6dd3ea706ae341a"
+    },
+    {
+      "bytes": 384732,
+      "cid": "baguqeeraqg4bykwb4cr4f5qb72plh56iisvghd2vafcd4hkjsxuiwrkt5gha",
+      "sha256": "81b81c2ac1e0a3c2f601fe9eb3f7c844aa638f5501443e1d4995e88b4553e98e"
+    },
+    {
+      "bytes": 565,
+      "cid": "baguqeerasr5d6sj775m55kxmahmi4bdbn43oh3w2o4mxgcx6w5jhbfxddi6a",
+      "sha256": "947a3f493fff59deaaec01d88e04616f36e3eeda7719730afeb7527096e31a3c"
+    },
+    {
+      "bytes": 3315,
+      "cid": "baguqeerawagsxwg7g7n2udtdlrmilbjfmogbwkvk6m7kzyii7fj4fd25tfvq",
+      "sha256": "b00d2bd8df37dbaa0e635c58858525638c1b2aaaf33eace108f953c28f5d996b"
+    },
+    {
+      "bytes": 3496,
+      "cid": "baguqeerawfnnb3vxi7nyfqtspj2mc36i6v3a75suoglghkkntzw5ma6tyejq",
+      "sha256": "b15ad0eeb747db82c2727a74c16fc8f5760ff654719663a94d9e6dd603d3c113"
+    },
+    {
+      "bytes": 7001,
+      "cid": "baguqeeraxcpob6sz3nbbdlzsuzf6jzc3ldnbjnfkajc6zuu57fbchgisnvpa",
+      "sha256": "b89ee0fa59db4211af32a64be4e45b58da14b4aa0245ecd29df9422399126d5e"
+    }
+  ],
+  "distinct_controls": 32,
+  "earlier_nine_case_pass_seconds": 62.98,
+  "elapsed_native_seconds": 67.3,
+  "elapsed_neighbor_seconds": 2.23,
+  "native_default_host": true,
+  "native_passed": 13,
+  "native_test_names": [
+    "test_real_two_peer_round_exact_native_reduction",
+    "test_lost_response_restarts_actual_peer_without_refit",
+    "test_actual_unavailable_peer_process_cannot_complete",
+    "test_stale_queue_completion_after_actual_peer_result_refused",
+    "test_historical_peer_record_cannot_rebind_profile_or_result",
+    "test_strict_bounded_frames_reject_ambiguous_or_incomplete_json[\\x00\\x00\\x00\\r{\"x\":1,\"x\":2}]",
+    "test_strict_bounded_frames_reject_ambiguous_or_incomplete_json[\\x00\\x00\\x00\\t{\"x\":NaN}]",
+    "test_strict_bounded_frames_reject_ambiguous_or_incomplete_json[\\x00\\x00\\x00\\xff{}]",
+    "test_peer_cannot_launch_without_inherited_owner",
+    "test_changed_source_refuses_before_any_peer_delivery",
+    "test_wrong_model_reaches_actual_peer_but_cannot_complete",
+    "test_peer_transport_cannot_upgrade_changed_binary_reference",
+    "test_actual_peer_children_and_owned_leases_are_reaped"
+  ],
+  "neighbor_passed": 19,
+  "neighbor_test_names": [
+    "test_complete_replay_is_exact_and_survives_queue_restart",
+    "test_hash_commits_type_model_and_complete_payload",
+    "test_non_native_or_nonfinite_json_is_rejected_before_submit[bad0]",
+    "test_non_native_or_nonfinite_json_is_rejected_before_submit[bad1]",
+    "test_non_native_or_nonfinite_json_is_rejected_before_submit[bad2]",
+    "test_only_one_concurrent_claim_invokes_handler",
+    "test_expired_handler_result_cannot_complete_or_resurrect",
+    "test_replaced_attempt_rejects_late_success_and_failure",
+    "test_handler_cannot_extend_trusted_fractional_deadline_by_mutating_task",
+    "test_guard_rejection_before_handler_fails_only_owned_claim",
+    "test_scoped_guard_checks_after_handler_and_restores_context",
+    "test_scoped_guards_do_not_leak_between_threads",
+    "test_handler_failure_uses_native_retry_backoff_and_unique_attempt",
+    "test_exhausted_native_attempts_do_not_refit",
+    "test_lost_completion_response_replays_native_result_without_handler",
+    "test_completion_false_does_not_report_success",
+    "test_explicit_heartbeat_renews_native_owned_claim",
+    "test_explicit_hook_registration_has_no_global_activation",
+    "test_import_and_instantiation_do_not_open_network_or_worker"
+  ],
+  "no_external_publication": true,
+  "peer_record_cid": "baguqeerasr5d6sj775m55kxmahmi4bdbn43oh3w2o4mxgcx6w5jhbfxddi6a",
+  "private_exclusions": [
+    "native database files",
+    "scheduler state/lease keys",
+    "private peer configuration",
+    "model-registry authority records",
+    "Git administrative files"
+  ],
+  "qualification": "two sequential local subprocess peers using canonical MCP++ frames and shared immutable CAS; exact native 8D federation replay",
+  "remaining": [
+    "remote/libp2p deployment",
+    "cross-host artifact transport",
+    "parallel remote fleet and device accounting",
+    "distributed 384D training",
+    "gradient collective backend/verifier",
+    "whole-round completion reply recovery without retained sidecar CID"
+  ],
+  "schema": "codebase-peer-native-qualification/v1",
+  "source_policy_cid": "baguqeera2syrb6ypae5jbkypzbcqmjxt2uqynr7q6aordd3ggu5td2o3d3ia",
+  "telemetry_injected": false
+}

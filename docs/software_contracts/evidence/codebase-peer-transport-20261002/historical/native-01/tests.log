@@ -1,0 +1,36 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 9 items
+
+tests/integration/logic/software_contracts/test_codebase_peer_federation.py E [ 11%]
+
+
+==================================== ERRORS ====================================
+______ ERROR at setup of test_real_two_peer_round_exact_native_reduction _______
+tests/integration/logic/software_contracts/test_codebase_peer_federation.py:44: in current
+    value.head = index.prepare_current(repo, repository_id="repository:peer", operation_id="capture", expected_head=None).head
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:299: in prepare_current
+    self._prepare(
+ipfs_datasets_py/logic/software_contracts/codebase_ir.py:356: in _prepare
+    snapshot = snapshot_repository(
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:854: in snapshot_repository
+    status = _status(git_root); index = _index_oids(git_root, raw_exclusions); head_oids = _tree_oids(git_root, tree, raw_exclusions)
+             ^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:783: in _status
+    records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py:181: in _require_git
+    if result.returncode or result.stderr: raise GitSnapshotError(f"git {what} failed or warned")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot.GitSnapshotError: git status failed or warned
+- generated xml file: /home/barberb/lift_coding/artifacts/codebase-peer-transport-20261002/native-01/tests.xml -
+=========================== short test summary info ============================
+ERROR tests/integration/logic/software_contracts/test_codebase_peer_federation.py::test_real_two_peer_round_exact_native_reduction
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 9.79s ===============================

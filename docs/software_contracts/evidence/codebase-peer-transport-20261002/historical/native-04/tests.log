@@ -1,0 +1,41 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /tmp/ir-release-datasets-20261001
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 9 items
+
+tests/integration/logic/software_contracts/test_codebase_peer_federation.py E [ 11%]
+
+
+==================================== ERRORS ====================================
+______ ERROR at setup of test_real_two_peer_round_exact_native_reduction _______
+tests/integration/logic/software_contracts/test_codebase_peer_federation.py:56: in current
+    value.round = peer.train_current_peer_dispatched_codebase_round(index, repo, expected_head=value.head,
+ipfs_datasets_py/logic/software_contracts/codebase_peer_dispatched_federation.py:221: in train_current_peer_dispatched_codebase_round
+    result = dispatcher.dispatch(task, round_spec.model_id, timeout_seconds=remaining(), lease_seconds=min(600, remaining() + 5))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py:241: in dispatch
+    result = self.handler(_copy(task))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_peer_dispatched_federation.py:62: in __call__
+    return self.peers[work["client_id"]](task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_transport.py:131: in __call__
+    return self._deliver(task)
+           ^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_transport.py:198: in _deliver
+    _require(len(responses) == 2 and responses[0].get("id") == 1
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py:36: in _require
+    raise CodebaseDispatchError(message)
+E   ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch.CodebaseDispatchError: peer handshake or tool result failed: [{'code': -32002, 'message': 'tool_error'}] 2026-10-02 17:39:22,760 - ipfs_accelerate_py.ipfs_kit_integration - INFO - Successfully imported ipfs_kit_py modules from /home/barberb/HACC/complaint-generator/ipfs_datasets_py/ipfs_kit_py/ipfs_kit_py/__init__.py
+E   2026-10-02 17:39:22,760 - ipfs_accelerate_py.ipfs_kit_integration - INFO - IPFS Kit integration enabled successfully
+E   2026-10-02 17:39:22,760 - ipfs_accelerate_py.common.storage_wrapper - INFO - Storage initialized with distributed backend
+E   CodebaseFeatureTrainingError: native feature worker failed: nonzero_exit: prlimit: failed to set the FSIZE resource limit: Operation not permitted
+- generated xml file: /home/barberb/lift_coding/artifacts/codebase-peer-transport-20261002/native-04/tests.xml -
+=========================== short test summary info ============================
+ERROR tests/integration/logic/software_contracts/test_codebase_peer_federation.py::test_real_two_peer_round_exact_native_reduction
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+============================== 1 error in 12.45s ===============================

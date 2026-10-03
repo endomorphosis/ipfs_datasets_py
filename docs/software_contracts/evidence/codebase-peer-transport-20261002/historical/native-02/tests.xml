@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="12.154" timestamp="2026-10-02T17:36:01.759284+00:00" hostname="spark-b271"><testcase classname="tests.integration.logic.software_contracts.test_codebase_peer_federation" name="test_real_two_peer_round_exact_native_reduction" time="11.844"><error message="failed on setup with &quot;ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch.CodebaseDispatchError: local peer process unavailable, cancelled, or failed:  ACC/complaint-generator/ipfs_datasets_py/ipfs_kit_py/ipfs_kit_py/__init__.py&#10;2026-10-02 17:36:13,227 - ipfs_accelerate_py.ipfs_kit_integration - INFO - IPFS Kit integration enabled successfully&#10;2026-10-02 17:36:13,227 - ipfs_accelerate_py.common.storage_wrapper - INFO - Storage initialized with distributed backend&#10;Traceback (most recent call last):&#10;  File &quot;/tmp/ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_worker.py&quot;, line 83, in &lt;module&gt;&#10;    main()&#10;  File &quot;/tmp/ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_worker.py&quot;, line 39, in main&#10;    peer._require(str(scheduler.state_path) == token.state_path, &quot;peer may use only the inherited default host authority&quot;)&#10;  File &quot;/tmp/ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py&quot;, line 36, in _require&#10;    raise CodebaseDispatchError(message)&#10;ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch.CodebaseDispatchError: peer may use only the inherited default host authority&quot;">tests/integration/logic/software_contracts/test_codebase_peer_federation.py:56: in current
+    value.round = peer.train_current_peer_dispatched_codebase_round(index, repo, expected_head=value.head,
+ipfs_datasets_py/logic/software_contracts/codebase_peer_dispatched_federation.py:221: in train_current_peer_dispatched_codebase_round
+    result = dispatcher.dispatch(task, round_spec.model_id, timeout_seconds=remaining(), lease_seconds=min(600, remaining() + 5))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py:241: in dispatch
+    result = self.handler(_copy(task))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/software_contracts/codebase_peer_dispatched_federation.py:62: in __call__
+    return self.peers[work["client_id"]](task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_transport.py:131: in __call__
+    return self._deliver(task)
+           ^^^^^^^^^^^^^^^^^^^
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_transport.py:191: in _deliver
+    _require(process.ok and process.workspace_cleaned and not process.output_truncated,
+../ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py:36: in _require
+    raise CodebaseDispatchError(message)
+E   ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch.CodebaseDispatchError: local peer process unavailable, cancelled, or failed:  ACC/complaint-generator/ipfs_datasets_py/ipfs_kit_py/ipfs_kit_py/__init__.py
+E   2026-10-02 17:36:13,227 - ipfs_accelerate_py.ipfs_kit_integration - INFO - IPFS Kit integration enabled successfully
+E   2026-10-02 17:36:13,227 - ipfs_accelerate_py.common.storage_wrapper - INFO - Storage initialized with distributed backend
+E   Traceback (most recent call last):
+E     File "/tmp/ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_worker.py", line 83, in &lt;module&gt;
+E       main()
+E     File "/tmp/ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_peer_worker.py", line 39, in main
+E       peer._require(str(scheduler.state_path) == token.state_path, "peer may use only the inherited default host authority")
+E     File "/tmp/ir-release-accelerate-20261001/ipfs_accelerate_py/p2p_tasks/codebase_federated_dispatch.py", line 36, in _require
+E       raise CodebaseDispatchError(message)
+E   ipfs_accelerate_py.p2p_tasks.codebase_federated_dispatch.CodebaseDispatchError: peer may use only the inherited default host authority</error></testcase></testsuite></testsuites>
