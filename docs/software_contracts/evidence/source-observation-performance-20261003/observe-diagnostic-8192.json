@@ -1,0 +1,22 @@
+{
+  "database_read_only": true,
+  "deadline_seconds": 90,
+  "diagnostic_memo_capacity_override": 8192,
+  "diagnostic_skip_existing_schema_installation": true,
+  "elapsed_seconds": 13.768405578000966,
+  "head": {
+    "ast_revision_id": "rev:terminal-source384:281fc0a3d8db01400ad9433b2bcf4b846ff25be2df20af46aed38d7bdaf167a1:snapshot:baguqeerahgfvbgsohbdin7u44wmh3b6tswb42vmp2yj2qvxogyf4k7dkv5wa",
+    "generation": 1,
+    "manifest_cid": "baguqeeraczvkryynezvergeep3vdxxiuqq6qptgc7lvim3povv3sdbk5jpba",
+    "receipt_cid": "baguqeera4do2bie5htcgyc6sjtiikzxx3njiij3f7ivldgk5ytfnlltzleaq",
+    "repository_id": "terminal-source384:281fc0a3d8db01400ad9433b2bcf4b846ff25be2df20af46aed38d7bdaf167a1",
+    "schema": "codebase-head@1",
+    "snapshot_cid": "baguqeerahgfvbgsohbdin7u44wmh3b6tswb42vmp2yj2qvxogyf4k7dkv5wa"
+  },
+  "memory_mb": 4096,
+  "owner_sha256": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4",
+  "schema": "source-observation-profile@1",
+  "source_files": 3,
+  "source_root": "/home/barberb/lift_coding/artifacts/terminal-source384-context-20261003/bottle-canary-02/app",
+  "status": "passed"
+}

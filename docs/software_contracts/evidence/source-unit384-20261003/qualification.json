@@ -1,0 +1,144 @@
+{
+  "actual_inference": {
+    "coverage": {
+      "candidate_statuses": {
+        "fail_open_source_contract_mismatch": 2,
+        "fail_open_source_contract_unsupported": 2
+      },
+      "file_dispositions": {
+        "complete_python_source_required": 1,
+        "inventoried": 1,
+        "unsupported_language": 1
+      },
+      "files": 3,
+      "functions": 5,
+      "selected_units": 5,
+      "unit_dispositions": {
+        "decoded_unverified_candidate": 4,
+        "deferred_gte_token_limit": 1
+      }
+    },
+    "inference_executed": true,
+    "native_worker_executed": true,
+    "original_checkpoint_sha256": "2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5",
+    "retention": "unknown_not_evaluated",
+    "runtime_checkpoint_sha256": "e077986eecdcdc4eb5f244a95a8591bc759a89af31e2a18adff1a20935ff2d7f",
+    "version_id": "sha256:4e6ea2c9c8d97ba6c09c87eb125cb324f9f77a2f53806f93756d8a8b51a543f9",
+    "worker_receipt": {
+      "child_lease_id": "c624c96838ef43c6a53d425973f1ce8b",
+      "device": "cpu",
+      "elapsed_ms": 4455,
+      "input_sha256": "e724f1e6167e9d99b3f195b3313042e26237fddf8bac3e621019a9f4ef51a7ed",
+      "memory_enforcement": "sampled_process_tree_RSS_may_overshoot",
+      "memory_mb": 4096,
+      "output_sha256": "0ed3c09deab7b0dcf184c2c678e3ed7ec6e01541561f147e8e25edcc0aabd088",
+      "parent_lease_id": "999ee122513f4119b8f455e27b466a2a",
+      "provider_calls": 0,
+      "returncode": 0,
+      "workspace_cleaned": true
+    }
+  },
+  "initial_output_recovered_from_retained_command": true,
+  "limitations": [
+    "Declared local fixture, not a benchmark score.",
+    "Four emitted candidates are fail-open; none are accepted as source contracts.",
+    "No training, provider calls, model promotion or proof authority.",
+    "Real numerical fixture preceded scanner dotfile fix; both tested separately.",
+    "An initial mixed test invocation omitted CUDA_VISIBLE_DEVICES and had 23 legacy fixture CUDA-OOM setup errors; corrected explicit CPU invocation passed all 48 controls.",
+    "Sampled RSS limit is not a peak-RSS guarantee."
+  ],
+  "peer_review": "read_only_no_blocker_reported; tests_not_independently_rerun",
+  "schema": "source-unit384-development-qualification@1",
+  "scope": "component development controls; no live benchmark score or whole-codebase proof claim",
+  "source_root": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+  "source_snapshot_scope": "three new owners, directly changed scanner, all five executed test files, reused extraction helpers, historical scanner before namespace fix; numerical dependency hashes retained in actual result, not an exhaustive dependency snapshot",
+  "sources": [
+    {
+      "bytes": 5849,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/source_function_units.py",
+      "sha256": "ad0e72395c999fc579d7a139e7011c791cbac4f721159a9acbb026b856df3424"
+    },
+    {
+      "bytes": 19577,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+      "sha256": "4e43ba59fd26a11a6b371634918fbaae2a9899ba51da1ec53cf850d565d2e246"
+    },
+    {
+      "bytes": 4483,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384_worker.py",
+      "sha256": "13f1a5519a4f3a9cec473795521858504d90b41075a554606daa354aff6bca6a"
+    },
+    {
+      "bytes": 3967,
+      "path": "tests/unit/logic/formalization/autoencoder/test_source_function_units.py",
+      "sha256": "51773318799d8452d268e0dc273586b059e4db99cd559321edcfb985376411e7"
+    },
+    {
+      "bytes": 7596,
+      "path": "tests/integration/logic/software_contracts/test_codebase_source_units_384.py",
+      "sha256": "229f41a8af2800d1d19093c450cd5a67d5fc55882a4b65b35d614f9ae27faefb"
+    },
+    {
+      "bytes": 54666,
+      "path": "ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py",
+      "sha256": "5b95b014af601305eeb6d0d424d3baf3861e641a62ccfc892a5f3bcc5c9754b0"
+    },
+    {
+      "bytes": 13754,
+      "path": "tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py",
+      "sha256": "58d052c91ec33a7b208ffb0eb94e974fbfd789c1128c8566ff714e0aa77d3eb2"
+    },
+    {
+      "bytes": 16449,
+      "path": "tests/unit/logic/software_contracts/semantic_index/test_scanner.py",
+      "sha256": "d5b0d18032cbefab8dfd3e47fcd68b4bd06605add78e9d760533f07b14130f05"
+    }
+  ],
+  "test_attempts": [
+    {
+      "deselected": 1,
+      "errors": 23,
+      "failed": 0,
+      "junit_xml": null,
+      "name": "initial_omitted_cuda",
+      "passed": 24,
+      "seconds": 4.41,
+      "status": "legacy_fixture_setup_failed"
+    },
+    {
+      "errors": 0,
+      "failed": 0,
+      "name": "native01_explicit_cpu",
+      "passed": 48,
+      "seconds": 10.57,
+      "skipped": 0,
+      "status": "passed"
+    },
+    {
+      "errors": 0,
+      "failed": 0,
+      "name": "scanner_dotfiles",
+      "passed": 31,
+      "seconds": 1.28,
+      "skipped": 0,
+      "status": "passed"
+    }
+  ],
+  "test_suites": [
+    {
+      "errors": 0,
+      "failures": 0,
+      "path": "native01-tests.xml",
+      "skipped": 0,
+      "tests": 48
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "path": "scanner-dotfiles-tests.xml",
+      "skipped": 0,
+      "tests": 31
+    }
+  ],
+  "unique_passing_tests": 79
+}

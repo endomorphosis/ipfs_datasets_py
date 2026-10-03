@@ -1,0 +1,103 @@
+# Captured function units with the shared Source384 parent
+
+`codebase_source_units_384` supplies optional model advice for an existing
+`RepositoryCodebaseIndex`. It reads the original captured files, inventories their
+Python functions, and passes bounded function views to the existing GTE and
+shared 384-dimensional decoder. It never replaces a captured file with a fixture,
+trains a model, or changes the source or model head.
+
+The input scope is explicit: callers supply a native source head, repository,
+selected captured paths, a registered shared-parent version, and the pinned local
+embedding snapshot. The calling supervisor remains responsible for binding those
+paths and the checkpoint selection to its authorized task population.
+
+## Source identity and coverage
+
+`source_function_units.extract_function_units` reuses the Security formula
+extractor's qualified names, complete-function spans, and line-to-byte maps.
+Each unit records its original path and file SHA-256, qualified name, enclosing
+scope, original byte range, normalized body SHA-256, and exact source map. An
+independent AST comparison checks that indentation normalization preserves the
+function node. Normalized text is a function view; it is not represented as a
+complete original module. The legacy formula extraction schema remains unchanged.
+
+The inventory includes nested functions and every function in each selected
+file. Unsupported source and normalization cases remain explicit. Selection is
+the canonical path/source-byte-order prefix, with unselected units retained as
+`deferred_selection_budget`. This is deterministic bounded coverage, not semantic
+ranking. Functions over GTE's 512-token maximum are recorded as
+`deferred_gte_token_limit`; they are not truncated.
+
+Limits include 128 selected files, 1 MiB per captured file, 4 MiB of captured
+population bytes, 1,024 functions, 128 numerical candidates, 32,768 characters
+per candidate, and 32 MiB per serialized artifact. Whole-inventory limits refuse
+the operation rather than silently dropping functions. File-level unsupported
+conditions and per-unit deferrals appear in the saved coverage counters.
+
+## Preparation, inference, and replay
+
+The native APIs are:
+
+```python
+preparation = prepare_source_units(index, expected_head=head, paths=paths)
+validate_source_units(index, preparation)
+
+result = infer_shared_parent_units(
+    index, repository, expected_head=head, registry=registry,
+    version_id=parent_version, paths=paths, embedding_snapshot=snapshot,
+    scheduler=scheduler, timeout_seconds=180, memory_mb=4096,
+)
+validate_shared_parent_units(
+    index, repository, result, registry=registry,
+    embedding_snapshot=snapshot, scheduler=scheduler,
+)
+```
+
+The result contains the native registry artifact reference, the complete report,
+and flags describing whether that invocation ran the numerical worker. The report
+retains original and compatibility-view checkpoint hashes, native model version,
+source head, complete preparation, producer and runtime pins, embedding asset
+pins, numerical rows, worker receipt, and coverage.
+
+Numerical work runs in an isolated, offline CPU subprocess admitted through the
+existing resource owner. It loads the actual pinned GTE and shared decoder;
+target labels and source execution are absent. The worker uses the existing
+sampled process-tree RSS limit, which can overshoot and does not guarantee peak
+RSS. CUDA execution is not part of this profile.
+
+Replay re-derives the source maps, checks the parent checkpoint and embedding
+assets, validates the output and its hashes, and resolves the committed native
+operation. `validate_shared_parent_units` additionally observes the live source
+head before and after replay. It does not invoke the numerical worker.
+`load_source_unit_inference` is historical replay only and makes no current-source
+claim.
+
+## What the result establishes
+
+Decoder outputs are candidates. Proof, execution, completion, source-semantics,
+and whole-file-semantics authority remain false. A mapped function can still lack
+its module globals, closure bindings, or a supported source contract. Those cases
+remain fail-open instead of being treated as checked program properties.
+
+Repository retention is `unknown_not_evaluated`; this inference path performs no
+training or promotion. Downstream intent planning and proof checks must retain
+their independent contract and admission rules.
+
+The initial actual-model development control inventories five functions from an
+unchanged 73,909-byte Python module. Four receive decoder candidates and one is
+deferred for token length. Two candidates report source-contract mismatch and
+two report unsupported source contracts. These are truthful inference and replay
+controls, not a benchmark score or a demonstrated formalization improvement.
+
+The [retained development evidence](evidence/source-unit384-20261003/README.md)
+contains the actual inference receipt, exact source and test snapshots, the
+initial omitted-CUDA setup failure, and the corrected CPU and scanner test runs.
+
+The [separate observation performance evidence](evidence/source-observation-performance-20261003/README.md)
+diagnoses repeated CID encoding when a captured graph's working set exceeded
+4,096 entries. The pure encoding and validation caches now each retain at most
+8,192 entries; they store short identity results, not source or graph bodies.
+Every stored body and live registration is still verified. On one retained
+Bottle snapshot, the same native observation took 27.85 seconds before and
+13.62 seconds after the change under cProfile. This is a single component
+measurement, not a general scaling claim or a complete benchmark result.

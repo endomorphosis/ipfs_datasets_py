@@ -1,0 +1,136 @@
+{
+  "schema": "source-unit384-evidence@1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2618,
+      "sha256": "71d983dc4093a3511a21f9adb3f84704de0373506252770fb2da00e3ecbcdc62"
+    },
+    {
+      "path": "actual-native01/fixture-repository/broken.py",
+      "bytes": 13,
+      "sha256": "e5c39b5d9e483c96898f2970978fee4d8e5a3814e685d9ab37365a5aa333b5ad"
+    },
+    {
+      "path": "actual-native01/fixture-repository/module.py",
+      "bytes": 73909,
+      "sha256": "eae1c51a4405b7049373ac8cb0629ff438b719f95ce862519c758e10fb59ebce"
+    },
+    {
+      "path": "actual-native01/fixture-repository/notes.txt",
+      "bytes": 28,
+      "sha256": "697b206d41e835f487ab6104e2cf4fa1d33349ed59c2d9c77b77813a0040706c"
+    },
+    {
+      "path": "actual-native01/result.json",
+      "bytes": 119013,
+      "sha256": "eca909bdda5228670445d43c86aec863575884826a8c4901c6d226ef8866c6b3"
+    },
+    {
+      "path": "initial-omitted-cuda-tests.log",
+      "bytes": 42101,
+      "sha256": "73d5b2a7c3e2f6f9aaab336cfb8e8d51002e601b1c42f9019e11b477395d34aa"
+    },
+    {
+      "path": "native01-tests.log",
+      "bytes": 1469,
+      "sha256": "524b0b0d0ac85094e7ac2a9e75244d141eaf705b12eb2439845621e1725933ce"
+    },
+    {
+      "path": "native01-tests.xml",
+      "bytes": 58333,
+      "sha256": "350d12511fe10d022c6e2a249fac2d584facee2bb69e8c6fd8f711885d01b2ee"
+    },
+    {
+      "path": "qualification.json",
+      "bytes": 5290,
+      "sha256": "928eb386e6cab8301f679fc7da5fe73784c3f50a0c91d31c473e668a02254baa"
+    },
+    {
+      "path": "scanner-dotfiles-tests.log",
+      "bytes": 1303,
+      "sha256": "4a3005dd6771a60da2e725f68f972264fb7416d7c95c54fad1467eac7aa38612"
+    },
+    {
+      "path": "scanner-dotfiles-tests.xml",
+      "bytes": 5843,
+      "sha256": "b650aa18ad97a7bca816d58a7080202eaa2c1d3f610646fca38fc7581dc86893"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/formalization/autoencoder/security/security_formalization_evaluation.py",
+      "bytes": 14644,
+      "sha256": "fa094ce4beb8d356b1c219d5c1903d98809b4e874fb6e5be32ad26d53913fd72"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_corpus.py",
+      "bytes": 13307,
+      "sha256": "3f7f9443be1cf122d019f5936f0650b13da185686cbbc205d98e61098f9fca1c"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_source_units.py",
+      "bytes": 11735,
+      "sha256": "ae9b5d94b17c05201dde08152c6f1f54a09736c76fcad8ba8e588dc1c5d59b07"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/formalization/autoencoder/source_function_units.py",
+      "bytes": 5849,
+      "sha256": "ad0e72395c999fc579d7a139e7011c791cbac4f721159a9acbb026b856df3424"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/formalization/autoencoder/source_screening.py",
+      "bytes": 2348,
+      "sha256": "f53a59b989274d7944628017a3baae2ebd66dc432855a7aa92033774d7c41eab"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+      "bytes": 19577,
+      "sha256": "4e43ba59fd26a11a6b371634918fbaae2a9899ba51da1ec53cf850d565d2e246"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/software_contracts/codebase_source_units_384_worker.py",
+      "bytes": 4483,
+      "sha256": "13f1a5519a4f3a9cec473795521858504d90b41075a554606daa354aff6bca6a"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py",
+      "bytes": 54666,
+      "sha256": "5b95b014af601305eeb6d0d424d3baf3861e641a62ccfc892a5f3bcc5c9754b0"
+    },
+    {
+      "path": "sources/tests/integration/logic/software_contracts/test_codebase_source_units_384.py",
+      "bytes": 7596,
+      "sha256": "229f41a8af2800d1d19093c450cd5a67d5fc55882a4b65b35d614f9ae27faefb"
+    },
+    {
+      "path": "sources/tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py",
+      "bytes": 8511,
+      "sha256": "2880115855e3e903ca1523558f4c443a76a64e46838aa095399d850805eef028"
+    },
+    {
+      "path": "sources/tests/unit/logic/formalization/autoencoder/test_source_function_units.py",
+      "bytes": 3967,
+      "sha256": "51773318799d8452d268e0dc273586b059e4db99cd559321edcfb985376411e7"
+    },
+    {
+      "path": "sources/tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py",
+      "bytes": 13754,
+      "sha256": "58d052c91ec33a7b208ffb0eb94e974fbfd789c1128c8566ff714e0aa77d3eb2"
+    },
+    {
+      "path": "sources/tests/unit/logic/software_contracts/semantic_index/test_scanner.py",
+      "bytes": 16449,
+      "sha256": "d5b0d18032cbefab8dfd3e47fcd68b4bd06605add78e9d760533f07b14130f05"
+    },
+    {
+      "path": "sources-before-scanner-fix/ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py",
+      "bytes": 54427,
+      "sha256": "99af34e5427faadbb9f7caa0aa025b18c8b43dbf1eb689ef7f140ea8ded7d25f"
+    },
+    {
+      "path": "test-commands.json",
+      "bytes": 3663,
+      "sha256": "2bf87feb878599d7974cb301b8e240ea1fc656d85c2104e7f6442af3798ddd21"
+    }
+  ],
+  "bytes": 544896
+}

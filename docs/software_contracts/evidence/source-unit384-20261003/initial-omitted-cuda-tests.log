@@ -1,0 +1,574 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 48 items / 1 deselected / 47 selected
+
+tests/unit/logic/formalization/autoencoder/test_source_function_units.py . [  2%]
+.................                                                        [ 38%]
+tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py E [ 40%]
+EEEEEEEEEEEEEEEEEEEEEE                                                   [ 87%]
+tests/integration/logic/software_contracts/test_codebase_source_units_384.py . [ 89%]
+.....                                                                    [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_complete_module_and_class_units_consume_real_weights __
+../../../.local/lib/python3.12/site-packages/pytest_asyncio/plugin.py:924: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_window_context_recovery_never_counts_as_standalone_success _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_model_off_and_zero_head_do_not_receive_parser_fallback[options0] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_model_off_and_zero_head_do_not_receive_parser_fallback[options1] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_fragments_and_prose_are_not_repaired[def broken(x):\n    return (x +\n] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_fragments_and_prose_are_not_repaired[    return value + 2\n] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_fragments_and_prose_are_not_repaired[def f(x):\n    return x+2\n] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_fragments_and_prose_are_not_repaired[Fix a command injection vulnerability.] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_replay_rejects_forged_provenance_or_success_credit[mapping] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_replay_rejects_forged_provenance_or_success_credit[recovered_credit] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_replay_rejects_forged_provenance_or_success_credit[source] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_replay_rejects_forged_provenance_or_success_credit[checkpoint] _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+____ ERROR at setup of test_bound_overflow_does_not_silently_drop_functions ____
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+___________ ERROR at setup of test_bad_byte_windows_refused[window0] ___________
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+___________ ERROR at setup of test_bad_byte_windows_refused[window1] ___________
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+___________ ERROR at setup of test_bad_byte_windows_refused[window2] ___________
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+___________ ERROR at setup of test_bad_byte_windows_refused[window3] ___________
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_source_digest_must_match_independently_pinned_source __
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_non_python_source_not_guessed_from_function_spelling __
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_indentation_removal_cannot_change_multiline_literal_contents _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_____ ERROR at setup of test_utf8_before_a_function_keeps_source_byte_maps _____
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+_ ERROR at setup of test_explicit_python_language_preserves_arbitrary_original_source_path _
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+___ ERROR at setup of test_explicit_other_language_overrides_python_filename ___
+tests/unit/logic/formalization/autoencoder/test_security_formula_decoder.py:75: in formula_checkpoint
+    descriptor = api.train_security_formula_decoder(samples=authored_formula_samples(),
+ipfs_datasets_py/logic/formalization/autoencoder/security/security_formula_decoder.py:338: in train_security_formula_decoder
+    optimizer.step(); losses.append(total)
+    ^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:530: in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:80: in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/optim/adam.py:222: in step
+    self._accelerator_graph_capture_health_check()
+../../../.local/lib/python3.12/site-packages/torch/optim/optimizer.py:466: in _accelerator_graph_capture_health_check
+    capturing = torch.accelerator.current_stream().is_capturing()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/lib/python3.12/site-packages/torch/accelerator/__init__.py:232: in current_stream
+    return torch._C._accelerator_getStream(device_index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.AcceleratorError: CUDA error: out of memory
+E   Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E   For more detailed error information, run with CUDA_LOG_FILE=stderr
+=========================== short test summary info ============================
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_complete_module_and_class_units_consume_real_weights
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_window_context_recovery_never_counts_as_standalone_success
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_model_off_and_zero_head_do_not_receive_parser_fallback[options0]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_model_off_and_zero_head_do_not_receive_parser_fallback[options1]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_fragments_and_prose_are_not_repaired[def broken(x):\n    return (x +\n]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_fragments_and_prose_are_not_repaired[    return value + 2\n]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_fragments_and_prose_are_not_repaired[def f(x):\n    return x+2\n]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_fragments_and_prose_are_not_repaired[Fix a command injection vulnerability.]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_replay_rejects_forged_provenance_or_success_credit[mapping]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_replay_rejects_forged_provenance_or_success_credit[recovered_credit]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_replay_rejects_forged_provenance_or_success_credit[source]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_replay_rejects_forged_provenance_or_success_credit[checkpoint]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_bound_overflow_does_not_silently_drop_functions
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_bad_byte_windows_refused[window0]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_bad_byte_windows_refused[window1]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_bad_byte_windows_refused[window2]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_bad_byte_windows_refused[window3]
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_source_digest_must_match_independently_pinned_source
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_non_python_source_not_guessed_from_function_spelling
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_indentation_removal_cannot_change_multiline_literal_contents
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_utf8_before_a_function_keeps_source_byte_maps
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_explicit_python_language_preserves_arbitrary_original_source_path
+ERROR tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py::test_explicit_other_language_overrides_python_filename
+================= 24 passed, 1 deselected, 23 errors in 4.41s ==================

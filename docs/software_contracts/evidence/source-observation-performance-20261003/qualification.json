@@ -1,0 +1,96 @@
+{
+  "actual_retained_source_head": {
+    "ast_revision_id": "rev:terminal-source384:281fc0a3d8db01400ad9433b2bcf4b846ff25be2df20af46aed38d7bdaf167a1:snapshot:baguqeerahgfvbgsohbdin7u44wmh3b6tswb42vmp2yj2qvxogyf4k7dkv5wa",
+    "generation": 1,
+    "manifest_cid": "baguqeeraczvkryynezvergeep3vdxxiuqq6qptgc7lvim3povv3sdbk5jpba",
+    "receipt_cid": "baguqeera4do2bie5htcgyc6sjtiikzxx3njiij3f7ivldgk5ytfnlltzleaq",
+    "repository_id": "terminal-source384:281fc0a3d8db01400ad9433b2bcf4b846ff25be2df20af46aed38d7bdaf167a1",
+    "schema": "codebase-head@1",
+    "snapshot_cid": "baguqeerahgfvbgsohbdin7u44wmh3b6tswb42vmp2yj2qvxogyf4k7dkv5wa"
+  },
+  "after": {
+    "capacity": 8192,
+    "content_sha256": "cda06b90dfaf7db309c554deac01b2ffee9af7d0ab652b10e40f57908860afc7",
+    "elapsed_seconds": 13.620060028999433,
+    "encode_memo": {
+      "currsize": 5730,
+      "hits": 23343,
+      "maxsize": 8192,
+      "misses": 5730
+    },
+    "validate_memo": {
+      "currsize": 1080,
+      "hits": 1111,
+      "maxsize": 8192,
+      "misses": 1080
+    }
+  },
+  "all_native_source_head_ast_cas_fences_preserved": true,
+  "before": {
+    "capacity": 4096,
+    "content_sha256": "b6f0299be63eb3d7d2517abcc431d51ff28668555fe464c0a54c99507d248eb4",
+    "elapsed_seconds": 27.849052782999934
+  },
+  "database_read_only": true,
+  "deadline_seconds": 90,
+  "diagnostic_only": {
+    "capacity_override": 8192,
+    "elapsed_seconds": 13.768405578000966,
+    "not_production_qualification": true
+  },
+  "limits": [
+    "Only a fixed per-cache entry capacity changed; no manifest reconstruction cache was added.",
+    "Capacity8192 still evicts larger working sets and does not establish general scaling.",
+    "Measurements include cProfile instrumentation and are not full benchmark timings.",
+    "No numerical model inference, training or provider call in the observation profile.",
+    "No task success, formalization quality, proof authority or peak-RSS guarantee is inferred.",
+    "Historical4096 evidence is retained unchanged.",
+    "profile-observe.py is the final diagnostic reproducer; earlier receipts have the narrower metadata fields that existed when they were recorded."
+  ],
+  "memory_mb": 4096,
+  "prework_refusal": {
+    "later_read_only_audit": "no leases/waiters; stored 4 CPU / 9830MiB differs from requested native16CPU/99688MiB; actor not identified",
+    "observation_performed": false,
+    "seconds": 0.008044357000471791,
+    "state_file_edited": false,
+    "type": "ResourceConfigurationError"
+  },
+  "profiled_observation_ratio_before_over_after": 2.0447085199114063,
+  "schema": "source-observation-performance-qualification@1",
+  "schema_installation_diagnostic_adjustment": "exact DuckDBASTStore initialized without connection, then read-only connection attached before native catalog construction; avoids unconditional CREATE DDL only",
+  "source_pins": [
+    {
+      "bytes": 28949,
+      "path": "ipfs_datasets_py/logic/software_contracts/content.py",
+      "sha256": "cda06b90dfaf7db309c554deac01b2ffee9af7d0ab652b10e40f57908860afc7"
+    },
+    {
+      "bytes": 28715,
+      "path": "ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+      "sha256": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4"
+    },
+    {
+      "bytes": 22010,
+      "path": "tests/unit/logic/software_contracts/test_content_memo.py",
+      "sha256": "448bdf97c94ed5a4c6034bd798321ccb5d0611534676f3cf9f0ff60db6ec53b1"
+    },
+    {
+      "bytes": 12296,
+      "path": "tests/unit/logic/software_contracts/test_content_identity.py",
+      "sha256": "2ee2bf2d98e41143aa1c533a2b91ab50b15348b3f49e8eed67b7f259a5b4a615"
+    },
+    {
+      "bytes": 13173,
+      "path": "tests/unit/logic/software_contracts/test_cache.py",
+      "sha256": "0c15fe456de9d75457083d1a65646c292c4ffca569d83dc543ebb0a9799533cb"
+    }
+  ],
+  "status": "component_comparison_passed",
+  "tests": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 64,
+    "seconds": 5.94,
+    "skipped": 0
+  }
+}

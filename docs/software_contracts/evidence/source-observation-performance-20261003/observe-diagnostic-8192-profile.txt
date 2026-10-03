@@ -1,0 +1,73 @@
+         68293799 function calls (56727597 primitive calls) in 13.562 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1021 to 65 due to restriction <65>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   10.940   10.940 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:490(load)
+        1    0.000    0.000    8.527    8.527 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:184(from_dict)
+        1    0.001    0.001    8.482    8.482 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:452(from_dict)
+    29054    0.012    0.000    7.547    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:413(cid_for_structured)
+    29066    0.022    0.000    6.438    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:359(_cid_from_digest_bytes)
+    27912    0.010    0.000    6.119    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:383(edge_id)
+1657158/870912    0.930    0.000    4.869    0.000 /home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py:743(validate)
+    29066    0.058    0.000    4.856    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:203(_encode_digest)
+14224960/8886420    1.170    0.000    3.776    0.000 {built-in method builtins.isinstance}
+     4653    0.001    0.000    3.614    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:458(<genexpr>)
+     4652    0.008    0.000    3.613    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:395(from_dict)
+     5726    0.008    0.000    3.445    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:185(_memo_encode_digest)
+  2669270    0.597    0.000    2.823    0.000 /usr/lib/python3.12/typing.py:1194(__instancecheck__)
+      532    0.000    0.000    2.693    0.005 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:456(<genexpr>)
+      531    0.002    0.000    2.692    0.005 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:320(from_dict)
+      531    0.006    0.000    2.680    0.005 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:265(__post_init__)
+   648258    0.328    0.000    2.636    0.000 /home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py:439(_validate_union)
+     6802    0.002    0.000    2.516    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py:493(__str__)
+     6802    0.005    0.000    2.515    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py:383(encode)
+     6802    0.004    0.000    2.462    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/__init__.py:222(encode)
+     6802    0.003    0.000    2.440    0.000 /home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py:212(encode)
+     6802    0.132    0.000    2.400    0.000 /home/barberb/.local/lib/python3.12/site-packages/bases/encoding/fixchar.py:373(_encode)
+  2669270    0.629    0.000    2.225    0.000 /usr/lib/python3.12/typing.py:1465(__subclasscheck__)
+   408098    0.156    0.000    2.178    0.000 /home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/string_alphabet.py:101(__getitem__)
+        1    0.000    0.000    2.127    2.127 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:180(cid)
+        2    0.000    0.000    2.127    1.064 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:446(state_cid)
+        1    0.000    0.000    1.998    1.998 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:172(to_dict)
+        1    0.001    0.001    1.997    1.997 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:449(to_dict)
+        2    0.002    0.001    1.869    0.935 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:443(identity_payload)
+    13956    0.005    0.000    1.767    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:390(to_dict)
+        4    0.004    0.001    1.677    0.419 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/ast_ir.py:1467(from_dict)
+    29066    0.017    0.000    1.548    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py:447(digest)
+790610/56087    0.264    0.000    1.405    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:130(_thaw_structured)
+        2    0.001    0.001    1.313    0.657 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py:1762(_rebuild)
+    69298    0.261    0.000    1.312    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:103(_memo_registration_key)
+    29059    0.016    0.000    1.291    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:335(canonical_dag_json_bytes)
+  2669295    0.440    0.000    1.278    0.000 {built-in method builtins.issubclass}
+3932303/90247    1.143    0.000    1.206    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:270(validate_structured_value)
+     5726    0.007    0.000    1.182    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py:199(__new__)
+   248684    0.020    0.000    1.134    0.000 {built-in method builtins.getattr}
+        1    0.000    0.000    1.120    1.120 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:428(__post_init__)
+        3    0.001    0.000    1.119    0.373 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:409(_sorted_records)
+   904576    0.191    0.000    1.088    0.000 /home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py:347(_validate_type)
+    52700    0.035    0.000    1.052    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py:297(get)
+     2182    0.006    0.000    1.045    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:422(validate_cid)
+        3    0.001    0.000    1.035    0.345 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:516(load_ast_artifact)
+     1593    0.003    0.000    1.021    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:317(to_dict)
+   281957    0.260    0.000    1.018    0.000 {built-in method builtins.any}
+     1595    0.000    0.000    0.975    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py:114(_cid)
+   122908    0.092    0.000    0.974    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/ast_ir.py:160(_text)
+    38020    0.071    0.000    0.955    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py:48(__new__)
+     1076    0.001    0.000    0.935    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:456(_memo_validate_cid)
+     1076    0.003    0.000    0.912    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:463(_validate_cid_uncached)
+   167275    0.041    0.000    0.873    0.000 {built-in method builtins.sorted}
+2669381/2669271    0.545    0.000    0.837    0.000 <frozen abc>:121(__subclasscheck__)
+        2    0.000    0.000    0.828    0.414 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/ast_ir.py:1492(from_json)
+     5726    0.004    0.000    0.825    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py:89(_CID_validate_multihash_digest)
+    16662    0.013    0.000    0.816    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/ast_ir.py:1021(from_dict)
+    29066    0.027    0.000    0.796    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py:211(digest)
+   137988    0.171    0.000    0.789    0.000 /home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py:237(_type_error)
+     7878    0.010    0.000    0.771    0.000 /home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py:558(unwrap_raw)
+2047630/1580960    0.213    0.000    0.768    0.000 {built-in method builtins.hash}
+   100076    0.052    0.000    0.728    0.000 /usr/lib/python3.12/json/__init__.py:183(dumps)
+    38050    0.014    0.000    0.713    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/content.py:198(_require_unchanged_registration)
+      531    0.000    0.000    0.691    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py:141(symbol_version_cid)
+
+

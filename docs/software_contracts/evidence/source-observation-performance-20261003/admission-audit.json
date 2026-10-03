@@ -1,0 +1,109 @@
+{
+  "differences": {
+    "lane_reservations": {
+      "requested": {
+        "validation": {
+          "cpu_slots": 2,
+          "memory_mb": 0
+        }
+      },
+      "stored": {
+        "validation": {
+          "cpu_slots": 1,
+          "memory_mb": 0
+        }
+      }
+    },
+    "proof_memory_headroom_mb": {
+      "requested": 24922,
+      "stored": 2458
+    },
+    "total_child_process_slots": {
+      "requested": 16,
+      "stored": 4
+    },
+    "total_cpu_slots": {
+      "requested": 16,
+      "stored": 4
+    },
+    "total_memory_mb": {
+      "requested": 99688,
+      "stored": 9830
+    }
+  },
+  "environment": {
+    "IPFS_DATASETS_PROOF_RESOURCE_RECOVERY": null,
+    "IPFS_DATASETS_RESOURCE_CHILD_PROCESS_SLOTS": null,
+    "IPFS_DATASETS_RESOURCE_CPU_SLOTS": null,
+    "IPFS_DATASETS_RESOURCE_GPU_MEMORY_MB": null,
+    "IPFS_DATASETS_RESOURCE_MEMORY_MB": null,
+    "IPFS_DATASETS_RESOURCE_SCHEDULER_PATH": null,
+    "IPFS_DATASETS_RESOURCE_UNIFIED_MEMORY_MB": null
+  },
+  "leases": {},
+  "profile_runtime": "default_resource_scheduler_config; no explicit capacity overrides",
+  "proof_backoff": {},
+  "proof_recovery": null,
+  "read_only": true,
+  "requested_config": {
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 2,
+        "memory_mb": 0
+      }
+    },
+    "max_gpu_memory_percent": null,
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_waiting_requests": 256,
+    "proof_backoff_seconds": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_memory_headroom_mb": 24922,
+    "proof_memory_stall_percent": 2.0,
+    "proof_recovery_enabled": false,
+    "proof_recovery_grants": 4,
+    "proof_recovery_interval_seconds": 0.25,
+    "proof_recovery_samples": 2,
+    "proof_safety_enabled": true,
+    "require_known_gpu_for_gpu_work": true,
+    "reserved_gpu_memory_mb": 0,
+    "reserved_memory_mb": 0,
+    "total_child_process_slots": 16,
+    "total_cpu_slots": 16,
+    "total_gpu_memory_mb": null,
+    "total_memory_mb": 99688,
+    "total_unified_memory_mb": null
+  },
+  "schema": "source-observation-admission-audit@1",
+  "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+  "stored_config": {
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 1,
+        "memory_mb": 0
+      }
+    },
+    "max_gpu_memory_percent": null,
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_waiting_requests": 256,
+    "proof_backoff_seconds": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_memory_headroom_mb": 2458,
+    "proof_memory_stall_percent": 2.0,
+    "proof_safety_enabled": true,
+    "require_known_gpu_for_gpu_work": true,
+    "reserved_gpu_memory_mb": 0,
+    "reserved_memory_mb": 0,
+    "total_child_process_slots": 4,
+    "total_cpu_slots": 4,
+    "total_gpu_memory_mb": null,
+    "total_memory_mb": 9830,
+    "total_unified_memory_mb": null
+  },
+  "stored_state_sha256": "9e7e0c6aa877c189a43c41eab761acd13e566bfd73ec4d914e424834a9128920",
+  "time_unix": 1791006125.2088733,
+  "waiters": {}
+}

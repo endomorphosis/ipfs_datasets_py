@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/source-observation-performance-20261003/profile-observe.py", line 22, in <module>
+    with duckdb.connect(str(state/'source.duckdb'),read_only=True,config={'threads':1,'memory_limit':'512MB'}) as cx:
+  File "/home/barberb/lift_coding/artifacts/source-observation-performance-20261003/profile-observe.py", line 23, in <module>
+    store=DuckDBASTStore(connection=cx)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py", line 1688, in __init__
+    self.install_schema(connection)
+  File "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py", line 1705, in install_schema
+    connection.execute(body)
+_duckdb.InvalidInputException: Invalid Input Error: Cannot execute statement of type "CREATE" on database "source" which is attached in read-only mode!

@@ -1,0 +1,63 @@
+{
+  "commands": [
+    {
+      "command": [
+        "/bin/bash",
+        "-lc",
+        "python3.12 -m pytest -q tests/unit/logic/formalization/autoencoder/test_source_function_units.py tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py tests/integration/logic/software_contracts/test_codebase_source_units_384.py -k 'not actual_pinned'"
+      ],
+      "cwd": "file:///home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+      "duration": {
+        "nanos": 818320171,
+        "secs": 5
+      },
+      "exit_code": 1,
+      "junit_xml": null,
+      "output_path": "initial-omitted-cuda-tests.log",
+      "output_sha256": "73d5b2a7c3e2f6f9aaab336cfb8e8d51002e601b1c42f9019e11b477395d34aa",
+      "schema": "retained-test-command@1",
+      "source_record_sha256": "fb50bddfcb294767083981dc8eb4b6faea10dc586d16889ccc6697465132ef74",
+      "status": "failed",
+      "timestamp": "2026-10-03T05:15:02.626Z"
+    },
+    {
+      "command": [
+        "/bin/bash",
+        "-lc",
+        "env CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 PYTHONDONTWRITEBYTECODE=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 CODEBASE384_CHECKPOINT=/home/barberb/lift_coding/artifacts/distributed384-20261001/run-01/security_ir/coordinator/checkpoints/2ca38dfcc05536315fc3e2c0647b710b930ef4066b474061a7b4e5bfb9a258c5.json CODEBASE384_EMBEDDING_SNAPSHOT=/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd python3.12 -m pytest -q tests/unit/logic/formalization/autoencoder/test_source_function_units.py tests/unit/logic/formalization/autoencoder/test_security_formula_source_units.py tests/integration/logic/software_contracts/test_codebase_source_units_384.py --basetemp=/home/barberb/lift_coding/artifacts/source-unit384-20261003/native01 --junitxml=/home/barberb/lift_coding/artifacts/source-unit384-20261003/native01-tests.xml > /home/barberb/lift_coding/artifacts/source-unit384-20261003/native01-tests.log 2>&1"
+      ],
+      "cwd": "file:///home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+      "duration": {
+        "nanos": 935947606,
+        "secs": 11
+      },
+      "exit_code": 0,
+      "junit_xml": "native01-tests.xml",
+      "output_path": "native01-tests.log",
+      "schema": "retained-test-command@1",
+      "source_record_sha256": "82c104391e8c57f210ce9d281cbe815de0401347b6bfe7ae56fa90840921dff7",
+      "status": "completed",
+      "timestamp": "2026-10-03T05:16:06.421Z"
+    },
+    {
+      "command": [
+        "/bin/bash",
+        "-lc",
+        "CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONDONTWRITEBYTECODE=1 python3.12 -m pytest -q tests/unit/logic/software_contracts/semantic_index/test_python_analysis.py tests/unit/logic/software_contracts/semantic_index/test_scanner.py --junitxml=/home/barberb/lift_coding/artifacts/source-unit384-20261003/scanner-dotfiles-tests.xml > /home/barberb/lift_coding/artifacts/source-unit384-20261003/scanner-dotfiles-tests.log 2>&1"
+      ],
+      "cwd": "file:///home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+      "duration": {
+        "nanos": 746212199,
+        "secs": 1
+      },
+      "exit_code": 0,
+      "junit_xml": "scanner-dotfiles-tests.xml",
+      "output_path": "scanner-dotfiles-tests.log",
+      "schema": "retained-test-command@1",
+      "source_record_sha256": "a17a6d3eb362ea73acb5113e9c9423b6b0665557660b44c445aace8057cd8cd6",
+      "status": "completed",
+      "timestamp": "2026-10-03T05:21:47.669Z"
+    }
+  ],
+  "schema": "source-unit384-test-commands@1"
+}

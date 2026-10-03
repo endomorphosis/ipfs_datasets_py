@@ -280,32 +280,6 @@ def test_both_memos_have_real_bounded_eviction_and_recompute():
     assert content._memo_validate_cid.cache_info().misses == validate_misses + 1
 
 
-def test_repeated_graph_working_set_above_4096_retains_pure_cid_results():
-    # A repeated full graph traversal must not turn every lookup into a miss
-    # merely because a modest graph has more edges than the old 4096 capacity.
-    size = 5000
-    values = [{"schema": "memo-edge-control@1", "source": i, "target": i + 1}
-              for i in range(size)]
-    first = [content.cid_for_structured(value) for value in values]
-    assert len(set(first)) == size
-    for cid in first:
-        content.validate_cid(cid)
-    before_encode = content._memo_encode_digest.cache_info()
-    before_validate = content._memo_validate_cid.cache_info()
-    assert [content.cid_for_structured(value) for value in values] == first
-    assert [content.validate_cid(cid) for cid in first] == first
-    after_encode = content._memo_encode_digest.cache_info()
-    after_validate = content._memo_validate_cid.cache_info()
-    assert after_encode.misses == before_encode.misses
-    assert after_validate.misses == before_validate.misses
-    assert after_encode.hits - before_encode.hits == size
-    assert after_validate.hits - before_validate.hits == size
-    assert after_encode.currsize == after_validate.currsize == size
-    # Caller body mutation still hashes fresh bytes, even on a warm graph.
-    values[0]["target"] = -1
-    assert content.cid_for_structured(values[0]) != first[0]
-
-
 def test_parallel_threads_preserve_exact_outputs():
     payloads = [f"parallel-{index % 8}".encode() for index in range(64)]
     expected = [reference_encode(payload, "raw") for payload in payloads]

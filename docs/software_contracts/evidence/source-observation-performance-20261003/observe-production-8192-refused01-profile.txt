@@ -1,0 +1,73 @@
+         9654 function calls (9567 primitive calls) in 0.008 seconds
+
+   Ordered by: cumulative time
+   List reduced from 424 to 65 due to restriction <65>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.008    0.008 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_ir.py:422(observe_current)
+      6/1    0.000    0.000    0.006    0.006 <frozen importlib._bootstrap>:1349(_find_and_load)
+      6/1    0.000    0.000    0.006    0.006 <frozen importlib._bootstrap>:1304(_find_and_load_unlocked)
+      6/1    0.000    0.000    0.006    0.006 <frozen importlib._bootstrap>:911(_load_unlocked)
+      6/1    0.000    0.000    0.006    0.006 <frozen importlib._bootstrap_external>:989(exec_module)
+     14/2    0.000    0.000    0.006    0.003 <frozen importlib._bootstrap>:480(_call_with_frames_removed)
+     39/1    0.002    0.000    0.006    0.006 {built-in method builtins.exec}
+        1    0.000    0.000    0.006    0.006 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:1(<module>)
+        1    0.000    0.000    0.005    0.005 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1(<module>)
+        6    0.000    0.000    0.004    0.001 /usr/lib/python3.12/dataclasses.py:1257(wrap)
+        6    0.000    0.000    0.004    0.001 /usr/lib/python3.12/dataclasses.py:921(_process_class)
+       33    0.000    0.000    0.003    0.000 /usr/lib/python3.12/dataclasses.py:449(_create_fn)
+      2/1    0.000    0.000    0.001    0.001 /usr/lib/python3.12/contextlib.py:132(__enter__)
+      3/1    0.000    0.000    0.001    0.001 {built-in method builtins.next}
+        1    0.000    0.000    0.001    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/codebase_resources.py:25(acquire_codebase_resources)
+        1    0.000    0.000    0.001    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1909(get_global_resource_scheduler)
+        1    0.000    0.000    0.001    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py:1(<module>)
+        6    0.000    0.000    0.001    0.000 /usr/lib/python3.12/dataclasses.py:568(_init_fn)
+        1    0.000    0.000    0.001    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1897(default_resource_scheduler_config)
+        1    0.000    0.000    0.001    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:421(for_proof_host)
+        6    0.000    0.000    0.001    0.000 <frozen importlib._bootstrap_external>:1062(get_code)
+        1    0.000    0.000    0.001    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py:51(collect_proof_host_resources)
+        6    0.000    0.000    0.001    0.000 <frozen importlib._bootstrap_external>:751(_compile_bytecode)
+        6    0.000    0.000    0.001    0.000 /usr/lib/python3.12/dataclasses.py:1240(dataclass)
+        6    0.001    0.000    0.001    0.000 {built-in method marshal.loads}
+       30    0.000    0.000    0.001    0.000 /usr/lib/python3.12/pathlib.py:1024(read_text)
+        1    0.000    0.000    0.001    0.001 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py:1(<module>)
+        5    0.000    0.000    0.001    0.000 /usr/lib/python3.12/dataclasses.py:638(_frozen_get_del_attr)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/dataclasses.py:760(_get_field)
+       20    0.000    0.000    0.000    0.000 {built-in method builtins.__build_class__}
+      2/1    0.000    0.000    0.000    0.000 {built-in method builtins.__import__}
+       31    0.000    0.000    0.000    0.000 /usr/lib/python3.12/pathlib.py:1007(open)
+       31    0.000    0.000    0.000    0.000 {built-in method _io.open}
+        6    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap>:1240(_find_spec)
+        6    0.000    0.000    0.000    0.000 /usr/lib/python3.12/dataclasses.py:627(_repr_fn)
+      243    0.000    0.000    0.000    0.000 /usr/lib/python3.12/dataclasses.py:701(_is_type)
+        6    0.000    0.000    0.000    0.000 /usr/lib/python3.12/dataclasses.py:661(_cmp_fn)
+        6    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap_external>:1520(find_spec)
+        6    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap_external>:1491(_get_spec)
+       15    0.000    0.000    0.000    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py:38(_psi)
+        6    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap_external>:1593(find_spec)
+       38    0.000    0.000    0.000    0.000 /usr/lib/python3.12/pathlib.py:447(__fspath__)
+       46    0.000    0.000    0.000    0.000 /usr/lib/python3.12/pathlib.py:437(__str__)
+        1    0.000    0.000    0.000    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:368(default_scheduler_state_path)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/tempfile.py:452(gettempdir)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/tempfile.py:440(_gettempdir)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/tempfile.py:322(_get_default_tempdir)
+       43    0.000    0.000    0.000    0.000 /usr/lib/python3.12/pathlib.py:551(drive)
+        1    0.000    0.000    0.000    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:803(__init__)
+        5    0.000    0.000    0.000    0.000 /usr/lib/python3.12/dataclasses.py:882(_hash_add)
+       36    0.000    0.000    0.000    0.000 /usr/lib/python3.12/pathlib.py:407(_load_parts)
+        5    0.000    0.000    0.000    0.000 /usr/lib/python3.12/dataclasses.py:675(_hash_fn)
+        2    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap_external>:1644(_fill_cache)
+        6    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap_external>:1183(get_data)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/enum.py:528(__new__)
+        2    0.000    0.000    0.000    0.000 {built-in method posix.listdir}
+    65/54    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0xa39208}
+       27    0.000    0.000    0.000    0.000 {method 'read' of '_io.TextIOWrapper' objects}
+        1    0.000    0.000    0.000    0.000 /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:848(_locked_state)
+       32    0.000    0.000    0.000    0.000 /usr/lib/python3.12/pathlib.py:719(__truediv__)
+       32    0.000    0.000    0.000    0.000 {built-in method posix.stat}
+       39    0.000    0.000    0.000    0.000 /usr/lib/python3.12/pathlib.py:380(with_segments)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/inspect.py:3308(signature)
+       32    0.000    0.000    0.000    0.000 /usr/lib/python3.12/pathlib.py:711(joinpath)
+        3    0.000    0.000    0.000    0.000 /usr/lib/python3.12/typing.py:392(inner)
+
+

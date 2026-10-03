@@ -1,0 +1,136 @@
+{
+  "schema": "source-observation-performance-evidence@1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2908,
+      "sha256": "177e6580c5605239548b1b1082e1796b3ee542d3aad47bd72b96d6566480093d"
+    },
+    {
+      "path": "admission-audit.json",
+      "bytes": 3084,
+      "sha256": "4694fffc58aa576338c8093ddf8d84affa02e0147a6ef901ac7ec40b16d43a50"
+    },
+    {
+      "path": "before/ipfs_datasets_py/logic/software_contracts/content.py",
+      "bytes": 28720,
+      "sha256": "b6f0299be63eb3d7d2517abcc431d51ff28668555fe464c0a54c99507d248eb4"
+    },
+    {
+      "path": "before/tests/unit/logic/software_contracts/test_content_memo.py",
+      "bytes": 20636,
+      "sha256": "0f5b47ee6d680432ae8ff0c103814da905db47822d5b78f7ad50710e24b2142d"
+    },
+    {
+      "path": "cid8192-tests.log",
+      "bytes": 1386,
+      "sha256": "4a821b56f318f9c835107499d17ee2ed7d4b5fba7ed529dbd082e814e5032b13"
+    },
+    {
+      "path": "cid8192-tests.xml",
+      "bytes": 10257,
+      "sha256": "b0080aa705a98394d67a4eb9c55966d588377a19b0676feaf310cd119690af0d"
+    },
+    {
+      "path": "initial-read-only-constructor-refusal.log",
+      "bytes": 1030,
+      "sha256": "c606886484e993e4ed0214522277c90aabf2d39513e67094f9c0fefd9fde9f2e"
+    },
+    {
+      "path": "observe-before-profile.txt",
+      "bytes": 10596,
+      "sha256": "10ca85c4cd7d6723f4c800fa2caae6890b5b06820849ca281981f6ca5cc26f3d"
+    },
+    {
+      "path": "observe-before.json",
+      "bytes": 1080,
+      "sha256": "1d92e022cf47edb380692374918de71b7220e964361c9b70e8aa7d3248394140"
+    },
+    {
+      "path": "observe-before.log",
+      "bytes": 1024,
+      "sha256": "2c7b70045f8f1c810dd386e2dc80db6b828b39b9934fea45dcae6977bc046544"
+    },
+    {
+      "path": "observe-diagnostic-8192-profile.txt",
+      "bytes": 10813,
+      "sha256": "6d730b15f1356c8ee5ae3a250984e881e7f85ba92db722e5d6c54d5388888d11"
+    },
+    {
+      "path": "observe-diagnostic-8192.json",
+      "bytes": 1125,
+      "sha256": "cf55510c8fd368a6b6d2eaa803a1433bbf0a7e7ccf255baf0a23996a3a322137"
+    },
+    {
+      "path": "observe-diagnostic-8192.log",
+      "bytes": 1067,
+      "sha256": "4c2e7867c3becbbb61ad2d87ac5a35fae9eab53777f6350e6c3d7b833b9b026c"
+    },
+    {
+      "path": "observe-production-8192-profile.txt",
+      "bytes": 10702,
+      "sha256": "d3fa58f05765d9dfcf047a241d2c52a98339e7aeb38d189419165da959e2a090"
+    },
+    {
+      "path": "observe-production-8192-refused01-profile.txt",
+      "bytes": 7894,
+      "sha256": "9359a671ece1536ebb32c828031735d410376c71a65078a0a410333df6ea0b4b"
+    },
+    {
+      "path": "observe-production-8192-refused01.json",
+      "bytes": 1540,
+      "sha256": "f19b0c9fb358b32acc98bb10f35150fde5040eb30ad9380a9541f28c522a5031"
+    },
+    {
+      "path": "observe-production-8192-refused01.log",
+      "bytes": 1434,
+      "sha256": "fff1e66bf64002afc55d680cf89f5eb30c68531acc518fdb9af22e9ff5bf4c70"
+    },
+    {
+      "path": "observe-production-8192.json",
+      "bytes": 1415,
+      "sha256": "4346749fd4fccab4119b9f80a2a667b9b0a1ab62753c17db40e951deafa71a25"
+    },
+    {
+      "path": "observe-production-8192.log",
+      "bytes": 1311,
+      "sha256": "143266e16212f19f75126620cd6bce58f404abe67959d6477ae0082485f14dcd"
+    },
+    {
+      "path": "profile-observe.py",
+      "bytes": 3591,
+      "sha256": "9206db10ac00066dfcffa7c5111ee525e431fcb93db1fe624124a9153a65d81c"
+    },
+    {
+      "path": "qualification.json",
+      "bytes": 3978,
+      "sha256": "3c0c79a6b85049b5759864db9b550d9a4c00d0e214fc06edb18e48e7abe7f27a"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+      "bytes": 28715,
+      "sha256": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4"
+    },
+    {
+      "path": "sources/ipfs_datasets_py/logic/software_contracts/content.py",
+      "bytes": 28949,
+      "sha256": "cda06b90dfaf7db309c554deac01b2ffee9af7d0ab652b10e40f57908860afc7"
+    },
+    {
+      "path": "sources/tests/unit/logic/software_contracts/test_cache.py",
+      "bytes": 13173,
+      "sha256": "0c15fe456de9d75457083d1a65646c292c4ffca569d83dc543ebb0a9799533cb"
+    },
+    {
+      "path": "sources/tests/unit/logic/software_contracts/test_content_identity.py",
+      "bytes": 12296,
+      "sha256": "2ee2bf2d98e41143aa1c533a2b91ab50b15348b3f49e8eed67b7f259a5b4a615"
+    },
+    {
+      "path": "sources/tests/unit/logic/software_contracts/test_content_memo.py",
+      "bytes": 22010,
+      "sha256": "448bdf97c94ed5a4c6034bd798321ccb5d0611534676f3cf9f0ff60db6ec53b1"
+    }
+  ],
+  "bytes": 230734
+}
