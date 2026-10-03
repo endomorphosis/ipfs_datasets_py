@@ -1389,3 +1389,204 @@ teacher remains unchanged and verified local 768D inputs remain unavailable.
 No decoder weights were trained or promoted, no new formula generation or native
 family/Lake validation ran, and no span received admission or `roundtrip_ok`.
 The Constitution remains unformalized.
+
+## Causal source-value supervision (2026-10-03)
+
+The source-value continuation completed after the workstation restart. Its
+evidence directory is
+`docs/implementation/reports/evidence/decoder-source-value-training-20261002/`;
+the directory retains the experiment's original preparation date. Both unchanged
+control fits exactly reproduce their historical final tensors, validation
+history, exposures, and checkpoint-selection decisions. All six fits complete,
+but every selected state remains epoch zero. No candidate improves accepted
+formula reconstruction, and no production default or checkpoint is promoted.
+
+### Model, training, and replay interfaces
+
+The implementation is deliberately separate from the existing model owners:
+
+- `source_value_decoder_experiment.bind_source_value_model(model, codec=...,
+  feature_kind=..., max_rules=8, guidance=True)` privately copies the inherited
+  cardinality decoder. `projected_source` reads the actual projected 384-vector;
+  `inherited_conditioning` concatenates its initial hidden state of width 32 and
+  persistent source-embedding residual of width 16. Neither path changes the
+  encoder representation, context, or original checkpoint.
+- `model.source_value_logits(projected)` returns raw scores shaped
+  `[batch, 8, 4, vocabulary]`. Fields are actor, action, modality, and object, in
+  that order. These are source-only predictions, without prefix or reference
+  arguments. The new linear head starts at zero, preserving inherited decoder
+  logits exactly. Its full-vocabulary outputs receive no legal-value mask.
+- During autoregressive decoding, only the actual consumed prefix can identify
+  a scalar-field colon and select its ordered rule slot. The corresponding
+  source scores are added to the decoder logits. A strict lexical recognizer
+  tracks real prefixes and is checked against the existing cardinality
+  recognizer. An invalid prefix disables this guidance permanently. Slots beyond
+  eight receive no residual; generation is neither truncated nor forced to
+  close. The recognizer is not a semantic validator.
+- `reference_source_values(...)` authenticates the complete reference document
+  against its numerical target tokens before preparing auxiliary labels.
+  Present scalar slots contain actual inherited vocabulary IDs; absent slots
+  are ignored by this auxiliary loss. Conditions, exceptions, temporal fields,
+  syntax, and termination still receive the unchanged full sequence loss.
+- `long_span_source_value_training.train(...)` adds
+  `source_value_weight=0.25` on the same decoder training batch, with no extra
+  examples. It trains the inherited decoder and count head jointly with the new
+  head, while the source projection remains frozen. It returns selected and
+  last-complete states separately. Source-head metrics cannot select a state:
+  the existing per-length, per-facet source-fidelity guards and reconstruction
+  guards must still pass before fidelity or reference CE can rank a candidate.
+- `bind_zero_condition_model(...)` removes the initial recurrent source,
+  persistent source input, count-head source features, and scalar-head source
+  features. Learned head biases remain source-independent priors. The original
+  projection and generated-prefix history remain available for their respective
+  reconstruction and causal-decoding roles.
+
+The runner is `scripts/ops/autoencoder/benchmark_decoder_source_value_training.py`.
+Like the preceding experiments, it takes `--dependency-root`, `--extension-root`,
+`--manifest`, `--plan`, and a fresh `--output` directory. It authenticates the
+frozen canonical parser/compiler/decompiler tree, donor, cached embeddings,
+complete targets, predecessor evidence, and extensions before running. The
+sealed recipe, private state exports, actual generated token IDs and IR,
+per-update losses/exposures, and raw source/count logits are retained for replay
+and arithmetic review. Private development exports are not production lineage
+checkpoints or optimizer-resumable states.
+
+The paired recipe has unchanged, conditioning-48, and projected-384 arms, each
+with seeds 1729 and 2718. Every fit uses the same 48 training and 48 exposed
+validation paragraphs, complete outputs of at most 512 tokens, temperature zero,
+and four cumulative source-length stages of 20 epochs each. There are 340
+optimizer updates, 2,440 decoder-row presentations, 225,840 target-token
+presentations, and 2,440 balanced count-row presentations per fit. Each candidate
+adds 25,600 present scalar labels from those same decoder batches. Count loss
+weight remains 0.25; count boundary guidance remains off. AdamW, semantic-field
+sequence loss, reconstruction loss, clipping at norm one, and the plateau
+scheduler retain the prior recipe. Learning rate starts at 0.001 and ends at
+0.0005 in all six fits. No gradient packets or per-update parameter snapshots are
+added; compact update receipts retain the actual losses and committed exposure.
+
+Selected and last-complete states each receive five post-fit panels: conditioned
+training and validation, within-length source shuffles of both splits, and a
+zero-source validation control. This yields 60 panels, each containing 48
+paragraphs. Shuffles preserve reference identities and targets and alter only
+the assigned source vectors. Neither controls nor validation labels train the
+model. Validation has already been used repeatedly for development; the fresh
+test remains unopened.
+
+### Results: source readouts improve locally, but generation does not qualify
+
+The following table reports **unselected final attempts**, not the epoch-zero
+states retained by the gates. Exactness requires a complete ordered reference
+document and EOS; the source-head column measures only reference-present scalar
+slots. Each validation panel contains 180 reference rules and 720 scalar values.
+
+| Arm / seed | Validation sequence CE | Validation EOS / syntax /48 | Validation exact /48 | Training exact /48 | Source head training /720 | Source head validation /720 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Unchanged /1729 | 0.268161 | 48 /48 | 0 | 0 | — | — |
+| Conditioning48 /1729 | 0.228970 | 38 /38 | 0 | 1 | 324 | 228 |
+| Projected384 /1729 | 0.209414 | 35 /35 | 0 | 3 | 379 | 245 |
+| Unchanged /2718 | 0.203500 | 24 /24 | 0 | 0 | — | — |
+| Conditioning48 /2718 | 0.272654 | 48 /48 | 0 | 2 | 327 | 224 |
+| Projected384 /2718 | 0.202612 | 17 /17 | 0 | 2 | 377 | 248 |
+
+Every one of the 20 validation checkpoints in every fit fails at least the
+unchanged eight-rule modality guard. Other length/facet, EOS, and syntax
+regressions also occur. Every selected state remains epoch zero with zero exact
+training and validation paragraphs. The final candidates recover one to three
+training paragraphs, all single-rule cases; no multi-rule training or validation
+paragraph is exact. No complete validation reference rule is preserved in any
+final attempt: all 180 remain missing under exact whole-rule matching.
+
+Projected-source heads reach 34.0–34.4% validation scalar accuracy, versus
+31.1–31.7% for conditioning heads. This small readout advantage does not transfer
+to faithful generated documents. For projected-384, the 1/2/4/8-rule validation
+bins recover respectively 28/48, 32/96, 63/192, and 122–125/384 scalar values.
+Conditioning recovers 16–19/48, 31–32/96, 60–63/192, and 115–116/384. Longer-span
+ordered binding remains weak, and all candidates have a substantial training
+versus validation gap.
+
+Controls constrain the interpretation. Conditioning-head validation scores are
+228 and 224 with the real source, 229 and 229 after within-length shuffling, and
+223 and 224 with zero source features. Projected-head scores are 245 and 248,
+falling to 227 and 229 when shuffled and 231 and 229 when zeroed. The projected
+heads therefore show some source association beyond their biases, while the
+conditioning-head validation accuracy does not improve over these controls.
+The heads predict all three modalities; projected-head recall is 22–24/59 for
+prohibition, 9–10/56 for obligation, and 33–37/65 for permission. Generated IR
+still loses rule identity and count, despite these nonconstant source readouts.
+These scores cannot be compared directly with the earlier ridge probe: its
+feature states, fitted objective, class supports, absent-slot supervision, and
+count-exactness task differ.
+
+A concrete validation example is “The registrar is allowed to preserve the
+archive.” For `projected384-1729`, the source head predicts registrar, preserve,
+prohibition, and archive: three scalar values are correct, but modality is not.
+The actual generated IR is:
+
+```json
+{"rules":[{"action":"deliver","actor":"registrar","conditions":[],"exceptions":[],"modality":"F","object":"notice","temporal":[]}]}
+```
+
+Thus even a source-head preference for the correct action and object can be
+overcome by the combined autoregressive logits. For the same source,
+`projected384-2718` repeats clauses until its 511-content-token limit, without
+EOS. An eight-rule validation example beginning with the registrar's prohibition
+on preserving a notice also becomes the single wrong rule shown above under
+`projected384-1729`; all eight complete reference rules are missing. Raw examples
+are retained under the corresponding arm's
+`last-attempt/evaluation-validation.json`, including identities, expected IR,
+actual tokens, parse errors, and generation status. No corrected or reconstructed
+reference text is substituted for these outputs.
+
+The useful next diagnostic is to separate the source residual's scalar margins
+from inherited decoder margins at actual first greedy divergences, while also
+retaining the rule-boundary failures. The current evidence does not justify
+raising output/context limits, weakening the guards, treating readout scores as
+teacher qualification, or promoting either new architecture. A controlled
+readout-only fit with inherited weights frozen, followed by separate
+auxiliary-only and generation-residual activation arms under the same gates,
+could isolate the joint-training interaction. Those experiments have not run.
+
+### Cost, validation, and restart recovery
+
+Trainable parameter counts are 25,888 for the unchanged control, 76,064 for
+conditioning-48, and 420,128 for projected-384. The larger head changes both
+source access and parameter capacity; this comparison cannot isolate dimensional
+information from capacity. Fit calls take 8.814/10.274 seconds for the unchanged
+seeds, 9.771/9.320 for conditioning, and 11.315/12.339 for projected-384. The
+larger source head does not provide a training-throughput improvement.
+
+The six fit calls total 61.833 seconds. Post-fit persistence, reloads, evaluation,
+and evaluation-file writes total 23.771 seconds. Final-attempt conditioned
+validation calls take 3.06–18.87 ms per span, including numerical evaluation,
+fidelity scoring, count/readout diagnostics, and control construction, but
+excluding output-file writes. Output-limit loops materially affect these times;
+they are not equal-length generation throughput. Device is CPU, workers one,
+bridge names `[]`, prover evaluation false, and metric disk cache disabled.
+Paragraph embeddings are warm cached; no encoder execution or sample-memory
+scoring occurs. No bridge-on evaluate or faster legal-IR admission is claimed.
+
+All 969 focused tests pass in 21.71 seconds. The independent audit passes 50,190
+checks with zero findings over 136 raw artifacts. It recomputes raw source-head
+affine/tanh scores from saved tensors, control assignments, objective arithmetic,
+exposure counts, formula fidelity, strict selection decisions, provenance, and
+state hashes without another training or generation run. Maximum independent
+source-logit discrepancy is at most 3.58e-6. Historical unchanged-arm state and
+gate parity also passes for both seeds.
+
+The reboot replaced the ephemeral `/tmp/pytest-of-barberb` root inode and the
+first admission refused that stale identity. Recovery updated only this identity
+under the existing ledger lock and atomic writer, preserving all 368 reservation
+records and retained claims and the shared 140 GB cap. The admitted guardian takes 189.212 seconds
+including resource admission, monitoring, and final accounting. Peak polled RSS
+is 915,525,632 bytes across five observations, within the 4 GiB memory reservation.
+It retains 151,799,237 bytes, releases its 400 MB storage reservation, and ends
+with total charged storage of 103,704,901,762 bytes under the unchanged cap.
+The monitoring maximum is an observed sample, not an exact allocator peak.
+
+The 8D linguistic teacher is untouched; verified local 768D inputs remain
+unavailable. No weights were downloaded, encoder context increased, or Mathlib
+imported. This exposed development experiment performs no native family
+qualification or `lake build <Lib>`, and grants no admission, proof authority,
+source-semantic qualification, or Constitution formalization. Its small authored
+corpus has empty qualifier fields; it does not establish coverage of real legal
+exceptions, temporal semantics, or all supported logic families.
