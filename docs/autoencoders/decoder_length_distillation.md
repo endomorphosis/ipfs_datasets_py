@@ -2477,8 +2477,133 @@ checkpoint is trained or promoted. Temperature stays zero and both limits stay
 build or new logic-family qualification is claimed; Lake remains the only Lean
 admission path.
 
-The next training experiment should separately test a training-only order
-contrast objective or structured clause representation, and calibrate stopping
-against actual generated prefixes. It must retain complete-generation selection
-gates and the existing validation split. These observations do not justify
-forcing a reference count, increasing context, or weakening acceptance.
+The subsequent bounded training experiment below tests same-parent order
+substitution and stopping supervision from actual generated prefixes. The
+diagnostic does not justify forcing a reference count, increasing context, or
+weakening acceptance.
+
+### Order substitution and generated-prefix stopping training
+
+`benchmark_order_boundary_source_training.py` runs a fixed two-by-two ablation:
+unchanged shared-slot training, order substitution, generated-prefix stopping
+loss, and both. Each uses seeds 1729/2718, the same fresh shared model, 340 AdamW
+updates, learning rate 0.001 with the inherited plateau scheduler, clipping,
+source-length curriculum, and full-generation selection. The runtime allowance
+is 180 seconds per fit rather than the prior 90; no optimizer setting or exposure
+budget changes. Both baseline fits exactly replay the complete prior training
+report except elapsed time and that allowance, including all states, gradients'
+norm summaries, optimizer history, selection, and all five selected/final source
+controls. The default trainer still takes the original path.
+
+The optional `order_augmentation` argument to
+`long_span_source_value_training.train` has only `preparation` and
+`embedding_observations` fields. `order_training_augmentation.prepare` validates
+the authenticated 108-source panel against the original 48 training rows and
+forbidden validation sources. It checks complete target binding, component
+permutation, exact original cached vectors, tokenizer/output lengths, and
+casefolded whitespace-normalized source uniqueness. Per-parent counters cycle
+through original, reverse, and rotate orders, removing duplicate aliases. They
+persist across stages and do not draw from the batch RNG. Each selected variant
+replaces its parent within an existing batch, with its own token weights and
+scalar labels. Original rows still own curriculum membership, normalization,
+count prior, and the balanced count stream; no statistics are refitted on the
+augmented set.
+
+Each fit therefore retains 2,440 decoder-row presentations, 225,840 reference
+output-token presentations, 25,600 present scalar labels, and 610 count-head
+presentations at each of 1/2/4/8 clauses. Order substitution adds no decoder
+batches. Its postfit 108-source order panel includes training variants, so it
+cannot establish fresh order generalization. The common 48-row exposed
+validation set and the unopened fresh holdout are unchanged.
+
+`generated_boundary_weight` defaults to zero. At the tested weight 0.25,
+`generated_boundary_training` first completes ordinary source-only greedy
+rollouts of the current effective training batch, with temperature zero and
+output limit 512. It retains the first and last distinct complete-rule boundary
+actually visited, independent of the reference count. Only afterward does the
+loss use the training reference count: continue before that count and close at
+or beyond it. It replays each generated prefix once with gradients and computes
+full-vocabulary CE, averaging within each active row and then across active
+rows. No-site rows attach no loss graph; malformed prefixes receive no invented
+boundaries. Targets, desired prefixes, syntax masks, and forced closing decisions
+never enter inference. The saved receipts retain all available/selected sites,
+actual prefixes and predictions, source hashes, full logits, labels, CE values,
+aggregation, and extra work. Deadline expiry cannot commit a partial update.
+
+All eight fits complete, but **validation exact reconstruction stays 0/48 and
+all selected checkpoints remain at epoch zero**. Neither intervention is
+accepted or enabled by default. Results below concern unselected final attempts;
+scalar positions are actual generated actor/action/modality/object matches out
+of 720, not auxiliary-head accuracy.
+
+| Variant / seed | Validation sequence CE | Generated scalar matches /720 | EOS / syntax /48 | Generated rules / duplicates | Original-training exact /48 | Fit seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Baseline /1729 | 0.187817 | 208 | 44 / 44 | 219 / 121 | 3 | 13.275 |
+| Order /1729 | 0.184261 | 208 | 44 / 44 | 219 / 127 | 2 | 14.011 |
+| Boundary /1729 | 0.178439 | 224 | 48 / 44 | 163 / 30 | 6 | 55.362 |
+| Both /1729 | 0.182966 | 269 | 48 / 48 | 200 / 90 | 7 | 47.560 |
+| Baseline /2718 | 0.187983 | 217 | 48 / 48 | 195 / 101 | 3 | 10.990 |
+| Order /2718 | 0.191249 | 102 | 48 / 48 | 65 / 6 | 5 | 10.680 |
+| Boundary /2718 | 0.236283 | 27 | 48 / 13 | 13 / 0 | 5 | 34.112 |
+| Both /2718 | 0.225022 | 187 | 45 / 45 | 134 / 53 | 5 | 37.097 |
+
+In seed 1729, better termination and some scalar recovery do not yield faithful
+whole documents. Seed 2718 demonstrates why lower repetition counts cannot be
+called better reconstruction: boundary-only training emits just 13 valid rules,
+loses all 180 reference rules, and produces only 13 syntactically valid documents
+despite 48 EOS outputs. Its zero duplicate count reflects lost coverage. Order
+substitution alone also shortens that seed's outputs substantially. Both seeds
+remain subject to the original per-length source-facet and whole-rule gates;
+CE, count accuracy, training exactness, and auxiliary losses cannot override them.
+
+Order binding also remains unresolved on the augmented sources themselves.
+Every model reconstructs 0/60 changed-order documents exactly, including the
+order/both models trained on those variants. All eight models' full scalar logits
+remain closer to fixed slot alignment than permuted alignment on 60/60 pairs.
+The separate joint actor/action analysis is retained with the evidence; neither
+marginal value accuracy nor successful stopping establishes ordered binding.
+
+Boundary-only fits cost about 4.17 and 3.10 times their respective baselines;
+combined fits cost 3.58 and 3.38 times as much. Their extra supervision is explicit:
+
+| Variant / seed | Selected boundary labels | Actual consumed rollout tokens including BOS | Differentiable replay tokens | Rows with no boundary sites |
+| --- | ---: | ---: | ---: | ---: |
+| Boundary /1729 | 3,105 | 412,506 | 186,713 | 221 |
+| Both /1729 | 3,160 | 326,568 | 171,209 | 203 |
+| Boundary /2718 | 2,183 | 221,856 | 80,767 | 258 |
+| Both /2718 | 2,249 | 219,971 | 99,945 | 265 |
+
+These are per-row token counts; padded/inactive batch computation adds work.
+Equal optimizer updates are not equal computation for the boundary arms. The
+complete comparison takes 270.921 seconds, including 223.087 seconds in fit
+calls. The guardian takes 342.054 seconds including admission, accounting and
+durable release, retaining 456,673,993 bytes under its 800 MB reservation. The
+existing 140 GB campaign cap is unchanged. Native-family/Lake qualification is
+not part of this numerical diagnostic, and the historical frozen resource owner
+is recorded rather than presented as validation of later scheduler revisions.
+
+Conditioned final validation evaluation takes 0.015688, 0.016015, 0.008911,
+0.009275, 0.011814, 0.005737, 0.005030, and 0.009685 wall seconds per span in table
+order, with 48 samples per call. Those calls include numerical generation/CE,
+fidelity scoring, count and scalar readouts; generated lengths and failure modes
+differ. In particular, faster collapsed output is not useful-conversion
+throughput. Execution uses one CPU worker, bridge names `[]`, prover evaluation
+false, metric disk cache off, and verified warm cached semantic embeddings; no
+encoder forward or bridge-on evaluation occurs. No bridge-on speed gain is claimed.
+
+The frozen suite passes **1,589 tests**. Independent saved-evidence auditing
+passes **89,475 checks with zero findings**, including exact baseline replay,
+all 24 typed initial/selected/final states, the unchanged selection decisions,
+parent/variant exposure, generated boundary labels and full-vocabulary CE,
+all 80 selected/final control panels, and the final order/boundary diagnostics.
+It does not rerun gradient updates or native provers. The
+[published evidence](../implementation/reports/evidence/decoder-order-boundary-training-20261003/results.json)
+retains complete receipts and states, with authenticated predecessor archives
+for the reused inputs. No production checkpoint or 8D teacher is changed; no
+768D execution, formalization, convergence, or Lake admission is claimed.
+
+The next controlled change should isolate boundary-loss gradients from the
+recurrent syntax decoder and separately test a representation that preserves
+clause-specific actor/action binding. These are hypotheses to test, not accepted
+improvements. Larger output limits and relaxed selection do not address the
+failures observed here.

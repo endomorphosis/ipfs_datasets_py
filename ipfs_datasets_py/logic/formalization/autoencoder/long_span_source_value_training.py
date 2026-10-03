@@ -177,7 +177,8 @@ def _evaluate(torch, model, rows, references, transform, options, codec, deadlin
 def train(student, training_rows, validation_rows, *, training_references, validation_references,
           codec, input_transform, lineage, validate_rule, validator_id,
           curriculum, strategy="reference_ce", config=None, cardinality_weight=0.,
-          count_exposure="current_stage", source_value_weight=0.):
+          count_exposure="current_stage", source_value_weight=0.,
+          order_augmentation=None, generated_boundary_weight=0.):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -195,6 +196,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                   "unknown count exposure policy")
     core._require(type(source_value_weight) in (int, float) and math.isfinite(source_value_weight)
         and 0 <= source_value_weight <= 1, "invalid source-value weight")
+    core._require(type(generated_boundary_weight) in (int, float) and math.isfinite(generated_boundary_weight)
+        and 0 <= generated_boundary_weight <= 1, "invalid generated-boundary weight")
+    core._require(order_augmentation is None or type(order_augmentation) is dict
+        and set(order_augmentation) == {"preparation", "embedding_observations"},
+        "closed order-augmentation inputs required")
     head_specification = _head_specification(student, codec, source_value_weight)
     count_labels = _count_labels(training_references)
     _count_labels(validation_references)
@@ -218,10 +224,19 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                 and receipt["expected_training_ids"] == [row["id"] for row in training_rows]
                 and set(receipt["forbidden_validation_ids"]) == tune_ids,
                 "projected-source receipt cohort differs from actual training/validation rows")
-    weights = reference_weights(training_rows, training_references, codec, strategy=strategy, validate_rule=validate_rule)
+    order_selector = None
+    effective_rows, effective_references = training_rows, training_references
+    if order_augmentation is not None:
+        core._require(count_exposure == "balanced_all", "order substitution requires original balanced count stream")
+        from . import order_training_augmentation
+        order_selector = order_training_augmentation.prepare(training_rows, validation_rows,
+            training_references=training_references, codec=codec, **order_augmentation)
+        effective_rows, effective_references = order_selector.effective_rows, order_selector.effective_references
+    order_initial = None if order_selector is None else order_selector.snapshot()
+    weights = reference_weights(effective_rows, effective_references, codec, strategy=strategy, validate_rule=validate_rule)
     reference_weights(validation_rows, validation_references, codec, strategy="reference_ce", validate_rule=validate_rule)
     source_labels = (None if head_specification is None else values.reference_source_values(
-        training_rows, training_references, codec, validate_rule=validate_rule))
+        effective_rows, effective_references, codec, validate_rule=validate_rule))
     validation_source_labels = (None if head_specification is None else values.reference_source_values(
         validation_rows, validation_references, codec, validate_rule=validate_rule))
     stages = core._curriculum(curriculum, training_rows, options)
@@ -237,6 +252,13 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     estimate += options["max_optimizer_steps"]*(2048+2*options["batch_size"]*640)
     if head_specification is not None:
         estimate += 128*len(validation_rows)*values.MAX_RULES*len(values.SOURCE_FIELDS)*len(codec["target_vocabulary"])
+    if order_selector is not None:
+        estimate += 32*len(effective_rows)*(student.dimension+options["max_target_tokens"])
+    if generated_boundary_weight:
+        # Retained generated prefixes/labels and a differentiable replay, in
+        # addition to the unchanged reference loss. This is not an RSS quota.
+        estimate += options["max_optimizer_steps"]*options["batch_size"]*options["max_target_tokens"]*48
+        estimate += 134217728
     core._require(estimate <= options["max_memory_bytes"], "trial tensor work exceeds budget")
     count_selector = (_BalancedCountSelector(training_rows, count_labels, options["seed"])
                       if count_exposure == "balanced_all" else None)
@@ -274,6 +296,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     gradient_norm_sum = gradient_norm_max = 0.
     gradient_norm_steps = gradient_clipped_steps = 0
     global_epoch = 0
+    boundary_owner = None
+    boundary_counts = None
+    if generated_boundary_weight:
+        from . import generated_boundary_training as boundary_owner
+        boundary_counts = {identity: value+1 for identity, value in _count_labels(effective_references).items()}
     for stage in stages:
         if baseline is None or stopped != "epochs_completed":
             break
@@ -293,7 +320,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     stopped = "deadline" if time.monotonic() >= deadline else "optimizer_step_limit"
                     complete = False
                     break
-                part = [current[index] for index in order[offset:offset+options["batch_size"]]]
+                parents = [current[index] for index in order[offset:offset+options["batch_size"]]]
+                part = parents if order_selector is None else order_selector.select(parents)
                 data, labels = core._batch(torch, part, input_transform)
                 token_weights = torch.tensor([weights[row["id"]] + [0.]*(labels.shape[1]-len(weights[row["id"]]))
                     for row in part], dtype=torch.float32)[:, 1:]
@@ -327,6 +355,21 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     objective = objective + cardinality_weight*count_loss
                 if source_value_weight != 0.:
                     objective = objective + source_value_weight*source_loss
+                boundary_result = None
+                if boundary_owner is not None:
+                    try:
+                        collection = boundary_owner.collect_source_boundary_prefixes(working,
+                            [dict(id=row["id"], input=row["input"]) for row in part], codec=codec,
+                            input_transform=input_transform, max_target_tokens=options["max_target_tokens"],
+                            batch_size=options["batch_size"], deadline=deadline, max_sites_per_row=2)
+                        boundary_result = boundary_owner.generated_boundary_loss(torch, working,
+                            collection, boundary_counts, codec=codec, input_transform=input_transform, deadline=deadline)
+                    except TimeoutError:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_during_generated_boundary", False
+                        break
+                    if boundary_result["loss"] is not None:
+                        objective = objective + generated_boundary_weight*boundary_result["loss"]
                 core._require(core._finite(torch, objective) and core._finite(torch, source_loss), "nonfinite objective")
                 if time.monotonic() >= deadline:
                     stopped, complete = "deadline", False
@@ -355,6 +398,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     token_ce=float(plain.detach()), weighted_token_ce=float(weighted.detach()),
                     count_ce=float(count_loss.detach()), source_value_ce=float(source_loss.detach()),
                     raw_reconstruction_mse=float(mse.detach()), objective=float(objective.detach())))
+                if order_selector is not None:
+                    committed_updates[-1]["decoder_parent_row_ids"] = [row["id"] for row in parents]
+                if boundary_result is not None:
+                    committed_updates[-1]["generated_boundary"] = boundary_result["receipt"]
                 norm = float(preclip_norm.detach())
                 gradient_norm_sum += norm; gradient_norm_max = max(gradient_norm_max, norm)
                 gradient_norm_steps += 1; gradient_clipped_steps += int(norm > options["max_grad_norm"])
@@ -469,6 +516,19 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         tensor_work_estimate_bytes=estimate, memory_estimate_excludes_python_import_allocator_rss=True,
         deadline_cooperative=True, **FALSE)
     report["elapsed_seconds"] = time.monotonic()-started
+    if order_selector is not None:
+        report.update(order_augmentation=dict(initial=order_initial, final=order_selector.snapshot(),
+            selector_draws_may_include_uncommitted_final_batch=True,
+            original_rows_own_curriculum_normalization_and_count_stream=True,
+            substituted_rows_own_reference_and_scalar_labels=True),
+            source_value_training_row_policy="same decoder batch with authenticated same-parent order substitution")
+    if boundary_owner is not None:
+        report.update(generated_boundary_weight=generated_boundary_weight,
+            generated_boundary_policy="complete_source_only_greedy_then_first_and_last_distinct_visited_boundary",
+            generated_boundary_site_cap_per_row=2, generated_boundary_rows="current_effective_training_batch_only",
+            generated_boundary_supervision="full_vocabulary_CE; mean_per_active_row_then_active_rows",
+            generated_boundary_reference_access="training_loss_labels_only; never_greedy_rollout",
+            generated_boundary_used_for_selection=False)
     return dict(state_dict=best_state, report=report,
         last_complete_attempt_state_dict=diagnostic_state,
         predictions=[] if selected is None else deepcopy(selected["predictions"]),
