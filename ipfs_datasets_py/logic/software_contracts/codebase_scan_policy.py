@@ -131,12 +131,12 @@ def _implementation():
     from . import ast_ir, cache, codebase_ir, content, duckdb_ast_store, duckdb_ingest, python_frontend
     from .semantic_index import models, python_analysis, pytest_analysis, scanner, symbol_graph
     from ipfs_datasets_py.duckdb_control import codebase_catalog
-    from ..backends import codebase_process
+    from ..backends import process
     return {module.__name__: hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
             for module in (sys.modules[__name__], ast_ir, cache, codebase_ir, content,
                            duckdb_ast_store, duckdb_ingest, python_frontend, snapshots,
                            models, python_analysis, pytest_analysis, scanner, symbol_graph,
-                           codebase_catalog, codebase_process)}
+                           codebase_catalog, process)}
 
 
 def _owner(index):
@@ -145,7 +145,7 @@ def _owner(index):
 
 
 def _bounded_git(root, arguments, *, allowed=(0,)):
-    from ..backends.codebase_process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
+    from ..backends.process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
     executable = shutil.which("git")
     _require(executable is not None, "Git scope inspection is unavailable")
     result = run_bounded_stdin_tool([executable, "-C", str(root), *arguments], b"",
@@ -192,8 +192,12 @@ def _external_ignore_scope(index, root):
         info_path = root / info_path
     rows = []
     for kind, path in (("repository_info", info_path), ("global", global_path)):
-        path = path.resolve()
+        # Preserve the selected leaf: resolving it would silently dereference a
+        # symlink before O_NOFOLLOW has a chance to reject it.
+        path = Path(os.path.abspath(path))
         try:
+            _require(not stat.S_ISLNK(path.lstat().st_mode),
+                     "external ignore file must be regular without a symlink")
             descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK | getattr(os, "O_NOFOLLOW", 0))
             with os.fdopen(descriptor, "rb") as stream:
                 before = os.fstat(stream.fileno())
@@ -201,7 +205,7 @@ def _external_ignore_scope(index, root):
                 raw = stream.read(MAX_FILE_BYTES + 1)
                 after = os.fstat(stream.fileno())
             witness = lambda stat: (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
-            _require(witness(before) == witness(after) == witness(path.stat()),
+            _require(witness(before) == witness(after) == witness(path.lstat()),
                      "external ignore bytes changed during capture")
             present = True
         except FileNotFoundError:
@@ -286,6 +290,9 @@ def _derive(index, *, publication, policy, external_ignores, repository_rules, t
                         if PurePosixPath(entry.path).name == ".gitignore")
     _require(type(repository_rules) is list and repository_rules == rule_paths,
              "repository ignore rules must be included in the complete captured inventory")
+    _require(all(not entry.is_opaque for entry in captured.entries
+                 if entry.path in rule_paths),
+             "repository ignore rules require exact captured bytes")
     units = {unit.source_key: unit for unit in manifest.units}
     rows, available = [], {}
     for entry in captured.entries:
@@ -299,7 +306,7 @@ def _derive(index, *, publication, policy, external_ignores, repository_rules, t
             raw = index.artifacts.get_bytes(entry.source_cid)
             _require(len(raw) == entry.size_bytes and len(raw) <= policy.max_file_bytes,
                      "captured source size differs")
-            if entry.path.endswith(".py"):
+            if entry.kind == "python":
                 _require(ast is not None and unit.ast_cid is not None,
                          "Python source lacks its structural extraction record")
                 _require(classify_parse_status(ast) == unit.parse_status,
@@ -399,6 +406,9 @@ def prepare_policy_current(index, repository, *, repository_id, operation_id,
              "external ignore scope changed during policy publication")
     _require(_repository_rule_paths(root, policy) == repository_rules,
              "repository ignore scope changed during policy publication")
+    # Scope queries can take time and can themselves overlap a source edit.
+    # End with a native source fence, without claiming an atomic source lock.
+    index.observe_current(root, expected_head=publication.head, **resources)
     return {"receipt_cid": receipt_cid, "head": publication.head.to_dict(),
             "source_observed_live": True, "proof_authority": False,
             "training_admitted": False}

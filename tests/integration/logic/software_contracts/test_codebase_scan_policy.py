@@ -278,6 +278,7 @@ def test_active_external_ignore_patterns_are_rejected_before_source_publication(
         path.parent.mkdir(parents=True)
     else:
         path = root / ".git" / "info" / "exclude"
+        path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("*.py\n")
     with pytest.raises(module.CodebaseScanPolicyError, match="active or oversized external"):
         prepare()
@@ -358,3 +359,105 @@ def test_oversized_git_ignore_inventory_is_process_bounded_before_source_capture
     with pytest.raises(module.CodebaseScanPolicyError, match="bounded process profile"):
         prepare()
     assert index.current("scan:fixture") is None
+
+
+@pytest.mark.parametrize("raw", [b"#" * 513 + b"\n*.py\n", b"\xff\n*.py\n"])
+def test_opaque_repository_ignore_rule_cannot_define_admitted_scope(current, raw):
+    root, index, prepare, _, _ = current
+    (root / ".gitignore").write_bytes(raw)
+    git(root, "add", ".gitignore")
+    git(root, "commit", "-qm", "opaque scope definition")
+    with pytest.raises(module.CodebaseScanPolicyError, match="exact captured bytes"):
+        prepare()
+    # Native structural history may exist, but the policy cannot certify it.
+    assert index.current("scan:fixture") is not None
+
+
+@pytest.mark.parametrize("helper", ["_external_ignore_scope", "_repository_rule_paths"])
+def test_source_edit_during_final_scope_query_withholds_live_success(current, monkeypatch, helper):
+    root, _, prepare, _, _ = current
+    original = getattr(module, helper)
+    calls = []
+    def mutate(*args, **kwargs):
+        result = original(*args, **kwargs)
+        calls.append(result)
+        if len(calls) == 3:
+            (root / "main.py").write_text("def changed(n: int) -> int:\n    return n + 99\n")
+        return result
+    monkeypatch.setattr(module, helper, mutate)
+    with pytest.raises(StaleCodebaseError):
+        prepare()
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize("target_present", [True, False])
+def test_external_ignore_symlink_is_rejected_without_opening_target(current, tmp_path, monkeypatch, target_present):
+    root, index, prepare, _, _ = current
+    target = tmp_path / "ignore-target"
+    if target_present:
+        target.write_text("# inactive target\n")
+    link = tmp_path / "ignore-link"
+    link.symlink_to(target)
+    git(root, "config", "core.excludesfile", str(link))
+    original = os.open
+    opened = []
+    def observe(path, *args, **kwargs):
+        opened.append(Path(path))
+        return original(path, *args, **kwargs)
+    monkeypatch.setattr(os, "open", observe)
+    with pytest.raises(module.CodebaseScanPolicyError, match="without a symlink"):
+        prepare()
+    assert link not in opened and target not in opened
+    assert index.current("scan:fixture") is None
+
+
+def test_working_capture_replaced_fifo_is_nonblocking_and_opaque(current, monkeypatch):
+    root, _, _, _, _ = current
+    path = root / "candidate.py"
+    path.write_text("x = 1\n")
+    original = os.open
+    raced = []
+    def replace_at_open(candidate, flags, *args, **kwargs):
+        if Path(candidate) == path:
+            assert flags & os.O_NONBLOCK
+            path.unlink()
+            os.mkfifo(path)
+            raced.append(True)
+        return original(candidate, flags, *args, **kwargs)
+    monkeypatch.setattr(os, "open", replace_at_open)
+    entry = module.snapshots._working_entry(root, b"candidate.py", 512)
+    assert raced == [True]
+    assert entry.is_opaque and entry.opaque_reason == "symlink_or_nonregular"
+    assert entry.captured_bytes is None
+
+
+@pytest.mark.parametrize("mode", ["filesystem", "git-unborn"])
+def test_uncommitted_roots_are_outside_the_frozen_policy(current, tmp_path, mode):
+    _, index, _, scheduler, _ = current
+    root = tmp_path / mode
+    if mode == "git-unborn":
+        repository(root)
+    else:
+        root.mkdir()
+    (root / "example.py").write_text("x = 1\n")
+    with pytest.raises(module.CodebaseScanPolicyError, match="committed Git root"):
+        module.prepare_policy_current(index, root, repository_id=mode,
+            operation_id=mode, expected_head=None, scheduler=scheduler)
+    assert index.current(mode) is None
+
+
+@pytest.mark.parametrize("suffix", [".pyi", ".PY"])
+def test_native_python_language_classification_remains_selectable(current, suffix):
+    root, _, prepare, _, _ = current
+    path = "declarations" + suffix
+    (root / path).write_text("def identity(value: int) -> int:\n    return value\n")
+    git(root, "add", path)
+    git(root, "commit", "-qm", "Python classification fixture")
+    value = prepare(training_paths=(path,), proof_paths=(path,))
+    receipt = load(current, value)
+    row = next(row for row in receipt["inventory"] if row["path"] == path)
+    assert row["analysis_disposition"] == "python_ast_ok"
+    assert row["candidate_selectable"] is True
+    assert receipt["training_selection"][0]["path"] == path
+    assert receipt["proof_selection"][0]["path"] == path
+    assert receipt["training_admitted"] is False and receipt["proof_authority"] is False

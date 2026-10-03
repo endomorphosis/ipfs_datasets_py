@@ -732,7 +732,9 @@ def _working_entry(root: Path, raw: bytes, max_file_bytes: int, **evidence: Any)
         if before.st_size > max_file_bytes: return _opaque(path, "oversized", before.st_size, raw=raw, **evidence)
         nofollow = getattr(os, "O_NOFOLLOW", None)
         if nofollow is None: return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
-        fd = os.open(candidate, os.O_RDONLY | nofollow)
+        # A regular file can become a FIFO between lstat and open. Open without
+        # blocking, then reject nonregular descriptors before reading.
+        fd = os.open(candidate, os.O_RDONLY | nofollow | os.O_NONBLOCK)
         with os.fdopen(fd, "rb") as handle:
             opened = os.fstat(handle.fileno())
             if not stat.S_ISREG(opened.st_mode): return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
