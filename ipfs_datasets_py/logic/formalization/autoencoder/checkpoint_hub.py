@@ -233,3 +233,17 @@ def publish_package(directory, *, domain, repository_id, release_id, model_card)
         commit_message="Publish " + domain + " 384D development checkpoint " + release_id, operations=operations)
     descriptor["revision"] = commit.oid
     return validate_descriptor(descriptor, domain=domain)
+
+
+def open_ir_cell_autoencoder(directory_plan_pin, inventory_pins, request, *, package_manifest_pin,
+                            cache_split, row_ids, max_reference_bytes=512 * 1024 * 1024):
+    """Opt in to exact-cell experimental cached replay, without Hub/default lookup.
+
+    All bindings and target-free cached inputs authenticate before fixed existing
+    runtime loading. Loading may execute the Legal package fixture; numerical
+    qualification and runtime release admission remain separate operations.
+    """
+    from .ir_cell_runtime import _open_ir_cell_autoencoder
+    return _open_ir_cell_autoencoder(directory_plan_pin, inventory_pins, request,
+        package_manifest_pin=package_manifest_pin, cache_split=cache_split,
+        row_ids=row_ids, max_reference_bytes=max_reference_bytes)
