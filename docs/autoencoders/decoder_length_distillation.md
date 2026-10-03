@@ -1590,3 +1590,167 @@ qualification or `lake build <Lib>`, and grants no admission, proof authority,
 source-semantic qualification, or Constitution formalization. Its small authored
 corpus has empty qualifier fields; it does not establish coverage of real legal
 exceptions, temporal semantics, or all supported logic families.
+
+## Actual-prefix attribution and frozen inherited decoder (2026-10-03)
+
+The next two bounded experiments complete under the unchanged acceptance gates.
+First, actual greedy replay identifies how inherited and source-head logits
+combine at the earliest errors. Second, a controlled fit freezes the inherited
+decoder, count head, and projection and trains only the new source head. Neither
+experiment produces an accepted reconstruction improvement: all four new fits
+select epoch zero and reconstruct zero complete validation paragraphs. Evidence
+is in `docs/implementation/reports/evidence/decoder-source-value-margins-20261003/`.
+
+### Actual greedy-prefix diagnostic
+
+`decoder_source_value_margins.trace_predictions(...)` accepts the private model,
+rows, references, codec, inherited input transform and lineage, authenticated
+expected predictions, validator, and optional original rows/source assignments.
+The target-free rollout helper receives only the model and source tensor. It
+follows the original greedy policy, including stepping inactive batch members,
+and must reproduce saved content tokens, stopping status, and EOS exactly.
+References identify the first divergence only after a complete batch rollout;
+they never supply prefixes or decisions to generation.
+
+At every actual step, the owner checks that inherited logits plus the causal
+source residual equal the combined logits exactly and that inherited recurrent
+states match. Compact events retain consumed/emitted tokens, grammar context,
+active or inactive guidance reasons, and component winners. Raw float32 vectors
+are retained at the first divergence, first scalar site, and first rule boundary,
+with duplicate captures merged. This distinguishes invalid-prefix or beyond-slot
+inactivity from a zero or unhelpful active head without retaining full raw logits
+at every step. The private copy preserves caller tensors, gradients, trainability,
+modes, and RNG; cooperative deadlines include final integrity checks.
+
+The runner `benchmark_decoder_source_value_margins.py` has the same five path
+arguments as the preceding runners. It replays 18 authenticated panels: four
+unselected final candidate states on training and validation, each with actual
+and within-length shuffled sources, plus conditioned training/validation for one
+representative zero-head epoch-zero state. All 864 row replays match. The archive
+retains 134,456 emitted-step events and 1,971 deduplicated raw captures. Independent
+numeric decomposition is verified at those retained captures; the remaining
+steps have independent grammar/source metadata checks and the pinned owner's
+decomposition assertion, not an independent recurrent-model rerun.
+
+Across the four final candidate states' 192 conditioned validation rows, every
+first error is a scalar value: 140 actions and 52 actors. The source head alone
+prefers the reference value in 34 cases but the combined decoder emits another
+value. In 24 cases the inherited decoder alone prefers the correct value but
+the residual changes that choice. Both component winners are wrong in the other
+134 cases. The initial zero head has a uniform vocabulary tie; its deterministic
+PAD argmax is not a learned preference. These counts concern first divergences,
+where all earlier generated tokens match the reference, rather than a score
+computed by aligning references after an already divergent prefix.
+
+For “The registrar is allowed to preserve the archive,” the projected-384 seed
+1729 head prefers `preserve`, the inherited decoder prefers `publish`, and their
+sum emits `deliver`, which is neither component's winner. At this first action
+site, the `preserve` minus `deliver` margins are -1.410049 inherited, +0.766215
+source, and -0.643834 combined. Conversely, for “The treasurer is allowed to
+deliver the archive,” projected-384 seed 2718 has a correct inherited `deliver`
+preference; its +0.409979 margin against `approve` is overturned by the source's
+-0.426259 margin, leaving -0.016280 combined. A larger residual scale would
+therefore help some errors and harm others. The diagnostic supports separating
+source binding from joint-decoder adaptation, rather than simply increasing
+source weight or output length.
+
+### Source-head-only comparison
+
+`source_value_freeze_experiment` applies and verifies the private freeze policy;
+`benchmark_decoder_source_value_freeze.py` runs the paired comparison after
+checking the completed diagnostic and its clean audit. The existing trainer,
+semantic-field sequence loss, auxiliary weights, curriculum, optimizer recipe,
+source assignments, and strict selection gates remain unchanged. Both source
+heads start at zero on the same authenticated epoch-zero inherited decoder used
+by the earlier joint fits. Only trainability changes: all inherited body tensors
+remain byte-identical across all eight selected/final exports. Count losses and
+balanced count-row exposure remain recorded, but the frozen count head and
+conditioner receive no gradient update. This is not distillation from a qualified
+teacher or a new source embedding representation.
+
+The four fits each complete 340 updates, 2,440 decoder and count-row presentations,
+225,840 target-token presentations, and 25,600 auxiliary scalar labels. All 40
+post-fit control panels and all eight exports are retained. The table describes
+unselected final attempts; each validation denominator is 48 paragraphs or 720
+reference-present scalar values.
+
+| Head / seed | Validation sequence CE | Training exact /48 | Validation exact /48 | Source head train /720 | Source head validation /720 | Validation shuffled /720 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Conditioning48 /1729 | 4.013346 | 1 | 0 | 312 | 230 | 230 |
+| Projected384 /1729 | 4.003717 | 3 | 0 | 382 | 247 | 226 |
+| Conditioning48 /2718 | 4.012458 | 1 | 0 | 312 | 228 | 228 |
+| Projected384 /2718 | 4.002865 | 3 | 0 | 371 | 249 | 224 |
+
+All final conditioned validation outputs reach EOS and pass syntax, but each
+contains only one rule. All 180 complete reference rules remain missing under
+exact whole-rule matching. The one to three exact training documents are all
+single-rule cases; no multi-rule training or validation document is exact. All
+20 validation checkpoints in each arm are rejected. The eight-rule modality
+guard fails at 17, 19, 19, and 20 checkpoints respectively; other per-length
+facet guards reject the remaining candidates. Selected training and validation
+exactness remain zero. Preserving termination alone
+does not solve longer-span semantics.
+
+Sequence CE falls from the shared 4.291244 baseline, but remains much higher
+than the prior joint fits' roughly 0.20–0.27 final losses. Freezing the initial
+decoder also freezes its substantial sequence-prediction error. Projected heads
+retain a modest validation source association: 247/249 correct versus 226/224
+after shuffling and 232/228 with zero source features. Conditioning scores equal
+their shuffle controls and are close to their 230/224 zero-feature scores.
+Neither readout establishes full source fidelity. Projected heads recover
+28/48, 32/96, 65–67/192, and 122/384 validation values in the 1/2/4/8-rule bins;
+the longer-span gap remains. The two heads also have different parameter counts,
+so their comparison is not a controlled test of feature dimension alone.
+
+### Cost, validation, and retained evidence
+
+The diagnostic runner takes 20.865 seconds, including panel writes. The four
+head-only fit calls take 6.206, 6.434, 5.796, and 6.457 seconds, totaling 24.893
+seconds; their paired joint fits took 42.745 seconds in total. Head-only fits do
+less gradient work, particularly through the recurrent decoder, and train
+50,176 or 394,240 parameters. This is a narrower experiment with unchanged
+rejected checkpoint selection, not faster successful legal formalization.
+Post-fit state persistence, reloads, evaluations, and writes add 10.599 seconds.
+Device is CPU, workers one, bridge names `[]`, prover evaluation false, and
+metric disk cache off. Paragraph embeddings remain warm cached and no encoder
+forward or sample-memory scoring occurs. No bridge-on timing is claimed.
+
+The focused suite passes 1,071 tests, with another 34 scheduler-adapter tests.
+The 24 new diagnostic tests are included in that focused total. The diagnostic
+audit passes 285,494 checks and the final training audit passes 36,106, both with
+zero findings. An initial training-audit attempt had one incorrect expectation
+about the shape of the runner's augmented decision receipt. Its failed receipt
+and original program remain archived; a separate corrected auditor verifies the
+exact augmented binding and reruns the arithmetic without retraining. Both audit
+source versions are pinned, preserving the original diagnostic audit's source.
+
+The first diagnostic admission failed before any model execution because its
+local scheduler configuration differed from the active shared configuration.
+A pinned adapter adopts the exact existing configuration for the local client;
+it does not reset the shared scheduler or clear retained reservations. The failed
+attempt, unused reservation release, adapter tests, and both successful admission
+receipts are retained. The diagnostic guardian takes 59.672 seconds and retains
+67,295,359 bytes within its released 300 MB reservation. The training guardian
+takes 78.558 seconds and retains 117,028,635 bytes within its released 400 MB
+reservation. Peak polled RSS is respectively 716,038,144 and 1,014,095,872 bytes;
+these are sampled observations, not exact peaks. Final charged storage is
+103,968,749,307 bytes under the unchanged 140 GB campaign cap.
+
+The new evidence archive physically retains every new raw replay, fitted state,
+generation/readout panel, audit, source/test closure, and recovery receipt.
+Previously published inputs are referenced by original path, exact member name,
+SHA-256, and byte length in `manifest.referenced_artifacts`. The required archive
+dependency is the source-value-training evidence at Git commit
+`491b15dd41b105e92817c6d2e0663983a0bb9f7e`; its exact repository/path and hashes
+are recorded in `archive_dependencies`, and its public manifest/results are also
+included. Thus this archive is explicitly **not standalone**: reproducible
+replay requires that verified predecessor archive. Prior raw evidence is
+preserved without uploading another copy.
+
+No accepted state is promoted. The 8D linguistic teacher remains unchanged and
+verified local 768D inputs remain unavailable. Neither experiment runs native
+logic-family qualification or `lake build <Lib>`, grants admission, or formalizes
+the Constitution. Fresh holdouts, populated qualifiers, realistic statute spans,
+and faithful multi-rule generation remain open gaps. Further work must improve
+source binding and sequence/cardinality behavior together while retaining the
+existing fidelity and Lake gates.
