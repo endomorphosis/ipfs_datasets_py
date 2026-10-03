@@ -15,6 +15,8 @@ import subprocess
 import tempfile
 from types import MappingProxyType
 
+from .codebase_path_boundary import PathBoundary, PathBoundaryError
+
 
 class GitOperationError(ValueError):
     """A scan Git context or bounded native result is outside its profile."""
@@ -23,13 +25,14 @@ class GitOperationError(ValueError):
 _ACTIVE = ContextVar("codebase_git_operation", default=None)
 MAX_METADATA_BYTES = 512 * 1024
 MAX_NATIVE_MEMORY_BYTES = 256 * 1024 * 1024
-_SAFE_CONFIG = ("-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
+_SAFE_CONFIG = ("--no-pager", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
                 "-c", "gc.auto=0", "-c", "maintenance.auto=false",
                 "-c", "protocol.allow=never")
 _REDIRECTS = {"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
               "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
               "GIT_NAMESPACE", "GIT_EXEC_PATH", "GIT_SSH", "GIT_SSH_COMMAND",
               "GIT_PROXY_COMMAND", "GIT_EXTERNAL_DIFF", "GIT_CONFIG"}
+_CONFIG_QUERY = ("config", "--null", "--includes", "--show-origin", "--show-scope", "--list")
 
 
 def _require(condition, message):
@@ -50,6 +53,7 @@ def _arguments(arguments):
              "bounded Git argument sequence required")
     args = tuple(arguments)
     fixed = {
+        _CONFIG_QUERY,
         ("rev-parse", "--show-toplevel"), ("rev-parse", "--show-object-format"),
         ("rev-parse", "--git-dir"), ("rev-parse", "--verify", "--quiet", "HEAD"),
         ("rev-parse", "--verify", "HEAD"),
@@ -99,7 +103,7 @@ class GitScanOperation:
         _require(all(type(key) is str and type(value) is str and key
                      and "\0" not in key + value and "=" not in key
                      for key, value in environment.items()), "native Git environment is malformed")
-        _require(not any(key.startswith(("LD_", "DYLD_")) or key in _REDIRECTS
+        _require(not any(key.startswith(("LD_", "DYLD_", "GIT_TRACE")) or key in _REDIRECTS
                          for key in environment), "native loader or Git redirect is outside scan profile")
         _require(sum(len(os.fsencode(key)) + len(os.fsencode(value)) + 2
                      for key, value in environment.items()) <= 131072,
@@ -112,9 +116,13 @@ class GitScanOperation:
         self.configuration = _configuration(environment)
         # Status may otherwise refresh the source index as an optional write.
         environment["GIT_OPTIONAL_LOCKS"] = "0"
+        environment.update(GIT_ALLOW_PROTOCOL="", GIT_NO_LAZY_FETCH="1",
+                           GIT_TRACE2="0", GIT_TRACE2_PERF="0", GIT_TRACE2_EVENT="0")
         self.environment = MappingProxyType(environment)
         self._temporary = None
         self._token = None
+        self._root_boundary = None
+        self._config_bytes = None
 
     def __enter__(self):
         _require(self._token is None and self._temporary is None, "Git scan context cannot be reentered")
@@ -128,19 +136,41 @@ class GitScanOperation:
                      "private Git environment exceeds its byte bound")
             self.environment = MappingProxyType(environment)
             self._temporary = temporary
+            try:
+                self._root_boundary = PathBoundary(self.root, directory=True).__enter__()
+            except (OSError, PathBoundaryError) as exc:
+                raise GitOperationError("repository root ancestors are unsafe") from exc
             self._token = _ACTIVE.set(self)
+            self._config_bytes = self._read_configuration()
         except BaseException:
-            temporary.cleanup()
+            self._config_bytes = None
+            if self._token is not None:
+                _ACTIVE.reset(self._token)
+                self._token = None
+            try:
+                if self._root_boundary is not None:
+                    self._root_boundary.close()
+                    self._root_boundary = None
+            finally:
+                self._temporary = None
+                temporary.cleanup()
             raise
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, exception_type, *_):
         try:
-            _ACTIVE.reset(self._token)
+            if exception_type is None:
+                self.verify_configuration()
         finally:
-            self._token = None
-            temporary, self._temporary = self._temporary, None
-            temporary.cleanup()
+            self._config_bytes = None
+            try:
+                _ACTIVE.reset(self._token)
+                self._token = None
+                boundary, self._root_boundary = self._root_boundary, None
+                boundary.close()
+            finally:
+                temporary, self._temporary = self._temporary, None
+                temporary.cleanup()
 
     def remaining(self):
         seconds = self.checkpoint()
@@ -148,17 +178,17 @@ class GitScanOperation:
                  "finite positive remaining Git deadline required")
         _require(_configuration(os.environ) == self.configuration,
                  "Git configuration environment changed during scan")
+        if self._root_boundary is not None:
+            try:
+                self._root_boundary.verify()
+            except PathBoundaryError as exc:
+                raise GitOperationError("repository root ancestor binding changed") from exc
         return seconds
 
-    def run(self, root, arguments, *, max_output_bytes=None):
+    def _execute(self, args, output_bytes):
         from ..backends.process import ProcessInvocation, SubprocessExecutor, ToolRunLimits, ToolRuntime
-        _require(_ACTIVE.get() is self and Path(root).resolve() == self.root,
-                 "Git query must use its active exact repository root")
-        args = _arguments(arguments)
-        output_bytes = (self.max_file_bytes + 1 if args[:2] == ("cat-file", "blob")
-                        else MAX_METADATA_BYTES) if max_output_bytes is None else max_output_bytes
-        _require(type(output_bytes) is int and 0 < output_bytes <= MAX_METADATA_BYTES,
-                 "finite Git output cap required")
+        _require(_ACTIVE.get() is self and self._root_boundary is not None
+                 and self._temporary is not None, "active admitted Git context required")
         timeout = min(10.0, self.remaining())
         limits = ToolRunLimits(timeout_seconds=timeout, cpu_seconds=timeout,
             memory_bytes=self.native_memory_bytes, resident_memory_bytes=self.native_memory_bytes,
@@ -168,12 +198,51 @@ class GitScanOperation:
             runtime=ToolRuntime.NATIVE, cwd=self.root, environment=self.environment,
             stdin=None, limits=limits)
         raw = SubprocessExecutor().execute(invocation, cancellation=self.cancellation)
-        self.remaining()  # Native cleanup must finish before checking current success.
+        self.remaining()
         _require(type(raw.returncode) is int and type(raw.stdout) is bytes and type(raw.stderr) is bytes
                  and not any((raw.error, raw.timed_out, raw.cancelled, raw.output_truncated,
                               raw.resource_exhausted, raw.process_tree_terminated)),
                  "Git query failed or exceeded its bounded process profile")
         return subprocess.CompletedProcess(invocation.argv, raw.returncode, raw.stdout, raw.stderr)
+
+    def _read_configuration(self):
+        result = self._execute(_CONFIG_QUERY, MAX_METADATA_BYTES)
+        _require(result.returncode == 0 and result.stderr == b"", "Git configuration preflight failed")
+        records = result.stdout.split(b"\0")
+        _require(records[-1] == b"" and (len(records) - 1) % 3 == 0,
+                 "ordered Git configuration records are malformed")
+        for offset in range(0, len(records) - 1, 3):
+            scope, origin, entry = records[offset:offset + 3]
+            key = entry.partition(b"\n")[0].lower()
+            _require(scope in {b"system", b"global", b"local", b"worktree", b"command"}
+                     and origin and key, "Git configuration origin or scope is malformed")
+            _require(not (key.startswith((b"filter.", b"trace2."))
+                          or key in {b"extensions.partialclone", b"core.alternaterefscommand"}
+                          or (key.startswith(b"remote.") and key.endswith(b".promisor"))),
+                     "executable filter, trace, alternate-ref or promisor configuration is outside scan profile")
+        return result.stdout
+
+    def verify_configuration(self):
+        _require(_ACTIVE.get() is self and self._root_boundary is not None,
+                 "active admitted Git context required")
+        _require(self._config_bytes is not None, "admitted Git configuration witness required")
+        _require(self._read_configuration() == self._config_bytes,
+                 "Git configuration records changed during scan")
+
+    def run(self, root, arguments, *, max_output_bytes=None):
+        _require(_ACTIVE.get() is self and Path(root).resolve() == self.root,
+                 "Git query must use its active exact repository root")
+        args = _arguments(arguments)
+        output_bytes = (self.max_file_bytes + 1 if args[:2] == ("cat-file", "blob")
+                        else MAX_METADATA_BYTES) if max_output_bytes is None else max_output_bytes
+        _require(type(output_bytes) is int and 0 < output_bytes <= MAX_METADATA_BYTES,
+                 "finite Git output cap required")
+        self.verify_configuration()
+        if args == ("status", "--porcelain", "-z", "--untracked-files=all"):
+            args = (*args, "--ignore-submodules=all")
+        result = self._execute(args, output_bytes)
+        self.verify_configuration()
+        return result
 
 
 __all__ = ["GitOperationError", "GitScanOperation", "current_git_operation"]

@@ -106,6 +106,7 @@ class SnapshotEntry:
     head_blob_oid: str | None = None; index_blob_oids: Mapping[str, str] | None = None
     captured_bytes: bytes | None = field(default=None, compare=False, repr=False)
     witness: tuple[int, int, int, int, int] | None = field(default=None, compare=False, repr=False)
+    ancestor_witness: tuple | None = field(default=None, compare=False, repr=False)
     def __post_init__(self) -> None:
         raw = self.raw_path_hex or _raw_hex(self.path)
         try: raw_bytes = bytes.fromhex(raw)
@@ -721,35 +722,37 @@ def _kind(path: str) -> str:
     return "artifact"
 def _opaque(path: str, reason: str, size: int | None = None, source_cid: str | None = None, *, raw: bytes | None = None, oid: str | None = None, disposition: str = "opaque", head_oid: str | None = None, index_oids: Mapping[str, str] | None = None) -> SnapshotEntry:
     return SnapshotEntry(path, "opaque", size, source_cid, reason, (raw or os.fsencode(path)).hex(), oid, "opaque", disposition, head_oid, index_oids)
-def _entry(path: str, raw: bytes, data: bytes, max_file_bytes: int, oid: str | None = None, witness: tuple[int, int, int, int, int] | None = None, disposition: str = "working", head_oid: str | None = None, index_oids: Mapping[str, str] | None = None, acquisition: str = "working-captured") -> SnapshotEntry:
+def _entry(path: str, raw: bytes, data: bytes, max_file_bytes: int, oid: str | None = None, witness: tuple[int, int, int, int, int] | None = None, disposition: str = "working", head_oid: str | None = None, index_oids: Mapping[str, str] | None = None, acquisition: str = "working-captured", ancestor_witness: tuple | None = None) -> SnapshotEntry:
     if len(data) > max_file_bytes: return _opaque(path, "oversized", len(data), raw=raw, oid=oid, disposition=disposition, head_oid=head_oid, index_oids=index_oids)
     try: data.decode("utf-8", "strict")
     except UnicodeDecodeError: return _opaque(path, "undecodable", len(data), cid_for_bytes(data), raw=raw, oid=oid, disposition=disposition, head_oid=head_oid, index_oids=index_oids)
-    return SnapshotEntry(path, _kind(path), len(data), cid_for_bytes(data), None, raw.hex(), oid, acquisition, disposition, head_oid, index_oids, data, witness)
+    return SnapshotEntry(path, _kind(path), len(data), cid_for_bytes(data), None, raw.hex(), oid, acquisition, disposition, head_oid, index_oids, data, witness, ancestor_witness)
 def _working_entry(root: Path, raw: bytes, max_file_bytes: int, **evidence: Any) -> SnapshotEntry:
+    from ..codebase_path_boundary import PathBoundary, PathBoundaryError
     path = _raw_display(raw)
     if _malformed_raw(raw): return _opaque(path, "malformed_path", raw=raw, **evidence)
     candidate = root / os.fsdecode(raw)
     try:
-        before = candidate.stat(follow_symlinks=False)
-        if not stat.S_ISREG(before.st_mode): return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
-        if before.st_size > max_file_bytes: return _opaque(path, "oversized", before.st_size, raw=raw, **evidence)
-        nofollow = getattr(os, "O_NOFOLLOW", None)
-        if nofollow is None: return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
-        # A regular file can become a FIFO between lstat and open. Open without
-        # blocking, then reject nonregular descriptors before reading.
-        fd = os.open(candidate, os.O_RDONLY | nofollow | os.O_NONBLOCK)
-        with os.fdopen(fd, "rb") as handle:
-            opened = os.fstat(handle.fileno())
-            if not stat.S_ISREG(opened.st_mode): return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
-            data = handle.read(max_file_bytes + 1)
-            read_end = os.fstat(handle.fileno())
-        after = candidate.stat(follow_symlinks=False)
+        with PathBoundary(candidate) as boundary:
+            before = boundary.stat_leaf()
+            if not stat.S_ISREG(before.st_mode): return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
+            if before.st_size > max_file_bytes: return _opaque(path, "oversized", before.st_size, raw=raw, **evidence)
+            # A replacement FIFO never blocks; ancestors and leaf are no-follow.
+            fd = boundary.open_leaf()
+            with os.fdopen(fd, "rb") as handle:
+                opened = os.fstat(handle.fileno())
+                if not stat.S_ISREG(opened.st_mode): return _opaque(path, "symlink_or_nonregular", before.st_size, raw=raw, **evidence)
+                data = handle.read(max_file_bytes + 1)
+                read_end = os.fstat(handle.fileno())
+            after = boundary.stat_leaf()
+            boundary.verify()
+            ancestors = boundary.signature
+    except PathBoundaryError: return _opaque(path, "unsafe_ancestor", raw=raw, **evidence)
     except FileNotFoundError: return _opaque(path, "missing", raw=raw, **evidence)
     except OSError: return _opaque(path, "unreadable", raw=raw, **evidence)
     witness = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
     if any(witness != (item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns, item.st_ctime_ns) for item in (opened, read_end, after)): return _opaque(path, "raced", after.st_size, raw=raw, **evidence)
-    return _entry(path, raw, data, max_file_bytes, witness=witness, **evidence)
+    return _entry(path, raw, data, max_file_bytes, witness=witness, ancestor_witness=ancestors, **evidence)
 
 def _tree_oids(root: Path, tree: str, exclusions: Sequence[bytes]) -> dict[bytes, str]:
     result: dict[bytes, str] = {}
@@ -873,7 +876,7 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
             working = _working_entry(git_root, bytes.fromhex(item.raw_path_hex or ""), max_file_bytes)
             if working.is_opaque or working.source_cid != item.source_cid:
                 break
-            verified_entries.append(replace(item, witness=working.witness))
+            verified_entries.append(replace(item, witness=working.witness, ancestor_witness=working.ancestor_witness))
         else:
             entries = tuple(verified_entries); mode = "git-clean"
         if len(verified_entries) != len(clean_entries):
@@ -902,8 +905,12 @@ def snapshot_repository(repository: str | os.PathLike[str], *, repository_id: st
         if item.witness is None:
             continue
         try:
-            current = (git_root / os.fsdecode(bytes.fromhex(item.raw_path_hex or ""))).stat(follow_symlinks=False)
-        except OSError as exc:
+            from ..codebase_path_boundary import PathBoundary, PathBoundaryError
+            with PathBoundary(git_root / os.fsdecode(bytes.fromhex(item.raw_path_hex or ""))) as boundary:
+                current = boundary.stat_leaf()
+                if item.ancestor_witness != boundary.signature:
+                    raise GitSnapshotError("captured working ancestor changed during snapshot")
+        except (OSError, PathBoundaryError) as exc:
             raise GitSnapshotError("captured working file changed during snapshot") from exc
         if not stat.S_ISREG(current.st_mode) or item.witness != (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns, current.st_ctime_ns):
             raise GitSnapshotError("captured working file changed during snapshot")
