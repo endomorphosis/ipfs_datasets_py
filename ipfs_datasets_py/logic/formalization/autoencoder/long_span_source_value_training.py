@@ -32,6 +32,9 @@ def _head_specification(model, codec, source_value_weight):
     if not present:
         return None
     description = model.describe()
+    if description.get("schema") == "action-factorized-clause-source-decoder-development/v1":
+        from . import action_factorized_clause_decoder_experiment as action_values
+        return action_values.checked_specification(model, codec)
     if description.get("schema") == "clause-source-decoder-development/v1":
         from . import clause_source_decoder_experiment as clause_values
         return clause_values.checked_specification(model, codec)
@@ -186,7 +189,7 @@ def train(student, training_rows, validation_rows, *, training_references, valid
           curriculum, strategy="reference_ce", config=None, cardinality_weight=0.,
           count_exposure="current_stage", source_value_weight=0.,
           order_augmentation=None, generated_boundary_weight=0., generated_boundary_gradient_scope="all_trainable",
-          source_contexts=None):
+          source_contexts=None, action_contrastive_weight=0.):
     """Fresh reference-supervised fit; source fidelity gates experimental selection.
 
     The last complete attempt is retained as an explicitly unselected diagnostic.
@@ -204,6 +207,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                   "unknown count exposure policy")
     core._require(type(source_value_weight) in (int, float) and math.isfinite(source_value_weight)
         and 0 <= source_value_weight <= 1, "invalid source-value weight")
+    core._require(type(action_contrastive_weight) in (int, float) and math.isfinite(action_contrastive_weight)
+        and 0 <= action_contrastive_weight <= 1, "invalid action-contrastive weight")
     core._require(type(generated_boundary_weight) in (int, float) and math.isfinite(generated_boundary_weight)
         and 0 <= generated_boundary_weight <= 1, "invalid generated-boundary weight")
     core._require(type(generated_boundary_gradient_scope) is str
@@ -215,7 +220,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         and set(order_augmentation) == {"preparation", "embedding_observations"},
         "closed order-augmentation inputs required")
     head_specification = _head_specification(student, codec, source_value_weight)
-    contextual = head_specification is not None and head_specification.get("schema") == "clause-source-decoder-development/v1"
+    contextual = head_specification is not None and head_specification.get("schema") in (
+        "clause-source-decoder-development/v1", "action-factorized-clause-source-decoder-development/v1")
+    core._require(action_contrastive_weight == 0. or head_specification is not None
+        and head_specification.get("schema") == "action-factorized-clause-source-decoder-development/v1",
+        "positive action-contrastive weight requires action-factorized clause model")
     core._require(contextual == (source_contexts is not None), "clause source model and explicit contexts must be paired")
     context_receipt = None
     training_contexts = validation_contexts = None
@@ -245,7 +254,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     core._require(not train_ids & tune_ids and not train_sources & tune_sources, "training/validation overlap")
     if head_specification is not None and head_specification.get("schema") in (
             "projected-source-decoder-development/v1", "mean-centered-source-decoder-development/v1",
-            "shared-slot-source-decoder-development/v1", "clause-source-decoder-development/v1"):
+            "shared-slot-source-decoder-development/v1", "clause-source-decoder-development/v1",
+            "action-factorized-clause-source-decoder-development/v1"):
         inventory = [dict(id=row["id"], source_sha256=hashlib.sha256(row["source_text"].encode()).hexdigest())
             for row in training_rows]
         for name in ("normalization", "count_prior"):
@@ -270,6 +280,11 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         effective_rows, effective_references, codec, validate_rule=validate_rule))
     validation_source_labels = (None if head_specification is None else values.reference_source_values(
         validation_rows, validation_references, codec, validate_rule=validate_rule))
+    action_owner = action_inventory = None
+    if action_contrastive_weight:
+        from . import action_contrastive_decoder_training as action_owner
+        action_inventory = action_owner.prepare_training_inventory(training_rows, training_references,
+            contexts=training_contexts, codec=codec, validate_rule=validate_rule)
     stages = core._curriculum(curriculum, training_rows, options)
     parameter_bytes = sum(t.numel()*t.element_size() for t in student.state_dict().values())
     width = max(len(r["target_ids"]) for r in [*training_rows, *validation_rows])
@@ -292,6 +307,10 @@ def train(student, training_rows, validation_rows, *, training_references, valid
         estimate += 134217728
     if source_contexts is not None:
         estimate += 16*options["batch_size"]*8*student.dimension*4 + len(core._raw(source_contexts))
+    if action_contrastive_weight:
+        # Unique source features/pair receipts plus a separate small feature
+        # graph; this is a conservative tensor/retained-work estimate, not RSS.
+        estimate += options["max_optimizer_steps"]*options["batch_size"]*8*(64*32+2048)
     core._require(estimate <= options["max_memory_bytes"], "trial tensor work exceeds budget")
     count_selector = (_BalancedCountSelector(training_rows, count_labels, options["seed"])
                       if count_exposure == "balanced_all" else None)
@@ -392,6 +411,18 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     objective = objective + cardinality_weight*count_loss
                 if source_value_weight != 0.:
                     objective = objective + source_value_weight*source_loss
+                action_result = None
+                if action_owner is not None:
+                    try:
+                        action_result = action_owner.source_action_contrastive_loss(torch, working,
+                            projected, part, source_context=context_kwargs["source_context"],
+                            inventory=action_inventory, deadline=deadline)
+                    except TimeoutError:
+                        optimizer.zero_grad(set_to_none=True)
+                        stopped, complete = "deadline_during_action_contrastive", False
+                        break
+                    if action_result["loss"] is not None:
+                        objective = objective + action_contrastive_weight*action_result["loss"]
                 boundary_result = None
                 if boundary_owner is not None:
                     try:
@@ -414,6 +445,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     stopped, complete = "deadline", False
                     break
                 objective.backward()
+                if action_result is not None:
+                    action_owner.record_feature_gradient(torch, action_result, weight=action_contrastive_weight)
                 preclip_norm = torch.nn.utils.clip_grad_norm_(trainable, options["max_grad_norm"], error_if_nonfinite=True)
                 if time.monotonic() >= deadline:
                     optimizer.zero_grad(set_to_none=True)
@@ -441,6 +474,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
                     committed_updates[-1]["decoder_parent_row_ids"] = [row["id"] for row in parents]
                 if boundary_result is not None:
                     committed_updates[-1]["generated_boundary"] = boundary_result["receipt"]
+                if action_result is not None:
+                    committed_updates[-1]["action_contrastive"] = action_result["receipt"]
                 norm = float(preclip_norm.detach())
                 gradient_norm_sum += norm; gradient_norm_max = max(gradient_norm_max, norm)
                 gradient_norm_steps += 1; gradient_clipped_steps += int(norm > options["max_grad_norm"])
@@ -574,6 +609,17 @@ def train(student, training_rows, validation_rows, *, training_references, valid
             generated_boundary_supervision="full_vocabulary_CE; mean_per_active_row_then_active_rows",
             generated_boundary_reference_access="training_loss_labels_only; never_greedy_rollout",
             generated_boundary_used_for_selection=False)
+    if action_owner is not None:
+        report.update(action_contrastive_weight=action_contrastive_weight,
+            action_contrastive_temperature=action_owner.TEMPERATURE,
+            action_contrastive_inventory=action_inventory,
+            action_contrastive_policy="current_batch_unique_source_clauses; same_action_different_actor_positive; other_actions_negative",
+            action_contrastive_reference_access="authenticated_training_loss_only; never_generation",
+            action_contrastive_used_for_selection=False,
+            action_contrastive_active_updates=sum(update["action_contrastive"]["active_anchor_count"] > 0
+                for update in committed_updates),
+            action_contrastive_skipped_updates=sum(update["action_contrastive"]["active_anchor_count"] == 0
+                for update in committed_updates))
     return dict(state_dict=best_state, report=report,
         last_complete_attempt_state_dict=diagnostic_state,
         predictions=[] if selected is None else deepcopy(selected["predictions"]),
