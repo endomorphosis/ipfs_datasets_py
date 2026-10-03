@@ -24,13 +24,13 @@ import time
 from typing import Any
 
 from .content import cid_for_bytes, cid_for_structured
-from ..backends.codebase_process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
+from ..backends.process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
 from ..backends.smt.compiler import (
     INT_SORT, SmtCompilation, SmtQueryMode, SmtTerm, SmtTermKind,
     SoftwareVerificationSMTCompiler, smt_sanitize, term_eq, term_int, term_symbol,
 )
 from ..backends.smt.differential import normalize_smtlib_for_solver, parse_smt_solver_stdout
-from ..software_verification.codebase_pipeline import (
+from ..software_verification.pipeline import (
     ContractSpec, PipelineStatus, SourceToVerificationPipeline, SourceToVerificationResult,
 )
 from ..software_verification.vc import VCRuleKind
@@ -290,8 +290,8 @@ def _native_executable(discovered: str) -> tuple[str, str]:
 
 
 def _implementation_identity() -> dict[str, Any]:
-    from ..software_verification import codebase_pipeline as pipeline, codebase_source_adapters as source_adapters, vc
-    from ..backends import codebase_process as process
+    from ..software_verification import pipeline, source_adapters, vc
+    from ..backends import process
     from ..backends.smt import compiler, differential
     modules = (sys.modules[__name__], pipeline, source_adapters, vc, process, compiler, differential)
     return {"python": sys.version, "implementation": sys.implementation.name,
