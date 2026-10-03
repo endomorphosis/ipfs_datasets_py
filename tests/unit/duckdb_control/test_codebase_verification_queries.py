@@ -14,7 +14,7 @@ from ipfs_datasets_py.duckdb_control.codebase_verification_queries import (
     CodebaseVerificationQueryEntry as Entry,
     CodebaseVerificationQueryPage as Page,
 )
-from ipfs_datasets_py.logic.software_contracts.content import cid_for_structured
+from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes, cid_for_structured
 from ipfs_datasets_py.logic.software_contracts import codebase_verification as verifier
 from ipfs_datasets_py.logic.software_verification.pipeline import ContractSpec
 from tests.unit.duckdb_control.test_codebase_verification_catalog import prepared, publish  # noqa: F401
@@ -58,6 +58,77 @@ def query(prepared, **kwargs):
     options = dict(expected_head=head, selector=Selector(), scheduler=owner)
     options.update(kwargs)
     return catalog.query_current(repository, **options)
+
+
+@pytest.mark.parametrize("kind", [
+    "source", "snapshot", "manifest", "ast", "ast_revision", "head", "compiler",
+    "verification", "applicability", "authored_contract", "lowered_contract", "domain",
+    "environment", "profile", "implementation", "canonical_assumptions",
+])
+def test_page_rejects_unrelated_exact_dependency_selector(prepared, kind):
+    publish(prepared)
+    page = query(prepared)
+    if kind == "source":
+        value = cid_for_bytes(b"unrelated source")
+    elif kind in {"implementation", "canonical_assumptions"}:
+        value = "sha256:" + "0" * 64
+    elif kind == "ast_revision":
+        value = "revision:unrelated"
+    else:
+        value = cid_for_structured({"unrelated": kind})
+    selector = Selector(dependency_kind=kind, dependency_value=value)
+    with pytest.raises(CodebaseVerificationCatalogError, match="dependency selector"):
+        replace(page, selector=selector)
+
+
+def test_page_accepts_every_dependency_stored_for_its_exact_entry(prepared):
+    from ipfs_datasets_py.duckdb_control.codebase_verification_projection import DOMAIN
+    publish(prepared)
+    page = query(prepared)
+    rows = prepared[7].execute(f"SELECT kind,value FROM {DOMAIN}.dependencies WHERE entry_id=? ORDER BY kind,value",
+                               [page.entries[0].entry_id]).fetchall()
+    assert {kind for kind, _ in rows} >= {"source", "ast", "ast_revision", "authored_contract", "environment", "profile", "implementation"}
+    for kind, value in rows:
+        selector = Selector(dependency_kind=kind, dependency_value=value)
+        selected = replace(page, selector=selector)
+        assert selected.to_dict()["selector"] == selector.to_dict()
+        assert selected.entries == page.entries
+
+
+@pytest.mark.parametrize("surface", ["to_dict", "page_cid"])
+def test_page_serialization_rechecks_mutated_dependency_binding(prepared, surface):
+    publish(prepared)
+    page = query(prepared)
+    object.__setattr__(page, "selector", Selector(dependency_kind="source", dependency_value=cid_for_bytes(b"other")))
+    with pytest.raises(CodebaseVerificationCatalogError, match="dependency selector"):
+        if surface == "to_dict":
+            page.to_dict()
+        else:
+            page.page_cid
+
+
+def test_dependency_match_stays_scoped_to_the_selected_contract(prepared):
+    catalog, index, repository, head, _, _, owner, _, _ = prepared
+    first = ContractSpec("increment", postconditions=("result == n + 1",), contract_id="contract:first")
+    second = ContractSpec("increment", postconditions=("result == n + 2",), contract_id="contract:second")
+    record = verifier.verify_current_codebase_unit(index, repository, expected_head=head, path="counter.py",
+                                                   contracts=[first, second], scheduler=owner)
+    publish(prepared, verification_cid=record.artifact_cid)
+    page = query(prepared, selector=Selector(contract_id=first.contract_id))
+    assert len(page.entries) == 1 and len(page.entries[0].projection.to_dict()["contracts"]) == 2
+    selector = Selector(contract_id=first.contract_id, dependency_kind="authored_contract",
+                        dependency_value=cid_for_structured(second.to_dict()))
+    with pytest.raises(CodebaseVerificationCatalogError, match="dependency selector"):
+        replace(page, selector=selector)
+    assert query(prepared, selector=selector).entries == ()
+
+
+def test_unmatched_dependency_query_returns_a_valid_empty_page(prepared):
+    publish(prepared)
+    selector = Selector(dependency_kind="source", dependency_value=cid_for_bytes(b"absent"))
+    page = query(prepared, selector=selector)
+    assert page.entries == () and page.complete
+    assert page.to_dict()["selector"] == selector.to_dict()
 
 
 def test_native_entry_page_receipts_bind_exact_selector_head_and_cursor(prepared):
