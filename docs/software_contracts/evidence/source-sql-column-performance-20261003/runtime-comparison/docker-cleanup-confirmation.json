@@ -1,0 +1,18 @@
+{
+  "schema": "diagnostic-container-cleanup@1",
+  "utc": "2026-10-03T10:16:32.143197+00:00",
+  "container_id": "634a55e24b5d",
+  "argv": [
+    "docker",
+    "ps",
+    "-a",
+    "--filter",
+    "id=634a55e24b5d",
+    "--format",
+    "{{.ID}} {{.Names}} {{.Status}}"
+  ],
+  "return_code": 0,
+  "stdout": "",
+  "stderr": "",
+  "container_absent": true
+}

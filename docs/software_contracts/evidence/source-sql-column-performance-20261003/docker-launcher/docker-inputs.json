@@ -1,0 +1,14 @@
+{
+  "corpus": {
+    "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/corpus.json",
+    "sha256": "cd84435f534cfcd29b4e4ef5928542d57e630529c0d86eba34baa1b1c02966bd"
+  },
+  "replay": {
+    "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py",
+    "sha256": "181ca8064c9529514f68bee2e87c6cae4d67862ab63082a92d1eea3b61878671"
+  },
+  "candidate": {
+    "path": "/home/barberb/lift_coding/artifacts/source384-sql-vector-candidate-20261003/vector_candidate.py",
+    "sha256": "be404be397941857bc21f2b99af2240a29a4dc7944018bd6a1f72ce70736b72c"
+  }
+}

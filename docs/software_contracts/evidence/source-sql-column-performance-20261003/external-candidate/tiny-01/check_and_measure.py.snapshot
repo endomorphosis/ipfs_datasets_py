@@ -1,0 +1,218 @@
+"""Bounded native DuckDB controls and paired tiny SQL-only measurements."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import statistics
+import sys
+import time
+from types import SimpleNamespace
+import unittest
+
+import duckdb
+from ipfs_datasets_py.logic.software_contracts import duckdb_ast_store as owner
+from vector_candidate import insert_rows_unnest
+
+B = Path(__file__).parent
+BASELINE = owner.DuckDBASTStore._insert_rows
+METHODS = {"values": BASELINE, "column_unnest": insert_rows_unnest}
+WIDTH = 18
+DDL = """CREATE TABLE facts (
+ row_id VARCHAR PRIMARY KEY, blob_id VARCHAR, symbol_id VARCHAR,
+ name VARCHAR, qualified_name VARCHAR, kind VARCHAR, scope_id VARCHAR,
+ ordinal BIGINT, visible BOOLEAN, signature_json VARCHAR,
+ annotations_json VARCHAR, flags_json VARCHAR, start_byte BIGINT,
+ end_byte BIGINT, start_line BIGINT, start_column BIGINT,
+ end_line BIGINT, end_column BIGINT)"""
+STATEMENT = "INSERT INTO facts VALUES (" + ",".join(["?"] * WIDTH) + ")"
+
+
+def make_rows(count):
+    return [(f"r{i:06}", f"blob-{i // 17}", f"symbol-{i}",
+             "café_函数", f"module.Class.method_{i}", "function", None if i % 3 == 0 else "scope",
+             i, bool(i % 2), '{"args":["request","headers"],"return":"str"}',
+             None if i % 5 == 0 else '{"allow":"unicode Ω"}', '["public"]',
+             i * 19, i * 19 + 18, i + 1, 0, i + 1, 18) for i in range(count)]
+
+
+class Recorder:
+    def __init__(self, connection, mode, fail_call=None, error=None, consumed=None):
+        self.connection, self.mode = connection, mode
+        self.calls = []
+        self.fail_call, self.error, self.consumed = fail_call, error, consumed
+
+    def execute(self, statement, parameters):
+        start, cpu = time.monotonic(), time.process_time()
+        result = self.connection.execute(statement, parameters)
+        seconds, cpu_seconds = time.monotonic() - start, time.process_time() - cpu
+        count = len(parameters[0]) if self.mode == "column_unnest" else len(parameters) // WIDTH
+        assert self.mode != "column_unnest" or all(len(column) == count for column in parameters)
+        self.calls.append(dict(rows=count, parameters=len(parameters), sql_characters=len(statement),
+                               seconds=seconds, cpu_seconds=cpu_seconds,
+                               consumed=self.consumed[0] if self.consumed else None))
+        if len(self.calls) == self.fail_call:
+            raise self.error
+        return result
+
+
+def connection():
+    cx = duckdb.connect(config={"threads": 1, "memory_limit": "512MB"})
+    cx.execute(DDL)
+    return cx
+
+
+def run_rows(cx, mode, rows, **options):
+    recorder = Recorder(cx, mode, **options)
+    METHODS[mode](SimpleNamespace(_connection=recorder), STATEMENT, rows)
+    return recorder
+
+
+class CandidateControls(unittest.TestCase):
+    def test_exact_native_row_parity_128_and_1024(self):
+        for count in (128, 1024):
+            expected = make_rows(count)
+            for mode in METHODS:
+                with self.subTest(count=count, mode=mode), connection() as cx:
+                    recorder = run_rows(cx, mode, iter(expected))
+                    self.assertEqual(cx.execute("SELECT * FROM facts ORDER BY row_id").fetchall(), expected)
+                    self.assertEqual([row["rows"] for row in recorder.calls], [128] * (count // 128))
+                    self.assertEqual([row["parameters"] for row in recorder.calls],
+                                     [WIDTH if mode == "column_unnest" else 128 * WIDTH] * (count // 128))
+
+    def test_literal_sql_injection_unicode_null_boolean_and_large_integer(self):
+        expected = [list(row) for row in make_rows(3)]
+        expected[0][3] = "x'); DROP TABLE facts;--"
+        expected[0][7] = 2**62
+        expected[1][7] = -(2**62)
+        expected[2][9] = "'\\\"\n😀"
+        for mode in METHODS:
+            with self.subTest(mode=mode), connection() as cx:
+                run_rows(cx, mode, iter(expected))
+                self.assertEqual(cx.execute("SELECT * FROM facts ORDER BY row_id").fetchall(), [tuple(r) for r in expected])
+
+    def test_byte_bound_and_already_valid_oversized_singleton(self):
+        expected = [list(row) for row in make_rows(4)]
+        expected[0][9] = "é" * 70000
+        expected[1][9] = "é" * 70000
+        expected[2][9] = "é" * 140000
+        for mode in METHODS:
+            with self.subTest(mode=mode), connection() as cx:
+                recorder = run_rows(cx, mode, iter(expected))
+                self.assertEqual([r["rows"] for r in recorder.calls], [1, 1, 1, 1])
+                self.assertEqual(cx.execute("SELECT * FROM facts ORDER BY row_id").fetchall(), [tuple(r) for r in expected])
+
+    def test_empty_rows_do_not_execute(self):
+        for mode in METHODS:
+            with self.subTest(mode=mode), connection() as cx:
+                self.assertEqual(run_rows(cx, mode, iter(())).calls, [])
+
+    def test_second_native_chunk_failure_rolls_back_and_preserves_exception_identity(self):
+        for mode in METHODS:
+            with self.subTest(mode=mode), connection() as cx:
+                error = RuntimeError("injected after second native chunk")
+                cx.execute("BEGIN")
+                try:
+                    run_rows(cx, mode, iter(make_rows(1024)), fail_call=2, error=error)
+                except RuntimeError as exc:
+                    self.assertIs(exc, error)
+                    self.assertEqual(cx.execute("SELECT count(*) FROM facts").fetchone()[0], 256)
+                    cx.execute("ROLLBACK")
+                else:
+                    self.fail("native failure was swallowed")
+                self.assertEqual(cx.execute("SELECT count(*) FROM facts").fetchone()[0], 0)
+
+    def test_native_constraint_failure_rolls_back_all_chunks(self):
+        for mode in METHODS:
+            with self.subTest(mode=mode), connection() as cx:
+                rows = make_rows(257)
+                rows[256] = rows[0]
+                cx.execute("BEGIN")
+                with self.assertRaises(duckdb.ConstraintException):
+                    run_rows(cx, mode, iter(rows))
+                cx.execute("ROLLBACK")
+                self.assertEqual(cx.execute("SELECT count(*) FROM facts").fetchone()[0], 0)
+
+    def test_generator_consumption_order_and_failure_are_unchanged(self):
+        for mode in METHODS:
+            with self.subTest(mode=mode), connection() as cx:
+                consumed = [0]
+                def rows():
+                    for row in make_rows(1024):
+                        consumed[0] += 1
+                        yield row
+                error = RuntimeError("stop first chunk")
+                recorder = Recorder(cx, mode, fail_call=1, error=error, consumed=consumed)
+                with self.assertRaises(RuntimeError) as caught:
+                    METHODS[mode](SimpleNamespace(_connection=recorder), STATEMENT, rows())
+                self.assertIs(caught.exception, error)
+                self.assertEqual(consumed[0], 129)
+                self.assertEqual(recorder.calls[0]["consumed"], 129)
+
+    def test_generator_exception_before_first_flush_preserves_empty_database(self):
+        for mode in METHODS:
+            with self.subTest(mode=mode), connection() as cx:
+                error = RuntimeError("row producer failed")
+                def rows():
+                    yield from make_rows(128)
+                    raise error
+                with self.assertRaises(RuntimeError) as caught:
+                    run_rows(cx, mode, rows())
+                self.assertIs(caught.exception, error)
+                self.assertEqual(cx.execute("SELECT count(*) FROM facts").fetchone()[0], 0)
+
+    def test_width_rejection_matches_native(self):
+        for mode in METHODS:
+            with self.subTest(mode=mode), connection() as cx:
+                with self.assertRaisesRegex(owner.DuckDBASTStoreError, "fact row differs"):
+                    run_rows(cx, mode, [[None]])
+
+
+def measure():
+    records = []
+    for count in (128, 1024):
+        rows = make_rows(count)
+        row_sha = hashlib.sha256(json.dumps(rows, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+        for repeat in range(3):
+            for mode in (("values", "column_unnest") if repeat % 2 == 0 else ("column_unnest", "values")):
+                with connection() as cx:
+                    settings = cx.execute("SELECT current_setting('threads'),current_setting('memory_limit')").fetchone()
+                    cx.execute("BEGIN")
+                    start, cpu = time.monotonic(), time.process_time()
+                    recorder = run_rows(cx, mode, iter(rows))
+                    elapsed, cpu_seconds = time.monotonic() - start, time.process_time() - cpu
+                    cx.execute("COMMIT")
+                    assert cx.execute("SELECT * FROM facts ORDER BY row_id").fetchall() == rows
+                    records.append(dict(mode=mode, repeat=repeat, rows=count, width=WIDTH,
+                                        row_sha256=row_sha, seconds=elapsed, cpu_seconds=cpu_seconds,
+                                        execute_seconds=sum(r['seconds'] for r in recorder.calls),
+                                        execute_cpu_seconds=sum(r['cpu_seconds'] for r in recorder.calls),
+                                        statements=len(recorder.calls), statement_rows=[r['rows'] for r in recorder.calls],
+                                        parameters_per_statement=[r['parameters'] for r in recorder.calls],
+                                        threads=settings[0], memory_limit=settings[1], exact_row_parity=True))
+    return records
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("usage: check_and_measure.py fresh-output-directory")
+    out = Path(sys.argv[1]); out.mkdir()
+    with (out / 'controls.log').open('x') as stream:
+        result = unittest.TextTestRunner(stream=stream, verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(CandidateControls))
+    receipt = dict(schema='source384-sql-vector-candidate@1', experimental_only=True,
+                   production_qualification=False, corpus_replay=False, docker_replay=False,
+                   duckdb_version=duckdb.__version__, python=sys.version.split()[0],
+                   batch_rows=owner._INSERT_BATCH_ROWS, batch_parameter_byte_target=owner._INSERT_BATCH_PARAMETER_BYTES,
+                   tests=result.testsRun, failures=len(result.failures), errors=len(result.errors),
+                   skipped=len(result.skipped), tests_passed=result.wasSuccessful(),
+                   sources={str(path):hashlib.sha256(path.read_bytes()).hexdigest()
+                            for path in (B/'vector_candidate.py', Path(__file__), Path(owner.__file__))},
+                   limits=dict(rows=[128,1024], repeats=3, columns=WIDTH, threads=1, duckdb_memory='512MB'))
+    if result.wasSuccessful():
+        receipt['timings'] = measure()
+        receipt['medians_seconds'] = {str(count):{mode:statistics.median(r['seconds'] for r in receipt['timings'] if r['rows']==count and r['mode']==mode)
+                                                for mode in METHODS} for count in (128,1024)}
+    (out/'receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+    print(json.dumps({k:receipt[k] for k in ('tests','tests_passed','failures','errors')},sort_keys=True))
+    raise SystemExit(0 if result.wasSuccessful() else 1)

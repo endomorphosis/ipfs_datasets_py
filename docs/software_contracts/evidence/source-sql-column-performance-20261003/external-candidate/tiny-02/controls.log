@@ -1,0 +1,15 @@
+test_all_null_columns_and_double_values (__main__.CandidateControls.test_all_null_columns_and_double_values) ... ok
+test_byte_bound_and_already_valid_oversized_singleton (__main__.CandidateControls.test_byte_bound_and_already_valid_oversized_singleton) ... ok
+test_empty_rows_do_not_execute (__main__.CandidateControls.test_empty_rows_do_not_execute) ... ok
+test_exact_native_row_parity_128_and_1024 (__main__.CandidateControls.test_exact_native_row_parity_128_and_1024) ... ok
+test_generator_consumption_order_and_failure_are_unchanged (__main__.CandidateControls.test_generator_consumption_order_and_failure_are_unchanged) ... ok
+test_generator_exception_before_first_flush_preserves_empty_database (__main__.CandidateControls.test_generator_exception_before_first_flush_preserves_empty_database) ... ok
+test_literal_sql_injection_unicode_null_boolean_and_large_integer (__main__.CandidateControls.test_literal_sql_injection_unicode_null_boolean_and_large_integer) ... ok
+test_native_constraint_failure_rolls_back_all_chunks (__main__.CandidateControls.test_native_constraint_failure_rolls_back_all_chunks) ... ok
+test_second_native_chunk_failure_rolls_back_and_preserves_exception_identity (__main__.CandidateControls.test_second_native_chunk_failure_rolls_back_and_preserves_exception_identity) ... ok
+test_width_rejection_matches_native (__main__.CandidateControls.test_width_rejection_matches_native) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.544s
+
+OK

@@ -1,0 +1,176 @@
+{
+  "claim": "Repeated unsuccessful optional pandas imports are the leading source-backed hypothesis; Docker causal comparison still pending.",
+  "controlled_probe": {
+    "controlled_absence": true,
+    "duckdb_version": "1.5.5",
+    "performance_claim": false,
+    "production_runtime_modified": false,
+    "rows": [
+      {
+        "exact_values": true,
+        "kind": "int",
+        "pandas_import_attempts": 130,
+        "scalars": 64,
+        "seconds": 0.0031208759974106215
+      },
+      {
+        "exact_values": true,
+        "kind": "null",
+        "pandas_import_attempts": 2,
+        "scalars": 64,
+        "seconds": 0.00016131300071720034
+      },
+      {
+        "exact_values": true,
+        "kind": "str",
+        "pandas_import_attempts": 130,
+        "scalars": 64,
+        "seconds": 0.0007577190044685267
+      }
+    ],
+    "schema": "optional-import-retry-mechanism-probe@1"
+  },
+  "facts": {
+    "both_numpy": "1.26.4",
+    "docker_install_log_lists_pandas": false,
+    "docker_platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.41",
+    "docker_python": "3.12.12 (main, Dec 17 2025, 21:08:04) [Clang 21.1.4 ]",
+    "docker_throttled_usec_delta": 0,
+    "duckdb_memory_limit": "488.2 MiB",
+    "duckdb_threads": "1",
+    "host_pandas_metadata": "3.0.2",
+    "host_platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+    "host_python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+    "same_extension_sha256": "60ba180312ca4d6fcf14ebded76efcc1775485e69dcf89ec8f45653a5892a5ef"
+  },
+  "family_comparison": [
+    {
+      "family": "ast_nodes",
+      "unnest": {
+        "additional_docker_microseconds_per_scalar": 43.172507912094424,
+        "additional_docker_seconds": 19.441875488053483,
+        "scalars": 450330
+      },
+      "values": {
+        "additional_docker_microseconds_per_scalar": 42.22345439559117,
+        "additional_docker_seconds": 19.014488217966573,
+        "scalars": 450330
+      }
+    },
+    {
+      "family": "references",
+      "unnest": {
+        "additional_docker_microseconds_per_scalar": 43.19037384722166,
+        "additional_docker_seconds": 10.13574417297059,
+        "scalars": 234676
+      },
+      "values": {
+        "additional_docker_microseconds_per_scalar": 42.61887396632191,
+        "additional_docker_seconds": 10.00162686692056,
+        "scalars": 234676
+      }
+    },
+    {
+      "family": "calls",
+      "unnest": {
+        "additional_docker_microseconds_per_scalar": 43.41995748724242,
+        "additional_docker_seconds": 2.721910294960253,
+        "scalars": 62688
+      },
+      "values": {
+        "additional_docker_microseconds_per_scalar": 42.5884052932418,
+        "additional_docker_seconds": 2.669781951022742,
+        "scalars": 62688
+      }
+    },
+    {
+      "family": "effects",
+      "unnest": {
+        "additional_docker_microseconds_per_scalar": 43.66222242110627,
+        "additional_docker_seconds": 1.6159825140275643,
+        "scalars": 37011
+      },
+      "values": {
+        "additional_docker_microseconds_per_scalar": 42.58971735445703,
+        "additional_docker_seconds": 1.5762880290058092,
+        "scalars": 37011
+      }
+    },
+    {
+      "family": "scopes",
+      "unnest": {
+        "additional_docker_microseconds_per_scalar": 44.37433319671087,
+        "additional_docker_seconds": 0.6496402379998472,
+        "scalars": 14640
+      },
+      "values": {
+        "additional_docker_microseconds_per_scalar": 42.25690485069069,
+        "additional_docker_seconds": 0.6186410870141117,
+        "scalars": 14640
+      }
+    },
+    {
+      "family": "symbols",
+      "unnest": {
+        "additional_docker_microseconds_per_scalar": 42.095702245107134,
+        "additional_docker_seconds": 2.012511332934082,
+        "scalars": 47808
+      },
+      "values": {
+        "additional_docker_microseconds_per_scalar": 40.8491670643241,
+        "additional_docker_seconds": 1.9529169790112064,
+        "scalars": 47808
+      }
+    }
+  ],
+  "not_established": [
+    "No allocator/libc causal claim.",
+    "No recommendation to weaken schema/transaction/CID/proof validation.",
+    "No current production patch application; UNNEST remains experimental.",
+    "Controlled missing-module finder establishes import retry counts, not real missing-module wall cost."
+  ],
+  "primary_sources": [
+    {
+      "bytes": 777,
+      "sha256": "d347fc720be6474ba7484632866ee7d987f85cddf0daafe3eb828982ab1793dd",
+      "url": "https://raw.githubusercontent.com/duckdb/duckdb-python/v1.5.5/src/duckdb_py/importer.cpp"
+    },
+    {
+      "bytes": 2271,
+      "sha256": "0e85105e5f86081a2b5d64d6c0d0d62b2b3fb66f55086e14e1d3be750d5f7519",
+      "url": "https://raw.githubusercontent.com/duckdb/duckdb-python/v1.5.5/src/duckdb_py/include/duckdb_python/import_cache/modules/pandas_module.hpp"
+    },
+    {
+      "bytes": 1091,
+      "sha256": "d3517c0184927ba81c302433ddf24779f57f48fd301fb07d4b49b58f6b9652b6",
+      "url": "https://raw.githubusercontent.com/duckdb/duckdb-python/v1.5.5/src/duckdb_py/include/duckdb_python/import_cache/python_import_cache.hpp"
+    },
+    {
+      "bytes": 1619,
+      "sha256": "b9279c847545ccfa859020b4b42c6e3cb05950236f915af3e1c9b1892f57b199",
+      "url": "https://raw.githubusercontent.com/duckdb/duckdb-python/v1.5.5/src/duckdb_py/include/duckdb_python/import_cache/python_import_cache_item.hpp"
+    },
+    {
+      "bytes": 37943,
+      "sha256": "b61cae9edaa29e21d265af3b6aeb728c7ef87d8ec58171edc38ef258c76b60f5",
+      "url": "https://raw.githubusercontent.com/duckdb/duckdb-python/v1.5.5/src/duckdb_py/native/python_conversion.cpp"
+    },
+    {
+      "bytes": 24248,
+      "sha256": "f7994dd4af323a34baa52502a7ef32437c8097d3825c50faaf7c8f7a5a07daba",
+      "url": "https://raw.githubusercontent.com/duckdb/duckdb-python/v1.5.5/src/duckdb_py/native/python_objects.cpp"
+    },
+    {
+      "bytes": 2562,
+      "sha256": "0f51e28f0a62e04ae7d227fe363c5e48809d5cd008b90c9a2c42394446fdf43e",
+      "url": "https://raw.githubusercontent.com/duckdb/duckdb-python/v1.5.5/src/duckdb_py/python_import_cache.cpp"
+    }
+  ],
+  "recommended_next_probe": [
+    "Check real optional pandas import/discoverability inside exact retained runtime, without model imports.",
+    "Run tiny all-int/all-str/all-None scalar queries, counting failed pandas lookup attempts; use short bounded subprocesses.",
+    "If runtime absent-pandas verified, compare same small query with a real compatible pinned pandas dependency; do not fake pandas objects or change proof/source checks.",
+    "Only after causality is established, decide explicit deployment dependency or upstream binding fix, then retest corpus and full90-second qualification."
+  ],
+  "schema": "source384-sql-runtime-diagnosis@1"
+}

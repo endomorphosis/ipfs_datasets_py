@@ -1,0 +1,379 @@
+{
+  "batch_parameter_byte_target": 262144,
+  "batch_rows": 128,
+  "corpus_replay": false,
+  "docker_replay": false,
+  "duckdb_version": "1.5.5",
+  "errors": 0,
+  "experimental_only": true,
+  "failures": 0,
+  "limits": {
+    "columns": 18,
+    "duckdb_memory": "512MB",
+    "repeats": 3,
+    "rows": [
+      128,
+      1024
+    ],
+    "threads": 1
+  },
+  "medians_seconds": {
+    "1024": {
+      "column_unnest": 0.01290440699813189,
+      "values": 0.05610981800418813
+    },
+    "128": {
+      "column_unnest": 0.0021911570001975633,
+      "values": 0.0079723200033186
+    }
+  },
+  "production_qualification": false,
+  "python": "3.12.3",
+  "schema": "source384-sql-vector-candidate@1",
+  "skipped": 0,
+  "sources": {
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+    "/home/barberb/lift_coding/artifacts/source384-sql-vector-candidate-20261003/check_and_measure.py": "a01cbb2e90e53c3ab2389373d106456dd0f3a7b5b3440521869724c0bbf3ea56",
+    "/home/barberb/lift_coding/artifacts/source384-sql-vector-candidate-20261003/vector_candidate.py": "be404be397941857bc21f2b99af2240a29a4dc7944018bd6a1f72ce70736b72c"
+  },
+  "tests": 9,
+  "tests_passed": true,
+  "timings": [
+    {
+      "cpu_seconds": 0.008045599999999986,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.007887039999999956,
+      "execute_seconds": 0.007885758001066279,
+      "memory_limit": "488.2 MiB",
+      "mode": "values",
+      "parameters_per_statement": [
+        2304
+      ],
+      "repeat": 0,
+      "row_sha256": "9e03b198fce6ef7c3922bc4555227bb2df9463c2a6836a80444b21a14d433fa1",
+      "rows": 128,
+      "seconds": 0.008047393996093888,
+      "statement_rows": [
+        128
+      ],
+      "statements": 1,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.0021887039999999303,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.0019486720000001512,
+      "execute_seconds": 0.0019480470000416972,
+      "memory_limit": "488.2 MiB",
+      "mode": "column_unnest",
+      "parameters_per_statement": [
+        18
+      ],
+      "repeat": 0,
+      "row_sha256": "9e03b198fce6ef7c3922bc4555227bb2df9463c2a6836a80444b21a14d433fa1",
+      "rows": 128,
+      "seconds": 0.0021911570001975633,
+      "statement_rows": [
+        128
+      ],
+      "statements": 1,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.002055151999999838,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.0018508960000001018,
+      "execute_seconds": 0.001850589003879577,
+      "memory_limit": "488.2 MiB",
+      "mode": "column_unnest",
+      "parameters_per_statement": [
+        18
+      ],
+      "repeat": 1,
+      "row_sha256": "9e03b198fce6ef7c3922bc4555227bb2df9463c2a6836a80444b21a14d433fa1",
+      "rows": 128,
+      "seconds": 0.0020565619997796603,
+      "statement_rows": [
+        128
+      ],
+      "statements": 1,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.007970688000000115,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.007816928,
+      "execute_seconds": 0.007815548997314181,
+      "memory_limit": "488.2 MiB",
+      "mode": "values",
+      "parameters_per_statement": [
+        2304
+      ],
+      "repeat": 1,
+      "row_sha256": "9e03b198fce6ef7c3922bc4555227bb2df9463c2a6836a80444b21a14d433fa1",
+      "rows": 128,
+      "seconds": 0.0079723200033186,
+      "statement_rows": [
+        128
+      ],
+      "statements": 1,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.00766793599999982,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.007504624000000071,
+      "execute_seconds": 0.007502565000322647,
+      "memory_limit": "488.2 MiB",
+      "mode": "values",
+      "parameters_per_statement": [
+        2304
+      ],
+      "repeat": 2,
+      "row_sha256": "9e03b198fce6ef7c3922bc4555227bb2df9463c2a6836a80444b21a14d433fa1",
+      "rows": 128,
+      "seconds": 0.007670040999073535,
+      "statement_rows": [
+        128
+      ],
+      "statements": 1,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.0022853120000001503,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.0020274719999999746,
+      "execute_seconds": 0.002026209003815893,
+      "memory_limit": "488.2 MiB",
+      "mode": "column_unnest",
+      "parameters_per_statement": [
+        18
+      ],
+      "repeat": 2,
+      "row_sha256": "9e03b198fce6ef7c3922bc4555227bb2df9463c2a6836a80444b21a14d433fa1",
+      "rows": 128,
+      "seconds": 0.002288278999913018,
+      "statement_rows": [
+        128
+      ],
+      "statements": 1,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.05610657599999991,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.05494945600000012,
+      "execute_seconds": 0.054941581991442945,
+      "memory_limit": "488.2 MiB",
+      "mode": "values",
+      "parameters_per_statement": [
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304
+      ],
+      "repeat": 0,
+      "row_sha256": "46ee3f5612c8342e2f88225fbfa012d5659b8d59d09deebe69445f83a50ca9e0",
+      "rows": 1024,
+      "seconds": 0.05610981800418813,
+      "statement_rows": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "statements": 8,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.01297572800000002,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.011405599999999572,
+      "execute_seconds": 0.011401507988921367,
+      "memory_limit": "488.2 MiB",
+      "mode": "column_unnest",
+      "parameters_per_statement": [
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18
+      ],
+      "repeat": 0,
+      "row_sha256": "46ee3f5612c8342e2f88225fbfa012d5659b8d59d09deebe69445f83a50ca9e0",
+      "rows": 1024,
+      "seconds": 0.012978744998690672,
+      "statement_rows": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "statements": 8,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.012702304000000053,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.011193967999999943,
+      "execute_seconds": 0.011191420009708963,
+      "memory_limit": "488.2 MiB",
+      "mode": "column_unnest",
+      "parameters_per_statement": [
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18
+      ],
+      "repeat": 1,
+      "row_sha256": "46ee3f5612c8342e2f88225fbfa012d5659b8d59d09deebe69445f83a50ca9e0",
+      "rows": 1024,
+      "seconds": 0.012704913999186829,
+      "statement_rows": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "statements": 8,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.05600859199999997,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.05483534400000023,
+      "execute_seconds": 0.05482946599659044,
+      "memory_limit": "488.2 MiB",
+      "mode": "values",
+      "parameters_per_statement": [
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304
+      ],
+      "repeat": 1,
+      "row_sha256": "46ee3f5612c8342e2f88225fbfa012d5659b8d59d09deebe69445f83a50ca9e0",
+      "rows": 1024,
+      "seconds": 0.05601253499480663,
+      "statement_rows": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "statements": 8,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.056061423999999915,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.054844288000000185,
+      "execute_seconds": 0.055337655008770525,
+      "memory_limit": "488.2 MiB",
+      "mode": "values",
+      "parameters_per_statement": [
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304,
+        2304
+      ],
+      "repeat": 2,
+      "row_sha256": "46ee3f5612c8342e2f88225fbfa012d5659b8d59d09deebe69445f83a50ca9e0",
+      "rows": 1024,
+      "seconds": 0.056565380000392906,
+      "statement_rows": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "statements": 8,
+      "threads": 1,
+      "width": 18
+    },
+    {
+      "cpu_seconds": 0.012901440000000042,
+      "exact_row_parity": true,
+      "execute_cpu_seconds": 0.011339007999999984,
+      "execute_seconds": 0.011335441005940083,
+      "memory_limit": "488.2 MiB",
+      "mode": "column_unnest",
+      "parameters_per_statement": [
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18
+      ],
+      "repeat": 2,
+      "row_sha256": "46ee3f5612c8342e2f88225fbfa012d5659b8d59d09deebe69445f83a50ca9e0",
+      "rows": 1024,
+      "seconds": 0.01290440699813189,
+      "statement_rows": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "statements": 8,
+      "threads": 1,
+      "width": 18
+    }
+  ]
+}

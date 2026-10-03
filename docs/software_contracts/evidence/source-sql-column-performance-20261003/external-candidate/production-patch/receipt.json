@@ -1,0 +1,21 @@
+{
+  "applied": false,
+  "candidate_sha256": "be404be397941857bc21f2b99af2240a29a4dc7944018bd6a1f72ce70736b72c",
+  "files": [
+    {
+      "base_sha256": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+      "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py",
+      "proposed_sha256": "46d343490d2bc24a95fe2a3a87fcb1b709fa912766ce3fe0a3dbfe7d3485d514"
+    },
+    {
+      "base_sha256": "9bcc781834d477ed4951f8e4483bc36ee5fff99308a810e3b1adac9c9cd1b28d",
+      "path": "tests/unit/logic/software_contracts/test_duckdb_ast_store_persistence.py",
+      "proposed_sha256": "71bf09c7236d87150df022f0bd0ec1321381342d754311aac893e0ac5e704da7"
+    }
+  ],
+  "patch_sha256": "0fdfecfa93c15e7fd643cdfd871af48435146800fd3ffbccb28948d68b049a1d",
+  "production_tests_run": false,
+  "schema": "off-tree-proposed-production-patch@1",
+  "scope": "Only _insert_rows representation and focused persistence controls; root applies after corpus/container comparison.",
+  "syntax_ast_parse_passed": true
+}

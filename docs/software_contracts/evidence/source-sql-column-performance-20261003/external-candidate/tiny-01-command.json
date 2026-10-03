@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/artifacts/source384-sql-vector-candidate-20261003/check_and_measure.py",
+    "/home/barberb/lift_coding/artifacts/source384-sql-vector-candidate-20261003/tiny-01"
+  ],
+  "environment": {
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002"
+  },
+  "scope": "external tiny SQL-only candidate; no production changes"
+}

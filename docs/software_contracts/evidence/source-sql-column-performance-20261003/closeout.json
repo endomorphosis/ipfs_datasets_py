@@ -1,0 +1,51 @@
+{
+  "schema": "source-sql-column-performance-closeout@1",
+  "diagnostic_only": true,
+  "production_sql_patch_applied": false,
+  "full_source384_qualification_claimed": false,
+  "benchmark_result": false,
+  "model_loads": 0,
+  "provider_calls": 0,
+  "training_steps": 0,
+  "native_producers": [
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/ast_ir.py",
+      "sha256": "1461edb7c39f2adc89a70e54decfa291ccceafc50ed23011fbdeea5acb4c8b91",
+      "unchanged_for_diagnostic": true
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/content.py",
+      "sha256": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+      "unchanged_for_diagnostic": true
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py",
+      "sha256": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+      "unchanged_for_diagnostic": true
+    },
+    {
+      "path": "ipfs_datasets_py/logic/software_contracts/schema_versions.py",
+      "sha256": "fd7270cada2126606c00870dcb7291d27d7f8182e0e861d4f83905031668bbc6",
+      "unchanged_for_diagnostic": true
+    }
+  ],
+  "datasets_head": "5a1b37e266d38c35960359272aeaca9c96ed8fb5",
+  "control_suites": {
+    "final_replay_controls": 12,
+    "mocked_docker_wrapper_controls": 8,
+    "external_candidate_controls": 10,
+    "genuine_dependency_processes": 4
+  },
+  "exact_task_corpus_packaged": false,
+  "databases_packaged": false,
+  "model_weights_packaged": false,
+  "interpreter_binaries_packaged": false,
+  "dependency_symlink_roots_packaged": false,
+  "upstream_cpp_sources_packaged": false,
+  "corpus_reproduction": "corpus-reproduction.json",
+  "host_pair": "replay/host-pair-comparison.json",
+  "docker_pair": "runtime-comparison/docker-pair-comparison.json",
+  "standalone_caveat": "runtime-comparison/runtime-isolation-comparison.json",
+  "dependency_causality": "runtime-diagnosis/dependency-timing-results.json",
+  "scope": "Bounded native SQL replay and dependency diagnosis; corrected deployment qualification is separate."
+}

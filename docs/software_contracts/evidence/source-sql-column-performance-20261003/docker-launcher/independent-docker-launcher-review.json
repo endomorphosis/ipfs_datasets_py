@@ -1,0 +1,51 @@
+{
+  "archive_sha256": "43ba7c9bc830b9c6c684589db15ddad25a37339014a5287d41a962c10d98f9c3",
+  "blockers": [],
+  "controls": {
+    "log_sha256": "35ce9631187887f25d974bd86eb7f62dbfe5705f1e6891b12528881167999628",
+    "no_docker_sql_or_model_execution": true,
+    "passed": 8,
+    "process_seconds": 0.5158061050024116,
+    "suite_seconds": 0.42,
+    "test_script_sha256": "086f22ab1b9d9f7681e05951a113d80ff8d015905535a72dfcd19cbd27982924"
+  },
+  "decision": "no_blocker_for_root_authorized_sql_only_docker_pair",
+  "input_manifest_sha256": "dfa8274daddeee3efea1c8e80bbc6e4ca398ea9ef9efb9019beda60f71018cbc",
+  "inputs": {
+    "candidate": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-vector-candidate-20261003/vector_candidate.py",
+      "sha256": "be404be397941857bc21f2b99af2240a29a4dc7944018bd6a1f72ce70736b72c"
+    },
+    "corpus": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/corpus.json",
+      "sha256": "cd84435f534cfcd29b4e4ef5928542d57e630529c0d86eba34baa1b1c02966bd"
+    },
+    "replay": {
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py",
+      "sha256": "181ca8064c9529514f68bee2e87c6cae4d67862ab63082a92d1eea3b61878671"
+    }
+  },
+  "launcher_sha256": "88eaf13ffcb1d418cfab9f5fe11c3142acc5717bca5d32e6ddbd2e223ad63757",
+  "limitations": [
+    "Only the SQL-only pair is cleared; actual Docker outcome remains pending and is owned by root.",
+    "Fresh durable database replay excludes repository scan, Source384 neural inference, symbolic planning and full90-second pipeline; no benchmark advantage claim follows from this diagnostic alone.",
+    "Execute timing combines Python binding/native SQL and excludes cursor fetching/telemetry preparation; insertion residual includes diagnostic overhead.",
+    "Transport download is time-bounded and validated after download; it is not a new streaming byte-capped transport.",
+    "Mocked cleanup controls verify wrapper wiring; actual environment deletion must still be observed in the Docker receipt."
+  ],
+  "resource_profile": "source384-5cpu-12gib@1",
+  "reviewed_at_utc": "2026-10-03T09:56:46.770770+00:00",
+  "reviewer": "/root/restart_cid",
+  "root_owns_go_and_launch": true,
+  "schema": "independent-docker-sql-launcher-review@1",
+  "verified": [
+    "Existing frozen archive SHA, archived/live A/D owner hashes, native corpus producer pins and bounded selected input hashes verify on actual files.",
+    "Ordinary supervisor deployment and existing native lifecycle remain; hook requests source384_context=False and does not claim source inference qualification.",
+    "Actual cgroup owner validates named5CPU/12GiB before replay, and existing deployment qualifier validates resources again after the hook. SQL harness retains native one-thread512MB setting.",
+    "Pinned corpus/replay/candidate are uploaded into one fresh private state directory; each arm has fresh output/database, fixed supervisor user, runtime environment,90-second replay alarm and300-second exec bound. Outer2300-second deployment bound is explicit.",
+    "Collector binds exact corpus/harness digests, baseline/candidate mode and candidate SHA selection,31projections,13table inventories, native producer before/after,90-second scope, cold/table parity and absence of model/provider/training activity.",
+    "Receipts are collected in per-arm finally with30-second transport timeout and1MiB bounded regular-file validation; separate collection status persists on failures.",
+    "Native qualifier finally deletes its environment even if hook raises, and outer finally restores original deploy_supervisor and records diagnostic result.",
+    "Wrapper controls exercise wrong-arm/identity/population/deadline/scope refusal, resource refusal before uploads, command-error collection and collection-error cleanup/restoration."
+  ]
+}

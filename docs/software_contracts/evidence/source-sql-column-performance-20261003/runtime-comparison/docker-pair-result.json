@@ -1,0 +1,11 @@
+{
+  "archive_sha256": "43ba7c9bc830b9c6c684589db15ddad25a37339014a5287d41a962c10d98f9c3",
+  "benchmark_result": false,
+  "diagnostic_only": true,
+  "pair_passed": true,
+  "production_qualification": false,
+  "resource_profile": "source384-5cpu-12gib@1",
+  "schema": "source384-docker-sql-pair@1",
+  "seconds": 775.0514750549992,
+  "source384_context_requested": false
+}

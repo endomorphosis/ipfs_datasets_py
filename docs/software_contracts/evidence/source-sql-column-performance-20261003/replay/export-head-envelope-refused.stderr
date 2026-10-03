@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py", line 393, in <module>
+    main()
+  File "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py", line 385, in main
+    print(json.dumps(export_corpus(args.source_database, args.source_receipt, args.output), sort_keys=True))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py", line 117, in export_corpus
+    with duckdb.connect(str(database), read_only=True, config=CONFIG) as connection:
+  File "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py", line 118, in export_corpus
+    require_retained_head(connection, native["source_head"])
+  File "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py", line 100, in require_retained_head
+    raise ValueError("closed retained source head required")
+ValueError: closed retained source head required

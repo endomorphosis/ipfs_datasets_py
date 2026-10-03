@@ -1,0 +1,28 @@
+{
+  "available": {
+    "duckdb": "/home/barberb/.local/lib/python3.12/site-packages/duckdb",
+    "_duckdb.cpython-312-aarch64-linux-gnu.so": "/home/barberb/.local/lib/python3.12/site-packages/_duckdb.cpython-312-aarch64-linux-gnu.so",
+    "numpy": "/home/barberb/.local/lib/python3.12/site-packages/numpy",
+    "numpy.libs": "/home/barberb/.local/lib/python3.12/site-packages/numpy.libs",
+    "dateutil": "/usr/lib/python3/dist-packages/dateutil",
+    "six.py": "/home/barberb/.local/lib/python3.12/site-packages/six.py",
+    "pandas": "/home/barberb/.local/lib/python3.12/site-packages/pandas",
+    "duckdb-1.5.5.dist-info": "/home/barberb/.local/lib/python3.12/site-packages/duckdb-1.5.5.dist-info",
+    "numpy-1.26.4.dist-info": "/home/barberb/.local/lib/python3.12/site-packages/numpy-1.26.4.dist-info",
+    "python_dateutil-2.8.2.egg-info": "/usr/lib/python3/dist-packages/python_dateutil-2.8.2.egg-info",
+    "six-1.17.0.dist-info": "/home/barberb/.local/lib/python3.12/site-packages/six-1.17.0.dist-info",
+    "pandas-3.0.2.dist-info": "/home/barberb/.local/lib/python3.12/site-packages/pandas-3.0.2.dist-info"
+  },
+  "missing": {
+    "duckdb": "/home/barberb/.local/lib/python3.12/site-packages/duckdb",
+    "_duckdb.cpython-312-aarch64-linux-gnu.so": "/home/barberb/.local/lib/python3.12/site-packages/_duckdb.cpython-312-aarch64-linux-gnu.so",
+    "numpy": "/home/barberb/.local/lib/python3.12/site-packages/numpy",
+    "numpy.libs": "/home/barberb/.local/lib/python3.12/site-packages/numpy.libs",
+    "dateutil": "/usr/lib/python3/dist-packages/dateutil",
+    "six.py": "/home/barberb/.local/lib/python3.12/site-packages/six.py",
+    "duckdb-1.5.5.dist-info": "/home/barberb/.local/lib/python3.12/site-packages/duckdb-1.5.5.dist-info",
+    "numpy-1.26.4.dist-info": "/home/barberb/.local/lib/python3.12/site-packages/numpy-1.26.4.dist-info",
+    "python_dateutil-2.8.2.egg-info": "/usr/lib/python3/dist-packages/python_dateutil-2.8.2.egg-info",
+    "six-1.17.0.dist-info": "/home/barberb/.local/lib/python3.12/site-packages/six-1.17.0.dist-info"
+  }
+}

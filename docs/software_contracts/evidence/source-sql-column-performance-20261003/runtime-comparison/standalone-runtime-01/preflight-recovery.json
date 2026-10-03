@@ -1,0 +1,16 @@
+{
+  "schema": "standalone-preflight-recovery@1",
+  "first_import_succeeded": false,
+  "first_error_type": "ImportError",
+  "first_error": "pandas could not import dateutil from user site alone",
+  "first_error_raw_transcript_retained_in_session": true,
+  "initial_installer_interrupted_before_bin_link": true,
+  "versioned_bin_absent_after_interrupt": true,
+  "final_install_no_bin": true,
+  "final_import_succeeded": true,
+  "additional_existing_host_dependency_paths": [
+    "/usr/local/lib/python3.12/dist-packages",
+    "/usr/lib/python3/dist-packages"
+  ],
+  "installed_new_dependencies": false
+}

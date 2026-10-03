@@ -1,0 +1,137 @@
+Collecting duckdb==1.5.5
+  Downloading duckdb-1.5.5-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl.metadata (4.2 kB)
+Collecting multiformats==0.3.1.post4
+  Downloading multiformats-0.3.1.post4-py3-none-any.whl.metadata (11 kB)
+Collecting requests==2.34.2
+  Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+Collecting anyio==4.14.2
+  Downloading anyio-4.14.2-py3-none-any.whl.metadata (4.6 kB)
+Collecting cryptography==49.0.0
+  Downloading cryptography-49.0.0-cp311-abi3-manylinux_2_34_aarch64.whl.metadata (4.3 kB)
+Collecting pytest==9.1.1
+  Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+Collecting sentence-transformers==5.4.1
+  Downloading sentence_transformers-5.4.1-py3-none-any.whl.metadata (17 kB)
+Collecting transformers==4.52.1
+  Downloading transformers-4.52.1-py3-none-any.whl.metadata (38 kB)
+Collecting safetensors==0.7.0
+  Downloading safetensors-0.7.0-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl.metadata (4.1 kB)
+Collecting numpy==1.26.4
+  Downloading numpy-1.26.4-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl.metadata (62 kB)
+Requirement already satisfied: typing-extensions>=4.6.0 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from multiformats==0.3.1.post4) (4.16.0)
+Collecting typing-validation>=1.1.0 (from multiformats==0.3.1.post4)
+  Downloading typing_validation-1.2.12-py3-none-any.whl.metadata (5.9 kB)
+Collecting bases>=0.3.0 (from multiformats==0.3.1.post4)
+  Downloading bases-0.3.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting multiformats-config>=0.3.0 (from multiformats==0.3.1.post4)
+  Downloading multiformats_config-0.3.1-py3-none-any.whl.metadata (2.2 kB)
+Collecting charset_normalizer<4,>=2 (from requests==2.34.2)
+  Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl.metadata (46 kB)
+Collecting idna<4,>=2.5 (from requests==2.34.2)
+  Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+Collecting urllib3<3,>=1.26 (from requests==2.34.2)
+  Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+Collecting certifi>=2023.5.7 (from requests==2.34.2)
+  Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+Collecting cffi>=2.0.0 (from cryptography==49.0.0)
+  Downloading cffi-2.1.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl.metadata (2.5 kB)
+Collecting iniconfig>=1.0.1 (from pytest==9.1.1)
+  Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting packaging>=22 (from pytest==9.1.1)
+  Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest==9.1.1)
+  Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting pygments>=2.7.2 (from pytest==9.1.1)
+  Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting huggingface-hub>=0.23.0 (from sentence-transformers==5.4.1)
+  Downloading huggingface_hub-2.1.1-py3-none-any.whl.metadata (16 kB)
+Requirement already satisfied: torch>=1.11.0 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from sentence-transformers==5.4.1) (2.13.0+cpu)
+Collecting scikit-learn>=0.22.0 (from sentence-transformers==5.4.1)
+  Downloading scikit_learn-1.9.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl.metadata (9.3 kB)
+Collecting scipy>=1.0.0 (from sentence-transformers==5.4.1)
+  Downloading scipy-1.18.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl.metadata (62 kB)
+Collecting tqdm>=4.0.0 (from sentence-transformers==5.4.1)
+  Downloading tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+Requirement already satisfied: filelock in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from transformers==4.52.1) (3.32.3)
+Collecting huggingface-hub>=0.23.0 (from sentence-transformers==5.4.1)
+  Downloading huggingface_hub-0.36.2-py3-none-any.whl.metadata (15 kB)
+Collecting pyyaml>=5.1 (from transformers==4.52.1)
+  Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl.metadata (2.4 kB)
+Collecting regex!=2019.12.17 (from transformers==4.52.1)
+  Downloading regex-2026.9.29-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl.metadata (40 kB)
+Collecting tokenizers<0.22,>=0.21 (from transformers==4.52.1)
+  Downloading tokenizers-0.21.4-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl.metadata (6.7 kB)
+Requirement already satisfied: fsspec>=2023.5.0 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from huggingface-hub>=0.23.0->sentence-transformers==5.4.1) (2026.7.0)
+Collecting hf-xet<2.0.0,>=1.1.3 (from huggingface-hub>=0.23.0->sentence-transformers==5.4.1)
+  Downloading hf_xet-1.6.0-cp38-abi3-manylinux_2_28_aarch64.whl.metadata (4.9 kB)
+Collecting pycparser (from cffi>=2.0.0->cryptography==49.0.0)
+  Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+Collecting joblib>=1.4.0 (from scikit-learn>=0.22.0->sentence-transformers==5.4.1)
+  Downloading joblib-1.6.0-py3-none-any.whl.metadata (6.5 kB)
+Collecting narwhals>=2.0.1 (from scikit-learn>=0.22.0->sentence-transformers==5.4.1)
+  Downloading narwhals-2.26.0-py3-none-any.whl.metadata (15 kB)
+Collecting threadpoolctl>=3.5.0 (from scikit-learn>=0.22.0->sentence-transformers==5.4.1)
+  Downloading threadpoolctl-3.7.0-py3-none-any.whl.metadata (24 kB)
+Collecting cloudpickle>=3.0 (from joblib>=1.4.0->scikit-learn>=0.22.0->sentence-transformers==5.4.1)
+  Downloading cloudpickle-3.1.2-py3-none-any.whl.metadata (7.1 kB)
+INFO: pip is looking at multiple versions of scipy to determine which version is compatible with other requirements. This could take a while.
+Collecting scipy>=1.0.0 (from sentence-transformers==5.4.1)
+  Downloading scipy-1.18.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl.metadata (62 kB)
+  Downloading scipy-1.17.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl.metadata (62 kB)
+Requirement already satisfied: setuptools>=77.0.3 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from torch>=1.11.0->sentence-transformers==5.4.1) (78.1.0)
+Requirement already satisfied: sympy>=1.13.3 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from torch>=1.11.0->sentence-transformers==5.4.1) (1.14.0)
+Requirement already satisfied: networkx>=2.5.1 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from torch>=1.11.0->sentence-transformers==5.4.1) (3.6.1)
+Requirement already satisfied: jinja2 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from torch>=1.11.0->sentence-transformers==5.4.1) (3.1.6)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from sympy>=1.13.3->torch>=1.11.0->sentence-transformers==5.4.1) (1.3.0)
+Requirement already satisfied: MarkupSafe>=2.0 in /opt/ipfs-supervisor/venv/lib/python3.12/site-packages (from jinja2->torch>=1.11.0->sentence-transformers==5.4.1) (3.0.3)
+Downloading duckdb-1.5.5-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl (19.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 19.4/19.4 MB 10.9 MB/s  0:00:01
+Downloading multiformats-0.3.1.post4-py3-none-any.whl (57 kB)
+Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+Downloading anyio-4.14.2-py3-none-any.whl (125 kB)
+Downloading cryptography-49.0.0-cp311-abi3-manylinux_2_34_aarch64.whl (4.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 18.7 MB/s  0:00:00
+Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+Downloading sentence_transformers-5.4.1-py3-none-any.whl (571 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 571.3/571.3 kB 9.8 MB/s  0:00:00
+Downloading transformers-4.52.1-py3-none-any.whl (10.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.5/10.5 MB 19.6 MB/s  0:00:00
+Downloading safetensors-0.7.0-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl (491 kB)
+Downloading numpy-1.26.4-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl (13.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.9/13.9 MB 16.3 MB/s  0:00:00
+Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl (246 kB)
+Downloading huggingface_hub-0.36.2-py3-none-any.whl (566 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 566.4/566.4 kB 45.6 MB/s  0:00:00
+Downloading hf_xet-1.6.0-cp38-abi3-manylinux_2_28_aarch64.whl (4.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 3.8 MB/s  0:00:01
+Downloading idna-3.20-py3-none-any.whl (69 kB)
+Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+Downloading tokenizers-0.21.4-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl (3.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.0/3.0 MB 18.3 MB/s  0:00:00
+Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+Downloading bases-0.3.0-py3-none-any.whl (36 kB)
+Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+Downloading cffi-2.1.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl (222 kB)
+Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+Downloading multiformats_config-0.3.1-py3-none-any.whl (17 kB)
+Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 22.6 MB/s  0:00:00
+Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl (775 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 775.1/775.1 kB 20.9 MB/s  0:00:00
+Downloading regex-2026.9.29-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl (805 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 805.9/805.9 kB 15.5 MB/s  0:00:00
+Downloading scikit_learn-1.9.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl (8.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.9/8.9 MB 20.4 MB/s  0:00:00
+Downloading joblib-1.6.0-py3-none-any.whl (306 kB)
+Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+Downloading narwhals-2.26.0-py3-none-any.whl (474 kB)
+Downloading scipy-1.17.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl (32.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 32.9/32.9 MB 19.3 MB/s  0:00:01
+Downloading threadpoolctl-3.7.0-py3-none-any.whl (26 kB)
+Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+Downloading typing_validation-1.2.12-py3-none-any.whl (20 kB)
+Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+Installing collected packages: urllib3, typing-validation, tqdm, threadpoolctl, safetensors, regex, pyyaml, pygments, pycparser, pluggy, packaging, numpy, narwhals, iniconfig, idna, hf-xet, duckdb, cloudpickle, charset_normalizer, certifi, scipy, requests, pytest, joblib, cffi, bases, anyio, scikit-learn, huggingface-hub, cryptography, tokenizers, transformers, sentence-transformers, multiformats-config, multiformats
+
+Successfully installed anyio-4.14.2 bases-0.3.0 certifi-2026.7.22 cffi-2.1.1 charset_normalizer-3.5.2 cloudpickle-3.1.2 cryptography-49.0.0 duckdb-1.5.5 hf-xet-1.6.0 huggingface-hub-0.36.2 idna-3.20 iniconfig-2.3.0 joblib-1.6.0 multiformats-0.3.1.post4 multiformats-config-0.3.1 narwhals-2.26.0 numpy-1.26.4 packaging-26.3 pluggy-1.6.0 pycparser-3.0 pygments-2.21.0 pytest-9.1.1 pyyaml-6.0.3 regex-2026.9.29 requests-2.34.2 safetensors-0.7.0 scikit-learn-1.9.1 scipy-1.17.1 sentence-transformers-5.4.1 threadpoolctl-3.7.0 tokenizers-0.21.4 tqdm-4.70.1 transformers-4.52.1 typing-validation-1.2.12 urllib3-2.8.0

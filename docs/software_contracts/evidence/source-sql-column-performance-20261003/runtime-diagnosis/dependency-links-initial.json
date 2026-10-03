@@ -1,0 +1,19 @@
+{
+  "available": {
+    "duckdb": "/home/barberb/.local/lib/python3.12/site-packages/duckdb",
+    "_duckdb.cpython-312-aarch64-linux-gnu.so": "/home/barberb/.local/lib/python3.12/site-packages/_duckdb.cpython-312-aarch64-linux-gnu.so",
+    "numpy": "/home/barberb/.local/lib/python3.12/site-packages/numpy",
+    "numpy.libs": "/home/barberb/.local/lib/python3.12/site-packages/numpy.libs",
+    "dateutil": "/usr/lib/python3/dist-packages/dateutil",
+    "six.py": "/home/barberb/.local/lib/python3.12/site-packages/six.py",
+    "pandas": "/home/barberb/.local/lib/python3.12/site-packages/pandas"
+  },
+  "missing": {
+    "duckdb": "/home/barberb/.local/lib/python3.12/site-packages/duckdb",
+    "_duckdb.cpython-312-aarch64-linux-gnu.so": "/home/barberb/.local/lib/python3.12/site-packages/_duckdb.cpython-312-aarch64-linux-gnu.so",
+    "numpy": "/home/barberb/.local/lib/python3.12/site-packages/numpy",
+    "numpy.libs": "/home/barberb/.local/lib/python3.12/site-packages/numpy.libs",
+    "dateutil": "/usr/lib/python3/dist-packages/dateutil",
+    "six.py": "/home/barberb/.local/lib/python3.12/site-packages/six.py"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-I",
+    "-S",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/runtime-diagnosis/dependency_timing_probe.py",
+    "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/runtime-diagnosis/deps-available",
+    "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/runtime-diagnosis/mixed-36864-scalars.json",
+    "d3e7687eebb86d6443cd94a370fced3fdaf86602bd4f926e4fb889beae8fe3ba",
+    "available"
+  ],
+  "returncode": 0,
+  "process_seconds": 0.33498384300037287,
+  "script_sha256": "797c996be0ec12600d86b2a4b255d018b44c52cfcfb189fe7c18b2e8da0ce87f",
+  "input_sha256": "d3e7687eebb86d6443cd94a370fced3fdaf86602bd4f926e4fb889beae8fe3ba",
+  "dependency_links_sha256": "aaa5e55bde9169ae4dd4e05f7a67671f1fa690b4665b0a9ee430eec211469bca"
+}

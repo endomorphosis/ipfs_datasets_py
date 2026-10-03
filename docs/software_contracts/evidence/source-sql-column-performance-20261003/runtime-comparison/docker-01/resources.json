@@ -1,0 +1,9 @@
+{
+  "schema": "terminal-source384-cgroup-observation@1",
+  "cgroup_path": "/sys/fs/cgroup",
+  "cpu_max": "500000 100000",
+  "memory_max": "12884901888",
+  "detected_cpu_slots": 5,
+  "detected_total_memory_mb": 12288,
+  "available_memory_mb": 10366
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "paired-sql-docker-replay-comparison@1",
+  "diagnostic_only": true,
+  "production_qualification": false,
+  "benchmark_result": false,
+  "repetitions_per_mode": 1,
+  "order": "baseline_then_candidate",
+  "same_corpus": true,
+  "same_producer": true,
+  "all_13_tables_equal": true,
+  "cold_replay_both": true,
+  "rows": [
+    {
+      "mode": "native_multi_values_baseline",
+      "seconds": 45.10622226200212,
+      "apply_batch_seconds": 41.39067428799899,
+      "corpus_sha256": "cd84435f534cfcd29b4e4ef5928542d57e630529c0d86eba34baa1b1c02966bd",
+      "harness_sha256": "181ca8064c9529514f68bee2e87c6cae4d67862ab63082a92d1eea3b61878671",
+      "model_loads": 0,
+      "provider_calls": 0,
+      "training_steps": 0,
+      "neural_inference": false,
+      "receipt_sha256": "3eb0946ddcb82b83868bfa8f3cd1ecdc052deb2c9395c73b519f5d752162d19d",
+      "execute_wall_seconds": 40.26930874108075,
+      "execute_cpu_seconds": 40.23918276799992,
+      "execute_calls": 1132,
+      "scalar_parameters": 870877
+    },
+    {
+      "mode": "external_column_unnest_candidate",
+      "seconds": 43.64623610400304,
+      "apply_batch_seconds": 39.86279547199956,
+      "corpus_sha256": "cd84435f534cfcd29b4e4ef5928542d57e630529c0d86eba34baa1b1c02966bd",
+      "harness_sha256": "181ca8064c9529514f68bee2e87c6cae4d67862ab63082a92d1eea3b61878671",
+      "model_loads": 0,
+      "provider_calls": 0,
+      "training_steps": 0,
+      "neural_inference": false,
+      "receipt_sha256": "096db712289bdbbb383a71a37daa270c3141de52a5cbfa30c469884d43cd81aa",
+      "execute_wall_seconds": 38.692306449840544,
+      "execute_cpu_seconds": 38.67993822399993,
+      "execute_calls": 1132,
+      "scalar_parameters": 870877
+    }
+  ],
+  "interpretation": "Column UNNEST reduced host execute time but barely changed Docker time. Both Docker arms retain about 39-40 seconds of execute CPU. This candidate has not been applied to production; runtime dependency diagnosis remains necessary. No inference or benchmark score."
+}

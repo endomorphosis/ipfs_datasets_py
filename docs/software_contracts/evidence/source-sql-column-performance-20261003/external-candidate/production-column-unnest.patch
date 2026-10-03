@@ -1,0 +1,195 @@
+--- a/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py
++++ b/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py
+@@ -22,6 +22,7 @@
+ 
+ import json
+ import math
++import re
+ import threading
+ import time
+ from collections import OrderedDict
+@@ -2361,22 +2362,21 @@
+     # -- DuckDB persistence (caller holds the transaction) ------------------
+ 
+     def _insert_rows(self, statement: str, rows: Iterable[Sequence[Any]]) -> None:
+-        """Stream canonical fact rows into bounded parameterized INSERTs.
+-
+-        Statements and column order are the fixed literals below. Only VALUES
+-        placeholders are repeated; source-derived text is always a parameter.
+-        The caller's existing transaction owns every chunk, rollback and hooks.
++        """Stream canonical fact rows into bounded column-list INSERTs.
++
++        Statements and column order are the fixed literals below. Each list
++        parameter supplies one column to UNNEST; all lists have equal lengths.
++        Source-derived text stays in parameters. The existing transaction owns
++        every chunk, rollback and hooks, including valid oversized singletons.
+         """
+-        prefix, _, placeholders = statement.partition("VALUES")
++        prefix, separator, placeholders = statement.partition("VALUES")
++        if (not separator or re.fullmatch(
++                r"\s*\(\s*\?(?:\s*,\s*\?)*\s*\)\s*", placeholders) is None):
++            raise DuckDBASTStoreError("fact INSERT requires a placeholder-only VALUES layout")
+         width = placeholders.count("?")
+-        batch: list[Any] = []
++        sql = prefix + "SELECT " + ",".join(["unnest(?)"] * width)
++        columns: list[list[Any]] = [[] for _ in range(width)]
+         count = size = 0
+-
+-        def flush() -> None:
+-            self._connection.execute(
+-                prefix + "VALUES " + ",".join([placeholders.strip()] * count), batch
+-            )
+-
+         for row in rows:
+             if len(row) != width:
+                 raise DuckDBASTStoreError("fact row differs from INSERT column layout")
+@@ -2384,13 +2384,14 @@
+                             for value in row)
+             if count and (count >= _INSERT_BATCH_ROWS
+                           or size + row_bytes > _INSERT_BATCH_PARAMETER_BYTES):
+-                flush()
+-                batch, count, size = [], 0, 0
+-            batch.extend(row)
++                self._connection.execute(sql, columns)
++                columns, count, size = [[] for _ in range(width)], 0, 0
++            for column, value in zip(columns, row):
++                column.append(value)
+             count += 1
+             size += row_bytes
+         if count:
+-            flush()
++            self._connection.execute(sql, columns)
+ 
+     def _persist_projection(self, projection: ASTCatalogProjection) -> None:
+         connection = self._connection
+--- a/tests/unit/logic/software_contracts/test_duckdb_ast_store_persistence.py
++++ b/tests/unit/logic/software_contracts/test_duckdb_ast_store_persistence.py
+@@ -370,8 +370,11 @@
+ 
+     def execute(self, statement, parameters=None):
+         result = self.connection.execute(statement, parameters) if parameters is not None else self.connection.execute(statement)
+-        if " ".join(statement.split()).startswith("INSERT INTO ast_nodes VALUES"):
+-            self.node_batches.append(len(parameters) // 15)
++        if " ".join(statement.split()).startswith("INSERT INTO ast_nodes SELECT unnest("):
++            assert len(parameters) == 15
++            count = len(parameters[0])
++            assert all(len(column) == count for column in parameters)
++            self.node_batches.append(count)
+             if len(self.node_batches) == self.fail_after_node_batch:
+                 raise RuntimeError("failure after actual native chunk insertion")
+         return result
+@@ -434,7 +437,7 @@
+ 
+     class Recorder:
+         def execute(self, statement, parameters):
+-            calls.append((statement, tuple(parameters)))
++            calls.append((statement, tuple(tuple(column) for column in parameters)))
+             return connection.execute(statement, parameters)
+ 
+     store._connection = Recorder()
+@@ -443,9 +446,103 @@
+     assert connection.execute("SELECT count(*) FROM ast_blobs").fetchone() == (0,)
+     assert len(calls) > 2
+     for statement, parameters in calls:
+-        count = len(parameters) // 3
++        assert len(parameters) == 3
++        count = len(parameters[0])
++        assert all(len(column) == count for column in parameters)
+         assert statement.count("?") == len(parameters)
+         assert 0 < count <= owner._INSERT_BATCH_ROWS
+         assert "DROP TABLE" not in statement
+-        size = sum(len(value.encode()) if type(value) is str else 8 for value in parameters)
++        size = sum(len(value.encode()) if type(value) is str else 8
++                   for column in parameters for value in column)
+         assert size <= owner._INSERT_BATCH_PARAMETER_BYTES or count == 1
++
++
++@pytest.mark.parametrize("statement", [
++    "INSERT INTO missing SELECT ?",
++    "INSERT INTO missing VALUES ()",
++    "INSERT INTO missing VALUES (? + 1)",
++    "INSERT INTO missing VALUES (?,)",
++    "INSERT INTO missing VALUES (?); DROP TABLE ast_blobs",
++])
++def test_fact_insert_rejects_malformed_layout_before_consuming_rows(statement):
++    from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import DuckDBASTStoreError
++    store = DuckDBASTStore()
++
++    def rows():
++        raise AssertionError("malformed layout consumed rows")
++        yield ()
++
++    with pytest.raises(DuckDBASTStoreError, match="placeholder-only VALUES"):
++        store._insert_rows(statement, rows())
++
++
++def test_fact_insert_empty_rows_and_wrong_width_do_not_execute():
++    from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import DuckDBASTStoreError
++    store = DuckDBASTStore()
++
++    class NoExecution:
++        def execute(self, *_args, **_kwargs):
++            raise AssertionError("unexpected SQL execution")
++
++    store._connection = NoExecution()
++    store._insert_rows("INSERT INTO missing VALUES (?, ?)", iter(()))
++    with pytest.raises(DuckDBASTStoreError, match="fact row differs"):
++        store._insert_rows("INSERT INTO missing VALUES (?, ?)", iter([(1,)]))
++
++
++def test_native_column_lists_preserve_all_null_columns_and_double_values(database):
++    _, _, connection = database
++    store = DuckDBASTStore(connection=connection)
++    connection.execute("CREATE TEMP TABLE nullable_probe (ordinal BIGINT, text_value VARCHAR, int_value BIGINT, flag BOOLEAN, created_at DOUBLE)")
++    rows = [(i, None, None, None, value)
++            for i, value in enumerate((0.0, -0.0, 1.25, -2.5, 1700000000.125))]
++    store._insert_rows("INSERT INTO nullable_probe VALUES (?, ?, ?, ?, ?)", iter(rows))
++    assert connection.execute("SELECT * FROM nullable_probe ORDER BY ordinal").fetchall() == rows
++
++
++def test_native_chunk_executor_error_keeps_lazy_iteration_and_exact_exception(database):
++    _, _, connection = database
++    store = DuckDBASTStore(connection=connection)
++    connection.execute("CREATE TEMP TABLE lazy_probe (ordinal BIGINT)")
++    consumed = 0
++    failure = RuntimeError("injected after native insert")
++
++    def rows():
++        nonlocal consumed
++        for i in range(1024):
++            consumed += 1
++            yield (i,)
++
++    class RejectAfterNativeInsert:
++        def execute(self, statement, parameters):
++            connection.execute(statement, parameters)
++            assert consumed == 129
++            raise failure
++
++    store._connection = RejectAfterNativeInsert()
++    connection.execute("BEGIN")
++    try:
++        with pytest.raises(RuntimeError) as caught:
++            store._insert_rows("INSERT INTO lazy_probe VALUES (?)", rows())
++        assert caught.value is failure
++        assert consumed == 129
++        assert connection.execute("SELECT count(*) FROM lazy_probe").fetchone() == (128,)
++    finally:
++        connection.execute("ROLLBACK")
++    assert connection.execute("SELECT count(*) FROM lazy_probe").fetchone() == (0,)
++
++
++def test_native_row_generator_error_does_not_flush_pending_chunk(database):
++    _, _, connection = database
++    store = DuckDBASTStore(connection=connection)
++    connection.execute("CREATE TEMP TABLE generator_probe (ordinal BIGINT)")
++    failure = RuntimeError("row producer failed before flush")
++
++    def rows():
++        yield from ((i,) for i in range(128))
++        raise failure
++
++    with pytest.raises(RuntimeError) as caught:
++        store._insert_rows("INSERT INTO generator_probe VALUES (?)", rows())
++    assert caught.value is failure
++    assert connection.execute("SELECT count(*) FROM generator_probe").fetchone() == (0,)

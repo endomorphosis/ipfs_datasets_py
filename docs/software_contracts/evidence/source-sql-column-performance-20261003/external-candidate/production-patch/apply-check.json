@@ -1,0 +1,7 @@
+{
+  "git_apply_check": "passed",
+  "worktree_source_hashes_unchanged": true,
+  "patch_applied": false,
+  "production_tests_run": false,
+  "patch_sha256": "0fdfecfa93c15e7fd643cdfd871af48435146800fd3ffbccb28948d68b049a1d"
+}

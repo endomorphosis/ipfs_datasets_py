@@ -123,3 +123,12 @@ while its outer wrapper returned at 90.041 seconds. That very small margin is
 not a Docker qualification or a general performance guarantee. Its 127 decoder
 candidates all remain unsupported for source-contract proof use. The package
 retains earlier failed attempts and 114 distinct final controls across two runs.
+
+The [SQL and dependency diagnosis](evidence/source-sql-column-performance-20261003/README.md)
+replays the exact 31 AST projections with all 13 catalog tables and cold-reopen
+parity. Column-list insertion improved the host component but left Docker execute
+time near 40 seconds, so its production patch remains unapplied. A separate
+isolated dependency experiment found repeated unsuccessful pandas imports during
+DuckDB scalar conversion and measured their cost with real package absence.
+These results guide a deployment dependency fix; they do not qualify a corrected
+Docker runtime, change source/proof checks, or establish a benchmark score.

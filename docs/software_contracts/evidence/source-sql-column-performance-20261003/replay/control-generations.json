@@ -1,0 +1,93 @@
+{
+  "schema": "sql-replay-control-generations@1",
+  "attempts": [
+    {
+      "attempt": "tiny-01",
+      "xml_sha256": "810fcb475d0cb66e22105750180ea2960c29f30e1b49984c8d54df299f3ee4db",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "historical": true,
+      "exact_sources": null
+    },
+    {
+      "attempt": "tiny-02",
+      "xml_sha256": "a442123a570753a73f67994e7f0c4decc282f5e479cb88f18333ffbec40425b8",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "historical": true,
+      "exact_sources": {
+        "sql_replay.py": {
+          "path": "replay/tiny-02-sources/sql_replay.py",
+          "sha256": "b7834fc2ba871362b8d39fd2490d99e621c2b2601a8ff26fb08af63ce6d4a31c"
+        },
+        "test_sql_replay.py": {
+          "path": "replay/tiny-02-sources/test_sql_replay.py",
+          "sha256": "c933605ba08921308a2e022d4b3e59af05566821eeb9f2962e6d1ad0e66ad298"
+        }
+      }
+    },
+    {
+      "attempt": "tiny-03",
+      "xml_sha256": "96c702208ec547e47d16ef9fcf2e839c68496bd23f47bedb2c35edac53d7c49c",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "historical": true,
+      "exact_sources": {
+        "sql_replay.py": {
+          "path": "replay/tiny-03-sources/sql_replay.py",
+          "sha256": "7b967c5d0b27b4e3387e4a29ddde5144b88e482a845c8b7a92cc078c440806b3"
+        },
+        "test_sql_replay.py": {
+          "path": "replay/tiny-03-sources/test_sql_replay.py",
+          "sha256": "076738a3f805d1f208eb4d7d8488db6652e2f51fa828bfeea6b3170d2088067b"
+        }
+      }
+    },
+    {
+      "attempt": "tiny-04",
+      "xml_sha256": "6ac342bdfcc4b87ef766b38b03ed7f667b089d21fc2a647a6cdf11e6404f8b69",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "historical": true,
+      "exact_sources": {
+        "sql_replay.py": {
+          "path": "replay/tiny-04-sources/sql_replay.py",
+          "sha256": "7b967c5d0b27b4e3387e4a29ddde5144b88e482a845c8b7a92cc078c440806b3"
+        },
+        "test_sql_replay.py": {
+          "path": "replay/tiny-04-sources/test_sql_replay.py",
+          "sha256": "9363c7f23d595ea461220dafd2c6368d2ac95391ae9f1bf868da4eefbc87b2a8"
+        }
+      }
+    },
+    {
+      "attempt": "tiny-05",
+      "xml_sha256": "8f7975bfb382e087b9eccdb5c8f3a594a8db45853dc8c0cc4ab487a2174dba97",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "historical": false,
+      "exact_sources": {
+        "sql_replay.py": {
+          "path": "replay/final-sources/sql_replay.py",
+          "sha256": "181ca8064c9529514f68bee2e87c6cae4d67862ab63082a92d1eea3b61878671"
+        },
+        "test_sql_replay.py": {
+          "path": "replay/final-sources/test_sql_replay.py",
+          "sha256": "0b191c4855f352944979498884031125657afc12ba5dc3159386fecb8c9a43f3"
+        }
+      }
+    }
+  ],
+  "final_distinct_controls": 12,
+  "interpretation": "Repeated attempts are not summed as distinct controls. Tiny-01 lacks a separately retained exact source snapshot; subsequent attempts map to retained source generations. Tiny-04 had passing mock controls but actual export refused the incorrect missing-schema envelope; the real export succeeded only with final tiny-05 sources."
+}

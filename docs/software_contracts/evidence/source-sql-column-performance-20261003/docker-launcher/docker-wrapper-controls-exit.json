@@ -1,0 +1,10 @@
+{
+  "returncode": 0,
+  "seconds": 0.5158061050024116,
+  "files": {
+    "run_docker_pair.py": "88eaf13ffcb1d418cfab9f5fe11c3142acc5717bca5d32e6ddbd2e223ad63757",
+    "check_docker_pair.py": "086f22ab1b9d9f7681e05951a113d80ff8d015905535a72dfcd19cbd27982924",
+    "docker-inputs.json": "dfa8274daddeee3efea1c8e80bbc6e4ca398ea9ef9efb9019beda60f71018cbc"
+  },
+  "scope": "mocked wrapper controls plus real read-only input/archive hashes; no Docker/SQL/model execution"
+}

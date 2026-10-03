@@ -1,0 +1,52 @@
+{
+  "schema": "sql-replay-pair-admission@1",
+  "host_root_go_received": true,
+  "docker_root_go_received": false,
+  "diagnostic_only": true,
+  "production_qualification": false,
+  "source384_context": false,
+  "timeout_seconds_per_replay": 90,
+  "connection_config": {
+    "threads": "1",
+    "memory_limit": "512MB"
+  },
+  "frozen_pins": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py",
+      "sha256": "181ca8064c9529514f68bee2e87c6cae4d67862ab63082a92d1eea3b61878671",
+      "bytes": 19461
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/test_sql_replay.py",
+      "sha256": "0b191c4855f352944979498884031125657afc12ba5dc3159386fecb8c9a43f3",
+      "bytes": 7661
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/corpus.json",
+      "sha256": "cd84435f534cfcd29b4e4ef5928542d57e630529c0d86eba34baa1b1c02966bd",
+      "bytes": 9412206
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/tiny-05.xml",
+      "sha256": "8f7975bfb382e087b9eccdb5c8f3a594a8db45853dc8c0cc4ab487a2174dba97",
+      "bytes": 2138
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-vector-candidate-20261003/vector_candidate.py",
+      "sha256": "be404be397941857bc21f2b99af2240a29a4dc7944018bd6a1f72ce70736b72c",
+      "bytes": 1581
+    }
+  ],
+  "ordered_modes": [
+    "native_multi_values_baseline",
+    "external_column_unnest_candidate"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  }
+}

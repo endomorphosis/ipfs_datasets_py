@@ -1,0 +1,75 @@
+{
+  "schema": "standalone-replay-imports@1",
+  "python": "3.12.12 (main, Feb 12 2026, 00:42:57) [Clang 21.1.4 ]",
+  "executable": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/standalone-runtime-01/python/cpython-3.12.12-linux-aarch64-gnu/bin/python3.12",
+  "executable_sha256": "a93dceeb5522ea1d6db88f5f56b49b714ac75279c4b1a2d69fa97244fdb01a60",
+  "platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+  "machine": "aarch64",
+  "modules": {
+    "duckdb": {
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/duckdb/__init__.py",
+      "version": "1.5.5",
+      "sha256": "c5b4efa32761b6ff6eed37cda365fd371743c062ffabd9125aa24b5f13b662e7"
+    },
+    "_duckdb": {
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/_duckdb.cpython-312-aarch64-linux-gnu.so",
+      "version": "1.5.5",
+      "sha256": "60ba180312ca4d6fcf14ebded76efcc1775485e69dcf89ec8f45653a5892a5ef"
+    },
+    "numpy": {
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/numpy/__init__.py",
+      "version": "1.26.4",
+      "sha256": "22cd1535fa14d74ef6f457cca149ffdc80875f460be313b8f895273f78bc402e"
+    },
+    "pandas": {
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/pandas/__init__.py",
+      "version": "3.0.2",
+      "sha256": "742f85c135ee654bff1203efcee7664bf82fc7305ac3912ff304a063f5f7ea3c"
+    },
+    "pyarrow": {
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/pyarrow/__init__.py",
+      "version": "23.0.1",
+      "sha256": "9365c835bb11665393993d1d62bee8b496cab4650933990560a3580e4d5ffb7d"
+    },
+    "dateutil": {
+      "path": "/usr/lib/python3/dist-packages/dateutil/__init__.py",
+      "version": "2.8.2",
+      "sha256": "957125012ab0606c2a96b49649e5f5f49c05e417bdb4d79c0daf5e6e4fb48269"
+    },
+    "pytz": {
+      "path": "/usr/lib/python3/dist-packages/pytz/__init__.py",
+      "version": "2024.1",
+      "sha256": "d51fe6b7f8e83b66a7ca8d8acc31cef7b6c678bc84e60119d708511a44178934"
+    },
+    "multiformats": {
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/__init__.py",
+      "version": "0.3.1",
+      "sha256": "6402f73dfa7845c9e3a48ea4491e853c5b6a25bb9ce50ed75c5bc49f55134dad"
+    },
+    "ipfs_datasets_py.logic.software_contracts.duckdb_ast_store": {
+      "path": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py",
+      "version": null,
+      "sha256": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f"
+    }
+  },
+  "pythonpath": [
+    "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+    "/home/barberb/.local/lib/python3.12/site-packages",
+    "/usr/local/lib/python3.12/dist-packages",
+    "/usr/lib/python3/dist-packages",
+    "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/standalone-runtime-01/python/cpython-3.12.12-linux-aarch64-gnu/lib/python312.zip",
+    "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/standalone-runtime-01/python/cpython-3.12.12-linux-aarch64-gnu/lib/python3.12",
+    "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/standalone-runtime-01/python/cpython-3.12.12-linux-aarch64-gnu/lib/python3.12/lib-dynload",
+    "__editable__.ipfs_datasets_py-0.2.0.finder.__path_hook__",
+    "__editable__.ipfs_kit_py-0.3.0.finder.__path_hook__",
+    "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/standalone-runtime-01/python/cpython-3.12.12-linux-aarch64-gnu/lib/python3.12/site-packages"
+  ],
+  "config": {
+    "CONFIG_ARGS": "'--build=aarch64-unknown-linux-gnu' '--host=aarch64-unknown-linux-gnu' '--prefix=/install' '--with-openssl=/tools/deps' '--with-system-expat' '--with-system-libmpdec' '--without-ensurepip' '--with-readline=editline' '--enable-static-libpython-for-interpreter' '--enable-shared' '--enable-optimizations' '--with-lto' '--with-build-python=/tools/host/bin/python3.12' '--with-dbmliborder=bdb' 'build_alias=aarch64-unknown-linux-gnu' 'host_alias=aarch64-unknown-linux-gnu' 'PKG_CONFIG=pkg-config --static' 'PKG_CONFIG_PATH=/tools/deps/share/pkgconfig:/tools/deps/lib/pkgconfig' 'CC=clang' 'CFLAGS=-O3 -fPIC ' 'LDFLAGS= -Wl,--exclude-libs,ALL -LModules/_hacl' 'CPPFLAGS=-O3 -fPIC ' 'PROFILE_TASK=-m test --pgo'",
+    "Py_DEBUG": 0,
+    "Py_GIL_DISABLED": null,
+    "WITH_PYMALLOC": 1,
+    "MALLOC_LIBS": null,
+    "SOABI": "cpython-312-aarch64-linux-gnu"
+  }
+}

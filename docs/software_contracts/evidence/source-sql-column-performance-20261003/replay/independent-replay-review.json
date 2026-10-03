@@ -1,0 +1,80 @@
+{
+  "blockers": [],
+  "controls": {
+    "log_sha256": "78f7bfe4cd179c620eb3bec2670335bc18fbbaed3fe84252d267dbf082d03cce",
+    "passed": 12,
+    "suite_seconds": 2.065
+  },
+  "corpus": {
+    "bytes": 9412206,
+    "native_head_row_verified": true,
+    "projections": 31,
+    "rows_by_table": {
+      "ast_blobs": 31,
+      "ast_nodes": 30022,
+      "calls": 3918,
+      "diagnostics": 290,
+      "effects": 2847,
+      "imports": 287,
+      "interfaces": 990,
+      "invalidations": 0,
+      "references": 18052,
+      "scopes": 1220,
+      "source_files": 31,
+      "source_revisions": 1,
+      "symbols": 2656
+    },
+    "sha256": "cd84435f534cfcd29b4e4ef5928542d57e630529c0d86eba34baa1b1c02966bd",
+    "table_families": 13
+  },
+  "decision": "no_blocker_for_explicitly_authorized_sql_only_replay",
+  "limitations": [
+    "Launcher and actual Docker limits/cleanup are reviewed separately before rootGO; this receipt does not authorize or claim a Docker result.",
+    "Host paired workload is being run by preparation; this review does not infer its result or performance.",
+    "Native execute timing combines parameter binding and engine work and excludes cursor fetching/telemetry preparation. Insert-family residual includes diagnostic preparation, not just native Python batch work.",
+    "This SQL-only replay authenticates retained facts; it does not execute source, native Source384 inference, or the original full90-second pipeline.",
+    "Diagnostic input readers use a trusted local-file scope, initial regular-file checks and byte caps; they are not a new hostile-filesystem production reader."
+  ],
+  "pins": [
+    {
+      "bytes": 19461,
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/sql_replay.py",
+      "sha256": "181ca8064c9529514f68bee2e87c6cae4d67862ab63082a92d1eea3b61878671"
+    },
+    {
+      "bytes": 7661,
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/test_sql_replay.py",
+      "sha256": "0b191c4855f352944979498884031125657afc12ba5dc3159386fecb8c9a43f3"
+    },
+    {
+      "bytes": 9412206,
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/corpus.json",
+      "sha256": "cd84435f534cfcd29b4e4ef5928542d57e630529c0d86eba34baa1b1c02966bd"
+    },
+    {
+      "bytes": 2138,
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-persistence-20261003/tiny-05.xml",
+      "sha256": "8f7975bfb382e087b9eccdb5c8f3a594a8db45853dc8c0cc4ab487a2174dba97"
+    },
+    {
+      "bytes": 1581,
+      "path": "/home/barberb/lift_coding/artifacts/source384-sql-vector-candidate-20261003/vector_candidate.py",
+      "sha256": "be404be397941857bc21f2b99af2240a29a4dc7944018bd6a1f72ce70736b72c"
+    }
+  ],
+  "read_only_review": true,
+  "reviewed_at_utc": "2026-10-03T09:50:56.449129+00:00",
+  "reviewer": "/root/restart_cid",
+  "root_owns_docker_go": true,
+  "schema": "independent-sql-replay-review@1",
+  "tests_run_by_reviewer": false,
+  "verified": [
+    "Read-only retained database export checks native head schema and six-field equality, database body hash before/after, bounded31-projection population and native producer hashes.",
+    "Closed corpus and explicit expected SHA bind all replay bytes; candidate path and SHA must be supplied together, verified before exact captured-body execution and checked again on completion.",
+    "Native projection reconstruction and same apply_batch preserve validation and transaction ownership; each replay uses fresh durable DuckDB with one thread and512MB.",
+    "All13 table families are compared by counts and length-framed canonical sorted row digests, then checked again on cold reopening together with native canonical get of every projection.",
+    "Execution proxy forwards same SQL/parameter object once and returns exact native result; exceptions retain identity. Aggregate telemetry contains fixed SQL family labels and numeric sizes/times, no source/parameter values.",
+    "Outer finally restores original _insert_rows and underlying store connection on every timed-path exit, then restores alarm and persists diagnostics.",
+    "Result is explicitly diagnostic-only, with no benchmark/model/provider/training or production qualification claim."
+  ]
+}

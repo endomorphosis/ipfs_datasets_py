@@ -1,0 +1,163 @@
+{
+  "actual_docker_effect_pending": true,
+  "all_values_equal": true,
+  "available_median_seconds": 0.02159899200341897,
+  "difference_only_pandas_package_and_metadata_visibility": true,
+  "excluded": [
+    "upstream raw C++/header files src__*",
+    "private symlink roots deps-available and deps-missing; no installed package payloads"
+  ],
+  "files": [
+    {
+      "bytes": 3801,
+      "path": "DEPENDENCY_DIAGNOSIS.md",
+      "sha256": "4ace268f2ea97b24755b9114bdb76df13d1c04b17c1bde89338ee38c57f504b5"
+    },
+    {
+      "bytes": 766,
+      "path": "dependency-00-available-exit.json",
+      "sha256": "4de5117cde509a6faedc755e3c072611464f0b0615c04c0d4eac3619d19123a7"
+    },
+    {
+      "bytes": 1494,
+      "path": "dependency-00-available.stderr",
+      "sha256": "4db97eeea8249a102288f4137eff4a3185c46805bbd181d87d9a4053c9bd5523"
+    },
+    {
+      "bytes": 0,
+      "path": "dependency-00-available.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1123,
+      "path": "dependency-links-initial.json",
+      "sha256": "6a5952dec509800e92a693023a1e5b8ae5a8d96e8a636827f0f5a556281b7fb7"
+    },
+    {
+      "bytes": 2063,
+      "path": "dependency-links.json",
+      "sha256": "aaa5e55bde9169ae4dd4e05f7a67671f1fa690b4665b0a9ee430eec211469bca"
+    },
+    {
+      "bytes": 220,
+      "path": "dependency-timing-initial-metadata-refusal.json",
+      "sha256": "fc045ee4c96edaff43372a57f606a0bfdd4c01960b18fecdd83a9a4a03d42574"
+    },
+    {
+      "bytes": 14872,
+      "path": "dependency-timing-results.json",
+      "sha256": "8f21469cb7953ce7047c5c03ff95ca02b6c2c226f839b452c1b8611e0a47710a"
+    },
+    {
+      "bytes": 862,
+      "path": "dependency-v2-00-available-exit.json",
+      "sha256": "19f42d6e37dbdf7f0e473b2fe8931eb8a6ff824bd77ca0282f4fcae0777632fa"
+    },
+    {
+      "bytes": 0,
+      "path": "dependency-v2-00-available.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2673,
+      "path": "dependency-v2-00-available.stdout",
+      "sha256": "6f108fdf665c6178105639694900033772874f194001f50f27a81a85a1b85016"
+    },
+    {
+      "bytes": 858,
+      "path": "dependency-v2-01-missing-exit.json",
+      "sha256": "3564766af2475411c4798bdac78ae17d67394e06f95f9ef26a03ce38575a8cba"
+    },
+    {
+      "bytes": 0,
+      "path": "dependency-v2-01-missing.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2574,
+      "path": "dependency-v2-01-missing.stdout",
+      "sha256": "f640a817a5f5686857036e805b490b17e9b1f49e9f45429cbd8db7b051080856"
+    },
+    {
+      "bytes": 858,
+      "path": "dependency-v2-02-missing-exit.json",
+      "sha256": "868f50c42603df2d3de7ebee8982f0cdc27beac62978d842baf9b0d396a91f8b"
+    },
+    {
+      "bytes": 0,
+      "path": "dependency-v2-02-missing.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2582,
+      "path": "dependency-v2-02-missing.stdout",
+      "sha256": "20d20063953b0070f6a2d3cf74f1f60114de625cfafa990ac1b1c5c04cb3d20a"
+    },
+    {
+      "bytes": 863,
+      "path": "dependency-v2-03-available-exit.json",
+      "sha256": "23796769217ebbfaf030a1e42991869b9defb0ffbb31cc1c354f2d347a616d8e"
+    },
+    {
+      "bytes": 0,
+      "path": "dependency-v2-03-available.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2681,
+      "path": "dependency-v2-03-available.stdout",
+      "sha256": "6b63727832426e8a446ba3f9a602227f5e55804c15322cd7930297a774cd77f8"
+    },
+    {
+      "bytes": 3340,
+      "path": "dependency_timing_probe.py",
+      "sha256": "797c996be0ec12600d86b2a4b255d018b44c52cfcfb189fe7c18b2e8da0ce87f"
+    },
+    {
+      "bytes": 6718,
+      "path": "diagnosis.json",
+      "sha256": "2a2c8e76ace3076a02f8811aecb5c532471ceea0b13c13e2b27b418828d61167"
+    },
+    {
+      "bytes": 288,
+      "path": "missing-pandas-probe-exit.json",
+      "sha256": "3b4b0dc0f817cac3ab3526725ecf40c0ca4a7e5fefffb95e00d81555b9ac9c8b"
+    },
+    {
+      "bytes": 0,
+      "path": "missing-pandas-probe.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 542,
+      "path": "missing-pandas-probe.stdout",
+      "sha256": "8e34c01cb46103b28e414c70f81ba67a302a795f9d3e0200b80d6205e9c8b4ed"
+    },
+    {
+      "bytes": 465928,
+      "path": "mixed-36864-scalars.json",
+      "sha256": "d3e7687eebb86d6443cd94a370fced3fdaf86602bd4f926e4fb889beae8fe3ba"
+    },
+    {
+      "bytes": 1090,
+      "path": "probe_missing_pandas.py",
+      "sha256": "f669cd1e83db177d6e6dd26da617672047345a6d2a13b39b389513c2834ac738"
+    },
+    {
+      "bytes": 3326,
+      "path": "reproduce_dependency_pair.py",
+      "sha256": "d5bc9b7b32e46da2e1683a5eb23e3b2bbc625ac253989da713d216b88c124b5a"
+    }
+  ],
+  "fresh_processes": 4,
+  "missing_median_seconds": 0.9974888650031062,
+  "no_production_changes": true,
+  "normal_import_finders": true,
+  "numeric_timing_assertions": false,
+  "passed": true,
+  "recipe_assembled_after_run_not_executed": true,
+  "same_extension_binary": true,
+  "scalar_values_per_process": 36864,
+  "schema": "isolated-dependency-causal-control-freeze@1",
+  "shared_dependency_links_identical": true
+}

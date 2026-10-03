@@ -1,0 +1,13 @@
+test_bad_resources_refused_before_upload_or_replay (__main__.DockerPairControls.test_bad_resources_refused_before_upload_or_replay) ... ok
+test_changed_population_deadline_parity_or_scope_cannot_pass (__main__.DockerPairControls.test_changed_population_deadline_parity_or_scope_cannot_pass) ... ok
+test_collection_failure_still_cleans_and_restores (__main__.DockerPairControls.test_collection_failure_still_cleans_and_restores) ... ok
+test_exec_failure_still_collects_and_restores (__main__.DockerPairControls.test_exec_failure_still_collects_and_restores) ... ok
+test_real_frozen_inputs_and_archive_match (__main__.DockerPairControls.test_real_frozen_inputs_and_archive_match) ... ok
+test_success_keeps_resource_limits_modes_bounds_and_scope (__main__.DockerPairControls.test_success_keeps_resource_limits_modes_bounds_and_scope) ... ok
+test_wrong_arm_receipt_cannot_pass (__main__.DockerPairControls.test_wrong_arm_receipt_cannot_pass) ... ok
+test_wrong_candidate_or_producer_cannot_pass (__main__.DockerPairControls.test_wrong_candidate_or_producer_cannot_pass) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.420s
+
+OK
