@@ -25,6 +25,7 @@ the CID rather than trusting a stored string alone.
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 from functools import lru_cache
 from pathlib import Path
@@ -240,6 +241,25 @@ def cid_for_bytes(data: bytes) -> str:
 
     payload = _require_bytes(data)
     return _cid_from_digest_bytes(payload, codec=SOURCE_CODEC)
+
+
+def cid_for_byte_chunks(chunks: Iterable[bytes], *, max_chunk_bytes: int = 8 * 1024 * 1024) -> str:
+    """Hash bounded frames as the same raw CID without retaining the full source.
+
+    The stream owner supplies total-byte, frame-count and cancellation bounds.
+    Frame boundaries, including empty frames, do not change source identity.
+    """
+    if type(max_chunk_bytes) is not int or max_chunk_bytes <= 0:
+        raise ContentIdentityError("max_chunk_bytes must be a positive integer")
+    digest = hashlib.sha256()
+    for chunk in chunks:
+        payload = _require_bytes(chunk, path="chunk")
+        if len(payload) > max_chunk_bytes:
+            raise ContentIdentityError("source chunk exceeds its byte bound")
+        digest.update(payload)
+    from multiformats import multihash
+    complete = multihash.wrap(digest.digest(), MULTIHASH_TYPE)
+    return _encode_cid_digest(CID_BASE, CID_VERSION, SOURCE_CODEC, complete)
 
 
 def cid_for_obj(obj: Any) -> str:
@@ -593,6 +613,7 @@ __all__ = [
     "StructuredIdentityError",
     "canonical_dag_json_bytes",
     "cid_for_bytes",
+    "cid_for_byte_chunks",
     "cid_for_obj",
     "cid_for_structured",
     "cid_vectors_document",

@@ -8,15 +8,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import math
 import os
 from pathlib import Path, PurePosixPath
-import shutil
 import stat
 import sys
+import time
 
 from .codebase_ir import CodebaseScanLimits, RepositoryCodebaseIndex
 from .content import canonical_dag_json_bytes, cid_for_structured
 from .semantic_index import snapshot as snapshots
+from .codebase_git_operation import GitOperationError, GitScanOperation, current_git_operation
 
 PROFILE = "codebase-single-root-python-structural@1"
 POLICY_SCHEMA = "codebase-scan-policy@1"
@@ -128,7 +130,7 @@ class CodebaseScanPolicy:
 
 
 def _implementation():
-    from . import ast_ir, cache, codebase_ir, content, duckdb_ast_store, duckdb_ingest, python_frontend
+    from . import ast_ir, cache, codebase_git_operation, codebase_ir, content, duckdb_ast_store, duckdb_ingest, python_frontend
     from .semantic_index import models, python_analysis, pytest_analysis, scanner, symbol_graph
     from ipfs_datasets_py.duckdb_control import codebase_catalog
     from ..backends import process
@@ -136,7 +138,7 @@ def _implementation():
             for module in (sys.modules[__name__], ast_ir, cache, codebase_ir, content,
                            duckdb_ast_store, duckdb_ingest, python_frontend, snapshots,
                            models, python_analysis, pytest_analysis, scanner, symbol_graph,
-                           codebase_catalog, process)}
+                           codebase_catalog, codebase_git_operation, process)}
 
 
 def _owner(index):
@@ -145,20 +147,16 @@ def _owner(index):
 
 
 def _bounded_git(root, arguments, *, allowed=(0,)):
-    from ..backends.process import BoundedToolRunner, ToolRunLimits, run_bounded_stdin_tool
-    executable = shutil.which("git")
-    _require(executable is not None, "Git scope inspection is unavailable")
-    result = run_bounded_stdin_tool([executable, "-C", str(root), *arguments], b"",
-        runner=BoundedToolRunner(base_environment=dict(os.environ)),
-        limits=ToolRunLimits(timeout_seconds=10, cpu_seconds=10,
-            memory_bytes=256 * 1024 * 1024, resident_memory_bytes=256 * 1024 * 1024,
-            max_input_bytes=1, max_output_bytes=MAX_FILE_BYTES, max_workspace_bytes=MAX_FILE_BYTES))
-    _require(result.returncode in allowed and not any((result.error, result.timed_out,
-             result.cancelled, result.unavailable, result.output_truncated,
-             result.resource_exhausted)) and result.workspace_cleaned,
+    operation = current_git_operation()
+    _require(operation is not None, "Git scope inspection requires scan admission")
+    result = operation.run(root, arguments, max_output_bytes=MAX_FILE_BYTES)
+    _require(result.returncode in allowed and not result.stderr,
              "Git scope query failed or exceeded its bounded process profile")
-    _require("\ufffd" not in result.stdout, "non-UTF8 Git scope metadata is outside profile")
-    return result.returncode, result.stdout.encode("utf-8")
+    try:
+        result.stdout.decode("utf-8", "strict")
+    except UnicodeDecodeError as error:
+        raise CodebaseScanPolicyError("non-UTF8 Git scope metadata is outside profile") from error
+    return result.returncode, result.stdout
 
 
 def _external_ignore_scope(index, root):
@@ -179,8 +177,11 @@ def _external_ignore_scope(index, root):
     else:
         _require(not output, "absent ignore configuration returned data")
         configured_path = None
-        xdg = os.environ.get("XDG_CONFIG_HOME")
-        config_root = Path(xdg) if xdg else Path.home() / ".config"
+        environment = current_git_operation().environment
+        xdg = environment.get("XDG_CONFIG_HOME")
+        home = environment.get("HOME")
+        _require(bool(xdg) or bool(home), "external ignore default requires HOME or XDG_CONFIG_HOME")
+        config_root = Path(xdg) if xdg else Path(home) / ".config"
         _require(config_root.is_absolute(), "external ignore default root must be absolute")
         global_path = config_root / "git" / "ignore"
         selector = "XDG_CONFIG_HOME" if xdg else "HOME_default"
@@ -192,6 +193,7 @@ def _external_ignore_scope(index, root):
         info_path = root / info_path
     rows = []
     for kind, path in (("repository_info", info_path), ("global", global_path)):
+        current_git_operation().remaining()
         # Preserve the selected leaf: resolving it would silently dereference a
         # symlink before O_NOFOLLOW has a chance to reject it.
         path = Path(os.path.abspath(path))
@@ -210,6 +212,7 @@ def _external_ignore_scope(index, root):
             present = True
         except FileNotFoundError:
             raw, present = b"", False
+        current_git_operation().remaining()
         _require(len(raw) <= MAX_FILE_BYTES and all(not line or line.startswith(b"#") for line in raw.splitlines()),
                  "active or oversized external ignore patterns are outside the frozen profile")
         rows.append(dict(kind=kind, path=str(path), present=present,
@@ -378,37 +381,77 @@ def prepare_policy_current(index, repository, *, repository_id, operation_id,
     _require(type(policy) is CodebaseScanPolicy, "canonical scan policy required")
     training_paths = _paths(training_paths, "training selection")
     proof_paths = _paths(proof_paths, "proof selection")
+    from .codebase_resources import acquire_codebase_resources
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
+        LeaseCancelledError, LeaseTimeoutError,
+    )
+    bounds = CodebaseScanLimits(policy.max_entries, policy.max_file_bytes)
+    bounds.validate_reservation(memory_mb)
+    _require(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+             and timeout_seconds > 0, "scan timeout must be finite and positive")
     root = Path(repository).resolve()
+    deadline = time.monotonic() + timeout_seconds
+    try:
+        with acquire_codebase_resources(scheduler=scheduler, parent_lease=parent_lease,
+                cancel_event=cancel_event, timeout_seconds=min(30.0, timeout_seconds),
+                memory_mb=memory_mb) as lease:
+            cancelled = lease.combined_cancellation_signal(cancel_event)
+            def remaining():
+                if cancelled.is_set():
+                    raise LeaseCancelledError("codebase policy scan cancelled")
+                seconds = deadline - time.monotonic()
+                if seconds <= 0:
+                    raise LeaseTimeoutError("codebase policy scan deadline exceeded")
+                return seconds
+            remaining()
+            with GitScanOperation(root, checkpoint=remaining, cancellation=cancelled,
+                                  max_file_bytes=policy.max_file_bytes, memory_mb=memory_mb):
+                def resources():
+                    seconds = remaining()
+                    return dict(parent_lease=lease, cancel_event=cancelled,
+                                admission_timeout_seconds=min(30.0, seconds),
+                                timeout_seconds=seconds, memory_mb=memory_mb)
+                return _prepare_policy_admitted(index, root, repository_id=repository_id,
+                    operation_id=operation_id, expected_head=expected_head, policy=policy,
+                    training_paths=training_paths, proof_paths=proof_paths,
+                    resources=resources, checkpoint=remaining)
+    except GitOperationError as error:
+        raise CodebaseScanPolicyError(str(error)) from error
+
+
+def _prepare_policy_admitted(index, root, *, repository_id, operation_id, expected_head,
+                             policy, training_paths, proof_paths, resources, checkpoint):
+    checkpoint()
     _require(snapshots._git_root(root) == root, "profile requires the exact committed Git root")
     commit, _ = snapshots._captured_head(root)
     _require(commit is not None, "profile requires a committed Git root")
     external_ignores = _external_ignore_scope(index, root)
     repository_rules = _repository_rule_paths(root, policy)
-    resources = dict(scheduler=scheduler, parent_lease=parent_lease,
-                     cancel_event=cancel_event, timeout_seconds=timeout_seconds,
-                     memory_mb=memory_mb)
+    checkpoint()
     publication = index.prepare_current(root, repository_id=repository_id,
         operation_id=operation_id, expected_head=expected_head,
         limits=CodebaseScanLimits(policy.max_entries, policy.max_file_bytes),
-        exclusions=policy.exclusions, **resources)
-    index.observe_current(root, expected_head=publication.head, **resources)
+        exclusions=policy.exclusions, **resources())
+    index.observe_current(root, expected_head=publication.head, **resources())
     _require(_external_ignore_scope(index, root) == external_ignores,
              "external ignore scope changed during source preparation")
     _require(_repository_rule_paths(root, policy) == repository_rules,
              "repository ignore scope changed during source preparation")
+    checkpoint()
     receipt = _derive(index, publication=publication, policy=policy,
                       external_ignores=external_ignores,
                       repository_rules=repository_rules,
                       training_paths=training_paths, proof_paths=proof_paths)
+    checkpoint()
     receipt_cid = index.artifacts.put(receipt)
-    index.observe_current(root, expected_head=publication.head, **resources)
+    checkpoint()
+    index.observe_current(root, expected_head=publication.head, **resources())
     _require(_external_ignore_scope(index, root) == external_ignores,
              "external ignore scope changed during policy publication")
     _require(_repository_rule_paths(root, policy) == repository_rules,
              "repository ignore scope changed during policy publication")
-    # Scope queries can take time and can themselves overlap a source edit.
-    # End with a native source fence, without claiming an atomic source lock.
-    index.observe_current(root, expected_head=publication.head, **resources)
+    index.observe_current(root, expected_head=publication.head, **resources())
+    checkpoint()
     return {"receipt_cid": receipt_cid, "head": publication.head.to_dict(),
             "source_observed_live": True, "proof_authority": False,
             "training_admitted": False}

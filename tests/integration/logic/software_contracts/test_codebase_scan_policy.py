@@ -1,10 +1,13 @@
 """Frozen scope over real Git/AST/CAS/SQL owners, including opaque submodules."""
 from copy import deepcopy
+from dataclasses import replace
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import threading
+from types import SimpleNamespace
 
 import pytest
 
@@ -16,6 +19,9 @@ from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import DuckDBAST
 from ipfs_datasets_py.logic.software_contracts.duckdb_ingest import DuckDBASTIngestor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety import ProofHostResources
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import GlobalResourceScheduler, ResourceSchedulerConfig
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import LeaseCancelledError, LeaseTimeoutError
+from ipfs_datasets_py.logic.software_contracts import codebase_git_operation as operations
+from ipfs_datasets_py.logic.backends import process as transport
 
 
 def git(root, *args):
@@ -461,3 +467,298 @@ def test_native_python_language_classification_remains_selectable(current, suffi
     assert receipt["training_selection"][0]["path"] == path
     assert receipt["proof_selection"][0]["path"] == path
     assert receipt["training_admitted"] is False and receipt["proof_authority"] is False
+
+
+def private_configuration(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    xdg = tmp_path / "xdg"
+    (xdg / "git").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
+    monkeypatch.delenv("GIT_CONFIG_GLOBAL", raising=False)
+    return home, xdg
+
+
+@pytest.mark.parametrize("location", ["home", "xdg"])
+@pytest.mark.parametrize("active", [False, True])
+def test_native_global_configuration_is_shared_by_scope_and_capture(current, tmp_path, monkeypatch, location, active):
+    root, index, prepare, _, _ = current
+    home, xdg = private_configuration(tmp_path, monkeypatch)
+    ignore = tmp_path / "global.ignore"
+    ignore.write_text("*.py\n" if active else "# no patterns\n")
+    config = home / ".gitconfig" if location == "home" else xdg / "git" / "config"
+    config.write_text(f"[core]\n\texcludesfile = {ignore}\n")
+    (root / "untracked.py").write_text("x = 1\n")
+    if active:
+        with pytest.raises(module.CodebaseScanPolicyError, match="active or oversized external"):
+            prepare()
+        assert index.current("scan:fixture") is None
+    else:
+        value = prepare()
+        receipt = load(current, value)
+        assert receipt["external_ignores"]["files"][1]["path"] == str(ignore)
+        assert "untracked.py" in {row["path"] for row in receipt["inventory"]}
+
+
+def test_native_home_configuration_overrides_xdg_bait(current, tmp_path, monkeypatch):
+    root, _, prepare, _, _ = current
+    home, xdg = private_configuration(tmp_path, monkeypatch)
+    bait, selected = tmp_path / "bait.ignore", tmp_path / "selected.ignore"
+    bait.write_text("*.py\n")
+    selected.write_text("# selected inactive rule\n")
+    (xdg / "git" / "config").write_text(f"[core]\n\texcludesfile = {bait}\n")
+    (home / ".gitconfig").write_text(f"[core]\n\texcludesfile = {selected}\n")
+    (root / "untracked.py").write_text("x = 1\n")
+    receipt = load(current, prepare())
+    assert receipt["external_ignores"]["files"][1]["path"] == str(selected)
+    assert "untracked.py" in {row["path"] for row in receipt["inventory"]}
+
+
+def test_relative_include_and_ignore_paths_keep_native_origins(current, tmp_path, monkeypatch):
+    root, _, prepare, _, _ = current
+    home, _ = private_configuration(tmp_path, monkeypatch)
+    (home / "parts").mkdir()
+    (home / ".gitconfig").write_text("[include]\n\tpath = parts/selected.conf\n")
+    (home / "parts" / "selected.conf").write_text("[core]\n\texcludesfile = selected.ignore\n")
+    (home / "parts" / "selected.ignore").write_text("*.py\n")  # Wrong-origin bait.
+    (root / "selected.ignore").write_text("# repository-relative selected file\n")
+    (root / "untracked.py").write_text("x = 1\n")
+    receipt = load(current, prepare())
+    assert receipt["external_ignores"]["files"][1]["path"] == str(root / "selected.ignore")
+    assert "untracked.py" in {row["path"] for row in receipt["inventory"]}
+
+
+@pytest.mark.parametrize("matching", [False, True])
+def test_conditional_include_uses_native_home_and_exact_git_root(current, tmp_path, monkeypatch, matching):
+    _, index, prepare, _, _ = current
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("GIT_CONFIG_GLOBAL", raising=False)
+    ignore = tmp_path / "active.ignore"
+    ignore.write_text("*.py\n")
+    (tmp_path / "selected.conf").write_text(f"[core]\n\texcludesfile = {ignore}\n")
+    pattern = "repository" if matching else "another-root"
+    (tmp_path / ".gitconfig").write_text(f'[includeIf "gitdir:~/{pattern}/"]\n\tpath = selected.conf\n')
+    if matching:
+        with pytest.raises(module.CodebaseScanPolicyError, match="active or oversized external"):
+            prepare()
+        assert index.current("scan:fixture") is None
+    else:
+        assert load(current, prepare())["external_ignores"]["selector"] == "XDG_CONFIG_HOME"
+
+
+@pytest.mark.parametrize("relative", [False, True])
+def test_explicit_global_configuration_overrides_home_and_xdg(current, tmp_path, monkeypatch, relative):
+    root, _, prepare, _, _ = current
+    home, xdg = private_configuration(tmp_path, monkeypatch)
+    bait, selected = tmp_path / "bait.ignore", tmp_path / "selected.ignore"
+    bait.write_text("*.py\n")
+    selected.write_text("# selected inactive rule\n")
+    for config in [home / ".gitconfig", xdg / "git" / "config"]:
+        config.write_text(f"[core]\n\texcludesfile = {bait}\n")
+    config = root / "selected.config" if relative else tmp_path / "selected.config"
+    config.write_text(f"[core]\n\texcludesfile = {selected}\n")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", config.name if relative else str(config))
+    (root / "untracked.py").write_text("x = 1\n")
+    receipt = load(current, prepare())
+    assert receipt["external_ignores"]["files"][1]["path"] == str(selected)
+    assert "untracked.py" in {row["path"] for row in receipt["inventory"]}
+
+
+@pytest.mark.parametrize("xdg", [None, ""])
+def test_default_ignore_uses_frozen_home_when_xdg_unset_or_empty(current, tmp_path, monkeypatch, xdg):
+    _, index, prepare, _, _ = current
+    home, _ = private_configuration(tmp_path, monkeypatch)
+    if xdg is None:
+        monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    else:
+        monkeypatch.setenv("XDG_CONFIG_HOME", xdg)
+    path = home / ".config" / "git" / "ignore"
+    path.parent.mkdir(parents=True)
+    path.write_text("*.py\n")
+    with pytest.raises(module.CodebaseScanPolicyError, match="active or oversized external"):
+        prepare()
+    assert index.current("scan:fixture") is None
+
+
+def test_absent_home_with_explicit_xdg_keeps_native_configuration(current, tmp_path, monkeypatch):
+    root, _, prepare, _, _ = current
+    _, xdg = private_configuration(tmp_path, monkeypatch)
+    monkeypatch.delenv("HOME", raising=False)
+    ignore = tmp_path / "selected.ignore"
+    ignore.write_text("# no active patterns\n")
+    (xdg / "git" / "config").write_text(f"[core]\n\texcludesfile = {ignore}\n")
+    (root / "untracked.py").write_text("x = 1\n")
+    receipt = load(current, prepare())
+    assert "untracked.py" in {row["path"] for row in receipt["inventory"]}
+    assert receipt["external_ignores"]["files"][1]["path"] == str(ignore)
+
+
+def test_missing_home_and_xdg_never_invents_passwd_ignore_scope(current, monkeypatch):
+    _, index, prepare, _, _ = current
+    for key in ["HOME", "XDG_CONFIG_HOME", "GIT_CONFIG_GLOBAL"]:
+        monkeypatch.delenv(key, raising=False)
+    with pytest.raises(module.CodebaseScanPolicyError, match="requires HOME or XDG_CONFIG_HOME"):
+        prepare()
+    assert index.current("scan:fixture") is None
+
+
+@pytest.mark.parametrize("key", ["HOME", "XDG_CONFIG_HOME", "GIT_CONFIG_GLOBAL"])
+def test_environment_drift_after_sealing_withholds_current_result(current, tmp_path, monkeypatch, key):
+    _, index, prepare, _, _ = current
+    original = index.artifacts.put
+    captured = []
+    def mutate(value):
+        cid = original(value)
+        if value.get("schema") == module.RECEIPT_SCHEMA:
+            captured.append(cid)
+            monkeypatch.setenv(key, str(tmp_path / "changed-environment"))
+        return cid
+    monkeypatch.setattr(index.artifacts, "put", mutate)
+    with pytest.raises(module.CodebaseScanPolicyError, match="configuration environment changed"):
+        prepare()
+    assert operations.current_git_operation() is None
+    assert len(captured) == 1
+    assert module.load_policy_receipt(index, captured[0])["source_observed_live"] is False
+
+
+def test_precancelled_scan_has_no_initial_git_or_artifact_effect(current, monkeypatch):
+    _, index, prepare, _, _ = current
+    cancelled = threading.Event()
+    cancelled.set()
+    calls = []
+    original = module.snapshots._git
+    monkeypatch.setattr(module.snapshots, "_git", lambda *args: calls.append(args) or original(*args))
+    before = sorted(path for path in index.artifacts.root.rglob("*") if path.is_file())
+    with pytest.raises(LeaseCancelledError):
+        prepare(cancel_event=cancelled)
+    assert calls == []
+    assert sorted(path for path in index.artifacts.root.rglob("*") if path.is_file()) == before
+    assert operations.current_git_operation() is None
+
+
+@pytest.mark.parametrize("kwargs", [{"timeout_seconds": 0}, {"timeout_seconds": True},
+                                  {"timeout_seconds": float("nan")}, {"memory_mb": 0}])
+def test_invalid_operation_budget_is_rejected_before_initial_git(current, monkeypatch, kwargs):
+    _, _, prepare, _, _ = current
+    calls = []
+    monkeypatch.setattr(module.snapshots, "_git", lambda *args: calls.append(args))
+    with pytest.raises(ValueError):
+        prepare(**kwargs)
+    assert calls == [] and operations.current_git_operation() is None
+
+
+def test_deadline_accumulates_scope_and_native_publication_costs(current, monkeypatch):
+    _, index, prepare, _, _ = current
+    clock = [100.0]
+    monkeypatch.setattr(module, "time", SimpleNamespace(monotonic=lambda: clock[0]))
+    for name in ["_external_ignore_scope", "_repository_rule_paths"]:
+        original = getattr(module, name)
+        def cost(*args, _original=original, **kwargs):
+            result = _original(*args, **kwargs)
+            clock[0] += 7.0
+            return result
+        monkeypatch.setattr(module, name, cost)
+    original = index.prepare_current
+    timeouts = []
+    def native(*args, **kwargs):
+        timeouts.append(kwargs["timeout_seconds"])
+        result = original(*args, **kwargs)
+        clock[0] += 7.0
+        return result
+    monkeypatch.setattr(index, "prepare_current", native)
+    with pytest.raises(LeaseTimeoutError):
+        prepare(timeout_seconds=20)
+    assert timeouts == [6.0]
+    assert index.current("scan:fixture") is not None  # Complete history survives a refused live result.
+    assert operations.current_git_operation() is None
+
+
+def test_all_git_phases_share_one_envelope_and_original_environment(current, monkeypatch):
+    root, _, prepare, scheduler, _ = current
+    original = transport.SubprocessExecutor.execute
+    observations = []
+    def observe(self, invocation, cancellation=None):
+        state = scheduler.snapshot()
+        observations.append((state["active_root_lease_count"], state["active_lease_count"],
+                             state["allocated"], dict(invocation.environment), invocation.cwd))
+        return original(self, invocation, cancellation)
+    monkeypatch.setattr(transport.SubprocessExecutor, "execute", observe)
+    prepare()
+    assert observations and observations[0][1] == 1
+    assert {row[1] for row in observations} == {1, 2}
+    assert all(row[0] == 1 and row[2] == observations[0][2] and row[3] == observations[0][3]
+               and row[4] == root for row in observations)
+    assert observations[0][3].get("HOME") == os.environ.get("HOME")
+    assert operations.current_git_operation() is None
+
+
+def test_scan_child_preserves_caller_owned_parent(current):
+    root, index, _, scheduler, _ = current
+    with scheduler.acquire("orchestration", cpu_slots=2, memory_mb=1024,
+                           child_process_slots=2, timeout=0) as parent:
+        module.prepare_policy_current(index, root, repository_id="parent-scan",
+            operation_id="parent-scan", expected_head=None, parent_lease=parent,
+            policy=module.CodebaseScanPolicy(max_file_bytes=512, exclusions=("scratch",)))
+        assert not parent.released and scheduler.snapshot()["active_lease_count"] == 1
+    assert operations.current_git_operation() is None
+
+
+def test_exhausted_parent_child_slots_refuse_before_git(current, monkeypatch):
+    root, index, _, scheduler, _ = current
+    calls = []
+    monkeypatch.setattr(module.snapshots, "_git", lambda *args: calls.append(args))
+    with scheduler.acquire("orchestration", cpu_slots=2, memory_mb=1024,
+                           child_process_slots=1, timeout=0) as parent:
+        with parent.acquire_child(cpu_slots=1, memory_mb=512, child_process_slots=1, timeout=0):
+            with pytest.raises(LeaseTimeoutError):
+                module.prepare_policy_current(index, root, repository_id="blocked-scan",
+                    operation_id="blocked-scan", expected_head=None, parent_lease=parent,
+                    timeout_seconds=0.05)
+            assert not parent.released and scheduler.snapshot()["active_lease_count"] == 2
+    assert calls == [] and operations.current_git_operation() is None
+
+
+def test_cancellation_reaches_initial_native_executor(current, monkeypatch):
+    _, _, prepare, _, _ = current
+    cancelled = threading.Event()
+    original = transport.SubprocessExecutor.execute
+    calls = []
+    def cancel(self, invocation, cancellation=None):
+        cancelled.set()
+        result = original(self, invocation, cancellation)
+        calls.append(result.cancelled)
+        return result
+    monkeypatch.setattr(transport.SubprocessExecutor, "execute", cancel)
+    with pytest.raises(LeaseCancelledError):
+        prepare(cancel_event=cancelled)
+    assert calls == [True] and operations.current_git_operation() is None
+
+
+@pytest.mark.parametrize("change", [{"timed_out": True}, {"cancelled": True},
+    {"output_truncated": True}, {"resource_exhausted": True}, {"process_tree_terminated": True},
+    {"error": "injected cleanup refusal"}, {"stdout": "decoded text"}, {"returncode": True}])
+def test_raw_transport_refusals_never_publish_or_leave_context(current, monkeypatch, change):
+    _, index, prepare, _, _ = current
+    original = transport.SubprocessExecutor.execute
+    def refuse(self, invocation, cancellation=None):
+        return replace(original(self, invocation, cancellation), **change)
+    monkeypatch.setattr(transport.SubprocessExecutor, "execute", refuse)
+    with pytest.raises(module.CodebaseScanPolicyError, match="bounded process profile"):
+        prepare()
+    assert index.current("scan:fixture") is None and operations.current_git_operation() is None
+
+
+def test_raw_git_preserves_binary_blobs_and_undecodable_paths(current):
+    root, _, prepare, _, _ = current
+    first = prepare()
+    receipt = load(current, first)
+    binary = next(row for row in receipt["inventory"] if row["path"] == "binary.dat")
+    assert binary["opaque_reason"] == "undecodable" and binary["captured_for_analysis"] is False
+    name = b"non-\xff.py"
+    with open(os.fsencode(root) + b"/" + name, "wb") as stream:
+        stream.write(b"x = 1\n")
+    second = prepare("raw-path", CodebaseHead.from_dict(first["head"]))
+    receipt = load(current, second)
+    row = next(row for row in receipt["inventory"] if row["source_key"] == "raw:" + name.hex())
+    assert row["captured_for_analysis"] is False and row["candidate_selectable"] is False
