@@ -32,6 +32,34 @@ def _head_specification(model, codec, source_value_weight):
     if not present:
         return None
     description = model.describe()
+    if description.get("schema") == "mean-centered-source-decoder-development/v1":
+        from . import mean_centered_source_decoder_experiment as centered_values
+        core._require(description.get("scalar_mode") in centered_values.SCALAR_MODES
+            and getattr(model, "body", None) is not model
+            and callable(getattr(getattr(model, "body", None), "describe", None))
+            and model.body.describe().get("schema") == "projected-source-decoder-development/v1",
+            "authenticated scalar-centering base and mode required")
+        base = _head_specification(model.body, codec, source_value_weight)
+        core._require(description.get("base_architecture") == base
+            and all(description.get(key) == base[key] for key in (
+                "dimension", "feature_kind", "feature_dimension", "max_rules", "source_fields", "vocabulary_size", "codec_sha256"))
+            and description.get("normalization") == base["normalization"]
+            and description.get("count_prior") == base["count_prior"]
+            and description.get("source_auxiliary_logits") == "unchanged_raw_classifier"
+            and description.get("source_reference_mean_frozen") is True
+            and description.get("reference_baseline_detached") is False
+            and description.get("source_auxiliary_objective_changed") is False
+            and description.get("count_path_changed") is False
+            and description.get("recurrent_path_changed") is False
+            and description.get("projection_path_changed") is False
+            and description.get("full_vocabulary_retained") is True
+            and description.get("syntax_forced") is False
+            and description.get("closure_forced") is False
+            and description.get("reference_documents_passed_to_generation") is False
+            and description.get("generation_reference_count_access") is False,
+            "authenticated scalar-centering model specification required")
+        centered_values._reference_receipt(base, description.get("training_feature_mean_receipt"), model.dimension)
+        return deepcopy(description)
     if description.get("schema") == "projected-source-decoder-development/v1":
         from . import projected_source_decoder_experiment as projected_values
         core._require(description.get("feature_kind") == "projected_source"
@@ -175,7 +203,8 @@ def train(student, training_rows, validation_rows, *, training_references, valid
     train_ids, train_sources = core._rows(training_rows, student.dimension, codec["target_vocabulary"], options["max_target_tokens"])
     tune_ids, tune_sources = core._rows(validation_rows, student.dimension, codec["target_vocabulary"], options["max_target_tokens"])
     core._require(not train_ids & tune_ids and not train_sources & tune_sources, "training/validation overlap")
-    if head_specification is not None and head_specification.get("schema") == "projected-source-decoder-development/v1":
+    if head_specification is not None and head_specification.get("schema") in (
+            "projected-source-decoder-development/v1", "mean-centered-source-decoder-development/v1"):
         inventory = [dict(id=row["id"], source_sha256=hashlib.sha256(row["source_text"].encode()).hexdigest())
             for row in training_rows]
         for name in ("normalization", "count_prior"):

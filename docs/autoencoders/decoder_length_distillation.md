@@ -2040,3 +2040,237 @@ relocation. Improved count association and
 termination are development findings; no full validation reconstruction,
 convergence claim, teacher qualification, native logic-family validation, or
 Lean admission follows from them.
+
+
+## Mean-centered scalar guidance (2026-10-03)
+
+The next controlled experiment isolates how the projected-source scalar head
+contributes to recurrent decoding. The existing source head receives standalone
+scalar cross-entropy supervision, but its full logits are also added at causal
+scalar output positions. That can repeat source-independent preferences already
+present in the recurrent decoder. This is a testable hypothesis, not a complete
+explanation of the preceding zero-exact-reconstruction result.
+
+`mean_centered_source_decoder_experiment.bind_mean_centered_source_model()`
+wraps the authenticated projected-source model. Its `scalar_mode` is `raw`,
+`off`, or `mean_centered`. The last mode contributes
+`head(features(x)) - head(features(training_mean))` at the original causal
+scalar positions. The fitted training-only mean is bound to the original
+feature, source, and row inventories. No validation vector fits the mean. Both
+terms remain in the gradient graph; the source-head bias therefore cancels in
+the sequence loss while still receiving the unchanged raw auxiliary loss.
+
+This is an affine score difference, not a calibrated probability or a proved
+likelihood ratio. `source_value_logits()` remains the raw auxiliary classifier;
+`source_value_guidance_logits()` reports the applied residual. Centered residual
+argmax accuracy is not the acceptance metric. The complete freely generated
+document is evaluated by the existing per-length fidelity gates.
+
+The wrapper preserves the projection, recurrent/count paths, full output
+vocabulary, causal scalar recognizer, and fixed count-prior correction. It
+adds no trainable parameters and protects its reference mean and inherited
+normalization buffers on checkpoint restore. All modes start from the same
+zero scalar head, so original initial generation must match exactly.
+
+The fixed-state phase replays all eight prior final attempts in all three modes
+on the original 48 training and 48 exposed development-validation paragraphs.
+It changes no weights or selection. The raw path must reproduce the published
+predictions. The subsequent predeclared training comparison has four fresh
+fits: raw versus mean-centered scalar guidance, seeds 1729 and 2718, with
+center-RMS normalization and count-boundary guidance enabled. Each receives
+the same 340 updates and original exposure, optimizer, curriculum, and strict
+selection policy. The prior fitted states are replay inputs, not initializers
+for these fits. Diagnostic efficacy does not select which fits run.
+
+The validation corpus recombines familiar scalar values into unseen
+actor/action pairs. Its later positional heads also have limited coverage:
+slots 4–7 each have only 12 distinct training paragraphs. Nine validation
+scalar occurrences, spread across seven of the twelve eight-rule paragraphs,
+have values absent from the corresponding slot/field in training. Those
+cases remain in the evaluation and selection. This coverage finding does not
+account for every error, nor establish that the source embeddings have lost
+order information.
+
+Both phases are numerical development only. They preserve the local384
+embeddings, 512-token encoder context/output limit, temperature zero, and the
+8D linguistic teacher. Fresh holdouts remain unopened; no production state,
+formalization status, or Lake admission follows from these experiments.
+
+### Completed mean-centering results and the replay repair
+
+The fixed-state phase completed all 48 panels: eight authenticated final states,
+three scalar-guidance modes, and both exposed 48-paragraph splits. Every raw
+replay exactly reproduced the prior saved generation. Mean-centering changed
+some generated tokens, but produced **zero exact validation paragraphs in all
+eight states**, with unchanged aggregate EOS and syntax-valid counts relative
+to raw guidance. Removing guidance also produced zero exact validation
+paragraphs. On the four unnormalized states, centering reduced teacher-forced
+sequence CE by approximately 0.00094–0.00197; on the four center-RMS states it
+increased CE by approximately 0.00029–0.00078. These fixed-state differences do
+not establish that duplicated class preferences caused the reconstruction gap.
+
+The first fresh training attempt completed the raw seed-1729 fit and its ten
+postfit panels, then stopped at a replay-harness assertion. The initializer's
+prediction inventory stores four fields: ID, token IDs, EOS, and generation
+status. The numerical evaluator stores those four plus the reconstructed input
+vector and an exact-target score. The assertion incorrectly compared these
+different envelopes directly. All 48 common-field predictions were identical;
+the full six-field output also exactly matched the prior selected evaluation.
+Numerical update and underlying tensor comparisons had already passed.
+
+Revision two compares the exact four-field inventory and additionally requires
+the complete six-field predictions to equal authenticated, published prior
+selected evaluations. Both selected evaluation paths are pinned before training.
+The repair changes only the training replay helper and its training-phase
+caller; an independent AST comparison verifies that every diagnostic/shared
+runner function and all other module code remain unchanged. No objective,
+checkpoint selection rule, fidelity gate, or model computation changed. The
+failed attempt, both frozen runner versions, original and repaired test sources,
+and receipts remain retained. Its **340 extra updates** count as actual work
+performed; they are separate from the four completed comparison fits.
+
+The restarted comparison completed all four predeclared fits. Each committed
+340 updates, 2,440 decoder/count row presentations, 225,840 target-token
+presentations, and 25,600 scalar-value presentations. Both fresh raw arms
+exactly reproduced the previous corresponding raw fit's update losses,
+gradient norms, exposure, history, selection, underlying selected/final tensors,
+and predictions. Mean-centering adds no trainable parameters; each arm trains
+431,392 parameters with the autoencoder projection frozen.
+
+**All four fits retain epoch zero under the unchanged selection gates.** Each
+final attempt has zero exact validation paragraphs, and no checkpoint is
+promoted. The table therefore describes rejected last-complete attempts, not
+accepted replacements. Each validation split contains 48 paragraphs, 180
+reference rules, and 720 actor/action/modality/object reference positions.
+
+| Scalar guidance / seed | Validation sequence CE | Training exact /48 | Validation syntax /48 | Valid generated rules | Correct generated scalar positions /720 | Count-head correct /48 | Fit call seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Raw /1729 | 0.268138 | 2 | 26 | 26 | 34 | 23 | 11.996 |
+| Mean-centered /1729 | 0.273066 | 2 | 31 | 50 | 67 | 23 | 12.030 |
+| Raw /2718 | 0.197750 | 6 | 48 | 110 | 134 | 24 | 11.484 |
+| Mean-centered /2718 | 0.198428 | 6 | 48 | 61 | 91 | 24 | 11.750 |
+
+All four final attempts reach EOS on 48/48 validation paragraphs. The centered
+seed-1729 candidate improves syntax and the generated scalar count relative to
+its raw counterpart, but seed 2718 loses generated rules and correct scalar
+positions. Sequence CE worsens in both matched training comparisons. The exact
+training counts stay at two and six respectively, with no exact multi-rule
+training paragraph. These results **do not support a general reconstruction
+improvement or changing the default to mean-centered guidance**.
+
+The generated actor/action/modality/object counts are respectively
+2/8/9/15 for raw 1729, 7/12/17/31 for centered 1729, 23/22/33/56 for raw 2718,
+and 16/14/25/36 for centered 2718, each against 180 reference positions per
+field. No final validation output matches a complete reference rule. The
+scorer's 180 missing rules therefore describes exact-rule mismatch, even when
+50, 61, or 110 valid rules were emitted. Reconstructing empty qualifier lists
+does not repair the incorrect source values or clause bindings.
+
+### Source controls and the remaining coverage gap
+
+Each selected and final state is retained with all five original controls:
+conditioned validation, conditioned training, zero source, within-length source
+shuffle, and cross-length source shuffle. Targets stay fixed in the shuffle
+controls. The following counts come from complete freely generated documents;
+the denominator is 720 reference scalar positions in each split.
+
+| Scalar guidance / seed | Training | Validation | Within-length shuffle | Zero source | Cross-length shuffle |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Raw /1729 | 57 | 34 | 32 | 0 | 27 |
+| Mean-centered /1729 | 102 | 67 | 65 | 0 | 59 |
+| Raw /2718 | 224 | 134 | 110 | 0 | 87 |
+| Mean-centered /2718 | 154 | 91 | 73 | 0 | 65 |
+
+All validation controls have zero exact paragraphs. Zero-source generation has
+zero syntax-valid documents. Within-length and cross-length shuffling preserve
+each corresponding final state's aggregate syntax count, but reduce its
+correct generated scalar counts. These differences show source association
+without establishing adequate semantic fidelity. The source-count classifier
+scores 23/24 for the two seeds, 12 under zero source, and 8–9 under cross-length
+shuffling; within-length shuffling preserves the count totals by construction.
+
+The raw auxiliary classifier is a separate observation from the generated
+scalar counts above. Its training/validation correct positions are
+399/247, 400/243, 399/243, and 407/243 out of 720, in table order. Even training
+accuracy remains far from complete reconstruction. Its predictions are not
+substituted for the output document or used to accept a checkpoint. Likewise,
+the saved `scalar_guidance.applied_logits` record the potential residual at each
+of eight source slots; they are not traces showing that free generation visited
+every causal site, and are not calibrated posterior probabilities.
+
+The separate coverage audit verifies all 360 authored component occurrences
+against their source text, offsets, slot order, and references without executing
+a decoder. Nine validation values lack training support in their particular
+slot/field, although all individual value classes appear elsewhere in training.
+Those nine occurrences affect only seven of 48 validation rows, so they cannot
+explain zero exact reconstruction on every row. Postfit stratification finds
+all nine occurrences incorrect in every final candidate, but also zero exact
+documents among the other 41 validation rows with full slot/field support.
+All five validation actor/action
+pairs remain absent from the 15 training pairs. The split is preserved; no
+validation target has been moved into training.
+
+### Timing, validation, and the next proposed test
+
+The frozen suite passes **1,287 tests**, including the 104 new wrapper and runner
+tests, and the separate scheduler-adapter suite passes another 34. The repaired
+runner's regression uses the actual narrow/wide prediction-envelope distinction
+and rejects drift in each of the six numerical prediction fields. Readiness,
+the fixed-state diagnostic audit, the independent runner-revision audit, and
+the final 40-panel training audit pass with zero findings. The auditors verify
+saved predictions, full-vocabulary head arithmetic, fitted training statistics,
+source/state provenance, exposure, and selection. They do not rerun recurrent
+generation, replay gradients, recompute full sequence CE, execute native
+logic-family qualification, or run Lake.
+
+The four successful fit calls total 47.258 seconds; postfit persistence, reload,
+controls, and writes total 15.231 seconds. Their guardian takes 100.787 wall
+seconds including admission and resource accounting, and retains 201,281,251
+bytes within its released 800 MB reservation. Peak polled process-group RSS is
+1,010,139,136 bytes under the 4 GiB allocation; polling is not an exact peak
+measurement. The preceding fixed-state phase reports 32.603 seconds of runner
+work and retains another 129,325,483 bytes. Failed-attempt cost is retained
+separately. The campaign storage cap remains 140 GB.
+
+For conditioned validation, numerical evaluation takes approximately
+0.00249, 0.00464, 0.00801, and 0.00341 wall seconds per span in table order,
+with 48 samples per call. This API includes numerical validation, sequence CE,
+source-only generation, copying, and identity checks; separate source-fidelity
+and head diagnostics and artifact writes are outside that timing. Shorter or
+invalid output cannot establish a successful-reconstruction speedup. Device is
+CPU, workers are one, bridge names are `[]`, prover evaluation is false, and
+the legal-IR metric disk cache is off. Verified paragraph embeddings are warm
+cached inputs; no encoder forward occurs. These are **not bridge-on evaluation
+timings or end-to-end statute conversion timings**.
+
+A focused next proposal is a shared slot-aware scalar readout, while keeping
+the same whole-span 384D source and frozen encoder/projection. For example,
+`h_i = tanh(Wx + b + e_i)` can feed shared per-field full-vocabulary readouts,
+where `e_i` is a learned position embedding selected by the generated causal
+slot. Width 64 and vocabulary size 32 would use 33,472 scalar-head parameters,
+compared with 394,240 in the current independent affine heads. Pooling field
+supervision across slots could use all 180 training clause occurrences
+instead of only 12 examples in each late slot. Nonlinearity permits different
+source-dependent behavior across positions; a shared linear readout plus slot
+bias alone would not provide that interaction.
+
+That architecture is **a proposal, not implemented or trained in this run**.
+A matched comparison should retain the two seeds, 340 updates, exact row/token/
+scalar exposure, five full-generation controls, and all existing gates. It
+should report parameter count, training as well as validation losses, per-slot
+coverage, correct actor/action pairs, and the nine unsupported-at-slot values.
+It changes both parameter sharing and the function class, so an improvement
+would not by itself identify one cause. The cached cohort has no matched
+clause-order permutations; it cannot establish whether the pooled source
+representation retains enough order information. Such an order-sensitivity
+experiment would need its own plan and verified local encoder forward.
+
+The [published comparison evidence](../implementation/reports/evidence/decoder-mean-centered-source-20261003/results.json)
+preserves all raw panels, selected and rejected states, the failed first attempt,
+both runner/test revisions, audits, and resource receipts. Its compact archive
+explicitly depends on the pinned prior projected-source publication for original
+inputs and historical states; it does not claim to be a standalone runtime or
+bundle external Python packages. No fresh holdout, 8D teacher training, 768D
+training, production checkpoint change, native logic-family qualification, or
+`lake build Legal` occurred here. Syntax-valid output is not source fidelity,
+and only an actual Lake build can provide the corresponding Lean admission.
