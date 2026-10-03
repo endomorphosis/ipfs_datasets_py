@@ -2844,3 +2844,193 @@ fresh-holdout gain nor convergence, native logic-family qualification, a Lake
 admit, Constitution formalization, or an actual 8D/768D training result. The
 next reconstruction problem is reliable full-sequence content and stopping;
 better clause classification alone does not solve it.
+
+
+## Native 8D, 384D and 768D formula sidecars (2026-10-03)
+
+This study actually trained twelve separate formula sidecars at native input
+widths **8, 384 and 768**: pooled paragraph input versus explicit clause input,
+with seeds 1729 and 2718 at each width. Clause inputs improved teacher-forced
+sequence loss and generated actor/action/modality/object matches in all six
+paired comparisons. **No trained checkpoint passed the unchanged selection
+gate.** Every selected state remains epoch 0; the final attempted states are
+retained for diagnosis, not production use.
+
+[Machine-readable results](../implementation/reports/evidence/decoder-native-dimensions-20261003/results.json)
+and the adjacent manifest retain the inputs, provenance, generated tokens,
+source-fidelity reports, training traces, 36 typed states and 192 control panels.
+The archived experiment owners are also published as ordinary source files.
+
+### What changed, and what is being compared
+
+The 8D input uses the exact historical blank-English linguistic feature-hash
+producer. It is not a pretrained semantic embedding or the old sparse model's
+learned reconstruction. The original linguistic teacher and its checkpoint
+remain unchanged. The new 8D formula sidecar is separate from that teacher.
+The 384D input uses preserved GTE-small embeddings. The 768D input uses native
+GTE-multilingual embeddings from already installed, hash-verified local assets;
+no model weights were downloaded. This supersedes the earlier local finding
+that a native 768D input was unavailable.
+
+Each sidecar copies the same source-independent token embedding, GRU and output
+tensors from the existing 384D donor. Source-conditioning tensors are reset at
+the actual new width. This is initialization transfer, not a distillation loss
+or a continuation of any prior optimizer state. The residual projection is
+frozen at identity. Its zero training reconstruction loss, and near-zero
+inverse-normalization evaluation MSE, are properties of construction and
+floating-point arithmetic, **not learned autoencoder reconstruction**. Only
+the conditional formula decoder, source count and scalar heads are trained here.
+
+These are comparisons of complete source representations and decoder widths,
+not a dimension-only ablation. Trainable pooled/clause parameter counts are
+16,480/15,968 at 8D, 70,624/70,112 at 384D, and 125,920/125,408 at 768D. Within
+each pair, inputs, inherited parameters, trainability and initial complete
+generation match; the clause variant omits 512 slot-embedding parameters.
+
+The unchanged development panel contains 48 authored training paragraphs and
+48 previously exposed validation paragraphs, with 1, 2, 4 or 8 clauses each.
+It contains 113 unique training clauses and 54 distinct validation clauses.
+Literal blank lines define the clause inputs; this is not a new general-purpose
+US Code context resolver. Target fields never enter embedding production or
+source-context assembly. Reference labels enter training losses and later
+scoring, never free generation. The historical 8D vectors have no exact
+cross-split collisions on this panel.
+
+All fits use the original four-stage curriculum, 20 epochs per stage, 340
+optimizer updates, 2,440 row/count presentations, 225,840 target-token
+presentations and 25,600 source-value labels. The initial learning rate is
+0.001 with the unchanged adaptive plateau reductions: all four 384D fits and
+both 768D fits at seed 1729 reduce to 0.0005 after epoch 20, first used by
+committed updates in epoch 21. Batch size is 8,
+and count/source-value loss weights are 0.25. Temperature is 0.
+Encoder admission and decoder output limits remain 512 tokens. Vocabulary,
+selection arithmetic and per-length nonregression checks are unchanged; no
+forced syntax, forced closure or shortened targets were introduced.
+
+### Measured reconstruction
+
+Each cell below is **pooled → clause inputs**, using the final attempted state,
+not a selected or promoted checkpoint. Scalar matches cover the four named
+fields in 180 expected rules (720 labels); they are distinct from whole-document
+exactness. Token cross-entropy is teacher-forced; generated formulas are not.
+
+| Input width | Seed | Validation token CE | Generated scalar matches / 720 | Exact documents / 48 |
+| --- | --- | --- | --- | --- |
+| 8 | 1729 | 0.184044 → 0.141236 | 89 → 173 | 0 → 0 |
+| 8 | 2718 | 0.207498 → 0.169265 | 244 → 344 | 0 → 0 |
+| 384 | 1729 | 0.193616 → 0.155804 | 155 → 179 | 0 → 1 |
+| 384 | 2718 | 0.194504 → 0.163264 | 182 → 229 | 0 → 1 |
+| 768 | 1729 | 0.194959 → 0.142566 | 187 → 285 | 0 → 0 |
+| 768 | 2718 | 0.174055 → 0.098752 | 274 → 528 | 2 → 2 |
+
+All exact validation documents in this study have one clause. No 2-, 4- or
+8-clause validation paragraph is reconstructed exactly by any final state.
+The strongest aggregate field result, 768D clauses at seed 2718, has 528/720
+matches: actor 144/180, action **44/180**, modality 167/180 and object 173/180.
+Its auxiliary scalar head scores 536/720, which is a separate diagnostic.
+That model gets 34/48 training paragraphs exact but only 2/48 validation
+paragraphs exact, so this is not evidence of convergence on unseen law.
+
+For that same model, generated scalar matches fall from 528 to 220 with source
+shuffle, 222 with context-only shuffle, 207 with reversed clause context, 215
+with rotated clause context and 155 with zero conditioning. These controls
+support source dependence. They do not establish semantic correctness or
+reliable ordering. Although its twelve eight-clause rows generate the correct
+number of rules and valid syntax, only 23/96 ordered actions match there.
+Across all validation lengths, 154 expected rules are missing and 179 generated
+rules are unmatched, with 27 duplicates. “Unmatched” measures whole-rule content,
+not merely the difference between generated and expected counts.
+
+Strict selection rejects the best final attempt because unmatched whole rules
+regress at every length versus baseline and incumbent. Lower CE and aggregate
+field gains do not override that gate. The source-neutral epoch-0 baseline
+reaches EOS on all 48 rows but has **zero syntax-valid documents and zero
+generated rules**. Its zero unmatched-rule count makes newly generated wrong
+rules regress that metric. Retaining epoch 0 therefore does not yield a usable
+decoder; it means no trained candidate satisfied the full unchanged gate.
+The next reconstruction work should
+focus on ordered action binding, complete rule content and generalization;
+these measurements do not justify raising output limits or relaxing selection.
+
+### Wall time and retained evidence
+
+The same **pooled → clauses** order applies below. Evaluation wall time is the
+numerical `evaluate_model` call divided by 48 spans: it includes teacher-forced
+CE, target-free generation and its copy/identity checks. It excludes additional
+fidelity/count/scalar scoring and writes, so it is not pure inference latency.
+
+| Input width | Seed | Fit call seconds | Numerical evaluation seconds/span |
+| --- | --- | --- | --- |
+| 8 | 1729 | 11.531 → 10.902 | 0.014267 → 0.015503 |
+| 8 | 2718 | 9.959 → 10.690 | 0.009898 → 0.014791 |
+| 384 | 1729 | 10.654 → 14.537 | 0.003998 → 0.005686 |
+| 384 | 2718 | 11.104 → 14.227 | 0.004017 → 0.006372 |
+| 768 | 1729 | 11.362 → 18.254 | 0.005398 → 0.009098 |
+| 768 | 2718 | 13.851 → 19.716 | 0.011889 → 0.012419 |
+
+All twelve fit calls total 156.787 seconds; the complete runner takes
+298.403 seconds including setup, initial parity, postfit controls and writes.
+Runs use one reserved CPU worker with CUDA disabled. Clause inputs are a
+quality/compute tradeoff: the 384D and 768D fits are slower than their paired
+pooled fits. This is not a demonstrated training throughput improvement.
+
+Training inputs are warm cached. Separate source preparation took 23.586
+seconds: 239 historical feature rows took 3.870 seconds, while 72 new native
+768D paragraph embeddings took 13.322 seconds. The 167 cached native 768D
+clause texts include the 24 single-clause paragraphs; there are 239 unique texts
+across the 96 paragraphs and 167 clauses. Actual new forward inputs used
+19–87 tokens, all below 512. The native model's historical 8192-token profile
+was retained as provenance; it was neither relabelled nor admitted above the
+512-token experiment bound. Complete checkpoint loading recorded all 138
+tensors, and the complete-model/bare-encoder dense path matched bitwise.
+
+Bridge names are `[]`, prover evaluation is false, metric disk cache is off,
+and each evaluation panel has 48 samples. **No bridge-on evaluation ran**, so
+there is no bridge-on wall time or legal-IR bridge speed claim. Resource receipts
+separate fit, runner, guardian/accounting, observed RSS and durable output bytes.
+The 140 GB campaign cap was unchanged; preparation reserved 8 GiB/500 MB and
+training 4 GiB/1.5 GB, each with one CPU and child slot. A first preparation
+launch failed before reservation/model loading because the shared scheduler's
+persisted keys differed temporarily. The second launch succeeded without a
+scheduler reset, configuration change or foreign-lease edit.
+
+The full 57-file regression attempt recorded 2,119 passes and 16 setup errors
+from one retained, unused 384D package fixture: its saved core/source binding
+does not match the frozen runtime. That check was not bypassed or weakened.
+An explicitly scoped rerun kept all other tests plus the actual historical8
+feature-producer test and passed 2,119 checks. Both attempts are retained;
+the unused historical 384D package-loading path remains unqualified here.
+New construction/preparation/runner contracts and the actual source receipts
+are independently checked, as are the saved states and full source controls.
+The original frozen-projection check remains exact. The saved-output auditor
+allows at most 1e-12 inverse-transform MSE for arithmetic roundoff and checks
+zero residual count-head bias separately from its nonzero frozen log prior;
+earlier audit revisions and their findings are retained.
+
+### Entry points and operational scope
+
+`dimension_source_inputs.py` exposes `plan_sources`, `produce_historical8`,
+`produce_missing768` and `assemble_inputs`. These APIs join by exact source
+bytes, preserve separate producer identities and validate actual token IDs and
+masks before every model forward. `dimension_native_decoder_experiment.py`
+exposes `bind_dimension_native_body` and guarded restoration for actual 8D,
+384D and 768D bodies. It preserves the donor and validates all tensors before
+mutating a restore target.
+
+The command-line entry points are
+`scripts/ops/autoencoder/prepare_native_dimension_source_inputs.py` and
+`scripts/ops/autoencoder/benchmark_native_dimension_source_training.py`.
+Both require `--dependency-root`, `--extension-root`, `--manifest`, `--plan`
+and a fresh `--output`; their phases are `preparation` and `training`
+respectively. This run's archived `freeze.py`, `seal_training.py`, resource
+guardian and sealed manifests show the complete local recipe and hashes.
+Reproduction requires the declared existing assets and authenticated historical
+inputs; neither script downloads missing weights. Retained state JSON is typed
+and reload-checked, but lacks optimizer state and is not an optimizer resume
+checkpoint or a qualified production package.
+
+The work establishes actual training and source-dependent formula outputs at
+all three widths on this panel. It establishes no new logic-family qualification,
+Lake admit, fresh-holdout gain, global optimum or Constitution formalization.
+`lake build <Lib>` remains the only Lean admit. No production checkpoint is
+promoted, and the original 8D linguistic teacher remains separate and intact.
