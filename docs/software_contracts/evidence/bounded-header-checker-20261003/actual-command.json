@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "tests/unit/logic/security_ir/test_bounded_header_checker.py",
+    "tests/unit/logic/security_ir/test_bounded_header_checker_native.py",
+    "-q",
+    "--junitxml=/home/barberb/lift_coding/artifacts/source384-bounded-header-checker-20261003/actual-04.xml"
+  ],
+  "cwd": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "returncode": 0,
+  "tests": 38,
+  "source_pins": {
+    "ipfs_datasets_py/logic/security_ir/bounded_header_checker.py": "8e0464eeba44b5c90024612166d03ac3df524b579ab749ba300d7dfd77158a09",
+    "tests/unit/logic/security_ir/test_bounded_header_checker.py": "0c0e072c6bab018a222661998c60f5105c68809af56c3f088aa99f410405d80c",
+    "tests/unit/logic/security_ir/test_bounded_header_checker_native.py": "7f2c6d3bc35eec3a411d579cf08696ddb9df25dc547cceb4cf79816121b2b27e"
+  }
+}

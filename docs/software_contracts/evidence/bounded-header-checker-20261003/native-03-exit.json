@@ -1,0 +1,13 @@
+{
+  "tests": 4,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "seconds": 0.619,
+  "returncode": 0,
+  "source_sha256": "8e0464eeba44b5c90024612166d03ac3df524b579ab749ba300d7dfd77158a09",
+  "runner_sha256": "e99c2c9a5d9ff4be5bbb1a9ca000e52716865045d26bf74acb0d16e39b81eb97",
+  "log_sha256": "54d23ef0b56f99d2cbe2d50ca07723596b53070e1dcae86069f33fb176336fed",
+  "xml_sha256": "232f10ff4fca4875ff8f3784ea6dfdd38d6a29928c888062bfe07eb87c7c29dd",
+  "native_admission_qualification": false
+}

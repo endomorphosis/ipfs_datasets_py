@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 38 items
+
+tests/unit/logic/security_ir/test_bounded_header_checker.py ............ [ 31%]
+......................                                                   [ 89%]
+tests/unit/logic/security_ir/test_bounded_header_checker_native.py ....  [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/source384-bounded-header-checker-20261003/actual-04.xml -
+============================== 38 passed in 0.98s ==============================

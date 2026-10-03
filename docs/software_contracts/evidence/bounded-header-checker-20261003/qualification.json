@@ -1,0 +1,32 @@
+{
+  "controls": {
+    "authored_adapter": 34,
+    "native_subprocess": 4,
+    "union": 38
+  },
+  "legacy_behavior": "Adapter is additive and inactive unless consumer explicitly selects its new profile.",
+  "limits": "Linux/prlimit RLIMIT_AS per process; sampled tree RSS may overshoot; no hard aggregate cgroup claim or escaping-process sandbox. Accepted result deadline includes admission, version, query and child release; cleanup can extend return latency.",
+  "native_cases": [
+    "Installed Z3 query and bounded version probe",
+    "Per-process RLIMIT_AS/CPU and process-group observations with exact stdin",
+    "Output flood refused",
+    "Timeout terminated owned process"
+  ],
+  "native_host_admission_claim": false,
+  "proof_authority": false,
+  "retained_failure": {
+    "bytes": 6934528,
+    "fixture_errors": 32,
+    "passed": 2,
+    "path": "controls-01.log",
+    "reason": "Authored parent assigned native read-only released property; fixed test fixture only. Oversized pytest IDs retained locally.",
+    "sha256": "b63a78f1e4e913fd2e9228b893e8580bc69056c97e0be2cb3b6bb534d4246749"
+  },
+  "schema": "bounded-header-checker-draft-qualification@1",
+  "source_pins": {
+    "ipfs_datasets_py/logic/security_ir/bounded_header_checker.py": "8e0464eeba44b5c90024612166d03ac3df524b579ab749ba300d7dfd77158a09",
+    "tests/unit/logic/security_ir/test_bounded_header_checker.py": "0c0e072c6bab018a222661998c60f5105c68809af56c3f088aa99f410405d80c",
+    "tests/unit/logic/security_ir/test_bounded_header_checker_native.py": "7f2c6d3bc35eec3a411d579cf08696ddb9df25dc547cceb4cf79816121b2b27e"
+  },
+  "status": "off_tree_qualified_adapter_not_live_integrated"
+}

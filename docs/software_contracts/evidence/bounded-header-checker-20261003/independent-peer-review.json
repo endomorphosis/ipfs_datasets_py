@@ -1,0 +1,24 @@
+{
+  "schema": "independent-bounded-header-runner-review@1",
+  "reviewer": "peer_recovery_fresh",
+  "read_only": true,
+  "source_sha256": "8e0464eeba44b5c90024612166d03ac3df524b579ab749ba300d7dfd77158a09",
+  "verdict": "no_source_blocker_found",
+  "findings": [
+    "Uses existing universal bounded process owner; no second subprocess harness.",
+    "One query deadline covers child admission and the initial bounded version probe; enclosing callback cannot be extended.",
+    "SMT bytes unchanged; max_steps is bound through Z3 argv.",
+    "Input/output, virtual memory and sampled tree RSS bounds are enforced through native ToolRunLimits; combined accepted output is checked.",
+    "Cancellation/status sampling failure enters cleanup; late, failed, truncated, uncleared or resource-exhausted results cannot be returned as solver evidence.",
+    "Only one runner invocation at a time; cached version is local to the factory."
+  ],
+  "limits": [
+    "Per-process RLIMIT_AS and sampled process-tree RSS are not a kernel aggregate-memory sandbox.",
+    "Cleanup may extend elapsed wall time; late results are rejected.",
+    "Reviewer ran no duplicate adapter controls. A pilot independently exercised actual native parent/child scheduler leases and actual Z3 using this frozen adapter."
+  ],
+  "test_receipt_references": [
+    "controls-02.xml",
+    "native-03.xml"
+  ]
+}
