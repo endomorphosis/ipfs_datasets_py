@@ -260,3 +260,16 @@ def preflight_ir_cell_cached_targets(directory_plan_pin, inventory_pins, request
     return preflight(directory_plan_pin, inventory_pins, request,
         package_manifest_pin=package_manifest_pin, cache_split=cache_split,
         row_ids=row_ids, max_reference_bytes=max_reference_bytes)
+
+
+def open_ir_original_corpus_autoencoder(directory_plan_pin, inventory_pins, request, *, package_manifest_pin,
+        corpus_pin, corpus_split, row_ids, max_reference_bytes=512 * 1024 * 1024):
+    """Opt in to exact original Intent/Security package corpus replay.
+
+    Fixed checkpoint fitting manifests and original source/vector identities
+    authenticate before loading. Targets and native evidence are never inputs.
+    """
+    from .ir_original_corpus_runtime import _open_ir_original_corpus_autoencoder
+    return _open_ir_original_corpus_autoencoder(directory_plan_pin, inventory_pins, request,
+        package_manifest_pin=package_manifest_pin, corpus_pin=corpus_pin,
+        corpus_split=corpus_split, row_ids=row_ids, max_reference_bytes=max_reference_bytes)
