@@ -1,0 +1,8 @@
+{
+  "schema": "sql-fact-insert-expression-parity@1",
+  "families": 9,
+  "unchanged_sql_columns_and_value_expressions": true,
+  "old_sha256": "34f728f42076b66c564eef64edfa1f9ee7039ae29148ab68f75679dcddcc42c3",
+  "new_sha256": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+  "method": "Compare nine former loop query/value/iterator AST expressions with new generator query/value/iterator AST expressions; SQL whitespace normalized only."
+}

@@ -1,0 +1,80 @@
+{
+  "environment": {
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "profile_runs": [
+    {
+      "arguments": [
+        "before-01"
+      ],
+      "scope": "cProfile, original8192 production, failed90s before publication",
+      "script": "profile_cold.before.py"
+    },
+    {
+      "arguments": [
+        "diagnostic32768-01",
+        "32768"
+      ],
+      "scope": "cProfile, diagnostic cache monkeypatch, failed90s",
+      "script": "profile_cold.diagnostic.py"
+    },
+    {
+      "arguments": [
+        "diagnostic32768-stages-01",
+        "32768",
+        "stages"
+      ],
+      "scope": "diagnostic native work completed but timer receipt lost; no performance credit",
+      "script": "profile_cold.stage-receipt-bug.py"
+    },
+    {
+      "arguments": [
+        "diagnostic32768-stages-02",
+        "32768",
+        "stages"
+      ],
+      "scope": "lightweight stage timers, diagnostic cache monkeypatch",
+      "script": "profile_cold.stages.py"
+    },
+    {
+      "arguments": [
+        "production-stages-01",
+        "production",
+        "stages"
+      ],
+      "scope": "lightweight stage timers, unmodified production owners",
+      "script": "profile_cold.py"
+    },
+    {
+      "arguments": [],
+      "scope": "separate fresh process native current-source observation, unmodified production owners",
+      "script": "observe_cold.py"
+    }
+  ],
+  "schema": "source-cold-index-commands@1",
+  "tests": {
+    "additional_environment": {
+      "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"
+    },
+    "argv": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/unit/logic/software_contracts/test_content_memo.py",
+      "tests/unit/logic/software_contracts/test_content_identity.py",
+      "tests/unit/logic/software_contracts/test_duckdb_ast_store.py",
+      "tests/unit/logic/software_contracts/test_duckdb_ast_store_persistence.py",
+      "tests/unit/duckdb_control/test_codebase_catalog.py",
+      "tests/integration/logic/software_contracts/test_codebase_ir.py",
+      "--junitxml=targeted-02.xml"
+    ],
+    "earlier_collection_error": "targeted-01 named nonexistent test_content.py;0 tests ran; retained log/XML",
+    "passed": 146,
+    "seconds": 42.6
+  }
+}

@@ -25,7 +25,7 @@ import math
 import threading
 import time
 from collections import OrderedDict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import StrEnum
@@ -56,11 +56,6 @@ ASTS_CATALOG_NAME: Final = "asts"
 MAX_STORED_PAYLOAD_BYTES: Final = 16 * 1024 * 1024
 MAX_BATCH_PAYLOAD_BYTES: Final = 64 * 1024 * 1024
 MAX_QUERY_ROWS: Final = 100_000
-# Bound SQL planning and additional argument residency independently of the
-# already validated projection payload. One valid oversized row is preserved
-# as a singleton, rather than tightening the existing payload contract.
-_INSERT_BATCH_ROWS: Final = 128
-_INSERT_BATCH_PARAMETER_BYTES: Final = 256 * 1024
 
 # Closed catalog table family declared by the control-plane plan (DQK-G600).
 ASTS_CATALOG_TABLES: Final[tuple[str, ...]] = (
@@ -2360,38 +2355,6 @@ class DuckDBASTStore:
 
     # -- DuckDB persistence (caller holds the transaction) ------------------
 
-    def _insert_rows(self, statement: str, rows: Iterable[Sequence[Any]]) -> None:
-        """Stream canonical fact rows into bounded parameterized INSERTs.
-
-        Statements and column order are the fixed literals below. Only VALUES
-        placeholders are repeated; source-derived text is always a parameter.
-        The caller's existing transaction owns every chunk, rollback and hooks.
-        """
-        prefix, _, placeholders = statement.partition("VALUES")
-        width = placeholders.count("?")
-        batch: list[Any] = []
-        count = size = 0
-
-        def flush() -> None:
-            self._connection.execute(
-                prefix + "VALUES " + ",".join([placeholders.strip()] * count), batch
-            )
-
-        for row in rows:
-            if len(row) != width:
-                raise DuckDBASTStoreError("fact row differs from INSERT column layout")
-            row_bytes = sum(len(value.encode("utf-8")) if type(value) is str else 8
-                            for value in row)
-            if count and (count >= _INSERT_BATCH_ROWS
-                          or size + row_bytes > _INSERT_BATCH_PARAMETER_BYTES):
-                flush()
-                batch, count, size = [], 0, 0
-            batch.extend(row)
-            count += 1
-            size += row_bytes
-        if count:
-            flush()
-
     def _persist_projection(self, projection: ASTCatalogProjection) -> None:
         connection = self._connection
         if connection is None:
@@ -2465,13 +2428,13 @@ class DuckDBASTStore:
                 blob.created_at,
             ],
         )
-        self._insert_rows(
-            """
-            INSERT INTO ast_nodes VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            )
-            """,
-            (
+        for node in projection.nodes:
+            connection.execute(
+                """
+                INSERT INTO ast_nodes VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     node.node_id,
                     node.blob_id,
@@ -2488,17 +2451,15 @@ class DuckDBASTStore:
                     node.span.end_column,
                     node.label,
                     node.payload_json,
-                ]
-                for node in projection.nodes
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO scopes VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.scopes:
+            connection.execute(
+                """
+                INSERT INTO scopes VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.scope_row_id,
                     item.blob_id,
@@ -2512,17 +2473,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.scopes
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO symbols VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.symbols:
+            connection.execute(
+                """
+                INSERT INTO symbols VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.symbol_row_id,
                     item.blob_id,
@@ -2542,17 +2501,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.symbols
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO imports VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.imports:
+            connection.execute(
+                """
+                INSERT INTO imports VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.import_row_id,
                     item.blob_id,
@@ -2569,17 +2526,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.imports
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO "references" VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.references:
+            connection.execute(
+                """
+                INSERT INTO "references" VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.reference_row_id,
                     item.blob_id,
@@ -2594,17 +2549,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.references
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO calls VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.calls:
+            connection.execute(
+                """
+                INSERT INTO calls VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.call_row_id,
                     item.blob_id,
@@ -2622,17 +2575,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.calls
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO effects VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.effects:
+            connection.execute(
+                """
+                INSERT INTO effects VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.effect_row_id,
                     item.blob_id,
@@ -2647,17 +2598,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.effects
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO interfaces VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.interfaces:
+            connection.execute(
+                """
+                INSERT INTO interfaces VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.interface_row_id,
                     item.blob_id,
@@ -2673,17 +2622,15 @@ class DuckDBASTStore:
                     item.span.start_column,
                     item.span.end_line,
                     item.span.end_column,
-                ]
-                for item in projection.interfaces
-            ),
-        )
-        self._insert_rows(
-            """
-            INSERT INTO diagnostics VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ],
             )
-            """,
-            (
+        for item in projection.diagnostics:
+            connection.execute(
+                """
+                INSERT INTO diagnostics VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
                 [
                     item.diagnostic_row_id,
                     item.blob_id,
@@ -2700,10 +2647,8 @@ class DuckDBASTStore:
                     item.span.end_line,
                     item.span.end_column,
                     item.created_at,
-                ]
-                for item in projection.diagnostics
-            ),
-        )
+                ],
+            )
         for item in projection.invalidations:
             self._persist_invalidation(item)
 

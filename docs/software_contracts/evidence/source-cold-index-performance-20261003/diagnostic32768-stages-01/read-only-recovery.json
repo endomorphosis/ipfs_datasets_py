@@ -1,0 +1,8 @@
+{
+  "schema": "diagnostic-receipt-persistence-failure@1",
+  "head_count": 1,
+  "ast_blobs_count": 30,
+  "timings_lost": true,
+  "performance_credit": false,
+  "error": "diagnostic attempted pstats on disabled profiler before receipt write; corrected script persists receipt first"
+}

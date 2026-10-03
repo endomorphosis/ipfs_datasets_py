@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 146 items
+
+tests/unit/logic/software_contracts/test_content_memo.py ............... [ 10%]
+.................                                                        [ 21%]
+tests/unit/logic/software_contracts/test_content_identity.py ........... [ 29%]
+.........                                                                [ 35%]
+tests/unit/logic/software_contracts/test_duckdb_ast_store.py ........... [ 43%]
+.....                                                                    [ 46%]
+tests/unit/logic/software_contracts/test_duckdb_ast_store_persistence.py . [ 47%]
+...........................                                              [ 65%]
+tests/unit/duckdb_control/test_codebase_catalog.py ..................... [ 80%]
+........                                                                 [ 85%]
+tests/integration/logic/software_contracts/test_codebase_ir.py ......... [ 91%]
+............                                                             [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/source-cold-index-performance-20261003/targeted-02.xml -
+============================= 146 passed in 42.60s =============================

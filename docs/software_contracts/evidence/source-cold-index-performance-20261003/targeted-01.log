@@ -1,0 +1,11 @@
+ERROR: file or directory not found: tests/unit/logic/software_contracts/test_content.py
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 0 items
+
+- generated xml file: /home/barberb/lift_coding/artifacts/source-cold-index-performance-20261003/targeted-01.xml -
+============================ no tests ran in 0.00s =============================

@@ -1,0 +1,42 @@
+logic tree pin compiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+logic tree pin compiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+Traceback (most recent call last):
+  File "<string>", line 21, in <module>
+  File "/opt/ipfs-supervisor/source/benchmarks/agent_supervisor/container_coding/terminal_indexed_preparation.py", line 381, in initial_context
+    return prepare_initial_context(state=state, prepared=_load_prepared(state),
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ipfs-supervisor/source/benchmarks/agent_supervisor/container_coding/terminal_initial_context.py", line 240, in prepare_initial_context
+    source384 = prepare_source384_context(repository=root,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ipfs-supervisor/source/ipfs_accelerate_py/agent_supervisor/runtime/source384_repository_context.py", line 219, in prepare_source384_context
+    head = index.prepare_current(root, repository_id=repository_id, operation_id="initial",
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir.py", line 299, in prepare_current
+    self._prepare(
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir.py", line 405, in _prepare
+    self.ingestor.ingest_snapshot(
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py", line 1031, in ingest_snapshot
+    return self._ingest_sources(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py", line 1314, in _ingest_sources
+    publish_batch(pending_publication)
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir.py", line 408, in <lambda>
+    lambda publication: publisher(prepared[0], publication, checkpoint)),
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir.py", line 294, in publish
+    receipts.append(self.catalog.publish(
+                    ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/duckdb_control/codebase_catalog.py", line 519, in publish
+    self.store.apply_batch(projections, supersession,
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py", line 2081, in apply_batch
+    before_commit(self._connection)
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/duckdb_control/codebase_catalog.py", line 508, in before_commit
+    check()
+  File "/opt/ipfs-supervisor/datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir.py", line 353, in checkpoint
+    raise LeaseTimeoutError("codebase preparation deadline exceeded")
+ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.LeaseTimeoutError: codebase preparation deadline exceeded
+{"benchmark_result": false, "download_calls": 0, "error": "codebase preparation deadline exceeded", "error_phase": "initial_context", "error_type": "LeaseTimeoutError", "failure_resources": {"available_memory_mb": 10070, "cpu_slots": 5, "cpu_stall_percent": 26.89, "io_stall_percent": 0.53, "memory_stall_percent": 0.05, "total_memory_mb": 12288}, "official_verifier_executed": false, "phase_seconds": 137.48924825699942, "prepare_seconds": 10.43119648100037, "producer": {"byte_reader": "a3b3943bacb0becc7789c86414adab9f92e6977021919fb3e84b5e3c2baba491", "config": "4a42288ef9b889f9b3c9592631c20f86aadd4ba40d40884fdcaed9a8ac0fdc3b", "consumer": "5e7da432a206b07900822044326dde963b5bf8cb9c1f39d313e1a6ceed56e66f", "source_owners": {"ipfs_datasets_py.duckdb_control.codebase_catalog": "fdcf6d4ce676fbb1e5b8b42bab18c76368509abaedc936b1efd9aa4d53bb37d1", "ipfs_datasets_py.logic.software_contracts.codebase_ir": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4", "ipfs_datasets_py.logic.software_contracts.content": "cda06b90dfaf7db309c554deac01b2ffee9af7d0ab652b10e40f57908860afc7", "ipfs_datasets_py.logic.software_contracts.duckdb_ast_store": "34f728f42076b66c564eef64edfa1f9ee7039ae29148ab68f75679dcddcc42c3", "ipfs_datasets_py.logic.software_contracts.duckdb_ingest": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e", "ipfs_datasets_py.logic.software_contracts.python_frontend": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df", "ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis": "5b95b014af601305eeb6d0d424d3baf3861e641a62ccfc892a5f3bcc5c9754b0", "ipfs_datasets_py.logic.software_contracts.semantic_index.scanner": "002957f910a0bc1ff29de1ed72aca9c2464218ac5f65478be34a7c8f04e166a1", "ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot": "5135e623a0a3f970252da63dce049be167e8bb73db5355f6c3116316b70aafa6"}}, "provider_calls": 0, "qualified": false, "schema": "terminal-source384-original-container-qualification@1", "seconds": 149.00468344600085, "source_qualified_proof_claimed": false, "training_steps": 0}

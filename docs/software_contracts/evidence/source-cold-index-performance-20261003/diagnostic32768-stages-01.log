@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/source-cold-index-performance-20261003/profile_cold.py", line 45, in <module>
+    with duckdb.connect(str(out/'source.duckdb'),config={'threads':1,'memory_limit':'512MB'}) as cx:
+  File "/home/barberb/lift_coding/artifacts/source-cold-index-performance-20261003/profile_cold.py", line 59, in <module>
+    profile.dump_stats(out/'profile.prof');s=io.StringIO();pstats.Stats(profile,stream=s).sort_stats('cumulative').print_stats(90);(out/'profile.txt').write_text(s.getvalue())
+                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pstats.py", line 115, in __init__
+    self.init(arg)
+  File "/usr/lib/python3.12/pstats.py", line 129, in init
+    self.load_stats(arg)
+  File "/usr/lib/python3.12/pstats.py", line 155, in load_stats
+    raise TypeError("Cannot create or construct a %r object from %r"
+TypeError: Cannot create or construct a <class 'pstats.Stats'> object from <cProfile.Profile object at 0xf66ba2c35080>

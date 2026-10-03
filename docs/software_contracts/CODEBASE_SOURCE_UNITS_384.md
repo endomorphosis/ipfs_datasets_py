@@ -95,9 +95,19 @@ initial omitted-CUDA setup failure, and the corrected CPU and scanner test runs.
 
 The [separate observation performance evidence](evidence/source-observation-performance-20261003/README.md)
 diagnoses repeated CID encoding when a captured graph's working set exceeded
-4,096 entries. The pure encoding and validation caches now each retain at most
-8,192 entries; they store short identity results, not source or graph bodies.
+4,096 entries. That version increased the pure encoding and validation caches to
+8,192 entries each; they store short identity results, not source or graph bodies.
 Every stored body and live registration is still verified. On one retained
 Bottle snapshot, the same native observation took 27.85 seconds before and
 13.62 seconds after the change under cProfile. This is a single component
 measurement, not a general scaling claim or a complete benchmark result.
+
+The [full public-source cold-index follow-up](evidence/source-cold-index-performance-20261003/README.md)
+retains the later 218-file profile, failures, and current-producer controls.
+Its 12,554-edge graph exceeded the earlier cache bound. The fixed per-cache bound
+is now 32,768 entries, retaining all live registration and fresh body-hash checks.
+AST facts use parameterized INSERT chunks of at most 128 rows and a 256 KiB
+parameter-byte target; a larger already-valid row remains a singleton. Canonical
+projection validation, transaction hooks, source/head fences, rollback, and
+post-commit counters are unchanged. This qualifies bounded indexing and replay;
+it makes no claim about decoder accuracy, task success, or overall benchmark speed.

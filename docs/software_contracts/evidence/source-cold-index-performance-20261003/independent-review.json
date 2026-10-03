@@ -1,0 +1,133 @@
+{
+  "admission_or_deadline_weakened": false,
+  "blocking_findings": [],
+  "bounds": {
+    "UTF8_scalar_parameter_byte_target": 262144,
+    "already_valid_oversized_singleton_preserved": true,
+    "maximum_parameters_per_statement": 2304,
+    "maximum_rows_per_statement": 128,
+    "new_per_fact_transactions": false,
+    "row_generators_streamed": true,
+    "source_derived_SQL_interpolation": false
+  },
+  "compared_base_commit": "ccfd3dabdf25e93774b1a10e29b15882bf8fad0f",
+  "independent_tests_run": false,
+  "meaningful_tests_reviewed": [
+    "5000/20000 repeated CID working sets alongside existing bounded eviction, live registration and body mutation controls.",
+    "Actual native multi-chunk fact persistence and exact cold reopen.",
+    "Failure after the second actual native chunk rolls back replacement, invalidation audits and counters.",
+    "A before_commit exception rolls back the complete replacement.",
+    "Native Unicode, quoted SQL-looking strings, NULL/bool parameters and oversized singleton roundtrip, with row/byte/placeholder bounds."
+  ],
+  "measurement_caveats": [
+    "The cProfile 113/107-second deadline failures must not be compared as measured speedups against lightweight timings.",
+    "The 51.4-second cache-only diagnostic used an explicit 32768-entry monkeypatch; it is not production qualification.",
+    "Only a same-workload lightweight current-production versus cache-only diagnostic comparison can isolate SQL batching cost. Cold observer and Docker outcomes must remain separate.",
+    "256 KiB is a UTF8 scalar parameter target with an explicit single-row exception, not an exact Python RSS ceiling."
+  ],
+  "proof_authority_upgraded": false,
+  "qualification_status": "The implementing agent reports 146 targeted controls passed in 42.60 seconds against these unchanged sources. Primary actual full 218-file production timing and cold observer qualification were pending at review.",
+  "repository": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002",
+  "schema": "independent-cold-source-index-optimization-review@1",
+  "scope": [
+    "Fixed pure CID cache capacity 8192 \u2192 32768; cache keys, body hashing and registry fences are unchanged.",
+    "Stream nine existing AST fact INSERT families into parameterized VALUES batches; preserve canonical validation, transaction ownership, hooks, source/blob writes, invalidation operations, rollback and postcommit counters."
+  ],
+  "source_and_test_pins": [
+    {
+      "bytes": 28950,
+      "path": "ipfs_datasets_py/logic/software_contracts/content.py",
+      "sha256": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43"
+    },
+    {
+      "bytes": 95861,
+      "path": "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py",
+      "sha256": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f"
+    },
+    {
+      "bytes": 22035,
+      "path": "tests/unit/logic/software_contracts/test_content_memo.py",
+      "sha256": "38b7b1c4055dd6ad1018dd4c3e484c1924e5149adcd175dfe943361f5d670599"
+    },
+    {
+      "bytes": 17614,
+      "path": "tests/unit/logic/software_contracts/test_duckdb_ast_store_persistence.py",
+      "sha256": "9bcc781834d477ed4951f8e4483bc36ee5fff99308a810e3b1adac9c9cd1b28d"
+    }
+  ],
+  "static_AST_comparison": [
+    {
+      "family": "nodes",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 15
+    },
+    {
+      "family": "scopes",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 12
+    },
+    {
+      "family": "symbols",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 18
+    },
+    {
+      "family": "imports",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 15
+    },
+    {
+      "family": "references",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 13
+    },
+    {
+      "family": "calls",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 16
+    },
+    {
+      "family": "effects",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 13
+    },
+    {
+      "family": "interfaces",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 14
+    },
+    {
+      "family": "diagnostics",
+      "no_filter_or_async": true,
+      "same_fixed_SQL": true,
+      "same_loop_target": true,
+      "same_row_expressions": true,
+      "width": 15
+    }
+  ],
+  "verdict": "No code-review blocker; native performance and Docker qualifications remain independently required."
+}

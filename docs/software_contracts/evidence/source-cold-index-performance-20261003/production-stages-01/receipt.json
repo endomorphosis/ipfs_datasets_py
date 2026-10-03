@@ -1,0 +1,67 @@
+{
+  "ast_blobs_count": 30,
+  "deadline_seconds": 90,
+  "duckdb_memory": "512MB",
+  "encode_cache": {
+    "currsize": 32768,
+    "hits": 341644,
+    "maxsize": 32768,
+    "misses": 34181
+  },
+  "head": {
+    "ast_revision_id": "rev:public-cold-qualification:snapshot:baguqeerax6uviy3dioi3avt4yw6l77flcqmluibawil4cdobwuwkfcqmzo3q",
+    "generation": 1,
+    "manifest_cid": "baguqeera3ffx4nkzsyawnyqizfheetgrwstfo6upske5j6bz2fsd2ydmqisa",
+    "receipt_cid": "baguqeerakntvga77ovaum4hozor36u3wv4p5s7qycxm2vsdzmgosoezzwraa",
+    "repository_id": "public-cold-qualification",
+    "schema": "codebase-head@1",
+    "snapshot_cid": "baguqeerax6uviy3dioi3avt4yw6l77flcqmluibawil4cdobwuwkfcqmzo3q"
+  },
+  "head_count": 1,
+  "instrumented": false,
+  "label": "production-stages-01",
+  "lightweight_stage_timers": true,
+  "memory_mb": 4096,
+  "model_loads": 0,
+  "producer": {
+    "codebase_ir": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4",
+    "content": "1e8c9bb9019bb593d6812ac6d1d1fa46e882be291d5f41bbb4894fb171056b43",
+    "duckdb_ast_store": "736c77ebdc66607ef234ab1aa2f4d84c4768811f11d568962a11692dfdcfad2f",
+    "duckdb_ingest": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e"
+  },
+  "production_memo_capacity": 32768,
+  "provider_calls": 0,
+  "schema": "full-public-cold-index-profile@1",
+  "script_sha256": "cef1d7616624fe220361d0966a6db196addcb363351f283054c6452217af6b25",
+  "seconds": 55.01960630800022,
+  "source_files": 218,
+  "source_receipt_sha256": "18a3a1427c5761807578807814d9a5d7de8c7fbc0dda4ee485fc245b0ddf0c3d",
+  "source_root": "/home/barberb/lift_coding/artifacts/source-cold-index-performance-20261003/production-stages-01/app",
+  "stage_timers": {
+    "CodebaseCatalog._validate_candidate": {
+      "calls": 1,
+      "seconds": 12.000326033001329
+    },
+    "DuckDBASTStore._persist_projection": {
+      "calls": 30,
+      "seconds": 3.035430145995633
+    },
+    "DuckDBASTStore.apply_batch": {
+      "calls": 1,
+      "seconds": 4.710074347000045
+    },
+    "RepositoryScanner.scan_snapshot": {
+      "calls": 1,
+      "seconds": 15.01483907200236
+    }
+  },
+  "status": "passed",
+  "threads": 1,
+  "training_steps": 0,
+  "validation_cache": {
+    "currsize": 3789,
+    "hits": 12664,
+    "maxsize": 32768,
+    "misses": 3789
+  }
+}

@@ -60,10 +60,10 @@ _ALLOWED_READ_CODECS: Final[frozenset[str]] = frozenset(
 
 # Only pure, small encoding/validation results are retained. Payloads and
 # structured values never enter either cache; every read still hashes its body.
-# A repository graph can revisit tens of thousands of identities during closed
+# A several-thousand-edge semantic graph revisits every identity during closed
 # reconstruction. Keep its working set resident without retaining graph bodies;
 # larger populations still evict at this fixed per-cache entry bound.
-_CID_MEMO_MAXSIZE: Final[int] = 32768
+_CID_MEMO_MAXSIZE: Final[int] = 8192
 
 
 @lru_cache(maxsize=1)
