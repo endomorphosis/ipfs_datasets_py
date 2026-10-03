@@ -1,0 +1,1249 @@
+{
+  "schema": "codebase-ir-original-numerical-replay-handoff/v1",
+  "status": "numerical_replay_completed_quality_gates_failed",
+  "captured_at_utc": "2026-10-03T18:52:35.510005+00:00",
+  "worktree": "/home/barberb/lift_coding/.worktrees/codebase-numerical-replay-20261003",
+  "base_commit": "f6c9136f814a1ace3a20a38305a24e7c68f771ac",
+  "stage": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003",
+  "successful_families": [
+    {
+      "ir_family_id": "security_ir",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "successful_run_id": "security-replay-v7",
+      "checkpoint": {
+        "bytes": 597741,
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/security_ir/checkpoint.json",
+        "sha256": "855b3d6d85bb59e165930785bd49711df0fcc8fbc8e11329e2f4b65125520441"
+      },
+      "package_manifest": {
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/security_ir/manifest.json",
+        "bytes": 8156,
+        "sha256": "d9fc241c7c6a039068681fab18b6a36fbcbd1752c2683ba1dc16423ce94aba2a"
+      },
+      "original_cache": {
+        "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/validation.json",
+        "bytes": 1068258,
+        "sha256": "e719430c2db18dde3d3e49ca831755a4569c975f2eff12bd1db7dba2c82cf8b3"
+      },
+      "ordered_row_ids": [
+        "v3:security_ir:0:3:0:0",
+        "v3:security_ir:1:4:0:0",
+        "v3:security_ir:2:0:0:0",
+        "v3:security_ir:3:1:0:0",
+        "v3:security_ir:4:2:0:0"
+      ],
+      "counts": {
+        "attempted": 5,
+        "decoded": 5,
+        "abstained": 0,
+        "refused": 0,
+        "exact_retained_ir": 0,
+        "embeddings_scored": 5,
+        "rendered": null,
+        "rendering_refused": null,
+        "exact_original_utf8": null,
+        "normalized_whitespace_exact": null
+      },
+      "rates": {
+        "denominator": "all_attempted_rows",
+        "decoded": 1.0,
+        "exact_retained_ir": 0.0,
+        "exact_original_utf8": null,
+        "normalized_whitespace_exact": null
+      },
+      "embedding_mse": 0.0007654917802983966,
+      "text_reconstruction": {
+        "supported": false,
+        "status": "unsupported_not_emitted",
+        "renderer_uses_model": null,
+        "renderer_inputs": null,
+        "learned_original_wording_recovery": false
+      },
+      "parser_assisted": false,
+      "saved_loading_fixture_verified_rows": 0,
+      "independent_teacher_evaluation": false,
+      "teacher_qualified": false
+    },
+    {
+      "ir_family_id": "intent_ir",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "successful_run_id": "intent-replay-v7",
+      "checkpoint": {
+        "bytes": 586049,
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/intent_ir/checkpoint.json",
+        "sha256": "f031dc5a3dfb9b4fd9e7a8bfbe0f188393edd3afdcc3f18c06c84f4749c6db55"
+      },
+      "package_manifest": {
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/intent_ir/manifest.json",
+        "bytes": 8126,
+        "sha256": "250b6bf9cd93e32ee2db77498432d4dc5c7d705f333f9d99e92de69cdf2c727f"
+      },
+      "original_cache": {
+        "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/validation.json",
+        "bytes": 1039515,
+        "sha256": "8478295c9c2a2e7158c8fdede1e3b5043e7278c0531020e4e8e0c7ffd27be404"
+      },
+      "ordered_row_ids": [
+        "v3:intent_ir:0:3:0:0",
+        "v3:intent_ir:1:4:0:0",
+        "v3:intent_ir:2:0:0:0",
+        "v3:intent_ir:3:1:0:0",
+        "v3:intent_ir:4:2:0:0"
+      ],
+      "counts": {
+        "attempted": 5,
+        "decoded": 5,
+        "abstained": 0,
+        "refused": 0,
+        "exact_retained_ir": 0,
+        "embeddings_scored": 5,
+        "rendered": null,
+        "rendering_refused": null,
+        "exact_original_utf8": null,
+        "normalized_whitespace_exact": null
+      },
+      "rates": {
+        "denominator": "all_attempted_rows",
+        "decoded": 1.0,
+        "exact_retained_ir": 0.0,
+        "exact_original_utf8": null,
+        "normalized_whitespace_exact": null
+      },
+      "embedding_mse": 0.0007005892164569545,
+      "text_reconstruction": {
+        "supported": false,
+        "status": "unsupported_not_emitted",
+        "renderer_uses_model": null,
+        "renderer_inputs": null,
+        "learned_original_wording_recovery": false
+      },
+      "parser_assisted": false,
+      "saved_loading_fixture_verified_rows": 0,
+      "independent_teacher_evaluation": false,
+      "teacher_qualified": false
+    },
+    {
+      "ir_family_id": "legal_ir",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "successful_run_id": "legal-replay-v9",
+      "checkpoint": {
+        "bytes": 1715990,
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/legal_ir/checkpoint.json",
+        "sha256": "26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da"
+      },
+      "package_manifest": {
+        "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/legal_ir/manifest.json",
+        "bytes": 3886,
+        "sha256": "34794ea4bbf128678eafdd8ba1862b58c8d0bf36b8ae83e20de75abf57e9debc"
+      },
+      "original_cache": {
+        "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/validation.json",
+        "bytes": 1038480,
+        "sha256": "6a07b7a4d7c73802fc4a31a2666adcb312706fcc3deffbc46626d9d8914d43c9"
+      },
+      "ordered_row_ids": [
+        "v3:legal_ir:0:3:0:0",
+        "v3:legal_ir:1:4:0:0",
+        "v3:legal_ir:2:0:0:0",
+        "v3:legal_ir:3:1:0:0",
+        "v3:legal_ir:4:2:0:0"
+      ],
+      "counts": {
+        "attempted": 5,
+        "decoded": 5,
+        "abstained": 0,
+        "refused": 0,
+        "exact_retained_ir": 0,
+        "embeddings_scored": 5,
+        "rendered": 5,
+        "rendering_refused": 0,
+        "exact_original_utf8": 0,
+        "normalized_whitespace_exact": 0
+      },
+      "rates": {
+        "denominator": "all_attempted_rows",
+        "decoded": 1.0,
+        "exact_retained_ir": 0.0,
+        "exact_original_utf8": 0.0,
+        "normalized_whitespace_exact": 0.0
+      },
+      "embedding_mse": 0.0012334482713310354,
+      "text_reconstruction": {
+        "supported": true,
+        "status": "deterministic_predicted_ir_rendering",
+        "renderer_uses_model": false,
+        "renderer_inputs": "predicted_ir_and_request_id_only",
+        "learned_original_wording_recovery": false
+      },
+      "parser_assisted": true,
+      "saved_loading_fixture_verified_rows": 4,
+      "independent_teacher_evaluation": false,
+      "teacher_qualified": false
+    }
+  ],
+  "all_retained_runs": [
+    {
+      "run_id": "security-replay-v1",
+      "family": "security_ir",
+      "phase": "cold_import",
+      "exit_code": 3,
+      "accepted": false,
+      "model_load_returned": false,
+      "inference_returned": false,
+      "cached_rows_completed": 0,
+      "fixture_rows_verified": 0,
+      "source_loads": 1,
+      "import_denials": 0,
+      "effect_denials": 1,
+      "primary_error": "Unbound ctypes load",
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v1/result.json",
+          "bytes": 3705,
+          "sha256": "d1492c67e33bf8e3b26c4cd84bbbbf1ea092072f0d03a71f399e2c9d011301a8"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v1/run.log",
+          "bytes": 1485,
+          "sha256": "570ec820614e7b5468fb72586ef719e65434760ad3054fae4c5b3e505763f46f"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v1/import-observations.json",
+          "bytes": 1676,
+          "sha256": "215d005c3422ff16b09c51a0d016eb96e80a3d88874d680bdf3d9d291d29e3fc"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v1/effect-observations.json",
+          "bytes": 306,
+          "sha256": "c0332fef882069e9d2000d3039aac7a09a85f689bcd17b5d2eea10a53ab7f19c"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v1.json",
+          "bytes": 2214,
+          "sha256": "431e4b9786c37e95dfce12929b4646ac01c76dd520c3040209aed4355a888fb0"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v1.log",
+          "bytes": 264,
+          "sha256": "8a72bbcb3fe106cc219b13721e756c62d2003953fe62c535740d61c9fb96f18c"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-security-replay-v1.json",
+          "bytes": 422,
+          "sha256": "126283d7b8e57219ce213170314808bf0cc97dd85ba522704fd17f65542033eb"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission.json",
+        "bytes": 1983,
+        "sha256": "a1d1c560677f854b2846884846b8e23546c42925e99bb45916ca3045a4e14336"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay.py",
+        "bytes": 20308,
+        "sha256": "98e55f76eab3ac7995c95ece667ae21582d7d7f630ab62e7f35e2dec384cb6bd"
+      }
+    },
+    {
+      "run_id": "security-replay-v2",
+      "family": "security_ir",
+      "phase": "cold_import",
+      "exit_code": 3,
+      "accepted": false,
+      "model_load_returned": false,
+      "inference_returned": false,
+      "cached_rows_completed": 0,
+      "fixture_rows_verified": 0,
+      "source_loads": 145,
+      "import_denials": 0,
+      "effect_denials": 1,
+      "primary_error": "Write outside private run",
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v2/result.json",
+          "bytes": 5742,
+          "sha256": "fea7b04b4c2ebc3753fcbf285de12f8992bbc0b882b8fd4d3dcdd8f16c1d8aa8"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v2/run.log",
+          "bytes": 3512,
+          "sha256": "cef1ee4e367e3f61dc4de05d8e7d839ad74ac81ecc5099858bcd1cd08d527808"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v2/import-observations.json",
+          "bytes": 112415,
+          "sha256": "3632f2fc41535174b004ee1f72f5a66b5f7d754ba7348b6b1bc21f7acfb8e3d4"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v2/effect-observations.json",
+          "bytes": 303,
+          "sha256": "bcb67751dd9a5df7cb50a38fd1ad001050bf6b83c9f82fbae206b07bc594f8c1"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v2.json",
+          "bytes": 2226,
+          "sha256": "ae3add29712370380390cbfabd69c17180ea61dddede488bfb51df1fede40a80"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v2.log",
+          "bytes": 266,
+          "sha256": "9d2a9c8aad3fb2d50b7bbf2d11270af737c26c11ec89c410cb7c0f57dcc4e867"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-security-replay-v2.json",
+          "bytes": 422,
+          "sha256": "5bf9959e800d05ae7a833a18c18a53101caef6515c6e1dd5eb9fb78c3030c095"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v2.json",
+        "bytes": 2462,
+        "sha256": "d83a5cffb59cea4689c06393ea57a51625153e7197c37b66d3d5025cb257d6e2"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v2.py",
+        "bytes": 22450,
+        "sha256": "71968eb0200ec2186476548b3cc601bff4338a9a5cbcb34479bb314398c5b04b"
+      }
+    },
+    {
+      "run_id": "security-replay-v3",
+      "family": "security_ir",
+      "phase": "cold_import",
+      "exit_code": 3,
+      "accepted": false,
+      "model_load_returned": false,
+      "inference_returned": false,
+      "cached_rows_completed": 0,
+      "fixture_rows_verified": 0,
+      "source_loads": 124,
+      "import_denials": 1,
+      "effect_denials": 0,
+      "primary_error": "CUDA optional import outside authenticated CPU bootstrap: cuda.bindings",
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v3/result.json",
+          "bytes": 4164,
+          "sha256": "59c676396d99d617545b1bd4f340655a376bab9d4b4710e5048c1e2964a0e079"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v3/run.log",
+          "bytes": 1891,
+          "sha256": "0cf0a2e3217b0816fbe459409a1b3e6533eb0d83a2385d5a22e747a6a938e590"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v3/import-observations.json",
+          "bytes": 95682,
+          "sha256": "f6f2cb514def2ec6c6f50d6d8e2e245764d12e088838f324314f47eec2937b8e"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v3/effect-observations.json",
+          "bytes": 221,
+          "sha256": "43b5707bc67d6036397524246c6cfeb29afcc575384d3ab1dcbb4d70c1390416"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v3.json",
+          "bytes": 2226,
+          "sha256": "04f62b72117be4c44644666803ab5592989bcd9ce4b9d8bfcbc8a113290d50bb"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v3.log",
+          "bytes": 266,
+          "sha256": "ddcc5f763aac2d3b7ec4bab3c625ffdae9b1afbf354ec14d31951a71e058fd3c"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-security-replay-v3.json",
+          "bytes": 422,
+          "sha256": "0554523a46397e7df6aaa8c4f38002585ba3f79199d41c882a641fea15002c94"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v3.json",
+        "bytes": 2947,
+        "sha256": "a7d20601dec4a2a67f177571141f45ce6f63135fa3c53eefbdcd18fd64535691"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v3.py",
+        "bytes": 23892,
+        "sha256": "bdd712c8825474e4296f81305bf9788f0fb0f2690ace70b6b3f7f81259e63434"
+      }
+    },
+    {
+      "run_id": "security-replay-v4",
+      "family": "security_ir",
+      "phase": "cold_import",
+      "exit_code": 3,
+      "accepted": false,
+      "model_load_returned": false,
+      "inference_returned": false,
+      "cached_rows_completed": 0,
+      "fixture_rows_verified": 0,
+      "source_loads": 126,
+      "import_denials": 1,
+      "effect_denials": 0,
+      "primary_error": "Unadmitted source/native import origin: pynvml",
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v4/result.json",
+          "bytes": 3847,
+          "sha256": "4f3261ec860fe21c0368343ccc356b09d7c15695883453201286bf505619af1e"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v4/run.log",
+          "bytes": 1574,
+          "sha256": "1fca30ce1ab68a178ab46cf2022b22465ae1e7b9f1d5ca918c78f5484bc245d4"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v4/import-observations.json",
+          "bytes": 97664,
+          "sha256": "b5639d9fa12773c23e569d22c70d1f72390f279d2c6220d623449e96bde93cf6"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v4/effect-observations.json",
+          "bytes": 221,
+          "sha256": "43b5707bc67d6036397524246c6cfeb29afcc575384d3ab1dcbb4d70c1390416"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v4.json",
+          "bytes": 2226,
+          "sha256": "5def922f6186cc84d2a91853ce54baf39eb18cc86d4dd9bc4c7d90d2e27d76dc"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v4.log",
+          "bytes": 266,
+          "sha256": "f19b17970a2960530fdf1a3bff3a0a629883b1044ae132038f0c87535aaa22e8"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-security-replay-v4.json",
+          "bytes": 422,
+          "sha256": "8eca0e9a7fe46c6162baec915661d55aa1040f62752f8839a3b2cff091c9e079"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v4.json",
+        "bytes": 3189,
+        "sha256": "05ed03434bcf153ed3768ee5b2c61dad8606c63a3f516a974ee50bb46d0f1e46"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v4.py",
+        "bytes": 24575,
+        "sha256": "8f212138d1aec6b5530a3ef11cbcf427de620738552a7d17120bf860dafdded2"
+      }
+    },
+    {
+      "run_id": "security-replay-v5",
+      "family": "security_ir",
+      "phase": "cold_import",
+      "exit_code": 3,
+      "accepted": false,
+      "model_load_returned": false,
+      "inference_returned": false,
+      "cached_rows_completed": 0,
+      "fixture_rows_verified": 0,
+      "source_loads": 184,
+      "import_denials": 1,
+      "effect_denials": 0,
+      "primary_error": "Unadmitted source/native import origin: dill",
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v5/result.json",
+          "bytes": 6658,
+          "sha256": "a9afd7392b6d3b5c8c35d492e8575cbf36135347eddb9c6ff51b6cd1ebbd9226"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v5/run.log",
+          "bytes": 4385,
+          "sha256": "a44664a4403068741e35d59c522f62b1c007bde2a68721fcc7eb3c2ff7ba70a8"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v5/import-observations.json",
+          "bytes": 129378,
+          "sha256": "37ba4f58e3dbe8955a1bbb2fa75c4b9eaff99bc09fa9c7c8de7d70bb3a90eb5a"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v5/effect-observations.json",
+          "bytes": 221,
+          "sha256": "43b5707bc67d6036397524246c6cfeb29afcc575384d3ab1dcbb4d70c1390416"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v5.json",
+          "bytes": 2226,
+          "sha256": "d047c5f066e8162d28519ee39890830e369c71a9a91c84712cec807bf58ea62c"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v5.log",
+          "bytes": 266,
+          "sha256": "d1f6b42b0cff342ca9fcdbb1de05c51b5349cc904fdd42d86440339669e89b32"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-security-replay-v5.json",
+          "bytes": 422,
+          "sha256": "c738bd049d8132f4ca1e451adc35297bdf624f28ae8d585361bdbdbe2742a8f8"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v5.json",
+        "bytes": 3688,
+        "sha256": "4df3014abcf8a79c6079a8b10bf9e4c310333216895f3090dcdfc6c251ad755c"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v5.py",
+        "bytes": 24864,
+        "sha256": "efa64712560f8b8b7a78803c8dfb6bbe858b382a33e0817b47fc3ed53cdf2139"
+      }
+    },
+    {
+      "run_id": "security-replay-v6",
+      "family": "security_ir",
+      "phase": "real_local_loading",
+      "exit_code": 3,
+      "accepted": false,
+      "model_load_returned": false,
+      "inference_returned": false,
+      "cached_rows_completed": 0,
+      "fixture_rows_verified": 0,
+      "source_loads": 1172,
+      "import_denials": 3,
+      "effect_denials": 0,
+      "primary_error": "Unadmitted source/native import origin: anyio",
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v6/result.json",
+          "bytes": 7710,
+          "sha256": "667e063827c367e1a3b1fa5d33627c01f0f4741fd63ab46e87a245a3d1b4a3e0"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v6/run.log",
+          "bytes": 5371,
+          "sha256": "1f75c133dfccd28bc4011f94dfe60c46fda297fa1e5ce1d52b86ac78f9afb457"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v6/import-observations.json",
+          "bytes": 757931,
+          "sha256": "ef163834d58083c488b3faed2624ceff0232a06434fe1e766d42fe6280db4e17"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v6/effect-observations.json",
+          "bytes": 221,
+          "sha256": "59d2f9c7e4841798cff8b410f13323cc8dc11910b0b4f60a302d732ec7810c27"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v6/prepared-plan.json",
+          "bytes": 94473,
+          "sha256": "30cccdd535472e7081d8340dd35c8aff6103f970f2cf0f778c2b77eec95bd52e"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v6.json",
+          "bytes": 2226,
+          "sha256": "903bb0023f4f3593c272b9e4be1f500d347dd8566ba34738913bceed08a20b84"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v6.log",
+          "bytes": 274,
+          "sha256": "49f1996cd863da6ed150a4653152b15b4566cc7db100a7ec70504c7b1313f957"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-security-replay-v6.json",
+          "bytes": 422,
+          "sha256": "f6fde213747dc783afc471babf30ac0c0e6876f122064d7de6c717f1ceed3fc4"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v6.json",
+        "bytes": 3927,
+        "sha256": "4f8a2742ff36f0e8c88564e92d3a15311b196ee0663f627b5a78cfecd020f528"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v6.py",
+        "bytes": 26663,
+        "sha256": "13e69e8cec312e007f1d12e7e5597e27fe2d5fe78552e3ffb74ba7424f8a45f8"
+      }
+    },
+    {
+      "run_id": "security-replay-v7",
+      "family": "security_ir",
+      "phase": "completed",
+      "exit_code": 0,
+      "accepted": true,
+      "model_load_returned": true,
+      "inference_returned": true,
+      "cached_rows_completed": 5,
+      "fixture_rows_verified": 0,
+      "source_loads": 1268,
+      "import_denials": 0,
+      "effect_denials": 0,
+      "primary_error": null,
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v7/result.json",
+          "bytes": 2305,
+          "sha256": "27b6a9db2c6259eb2d3a6ff6f53c53cf3380ebc7ceb25d53a51ed9bc8d287534"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v7/run.log",
+          "bytes": 846,
+          "sha256": "7c5ece85906f8271652884527a974a7b2e6f26cbc255472627cd4a92aedb3c40"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v7/import-observations.json",
+          "bytes": 824582,
+          "sha256": "6e64c12c3bd4b02fc77be3f1d4e39af60d1ce621dd6d796cae8c2ba7b7142107"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v7/effect-observations.json",
+          "bytes": 221,
+          "sha256": "47f3ab7fa438d52c99d2bde0d907704cbcca66bd32d9bf5b1492b622539af5d1"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v7/prepared-plan.json",
+          "bytes": 94473,
+          "sha256": "30cccdd535472e7081d8340dd35c8aff6103f970f2cf0f778c2b77eec95bd52e"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v7/loaded-description.json",
+          "bytes": 2972,
+          "sha256": "c1ce2bea86112997cb89c7ad004425b4aabe250a63e8594384a325b24a0e5184"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v7/candidate-report.json",
+          "bytes": 80139,
+          "sha256": "63a5ae5ce1e32f78d440b45e40243b39b981d7af5c46a7845a7cfe053e22093a"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/security-replay-v7/development-score.json",
+          "bytes": 5942,
+          "sha256": "f828e869561591bd2aee03c467edf6aebc08c8164f78d16b4d986f12378370c5"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v7.json",
+          "bytes": 2226,
+          "sha256": "5572ec8c4d1bdcad739cb5819e46ce2854da77af58129b8e3dcfbe412d5c3fea"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-security-replay-v7.log",
+          "bytes": 262,
+          "sha256": "795a869e3397cb68288dce4258c636ccdc06b5848e3b25cd427d653bc40b4a27"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-security-replay-v7.json",
+          "bytes": 422,
+          "sha256": "d15c0165240008f169c5daf1adafe97db0628ecf4e0b731e7ab6e1e4200d2a76"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v7.json",
+        "bytes": 4165,
+        "sha256": "bb8b58e3c50f0006c41dad3298002346999300ca35cf5024ed510803ab2f5de6"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v7.py",
+        "bytes": 28423,
+        "sha256": "e0d5f9b7aaf847475a3695e65c035f966ec80810855c4ba608eb6c59e852aa87"
+      }
+    },
+    {
+      "run_id": "intent-replay-v7",
+      "family": "intent_ir",
+      "phase": "completed",
+      "exit_code": 0,
+      "accepted": true,
+      "model_load_returned": true,
+      "inference_returned": true,
+      "cached_rows_completed": 5,
+      "fixture_rows_verified": 0,
+      "source_loads": 1268,
+      "import_denials": 0,
+      "effect_denials": 0,
+      "primary_error": null,
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/intent-replay-v7/result.json",
+          "bytes": 2301,
+          "sha256": "7d9b550ceb720d5efbc1172d6e75d2a54a2e35e9bb4f98ddd4407c241451ed5f"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/intent-replay-v7/run.log",
+          "bytes": 846,
+          "sha256": "7c5ece85906f8271652884527a974a7b2e6f26cbc255472627cd4a92aedb3c40"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/intent-replay-v7/import-observations.json",
+          "bytes": 824582,
+          "sha256": "6e64c12c3bd4b02fc77be3f1d4e39af60d1ce621dd6d796cae8c2ba7b7142107"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/intent-replay-v7/effect-observations.json",
+          "bytes": 221,
+          "sha256": "47f3ab7fa438d52c99d2bde0d907704cbcca66bd32d9bf5b1492b622539af5d1"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/intent-replay-v7/prepared-plan.json",
+          "bytes": 93907,
+          "sha256": "5e2655ee5ce132b1cc8e254033c53f1c7740a1d944ca6c8dd92b3b9efcb5699c"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/intent-replay-v7/loaded-description.json",
+          "bytes": 2952,
+          "sha256": "38ed4f037acdf9e3080a67f88adf74cdb36026c2fa6dc6f122c7f4fdb7bce46e"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/intent-replay-v7/candidate-report.json",
+          "bytes": 75115,
+          "sha256": "7e744d41ed06b7e114862f4db7324c8b565cee6acd0719371460a66f017db96f"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/intent-replay-v7/development-score.json",
+          "bytes": 5909,
+          "sha256": "5a4fbf4bf1e940057c9712f630467fb2dcacb6b5fdaaecde655f92d2b1e4bf38"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-intent-replay-v7.json",
+          "bytes": 2218,
+          "sha256": "ff845e85de0b731e8f9bc9722d36536498a68a5c6a9eb59bd5cca59db7dc1843"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-intent-replay-v7.log",
+          "bytes": 260,
+          "sha256": "3f94431f5d368d61c080ca731654b22bdbaadc988c89b5d727317f3a8cbd9f00"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-intent-replay-v7.json",
+          "bytes": 418,
+          "sha256": "63bf72b1904236ee7fd29b6ea2716af8f6d639760f12c2eb1009738b789936f9"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v7.json",
+        "bytes": 4165,
+        "sha256": "bb8b58e3c50f0006c41dad3298002346999300ca35cf5024ed510803ab2f5de6"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v7.py",
+        "bytes": 28423,
+        "sha256": "e0d5f9b7aaf847475a3695e65c035f966ec80810855c4ba608eb6c59e852aa87"
+      }
+    },
+    {
+      "run_id": "legal-replay-v7",
+      "family": "legal_ir",
+      "phase": "real_local_loading",
+      "exit_code": 3,
+      "accepted": false,
+      "model_load_returned": false,
+      "inference_returned": false,
+      "cached_rows_completed": 0,
+      "fixture_rows_verified": 0,
+      "source_loads": 1843,
+      "import_denials": 1,
+      "effect_denials": 0,
+      "primary_error": "Unadmitted source/native import origin: colorama",
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v7/result.json",
+          "bytes": 9811,
+          "sha256": "3107d0c2b3721c64246ccf457089fcc51cfa2b4b898d3ccfa29b07aa0346943b"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v7/run.log",
+          "bytes": 10441,
+          "sha256": "5b5f9e9fffa167fd6ff53f87a87fe05de3de4041de4b29932b3fdc35c30ddbde"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v7/import-observations.json",
+          "bytes": 1182335,
+          "sha256": "23acf021eee3dcb63a6ddbd356c08164ba658bcb9fe6b8a1802ed0faeae6811c"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v7/effect-observations.json",
+          "bytes": 221,
+          "sha256": "59d2f9c7e4841798cff8b410f13323cc8dc11910b0b4f60a302d732ec7810c27"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v7/prepared-plan.json",
+          "bytes": 88941,
+          "sha256": "11909747fda2ceec4307aee7c39c9dcaaf5f0daf05990d6ea0481e867fb0822b"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-legal-replay-v7.json",
+          "bytes": 2214,
+          "sha256": "8683218b507d633adefabdb77eda9e6a94f8cb04c15f7026b03bd75aca82d615"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-legal-replay-v7.log",
+          "bytes": 271,
+          "sha256": "790b03bc31b5fbf37744d1d368b936841cb48f54caf5e5e5b8d001e3ff328038"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-legal-replay-v7.json",
+          "bytes": 416,
+          "sha256": "24a4accca20987420e9f58114e22573e1a9130cb980d9bf6f9c44a80e5265c6d"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v7.json",
+        "bytes": 4165,
+        "sha256": "bb8b58e3c50f0006c41dad3298002346999300ca35cf5024ed510803ab2f5de6"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v7.py",
+        "bytes": 28423,
+        "sha256": "e0d5f9b7aaf847475a3695e65c035f966ec80810855c4ba608eb6c59e852aa87"
+      }
+    },
+    {
+      "run_id": "legal-replay-v8",
+      "family": "legal_ir",
+      "phase": "real_local_loading",
+      "exit_code": 3,
+      "accepted": false,
+      "model_load_returned": false,
+      "inference_returned": false,
+      "cached_rows_completed": 0,
+      "fixture_rows_verified": 0,
+      "source_loads": 2048,
+      "import_denials": 1,
+      "effect_denials": 0,
+      "primary_error": "Unadmitted source/native import origin: hypothesis",
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v8/result.json",
+          "bytes": 8742,
+          "sha256": "99a764b450594b597e628290b8637cbfb45b870eefdc9b6eafc6e90deac94921"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v8/run.log",
+          "bytes": 9372,
+          "sha256": "01edfac0f0ae83e2ddac28f5213cedcf36fa3bffc548295b54a46f3a47828391"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v8/import-observations.json",
+          "bytes": 1318239,
+          "sha256": "2ecb1aa74cfb1d96ae243661f944f194fb15915003aa328eedb2a15e63b27912"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v8/effect-observations.json",
+          "bytes": 221,
+          "sha256": "59d2f9c7e4841798cff8b410f13323cc8dc11910b0b4f60a302d732ec7810c27"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v8/prepared-plan.json",
+          "bytes": 88941,
+          "sha256": "11909747fda2ceec4307aee7c39c9dcaaf5f0daf05990d6ea0481e867fb0822b"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-legal-replay-v8.json",
+          "bytes": 2214,
+          "sha256": "cf9e3cf260345430097def9fe88da0ba2310f5482ac44d2384a7504e18332b39"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-legal-replay-v8.log",
+          "bytes": 271,
+          "sha256": "c33fe4b30975f3f02a023396925001dbc2796476f6ef515b3c66770dc23e9670"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-legal-replay-v8.json",
+          "bytes": 416,
+          "sha256": "20f698e44c070fd61b7beb6ad02e405820b1582ff0e2325d4cb9e7075b026e3c"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v8.json",
+        "bytes": 4403,
+        "sha256": "21299bfadb86a3794fae19d33e8d48f2954c5b868559a21d802f3596c52ae2fa"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v8.py",
+        "bytes": 28423,
+        "sha256": "2e4a365563541ebd50e03269389122a54cfaa8bc0f80788c6fd7d4d406d2436c"
+      }
+    },
+    {
+      "run_id": "legal-replay-v9",
+      "family": "legal_ir",
+      "phase": "completed",
+      "exit_code": 0,
+      "accepted": true,
+      "model_load_returned": true,
+      "inference_returned": true,
+      "cached_rows_completed": 5,
+      "fixture_rows_verified": 4,
+      "source_loads": 2104,
+      "import_denials": 0,
+      "effect_denials": 0,
+      "primary_error": null,
+      "raw_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v9/result.json",
+          "bytes": 2334,
+          "sha256": "fd2357e70e7d1dccb4b1fd48dcfdfe7f9df67fdbf270501b8f145499f9648eb2"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v9/run.log",
+          "bytes": 10575,
+          "sha256": "4f0ebd33b9f5ea9e8c9fd570f05b353c6da5338b4a8dd5b9b30790019018a293"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v9/import-observations.json",
+          "bytes": 1358066,
+          "sha256": "d6c2c2ff7e358c4e21d9163a8e497348f90bc7b460c1be3e676cacec4d59f873"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v9/effect-observations.json",
+          "bytes": 240,
+          "sha256": "8adcacbe2fd962cb007b3757be57e27f10150fbdfd961098d8083d43b725be2c"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v9/prepared-plan.json",
+          "bytes": 88941,
+          "sha256": "11909747fda2ceec4307aee7c39c9dcaaf5f0daf05990d6ea0481e867fb0822b"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v9/loaded-description.json",
+          "bytes": 2978,
+          "sha256": "0e44e559510947be24e41d9ae0dcd6d3e387dc8b9ab1244e8d5b02a256fa9765"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v9/candidate-report.json",
+          "bytes": 85835,
+          "sha256": "4d5bf42b6ce6c5c07ab4365f6532acf9b5b3fb6145747c2e35b2134fbe9500d0"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/runs/legal-replay-v9/development-score.json",
+          "bytes": 6081,
+          "sha256": "4b6a7b6fe20504683c63d3d60e61a9e230dcbf6fe5de363c5e339956a71f7369"
+        }
+      ],
+      "launcher_receipts": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-legal-replay-v9.json",
+          "bytes": 2214,
+          "sha256": "b2ba7b8f4b7108e6c431df9cf0e1f8cc34f33278adc807ffb53a902a3029cf1a"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-legal-replay-v9.log",
+          "bytes": 259,
+          "sha256": "132fb4fe3379a2d64fd66cd754964979b9be226fd192009ab4cf47d885364015"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/launcher-result-legal-replay-v9.json",
+          "bytes": 416,
+          "sha256": "07462283b3e3a47623ee08560539e2ccebb82b02070bc2b37d7fe9e18fa29d8d"
+        }
+      ],
+      "admission": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/admission-v9.json",
+        "bytes": 4890,
+        "sha256": "69add49681f0a7e0d0752c1734367a6ba0ddcc09ec4ab92890243544b1a88254"
+      },
+      "harness": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/run_numerical_replay_v9.py",
+        "bytes": 30894,
+        "sha256": "ad395e0d52ce2c40104024b8f393141b322b3af50a52e89ad69019bb62700d8c"
+      }
+    }
+  ],
+  "numerical_totals": {
+    "bounded_runs": 11,
+    "successful_runs": 3,
+    "refused_runs": 8,
+    "model_loads_returned": 3,
+    "inference_calls_returned": 3,
+    "validation_rows_replayed": 15,
+    "exact_retained_ir": 0,
+    "separate_legal_loading_fixture_rows_verified": 4,
+    "deterministic_legal_texts_rendered": 5,
+    "exact_original_legal_utf8": 0,
+    "training_runs": 0,
+    "new_embeddings_generated": 0
+  },
+  "old_assets_unchanged": true,
+  "original_asset_preservation": [
+    {
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/preservation-start.json",
+        "bytes": 702779,
+        "sha256": "daa60eae8b37277851aa2f3b8911c3b8975d317f8bdfa688459eaf0c005eac93"
+      },
+      "all_matched": true,
+      "prior_bindings": 2460,
+      "complete_unique_files": 2484,
+      "original_assets": 26,
+      "inventory_documents": 13,
+      "execution_counter_scope": "The metadata preservation helper only; actual replay counts are separate."
+    },
+    {
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/preservation-end.json",
+        "bytes": 702779,
+        "sha256": "5d347642d0bdceacaeefe8dd99cc7dc8755c31f135f57e321548ecd7f31da90a"
+      },
+      "all_matched": true,
+      "prior_bindings": 2460,
+      "complete_unique_files": 2484,
+      "original_assets": 26,
+      "inventory_documents": 13,
+      "execution_counter_scope": "The metadata preservation helper only; actual replay counts are separate."
+    },
+    {
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/preservation-independent-end.json",
+        "bytes": 702779,
+        "sha256": "a08bdcd570692a40ed4c18d27e41c584d4458fd566ef36821c64f87893e30059"
+      },
+      "all_matched": true,
+      "prior_bindings": 2460,
+      "complete_unique_files": 2484,
+      "original_assets": 26,
+      "inventory_documents": 13,
+      "execution_counter_scope": "The metadata preservation helper only; actual replay counts are separate."
+    }
+  ],
+  "evidence_receipts": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/matched-source-generation.json",
+      "bytes": 2367,
+      "sha256": "3f9152e417250ea90c76c3c5bb62a6386ae1f27f7ca58322794923c66c5cc70d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/project-sources.json",
+      "bytes": 492240,
+      "sha256": "a1311cc147ef1a087e69ebff6ed787d08308145127adddf7fd6c7ac21cb7a026"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/dependency-profile.json",
+      "bytes": 1385316,
+      "sha256": "c1e9edfd71ebd115ffbd962f6a2f2e3d713cbca340818b7531e6fa8ca8957e4d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/replay-inputs.json",
+      "bytes": 23940,
+      "sha256": "83a88b38af1e10f994f490c6864cd915a424d21f59b5d1f5ddf3298d47d3ea4e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/scorer-tests.json",
+      "bytes": 718,
+      "sha256": "9f1088fecd11dd9ae87c09a2a4daca821f8051b12becd3ca0008d1a75297917e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/scorer-tests.log",
+      "bytes": 2887,
+      "sha256": "4b3ec5baaa163e619e4fc81efe5f0c3b26944ca19b0bbeb9a52f44f7bec9ce71"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/score_numerical_replay.py",
+      "bytes": 17972,
+      "sha256": "254b622fbc07956929bf8ad18ae1a9743fc79320756ff2eb672339debf391554"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/test_score_numerical_replay.py",
+      "bytes": 12553,
+      "sha256": "416d91b244949aac9b03dfac2eeffb62c34c2fc6a557a2de2723a2136d34ac3f"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/surface-information-loss.json",
+      "bytes": 123833,
+      "sha256": "c8f30e95a69f5770c1bbc87525f6d2845a237c72af98b955517ff92563d291d1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/quality-diagnostics-v1.json",
+      "bytes": 39323,
+      "sha256": "557300e534cc539039aae40793a116559e8f2abb3b5a29700f3cb7eb677aa974"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/legal-quality-diagnostics-v1.json",
+      "bytes": 21283,
+      "sha256": "f8beec1539ff7c675377bfcb0855985e27db6adadd0cba95c92c2119415dce06"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/record_handoff.py",
+      "bytes": 13211,
+      "sha256": "e4353be26427cb666061cce34420b52fc3d8df60967340fa7421ab70555cfd04"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review.json",
+      "bytes": 2192,
+      "sha256": "0ce9e2a3caa3e10b59329bd62b6a464f753d2f6062555e538cd44dcc01f1d9a8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review-v2.json",
+      "bytes": 1753,
+      "sha256": "d2d62adc6329728b343683c77989c0c8263d8bd323caa740a4d2ba85af5048f1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review-v3.json",
+      "bytes": 1627,
+      "sha256": "43c78860ebb5eb8f6eff0711755a120aa42a1be6d62941bc2c2fd2a5994ca0d8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review-v4.json",
+      "bytes": 1802,
+      "sha256": "d09118730c8c724438cc23d90df5dea8a16b753b58897148dd62041eb19fefe1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review-v5.json",
+      "bytes": 1846,
+      "sha256": "bc8f1b534ed45937fcc1838ec43006e2be66a6a189064084df2439537f4d0823"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review-v6.json",
+      "bytes": 2107,
+      "sha256": "a599a5aa6155702956afd118bd68cec1bf1e9f1d88e87635607b6da28bb62ef1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review-v7.json",
+      "bytes": 1859,
+      "sha256": "866cb742918642b4dcdc6c68b51f15f150f6283f48fcd6f4c3089bee9a4d2434"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review-v8.json",
+      "bytes": 1945,
+      "sha256": "f55a3a5e6ff05f0e62c45453521a52b8bac11efa10ff55913f7e4e9c6654d804"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-numerical-replay-20261003/pre-execution-review-v9.json",
+      "bytes": 1950,
+      "sha256": "163ef7301669c13302212e315b5b90dbb1f4ab3b04fa29312d5e9eb961620bec"
+    }
+  ],
+  "plan_receipt": {
+    "path": "/home/barberb/lift_coding/.worktrees/codebase-numerical-replay-20261003/docs/autoencoders/pilots/intent_codebase_grounding/numerical_replay_handoff.md",
+    "bytes": 12577,
+    "sha256": "24f44c8351d273e50bcb41f6d684a1ab742d3326dde8904769c1062dea2482f1"
+  },
+  "twelve_inventory_cells": [
+    {
+      "ir_family_id": "codebase_ir",
+      "dimension": 8,
+      "numeric_replay_covered": false
+    },
+    {
+      "ir_family_id": "codebase_ir",
+      "dimension": 384,
+      "numeric_replay_covered": false
+    },
+    {
+      "ir_family_id": "codebase_ir",
+      "dimension": 768,
+      "numeric_replay_covered": false
+    },
+    {
+      "ir_family_id": "security_ir",
+      "dimension": 8,
+      "numeric_replay_covered": false
+    },
+    {
+      "ir_family_id": "security_ir",
+      "dimension": 384,
+      "numeric_replay_covered": true
+    },
+    {
+      "ir_family_id": "security_ir",
+      "dimension": 768,
+      "numeric_replay_covered": false
+    },
+    {
+      "ir_family_id": "legal_ir",
+      "dimension": 8,
+      "numeric_replay_covered": false
+    },
+    {
+      "ir_family_id": "legal_ir",
+      "dimension": 384,
+      "numeric_replay_covered": true
+    },
+    {
+      "ir_family_id": "legal_ir",
+      "dimension": 768,
+      "numeric_replay_covered": false
+    },
+    {
+      "ir_family_id": "intent_ir",
+      "dimension": 8,
+      "numeric_replay_covered": false
+    },
+    {
+      "ir_family_id": "intent_ir",
+      "dimension": 384,
+      "numeric_replay_covered": true
+    },
+    {
+      "ir_family_id": "intent_ir",
+      "dimension": 768,
+      "numeric_replay_covered": false
+    }
+  ],
+  "reconstruction_findings": {
+    "all_15_selected_ir_targets_unrepresentable_by_frozen_codecs": true,
+    "in_vocabulary_semantic_errors_also_observed": true,
+    "legal_original_sources": 120,
+    "legal_unique_semantic_targets": 30,
+    "legal_wordings_per_semantic_target": 4,
+    "semantic_ir_only_empirical_exact_text_ceiling": 0.25,
+    "ceiling_is_not_a_model_score": true,
+    "existing_text_renderer_learned": false
+  },
+  "remaining_priorities": [
+    "New training-only open lexical codec and explicit inherited token/weight mapping",
+    "Family-specific conditioning and critical semantic-facet accuracy",
+    "Separate learned Legal surface channel and source-withheld prose head",
+    "Source-disjoint independent evaluation and teacher gates",
+    "Native 768D input alignment using original source/cache associations",
+    "Historical source-generation capsules alongside current UI codec",
+    "Native learned CodebaseIR decoder on existing capture/compiler producer",
+    "Twelve physical cell stores and separate HF repositories",
+    "Checked proof index and current IntentIR/supervisor correspondence",
+    "Reviewed consumer/assets integration into fresh origin/main"
+  ],
+  "scope_limits": {
+    "retained_validation_exposed_or_unknown": true,
+    "first_style_legal_intent_rows_obligations_only": true,
+    "legal_inference_parser_assisted": true,
+    "inferred_semantic_correctness_from_grammar_validity": false,
+    "partial_legal_weight_loads_can_precede_refused_optimizer_startup": true,
+    "historical_source_restorations_experimental_only": true,
+    "explicitly_disabled_optional_dependencies": [
+      "CUDA bindings",
+      "dill"
+    ],
+    "metadata_only_package_presence_is_not_execution_permission": true,
+    "stdlib_and_native_linker_closure_attested": false,
+    "native_effect_coverage_complete": false,
+    "source_observations_atomic_or_continuous": false
+  },
+  "authority": {
+    "teacher_qualified": false,
+    "learned_source_free_text_reconstruction_qualified": false,
+    "native_768d_replay_qualified": false,
+    "distillation_executed": false,
+    "native_codebase_model_qualified": false,
+    "proof_authority": false,
+    "supervisor_execution_qualified": false,
+    "cell_stores_created": false,
+    "runtime_release_qualified": false,
+    "source_generation_production_merge_admitted": false,
+    "origin_main_fetch_merge_push_performed": false
+  }
+}
