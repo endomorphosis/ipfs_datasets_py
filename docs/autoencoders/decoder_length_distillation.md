@@ -3034,3 +3034,107 @@ all three widths on this panel. It establishes no new logic-family qualification
 Lake admit, fresh-holdout gain, global optimum or Constitution formalization.
 `lake build <Lib>` remains the only Lean admit. No production checkpoint is
 promoted, and the original 8D linguistic teacher remains separate and intact.
+
+## 2026-10-03: action binding across 8D, 384D and 768D
+
+The separate action representation improves action recovery on unseen actor/action combinations. The effect on complete generated documents is mixed across widths and seeds. All 18 candidates still select epoch 0 under the unchanged per-length fidelity/reconstruction gate, so none is a usable promoted model. These are exposed development results, not fresh held-out qualification.
+
+The prior clause-head study used 15 training actor/action pairs and 5 disjoint validation pairs; all 180 validation rule occurrences use unseen pairings, while each individual actor and action is present in training. The prior action classifiers often chose an action previously paired with the same actor. The saved diagnostic checked 13,160 source/target mappings and found no mismatch.
+
+This round keeps all 48 training and 48 validation paragraphs, their 1/2/4/8-clause curriculum, targets, seed order 1729/2718, and cached source vectors fixed. It performs 18 fresh fits: the existing clause head, a separate action head, and that head plus a training-only contrastive objective. The 6 baseline fits reproduce every original report field except wall time, all initial/selected/final tensors, and every selected/final control prediction. No unsuccessful final state is used to redefine the acceptance baseline.
+
+Each candidate copies the original 64-wide source projection into separate action and non-action branches. The old action readout rows move to the action branch; no dead action readout remains. The exact added parameter counts are 576, 24,640, and 49,216 at 8D, 384D, and 768D. Fresh logits and full initial generation remain identical. The contrastive arm uses coefficient 0.05 and loss temperature 0.1; generation temperature stays 0. Within each existing minibatch, repeated literal clause hashes contribute once. Positives share an action across different actors; negatives have different actions. Same-action/same-actor pairs are excluded. An anchor needs both a positive and a negative. No eligible anchors means no feature forward or extra graph.
+
+The historical 8D linguistic teacher/checkpoint remains unchanged. The 8D lane here is a new formula sidecar using its preserved linguistic feature-hash representation; 384D and 768D use their verified native cached source embeddings. The representations differ, so this is not an isolated width ablation. The frozen identity projection cannot demonstrate learned feature reconstruction. No encoder ran, no weights were downloaded, and encoder context/output limits remain 512.
+
+### Measured final attempts (all unselected)
+
+Actions are correct ordered reference slots out of 180; exact documents are out of 48. Auxiliary action accuracy comes from the source head and must not be substituted for generated formula fidelity. CE is teacher-forced full-token cross-entropy on the validation references. Every run presents 225,840 decoder target tokens and 25,600 scalar labels over 340 updates, 80 epochs and 2,440 row/count presentations.
+
+| Width | Seed | Arm | CE | Raw actions /180 | Generated actions /180 | Exact /48 | Generated rules /180 | Fit s |
+|---:|---:|---|---:|---:|---:|---:|---:|---:|
+| 8 | 1729 | clauses | 0.141236 | 72 | 18 | 0 | 117 | 12.724 |
+| 8 | 1729 | action-head | 0.136739 | 83 | 5 | 1 | 29 | 13.737 |
+| 8 | 1729 | action-contrastive | 0.132340 | 89 | 13 | 1 | 57 | 15.049 |
+| 8 | 2718 | clauses | 0.169265 | 46 | 51 | 0 | 235 | 12.500 |
+| 8 | 2718 | action-head | 0.139096 | 61 | 69 | 0 | 236 | 13.212 |
+| 8 | 2718 | action-contrastive | 0.147139 | 76 | 27 | 1 | 124 | 14.209 |
+| 384 | 1729 | clauses | 0.155804 | 21 | 11 | 1 | 68 | 14.436 |
+| 384 | 1729 | action-head | 0.112074 | 126 | 54 | 6 | 79 | 15.063 |
+| 384 | 1729 | action-contrastive | 0.111347 | 169 | 76 | 9 | 82 | 16.708 |
+| 384 | 2718 | clauses | 0.163264 | 17 | 14 | 1 | 88 | 15.291 |
+| 384 | 2718 | action-head | 0.114457 | 126 | 56 | 5 | 82 | 15.368 |
+| 384 | 2718 | action-contrastive | 0.114620 | 167 | 79 | 8 | 82 | 17.347 |
+| 768 | 1729 | clauses | 0.142566 | 47 | 29 | 0 | 97 | 18.688 |
+| 768 | 1729 | action-head | 0.098840 | 162 | 91 | 9 | 98 | 19.444 |
+| 768 | 1729 | action-contrastive | 0.098586 | 172 | 92 | 10 | 97 | 22.250 |
+| 768 | 2718 | clauses | 0.098752 | 46 | 44 | 2 | 205 | 21.060 |
+| 768 | 2718 | action-head | 0.038686 | 172 | 168 | 29 | 215 | 21.669 |
+| 768 | 2718 | action-contrastive | 0.036505 | 180 | 170 | 29 | 213 | 24.381 |
+
+| Width | Seed | Arm | Exact 1-clause /12 | Exact 2-clause /12 | Exact 4-clause /12 | Exact 8-clause /12 |
+|---:|---:|---|---:|---:|---:|---:|
+| 8 | 1729 | clauses | 0 | 0 | 0 | 0 |
+| 8 | 1729 | action-head | 1 | 0 | 0 | 0 |
+| 8 | 1729 | action-contrastive | 1 | 0 | 0 | 0 |
+| 8 | 2718 | clauses | 0 | 0 | 0 | 0 |
+| 8 | 2718 | action-head | 0 | 0 | 0 | 0 |
+| 8 | 2718 | action-contrastive | 1 | 0 | 0 | 0 |
+| 384 | 1729 | clauses | 1 | 0 | 0 | 0 |
+| 384 | 1729 | action-head | 6 | 0 | 0 | 0 |
+| 384 | 1729 | action-contrastive | 9 | 0 | 0 | 0 |
+| 384 | 2718 | clauses | 1 | 0 | 0 | 0 |
+| 384 | 2718 | action-head | 5 | 0 | 0 | 0 |
+| 384 | 2718 | action-contrastive | 8 | 0 | 0 | 0 |
+| 768 | 1729 | clauses | 0 | 0 | 0 | 0 |
+| 768 | 1729 | action-head | 8 | 0 | 1 | 0 |
+| 768 | 1729 | action-contrastive | 9 | 0 | 1 | 0 |
+| 768 | 2718 | clauses | 2 | 0 | 0 | 0 |
+| 768 | 2718 | action-head | 12 | 5 | 3 | 9 |
+| 768 | 2718 | action-contrastive | 12 | 4 | 3 | 10 |
+
+The 768D contrastive candidate with seed 2718 reconstructs 10/12 eight-clause documents exactly, compared with 0/12 for its baseline. Its one-, two-, and four-clause counts are 12/12, 4/12, and 3/12. Its final attempt is rejected for a two-clause EOS regression and extra unmatched rules at lengths 2, 4 and 8: 213 rules are generated against 180 expected, with 10 missing, 43 unmatched and 32 duplicates (30 in four-clause documents). Performance is therefore neither uniform across lengths nor stable across seeds; the other 768D seed reaches no exact eight-clause documents.
+
+All exact-document counts must be read alongside length-specific evidence. Longer inputs still miss rules or produce the wrong actor/action/modality values. Changing the action representation alone does not repair recurrent generation and rule-count fidelity. A lower CE or better raw action score is insufficient for selection. The selected epoch 0 state emits EOS without a valid document and is also unusable.
+
+### Runtime and controls
+
+The runner took 581.786 s; fitted training calls summed to 303.135 s. The guardian took 618.076 s including admission, monitoring, accounting and durability work. Observed child RSS peaked at 1,911,304,192 bytes across 31 samples; the retained output was 1,322,288,193 bytes. The reservation was one CPU, 4 GiB RAM and 2.5 GB of retained output, under the unchanged 140 GB shared cap. CUDA was disabled.
+
+The following timings are per 48-row validation panel, using cached source vectors. The numerical call includes teacher-forced CE, free generation, identity-projection evaluation and its checks. The complete panel additionally includes control construction, fidelity/count/scalar readouts; both exclude serialization. Generated lengths differ, so lower time per span does not establish faster equal-output decoding. Training rows/s is 2,440 row presentations divided by the complete trainer-call wall time, including its internal validation.
+
+| Width | Seed | Arm | Numerical s /48 | Numerical s/span | Complete s/span | Training rows/s |
+|---:|---:|---|---:|---:|---:|---:|
+| 8 | 1729 | clauses | 0.780955 | 0.016270 | 0.019016 | 191.77 |
+| 8 | 1729 | action-head | 0.779589 | 0.016241 | 0.018613 | 177.62 |
+| 8 | 1729 | action-contrastive | 0.818109 | 0.017044 | 0.019560 | 162.13 |
+| 8 | 2718 | clauses | 0.804564 | 0.016762 | 0.020065 | 195.20 |
+| 8 | 2718 | action-head | 0.681432 | 0.014196 | 0.017473 | 184.68 |
+| 8 | 2718 | action-contrastive | 0.804272 | 0.016756 | 0.019638 | 171.72 |
+| 384 | 1729 | clauses | 0.290388 | 0.006050 | 0.016364 | 169.02 |
+| 384 | 1729 | action-head | 0.293756 | 0.006120 | 0.016411 | 161.99 |
+| 384 | 1729 | action-contrastive | 0.289171 | 0.006024 | 0.016365 | 146.04 |
+| 384 | 2718 | clauses | 0.319997 | 0.006667 | 0.016938 | 159.57 |
+| 384 | 2718 | action-head | 0.299581 | 0.006241 | 0.016479 | 158.77 |
+| 384 | 2718 | action-contrastive | 0.293613 | 0.006117 | 0.016598 | 140.66 |
+| 768 | 1729 | clauses | 0.444748 | 0.009266 | 0.027384 | 130.56 |
+| 768 | 1729 | action-head | 0.456078 | 0.009502 | 0.027985 | 125.49 |
+| 768 | 1729 | action-contrastive | 0.464454 | 0.009676 | 0.027695 | 109.66 |
+| 768 | 2718 | clauses | 0.660765 | 0.013766 | 0.032273 | 115.86 |
+| 768 | 2718 | action-head | 0.669697 | 0.013952 | 0.032497 | 112.61 |
+| 768 | 2718 | action-contrastive | 0.762780 | 0.015891 | 0.034522 | 100.08 |
+
+Execution settings: bridge names `[]`, prover evaluation `false`, metric disk cache disabled, one worker, 48 samples per panel. This is cached-source decoder timing. No bridge-on evaluation or parser/compile timing was measured, so it is not a faster legal-IR conversion claim.
+
+Each selected and final state receives eight panels: validation, training, zero source condition, within-length source shuffle, cross-length shuffle, context-only shuffle, reversed contexts and rotated contexts. All 54 typed state exports and 288 panels are retained. These exports do not include optimizer/RNG state for resume.
+
+### Implementation and reproduction
+
+- `logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py`: `bind_action_factorized_clause_model(clause_model, codec=codec)`, checked architecture/state restoration, `source_action_features(projected, source_context=...)`, full-vocabulary source logits and zero-condition control.
+- `logic/formalization/autoencoder/action_contrastive_decoder_training.py`: authenticated training inventory, current-batch pair loss and contrastive-only feature-gradient receipts. Reference documents never enter generation.
+- `logic/formalization/autoencoder/long_span_source_value_training.py`: opt-in `action_contrastive_weight=0.05` for the new model plus explicit `source_contexts`. Default 0 skips all contrastive preparation, graphs and report fields. Existing AdamW, learning-rate scheduler, clipping, deadlines and acceptance decisions remain unchanged.
+- `scripts/ops/autoencoder/benchmark_action_binding_source_training.py`: sealed 18-fit comparison with complete baseline replay. It requires `--phase training --dependency-root ... --extension-root ... --manifest ... --plan ... --output ...`; use the exact archived manifests and frozen producers through `run_training_reserved.py`, with a fresh attempt directory. Do not replace inherited references or warm-start an unselected state.
+
+The frozen scoped regression suite passed 2,226 tests. The 16 setup errors in the unused retained Legal 384 release fixture remain documented in the predecessor archive; this round neither reruns nor fixes that unrelated fixture. The original pre-run audit is retained. A separate results-auditor revision fixes scoped source-path resolution without changing training or qualification. Independent checks recompute scalar projections, contrastive pair/loss and feature-gradient arithmetic, saved-state hashes, generated IR scoring and strict selection. They do not independently replay every optimizer update or every neural autoregressive operation.
+
+This development corpus does not establish US Code/Constitution coverage or the native semantics of all logic families. No Lake build was executed here and no admit, formalization, `roundtrip_ok` or production promotion is granted. Lake remains the only Lean admit. The complete receipts, implementation and predecessor references are in `docs/implementation/reports/evidence/decoder-action-binding-20261003/{results.json,manifest.json,evidence.tar.xz}`.

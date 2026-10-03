@@ -268,7 +268,9 @@ def save_state(ctx,model,recipe,role,selected,path):
 
 
 def contextual(model):
-    return model.describe().get('schema')=='clause-source-decoder-development/v1'
+    return model.describe().get('schema') in (
+        'clause-source-decoder-development/v1',
+        'action-factorized-clause-source-decoder-development/v1')
 
 
 def guidance_diagnostic(ctx,model,rows,contexts,deadline):
@@ -308,7 +310,10 @@ def evaluate(ctx,model,split,control):
         'conditioned' if control=='zero_condition' else control)
     if control=='zero_condition':
         require(use_context,'context zero-control requires contextual model')
-        model=owners['clause_source_decoder_experiment'].bind_zero_condition_model(model)
+        owner=('action_factorized_clause_decoder_experiment'
+            if model.describe().get('schema')=='action-factorized-clause-source-decoder-development/v1'
+            else 'clause_source_decoder_experiment')
+        model=owners[owner].bind_zero_condition_model(model)
         execution.update(kind='zero_condition',control=dict(kind='zero_condition',
             source_assignment={r['id']:r['id'] for r in original}),
             normalized_clause_values_and_padding_mask_removed=True)
