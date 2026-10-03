@@ -3137,4 +3137,82 @@ Each selected and final state receives eight panels: validation, training, zero 
 
 The frozen scoped regression suite passed 2,226 tests. The 16 setup errors in the unused retained Legal 384 release fixture remain documented in the predecessor archive; this round neither reruns nor fixes that unrelated fixture. The original pre-run audit is retained. A separate results-auditor revision fixes scoped source-path resolution without changing training or qualification. Independent checks recompute scalar projections, contrastive pair/loss and feature-gradient arithmetic, saved-state hashes, generated IR scoring and strict selection. They do not independently replay every optimizer update or every neural autoregressive operation.
 
-This development corpus does not establish US Code/Constitution coverage or the native semantics of all logic families. No Lake build was executed here and no admit, formalization, `roundtrip_ok` or production promotion is granted. Lake remains the only Lean admit. The complete receipts, implementation and predecessor references are in `docs/implementation/reports/evidence/decoder-action-binding-20261003/{results.json,manifest.json,evidence.tar.xz}`.
+This development corpus does not establish US Code/Constitution coverage or the native semantics of all logic families. No Lake build was executed here and no admit, formalization, `roundtrip_ok` or production promotion is granted. Lake remains the only Lean admit. The complete receipts, implementation and predecessor references are in `docs/implementation/reports/evidence/decoder-action-binding-20261003/{results.json,manifest.json,evidence.tar.xz.part-*}`.
+
+
+## Ordered clause conditioning in the recurrent decoder (2026-10-03)
+
+This twelve-fit experiment does **not** justify replacing the current decoder recipe. Aggregate exact reconstruction across the six width/seed pairs is unchanged at 58/288 exposed validation spans. The best 768D seed improves by one exact span overall but loses two exact eight-clause spans. The optional implementation and every result are retained for further objective experiments; no candidate is promoted.
+
+The saved-data diagnosis separated source-count prediction from actual stopping. The prior 384D candidates closed early on all 36 multi-clause validation rows despite correctly predicting the count for 20–21 of those rows. In the strongest prior 768D seed, 17 of 19 failed spans had a wrong generated length or unfinished output. Count classes 9–32 had identical learned logits, leaving their prior-relative closing correction zero. These observations did not capture inherited recurrent boundary logits and do not establish which logit caused each decision.
+
+### What changes, and what stays fixed
+
+`ordered_clause_recurrent_decoder_experiment.bind_ordered_clause_recurrent_model(action_model, codec=codec)` copies the validated factorized model and adds one bias-free, zero-initialized `Linear(128, 16)` layer: 2,048 parameters at every native input width. It concatenates the existing 64D action and 64D non-action clause features, then adds the selected clause's projected feature to the token embedding and existing paragraph residual before the GRU. The consumed-prefix lexical state selects the clause **after** each consumed token. Closing a complete rule advances to the next clause. Exhausted, padded, invalid and post-array-close routes contribute zero.
+
+Source segmentation availability is an explicit inference input. This authored fixture has one source clause per reference rule; the experiment does not establish segmentation quality on statutes. It uses no reference count in generation, no vocabulary mask, and no forced closure/EOS. All 32 output tokens remain available. The original paragraph conditioning, scalar residuals and count-prior correction remain intact. Full-prefix and greedy initial predictions match the predecessor exactly. The historical 8D linguistic teacher and its protected checkpoint remain unchanged: these are learned-formula sidecars at native input widths 8/384/768.
+
+The data, losses, training exposure, optimizer and selection criteria are unchanged: 48 training and 48 repeatedly exposed validation paragraphs; lengths 1/2/4/8 with 12 of each; 180 rule occurrences in each split; 113 unique training clauses and 54 validation clauses. Validation actor/action pairs are absent from training, but these rows have been examined in previous experiments and are not a fresh holdout. Each fit starts from its original initializer and executes 340 AdamW updates over four cumulative 20-epoch stages, with learning rate 0.001, batch 8, 2,440 row/count presentations, 225,840 target-token presentations and 25,600 scalar labels. The action-contrastive coefficient is 0.05, its loss temperature is 0.1, and generation temperature stays 0. Encoder and decoder limits both remain 512. No encoder forwards or weight downloads occur.
+
+### Observed reconstruction
+
+The matched twelve-fit experiment changes only the recurrent route from the current source clause; it keeps the same losses, source rows and selection gates. The values below describe final private attempts on repeatedly exposed validation rows, not a fresh held-out assessment.
+
+| Dimension | Seed | Exact baseline → recurrent /48 | Raw action /180 | Generated action /180 | Duplicate rules | Token CE | Fit seconds |
+|---|---|---|---|---|---|---|---|
+| 8 | 1729 | 1 → 1 | 89 → 96 | 13 → 66 | 18 → 14 | 0.1323 → 0.1396 | 14.76 → 13.78 |
+| 8 | 2718 | 1 → 1 | 76 → 70 | 27 → 60 | 40 → 18 | 0.1471 → 0.1422 | 13.05 → 12.74 |
+| 384 | 1729 | 9 → 9 | 169 → 163 | 76 → 141 | 0 → 1 | 0.1113 → 0.0981 | 14.75 → 17.15 |
+| 384 | 2718 | 8 → 8 | 167 → 176 | 79 → 58 | 0 → 0 | 0.1146 → 0.1253 | 14.73 → 16.28 |
+| 768 | 1729 | 10 → 9 | 172 → 172 | 92 → 122 | 0 → 4 | 0.0986 → 0.0922 | 19.19 → 23.13 |
+| 768 | 2718 | 29 → 30 | 180 → 180 | 170 → 172 | 32 → 20 | 0.0365 → 0.0345 | 22.45 → 24.29 |
+
+Every selected checkpoint remains at epoch 0: none of the twelve fits passed the unchanged per-length nonregression gates. The strongest final private result is 768D seed 2718: 30/48 exact versus 29/48 for its baseline, with EOS 48/48 versus 47/48 and duplicate rules 20 versus 32. Its exact counts at lengths 1/2/4/8 are 12/5/5/8 versus 12/4/3/10, so the gain is not uniform over lengths. It still has 33 extra and 10 missing whole rules; extra-rule counts include incorrect substitutions as well as surplus output.
+
+The new recurrent route has a measurable fixed-state effect: disabling it reduces the best candidate from 30 to 25 exact and changes seven predictions, while its raw scalar head stays unchanged. This is a postfit ablation, not evidence that the added training path generally wins: the other 768D seed falls from 10 to 9 exact, and the 384D seed 2718 emits fewer correct actions (79 to 58) despite a stronger raw action head (167 to 176). In 8D, EOS rises to 48/48 for both seeds, but exactness stays at 1/48 and extra-rule counts rise substantially.
+
+For the best candidate, the whole-source and clause-only shuffle controls both yield 0/48 exact, versus 30/48 conditioned; residual-off yields 25/48. The conditioned numerical call takes 0.655769 s for 48 spans (0.013662 s/span), and the broader postfit panel takes 1.550228 s (0.032296 s/span). Those timings exclude the separately recorded potential-residual observation. The raw source action head is 180/180, but actual generated actions are 172/180 and generated actor/action pairs 170/180, showing remaining output errors.
+
+Exact-by-length, EOS, extra/missing rules, all eight source controls and the additional recurrent-residual-off control are retained in outcomes.json. Raw scalar scores and actual generated action matches are separate; correct source-head values do not establish correct generated formulas.
+
+All twelve fits completed 340 updates with 2440 row presentations each. The runner took 433.532s; summed training calls took 206.295s. These are CPU, one-worker measurements with cached embeddings, bridge names[], prover evaluation off and metric disk cache off. These are observed shared-host wall times: external workspace tests and small saved-panel arithmetic preflights overlapped, so they do not establish isolated throughput or a speedup. They are not bridge-on legal-IR timings. Each numerical/panel 48-row wall time and per-span division is retained separately; potential-residual observations are extra work outside those scopes.
+
+The identity projection MSE is not learned reconstruction. The historical 8D linguistic teacher remains unchanged. Source-clause segmentation and availability are explicit inference inputs; the recurrent model may learn to stop when context is exhausted, but does not receive reference counts or force EOS. Nothing here grants Lake admission, semantic qualification, production promotion or proof of convergence.
+
+
+### Runtime, retained artifacts and cleanup
+
+The complete numerical API timings below include teacher-forced CE, free generation and identity-projection evaluation. The broader panel adds source-control construction and fidelity/count/scalar scoring. Both exclude serialization and the separately recorded potential recurrent-residual observations. Generated lengths differ. Training rows/s divides 2,440 presentations by the whole trainer-call wall time, including its internal validation. These shared-host observations are not an isolated speed comparison.
+
+| Width | Seed | Arm | Numerical s/48 | Numerical s/span | Complete panel s/span | Training rows/s |
+|---:|---:|---|---:|---:|---:|---:|
+| 8 | 1729 | action-contrastive | 0.770125 | 0.016044 | 0.018538 | 165.30 |
+| 8 | 1729 | recurrent-clause | 0.328141 | 0.006836 | 0.009800 | 177.06 |
+| 8 | 2718 | action-contrastive | 0.714130 | 0.014878 | 0.017594 | 186.91 |
+| 8 | 2718 | recurrent-clause | 0.401587 | 0.008366 | 0.011452 | 191.59 |
+| 384 | 1729 | action-contrastive | 0.265624 | 0.005534 | 0.015472 | 165.45 |
+| 384 | 1729 | recurrent-clause | 0.467578 | 0.009741 | 0.020156 | 142.29 |
+| 384 | 2718 | action-contrastive | 0.268591 | 0.005596 | 0.015623 | 165.67 |
+| 384 | 2718 | recurrent-clause | 0.307550 | 0.006407 | 0.016557 | 149.92 |
+| 768 | 1729 | action-contrastive | 0.416975 | 0.008687 | 0.026228 | 127.12 |
+| 768 | 1729 | recurrent-clause | 0.643592 | 0.013408 | 0.031448 | 105.48 |
+| 768 | 2718 | action-contrastive | 0.703734 | 0.014661 | 0.033026 | 108.68 |
+| 768 | 2718 | recurrent-clause | 0.655769 | 0.013662 | 0.032296 | 100.47 |
+
+The reservation was one CPU, 4 GiB RAM and 2 GB output under the unchanged 140 GB campaign cap. CUDA was disabled. The observed child RSS maximum was 1,479,499,776 bytes across 23 samples. The completed attempt occupied 619,572,063 bytes at final disk accounting. The top-level run index is 16,497 bytes; it references complete authenticated per-arm training reports and panels instead of repeating their arrays. All 36 typed initial/selected/final states and 204 evaluation panels are retained. These exports do not contain optimizer/RNG state for training resume.
+
+The model child completed with exit 0 and was reaped; the guardian took 467.248 s through child exit, including admission, monitoring and accounting. The guardian then exited 1: disk finalization had already persisted a durable released reservation, but scheduler lease release encountered a configuration mismatch. The final error handling also encountered that mismatch, so it did not write `resources-final.json`. The original failure log is retained. The scheduler configuration later matched the adopted configuration again; the actor and exact intervening values are unknown.
+
+`reconcile_completed_resources.py` recovered **only the missing receipt**, using the existing stable ledger and scheduler locks. It verified the original owner had exited, the recorded child group was dead, the reservation/attempt inode matched, the exact 619,572,063-byte output inventory matched the already released durable ledger row, and the run's scheduler lease and waiters were absent. It changed no shared scheduler state, capacities, leases or foreign claims and reran no model. `resources-final.json` explicitly records the original guardian exit 1 and the recovery evidence. This is a reconciled resource record, not a claim that the original guardian completed successfully.
+
+### APIs, reproduction and remaining gap
+
+- `logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py` owns the new architecture, source-only recurrent features, strict typed/frozen restoration and the `bind_residual_off_model`/`bind_zero_condition_model` inference controls. State adds one versioned integer buffer and one trainable matrix while preserving inherited body tensor paths.
+- `long_span_source_value_training.train` accepts this explicit new model with authenticated `source_contexts` and the unchanged `action_contrastive_weight=0.05` recipe. The default path, optimizer, scheduler, objective coefficients, deadlines and per-length acceptance are unchanged. Control wrappers are excluded from trainable schema admission.
+- `scripts/ops/autoencoder/benchmark_ordered_clause_recurrent_training.py` owns the fixed twelve-fit comparison. It requires `--phase training --dependency-root ... --extension-root ... --manifest ... --plan ... --output ...`. Reproduce with the archived frozen sources/manifests through `run_training_reserved.py` and a fresh attempt directory. Restore typed states through the matching architecture; do not warm-start an unselected attempt and treat it as a new baseline.
+
+The 2,314 scoped regression tests pass, including 44 new architecture tests and 44 new runner/integration tests. The known 16 setup cases for an incompatible, unused retained Legal 384 release remain outside this scope and are preserved in predecessor evidence. All six baseline training reports, tensor states and control predictions replay the preceding action-contrastive experiment exactly, excluding elapsed time. The independent saved-data audit also checks objective/exposure/selection arithmetic, source provenance, raw scalar and all 32 count logits, potential 8×16 recurrent clause residuals, and the read-only resource reconciliation. Potential slot residuals are not actual visited-prefix traces, and this audit does not independently replay every optimizer or neural autoregressive operation.
+
+The result points toward testing boundary-specific training next. The existing generated-boundary collector samples the first and last visited boundaries; the saved diagnosis shows this would omit the first wrong close/continue decision in 12 of 17 erroneous rows of the prior best 768D validation arm. A future objective should retain full-vocabulary scoring, keep training labels out of generation, support the authenticated clause contexts, and test whether those actual errors improve. This experiment adds no such loss and claims no global convergence.
+
+No bridge-on legal-IR evaluation, native-family qualification or Lake build was run. Bridge names are `[]`, prover evaluation is `false`, metric disk cache is disabled, worker count is 1, and each panel contains 48 samples. These cached-source decoder timings cannot be used as parser/compile or bridge-on timings. No admit, formalized flag, `roundtrip_ok`, fresh-holdout claim or production promotion follows. The Constitution remains unformalized. Full evidence is published under `docs/implementation/reports/evidence/decoder-boundary-reconstruction-20261003/`: `results.json`, `manifest.json`, and ordered `evidence.tar.xz.part-*` chunks. Concatenate the parts in manifest order and verify both chunk and logical-archive hashes before extraction; predecessor artifacts have explicit immutable Git references.
